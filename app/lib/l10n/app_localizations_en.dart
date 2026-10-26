@@ -71,6 +71,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorSignInRequired => 'Sign in to do this.';
 
   @override
+  String get errorRateLimited => 'Too many requests. Wait a minute and try again.';
+
+  @override
   String get errorInvalidAmount => 'Enter an amount greater than zero.';
 
   @override

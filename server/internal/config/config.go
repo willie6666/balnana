@@ -65,6 +65,11 @@ type Config struct {
 	WebDir string
 	// CORSOrigins lists extra web origins allowed to call the API ("*" allows any).
 	CORSOrigins []string
+	// RateLimit caps API requests per client per minute (0: no cap).
+	RateLimit int
+	// TrustProxy takes the client address from X-Forwarded-For / X-Real-IP,
+	// for servers behind a reverse proxy.
+	TrustProxy bool
 
 	AuthMode   AuthMode
 	Password   bool
@@ -88,6 +93,8 @@ func load(getenv func(string) string) (*Config, error) {
 		DatabaseURL: e.str("BALNANA_DATABASE_URL", getenv("DATABASE_URL")),
 		WebDir:      e.str("BALNANA_WEB_DIR", ""),
 		CORSOrigins: e.list("BALNANA_CORS_ORIGINS"),
+		RateLimit:   e.int("BALNANA_RATE_LIMIT", 600),
+		TrustProxy:  e.bool("BALNANA_TRUST_PROXY", false),
 		AuthMode:    AuthMode(e.str("BALNANA_AUTH_MODE", string(AuthModeLink))),
 		Password:    e.bool("BALNANA_AUTH_PASSWORD", true),
 		Signup:      Signup(e.str("BALNANA_AUTH_SIGNUP", string(SignupOpen))),
@@ -142,6 +149,10 @@ func load(getenv func(string) string) (*Config, error) {
 	case SignupOpen, SignupInviteOnly, SignupClosed:
 	default:
 		e.fail("BALNANA_AUTH_SIGNUP must be open, invite_only or closed, got %q", c.Signup)
+	}
+
+	if c.RateLimit < 0 {
+		e.fail("BALNANA_RATE_LIMIT must be 0 (no limit) or more, got %d", c.RateLimit)
 	}
 
 	if c.SMTP.Enabled() && c.SMTP.From == "" {

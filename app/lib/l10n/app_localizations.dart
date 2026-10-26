@@ -211,6 +211,12 @@ abstract class AppLocalizations {
   /// **'Sign in to do this.'**
   String get errorSignInRequired;
 
+  /// No description provided for @errorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests. Wait a minute and try again.'**
+  String get errorRateLimited;
+
   /// No description provided for @errorInvalidAmount.
   ///
   /// In en, this message translates to:

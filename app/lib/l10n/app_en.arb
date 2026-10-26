@@ -31,6 +31,7 @@
   "errorMemberHasBalance": "Settle this person's balance before removing them.",
   "errorVersionConflict": "Someone else changed this expense while you were editing it. Reload to see their changes.",
   "errorSignInRequired": "Sign in to do this.",
+  "errorRateLimited": "Too many requests. Wait a minute and try again.",
   "errorInvalidAmount": "Enter an amount greater than zero.",
   "errorTooManyDecimals": "Too many decimal places for this currency.",
   "errorAmountTooLarge": "That amount is too large.",

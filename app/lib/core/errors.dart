@@ -17,6 +17,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'member_has_balance' => l10n.errorMemberHasBalance,
     'expense_version_conflict' => l10n.errorVersionConflict,
     'sign_in_required' => l10n.errorSignInRequired,
+    'rate_limited' => l10n.errorRateLimited,
     final code => MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??
         l10n.errorGeneric,
   };

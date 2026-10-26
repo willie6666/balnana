@@ -26,7 +26,9 @@ The web app and the API are then on `http://localhost:8080` (change the port wit
 
 For anything beyond your own machine, put a TLS reverse proxy (Caddy, Traefik, nginx)
 in front and set `BALNANA_PUBLIC_URL` to the public `https://` address: group links
-are built from it.
+are built from it. Behind a proxy, also set `BALNANA_TRUST_PROXY=true` so the
+per-client rate limit (`BALNANA_RATE_LIMIT`, requests a minute) sees real client
+addresses.
 
 Every setting is an environment variable; [.env.example](.env.example) lists them
 all, including the access mode (`link` or `accounts`), email and OAuth sign-in.

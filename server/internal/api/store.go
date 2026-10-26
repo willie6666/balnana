@@ -67,17 +67,19 @@ func scanGroup(row pgx.Row) (*group, error) {
 // groupByToken finds a live group a link may open. Pass lock to hold the
 // row until the transaction ends, so concurrent writes to one group queue up.
 func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock bool) (*group, error) {
-	if !validToken(token) {
-		return nil, errNotFound
-	}
-	if s.cfg.AuthMode == config.AuthModeAccounts && !s.cfg.LinkGroups {
+	if !validToken(token) || s.cfg.AuthMode == config.AuthModeAccounts && !s.cfg.LinkGroups {
+		noteMiss(ctx)
 		return nil, errNotFound
 	}
 	sql := `select ` + groupColumns + ` from groups where token = $1 and archived_at is null and link_access`
 	if lock {
 		sql += ` for update`
 	}
-	return scanGroup(q.QueryRow(ctx, sql, token))
+	g, err := scanGroup(q.QueryRow(ctx, sql, token))
+	if err == errNotFound {
+		noteMiss(ctx)
+	}
+	return g, err
 }
 
 func newToken() string {

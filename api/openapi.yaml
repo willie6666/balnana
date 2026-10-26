@@ -8,6 +8,11 @@ info:
     Money is always a decimal string (for example "1234.50"), never a JSON
     number. The number of decimal places is the group's `minorDigits`.
     Errors carry a stable machine `code`; clients translate it.
+
+    Any request may be answered 429 with code `rate_limited` and a
+    `Retry-After` header (seconds): per client there is a request cap
+    (BALNANA_RATE_LIMIT) and a cap on asking for group tokens that do not
+    exist.
 servers:
   - url: /api/v1
 paths:
