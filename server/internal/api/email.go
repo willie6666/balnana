@@ -181,7 +181,8 @@ func (s *Server) ResetPassword(ctx context.Context, req ResetPasswordRequestObje
 }
 
 func (s *Server) InviteToGroup(ctx context.Context, req InviteToGroupRequestObject) (InviteToGroupResponseObject, error) {
-	if _, err := s.requireUser(ctx); err != nil {
+	u, err := s.requireUser(ctx)
+	if err != nil {
 		return nil, err
 	}
 	if err := s.requireEmail(); err != nil {
@@ -191,6 +192,11 @@ func (s *Server) InviteToGroup(ctx context.Context, req InviteToGroupRequestObje
 	email, err := cleanEmail(in.Email)
 	if err != nil {
 		return nil, err
+	}
+	// Anyone may open an account and a group, so without a cap this would
+	// send any number of emails, with any text in the group's name.
+	if !s.invites.take(u.id, 1, time.Now()) {
+		return nil, errRateLimited
 	}
 	var g *group
 	var inviter string

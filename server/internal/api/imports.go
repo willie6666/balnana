@@ -113,6 +113,11 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	if err != nil {
 		return nil, err
 	}
+	if !dryRun {
+		if err := s.limitCreates(ctx); err != nil {
+			return nil, err
+		}
+	}
 
 	var preview ImportPreview
 	var out Group

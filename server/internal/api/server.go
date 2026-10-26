@@ -27,6 +27,8 @@ type Server struct {
 	hub      *hub
 	push     push.Sender // nil when the server sends no push notifications
 	pushing  sync.WaitGroup
+	creates  *buckets // groups created, by client
+	invites  *buckets // invitations sent, by account
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -41,7 +43,14 @@ type settings struct {
 var _ StrictServerInterface = (*Server)(nil)
 
 func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version string) *Server {
-	s := &Server{db: db, log: log, version: version, hub: newHub()}
+	s := &Server{
+		db:      db,
+		log:     log,
+		version: version,
+		hub:     newHub(),
+		creates: newBuckets(createPerMinute, createBurst),
+		invites: newBuckets(invitePerMinute, inviteBurst),
+	}
 	s.apply(cfg)
 	if cfg.FCM != nil {
 		if f, err := push.NewFCM(cfg.FCM); err != nil {

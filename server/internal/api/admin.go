@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"balnana/internal/config"
 )
@@ -120,6 +121,20 @@ func (s *Server) PrepareAdmin(ctx context.Context) error {
 		s.log.Warn("no administrator password yet: open " + admin + " to set one")
 	}
 	return nil
+}
+
+// ResetAdmin forgets the administrator password, for when it is lost, and
+// signs every administrator out. /admin then asks for a new password and
+// the setup code this returns, which only whoever runs it sees.
+func ResetAdmin(ctx context.Context, db *pgxpool.Pool) (string, error) {
+	code := newSetupCode()
+	return code, pgx.BeginFunc(ctx, db, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, `update admin set password_hash = null, setup_code = $1`, code); err != nil {
+			return err
+		}
+		_, err := tx.Exec(ctx, `delete from admin_sessions`)
+		return err
+	})
 }
 
 func newSetupCode() string {

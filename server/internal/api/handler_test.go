@@ -84,6 +84,9 @@ func TestServerInfoLinkMode(t *testing.T) {
 	if rec.Header().Get("Referrer-Policy") != "no-referrer" {
 		t.Fatal("missing Referrer-Policy")
 	}
+	if rec.Header().Get("X-Frame-Options") != "DENY" || rec.Header().Get("Content-Security-Policy") != "frame-ancestors 'none'" {
+		t.Fatal("other sites may frame the pages")
+	}
 }
 
 func TestServerInfoAccountsMode(t *testing.T) {

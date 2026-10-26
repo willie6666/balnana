@@ -46,6 +46,10 @@ opens the server first can set it. A server that already held groups or accounts
 before it had administration also asks for a setup code, printed in its log
 (`docker compose logs balnana`), so an upgrade cannot be taken over by a visitor.
 
+Lost the administrator password? Run `docker compose exec balnana /balnana reset-admin`.
+It signs everyone out of `/admin` and prints a setup code; open `/admin` and choose a
+new password with that code.
+
 Every setting can also be an environment variable; one that is set wins, and
 `/admin` shows it as fixed. [.env.example](.env.example) marks which ones `/admin`
 can change.
@@ -54,7 +58,15 @@ For anything beyond your own machine, put a TLS reverse proxy (Caddy, Traefik, n
 in front and set `BALNANA_PUBLIC_URL` to the public `https://` address: group links
 are built from it. Behind a proxy, also set `BALNANA_TRUST_PROXY=true` so the
 per-client rate limit (`BALNANA_RATE_LIMIT`, requests a minute) sees real client
-addresses.
+addresses. While that limit is on, each client address may also create 30 groups at
+once (then one a minute) and hold 100 live connections, and each account may send 20
+email invitations at once (then one a minute), so the server cannot be used to send
+spam. The limits are kept in memory by each server process.
+
+The server sets no overall read timeout, since live updates hold connections open;
+let the reverse proxy limit slow clients. Back up the PostgreSQL database
+(`docker compose exec db pg_dump -U balnana balnana > backup.sql`): it holds
+everything.
 
 Open groups update live over Server-Sent Events (`/api/v1/g/<token>/events`). The
 proxy must not buffer those responses; nginx honours the `X-Accel-Buffering: no`

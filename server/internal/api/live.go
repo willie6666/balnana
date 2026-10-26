@@ -18,6 +18,9 @@ import (
 const (
 	changeChannel = "balnana_group"
 	maxStreams    = 10_000
+	// Streams one client may hold open, so one cannot take them all. A phone
+	// holds one per group it shows; a household behind one address, a few.
+	maxClientStreams = 100
 	// Proxies and phones drop connections that stay quiet too long.
 	streamPing = 25 * time.Second
 	// How long apps wait before connecting again after losing the stream.
@@ -29,25 +32,34 @@ type hub struct {
 	mu      sync.Mutex
 	streams map[string]map[chan struct{}]struct{} // by group id
 	count   int
-	ready   chan struct{} // closed once the server listens for notices
-	done    chan struct{} // closed when the server stops listening: streams end
+	clients map[string]int // open streams by client
+	ready   chan struct{}  // closed once the server listens for notices
+	done    chan struct{}  // closed when the server stops listening: streams end
 }
 
 func newHub() *hub {
 	return &hub{
 		streams: map[string]map[chan struct{}]struct{}{},
+		clients: map[string]int{},
 		ready:   make(chan struct{}),
 		done:    make(chan struct{}),
 	}
 }
 
 // subscribe returns a channel that receives a value when the group changes.
-// Several changes in a row may arrive as one.
-func (h *hub) subscribe(groupID string) (chan struct{}, error) {
+// Several changes in a row may arrive as one. client is who asks, for the cap
+// per client ("" for none).
+func (h *hub) subscribe(groupID, client string) (chan struct{}, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if h.count >= maxStreams {
 		return nil, &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+	}
+	if client != "" {
+		if h.clients[client] >= maxClientStreams {
+			return nil, errRateLimited
+		}
+		h.clients[client]++
 	}
 	ch := make(chan struct{}, 1)
 	if h.streams[groupID] == nil {
@@ -58,7 +70,7 @@ func (h *hub) subscribe(groupID string) (chan struct{}, error) {
 	return ch, nil
 }
 
-func (h *hub) unsubscribe(groupID string, ch chan struct{}) {
+func (h *hub) unsubscribe(groupID, client string, ch chan struct{}) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if _, ok := h.streams[groupID][ch]; !ok {
@@ -69,6 +81,11 @@ func (h *hub) unsubscribe(groupID string, ch chan struct{}) {
 		delete(h.streams, groupID)
 	}
 	h.count--
+	if client != "" {
+		if h.clients[client]--; h.clients[client] <= 0 {
+			delete(h.clients, client)
+		}
+	}
 }
 
 func wake(ch chan struct{}) {
@@ -160,11 +177,12 @@ func (s *Server) GroupEvents(ctx context.Context, req GroupEventsRequestObject) 
 	if err != nil {
 		return nil, err
 	}
-	ch, err := s.hub.subscribe(g.id)
+	client := requestClient(ctx)
+	ch, err := s.hub.subscribe(g.id, client)
 	if err != nil {
 		return nil, err
 	}
-	return eventStream{s: s, ctx: ctx, token: req.Token, groupID: g.id, changes: ch}, nil
+	return eventStream{s: s, ctx: ctx, token: req.Token, groupID: g.id, client: client, changes: ch}, nil
 }
 
 // eventStream writes the text/event-stream of one group.
@@ -173,11 +191,12 @@ type eventStream struct {
 	ctx     context.Context
 	token   string
 	groupID string
+	client  string
 	changes chan struct{}
 }
 
 func (e eventStream) VisitGroupEventsResponse(w http.ResponseWriter) error {
-	defer e.s.hub.unsubscribe(e.groupID, e.changes)
+	defer e.s.hub.unsubscribe(e.groupID, e.client, e.changes)
 	rc := http.NewResponseController(w)
 	_ = rc.SetWriteDeadline(time.Time{}) // the stream stays open
 	h := w.Header()
