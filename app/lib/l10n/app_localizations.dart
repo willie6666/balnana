@@ -901,6 +901,156 @@ abstract class AppLocalizations {
   /// **'Add the first one, and Balnana will work out who owes whom.'**
   String get expensesEmptyBody;
 
+  /// No description provided for @expensesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search titles and notes'**
+  String get expensesSearchHint;
+
+  /// No description provided for @searchClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get searchClear;
+
+  /// No description provided for @expensesNoMatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches'**
+  String get expensesNoMatchTitle;
+
+  /// No description provided for @expensesNoMatchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try other words, or fewer filters.'**
+  String get expensesNoMatchBody;
+
+  /// Filter chip: expenses of every member, not just one.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone'**
+  String get filterAnyone;
+
+  /// No description provided for @filterAnyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Any category'**
+  String get filterAnyCategory;
+
+  /// Filter choice: only payments between members, not expenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get filterPayments;
+
+  /// No description provided for @filterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get filterClear;
+
+  /// No description provided for @periodAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get periodAll;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get periodLastMonth;
+
+  /// No description provided for @periodThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get periodThisYear;
+
+  /// No description provided for @periodPickDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates…'**
+  String get periodPickDays;
+
+  /// Title of the page with charts of what a group spent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending'**
+  String get statsTitle;
+
+  /// No description provided for @statsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get statsTotal;
+
+  /// No description provided for @statsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 expense} other{{count} expenses}}'**
+  String statsCount(int count);
+
+  /// No description provided for @statsByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get statsByCategory;
+
+  /// Chart heading: what each person paid, next to their share of the costs.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid and share per person'**
+  String get statsByMember;
+
+  /// No description provided for @statsPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get statsPaid;
+
+  /// No description provided for @statsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get statsShare;
+
+  /// No description provided for @statsByMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'By month'**
+  String get statsByMonth;
+
+  /// No description provided for @statsNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get statsNoCategory;
+
+  /// No description provided for @statsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing spent'**
+  String get statsEmptyTitle;
+
+  /// No description provided for @statsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no expenses in this period.'**
+  String get statsEmptyBody;
+
+  /// No description provided for @statsShowExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Show these expenses'**
+  String get statsShowExpenses;
+
   /// No description provided for @dateToday.
   ///
   /// In en, this message translates to:

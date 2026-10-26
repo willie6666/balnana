@@ -75,9 +75,18 @@ final balancesProvider = FutureProvider.family<Balances, String>((ref, token) as
 
 /// A group's expenses, newest first, loaded a page at a time.
 class ExpenseList {
-  const ExpenseList(this.items, this.nextCursor, {this.loadingMore = false, this.moreError});
+  const ExpenseList(
+    this.items,
+    this.nextCursor, {
+    this.filter = const ExpenseFilter(),
+    this.loadingMore = false,
+    this.moreError,
+  });
 
   final List<Expense> items;
+
+  /// What [items] were narrowed to.
+  final ExpenseFilter filter;
   final String? nextCursor;
   final bool loadingMore;
 
@@ -85,6 +94,22 @@ class ExpenseList {
   final Exception? moreError;
 
   bool get hasMore => nextCursor != null;
+}
+
+/// What the expenses of a group are narrowed to, while the app runs.
+final expenseFilterProvider = NotifierProvider.family<ExpenseFilterNotifier, ExpenseFilter, String>(
+  ExpenseFilterNotifier.new,
+);
+
+class ExpenseFilterNotifier extends Notifier<ExpenseFilter> {
+  ExpenseFilterNotifier(this.token);
+
+  final String token;
+
+  @override
+  ExpenseFilter build() => const ExpenseFilter();
+
+  void set(ExpenseFilter filter) => state = filter;
 }
 
 final expensesProvider = AsyncNotifierProvider.family<ExpensesNotifier, ExpenseList, String>(
@@ -97,12 +122,17 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
   final String token;
   int _digits = 2;
 
+  /// Counts builds, so a page asked for before one is not added after it.
+  var _build = 0;
+
   @override
   Future<ExpenseList> build() async {
+    _build++;
+    final filter = ref.watch(expenseFilterProvider(token));
     final group = await ref.watch(groupProvider(token).future);
     _digits = group.minorDigits;
-    final page = await _api(ref).group(token).expenses(_digits);
-    return ExpenseList(page.items, page.nextCursor);
+    final page = await _api(ref).group(token).expenses(_digits, filter: filter);
+    return ExpenseList(page.items, page.nextCursor, filter: filter);
   }
 
   /// Loads the next page, unless the last try failed and this is no [retry].
@@ -110,12 +140,15 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     final current = state.value;
     if (current == null || !current.hasMore || current.loadingMore) return;
     if (current.moreError != null && !retry) return;
-    state = AsyncData(ExpenseList(current.items, current.nextCursor, loadingMore: true));
+    final build = _build, filter = current.filter;
+    state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true));
     try {
-      final page = await _api(ref).group(token).expenses(_digits, cursor: current.nextCursor);
-      state = AsyncData(ExpenseList([...current.items, ...page.items], page.nextCursor));
+      final page = await _api(ref).group(token).expenses(_digits, cursor: current.nextCursor, filter: filter);
+      if (!ref.mounted || build != _build) return;
+      state = AsyncData(ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter));
     } on Exception catch (e) {
-      state = AsyncData(ExpenseList(current.items, current.nextCursor, moreError: e));
+      if (!ref.mounted || build != _build) return;
+      state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e));
     }
   }
 }
@@ -153,6 +186,7 @@ void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
   invalidate(groupProvider(token));
   invalidate(balancesProvider(token));
   invalidate(expensesProvider(token));
+  invalidate(statsProvider);
   invalidate(summariesProvider);
   invalidate(activityFeedProvider);
 }
@@ -164,4 +198,13 @@ final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String toke
 ) async {
   final group = await ref.watch(groupProvider(key.token).future);
   return _api(ref).group(key.token).expense(key.id, group.minorDigits);
+});
+
+/// What a group spent in a period, or all time when it is null.
+final statsProvider = FutureProvider.autoDispose.family<GroupStats, ({String token, Period? period})>((
+  ref,
+  key,
+) async {
+  final group = await ref.watch(groupProvider(key.token).future);
+  return _api(ref).group(key.token).stats(group.minorDigits, period: key.period);
 });

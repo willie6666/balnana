@@ -618,11 +618,37 @@ paths:
     get:
       operationId: listExpenses
       summary: Expenses and payments, newest first
+      description: >-
+        The filters combine; a cursor only works with the filters it was
+        given with.
       parameters:
         - name: cursor
           in: query
           schema:
             type: string
+        - name: q
+          in: query
+          description: Text to find in the title or note, ignoring case.
+          schema:
+            type: string
+            maxLength: 100
+        - name: member
+          in: query
+          description: Only what this member paid or has a share in.
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Only expenses of this category.
+          schema:
+            type: string
+        - name: kind
+          in: query
+          schema:
+            type: string
+            enum: [expense, payment]
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
         - name: limit
           in: query
           schema:
@@ -762,6 +788,33 @@ paths:
                 $ref: "#/components/schemas/Balances"
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/stats:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getStats
+      summary: What the group spent, by category, member and month
+      description: Payments between members are not spending and are left out.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - name: utcOffset
+          in: query
+          description: Minutes east of UTC that months begin at, for the reader's time zone.
+          schema:
+            type: integer
+            minimum: -840
+            maximum: 840
+            default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupStats"
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/activity:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -839,6 +892,20 @@ components:
       description: An id from `oauthProviders` in /server-info.
       schema:
         type: string
+    From:
+      name: from
+      in: query
+      description: Only what happened at or after this time.
+      schema:
+        type: string
+        format: date-time
+    To:
+      name: to
+      in: query
+      description: Only what happened before this time.
+      schema:
+        type: string
+        format: date-time
     ActingMember:
       name: X-Balnana-Member
       in: header
@@ -1237,6 +1304,61 @@ components:
           description: Suggested payments that settle everyone up.
           items:
             $ref: "#/components/schemas/Transfer"
+    GroupStats:
+      type: object
+      required: [total, count, categories, members, months]
+      properties:
+        total:
+          $ref: "#/components/schemas/Money"
+        count:
+          type: integer
+          description: How many expenses the total is made of.
+        categories:
+          type: array
+          description: Largest first.
+          items:
+            $ref: "#/components/schemas/CategoryStats"
+        members:
+          type: array
+          description: Every member who paid or had a share, in the group's member order.
+          items:
+            $ref: "#/components/schemas/MemberStats"
+        months:
+          type: array
+          description: Oldest first, only months with spending.
+          items:
+            $ref: "#/components/schemas/MonthStats"
+    CategoryStats:
+      type: object
+      required: [amount, count]
+      properties:
+        categoryId:
+          type: string
+          description: Absent for expenses without a category.
+        amount:
+          $ref: "#/components/schemas/Money"
+        count:
+          type: integer
+    MemberStats:
+      type: object
+      required: [memberId, paid, share]
+      properties:
+        memberId:
+          type: string
+        paid:
+          $ref: "#/components/schemas/Money"
+        share:
+          $ref: "#/components/schemas/Money"
+          description: What the member's part of the expenses came to.
+    MonthStats:
+      type: object
+      required: [month, amount]
+      properties:
+        month:
+          type: string
+          description: Year and month, as 2026-10.
+        amount:
+          $ref: "#/components/schemas/Money"
     MemberBalance:
       type: object
       required: [memberId, amount]

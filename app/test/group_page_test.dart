@@ -97,6 +97,37 @@ class _Pages implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// Answers expense pages with whatever matches the search, and keeps every
+/// query asked.
+class _Search implements HttpClientAdapter {
+  final queries = <Map<String, dynamic>>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    expect(options.uri.path, '/api/v1/g/tok/expenses');
+    queries.add(options.queryParameters);
+    final q = options.queryParameters['q'] as String?;
+    final items = [
+      for (final id in ['e1', 'e2'])
+        if (q == null || 'Item $id'.toLowerCase().contains(q.toLowerCase())) _expenseJson(id),
+    ];
+    return ResponseBody.fromString(
+      jsonEncode({'items': items, 'nextCursor': null}),
+      200,
+      headers: {
+        'content-type': ['application/json'],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 /// Starts the app in link mode with this device as Ana in group `tok`.
 Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) async {
   SharedPreferences.setMockInitialValues({
@@ -235,5 +266,143 @@ void main() {
     await tester.pumpAndSettle();
     expect(gets, before + 1);
     expect(find.text('Flat 3'), findsWidgets);
+  });
+
+  testWidgets('searching asks the server and clearing brings everything back', (tester) async {
+    final search = _Search();
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = search;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.text('Item e1'), findsOneWidget);
+    expect(find.text('Item e2'), findsOneWidget);
+
+    await tester.enterText(find.byType(SearchBar), '  e2 ');
+    await tester.pump(const Duration(milliseconds: 100));
+    // Waits for a pause in typing.
+    expect(search.queries, hasLength(1));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(search.queries.last['q'], 'e2');
+    expect(find.text('Item e1'), findsNothing);
+    expect(find.text('Item e2'), findsOneWidget);
+
+    await tester.enterText(find.byType(SearchBar), 'nothing');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing matches'), findsOneWidget);
+
+    // Below the group's header, which scrolls away.
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear filters'));
+    await tester.pumpAndSettle();
+    expect(search.queries.last.containsKey('q'), isFalse);
+    expect(find.text('Item e1'), findsOneWidget);
+    expect(find.text('Item e2'), findsOneWidget);
+    expect(find.text('nothing'), findsNothing);
+  });
+
+  testWidgets('stats show the spending and lead to its expenses', (tester) async {
+    final search = _Search();
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = search;
+    final periods = <Period?>[];
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      statsProvider.overrideWith((ref, key) async {
+        periods.add(key.period);
+        return GroupStats.fromJson({
+          'total': '138.00',
+          'count': 4,
+          'categories': [
+            {'categoryId': 'food', 'amount': '90.00', 'count': 1},
+            {'categoryId': 'transport', 'amount': '42.00', 'count': 2},
+            {'categoryId': null, 'amount': '6.00', 'count': 1},
+          ],
+          'members': [
+            {'memberId': 'a', 'paid': '48.00', 'share': '69.00'},
+            {'memberId': 'b', 'paid': '90.00', 'share': '69.00'},
+          ],
+          'months': [
+            {'month': '2026-09', 'amount': '30.00'},
+            {'month': '2026-10', 'amount': '108.00'},
+          ],
+        }, 2);
+      }),
+    ]);
+    await _go(tester, container, '/g/tok');
+    await tester.tap(find.byTooltip('Spending'));
+    await tester.pumpAndSettle();
+
+    expect(periods, [null]);
+    expect(find.text('\$138.00'), findsOneWidget);
+    expect(find.text('4 expenses'), findsOneWidget);
+    // The latest month is read out first.
+    expect(find.text('October 2026'), findsOneWidget);
+    expect(find.text('\$108.00'), findsOneWidget);
+    await tester.tap(find.text('Sep'));
+    await tester.pump();
+    expect(find.text('September 2026'), findsOneWidget);
+
+    expect(find.text('Food & drink'), findsOneWidget);
+    expect(find.text('2 expenses'), findsOneWidget);
+    // Spending without a category cannot be listed on its own.
+    await tester.ensureVisible(find.text('No category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('No category'));
+    await tester.pumpAndSettle();
+    expect(find.text('No category'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Transport'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transport'));
+    await tester.pumpAndSettle();
+    expect(container.read(expenseFilterProvider('tok')), const ExpenseFilter(category: 'transport'));
+    expect(search.queries.last['category'], 'transport');
+    expect(find.text('Clear filters'), findsOneWidget);
+  });
+
+  test('a filter asks for what it narrows to', () {
+    expect(const ExpenseFilter().query, isEmpty);
+    expect(const ExpenseFilter(text: '   ').isEmpty, isTrue);
+    final from = DateTime(2026, 10), to = DateTime(2026, 11);
+    expect(
+      ExpenseFilter(text: ' taxi ', member: 'a', payments: true, period: (from: from, to: to)).query,
+      {
+        'q': 'taxi',
+        'member': 'a',
+        'kind': 'payment',
+        'from': from.toUtc().toIso8601String(),
+        'to': to.toUtc().toIso8601String(),
+      },
+    );
+    expect(const ExpenseFilter(category: 'food').query, {'category': 'food'});
+  });
+
+  test('stats read amounts in minor units and months in local time', () {
+    final s = GroupStats.fromJson({
+      'total': '1.5',
+      'count': 1,
+      'categories': [
+        {'categoryId': null, 'amount': '1.5', 'count': 1},
+      ],
+      'members': [
+        {'memberId': 'a', 'paid': '1.5', 'share': '0.75'},
+      ],
+      'months': [
+        {'month': '2026-01', 'amount': '1.5'},
+      ],
+    }, 2);
+    expect(s.total, BigInt.from(150));
+    expect(s.categories.single.category, isNull);
+    expect(s.members.single.share, BigInt.from(75));
+    expect(s.months.single.month, DateTime(2026));
   });
 }

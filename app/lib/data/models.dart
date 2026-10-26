@@ -498,3 +498,114 @@ class JoinMember {
   /// Someone's account already is this member.
   final bool claimed;
 }
+
+/// A span of time: [from] inclusive, [to] exclusive.
+typedef Period = ({DateTime from, DateTime to});
+
+/// What to narrow a group's expenses to. Empty fields match everything.
+@immutable
+class ExpenseFilter {
+  const ExpenseFilter({this.text = '', this.member, this.category, this.payments = false, this.period});
+
+  /// Words to find in the title or note.
+  final String text;
+
+  /// Only expenses this member paid for or had a share in.
+  final String? member;
+
+  /// Only expenses of this category.
+  final String? category;
+
+  /// Only payments between members.
+  final bool payments;
+
+  final Period? period;
+
+  bool get isEmpty =>
+      text.trim().isEmpty && member == null && category == null && !payments && period == null;
+
+  ExpenseFilter copyWith({
+    String? text,
+    ValueGetter<String?>? member,
+    ValueGetter<String?>? category,
+    bool? payments,
+    ValueGetter<Period?>? period,
+  }) => ExpenseFilter(
+    text: text ?? this.text,
+    member: member == null ? this.member : member(),
+    category: category == null ? this.category : category(),
+    payments: payments ?? this.payments,
+    period: period == null ? this.period : period(),
+  );
+
+  Map<String, Object> get query => {
+    if (text.trim() case final q when q.isNotEmpty) 'q': q,
+    'member': ?member,
+    'category': ?category,
+    if (payments) 'kind': 'payment',
+    if (period case final p?) ...{'from': p.from.toUtc().toIso8601String(), 'to': p.to.toUtc().toIso8601String()},
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is ExpenseFilter &&
+      other.text == text &&
+      other.member == member &&
+      other.category == category &&
+      other.payments == payments &&
+      other.period == period;
+
+  @override
+  int get hashCode => Object.hash(text, member, category, payments, period);
+}
+
+/// What a group spent over some time, see `GET /g/{token}/stats`. Payments
+/// between members are not spending and are left out.
+@immutable
+class GroupStats {
+  const GroupStats({
+    required this.total,
+    required this.count,
+    required this.categories,
+    required this.members,
+    required this.months,
+  });
+
+  factory GroupStats.fromJson(Object? data, int digits) {
+    final json = _object(data);
+    return GroupStats(
+      total: _money(json, 'total', digits),
+      count: _req(json, 'count'),
+      categories: [
+        for (final c in _objects(json, 'categories'))
+          (category: _opt<String>(c, 'categoryId'), amount: _money(c, 'amount', digits), count: _req<int>(c, 'count')),
+      ],
+      members: [
+        for (final m in _objects(json, 'members'))
+          (member: _req<String>(m, 'memberId'), paid: _money(m, 'paid', digits), share: _money(m, 'share', digits)),
+      ],
+      months: [
+        for (final m in _objects(json, 'months')) (month: _month(_req(m, 'month')), amount: _money(m, 'amount', digits)),
+      ],
+    );
+  }
+
+  static DateTime _month(String s) {
+    final [year, month] = s.split('-').map(int.parse).toList();
+    return DateTime(year, month);
+  }
+
+  final BigInt total;
+
+  /// How many expenses [total] is made of.
+  final int count;
+
+  /// Largest first. A null category is spending without one.
+  final List<({String? category, BigInt amount, int count})> categories;
+
+  /// Everyone who paid or had a share, in member order.
+  final List<({String member, BigInt paid, BigInt share})> members;
+
+  /// Oldest first, only months with spending.
+  final List<({DateTime month, BigInt amount})> months;
+}

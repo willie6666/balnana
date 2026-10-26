@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +17,8 @@ import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
+import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/menu_chip.dart';
 import 'group_page.dart';
 
 class ExpensesTab extends ConsumerWidget {
@@ -26,98 +31,133 @@ class ExpensesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final async = ref.watch(expensesProvider(group.token));
+    final filter = ref.watch(expenseFilterProvider(group.token));
     final list = async.value;
     final me = myMemberId(ref, group.token);
+    // Shown while the list for a new filter loads, or failed to.
+    final stale = list != null && list.filter != filter;
+
+    Widget retry(Object error) => EmptyState(
+      icon: Icons.cloud_off_outlined,
+      title: l10n.groupsUnreachableTitle,
+      body: errorMessage(l10n, error),
+      action: FilledButton.tonal(
+        onPressed: () => ref.invalidate(expensesProvider(group.token)),
+        child: Text(l10n.commonRetry),
+      ),
+    );
+
+    // Fills the rest of the view, or grows past it. Not SliverFillRemaining:
+    // it sizes its child by intrinsic height, which EmptyState's width cap
+    // throws off, so a long message overflowed.
+    Widget fill(Widget child) => SliverLayoutBuilder(
+      builder: (context, constraints) => SliverToBoxAdapter(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: math.max(0, constraints.viewportMainAxisExtent - constraints.precedingScrollExtent),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BSpace.s16),
+            child: Center(child: child),
+          ),
+        ),
+      ),
+    );
 
     final List<Widget> slivers;
     if (list == null) {
       slivers = [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(
-            child: async.hasError && !async.isLoading
-                ? EmptyState(
-                    icon: Icons.cloud_off_outlined,
-                    title: l10n.groupsUnreachableTitle,
-                    body: errorMessage(l10n, async.error!),
-                    action: FilledButton.tonal(
-                      onPressed: () => ref.invalidate(expensesProvider(group.token)),
-                      child: Text(l10n.commonRetry),
-                    ),
-                  )
-                : const CircularProgressIndicator(),
-          ),
-        ),
+        fill(async.hasError && !async.isLoading ? retry(async.error!) : const CircularProgressIndicator()),
       ];
-    } else if (list.items.isEmpty) {
+    } else if (list.items.isEmpty && list.filter.isEmpty && filter.isEmpty) {
       slivers = [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.all(BSpace.s16),
-            child: Center(
-              child: EmptyState(
-                icon: Icons.receipt_long_outlined,
-                title: l10n.expensesEmptyTitle,
-                body: l10n.expensesEmptyBody,
-              ),
-            ),
+        fill(
+          EmptyState(
+            icon: Icons.receipt_long_outlined,
+            title: l10n.expensesEmptyTitle,
+            body: l10n.expensesEmptyBody,
           ),
         ),
       ];
     } else {
+      final bar = SliverPadding(
+        padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s12, sidePadding, 0),
+        sliver: SliverToBoxAdapter(child: ExpenseFilterBar(group: group)),
+      );
       final rows = _rows(list.items);
       slivers = [
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s8, sidePadding, BSpace.s8),
-          sliver: SliverList.builder(
-            itemCount: rows.length,
-            itemBuilder: (context, i) {
-              if (list.hasMore && i >= rows.length - 5) {
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => ref.read(expensesProvider(group.token).notifier).loadMore(),
-                );
-              }
-              return switch (rows[i]) {
-                final DateTime day => DateHeader(day: day),
-                final Expense e => ExpenseTile(
-                  expense: e,
-                  group: group,
-                  me: me,
-                  onTap: () => e.isPayment
-                      ? showPaymentSheet(context, group, e)
-                      : context.push('/g/${group.token}/expenses/${e.id}'),
-                ),
-                _ => const SizedBox.shrink(),
-              };
-            },
+        bar,
+        if (stale && async.isLoading)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s8, sidePadding, 0),
+            sliver: const SliverToBoxAdapter(child: LinearProgressIndicator()),
           ),
-        ),
-        if (list.loadingMore)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(BSpace.s16),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
-        else if (list.moreError case final error?)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(BSpace.s16),
-              child: Column(
-                children: [
-                  Text(errorMessage(l10n, error), textAlign: TextAlign.center),
-                  const SizedBox(height: BSpace.s8),
-                  FilledButton.tonal(
-                    onPressed: () => ref.read(expensesProvider(group.token).notifier).loadMore(retry: true),
-                    child: Text(l10n.commonRetry),
-                  ),
-                ],
+        if (stale && async.hasError && !async.isLoading)
+          fill(retry(async.error!))
+        else if (list.items.isEmpty)
+          fill(
+            EmptyState(
+              icon: Icons.search_off,
+              title: l10n.expensesNoMatchTitle,
+              body: l10n.expensesNoMatchBody,
+              action: FilledButton.tonal(
+                onPressed: () => ref.read(expenseFilterProvider(group.token).notifier).set(const ExpenseFilter()),
+                child: Text(l10n.filterClear),
               ),
             ),
+          )
+        else ...[
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(sidePadding, 0, sidePadding, BSpace.s8),
+            sliver: SliverList.builder(
+              itemCount: rows.length,
+              itemBuilder: (context, i) {
+                if (list.hasMore && !stale && i >= rows.length - 5) {
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => ref.read(expensesProvider(group.token).notifier).loadMore(),
+                  );
+                }
+                return switch (rows[i]) {
+                  final DateTime day => DateHeader(day: day),
+                  final Expense e => ExpenseTile(
+                    expense: e,
+                    group: group,
+                    me: me,
+                    onTap: () => e.isPayment
+                        ? showPaymentSheet(context, group, e)
+                        : context.push('/g/${group.token}/expenses/${e.id}'),
+                  ),
+                  _ => const SizedBox.shrink(),
+                };
+              },
+            ),
           ),
-        // Room for the floating button.
-        const SliverToBoxAdapter(child: SizedBox(height: 88)),
+          if (list.loadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(BSpace.s16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (list.moreError case final error?)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(BSpace.s16),
+                child: Column(
+                  children: [
+                    Text(errorMessage(l10n, error), textAlign: TextAlign.center),
+                    const SizedBox(height: BSpace.s8),
+                    FilledButton.tonal(
+                      onPressed: () => ref.read(expensesProvider(group.token).notifier).loadMore(retry: true),
+                      child: Text(l10n.commonRetry),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // Room for the floating button.
+          const SliverToBoxAdapter(child: SizedBox(height: 88)),
+        ],
       ];
     }
 
@@ -140,6 +180,146 @@ class ExpensesTab extends ConsumerWidget {
       rows.add(e);
     }
     return rows;
+  }
+}
+
+/// A search field and chips that narrow the expenses shown.
+class ExpenseFilterBar extends ConsumerStatefulWidget {
+  const ExpenseFilterBar({super.key, required this.group});
+
+  final Group group;
+
+  @override
+  ConsumerState<ExpenseFilterBar> createState() => _ExpenseFilterBarState();
+}
+
+class _ExpenseFilterBarState extends ConsumerState<ExpenseFilterBar> {
+  late final _search = TextEditingController(text: ref.read(expenseFilterProvider(widget.group.token)).text);
+  Timer? _typing;
+
+  @override
+  void dispose() {
+    _typing?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  ExpenseFilterNotifier get _notifier => ref.read(expenseFilterProvider(widget.group.token).notifier);
+
+  ExpenseFilter get _filter => ref.read(expenseFilterProvider(widget.group.token));
+
+  /// Searches once typing pauses, rather than for every letter.
+  void _typed(String text) {
+    _typing?.cancel();
+    _typing = Timer(const Duration(milliseconds: 400), () => _notifier.set(_filter.copyWith(text: text)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final group = widget.group;
+    final filter = ref.watch(expenseFilterProvider(group.token));
+    ref.listen(expenseFilterProvider(group.token), (_, next) {
+      if (next.text != _search.text) _search.text = next.text;
+    });
+
+    final member = group.member(filter.member);
+    final category = Category.byId(filter.category);
+    void set(ExpenseFilter f) => _notifier.set(f);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SearchBar(
+          controller: _search,
+          hintText: l10n.expensesSearchHint,
+          elevation: const WidgetStatePropertyAll(0),
+          backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerHigh),
+          leading: const Icon(Icons.search),
+          trailing: [
+            ListenableBuilder(
+              listenable: _search,
+              builder: (context, _) => _search.text.isEmpty
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      tooltip: l10n.searchClear,
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        _typing?.cancel();
+                        _search.clear();
+                        set(_filter.copyWith(text: ''));
+                      },
+                    ),
+            ),
+          ],
+          onChanged: _typed,
+          onSubmitted: (text) {
+            _typing?.cancel();
+            set(_filter.copyWith(text: text));
+          },
+        ),
+        const SizedBox(height: BSpace.s8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            spacing: BSpace.s8,
+            children: [
+              MenuChip(
+                avatar: member == null ? const Icon(Icons.person_outline) : MemberAvatar(member: member, size: 18),
+                label: member?.name ?? l10n.filterAnyone,
+                selected: member != null,
+                items: [
+                  MenuItemButton(
+                    onPressed: () => set(filter.copyWith(member: () => null)),
+                    child: Text(l10n.filterAnyone),
+                  ),
+                  for (final m in group.members)
+                    MenuItemButton(
+                      leadingIcon: MemberAvatar(member: m, size: 24),
+                      onPressed: () => set(filter.copyWith(member: () => m.id)),
+                      child: Text(m.name),
+                    ),
+                ],
+              ),
+              MenuChip(
+                avatar: category != null
+                    ? Text(category.emoji)
+                    : Icon(filter.payments ? Icons.payments_outlined : Icons.category_outlined),
+                label: category?.label(l10n) ?? (filter.payments ? l10n.filterPayments : l10n.filterAnyCategory),
+                selected: category != null || filter.payments,
+                items: [
+                  MenuItemButton(
+                    onPressed: () => set(filter.copyWith(category: () => null, payments: false)),
+                    child: Text(l10n.filterAnyCategory),
+                  ),
+                  for (final c in Category.values)
+                    MenuItemButton(
+                      leadingIcon: Text(c.emoji),
+                      onPressed: () => set(filter.copyWith(category: () => c.id, payments: false)),
+                      child: Text(c.label(l10n)),
+                    ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.payments_outlined),
+                    onPressed: () => set(filter.copyWith(category: () => null, payments: true)),
+                    child: Text(l10n.filterPayments),
+                  ),
+                ],
+              ),
+              PeriodChip(period: filter.period, onChanged: (p) => set(filter.copyWith(period: () => p))),
+              if (!filter.isEmpty)
+                TextButton(
+                  onPressed: () {
+                    _typing?.cancel();
+                    set(const ExpenseFilter());
+                  },
+                  child: Text(l10n.filterClear),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 

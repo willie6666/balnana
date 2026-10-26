@@ -60,6 +60,12 @@ const (
 	Web     StartOAuthParamsApp = "web"
 )
 
+// Defines values for ListExpensesParamsKind.
+const (
+	ListExpensesParamsKindExpense ListExpensesParamsKind = "expense"
+	ListExpensesParamsKindPayment ListExpensesParamsKind = "payment"
+)
+
 // Activity defines model for Activity.
 type Activity struct {
 	// Action group.created, group.updated, group.link_reset, member.added, member.updated, member.removed, expense.created, expense.updated, expense.deleted, expense.restored. Payments use the expense actions with `kind: payment` in the payload.
@@ -85,6 +91,16 @@ type Balances struct {
 
 	// Transfers Suggested payments that settle everyone up.
 	Transfers []Transfer `json:"transfers"`
+}
+
+// CategoryStats defines model for CategoryStats.
+type CategoryStats struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount Money `json:"amount"`
+
+	// CategoryId Absent for expenses without a category.
+	CategoryId *string `json:"categoryId,omitempty"`
+	Count      int     `json:"count"`
 }
 
 // EmailToken defines model for EmailToken.
@@ -183,6 +199,24 @@ type GroupCreate struct {
 	Members     []string `json:"members"`
 	MinorDigits *int     `json:"minorDigits,omitempty"`
 	Name        string   `json:"name"`
+}
+
+// GroupStats defines model for GroupStats.
+type GroupStats struct {
+	// Categories Largest first.
+	Categories []CategoryStats `json:"categories"`
+
+	// Count How many expenses the total is made of.
+	Count int `json:"count"`
+
+	// Members Every member who paid or had a share, in the group's member order.
+	Members []MemberStats `json:"members"`
+
+	// Months Oldest first, only months with spending.
+	Months []MonthStats `json:"months"`
+
+	// Total Decimal amount with up to the group's `minorDigits` decimals.
+	Total Money `json:"total"`
 }
 
 // GroupSummary defines model for GroupSummary.
@@ -359,8 +393,28 @@ type MemberInput struct {
 	Name  string `json:"name"`
 }
 
+// MemberStats defines model for MemberStats.
+type MemberStats struct {
+	MemberId string `json:"memberId"`
+
+	// Paid Decimal amount with up to the group's `minorDigits` decimals.
+	Paid Money `json:"paid"`
+
+	// Share Decimal amount with up to the group's `minorDigits` decimals.
+	Share Money `json:"share"`
+}
+
 // Money Decimal amount with up to the group's `minorDigits` decimals.
 type Money = string
+
+// MonthStats defines model for MonthStats.
+type MonthStats struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount Money `json:"amount"`
+
+	// Month Year and month, as 2026-10.
+	Month string `json:"month"`
+}
 
 // OAuthExchange defines model for OAuthExchange.
 type OAuthExchange struct {
@@ -538,11 +592,17 @@ type ActingMember = string
 // ExpenseId defines model for ExpenseId.
 type ExpenseId = string
 
+// From defines model for From.
+type From = time.Time
+
 // MemberId defines model for MemberId.
 type MemberId = string
 
 // OAuthProviderId defines model for OAuthProviderId.
 type OAuthProviderId = string
+
+// To defines model for To.
+type To = time.Time
 
 // Token defines model for Token.
 type Token = string
@@ -584,8 +644,27 @@ type ListActivityParams struct {
 // ListExpensesParams defines parameters for ListExpenses.
 type ListExpensesParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Q Text to find in the title or note, ignoring case.
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// Member Only what this member paid or has a share in.
+	Member *string `form:"member,omitempty" json:"member,omitempty"`
+
+	// Category Only expenses of this category.
+	Category *string                 `form:"category,omitempty" json:"category,omitempty"`
+	Kind     *ListExpensesParamsKind `form:"kind,omitempty" json:"kind,omitempty"`
+
+	// From Only what happened at or after this time.
+	From *From `form:"from,omitempty" json:"from,omitempty"`
+
+	// To Only what happened before this time.
+	To    *To  `form:"to,omitempty" json:"to,omitempty"`
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
+
+// ListExpensesParamsKind defines parameters for ListExpenses.
+type ListExpensesParamsKind string
 
 // CreateExpenseParams defines parameters for CreateExpense.
 type CreateExpenseParams struct {
@@ -639,6 +718,18 @@ type CreatePaymentParams struct {
 type ResetGroupLinkParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// GetStatsParams defines parameters for GetStats.
+type GetStatsParams struct {
+	// From Only what happened at or after this time.
+	From *From `form:"from,omitempty" json:"from,omitempty"`
+
+	// To Only what happened before this time.
+	To *To `form:"to,omitempty" json:"to,omitempty"`
+
+	// UtcOffset Minutes east of UTC that months begin at, for the reader's time zone.
+	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
@@ -790,6 +881,9 @@ type ServerInterface interface {
 	// Replace the token; the old link stops working
 	// (POST /g/{token}/reset-link)
 	ResetGroupLink(w http.ResponseWriter, r *http.Request, token Token, params ResetGroupLinkParams)
+	// What the group spent, by category, member and month
+	// (GET /g/{token}/stats)
+	GetStats(w http.ResponseWriter, r *http.Request, token Token, params GetStatsParams)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(w http.ResponseWriter, r *http.Request)
@@ -1401,6 +1495,54 @@ func (siw *ServerInterfaceWrapper) ListExpenses(w http.ResponseWriter, r *http.R
 	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "q", r.URL.Query(), &params.Q)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "member" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "member", r.URL.Query(), &params.Member)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "member", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "category" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "category", r.URL.Query(), &params.Category)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "kind" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "kind", r.URL.Query(), &params.Kind)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
 		return
 	}
 
@@ -2122,6 +2264,66 @@ func (siw *ServerInterfaceWrapper) ResetGroupLink(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetStats operation middleware
+func (siw *ServerInterfaceWrapper) GetStats(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetStatsParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "utcOffset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "utcOffset", r.URL.Query(), &params.UtcOffset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "utcOffset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStats(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateGroup operation middleware
 func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
@@ -2535,6 +2737,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/reset-link", wrapper.ResetGroupLink)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/stats", wrapper.GetStats)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/import", wrapper.ImportGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
@@ -3433,6 +3636,36 @@ func (response ResetGroupLinkdefaultJSONResponse) VisitResetGroupLinkResponse(w 
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetStatsRequestObject struct {
+	Token  Token `json:"token"`
+	Params GetStatsParams
+}
+
+type GetStatsResponseObject interface {
+	VisitGetStatsResponse(w http.ResponseWriter) error
+}
+
+type GetStats200JSONResponse GroupStats
+
+func (response GetStats200JSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetStatsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetStatsdefaultJSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type CreateGroupRequestObject struct {
 	Body *CreateGroupJSONRequestBody
 }
@@ -3831,6 +4064,9 @@ type StrictServerInterface interface {
 	// Replace the token; the old link stops working
 	// (POST /g/{token}/reset-link)
 	ResetGroupLink(ctx context.Context, request ResetGroupLinkRequestObject) (ResetGroupLinkResponseObject, error)
+	// What the group spent, by category, member and month
+	// (GET /g/{token}/stats)
+	GetStats(ctx context.Context, request GetStatsRequestObject) (GetStatsResponseObject, error)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
@@ -4746,6 +4982,33 @@ func (sh *strictHandler) ResetGroupLink(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResetGroupLinkResponseObject); ok {
 		if err := validResponse.VisitResetGroupLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetStats operation middleware
+func (sh *strictHandler) GetStats(w http.ResponseWriter, r *http.Request, token Token, params GetStatsParams) {
+	var request GetStatsRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetStats(ctx, request.(GetStatsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetStats")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetStatsResponseObject); ok {
+		if err := validResponse.VisitGetStatsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

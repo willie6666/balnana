@@ -326,8 +326,16 @@ class GroupApi {
   Future<void> removeMember(String id) =>
       _send(() => _dio.delete<Object?>('$_base/members/$id', options: _as), (_) {});
 
-  Future<Page<Expense>> expenses(int digits, {String? cursor, int limit = 50}) => _send(
-    () => _dio.get<Object?>('$_base/expenses', queryParameters: {'cursor': ?cursor, 'limit': limit}),
+  Future<Page<Expense>> expenses(
+    int digits, {
+    String? cursor,
+    int limit = 50,
+    ExpenseFilter filter = const ExpenseFilter(),
+  }) => _send(
+    () => _dio.get<Object?>(
+      '$_base/expenses',
+      queryParameters: {'cursor': ?cursor, 'limit': limit, ...filter.query},
+    ),
     (data) {
       if (data is! Map<String, Object?> || data['items'] is! List<Object?>) {
         throw const FormatException('bad page');
@@ -375,6 +383,18 @@ class GroupApi {
 
   Future<Balances> balances(int digits) =>
       _send(() => _dio.get<Object?>('$_base/balances'), (data) => Balances.fromJson(data, digits));
+
+  /// What the group spent in [period], with months starting in this device's time zone.
+  Future<GroupStats> stats(int digits, {Period? period}) => _send(
+    () => _dio.get<Object?>(
+      '$_base/stats',
+      queryParameters: {
+        if (period != null) ...{'from': period.from.toUtc().toIso8601String(), 'to': period.to.toUtc().toIso8601String()},
+        'utcOffset': DateTime.now().timeZoneOffset.inMinutes,
+      },
+    ),
+    (data) => GroupStats.fromJson(data, digits),
+  );
 
   Future<Page<Activity>> activity({String? cursor, int limit = 50}) => _send(
     () => _dio.get<Object?>('$_base/activity', queryParameters: {'cursor': ?cursor, 'limit': limit}),

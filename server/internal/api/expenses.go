@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -330,12 +331,27 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 		}
 		afterAt, afterID = &t, &id
 	}
-	list, err := loadExpenses(ctx, s.db, g.digits, `
+	f := expenseFilter{q: req.Params.Q, member: req.Params.Member, category: req.Params.Category,
+		from: req.Params.From, to: req.Params.To}
+	if req.Params.Kind != nil {
+		k := string(*req.Params.Kind)
+		if k != kindExpense && k != kindPayment {
+			return nil, badRequest("invalid_kind")
+		}
+		f.kind = &k
+	}
+	where, args, err := f.where(g.id)
+	if err != nil {
+		return nil, err
+	}
+	n := len(args)
+	args = append(args, afterAt, afterID, limit+1)
+	list, err := loadExpenses(ctx, s.db, g.digits, fmt.Sprintf(`
 		select `+expenseColumns+` from expenses
-		where group_id = $1 and deleted_at is null
-		  and ($2::timestamptz is null or (occurred_at, id) < ($2::timestamptz, $3::uuid))
+		where %s
+		  and ($%d::timestamptz is null or (occurred_at, id) < ($%d::timestamptz, $%d::uuid))
 		order by occurred_at desc, id desc
-		limit $4`, g.id, afterAt, afterID, limit+1)
+		limit $%d`, where, n+1, n+1, n+2, n+3), args...)
 	if err != nil {
 		return nil, err
 	}

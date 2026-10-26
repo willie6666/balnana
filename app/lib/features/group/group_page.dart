@@ -273,6 +273,11 @@ class _GroupPageState extends ConsumerState<GroupPage> {
               ),
               actions: [
                 IconButton(
+                  tooltip: l10n.statsTitle,
+                  icon: const Icon(Icons.insights_outlined),
+                  onPressed: () => context.push('/g/${group.token}/stats'),
+                ),
+                IconButton(
                   tooltip: l10n.groupShare,
                   icon: const Icon(Icons.share_outlined),
                   onPressed: () => copyGroupLink(context, ref, group.token),

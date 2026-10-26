@@ -11,6 +11,7 @@ import '../features/expense/expense_editor_page.dart';
 import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
+import '../features/group/stats_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
@@ -111,6 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'settings',
             builder: (context, state) => GroupSettingsPage(token: state.pathParameters['token']!),
+          ),
+          GoRoute(
+            path: 'stats',
+            builder: (context, state) => StatsPage(token: state.pathParameters['token']!),
           ),
           GoRoute(
             path: 'join',

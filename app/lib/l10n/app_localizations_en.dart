@@ -434,6 +434,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesEmptyBody => 'Add the first one, and Balnana will work out who owes whom.';
 
   @override
+  String get expensesSearchHint => 'Search titles and notes';
+
+  @override
+  String get searchClear => 'Clear search';
+
+  @override
+  String get expensesNoMatchTitle => 'Nothing matches';
+
+  @override
+  String get expensesNoMatchBody => 'Try other words, or fewer filters.';
+
+  @override
+  String get filterAnyone => 'Anyone';
+
+  @override
+  String get filterAnyCategory => 'Any category';
+
+  @override
+  String get filterPayments => 'Payments';
+
+  @override
+  String get filterClear => 'Clear filters';
+
+  @override
+  String get periodAll => 'All time';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodLastMonth => 'Last month';
+
+  @override
+  String get periodThisYear => 'This year';
+
+  @override
+  String get periodPickDays => 'Pick dates…';
+
+  @override
+  String get statsTitle => 'Spending';
+
+  @override
+  String get statsTotal => 'Total spent';
+
+  @override
+  String statsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count expenses',
+      one: '1 expense',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statsByCategory => 'By category';
+
+  @override
+  String get statsByMember => 'Paid and share per person';
+
+  @override
+  String get statsPaid => 'Paid';
+
+  @override
+  String get statsShare => 'Share';
+
+  @override
+  String get statsByMonth => 'By month';
+
+  @override
+  String get statsNoCategory => 'No category';
+
+  @override
+  String get statsEmptyTitle => 'Nothing spent';
+
+  @override
+  String get statsEmptyBody => 'There are no expenses in this period.';
+
+  @override
+  String get statsShowExpenses => 'Show these expenses';
+
+  @override
   String get dateToday => 'Today';
 
   @override
