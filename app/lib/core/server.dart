@@ -193,19 +193,19 @@ final apiProvider = Provider<Dio?>((ref) {
   final url = ref.watch(serverUrlProvider);
   if (url == null) return null;
   final session = ref.watch(sessionProvider);
-  final dio = _cachedDio(ref, url);
+  final dio = _cachedDio(ref, url, cacheAccount(session.token));
   if (session.token case final token?) dio.options.headers['Authorization'] = 'Bearer $token';
   ref.onDispose(dio.close);
   return dio;
 });
 
-/// A client for [url] that falls back on what this device saved when the
-/// server cannot be reached.
-Dio _cachedDio(Ref ref, String url) {
+/// A client for [url] that falls back on what this device saved for
+/// [account] when the server cannot be reached.
+Dio _cachedDio(Ref ref, String url, String account) {
   final dio = _newDio(url);
   if (ref.watch(cacheDbProvider) case final db?) {
     dio.interceptors.add(
-      OfflineCache(db, url, (offline) {
+      OfflineCache(db, url, account, (offline) {
         if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
       }),
     );
@@ -220,7 +220,7 @@ class NoServerException implements Exception {
 final serverInfoProvider = FutureProvider<ServerInfo>((ref) async {
   final url = ref.watch(serverUrlProvider);
   if (url == null) throw const NoServerException();
-  final dio = _cachedDio(ref, url);
+  final dio = _cachedDio(ref, url, CacheDb.public);
   try {
     final res = await dio.get<Object?>('/server-info');
     return ServerInfo.fromJson(res.data);

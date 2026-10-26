@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/api.dart';
 import '../data/known_groups.dart';
@@ -31,12 +32,13 @@ FirebaseOptions? get firebaseOptions {
 
 /// What the app needs from the phone's push service.
 abstract interface class PushService {
-  /// This device's address for the server to send to, or null when there is
-  /// none (no Google Play services, say).
-  Future<String?> token();
+  /// This device's address for the server to send to, its Firebase
+  /// installation ID, or null when there is none (no Google Play services,
+  /// say).
+  Future<String?> device();
 
   /// A new address, after the old one stopped working.
-  Stream<String> get tokenRefresh;
+  Stream<String> get deviceChanges;
 
   /// Asks to show notifications, where the system wants that asked.
   Future<void> requestPermission();
@@ -50,19 +52,34 @@ abstract interface class PushService {
 
 class _FirebasePush implements PushService {
   _FirebasePush(FirebaseOptions options)
-    : _messaging = Firebase.initializeApp(options: options).then((_) => FirebaseMessaging.instance);
+    : _messaging = Firebase.initializeApp(options: options).then((_) => FirebaseMessaging.instance) {
+    _messaging.then((m) => m.onRegistered.listen(_registered)).ignore();
+  }
 
   final Future<FirebaseMessaging> _messaging;
+  final _changes = StreamController<String>.broadcast();
+  String? _id;
 
-  // The server sends to registration tokens through the FCM HTTP v1 API, so
-  // these stay until it moves to installation IDs (`register`, `onRegistered`).
-  @override
-  // ignore: deprecated_member_use
-  Future<String?> token() async => (await _messaging).getToken();
+  void _registered(String id) {
+    if (id == _id) return;
+    _id = id;
+    _changes.add(id);
+  }
 
   @override
-  // ignore: deprecated_member_use
-  Stream<String> get tokenRefresh => Stream.fromFuture(_messaging).asyncExpand((m) => m.onTokenRefresh);
+  Future<String?> device() async {
+    final m = await _messaging;
+    final next = m.onRegistered.first;
+    await m.register();
+    if (_id case final id?) {
+      next.ignore();
+      return id;
+    }
+    return next.timeout(const Duration(seconds: 30));
+  }
+
+  @override
+  Stream<String> get deviceChanges => _changes.stream;
 
   @override
   Future<void> requestPermission() async => (await _messaging).requestPermission();
@@ -102,41 +119,105 @@ final pushAvailableProvider = Provider<bool>(
 final pushSyncProvider = Provider<void>((ref) {
   final push = ref.watch(pushServiceProvider);
   if (push == null) return;
-  final on = ref.watch(settingsProvider.select((s) => s.notifications));
-  final server = ref.watch(serverUrlProvider);
-  final available = ref.watch(pushAvailableProvider);
-  final api = ref.watch(balnanaApiProvider);
-  final signedIn = ref.watch(sessionProvider).token != null;
-  final groups = [
-    for (final g in ref.watch(knownGroupsProvider))
-      if (g.memberId case final member?) (token: g.token, memberId: member),
-  ];
-  final prefs = ref.read(prefsProvider);
+  final sync = ref.watch(_pushReconcilerProvider);
+  final want = _PushWant(
+    push: push,
+    on: ref.watch(settingsProvider.select((s) => s.notifications)),
+    server: ref.watch(serverUrlProvider),
+    available: ref.watch(pushAvailableProvider),
+    api: ref.watch(balnanaApiProvider),
+    signedIn: ref.watch(sessionProvider).token != null,
+    groups: [
+      for (final g in ref.watch(knownGroupsProvider))
+        if (g.memberId case final member?) (token: g.token, memberId: member),
+    ],
+  );
 
-  final refresh = push.tokenRefresh.listen((_) => ref.invalidateSelf());
-  ref.onDispose(refresh.cancel);
+  final changes = push.deviceChanges.listen((_) => ref.invalidateSelf());
+  ref.onDispose(changes.cancel);
 
   // Settle first: at start several of the above change one after another.
-  final timer = Timer(const Duration(milliseconds: 500), () async {
-    try {
-      final token = await push.token();
-      if (token == null || !ref.mounted) return;
-      final before = prefs.getString(_registeredOn);
-      if (before != null && (before != server || !on)) {
-        // A server left behind is let go even when it cannot be reached.
-        final forgotten = before == server && api != null ? await _forget(api, token) : await _forgetOn(before, token);
-        if (forgotten || before != server) await prefs.remove(_registeredOn);
-      }
-      if (!on || !available || api == null || server == null || (groups.isEmpty && !signedIn)) return;
-      await push.requestPermission();
-      await api.registerPushDevice(token, groups.take(maxPushGroups).toList());
-      await prefs.setString(_registeredOn, server);
-    } on Object catch (e) {
-      debugPrint('push registration failed: $e');
-    }
-  });
+  final timer = Timer(const Duration(milliseconds: 500), () => sync.want(want));
   ref.onDispose(timer.cancel);
 });
+
+final _pushReconcilerProvider = Provider<_PushReconciler>((ref) => _PushReconciler(ref.watch(prefsProvider)));
+
+/// What the server should know about this device, as of one change.
+class _PushWant {
+  const _PushWant({
+    required this.push,
+    required this.on,
+    required this.server,
+    required this.available,
+    required this.api,
+    required this.signedIn,
+    required this.groups,
+  });
+
+  final PushService push;
+  final bool on;
+  final String? server;
+  final bool available;
+  final BalnanaApi? api;
+  final bool signedIn;
+  final List<({String token, String memberId})> groups;
+
+  bool get register => on && available && api != null && server != null && (groups.isNotEmpty || signedIn);
+}
+
+/// Tells the server one thing at a time, always ending with the latest
+/// [_PushWant]: a registration still on its way when notifications are
+/// turned off is followed by a removal, not left standing.
+class _PushReconciler {
+  _PushReconciler(this._prefs);
+
+  final SharedPreferences _prefs;
+  _PushWant? _latest;
+  bool _running = false;
+
+  void want(_PushWant want) {
+    _latest = want;
+    if (!_running) unawaited(_run());
+  }
+
+  Future<void> _run() async {
+    _running = true;
+    try {
+      for (var want = _latest; want != null; want = identical(want, _latest) ? null : _latest) {
+        try {
+          await _apply(want);
+        } on Object catch (e) {
+          debugPrint('push registration failed: $e');
+        }
+      }
+    } finally {
+      _running = false;
+    }
+  }
+
+  /// Whether [want] has been overtaken, so what is left of it is not done.
+  bool _stale(_PushWant want) => !identical(want, _latest);
+
+  Future<void> _apply(_PushWant want) async {
+    final device = await want.push.device();
+    if (device == null || _stale(want)) return;
+    final server = want.server;
+    final before = _prefs.getString(_registeredOn);
+    if (before != null && (before != server || !want.on)) {
+      // A server left behind is let go even when it cannot be reached.
+      final api = want.api;
+      final forgotten = before == server && api != null ? await _forget(api, device) : await _forgetOn(before, device);
+      if (forgotten || before != server) await _prefs.remove(_registeredOn);
+    }
+    if (!want.register || _stale(want)) return;
+    await want.push.requestPermission();
+    if (_stale(want)) return;
+    await want.api!.registerPushDevice(device, want.groups.take(maxPushGroups).toList());
+    // Saved even when overtaken meanwhile: the next run may need to undo it.
+    await _prefs.setString(_registeredOn, server!);
+  }
+}
 
 /// The most groups one registration may name, as the server allows.
 const maxPushGroups = 200;
@@ -144,11 +225,11 @@ const maxPushGroups = 200;
 /// The server this device last registered with.
 const _registeredOn = 'push.server';
 
-/// Tells the server behind [api] to stop sending to [token], and whether it
-/// heard. Needs no session: the token itself is the secret.
-Future<bool> _forget(BalnanaApi api, String token) async {
+/// Tells the server behind [api] to stop sending to [device], and whether it
+/// heard. Needs no session: the device's address itself is the secret.
+Future<bool> _forget(BalnanaApi api, String device) async {
   try {
-    await api.removePushDevice(token);
+    await api.removePushDevice(device);
     return true;
   } on ApiException catch (e) {
     // An answer of any kind will do: a server with push off keeps no devices.
@@ -157,10 +238,10 @@ Future<bool> _forget(BalnanaApi api, String token) async {
 }
 
 /// [_forget] on [server], which this app no longer talks to.
-Future<bool> _forgetOn(String server, String token) async {
+Future<bool> _forgetOn(String server, String device) async {
   final dio = Dio(BaseOptions(baseUrl: '$server$apiBasePath', connectTimeout: const Duration(seconds: 10)));
   try {
-    return await _forget(BalnanaApi(dio), token);
+    return await _forget(BalnanaApi(dio), device);
   } finally {
     dio.close();
   }

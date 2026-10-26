@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -16,12 +17,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _server = 'https://split.example.com';
 
-/// Answers with [status] and a body naming the request, or throws a
-/// connection error while [down].
+/// Answers with [status] and a body naming the request and who asked, or
+/// throws a connection error while [down]. Answers wait for [hold] if set.
 class _Server implements HttpClientAdapter {
   var down = false;
   var status = 200;
   var calls = 0;
+  Future<void>? hold;
 
   @override
   Future<ResponseBody> fetch(
@@ -31,8 +33,10 @@ class _Server implements HttpClientAdapter {
   ) async {
     calls++;
     if (down) throw DioException.connectionError(requestOptions: options, reason: 'down');
+    final who = options.headers['Authorization'];
+    await hold;
     return ResponseBody.fromString(
-      jsonEncode({'path': options.uri.path, 'call': calls}),
+      jsonEncode({'path': options.uri.path, 'call': calls, 'who': who}),
       status,
       headers: {
         'content-type': ['application/json'],
@@ -56,7 +60,7 @@ void main() {
     offline = [];
     dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
       ..httpClientAdapter = server
-      ..interceptors.add(OfflineCache(db, _server, offline.add));
+      ..interceptors.add(OfflineCache(db, _server, '', offline.add));
   });
 
   tearDown(() => db.close());
@@ -106,8 +110,9 @@ void main() {
   });
 
   test('signing in or out forgets what the last account saw', () async {
-    await db.save(_server, 'GET /me', '{}');
-    await db.save('https://other.example.com', 'GET /me', '{}');
+    await db.save(_server, cacheAccount('a'), 'GET /me', '{}');
+    await db.save(_server, CacheDb.public, 'GET /server-info', '{}');
+    await db.save('https://other.example.com', cacheAccount('a'), 'GET /me', '{}');
     SharedPreferences.setMockInitialValues({});
     final container = ProviderContainer(
       overrides: [
@@ -117,11 +122,54 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(sessionProvider.notifier).set('token');
+    container.read(sessionProvider.notifier).set('b');
     await saved();
-    expect(await db.find(_server, 'GET /me'), isNull);
-    expect(await db.find('https://other.example.com', 'GET /me'), isNotNull);
+    expect(await db.find(_server, cacheAccount('a'), 'GET /me'), isNull);
+    expect(await db.find(_server, CacheDb.public, 'GET /server-info'), isNotNull);
+    expect(await db.find('https://other.example.com', cacheAccount('a'), 'GET /me'), isNotNull);
   });
+
+  // An answer for the last account that arrives after the switch must not
+  // be shown to the next one, offline or not.
+  for (final (name, steps) in [
+    ('signing out', <String?>[null]),
+    ('switching accounts', <String?>['b']),
+    ('signing out and in again', <String?>[null, 'c']),
+  ]) {
+    test('a late answer is not kept after $name', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer(
+        overrides: [
+          prefsProvider.overrideWithValue(await SharedPreferences.getInstance()),
+          serverUrlProvider.overrideWithValue(_server),
+          cacheDbProvider.overrideWithValue(db),
+        ],
+      );
+      addTearDown(container.dispose);
+      final session = container.read(sessionProvider.notifier)..set('a');
+      Dio client(String? token) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+        ..httpClientAdapter = server
+        ..options.headers['Authorization'] = token
+        ..interceptors.add(OfflineCache(db, _server, cacheAccount(token), offline.add));
+
+      final release = Completer<void>();
+      server.hold = release.future;
+      final pending = client('a').get<Object?>('/me');
+      await saved();
+      for (final token in steps) {
+        session.set(token);
+      }
+      await saved();
+      release.complete();
+      await pending;
+      await saved();
+
+      server.down = true;
+      await expectLater(client(steps.last).get<Object?>('/me'), throwsA(isA<DioException>()));
+      final rows = await db.select(db.cachedResponses).get();
+      expect(rows.where((r) => r.account == cacheAccount('a')), isEmpty);
+    });
+  }
 
   testWidgets('a bar says the app is offline until the server answers again', (tester) async {
     var infoLoads = 0;

@@ -60,7 +60,7 @@ class SessionNotifier extends Notifier<SessionKey> {
     }
     ref.read(prefsProvider).setString(_key, jsonEncode(tokens));
     // What the last account saw is not for the next one.
-    ref.read(cacheDbProvider)?.forget(server).ignore();
+    ref.read(cacheDbProvider)?.switchAccount(server, cacheAccount(token)).ignore();
     state = SessionKey(token, state.generation + 1);
   }
 }

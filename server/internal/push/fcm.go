@@ -26,6 +26,8 @@ import (
 // The text comes from the app's Android string resources, so it is in the
 // phone's language: BodyKey names a string and BodyArgs fill it in.
 type Message struct {
+	// Device is the phone's Firebase installation ID (FID), which FCM now
+	// prefers over the deprecated registration token.
 	Device   string
 	Title    string
 	BodyKey  string
@@ -35,7 +37,7 @@ type Message struct {
 	Data map[string]string
 }
 
-// ErrGone means the device token no longer works and should be forgotten.
+// ErrGone means the device is no longer registered and should be forgotten.
 var ErrGone = errors.New("push: device is no longer registered")
 
 type Sender interface {
@@ -84,7 +86,7 @@ func (f *FCM) Send(ctx context.Context, m Message) error {
 	switch {
 	case res.StatusCode == http.StatusOK:
 		return nil
-	// UNREGISTERED, or SENDER_ID_MISMATCH for a token of another project.
+	// UNREGISTERED, or SENDER_ID_MISMATCH for a device of another project.
 	case res.StatusCode == http.StatusNotFound || res.StatusCode == http.StatusForbidden && bytes.Contains(reply, []byte("SENDER_ID_MISMATCH")):
 		return ErrGone
 	default:
@@ -103,7 +105,7 @@ func wire(m Message) map[string]any {
 		notification["tag"] = m.Tag
 	}
 	return map[string]any{
-		"token":        m.Device,
+		"fid":          m.Device,
 		"notification": map[string]any{"title": m.Title},
 		"android":      map[string]any{"notification": notification},
 		"data":         m.Data,

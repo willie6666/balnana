@@ -65,7 +65,7 @@ func TestSend(t *testing.T) {
 	}
 	msg := got["message"]
 	android := msg["android"].(map[string]any)["notification"].(map[string]any)
-	if msg["token"] != "dev" || msg["notification"].(map[string]any)["title"] != "Flat" || android["body_loc_key"] != "push_expense_added" || android["tag"] != "e1" {
+	if msg["fid"] != "dev" || msg["token"] != nil || msg["notification"].(map[string]any)["title"] != "Flat" || android["body_loc_key"] != "push_expense_added" || android["tag"] != "e1" {
 		t.Errorf("message %v", msg)
 	}
 

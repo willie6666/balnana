@@ -18,6 +18,17 @@ class $CachedResponsesTable extends CachedResponses
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _accountMeta = const VerificationMeta(
+    'account',
+  );
+  @override
+  late final GeneratedColumn<String> account = GeneratedColumn<String>(
+    'account',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _requestMeta = const VerificationMeta(
     'request',
   );
@@ -50,7 +61,13 @@ class $CachedResponsesTable extends CachedResponses
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [server, request, body, savedAt];
+  List<GeneratedColumn> get $columns => [
+    server,
+    account,
+    request,
+    body,
+    savedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -70,6 +87,14 @@ class $CachedResponsesTable extends CachedResponses
       );
     } else if (isInserting) {
       context.missing(_serverMeta);
+    }
+    if (data.containsKey('account')) {
+      context.handle(
+        _accountMeta,
+        account.isAcceptableOrUnknown(data['account']!, _accountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountMeta);
     }
     if (data.containsKey('request')) {
       context.handle(
@@ -99,7 +124,7 @@ class $CachedResponsesTable extends CachedResponses
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {server, request};
+  Set<GeneratedColumn> get $primaryKey => {server, account, request};
   @override
   CachedResponse map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -107,6 +132,10 @@ class $CachedResponsesTable extends CachedResponses
       server: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}server'],
+      )!,
+      account: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account'],
       )!,
       request: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -132,12 +161,16 @@ class $CachedResponsesTable extends CachedResponses
 class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   final String server;
 
+  /// Whose answer it is: see [cacheAccount] and [CacheDb.public].
+  final String account;
+
   /// The method, path and query, plus the body for the few cached POSTs.
   final String request;
   final String body;
   final DateTime savedAt;
   const CachedResponse({
     required this.server,
+    required this.account,
     required this.request,
     required this.body,
     required this.savedAt,
@@ -146,6 +179,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['server'] = Variable<String>(server);
+    map['account'] = Variable<String>(account);
     map['request'] = Variable<String>(request);
     map['body'] = Variable<String>(body);
     map['saved_at'] = Variable<DateTime>(savedAt);
@@ -155,6 +189,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   CachedResponsesCompanion toCompanion(bool nullToAbsent) {
     return CachedResponsesCompanion(
       server: Value(server),
+      account: Value(account),
       request: Value(request),
       body: Value(body),
       savedAt: Value(savedAt),
@@ -168,6 +203,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CachedResponse(
       server: serializer.fromJson<String>(json['server']),
+      account: serializer.fromJson<String>(json['account']),
       request: serializer.fromJson<String>(json['request']),
       body: serializer.fromJson<String>(json['body']),
       savedAt: serializer.fromJson<DateTime>(json['savedAt']),
@@ -178,6 +214,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'server': serializer.toJson<String>(server),
+      'account': serializer.toJson<String>(account),
       'request': serializer.toJson<String>(request),
       'body': serializer.toJson<String>(body),
       'savedAt': serializer.toJson<DateTime>(savedAt),
@@ -186,11 +223,13 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
 
   CachedResponse copyWith({
     String? server,
+    String? account,
     String? request,
     String? body,
     DateTime? savedAt,
   }) => CachedResponse(
     server: server ?? this.server,
+    account: account ?? this.account,
     request: request ?? this.request,
     body: body ?? this.body,
     savedAt: savedAt ?? this.savedAt,
@@ -198,6 +237,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   CachedResponse copyWithCompanion(CachedResponsesCompanion data) {
     return CachedResponse(
       server: data.server.present ? data.server.value : this.server,
+      account: data.account.present ? data.account.value : this.account,
       request: data.request.present ? data.request.value : this.request,
       body: data.body.present ? data.body.value : this.body,
       savedAt: data.savedAt.present ? data.savedAt.value : this.savedAt,
@@ -208,6 +248,7 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   String toString() {
     return (StringBuffer('CachedResponse(')
           ..write('server: $server, ')
+          ..write('account: $account, ')
           ..write('request: $request, ')
           ..write('body: $body, ')
           ..write('savedAt: $savedAt')
@@ -216,12 +257,13 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
   }
 
   @override
-  int get hashCode => Object.hash(server, request, body, savedAt);
+  int get hashCode => Object.hash(server, account, request, body, savedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CachedResponse &&
           other.server == this.server &&
+          other.account == this.account &&
           other.request == this.request &&
           other.body == this.body &&
           other.savedAt == this.savedAt);
@@ -229,12 +271,14 @@ class CachedResponse extends DataClass implements Insertable<CachedResponse> {
 
 class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
   final Value<String> server;
+  final Value<String> account;
   final Value<String> request;
   final Value<String> body;
   final Value<DateTime> savedAt;
   final Value<int> rowid;
   const CachedResponsesCompanion({
     this.server = const Value.absent(),
+    this.account = const Value.absent(),
     this.request = const Value.absent(),
     this.body = const Value.absent(),
     this.savedAt = const Value.absent(),
@@ -242,16 +286,19 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
   });
   CachedResponsesCompanion.insert({
     required String server,
+    required String account,
     required String request,
     required String body,
     required DateTime savedAt,
     this.rowid = const Value.absent(),
   }) : server = Value(server),
+       account = Value(account),
        request = Value(request),
        body = Value(body),
        savedAt = Value(savedAt);
   static Insertable<CachedResponse> custom({
     Expression<String>? server,
+    Expression<String>? account,
     Expression<String>? request,
     Expression<String>? body,
     Expression<DateTime>? savedAt,
@@ -259,6 +306,7 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
   }) {
     return RawValuesInsertable({
       if (server != null) 'server': server,
+      if (account != null) 'account': account,
       if (request != null) 'request': request,
       if (body != null) 'body': body,
       if (savedAt != null) 'saved_at': savedAt,
@@ -268,6 +316,7 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
 
   CachedResponsesCompanion copyWith({
     Value<String>? server,
+    Value<String>? account,
     Value<String>? request,
     Value<String>? body,
     Value<DateTime>? savedAt,
@@ -275,6 +324,7 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
   }) {
     return CachedResponsesCompanion(
       server: server ?? this.server,
+      account: account ?? this.account,
       request: request ?? this.request,
       body: body ?? this.body,
       savedAt: savedAt ?? this.savedAt,
@@ -287,6 +337,9 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
     final map = <String, Expression>{};
     if (server.present) {
       map['server'] = Variable<String>(server.value);
+    }
+    if (account.present) {
+      map['account'] = Variable<String>(account.value);
     }
     if (request.present) {
       map['request'] = Variable<String>(request.value);
@@ -307,6 +360,7 @@ class CachedResponsesCompanion extends UpdateCompanion<CachedResponse> {
   String toString() {
     return (StringBuffer('CachedResponsesCompanion(')
           ..write('server: $server, ')
+          ..write('account: $account, ')
           ..write('request: $request, ')
           ..write('body: $body, ')
           ..write('savedAt: $savedAt, ')
@@ -332,6 +386,7 @@ abstract class _$CacheDb extends GeneratedDatabase {
 typedef $$CachedResponsesTableCreateCompanionBuilder =
     CachedResponsesCompanion Function({
       required String server,
+      required String account,
       required String request,
       required String body,
       required DateTime savedAt,
@@ -340,6 +395,7 @@ typedef $$CachedResponsesTableCreateCompanionBuilder =
 typedef $$CachedResponsesTableUpdateCompanionBuilder =
     CachedResponsesCompanion Function({
       Value<String> server,
+      Value<String> account,
       Value<String> request,
       Value<String> body,
       Value<DateTime> savedAt,
@@ -357,6 +413,11 @@ class $$CachedResponsesTableFilterComposer
   });
   ColumnFilters<String> get server => $composableBuilder(
     column: $table.server,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get account => $composableBuilder(
+    column: $table.account,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -390,6 +451,11 @@ class $$CachedResponsesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get account => $composableBuilder(
+    column: $table.account,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get request => $composableBuilder(
     column: $table.request,
     builder: (column) => ColumnOrderings(column),
@@ -417,6 +483,9 @@ class $$CachedResponsesTableAnnotationComposer
   });
   GeneratedColumn<String> get server =>
       $composableBuilder(column: $table.server, builder: (column) => column);
+
+  GeneratedColumn<String> get account =>
+      $composableBuilder(column: $table.account, builder: (column) => column);
 
   GeneratedColumn<String> get request =>
       $composableBuilder(column: $table.request, builder: (column) => column);
@@ -460,12 +529,14 @@ class $$CachedResponsesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> server = const Value.absent(),
+                Value<String> account = const Value.absent(),
                 Value<String> request = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<DateTime> savedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CachedResponsesCompanion(
                 server: server,
+                account: account,
                 request: request,
                 body: body,
                 savedAt: savedAt,
@@ -474,12 +545,14 @@ class $$CachedResponsesTableTableManager
           createCompanionCallback:
               ({
                 required String server,
+                required String account,
                 required String request,
                 required String body,
                 required DateTime savedAt,
                 Value<int> rowid = const Value.absent(),
               }) => CachedResponsesCompanion.insert(
                 server: server,
+                account: account,
                 request: request,
                 body: body,
                 savedAt: savedAt,

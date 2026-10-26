@@ -320,6 +320,10 @@ func (s *Server) ResetGroupLink(ctx context.Context, req ResetGroupLinkRequestOb
 		if err := s.resolveAccess(ctx, tx, g); err != nil {
 			return err
 		}
+		// Phones following by the old link hear nothing more (see pushDevices).
+		if _, err := tx.Exec(ctx, `delete from push_follows where group_id = $1 and link_token <> $2`, g.id, g.token); err != nil {
+			return err
+		}
 		if err := logActivity(ctx, tx, g.id, who, "group.link_reset", nil, nil); err != nil {
 			return err
 		}

@@ -252,10 +252,10 @@ class BalnanaApi {
   GroupApi group(String token, {String? memberId}) => GroupApi._(this, token, memberId);
 
   /// Asks for notifications about [groups] (and, signed in, the account's
-  /// groups) on the device with push [token].
-  Future<void> registerPushDevice(String token, List<({String token, String memberId})> groups) => _send(
+  /// groups) on the device with Firebase installation ID [device].
+  Future<void> registerPushDevice(String device, List<({String token, String memberId})> groups) => _send(
     () => _dio.put<Object?>(
-      '/push/devices/${Uri.encodeComponent(token)}',
+      '/push/devices/${Uri.encodeComponent(device)}',
       data: {
         'groups': [for (final g in groups) {'token': g.token, 'memberId': g.memberId}],
       },
@@ -263,8 +263,8 @@ class BalnanaApi {
     (_) {},
   );
 
-  Future<void> removePushDevice(String token) =>
-      _send(() => _dio.delete<Object?>('/push/devices/${Uri.encodeComponent(token)}'), (_) {});
+  Future<void> removePushDevice(String device) =>
+      _send(() => _dio.delete<Object?>('/push/devices/${Uri.encodeComponent(device)}'), (_) {});
 }
 
 class GroupApi {

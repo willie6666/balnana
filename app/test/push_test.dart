@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/push.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/core/session.dart';
 import 'package:balnana/core/settings.dart';
 import 'package:balnana/data/known_groups.dart';
 import 'package:dio/dio.dart';
@@ -19,14 +21,20 @@ class _FakePush implements PushService {
   final refreshes = StreamController<String>.broadcast();
   var asked = 0;
 
-  @override
-  Future<String?> token() async => address;
+  /// While set, asking for permission waits for it.
+  Future<void>? hold;
 
   @override
-  Stream<String> get tokenRefresh => refreshes.stream;
+  Future<String?> device() async => address;
 
   @override
-  Future<void> requestPermission() async => asked++;
+  Stream<String> get deviceChanges => refreshes.stream;
+
+  @override
+  Future<void> requestPermission() async {
+    asked++;
+    await hold;
+  }
 
   @override
   Future<String?> initialGroup() async => null;
@@ -35,9 +43,10 @@ class _FakePush implements PushService {
   Stream<String> get openedGroups => const Stream.empty();
 }
 
-/// Writes down every request and answers 204.
+/// Writes down every request and answers 204, after [hold] if set.
 class _Recorder implements HttpClientAdapter {
   final requests = <String>[];
+  Future<void>? hold;
 
   @override
   Future<ResponseBody> fetch(
@@ -46,7 +55,9 @@ class _Recorder implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     final body = options.data == null ? '' : ' ${jsonEncode(options.data)}';
-    requests.add('${options.method} ${options.uri.path}$body');
+    final who = options.headers['Authorization'] == null ? '' : ' as ${options.headers['Authorization']}';
+    requests.add('${options.method} ${options.uri.path}$body$who');
+    await hold;
     return ResponseBody.fromString('', 204);
   }
 
@@ -61,7 +72,7 @@ void main() {
   late _Recorder server;
   late ProviderContainer container;
 
-  Future<void> boot({bool serverPush = true}) async {
+  Future<void> boot({bool serverPush = true, Future<void>? hold, Future<void>? permission}) async {
     SharedPreferences.setMockInitialValues({
       'settings.server': _server,
       'groups.known': jsonEncode([
@@ -70,16 +81,20 @@ void main() {
       ]),
     });
     final prefs = await SharedPreferences.getInstance();
-    push = _FakePush();
-    server = _Recorder();
-    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server;
+    push = _FakePush()..hold = permission;
+    server = _Recorder()..hold = hold;
     final info = ServerInfo(version: '1.0.0', authMode: AuthMode.link, push: serverPush, publicUrl: _server);
     container = ProviderContainer(
       overrides: [
         prefsProvider.overrideWithValue(prefs),
+        cacheDbProvider.overrideWithValue(null),
         pushServiceProvider.overrideWithValue(push),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
-        apiProvider.overrideWithValue(dio),
+        apiProvider.overrideWith((ref) {
+          final token = ref.watch(sessionProvider).token;
+          return Dio(BaseOptions(baseUrl: '$_server/api/v1', headers: {'Authorization': ?token}))
+            ..httpClientAdapter = server;
+        }),
       ],
     );
     addTearDown(container.dispose);
@@ -122,5 +137,42 @@ void main() {
     expect(server.requests, isEmpty);
     expect(push.asked, 0);
     expect(container.read(pushAvailableProvider), isFalse);
+  });
+
+  // Whatever order the work finishes in, the server ends up told the latest.
+  test('turning notifications off during a registration undoes it', () async {
+    final put = Completer<void>();
+    await boot(hold: put.future);
+    expect(server.requests, hasLength(1));
+    container.read(settingsProvider.notifier).setNotifications(false);
+    await _settle();
+    expect(server.requests, hasLength(1));
+    put.complete();
+    await _settle();
+    expect(server.requests, [startsWith('PUT '), 'DELETE /api/v1/push/devices/device-1']);
+    expect(container.read(prefsProvider).getString('push.server'), isNull);
+  });
+
+  test('turning notifications off while permission is asked registers nothing', () async {
+    final asked = Completer<void>();
+    await boot(permission: asked.future);
+    container.read(settingsProvider.notifier).setNotifications(false);
+    await _settle();
+    asked.complete();
+    await _settle();
+    expect(server.requests, isEmpty);
+    expect(container.read(prefsProvider).getString('push.server'), isNull);
+  });
+
+  test('signing in during a registration registers again as the account', () async {
+    final put = Completer<void>();
+    await boot(hold: put.future);
+    container.read(sessionProvider.notifier).set('b');
+    await _settle();
+    server.hold = null;
+    put.complete();
+    await _settle();
+    expect(server.requests, hasLength(2));
+    expect(server.requests.last, endsWith(' as b'));
   });
 }

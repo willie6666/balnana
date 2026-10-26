@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"sync"
@@ -167,10 +169,75 @@ func TestPushAccounts(t *testing.T) {
 		t.Fatalf("sent %+v", sent)
 	}
 
+	// A new link changes nothing for accounts.
+	var reset Group
+	ana.must(200, "POST", "/g/"+g.Token+"/reset-link", nil, &reset)
+	g.Token = reset.Token
+	pay()
+	if sent := f.take(s); len(sent) != 1 || sent[0].Device != "ana-phone" || sent[0].Data["group"] != reset.Token {
+		t.Fatalf("sent after reset %+v", sent)
+	}
+
 	// Signing out ends it.
 	ana.must(204, "POST", "/auth/logout", nil, nil)
 	pay()
 	if sent := f.take(s); len(sent) != 0 {
 		t.Errorf("sent after sign-out %+v", sent)
+	}
+}
+
+// Resetting the link cuts off phones that only had the old one, even one
+// whose registration overlapped the reset; accounts keep hearing.
+func TestPushLinkReset(t *testing.T) {
+	c, f, s := pushClient(t, map[string]string{})
+	g := createGroup(c, "Ana", "Ben")
+	ana, ben := g.Members[0].Id, g.Members[1].Id
+	c.must(204, "PUT", "/push/devices/old-phone", follow(g.Token, ben), nil)
+	var reset Group
+	c.must(200, "POST", "/g/"+g.Token+"/reset-link", nil, &reset)
+	c.errorCode(404, "GET", "/g/"+g.Token, nil)
+
+	// A registration that read the old link before the reset but wrote after.
+	_, err := s.db.Exec(context.Background(), `
+		with d as (insert into push_devices (token) values ('late-phone') returning token)
+		insert into push_follows (device, group_id, member_id, link_token)
+		select d.token, g.id, $2, $3 from d, groups g where g.token = $1`, reset.Token, ben, g.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.must(204, "PUT", "/push/devices/new-phone", follow(reset.Token, ben), nil)
+
+	c.member = ana
+	c.must(201, "POST", "/g/"+reset.Token+"/payments", PaymentInput{Amount: "5", FromMemberId: ana, ToMemberId: ben}, nil)
+	sent := f.take(s)
+	if len(sent) != 1 || sent[0].Device != "new-phone" {
+		t.Fatalf("sent %+v", sent)
+	}
+	var left int
+	if err := s.db.QueryRow(context.Background(), `select count(*) from push_follows where device = 'old-phone'`).Scan(&left); err != nil || left != 0 {
+		t.Errorf("old follow kept: %d %v", left, err)
+	}
+}
+
+// A device token lets whoever has it change what the phone hears, so no log
+// line may hold one, whether the request works or not.
+func TestPushLogsHideDevices(t *testing.T) {
+	var logs bytes.Buffer
+	log := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	s := NewServer(baseConfig(t, map[string]string{}), testDB(t), log, "test")
+	s.push = &fakePush{gone: map[string]bool{}}
+	h := NewHandler(s, http.NotFoundHandler())
+	const device = "private-device-token"
+	for _, body := range []string{"{not json", `{"groups":[]}`, `{"groups":[{"token":"x","memberId":"y"}]}`} {
+		req := httptest.NewRequest("PUT", "/api/v1/push/devices/"+device, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		h.ServeHTTP(httptest.NewRecorder(), req)
+	}
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("DELETE", "/api/v1/push/devices/"+device, nil))
+	if !strings.Contains(logs.String(), "/push/devices/<token>") {
+		t.Fatalf("nothing logged: %s", logs.String())
+	}
+	if strings.Contains(logs.String(), device) {
+		t.Fatalf("device token in logs: %s", logs.String())
 	}
 }

@@ -11,9 +11,11 @@ import (
 	"balnana/internal/push"
 )
 
-// Push notifications: phones register their Firebase token (migration
-// 00006), and after an expense changes, the members it involves hear about
-// it on every phone they registered, except whoever made the change.
+// Push notifications: phones register their Firebase installation ID
+// (migration 00006), and after an expense changes, the members it involves
+// hear about it on every phone they registered, except whoever made the
+// change. A phone following a group by link hears only while that link
+// works (migration 00007).
 
 const (
 	maxDeviceToken = 4096
@@ -38,7 +40,7 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 	} else if u != nil {
 		session = &u.sessionID
 	}
-	type follow struct{ group, member string }
+	type follow struct{ group, member, link string }
 	var follows []follow
 	for _, item := range req.Body.Groups {
 		g, err := s.findGroup(ctx, s.db, item.Token, false)
@@ -60,7 +62,7 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 			return nil, err
 		}
 		if ok {
-			follows = append(follows, follow{g.id, item.MemberId})
+			follows = append(follows, follow{g.id, item.MemberId, item.Token})
 		}
 	}
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -75,8 +77,8 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 		}
 		for _, f := range follows {
 			_, err := tx.Exec(ctx, `
-				insert into push_follows (device, group_id, member_id) values ($1, $2, $3)
-				on conflict do nothing`, req.Device, f.group, f.member)
+				insert into push_follows (device, group_id, member_id, link_token) values ($1, $2, $3, $4)
+				on conflict do nothing`, req.Device, f.group, f.member, f.link)
 			if err != nil {
 				return err
 			}
@@ -184,12 +186,14 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 }
 
 // pushDevices lists the phones of the members of g listed in ids: those
-// following the group by link while the link opens it, and those signed in
-// to a member's account.
+// following the group by its current link while the link opens it, and
+// those signed in to a member's account. A follow made with a link that has
+// since been reset is left out, even when it was made while the reset ran.
 func (s *Server) pushDevices(ctx context.Context, g *group, ids []string) ([]string, error) {
 	linkOpen := g.open
 	rows, err := s.db.Query(ctx, `
 		select f.device from push_follows f
+		join groups g on g.id = f.group_id and g.token = f.link_token
 		where $3 and f.group_id = $1 and f.member_id = any($2::uuid[])
 		union
 		select d.token from push_devices d

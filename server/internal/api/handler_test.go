@@ -134,6 +134,7 @@ func TestMaskPath(t *testing.T) {
 		"/api/v1/auth/invites/invitation-secret":    "/api/v1/auth/invites/<token>",
 		"/g/AAAAAAAAAAAAAAAAAAAAAA/expenses/new":    "/g/<token>/expenses/new",
 		"/invite/invitation-secret":                 "/invite/<token>",
+		"/api/v1/push/devices/private-device-token": "/api/v1/push/devices/<token>",
 		"/api/v1/groups":                            "/api/v1/groups",
 	} {
 		if got := maskPath(path); got != want {

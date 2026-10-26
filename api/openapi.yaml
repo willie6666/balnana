@@ -413,7 +413,7 @@ paths:
       - name: device
         in: path
         required: true
-        description: The device's Firebase Cloud Messaging registration token.
+        description: The device's Firebase installation ID (FID), which FCM sends to.
         schema:
           type: string
           minLength: 1
