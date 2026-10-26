@@ -1,6 +1,7 @@
 import 'package:balnana/app.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/data/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,6 +80,29 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Source code'), 200);
     expect(find.text('https://git.example.com/balnana'), findsOneWidget);
+  });
+
+  testWidgets('a closed server offers sign-up only for its first account', (tester) async {
+    for (final first in [true, false]) {
+      final info = ServerInfo(
+        version: '1.0.0',
+        authMode: AuthMode.accounts,
+        password: true,
+        signup: SignupPolicy.closed,
+        firstAccount: first,
+        publicUrl: 'https://split.example.com',
+      );
+      await _boot(
+        tester,
+        await _prefs({'settings.server': 'https://split.example.com'}),
+        overrides: [
+          serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
+          accountProvider.overrideWithValue(const AsyncValue.data(null)),
+        ],
+      );
+      expect(find.text('Create an account'), first ? findsOneWidget : findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('a wide window uses a navigation rail', (tester) async {

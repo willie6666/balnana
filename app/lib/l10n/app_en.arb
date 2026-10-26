@@ -209,6 +209,7 @@
   "@splitPercentOver": {"placeholders": {"percent": {"type": "String"}}},
   "conflictTitle": "Changed elsewhere",
   "conflictReload": "Reload",
+  "expenseChangedElsewhere": "Someone else changed this expense. Reloading shows their version and drops your changes here.",
 
   "suggestedPayments": "Suggested payments",
   "allSettled": "Everyone is settled up.",

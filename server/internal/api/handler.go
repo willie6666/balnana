@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"log/slog"
+	"mime"
 	"net/http"
 	"runtime/debug"
 	"slices"
@@ -18,7 +19,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 
 	strict := NewStrictHandlerWithOptions(s, nil, StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			s.log.Debug("bad request", "path", r.URL.Path, "err", err)
+			s.log.Debug("bad request", "path", maskPath(r.URL.Path), "err", err)
 			var tooLarge *http.MaxBytesError
 			if errors.As(err, &tooLarge) {
 				writeError(w, http.StatusRequestEntityTooLarge, "too_large")
@@ -44,8 +45,8 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	mux.Handle("/", web)
 
 	var h http.Handler = mux
-	h = limitBodies(h)
 	h = s.sessions(h)
+	h = checkBodies(h)
 	h = rateLimit(s.cfg.RateLimit, s.cfg.TrustProxy, h)
 	h = cors(s.cfg.CORSOrigins, h)
 	h = securityHeaders(h)
@@ -60,11 +61,24 @@ const (
 	maxImportBody = 16 << 20
 )
 
-func limitBodies(next http.Handler) http.Handler {
+// checkBodies limits the size of request bodies and, for the API, wants them
+// to be JSON: a page on another site can post a plain-text form without
+// asking first, but not JSON.
+func checkBodies(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !safeMethod(r.Method) && r.ContentLength != 0 && strings.HasPrefix(r.URL.Path, BasePath+"/") {
+			if t, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || t != "application/json" {
+				writeError(w, http.StatusUnsupportedMediaType, "not_json")
+				return
+			}
+		}
 		limit := int64(maxBody)
 		if r.URL.Path == BasePath+"/groups/import" {
 			limit = maxImportBody
+		}
+		if r.ContentLength > limit {
+			writeError(w, http.StatusRequestEntityTooLarge, "too_large")
+			return
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, limit)
 		next.ServeHTTP(w, r)
@@ -133,15 +147,19 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 
-// maskPath hides group tokens: never log /g/ paths in full, the token grants
-// access to the group.
+// Paths whose next part is a secret: a group token grants access to the
+// group, an invitation token proves an email address.
+var secretPaths = []string{"/g/", "/invite/", BasePath + "/g/", BasePath + "/auth/invites/"}
+
+// maskPath hides the secrets in a path before it is logged.
 func maskPath(path string) string {
-	if strings.HasPrefix(path, "/g/") {
-		return "/g/<token>"
-	}
-	if rest, ok := strings.CutPrefix(path, BasePath+"/g/"); ok {
-		_, after, _ := strings.Cut(rest, "/")
-		return BasePath + "/g/<token>/" + after
+	for _, prefix := range secretPaths {
+		if rest, ok := strings.CutPrefix(path, prefix); ok {
+			if _, after, found := strings.Cut(rest, "/"); found {
+				return prefix + "<token>/" + after
+			}
+			return prefix + "<token>"
+		}
 	}
 	return path
 }

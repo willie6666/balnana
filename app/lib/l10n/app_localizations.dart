@@ -1105,6 +1105,12 @@ abstract class AppLocalizations {
   /// **'Reload'**
   String get conflictReload;
 
+  /// No description provided for @expenseChangedElsewhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else changed this expense. Reloading shows their version and drops your changes here.'**
+  String get expenseChangedElsewhere;
+
   /// No description provided for @suggestedPayments.
   ///
   /// In en, this message translates to:

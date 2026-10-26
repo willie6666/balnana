@@ -88,6 +88,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           : await api.login(email: _email.text.trim(), password: _password.text);
       if (!mounted) return;
       TextInput.finishAutofillContext();
+      // Whether a first account may still sign up has changed.
+      if (_register) ref.invalidate(serverInfoProvider);
       startSession(ref, token);
       context.go(safeNext(widget.next) ?? '/groups');
     } on ApiException catch (e) {
@@ -106,7 +108,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final scheme = Theme.of(context).colorScheme;
     final info = ref.watch(serverInfoProvider).value;
     final passwords = info?.password ?? true;
-    final canRegister = info?.signup != SignupPolicy.closed || widget.prefill?.invite != null;
+    final canRegister =
+        info?.signup != SignupPolicy.closed || (info?.firstAccount ?? false) || widget.prefill?.invite != null;
     final canReset = info?.email ?? false;
     final providers = info?.oauthProviders ?? const <OAuthProvider>[];
 

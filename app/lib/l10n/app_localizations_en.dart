@@ -560,6 +560,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get conflictReload => 'Reload';
 
   @override
+  String get expenseChangedElsewhere =>
+      'Someone else changed this expense. Reloading shows their version and drops your changes here.';
+
+  @override
   String get suggestedPayments => 'Suggested payments';
 
   @override

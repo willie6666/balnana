@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,24 +23,43 @@ import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
 
 /// Adds an expense to a group, or edits one when [expenseId] is set.
-class ExpenseEditorPage extends ConsumerWidget {
+class ExpenseEditorPage extends ConsumerStatefulWidget {
   const ExpenseEditorPage({super.key, required this.token, this.expenseId});
 
   final String token;
   final String? expenseId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExpenseEditorPage> createState() => _ExpenseEditorPageState();
+}
+
+class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
+  /// The version the form started from. Live updates bring newer ones, which
+  /// replace it only when nothing was changed here or when asked to.
+  Expense? _base;
+
+  void _adopt(Expense expense) => setState(() => _base = expense);
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final token = widget.token, expenseId = widget.expenseId;
     final group = ref.watch(groupProvider(token));
-    final expense = expenseId == null ? null : ref.watch(expenseProvider((token: token, id: expenseId!)));
+    final expense = expenseId == null ? null : ref.watch(expenseProvider((token: token, id: expenseId)));
     final error = group.error ?? expense?.error;
 
     if (group.value case final g? when expense == null || expense.hasValue) {
+      final latest = expense?.value;
+      final base = _base ??= latest;
       return GroupTheme(
         group: g,
-        // A new version from the server starts the form over.
-        child: _Editor(key: ValueKey(expense?.value?.version), group: g, expense: expense?.value),
+        child: _Editor(
+          key: ValueKey(base?.version),
+          group: g,
+          expense: base,
+          newer: latest != null && latest.version != base?.version ? latest : null,
+          onReload: _adopt,
+        ),
       );
     }
     return Scaffold(
@@ -56,7 +76,7 @@ class ExpenseEditorPage extends ConsumerWidget {
                   action: FilledButton.tonal(
                     onPressed: () {
                       ref.invalidate(groupProvider(token));
-                      if (expenseId != null) ref.invalidate(expenseProvider((token: token, id: expenseId!)));
+                      if (expenseId != null) ref.invalidate(expenseProvider((token: token, id: expenseId)));
                     },
                     child: Text(l10n.commonRetry),
                   ),
@@ -68,10 +88,16 @@ class ExpenseEditorPage extends ConsumerWidget {
 }
 
 class _Editor extends ConsumerStatefulWidget {
-  const _Editor({super.key, required this.group, this.expense});
+  const _Editor({super.key, required this.group, this.expense, this.newer, required this.onReload});
 
   final Group group;
   final Expense? expense;
+
+  /// A version of [expense] someone else saved since the form started.
+  final Expense? newer;
+
+  /// Starts the form over from another version.
+  final ValueChanged<Expense> onReload;
 
   @override
   ConsumerState<_Editor> createState() => _EditorState();
@@ -149,9 +175,39 @@ class _EditorState extends ConsumerState<_Editor> {
     for (final c in [_amount, ..._paid.values, ..._values.values]) {
       c.addListener(_changed);
     }
+    _initial = _snapshot();
   }
 
   void _changed() => setState(() {});
+
+  /// Everything the form holds, to tell whether it was changed.
+  List<Object?> _snapshot() => [
+    _amount.text,
+    _title.text,
+    _note.text,
+    _category,
+    _date,
+    _payer,
+    _multiPay,
+    _method,
+    for (final m in _people) ...[_included.contains(m.id), _paid[m.id]!.text, _values[m.id]!.text],
+  ];
+
+  late final List<Object?> _initial;
+
+  bool get _dirty => !listEquals(_snapshot(), _initial);
+
+  @override
+  void didUpdateWidget(_Editor old) {
+    super.didUpdateWidget(old);
+    // Nothing to lose here, so show the newer version straight away.
+    final newer = widget.newer;
+    if (newer != null && newer.version != old.newer?.version && !_dirty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onReload(newer);
+      });
+    }
+  }
 
   /// [setState] for the row widgets below.
   void _update(VoidCallback fn) => setState(fn);
@@ -296,8 +352,18 @@ class _EditorState extends ConsumerState<_Editor> {
         ],
       ),
     );
-    if (reload == true && widget.expense != null) {
-      ref.invalidate(expenseProvider((token: _group.token, id: widget.expense!.id)));
+    if (reload == true && widget.expense != null) await _reload();
+  }
+
+  /// Starts the form over from the server's latest version.
+  Future<void> _reload() async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final latest = await ref.refresh(expenseProvider((token: _group.token, id: widget.expense!.id)).future);
+      if (mounted) widget.onReload(latest);
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
   }
 
@@ -328,6 +394,29 @@ class _EditorState extends ConsumerState<_Editor> {
           IconButton(tooltip: l10n.expenseDelete, icon: const Icon(Icons.delete_outline), onPressed: _delete),
       ],
       children: [
+        if (widget.newer != null && _dirty) ...[
+          Card.filled(
+            color: scheme.secondaryContainer,
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s12, BSpace.s8, BSpace.s8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.expenseChangedElsewhere, style: TextStyle(color: scheme.onSecondaryContainer)),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton(
+                      onPressed: () => widget.onReload(widget.newer!),
+                      child: Text(l10n.conflictReload),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: BSpace.s16),
+        ],
         Form(
           key: _form,
           autovalidateMode: _tried ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,

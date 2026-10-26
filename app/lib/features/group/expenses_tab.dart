@@ -75,7 +75,7 @@ class ExpensesTab extends ConsumerWidget {
             itemBuilder: (context, i) {
               if (list.hasMore && i >= rows.length - 5) {
                 WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => ref.read(expensesProvider(group.token).notifier).loadMore().catchError((_) {}),
+                  (_) => ref.read(expensesProvider(group.token).notifier).loadMore(),
                 );
               }
               return switch (rows[i]) {
@@ -98,6 +98,22 @@ class ExpensesTab extends ConsumerWidget {
             child: Padding(
               padding: EdgeInsets.all(BSpace.s16),
               child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        else if (list.moreError case final error?)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(BSpace.s16),
+              child: Column(
+                children: [
+                  Text(errorMessage(l10n, error), textAlign: TextAlign.center),
+                  const SizedBox(height: BSpace.s8),
+                  FilledButton.tonal(
+                    onPressed: () => ref.read(expensesProvider(group.token).notifier).loadMore(retry: true),
+                    child: Text(l10n.commonRetry),
+                  ),
+                ],
+              ),
             ),
           ),
         // Room for the floating button.

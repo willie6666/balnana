@@ -1421,7 +1421,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, email, oauthProviders, linkGroups, publicUrl, sourceUrl]
+      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, publicUrl, sourceUrl]
       properties:
         name:
           type: string
@@ -1439,6 +1439,11 @@ components:
         signup:
           type: string
           enum: [open, invite_only, closed]
+        firstAccount:
+          type: boolean
+          description: >-
+            No account exists yet, so the first one may sign up with a password
+            even though signup is not open. Only ever true then.
         email:
           type: boolean
           description: The server can send email (verification, reset, invites).

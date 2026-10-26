@@ -75,11 +75,14 @@ final balancesProvider = FutureProvider.family<Balances, String>((ref, token) as
 
 /// A group's expenses, newest first, loaded a page at a time.
 class ExpenseList {
-  const ExpenseList(this.items, this.nextCursor, {this.loadingMore = false});
+  const ExpenseList(this.items, this.nextCursor, {this.loadingMore = false, this.moreError});
 
   final List<Expense> items;
   final String? nextCursor;
   final bool loadingMore;
+
+  /// Why the next page did not load. It is not asked for again until retried.
+  final Exception? moreError;
 
   bool get hasMore => nextCursor != null;
 }
@@ -102,16 +105,17 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     return ExpenseList(page.items, page.nextCursor);
   }
 
-  Future<void> loadMore() async {
+  /// Loads the next page, unless the last try failed and this is no [retry].
+  Future<void> loadMore({bool retry = false}) async {
     final current = state.value;
     if (current == null || !current.hasMore || current.loadingMore) return;
+    if (current.moreError != null && !retry) return;
     state = AsyncData(ExpenseList(current.items, current.nextCursor, loadingMore: true));
     try {
       final page = await _api(ref).group(token).expenses(_digits, cursor: current.nextCursor);
       state = AsyncData(ExpenseList([...current.items, ...page.items], page.nextCursor));
-    } on ApiException {
-      state = AsyncData(ExpenseList(current.items, current.nextCursor));
-      rethrow;
+    } on Exception catch (e) {
+      state = AsyncData(ExpenseList(current.items, current.nextCursor, moreError: e));
     }
   }
 }

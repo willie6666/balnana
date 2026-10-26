@@ -55,6 +55,13 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		PublicUrl:      s.cfg.PublicURL.String(),
 		SourceUrl:      s.cfg.SourceURL.String(),
 	}
+	if info.Password && s.cfg.Signup != config.SignupOpen {
+		// The first account may always sign up, so a closed server can start.
+		err := s.db.QueryRow(ctx, `select not exists (select 1 from users)`).Scan(&info.FirstAccount)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if accounts {
 		for _, p := range s.cfg.OAuthProviders() {
 			info.OauthProviders = append(info.OauthProviders, OAuthProvider{Id: p.ID, Name: p.Name})

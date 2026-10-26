@@ -27,6 +27,13 @@ import (
 // sets it) and create a throwaway database for each test.
 func testDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
+	return testDBConns(t, 0)
+}
+
+// testDBConns is testDB with a pool of at most maxConns connections (0 for
+// pgx's default).
+func testDBConns(t *testing.T, maxConns int32) *pgxpool.Pool {
+	t.Helper()
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		t.Skip("DATABASE_URL not set")
@@ -52,6 +59,9 @@ func testDB(t *testing.T) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	cfg.ConnConfig.Database = name
+	if maxConns > 0 {
+		cfg.MaxConns = maxConns
+	}
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)

@@ -439,6 +439,9 @@ type ServerInfo struct {
 	// Email The server can send email (verification, reset, invites).
 	Email bool `json:"email"`
 
+	// FirstAccount No account exists yet, so the first one may sign up with a password even though signup is not open. Only ever true then.
+	FirstAccount bool `json:"firstAccount"`
+
 	// LinkGroups Groups may be opened by link alone. Always true in link mode.
 	LinkGroups bool `json:"linkGroups"`
 

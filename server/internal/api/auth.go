@@ -55,13 +55,19 @@ type authKey struct{}
 type authState struct {
 	token      string
 	fromCookie bool
-	loaded     bool
-	user       *user
-	w          http.ResponseWriter
+	// crossSite is set for a write that a browser says comes from another
+	// site.
+	crossSite bool
+	loaded    bool
+	user      *user
+	w         http.ResponseWriter
 }
 
 // sessions finds the session token of API requests (a bearer token or the
-// web app's cookie). The account is looked up only when a handler asks.
+// web app's cookie) and looks the account up. That happens here, before a
+// handler holds a pool connection in a transaction: looking it up later
+// would need a second connection, and enough such requests at once would
+// wait on each other forever.
 func (s *Server) sessions(next http.Handler) http.Handler {
 	if s.cfg.AuthMode != config.AuthModeAccounts {
 		return next
@@ -71,18 +77,36 @@ func (s *Server) sessions(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		st := &authState{w: w}
+		st := &authState{w: w, crossSite: !safeMethod(r.Method) && !s.sameOrigin(r)}
 		if bearer, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
 			st.token = strings.TrimSpace(bearer)
 		} else if c, err := r.Cookie(sessionCookie); err == nil {
 			st.token, st.fromCookie = c.Value, true
-			if !safeMethod(r.Method) && !s.sameOrigin(r) {
+			if st.crossSite {
 				writeError(w, http.StatusForbidden, "bad_origin")
 				return
 			}
 		}
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), authKey{}, st)))
+		ctx := context.WithValue(r.Context(), authKey{}, st)
+		if st.token != "" {
+			if _, err := s.currentUser(ctx); err != nil {
+				writeHandlerError(s.log, w, r, err)
+				return
+			}
+		}
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// cookieOrigin refuses to start a cookie session for another site: it
+// could sign a visitor in to an account it controls (login CSRF). Only the
+// web app on this server asks for cookies.
+func cookieOrigin(ctx context.Context, cookie *bool) error {
+	st, _ := ctx.Value(authKey{}).(*authState)
+	if cookie != nil && *cookie && st != nil && st.crossSite {
+		return forbidden("bad_origin")
+	}
+	return nil
 }
 
 func safeMethod(m string) bool {
@@ -269,6 +293,9 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	if err := s.requirePasswords(); err != nil {
 		return nil, err
 	}
+	if err := cookieOrigin(ctx, req.Body.Cookie); err != nil {
+		return nil, err
+	}
 	in := req.Body
 	email, err := cleanEmail(in.Email)
 	if err != nil {
@@ -322,6 +349,9 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 
 func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginResponseObject, error) {
 	if err := s.requirePasswords(); err != nil {
+		return nil, err
+	}
+	if err := cookieOrigin(ctx, req.Body.Cookie); err != nil {
 		return nil, err
 	}
 	in := req.Body

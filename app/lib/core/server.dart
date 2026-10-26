@@ -86,6 +86,7 @@ class ServerInfo {
     required this.authMode,
     this.password = false,
     this.signup = SignupPolicy.open,
+    this.firstAccount = false,
     this.linkGroups = true,
     this.email = false,
     this.oauthProviders = const [],
@@ -112,6 +113,7 @@ class ServerInfo {
         'closed' => SignupPolicy.closed,
         _ => SignupPolicy.open,
       },
+      firstAccount: json['firstAccount'] == true,
       linkGroups: json['linkGroups'] != false,
       email: json['email'] == true,
       oauthProviders: [
@@ -130,6 +132,10 @@ class ServerInfo {
   /// Email and password sign-in is available.
   final bool password;
   final SignupPolicy signup;
+
+  /// No account exists yet, so the first one may sign up even when [signup]
+  /// is closed.
+  final bool firstAccount;
 
   /// Group owners may open a group to anyone with its link.
   final bool linkGroups;

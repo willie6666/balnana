@@ -1,8 +1,14 @@
 package api
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 func accountsClient(t *testing.T, env map[string]string) *client {
@@ -208,5 +214,103 @@ func TestLinkGroupsOff(t *testing.T) {
 	}
 	if code := ana.errorCode(403, "PATCH", "/g/"+g.Token, GroupUpdate{LinkAccess: ptr(true)}); code != "link_groups_off" {
 		t.Fatal(code)
+	}
+}
+
+// Signed-in group writes hold a connection for their transaction, so the
+// account must be looked up without needing a second one.
+func TestAccountWritesWithSmallPool(t *testing.T) {
+	for _, conns := range []int32{1, 2} {
+		pool := testDBConns(t, conns)
+		cfg := baseConfig(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
+		c := &client{t: t, h: NewHandler(NewServer(cfg, pool, slog.New(slog.DiscardHandler), "test"), http.NotFoundHandler())}
+		register(c, fmt.Sprintf("ana%d@example.com", conns), "Ana")
+		var g Group
+		c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana"}}, &g)
+
+		// Stuck writes give up after a while, and fail with a 500.
+		const writers = 6
+		codes := make(chan int, writers)
+		for i := range writers {
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				body := fmt.Sprintf(`{"name":"Flat %d"}`, i)
+				req := httptest.NewRequestWithContext(ctx, "PATCH", BasePath+"/g/"+g.Token, strings.NewReader(body))
+				req.Header.Set("Content-Type", "application/json")
+				req.Header.Set("Authorization", "Bearer "+c.token)
+				rec := httptest.NewRecorder()
+				c.h.ServeHTTP(rec, req)
+				codes <- rec.Code
+			}()
+		}
+		for range writers {
+			if code := <-codes; code != 200 {
+				t.Fatalf("pool of %d: status %d", conns, code)
+			}
+		}
+	}
+}
+
+// Another site cannot start a cookie session (login CSRF), with or without
+// an earlier cookie; the app on this server and bearer sign-ins still can.
+func TestCookieSessionsNeedSameOrigin(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	evil := http.Header{"Origin": {"https://evil.example"}, "Sec-Fetch-Site": {"cross-site"}}
+
+	web := c.another()
+	web.header = evil
+	login := LoginInput{Email: "ana@example.com", Password: "correct horse", Cookie: ptr(true)}
+	if code := web.errorCode(403, "POST", "/auth/login", login); code != "bad_origin" || len(web.jar) != 0 {
+		t.Fatalf("cross-site login: %s, cookies %v", code, web.jar)
+	}
+	in := RegisterInput{Email: "ben@example.com", Password: "correct horse", Name: "Ben", Cookie: ptr(true)}
+	if code := web.errorCode(403, "POST", "/auth/register", in); code != "bad_origin" || len(web.jar) != 0 {
+		t.Fatalf("cross-site register: %s, cookies %v", code, web.jar)
+	}
+
+	// A form post from another site is plain text, which the API refuses.
+	req := httptest.NewRequest("POST", BasePath+"/auth/login", strings.NewReader(`{"email":"ana@example.com","password":"correct horse","cookie":true}`))
+	req.Header.Set("Content-Type", "text/plain")
+	rec := httptest.NewRecorder()
+	c.h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnsupportedMediaType || len(rec.Result().Cookies()) != 0 {
+		t.Fatalf("plain text login: %d", rec.Code)
+	}
+
+	// Native apps send no Origin; a bearer login from elsewhere is fine.
+	web.header = http.Header{"Origin": {"https://evil.example"}}
+	web.must(200, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "correct horse"}, nil)
+	same := c.another()
+	same.header = http.Header{"Origin": {"http://example.com"}, "Sec-Fetch-Site": {"same-origin"}}
+	same.must(200, "POST", "/auth/login", login, nil)
+	if len(same.jar) != 1 {
+		t.Fatalf("same-origin cookies %v", same.jar)
+	}
+}
+
+// A closed server tells the app when its first account may still sign up.
+func TestFirstAccountOnClosedServer(t *testing.T) {
+	c := accountsClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "closed"})
+	var info ServerInfo
+	c.must(200, "GET", "/server-info", nil, &info)
+	if !info.FirstAccount {
+		t.Fatal("fresh closed server: no first account")
+	}
+	register(c, "ana@example.com", "Ana")
+	c.must(200, "GET", "/server-info", nil, &info)
+	if info.FirstAccount {
+		t.Fatal("first account still offered")
+	}
+	in := RegisterInput{Email: "ben@example.com", Password: "correct horse", Name: "Ben"}
+	if code := c.another().errorCode(403, "POST", "/auth/register", in); code != "signup_closed" {
+		t.Fatal(code)
+	}
+
+	open := accountsClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "open"})
+	open.must(200, "GET", "/server-info", nil, &info)
+	if info.FirstAccount {
+		t.Fatal("open server offers a first account")
 	}
 }

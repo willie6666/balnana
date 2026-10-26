@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'live_io.dart' if (dart.library.js_interop) 'live_web.dart' as impl;
 
@@ -23,5 +24,8 @@ const liveRetryMax = Duration(minutes: 1);
 /// until it says [LiveEvent.gone] or the subscription is cancelled.
 Stream<LiveEvent> groupEvents(Dio dio, String token, {Duration retry = liveRetry}) =>
     impl.groupEvents(dio, token, retry);
+
+/// Opens group event streams; tests replace it.
+final groupEventsProvider = Provider<Stream<LiveEvent> Function(Dio dio, String token)>((ref) => groupEvents);
 
 Duration nextRetry(Duration retry) => retry * 2 > liveRetryMax ? liveRetryMax : retry * 2;
