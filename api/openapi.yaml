@@ -22,8 +22,714 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServerInfo"
+  /groups:
+    post:
+      operationId: createGroup
+      summary: Create a group with its first members
+      description: Link mode only for now. The response carries the secret token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /groups/summaries:
+    post:
+      operationId: getGroupSummaries
+      summary: Home screen cards for the groups a device knows
+      description: >-
+        Tokens the server does not know (deleted, or the link was reset) are
+        listed in `missing` so the app can forget them.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupSummaryRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupSummaryList"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getGroup
+      summary: The group, its members and their balances
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateGroup
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/reset-link:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: resetGroupLink
+      summary: Replace the token; the old link stops working
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "200":
+          description: The group under its new token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/members:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: addMember
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/members/{memberId}:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/MemberId"
+    patch:
+      operationId: updateMember
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: removeMember
+      summary: Mark a member as having left
+      description: >-
+        Only members whose balance is zero can leave. They stay in past
+        expenses; error `member_has_balance` otherwise.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Removed
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/expenses:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: listExpenses
+      summary: Expenses and payments, newest first
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensePage"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createExpense
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/expenses/{expenseId}:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/ExpenseId"
+    get:
+      operationId: getExpense
+      summary: One expense, also when deleted
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateExpense
+      description: >-
+        `version` must be the version that was read; otherwise the expense
+        changed meanwhile and the answer is 409 `expense_version_conflict`.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteExpense
+      summary: Delete (restorable)
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Deleted
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/expenses/{expenseId}/restore:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/ExpenseId"
+    post:
+      operationId: restoreExpense
+      summary: Undo a delete
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/payments:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: createPayment
+      summary: Record that one member paid another
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: The payment, stored as an expense of kind `payment`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/balances:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getBalances
+      summary: Net balances and the payments that settle them
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balances"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/activity:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: listActivity
+      summary: What happened in the group, newest first
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityPage"
+        default:
+          $ref: "#/components/responses/Error"
 components:
+  parameters:
+    Token:
+      name: token
+      in: path
+      required: true
+      description: The group's secret token from its link.
+      schema:
+        type: string
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+    ExpenseId:
+      name: expenseId
+      in: path
+      required: true
+      schema:
+        type: string
+    ActingMember:
+      name: X-Balnana-Member
+      in: header
+      required: false
+      description: >-
+        Link mode: the member this device acts as, recorded in the activity
+        log. Ignored when it is not a member of the group.
+      schema:
+        type: string
+  responses:
+    Error:
+      description: >-
+        An error. 400 for invalid input, 404 for an unknown group or item,
+        409 for conflicts.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
+    Money:
+      type: string
+      description: Decimal amount with up to the group's `minorDigits` decimals.
+      example: "12.50"
+    GroupCreate:
+      type: object
+      required: [name, currency, members]
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+          description: 0xRRGGBB
+        currency:
+          type: string
+          description: ISO 4217 code
+          example: EUR
+        minorDigits:
+          type: integer
+          minimum: 0
+          maximum: 4
+          default: 2
+        members:
+          type: array
+          description: Names of the first members, the creator first.
+          items:
+            type: string
+    GroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+          description: Empty string clears it.
+        color:
+          type: integer
+    Group:
+      type: object
+      required: [token, name, currency, minorDigits, createdAt, members]
+      properties:
+        token:
+          type: string
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+        currency:
+          type: string
+        minorDigits:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          description: Everyone, including members who left, oldest first.
+          items:
+            $ref: "#/components/schemas/Member"
+    Member:
+      type: object
+      required: [id, name, left, balance]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: integer
+        left:
+          type: boolean
+        balance:
+          $ref: "#/components/schemas/Money"
+    MemberInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        color:
+          type: integer
+    GroupSummaryRequest:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          maxItems: 200
+          items:
+            type: object
+            required: [token]
+            properties:
+              token:
+                type: string
+              memberId:
+                type: string
+                description: Who this device is in the group, for `balance`.
+    GroupSummaryList:
+      type: object
+      required: [groups, missing]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupSummary"
+        missing:
+          type: array
+          items:
+            type: string
+    GroupSummary:
+      type: object
+      required: [token, name, currency, minorDigits, memberCount, updatedAt]
+      properties:
+        token:
+          type: string
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+        currency:
+          type: string
+        minorDigits:
+          type: integer
+        memberCount:
+          type: integer
+        balance:
+          $ref: "#/components/schemas/Money"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last activity in the group.
+    Share:
+      type: object
+      required: [memberId]
+      properties:
+        memberId:
+          type: string
+        value:
+          type: string
+          description: >-
+            Ignored for `equal`; an amount for `exact`; a percentage for
+            `percent`; a weight for `shares` (up to 4 decimals).
+    PayerInput:
+      type: object
+      required: [memberId, amount]
+      properties:
+        memberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+    ExpenseInput:
+      type: object
+      required: [title, amount, occurredAt, payers, splitMethod, splits]
+      properties:
+        title:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        occurredAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+        payers:
+          type: array
+          description: Who paid; the amounts add up to `amount`.
+          items:
+            $ref: "#/components/schemas/PayerInput"
+        splitMethod:
+          $ref: "#/components/schemas/SplitMethod"
+        splits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Share"
+        version:
+          type: integer
+          description: Required when updating.
+    PaymentInput:
+      type: object
+      required: [fromMemberId, toMemberId, amount]
+      properties:
+        fromMemberId:
+          type: string
+        toMemberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        occurredAt:
+          type: string
+          format: date-time
+          description: Defaults to now.
+    SplitMethod:
+      type: string
+      enum: [equal, exact, percent, shares]
+    Expense:
+      type: object
+      required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [expense, payment]
+        title:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        occurredAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+        splitMethod:
+          $ref: "#/components/schemas/SplitMethod"
+        payers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payer"
+        splits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SplitPart"
+        createdBy:
+          type: string
+          description: Member id of whoever added it, when known.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+    Payer:
+      type: object
+      required: [memberId, amount]
+      properties:
+        memberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+    SplitPart:
+      type: object
+      required: [memberId, amount]
+      properties:
+        memberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        share:
+          type: string
+          description: The percentage or weight entered, for `percent` and `shares`.
+    ExpensePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        nextCursor:
+          type: string
+    Balances:
+      type: object
+      required: [balances, transfers]
+      properties:
+        balances:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberBalance"
+        transfers:
+          type: array
+          description: Suggested payments that settle everyone up.
+          items:
+            $ref: "#/components/schemas/Transfer"
+    MemberBalance:
+      type: object
+      required: [memberId, amount]
+      properties:
+        memberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+    Transfer:
+      type: object
+      required: [fromMemberId, toMemberId, amount]
+      properties:
+        fromMemberId:
+          type: string
+        toMemberId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+    ActivityPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        nextCursor:
+          type: string
+    Activity:
+      type: object
+      required: [id, action, payload, createdAt]
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+          description: >-
+            group.created, group.updated, group.link_reset, member.added,
+            member.updated, member.removed, expense.created, expense.updated,
+            expense.deleted, expense.restored. Payments use the expense
+            actions with `kind: payment` in the payload.
+        actorMemberId:
+          type: string
+        subjectId:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+          description: Names and amounts at the time, for rendering in any language.
+        createdAt:
+          type: string
+          format: date-time
     ServerInfo:
       type: object
       required: [name, version, authMode, password, signup, email, oauthProviders, linkGroups, publicUrl, sourceUrl]

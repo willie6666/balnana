@@ -10,8 +10,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
+)
+
+// Defines values for ExpenseKind.
+const (
+	ExpenseKindExpense ExpenseKind = "expense"
+	ExpenseKindPayment ExpenseKind = "payment"
 )
 
 // Defines values for ServerInfoAuthMode.
@@ -27,16 +35,220 @@ const (
 	Open       ServerInfoSignup = "open"
 )
 
+// Defines values for SplitMethod.
+const (
+	Equal   SplitMethod = "equal"
+	Exact   SplitMethod = "exact"
+	Percent SplitMethod = "percent"
+	Shares  SplitMethod = "shares"
+)
+
+// Activity defines model for Activity.
+type Activity struct {
+	// Action group.created, group.updated, group.link_reset, member.added, member.updated, member.removed, expense.created, expense.updated, expense.deleted, expense.restored. Payments use the expense actions with `kind: payment` in the payload.
+	Action        string    `json:"action"`
+	ActorMemberId *string   `json:"actorMemberId,omitempty"`
+	CreatedAt     time.Time `json:"createdAt"`
+	Id            string    `json:"id"`
+
+	// Payload Names and amounts at the time, for rendering in any language.
+	Payload   map[string]interface{} `json:"payload"`
+	SubjectId *string                `json:"subjectId,omitempty"`
+}
+
+// ActivityPage defines model for ActivityPage.
+type ActivityPage struct {
+	Items      []Activity `json:"items"`
+	NextCursor *string    `json:"nextCursor,omitempty"`
+}
+
+// Balances defines model for Balances.
+type Balances struct {
+	Balances []MemberBalance `json:"balances"`
+
+	// Transfers Suggested payments that settle everyone up.
+	Transfers []Transfer `json:"transfers"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Code   string                  `json:"code"`
 	Params *map[string]interface{} `json:"params,omitempty"`
 }
 
+// Expense defines model for Expense.
+type Expense struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount     Money     `json:"amount"`
+	CategoryId *string   `json:"categoryId,omitempty"`
+	CreatedAt  time.Time `json:"createdAt"`
+
+	// CreatedBy Member id of whoever added it, when known.
+	CreatedBy   *string     `json:"createdBy,omitempty"`
+	DeletedAt   *time.Time  `json:"deletedAt,omitempty"`
+	Id          string      `json:"id"`
+	Kind        ExpenseKind `json:"kind"`
+	Note        *string     `json:"note,omitempty"`
+	OccurredAt  time.Time   `json:"occurredAt"`
+	Payers      []Payer     `json:"payers"`
+	SplitMethod SplitMethod `json:"splitMethod"`
+	Splits      []SplitPart `json:"splits"`
+	Title       string      `json:"title"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	Version     int         `json:"version"`
+}
+
+// ExpenseKind defines model for Expense.Kind.
+type ExpenseKind string
+
+// ExpenseInput defines model for ExpenseInput.
+type ExpenseInput struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount     Money     `json:"amount"`
+	CategoryId *string   `json:"categoryId,omitempty"`
+	Note       *string   `json:"note,omitempty"`
+	OccurredAt time.Time `json:"occurredAt"`
+
+	// Payers Who paid; the amounts add up to `amount`.
+	Payers      []PayerInput `json:"payers"`
+	SplitMethod SplitMethod  `json:"splitMethod"`
+	Splits      []Share      `json:"splits"`
+	Title       string       `json:"title"`
+
+	// Version Required when updating.
+	Version *int `json:"version,omitempty"`
+}
+
+// ExpensePage defines model for ExpensePage.
+type ExpensePage struct {
+	Items      []Expense `json:"items"`
+	NextCursor *string   `json:"nextCursor,omitempty"`
+}
+
+// Group defines model for Group.
+type Group struct {
+	Color     *int      `json:"color,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	Currency  string    `json:"currency"`
+	Emoji     *string   `json:"emoji,omitempty"`
+
+	// Members Everyone, including members who left, oldest first.
+	Members     []Member `json:"members"`
+	MinorDigits int      `json:"minorDigits"`
+	Name        string   `json:"name"`
+	Token       string   `json:"token"`
+}
+
+// GroupCreate defines model for GroupCreate.
+type GroupCreate struct {
+	// Color 0xRRGGBB
+	Color *int `json:"color,omitempty"`
+
+	// Currency ISO 4217 code
+	Currency string  `json:"currency"`
+	Emoji    *string `json:"emoji,omitempty"`
+
+	// Members Names of the first members, the creator first.
+	Members     []string `json:"members"`
+	MinorDigits *int     `json:"minorDigits,omitempty"`
+	Name        string   `json:"name"`
+}
+
+// GroupSummary defines model for GroupSummary.
+type GroupSummary struct {
+	// Balance Decimal amount with up to the group's `minorDigits` decimals.
+	Balance     *Money  `json:"balance,omitempty"`
+	Color       *int    `json:"color,omitempty"`
+	Currency    string  `json:"currency"`
+	Emoji       *string `json:"emoji,omitempty"`
+	MemberCount int     `json:"memberCount"`
+	MinorDigits int     `json:"minorDigits"`
+	Name        string  `json:"name"`
+	Token       string  `json:"token"`
+
+	// UpdatedAt Last activity in the group.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// GroupSummaryList defines model for GroupSummaryList.
+type GroupSummaryList struct {
+	Groups  []GroupSummary `json:"groups"`
+	Missing []string       `json:"missing"`
+}
+
+// GroupSummaryRequest defines model for GroupSummaryRequest.
+type GroupSummaryRequest struct {
+	Groups []struct {
+		// MemberId Who this device is in the group, for `balance`.
+		MemberId *string `json:"memberId,omitempty"`
+		Token    string  `json:"token"`
+	} `json:"groups"`
+}
+
+// GroupUpdate defines model for GroupUpdate.
+type GroupUpdate struct {
+	Color *int `json:"color,omitempty"`
+
+	// Emoji Empty string clears it.
+	Emoji *string `json:"emoji,omitempty"`
+	Name  *string `json:"name,omitempty"`
+}
+
+// Member defines model for Member.
+type Member struct {
+	// Balance Decimal amount with up to the group's `minorDigits` decimals.
+	Balance Money  `json:"balance"`
+	Color   *int   `json:"color,omitempty"`
+	Id      string `json:"id"`
+	Left    bool   `json:"left"`
+	Name    string `json:"name"`
+}
+
+// MemberBalance defines model for MemberBalance.
+type MemberBalance struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount   Money  `json:"amount"`
+	MemberId string `json:"memberId"`
+}
+
+// MemberInput defines model for MemberInput.
+type MemberInput struct {
+	Color *int   `json:"color,omitempty"`
+	Name  string `json:"name"`
+}
+
+// Money Decimal amount with up to the group's `minorDigits` decimals.
+type Money = string
+
 // OAuthProvider defines model for OAuthProvider.
 type OAuthProvider struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
+}
+
+// Payer defines model for Payer.
+type Payer struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount   Money  `json:"amount"`
+	MemberId string `json:"memberId"`
+}
+
+// PayerInput defines model for PayerInput.
+type PayerInput struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount   Money  `json:"amount"`
+	MemberId string `json:"memberId"`
+}
+
+// PaymentInput defines model for PaymentInput.
+type PaymentInput struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount       Money  `json:"amount"`
+	FromMemberId string `json:"fromMemberId"`
+
+	// OccurredAt Defaults to now.
+	OccurredAt *time.Time `json:"occurredAt,omitempty"`
+	ToMemberId string     `json:"toMemberId"`
 }
 
 // ServerInfo defines model for ServerInfo.
@@ -71,8 +283,196 @@ type ServerInfoAuthMode string
 // ServerInfoSignup defines model for ServerInfo.Signup.
 type ServerInfoSignup string
 
+// Share defines model for Share.
+type Share struct {
+	MemberId string `json:"memberId"`
+
+	// Value Ignored for `equal`; an amount for `exact`; a percentage for `percent`; a weight for `shares` (up to 4 decimals).
+	Value *string `json:"value,omitempty"`
+}
+
+// SplitMethod defines model for SplitMethod.
+type SplitMethod string
+
+// SplitPart defines model for SplitPart.
+type SplitPart struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount   Money  `json:"amount"`
+	MemberId string `json:"memberId"`
+
+	// Share The percentage or weight entered, for `percent` and `shares`.
+	Share *string `json:"share,omitempty"`
+}
+
+// Transfer defines model for Transfer.
+type Transfer struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount       Money  `json:"amount"`
+	FromMemberId string `json:"fromMemberId"`
+	ToMemberId   string `json:"toMemberId"`
+}
+
+// ActingMember defines model for ActingMember.
+type ActingMember = string
+
+// ExpenseId defines model for ExpenseId.
+type ExpenseId = string
+
+// MemberId defines model for MemberId.
+type MemberId = string
+
+// Token defines model for Token.
+type Token = string
+
+// UpdateGroupParams defines parameters for UpdateGroup.
+type UpdateGroupParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// ListActivityParams defines parameters for ListActivity.
+type ListActivityParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListExpensesParams defines parameters for ListExpenses.
+type ListExpensesParams struct {
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// CreateExpenseParams defines parameters for CreateExpense.
+type CreateExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// DeleteExpenseParams defines parameters for DeleteExpense.
+type DeleteExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateExpenseParams defines parameters for UpdateExpense.
+type UpdateExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// RestoreExpenseParams defines parameters for RestoreExpense.
+type RestoreExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// AddMemberParams defines parameters for AddMember.
+type AddMemberParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// RemoveMemberParams defines parameters for RemoveMember.
+type RemoveMemberParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateMemberParams defines parameters for UpdateMember.
+type UpdateMemberParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// CreatePaymentParams defines parameters for CreatePayment.
+type CreatePaymentParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// ResetGroupLinkParams defines parameters for ResetGroupLink.
+type ResetGroupLinkParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateGroupJSONRequestBody defines body for UpdateGroup for application/json ContentType.
+type UpdateGroupJSONRequestBody = GroupUpdate
+
+// CreateExpenseJSONRequestBody defines body for CreateExpense for application/json ContentType.
+type CreateExpenseJSONRequestBody = ExpenseInput
+
+// UpdateExpenseJSONRequestBody defines body for UpdateExpense for application/json ContentType.
+type UpdateExpenseJSONRequestBody = ExpenseInput
+
+// AddMemberJSONRequestBody defines body for AddMember for application/json ContentType.
+type AddMemberJSONRequestBody = MemberInput
+
+// UpdateMemberJSONRequestBody defines body for UpdateMember for application/json ContentType.
+type UpdateMemberJSONRequestBody = MemberInput
+
+// CreatePaymentJSONRequestBody defines body for CreatePayment for application/json ContentType.
+type CreatePaymentJSONRequestBody = PaymentInput
+
+// CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
+type CreateGroupJSONRequestBody = GroupCreate
+
+// GetGroupSummariesJSONRequestBody defines body for GetGroupSummaries for application/json ContentType.
+type GetGroupSummariesJSONRequestBody = GroupSummaryRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// The group, its members and their balances
+	// (GET /g/{token})
+	GetGroup(w http.ResponseWriter, r *http.Request, token Token)
+
+	// (PATCH /g/{token})
+	UpdateGroup(w http.ResponseWriter, r *http.Request, token Token, params UpdateGroupParams)
+	// What happened in the group, newest first
+	// (GET /g/{token}/activity)
+	ListActivity(w http.ResponseWriter, r *http.Request, token Token, params ListActivityParams)
+	// Net balances and the payments that settle them
+	// (GET /g/{token}/balances)
+	GetBalances(w http.ResponseWriter, r *http.Request, token Token)
+	// Expenses and payments, newest first
+	// (GET /g/{token}/expenses)
+	ListExpenses(w http.ResponseWriter, r *http.Request, token Token, params ListExpensesParams)
+
+	// (POST /g/{token}/expenses)
+	CreateExpense(w http.ResponseWriter, r *http.Request, token Token, params CreateExpenseParams)
+	// Delete (restorable)
+	// (DELETE /g/{token}/expenses/{expenseId})
+	DeleteExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params DeleteExpenseParams)
+	// One expense, also when deleted
+	// (GET /g/{token}/expenses/{expenseId})
+	GetExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId)
+
+	// (PUT /g/{token}/expenses/{expenseId})
+	UpdateExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params UpdateExpenseParams)
+	// Undo a delete
+	// (POST /g/{token}/expenses/{expenseId}/restore)
+	RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams)
+
+	// (POST /g/{token}/members)
+	AddMember(w http.ResponseWriter, r *http.Request, token Token, params AddMemberParams)
+	// Mark a member as having left
+	// (DELETE /g/{token}/members/{memberId})
+	RemoveMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params RemoveMemberParams)
+
+	// (PATCH /g/{token}/members/{memberId})
+	UpdateMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params UpdateMemberParams)
+	// Record that one member paid another
+	// (POST /g/{token}/payments)
+	CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams)
+	// Replace the token; the old link stops working
+	// (POST /g/{token}/reset-link)
+	ResetGroupLink(w http.ResponseWriter, r *http.Request, token Token, params ResetGroupLinkParams)
+	// Create a group with its first members
+	// (POST /groups)
+	CreateGroup(w http.ResponseWriter, r *http.Request)
+	// Home screen cards for the groups a device knows
+	// (POST /groups/summaries)
+	GetGroupSummaries(w http.ResponseWriter, r *http.Request)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(w http.ResponseWriter, r *http.Request)
@@ -86,6 +486,741 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetGroup operation middleware
+func (siw *ServerInterfaceWrapper) GetGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGroup(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGroup operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateGroupParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGroup(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListActivity operation middleware
+func (siw *ServerInterfaceWrapper) ListActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListActivityParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListActivity(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBalances operation middleware
+func (siw *ServerInterfaceWrapper) GetBalances(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBalances(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListExpenses operation middleware
+func (siw *ServerInterfaceWrapper) ListExpenses(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListExpensesParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListExpenses(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExpense operation middleware
+func (siw *ServerInterfaceWrapper) CreateExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExpense(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteExpense operation middleware
+func (siw *ServerInterfaceWrapper) DeleteExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteExpense(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExpense operation middleware
+func (siw *ServerInterfaceWrapper) GetExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExpense(w, r, token, expenseId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateExpense operation middleware
+func (siw *ServerInterfaceWrapper) UpdateExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateExpense(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreExpense operation middleware
+func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RestoreExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreExpense(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddMember operation middleware
+func (siw *ServerInterfaceWrapper) AddMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AddMemberParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddMember(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveMember operation middleware
+func (siw *ServerInterfaceWrapper) RemoveMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "memberId" -------------
+	var memberId MemberId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "memberId", r.PathValue("memberId"), &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "memberId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RemoveMemberParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveMember(w, r, token, memberId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMember operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "memberId" -------------
+	var memberId MemberId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "memberId", r.PathValue("memberId"), &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "memberId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateMemberParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMember(w, r, token, memberId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePayment operation middleware
+func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreatePaymentParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePayment(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetGroupLink operation middleware
+func (siw *ServerInterfaceWrapper) ResetGroupLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ResetGroupLinkParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetGroupLink(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGroup operation middleware
+func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGroup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGroupSummaries operation middleware
+func (siw *ServerInterfaceWrapper) GetGroupSummaries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGroupSummaries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetServerInfo operation middleware
 func (siw *ServerInterfaceWrapper) GetServerInfo(w http.ResponseWriter, r *http.Request) {
@@ -221,9 +1356,543 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}", wrapper.GetGroup)
+	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/balances", wrapper.GetBalances)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses", wrapper.ListExpenses)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses", wrapper.CreateExpense)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.DeleteExpense)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.GetExpense)
+	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.UpdateExpense)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses/{expenseId}/restore", wrapper.RestoreExpense)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members", wrapper.AddMember)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.RemoveMember)
+	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/reset-link", wrapper.ResetGroupLink)
+	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
+	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
 	m.HandleFunc("GET "+options.BaseURL+"/server-info", wrapper.GetServerInfo)
 
 	return m
+}
+
+type ErrorJSONResponse Error
+
+type GetGroupRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type GetGroupResponseObject interface {
+	VisitGetGroupResponse(w http.ResponseWriter) error
+}
+
+type GetGroup200JSONResponse Group
+
+func (response GetGroup200JSONResponse) VisitGetGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetGroupdefaultJSONResponse) VisitGetGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateGroupRequestObject struct {
+	Token  Token `json:"token"`
+	Params UpdateGroupParams
+	Body   *UpdateGroupJSONRequestBody
+}
+
+type UpdateGroupResponseObject interface {
+	VisitUpdateGroupResponse(w http.ResponseWriter) error
+}
+
+type UpdateGroup200JSONResponse Group
+
+func (response UpdateGroup200JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateGroupdefaultJSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ListActivityRequestObject struct {
+	Token  Token `json:"token"`
+	Params ListActivityParams
+}
+
+type ListActivityResponseObject interface {
+	VisitListActivityResponse(w http.ResponseWriter) error
+}
+
+type ListActivity200JSONResponse ActivityPage
+
+func (response ListActivity200JSONResponse) VisitListActivityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActivitydefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ListActivitydefaultJSONResponse) VisitListActivityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetBalancesRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type GetBalancesResponseObject interface {
+	VisitGetBalancesResponse(w http.ResponseWriter) error
+}
+
+type GetBalances200JSONResponse Balances
+
+func (response GetBalances200JSONResponse) VisitGetBalancesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetBalancesdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetBalancesdefaultJSONResponse) VisitGetBalancesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ListExpensesRequestObject struct {
+	Token  Token `json:"token"`
+	Params ListExpensesParams
+}
+
+type ListExpensesResponseObject interface {
+	VisitListExpensesResponse(w http.ResponseWriter) error
+}
+
+type ListExpenses200JSONResponse ExpensePage
+
+func (response ListExpenses200JSONResponse) VisitListExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListExpensesdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ListExpensesdefaultJSONResponse) VisitListExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type CreateExpenseRequestObject struct {
+	Token  Token `json:"token"`
+	Params CreateExpenseParams
+	Body   *CreateExpenseJSONRequestBody
+}
+
+type CreateExpenseResponseObject interface {
+	VisitCreateExpenseResponse(w http.ResponseWriter) error
+}
+
+type CreateExpense201JSONResponse Expense
+
+func (response CreateExpense201JSONResponse) VisitCreateExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response CreateExpensedefaultJSONResponse) VisitCreateExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteExpenseRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+	Params    DeleteExpenseParams
+}
+
+type DeleteExpenseResponseObject interface {
+	VisitDeleteExpenseResponse(w http.ResponseWriter) error
+}
+
+type DeleteExpense204Response struct {
+}
+
+func (response DeleteExpense204Response) VisitDeleteExpenseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteExpensedefaultJSONResponse) VisitDeleteExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetExpenseRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+}
+
+type GetExpenseResponseObject interface {
+	VisitGetExpenseResponse(w http.ResponseWriter) error
+}
+
+type GetExpense200JSONResponse Expense
+
+func (response GetExpense200JSONResponse) VisitGetExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetExpensedefaultJSONResponse) VisitGetExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateExpenseRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+	Params    UpdateExpenseParams
+	Body      *UpdateExpenseJSONRequestBody
+}
+
+type UpdateExpenseResponseObject interface {
+	VisitUpdateExpenseResponse(w http.ResponseWriter) error
+}
+
+type UpdateExpense200JSONResponse Expense
+
+func (response UpdateExpense200JSONResponse) VisitUpdateExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateExpensedefaultJSONResponse) VisitUpdateExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RestoreExpenseRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+	Params    RestoreExpenseParams
+}
+
+type RestoreExpenseResponseObject interface {
+	VisitRestoreExpenseResponse(w http.ResponseWriter) error
+}
+
+type RestoreExpense200JSONResponse Expense
+
+func (response RestoreExpense200JSONResponse) VisitRestoreExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RestoreExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RestoreExpensedefaultJSONResponse) VisitRestoreExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AddMemberRequestObject struct {
+	Token  Token `json:"token"`
+	Params AddMemberParams
+	Body   *AddMemberJSONRequestBody
+}
+
+type AddMemberResponseObject interface {
+	VisitAddMemberResponse(w http.ResponseWriter) error
+}
+
+type AddMember201JSONResponse Member
+
+func (response AddMember201JSONResponse) VisitAddMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddMemberdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response AddMemberdefaultJSONResponse) VisitAddMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RemoveMemberRequestObject struct {
+	Token    Token    `json:"token"`
+	MemberId MemberId `json:"memberId"`
+	Params   RemoveMemberParams
+}
+
+type RemoveMemberResponseObject interface {
+	VisitRemoveMemberResponse(w http.ResponseWriter) error
+}
+
+type RemoveMember204Response struct {
+}
+
+func (response RemoveMember204Response) VisitRemoveMemberResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveMemberdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RemoveMemberdefaultJSONResponse) VisitRemoveMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateMemberRequestObject struct {
+	Token    Token    `json:"token"`
+	MemberId MemberId `json:"memberId"`
+	Params   UpdateMemberParams
+	Body     *UpdateMemberJSONRequestBody
+}
+
+type UpdateMemberResponseObject interface {
+	VisitUpdateMemberResponse(w http.ResponseWriter) error
+}
+
+type UpdateMember200JSONResponse Member
+
+func (response UpdateMember200JSONResponse) VisitUpdateMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMemberdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateMemberdefaultJSONResponse) VisitUpdateMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type CreatePaymentRequestObject struct {
+	Token  Token `json:"token"`
+	Params CreatePaymentParams
+	Body   *CreatePaymentJSONRequestBody
+}
+
+type CreatePaymentResponseObject interface {
+	VisitCreatePaymentResponse(w http.ResponseWriter) error
+}
+
+type CreatePayment201JSONResponse Expense
+
+func (response CreatePayment201JSONResponse) VisitCreatePaymentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreatePaymentdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response CreatePaymentdefaultJSONResponse) VisitCreatePaymentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ResetGroupLinkRequestObject struct {
+	Token  Token `json:"token"`
+	Params ResetGroupLinkParams
+}
+
+type ResetGroupLinkResponseObject interface {
+	VisitResetGroupLinkResponse(w http.ResponseWriter) error
+}
+
+type ResetGroupLink200JSONResponse Group
+
+func (response ResetGroupLink200JSONResponse) VisitResetGroupLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ResetGroupLinkdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ResetGroupLinkdefaultJSONResponse) VisitResetGroupLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type CreateGroupRequestObject struct {
+	Body *CreateGroupJSONRequestBody
+}
+
+type CreateGroupResponseObject interface {
+	VisitCreateGroupResponse(w http.ResponseWriter) error
+}
+
+type CreateGroup201JSONResponse Group
+
+func (response CreateGroup201JSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response CreateGroupdefaultJSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetGroupSummariesRequestObject struct {
+	Body *GetGroupSummariesJSONRequestBody
+}
+
+type GetGroupSummariesResponseObject interface {
+	VisitGetGroupSummariesResponse(w http.ResponseWriter) error
+}
+
+type GetGroupSummaries200JSONResponse GroupSummaryList
+
+func (response GetGroupSummaries200JSONResponse) VisitGetGroupSummariesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetGroupSummariesdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetGroupSummariesdefaultJSONResponse) VisitGetGroupSummariesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type GetServerInfoRequestObject struct {
@@ -244,6 +1913,57 @@ func (response GetServerInfo200JSONResponse) VisitGetServerInfoResponse(w http.R
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// The group, its members and their balances
+	// (GET /g/{token})
+	GetGroup(ctx context.Context, request GetGroupRequestObject) (GetGroupResponseObject, error)
+
+	// (PATCH /g/{token})
+	UpdateGroup(ctx context.Context, request UpdateGroupRequestObject) (UpdateGroupResponseObject, error)
+	// What happened in the group, newest first
+	// (GET /g/{token}/activity)
+	ListActivity(ctx context.Context, request ListActivityRequestObject) (ListActivityResponseObject, error)
+	// Net balances and the payments that settle them
+	// (GET /g/{token}/balances)
+	GetBalances(ctx context.Context, request GetBalancesRequestObject) (GetBalancesResponseObject, error)
+	// Expenses and payments, newest first
+	// (GET /g/{token}/expenses)
+	ListExpenses(ctx context.Context, request ListExpensesRequestObject) (ListExpensesResponseObject, error)
+
+	// (POST /g/{token}/expenses)
+	CreateExpense(ctx context.Context, request CreateExpenseRequestObject) (CreateExpenseResponseObject, error)
+	// Delete (restorable)
+	// (DELETE /g/{token}/expenses/{expenseId})
+	DeleteExpense(ctx context.Context, request DeleteExpenseRequestObject) (DeleteExpenseResponseObject, error)
+	// One expense, also when deleted
+	// (GET /g/{token}/expenses/{expenseId})
+	GetExpense(ctx context.Context, request GetExpenseRequestObject) (GetExpenseResponseObject, error)
+
+	// (PUT /g/{token}/expenses/{expenseId})
+	UpdateExpense(ctx context.Context, request UpdateExpenseRequestObject) (UpdateExpenseResponseObject, error)
+	// Undo a delete
+	// (POST /g/{token}/expenses/{expenseId}/restore)
+	RestoreExpense(ctx context.Context, request RestoreExpenseRequestObject) (RestoreExpenseResponseObject, error)
+
+	// (POST /g/{token}/members)
+	AddMember(ctx context.Context, request AddMemberRequestObject) (AddMemberResponseObject, error)
+	// Mark a member as having left
+	// (DELETE /g/{token}/members/{memberId})
+	RemoveMember(ctx context.Context, request RemoveMemberRequestObject) (RemoveMemberResponseObject, error)
+
+	// (PATCH /g/{token}/members/{memberId})
+	UpdateMember(ctx context.Context, request UpdateMemberRequestObject) (UpdateMemberResponseObject, error)
+	// Record that one member paid another
+	// (POST /g/{token}/payments)
+	CreatePayment(ctx context.Context, request CreatePaymentRequestObject) (CreatePaymentResponseObject, error)
+	// Replace the token; the old link stops working
+	// (POST /g/{token}/reset-link)
+	ResetGroupLink(ctx context.Context, request ResetGroupLinkRequestObject) (ResetGroupLinkResponseObject, error)
+	// Create a group with its first members
+	// (POST /groups)
+	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
+	// Home screen cards for the groups a device knows
+	// (POST /groups/summaries)
+	GetGroupSummaries(ctx context.Context, request GetGroupSummariesRequestObject) (GetGroupSummariesResponseObject, error)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(ctx context.Context, request GetServerInfoRequestObject) (GetServerInfoResponseObject, error)
@@ -276,6 +1996,518 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetGroup operation middleware
+func (sh *strictHandler) GetGroup(w http.ResponseWriter, r *http.Request, token Token) {
+	var request GetGroupRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGroup(ctx, request.(GetGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGroupResponseObject); ok {
+		if err := validResponse.VisitGetGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateGroup operation middleware
+func (sh *strictHandler) UpdateGroup(w http.ResponseWriter, r *http.Request, token Token, params UpdateGroupParams) {
+	var request UpdateGroupRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body UpdateGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateGroup(ctx, request.(UpdateGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateGroupResponseObject); ok {
+		if err := validResponse.VisitUpdateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListActivity operation middleware
+func (sh *strictHandler) ListActivity(w http.ResponseWriter, r *http.Request, token Token, params ListActivityParams) {
+	var request ListActivityRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActivity(ctx, request.(ListActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListActivityResponseObject); ok {
+		if err := validResponse.VisitListActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBalances operation middleware
+func (sh *strictHandler) GetBalances(w http.ResponseWriter, r *http.Request, token Token) {
+	var request GetBalancesRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBalances(ctx, request.(GetBalancesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBalances")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBalancesResponseObject); ok {
+		if err := validResponse.VisitGetBalancesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListExpenses operation middleware
+func (sh *strictHandler) ListExpenses(w http.ResponseWriter, r *http.Request, token Token, params ListExpensesParams) {
+	var request ListExpensesRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListExpenses(ctx, request.(ListExpensesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListExpenses")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListExpensesResponseObject); ok {
+		if err := validResponse.VisitListExpensesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateExpense operation middleware
+func (sh *strictHandler) CreateExpense(w http.ResponseWriter, r *http.Request, token Token, params CreateExpenseParams) {
+	var request CreateExpenseRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body CreateExpenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateExpense(ctx, request.(CreateExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateExpenseResponseObject); ok {
+		if err := validResponse.VisitCreateExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteExpense operation middleware
+func (sh *strictHandler) DeleteExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params DeleteExpenseParams) {
+	var request DeleteExpenseRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteExpense(ctx, request.(DeleteExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteExpenseResponseObject); ok {
+		if err := validResponse.VisitDeleteExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetExpense operation middleware
+func (sh *strictHandler) GetExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId) {
+	var request GetExpenseRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExpense(ctx, request.(GetExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetExpenseResponseObject); ok {
+		if err := validResponse.VisitGetExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateExpense operation middleware
+func (sh *strictHandler) UpdateExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params UpdateExpenseParams) {
+	var request UpdateExpenseRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+	request.Params = params
+
+	var body UpdateExpenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateExpense(ctx, request.(UpdateExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateExpenseResponseObject); ok {
+		if err := validResponse.VisitUpdateExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreExpense operation middleware
+func (sh *strictHandler) RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams) {
+	var request RestoreExpenseRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreExpense(ctx, request.(RestoreExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreExpenseResponseObject); ok {
+		if err := validResponse.VisitRestoreExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddMember operation middleware
+func (sh *strictHandler) AddMember(w http.ResponseWriter, r *http.Request, token Token, params AddMemberParams) {
+	var request AddMemberRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body AddMemberJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddMember(ctx, request.(AddMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddMemberResponseObject); ok {
+		if err := validResponse.VisitAddMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveMember operation middleware
+func (sh *strictHandler) RemoveMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params RemoveMemberParams) {
+	var request RemoveMemberRequestObject
+
+	request.Token = token
+	request.MemberId = memberId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveMember(ctx, request.(RemoveMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveMemberResponseObject); ok {
+		if err := validResponse.VisitRemoveMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMember operation middleware
+func (sh *strictHandler) UpdateMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params UpdateMemberParams) {
+	var request UpdateMemberRequestObject
+
+	request.Token = token
+	request.MemberId = memberId
+	request.Params = params
+
+	var body UpdateMemberJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMember(ctx, request.(UpdateMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMemberResponseObject); ok {
+		if err := validResponse.VisitUpdateMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePayment operation middleware
+func (sh *strictHandler) CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams) {
+	var request CreatePaymentRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body CreatePaymentJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePayment(ctx, request.(CreatePaymentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePayment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePaymentResponseObject); ok {
+		if err := validResponse.VisitCreatePaymentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetGroupLink operation middleware
+func (sh *strictHandler) ResetGroupLink(w http.ResponseWriter, r *http.Request, token Token, params ResetGroupLinkParams) {
+	var request ResetGroupLinkRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetGroupLink(ctx, request.(ResetGroupLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetGroupLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetGroupLinkResponseObject); ok {
+		if err := validResponse.VisitResetGroupLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateGroup operation middleware
+func (sh *strictHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
+	var request CreateGroupRequestObject
+
+	var body CreateGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateGroup(ctx, request.(CreateGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateGroupResponseObject); ok {
+		if err := validResponse.VisitCreateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGroupSummaries operation middleware
+func (sh *strictHandler) GetGroupSummaries(w http.ResponseWriter, r *http.Request) {
+	var request GetGroupSummariesRequestObject
+
+	var body GetGroupSummariesJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGroupSummaries(ctx, request.(GetGroupSummariesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGroupSummaries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGroupSummariesResponseObject); ok {
+		if err := validResponse.VisitGetGroupSummariesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetServerInfo operation middleware

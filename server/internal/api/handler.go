@@ -21,8 +21,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 			writeError(w, http.StatusBadRequest, "bad_request")
 		},
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			s.log.Error("request failed", "path", r.URL.Path, "err", err)
-			writeError(w, http.StatusInternalServerError, "internal")
+			writeHandlerError(s.log, w, r, err)
 		},
 	})
 	HandlerWithOptions(strict, StdHTTPServerOptions{
@@ -101,16 +100,21 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rec, r)
-		// Never log /g/ paths in full: the token grants access to the group.
-		path := r.URL.Path
-		if strings.HasPrefix(path, "/g/") {
-			path = "/g/<token>"
-		} else if rest, ok := strings.CutPrefix(path, BasePath+"/g/"); ok {
-			_, after, _ := strings.Cut(rest, "/")
-			path = BasePath + "/g/<token>/" + after
-		}
-		log.Debug("request", "method", r.Method, "path", path, "status", rec.status, "duration", time.Since(start))
+		log.Debug("request", "method", r.Method, "path", maskPath(r.URL.Path), "status", rec.status, "duration", time.Since(start))
 	})
+}
+
+// maskPath hides group tokens: never log /g/ paths in full, the token grants
+// access to the group.
+func maskPath(path string) string {
+	if strings.HasPrefix(path, "/g/") {
+		return "/g/<token>"
+	}
+	if rest, ok := strings.CutPrefix(path, BasePath+"/g/"); ok {
+		_, after, _ := strings.Cut(rest, "/")
+		return BasePath + "/g/<token>/" + after
+	}
+	return path
 }
 
 func recoverer(log *slog.Logger, next http.Handler) http.Handler {
