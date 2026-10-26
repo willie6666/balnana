@@ -396,16 +396,18 @@ class ExpenseTile extends StatelessWidget {
     String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency);
 
     final e = expense;
+    final time = DateFormat.jm(Localizations.localeOf(context).toLanguageTag()).format(e.occurredAt.toLocal());
     final String title, subtitle;
     if (e.isPayment) {
       final from = _name(l10n, e.payers.first.memberId), to = _name(l10n, e.splits.first.memberId);
       title = l10n.paymentTitle(from, to);
-      subtitle = money(e.amount);
+      subtitle = '$time · ${money(e.amount)}';
     } else {
       title = e.title;
-      subtitle = e.payers.length == 1
+      final paidBy = e.payers.length == 1
           ? l10n.expensePaidBy(_name(l10n, e.payers.first.memberId), money(e.amount))
           : l10n.expensePaidByMany(e.payers.length, money(e.amount));
+      subtitle = '$time · $paidBy';
     }
 
     // What it means for this device's member.
@@ -519,7 +521,7 @@ class _PaymentSheet extends ConsumerWidget {
               formatMoney(context, payment.amount, group.minorDigits, group.currency),
               style: text.moneyHero.copyWith(fontSize: 36),
             ),
-            Text(DateFormat.yMMMEd(locale).format(payment.occurredAt.toLocal()), style: text.bodyMedium),
+            Text(DateFormat.yMMMEd(locale).add_jm().format(payment.occurredAt.toLocal()), style: text.bodyMedium),
             const SizedBox(height: BSpace.s24),
             OutlinedButton.icon(
               onPressed: () {

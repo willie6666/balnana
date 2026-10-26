@@ -314,6 +314,12 @@ class _EditorState extends ConsumerState<_Editor> {
     );
   }
 
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_date));
+    if (picked == null) return;
+    setState(() => _date = DateTime(_date.year, _date.month, _date.day, picked.hour, picked.minute));
+  }
+
   Future<void> _save() async {
     setState(() => _tried = true);
     final l10n = context.l10n;
@@ -473,8 +479,8 @@ class _EditorState extends ConsumerState<_Editor> {
                   border: InputBorder.none,
                   filled: false,
                   hintText: formatAmount(BigInt.zero, _digits),
-                  prefixText: symbol,
-                  prefixStyle: text.headlineMedium?.copyWith(color: scheme.onSurfaceVariant),
+                  prefixIcon: FieldAffix(symbol, style: text.headlineMedium),
+                  prefixIconConstraints: const BoxConstraints(),
                 ),
                 validator: (_) {
                   try {
@@ -521,6 +527,12 @@ class _EditorState extends ConsumerState<_Editor> {
                       icon: const Icon(Icons.event_outlined),
                       label: Text(DateFormat.yMMMEd(locale).format(_date)),
                     ),
+                  ),
+                  const SizedBox(width: BSpace.s8),
+                  OutlinedButton.icon(
+                    onPressed: _pickTime,
+                    icon: const Icon(Icons.schedule_outlined),
+                    label: Text(DateFormat.jm(locale).format(_date)),
                   ),
                 ],
               ),
@@ -631,7 +643,12 @@ class _PaidBy extends StatelessWidget {
                       textAlign: TextAlign.end,
                       keyboardType: TextInputType.numberWithOptions(decimal: s._digits > 0),
                       inputFormatters: [AmountFormatter(s._digits)],
-                      decoration: InputDecoration(isDense: true, prefixText: symbol, hintText: '0'),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        prefixIcon: FieldAffix(symbol),
+                        prefixIconConstraints: const BoxConstraints(),
+                        hintText: '0',
+                      ),
                     ),
                   ),
                 ],
@@ -651,6 +668,27 @@ class _PaidBy extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// A currency symbol or unit beside a field, shown even while it is empty.
+class FieldAffix extends StatelessWidget {
+  const FieldAffix(this.text, {super.key, this.end = false, this.style});
+
+  final String text;
+  final bool end;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsetsDirectional.only(start: end ? 4 : 12, end: end ? 12 : 4),
+      child: Text(
+        text,
+        style: (style ?? Theme.of(context).textTheme.bodyLarge)?.copyWith(color: scheme.onSurfaceVariant),
+      ),
     );
   }
 }
@@ -692,26 +730,6 @@ class _SplitRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (method != SplitMethod.equal && included)
-              SizedBox(
-                width: method == SplitMethod.exact ? 120 : 84,
-                child: TextField(
-                  controller: s._values[member.id],
-                  textAlign: TextAlign.end,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [AmountFormatter(method == SplitMethod.exact ? s._digits : 4)],
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: '0',
-                    prefixText: method == SplitMethod.exact ? symbol : null,
-                    suffixText: switch (method) {
-                      SplitMethod.percent => '%',
-                      SplitMethod.shares => '×',
-                      _ => null,
-                    },
-                  ),
-                ),
-              ),
             if (method != SplitMethod.exact)
               SizedBox(
                 width: 96,
@@ -723,6 +741,30 @@ class _SplitRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            if (method != SplitMethod.equal && included) ...[
+              const SizedBox(width: BSpace.s8),
+              SizedBox(
+                width: method == SplitMethod.exact ? 120 : 92,
+                child: TextField(
+                  controller: s._values[member.id],
+                  textAlign: TextAlign.end,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [AmountFormatter(method == SplitMethod.exact ? s._digits : 4)],
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: '0',
+                    prefixIcon: method == SplitMethod.exact ? FieldAffix(symbol) : null,
+                    prefixIconConstraints: const BoxConstraints(),
+                    suffixIcon: switch (method) {
+                      SplitMethod.percent => const FieldAffix('%', end: true),
+                      SplitMethod.shares => const FieldAffix('×', end: true),
+                      _ => null,
+                    },
+                    suffixIconConstraints: const BoxConstraints(),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
