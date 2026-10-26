@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -66,13 +67,27 @@ type client struct {
 	t      *testing.T
 	h      http.Handler
 	member string
+	token  string         // bearer session token
+	jar    []*http.Cookie // cookies the server set
+	header http.Header    // extra request headers
 }
 
 func newClient(t *testing.T) *client {
+	return newClientWith(t, map[string]string{})
+}
+
+// newClientWith starts a server with the given environment (on a fresh
+// database) and returns a client for it.
+func newClientWith(t *testing.T, env map[string]string) *client {
 	pool := testDB(t)
-	cfg := baseConfig(t, map[string]string{})
+	cfg := baseConfig(t, env)
 	s := NewServer(cfg, pool, slog.New(slog.DiscardHandler), "test")
 	return &client{t: t, h: NewHandler(s, http.NotFoundHandler())}
+}
+
+// another is a second client of the same server, with no session.
+func (c *client) another() *client {
+	return &client{t: c.t, h: c.h}
 }
 
 // call sends a request and decodes the JSON answer into out (when not nil).
@@ -89,8 +104,23 @@ func (c *client) call(method, path string, body any, out any) int {
 	if c.member != "" {
 		req.Header.Set("X-Balnana-Member", c.member)
 	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+	for _, ck := range c.jar {
+		req.AddCookie(ck)
+	}
+	for k, v := range c.header {
+		req.Header[k] = v
+	}
 	rec := httptest.NewRecorder()
 	c.h.ServeHTTP(rec, req)
+	for _, ck := range rec.Result().Cookies() {
+		c.jar = slices.DeleteFunc(c.jar, func(old *http.Cookie) bool { return old.Name == ck.Name })
+		if ck.MaxAge >= 0 {
+			c.jar = append(c.jar, ck)
+		}
+	}
 	if out != nil && rec.Body.Len() > 0 {
 		if err := json.Unmarshal(rec.Body.Bytes(), out); err != nil {
 			c.t.Fatalf("%s %s: decode %q: %v", method, path, rec.Body.String(), err)

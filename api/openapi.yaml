@@ -13,8 +13,20 @@ info:
     `Retry-After` header (seconds): per client there is a request cap
     (BALNANA_RATE_LIMIT) and a cap on asking for group tokens that do not
     exist.
+
+    Accounts mode (BALNANA_AUTH_MODE=accounts): sign in with /auth/login or
+    /auth/register. The web app asks for a session cookie (`cookie: true`);
+    other clients get a token to send as `Authorization: Bearer <token>`.
+    Group endpoints then need a session and membership in the group, unless
+    the group has link access, in which case its link alone is enough, as in
+    link mode. Without a session they answer 401 `sign_in_required`; for a
+    signed-in non-member, 403 `not_a_member` (see /g/{token}/join).
 servers:
   - url: /api/v1
+security:
+  - {}
+  - bearer: []
+  - cookie: []
 paths:
   /server-info:
     get:
@@ -31,7 +43,9 @@ paths:
     post:
       operationId: createGroup
       summary: Create a group with its first members
-      description: Link mode only for now. The response carries the secret token.
+      description: >-
+        The response carries the secret token. In accounts mode the creator
+        must be signed in and becomes the first member.
       requestBody:
         required: true
         content:
@@ -60,6 +74,115 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/GroupSummaryRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupSummaryList"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/register:
+    post:
+      operationId: register
+      summary: Create an account with email and password (accounts mode)
+      description: >-
+        Refused with 403 `signup_closed` when BALNANA_AUTH_SIGNUP is closed,
+        or invite_only and the address has no invitation. The first account
+        on a server can always be created.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/login:
+    post:
+      operationId: login
+      summary: Sign in with email and password (accounts mode)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: End this session
+      responses:
+        "204":
+          description: Signed out
+        default:
+          $ref: "#/components/responses/Error"
+  /me:
+    get:
+      operationId: getMe
+      summary: The signed-in account
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/password:
+    post:
+      operationId: changePassword
+      summary: Set a new password; other sessions are signed out
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChange"
+      responses:
+        "204":
+          description: Changed
+        default:
+          $ref: "#/components/responses/Error"
+  /me/groups:
+    get:
+      operationId: getMyGroups
+      summary: Home screen cards for the groups the account is a member of
       responses:
         "200":
           description: OK
@@ -114,6 +237,42 @@ paths:
       responses:
         "200":
           description: The group under its new token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/join:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getJoinInfo
+      summary: What a signed-in person needs to decide to join (accounts mode)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinInfo"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: joinGroup
+      summary: Become a member, as a new member or by claiming a placeholder
+      description: >-
+        Joining again after leaving brings the old member back. Joining when
+        already a member changes nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinInput"
+      responses:
+        "200":
+          description: The group, now with you in it
           content:
             application/json:
               schema:
@@ -385,11 +544,20 @@ components:
         log. Ignored when it is not a member of the group.
       schema:
         type: string
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+    cookie:
+      type: apiKey
+      in: cookie
+      name: balnana_session
   responses:
     Error:
       description: >-
-        An error. 400 for invalid input, 404 for an unknown group or item,
-        409 for conflicts.
+        An error. 400 for invalid input, 401 when signing in is needed, 403
+        when not allowed, 404 for an unknown group or item, 409 for
+        conflicts.
       content:
         application/json:
           schema:
@@ -421,9 +589,16 @@ components:
           default: 2
         members:
           type: array
-          description: Names of the first members, the creator first.
+          description: >-
+            Names of the first members, the creator first. In accounts mode
+            the first is the creator's name in this group.
           items:
             type: string
+        linkAccess:
+          type: boolean
+          description: >-
+            Accounts mode: let anyone with the link in, as in link mode.
+            Ignored unless the server allows it (`linkGroups`).
     GroupUpdate:
       type: object
       properties:
@@ -434,9 +609,14 @@ components:
           description: Empty string clears it.
         color:
           type: integer
+        linkAccess:
+          type: boolean
+          description: >-
+            Accounts mode, owners only, when the server allows it
+            (`linkGroups`).
     Group:
       type: object
-      required: [token, name, currency, minorDigits, createdAt, members]
+      required: [token, name, currency, minorDigits, createdAt, members, linkAccess]
       properties:
         token:
           type: string
@@ -458,9 +638,15 @@ components:
           description: Everyone, including members who left, oldest first.
           items:
             $ref: "#/components/schemas/Member"
+        linkAccess:
+          type: boolean
+          description: Whether the link alone opens the group (always in link mode).
+        myMemberId:
+          type: string
+          description: 'Accounts mode: the signed-in account''s member, if any.'
     Member:
       type: object
-      required: [id, name, left, balance]
+      required: [id, name, left, balance, owner, claimed]
       properties:
         id:
           type: string
@@ -470,6 +656,11 @@ components:
           type: integer
         left:
           type: boolean
+        owner:
+          type: boolean
+        claimed:
+          type: boolean
+          description: 'Accounts mode: an account is linked to this member.'
         balance:
           $ref: "#/components/schemas/Money"
     MemberInput:
@@ -735,6 +926,116 @@ components:
         createdAt:
           type: string
           format: date-time
+    RegisterInput:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          description: 8 to 200 characters.
+        name:
+          type: string
+        locale:
+          type: string
+        cookie:
+          type: boolean
+          description: 'Web app: keep the session in a cookie instead of returning a token.'
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        cookie:
+          type: boolean
+          description: 'Web app: keep the session in a cookie instead of returning a token.'
+    Session:
+      type: object
+      required: [user]
+      properties:
+        token:
+          type: string
+          description: 'Send as `Authorization: Bearer <token>`. Absent with `cookie: true`.'
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      required: [id, name, emailVerified, hasPassword]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        emailVerified:
+          type: boolean
+        name:
+          type: string
+        locale:
+          type: string
+        hasPassword:
+          type: boolean
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        locale:
+          type: string
+          description: Empty string follows the device.
+    PasswordChange:
+      type: object
+      required: [newPassword]
+      properties:
+        currentPassword:
+          type: string
+          description: Required when the account has a password.
+        newPassword:
+          type: string
+    JoinInfo:
+      type: object
+      required: [name, currency, members, member]
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+        currency:
+          type: string
+        member:
+          type: boolean
+          description: The account is already a member.
+        members:
+          type: array
+          description: Current members; unclaimed ones can be claimed.
+          items:
+            $ref: "#/components/schemas/JoinMember"
+    JoinMember:
+      type: object
+      required: [id, name, claimed]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: integer
+        claimed:
+          type: boolean
+    JoinInput:
+      type: object
+      properties:
+        claimMemberId:
+          type: string
+          description: An unclaimed member to become.
+        name:
+          type: string
+          description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
       required: [name, version, authMode, password, signup, email, oauthProviders, linkGroups, publicUrl, sourceUrl]

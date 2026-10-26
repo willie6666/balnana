@@ -7,6 +7,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// mayChange refuses changes to a member someone has claimed with their
+// account, unless they make them themselves or own the group.
+func mayChange(g *group, m *member) error {
+	if m.userID != nil && (g.me == nil || *g.me != m.id) && !g.owner {
+		return forbidden("not_allowed")
+	}
+	return nil
+}
+
 // checkNameFree refuses a name another current member already uses.
 func checkNameFree(members []member, name, except string) error {
 	for _, m := range members {
@@ -47,7 +56,7 @@ func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (Add
 		if active >= maxMembers {
 			return badRequest("too_many_members")
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -96,10 +105,13 @@ func (s *Server) UpdateMember(ctx context.Context, req UpdateMemberRequestObject
 		if m == nil {
 			return errNotFound
 		}
+		if err := mayChange(g, m); err != nil {
+			return err
+		}
 		if err := checkNameFree(members, name, m.id); err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -144,6 +156,9 @@ func (s *Server) RemoveMember(ctx context.Context, req RemoveMemberRequestObject
 		if m.left {
 			return nil
 		}
+		if err := mayChange(g, m); err != nil {
+			return err
+		}
 		nets, err := groupNets(ctx, tx, g.id)
 		if err != nil {
 			return err
@@ -151,7 +166,7 @@ func (s *Server) RemoveMember(ctx context.Context, req RemoveMemberRequestObject
 		if nets[m.id] != 0 {
 			return conflict("member_has_balance")
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 	"unicode"
@@ -38,23 +39,28 @@ const (
 	maxShareValue = 99_999_999_9999
 )
 
-// group is a row of the groups table.
+// group is a row of the groups table, plus what the request may do in it.
 type group struct {
-	id        string
-	token     string
-	name      string
-	emoji     *string
-	color     *int
-	currency  string
-	digits    int
-	createdAt time.Time
+	id         string
+	token      string
+	name       string
+	emoji      *string
+	color      *int
+	currency   string
+	digits     int
+	linkAccess bool
+	createdAt  time.Time
+
+	open  bool    // the link alone opens the group
+	me    *string // accounts mode: the signed-in account's member
+	owner bool    // ...who owns the group
 }
 
-const groupColumns = `id::text, token, name, emoji, color, currency, minor_digits, created_at`
+const groupColumns = `id::text, token, name, emoji, color, currency, minor_digits, link_access, created_at`
 
 func scanGroup(row pgx.Row) (*group, error) {
 	var g group
-	err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.digits, &g.createdAt)
+	err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.digits, &g.linkAccess, &g.createdAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
@@ -64,14 +70,15 @@ func scanGroup(row pgx.Row) (*group, error) {
 	return &g, nil
 }
 
-// groupByToken finds a live group a link may open. Pass lock to hold the
-// row until the transaction ends, so concurrent writes to one group queue up.
-func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock bool) (*group, error) {
-	if !validToken(token) || s.cfg.AuthMode == config.AuthModeAccounts && !s.cfg.LinkGroups {
+// findGroup finds a live group by token and works out who is asking, without
+// checking they may see it. Pass lock to hold the row until the transaction
+// ends, so concurrent writes to one group queue up.
+func (s *Server) findGroup(ctx context.Context, q querier, token string, lock bool) (*group, error) {
+	if !validToken(token) {
 		noteMiss(ctx)
 		return nil, errNotFound
 	}
-	sql := `select ` + groupColumns + ` from groups where token = $1 and archived_at is null and link_access`
+	sql := `select ` + groupColumns + ` from groups where token = $1 and archived_at is null`
 	if lock {
 		sql += ` for update`
 	}
@@ -79,7 +86,58 @@ func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock
 	if err == errNotFound {
 		noteMiss(ctx)
 	}
-	return g, err
+	if err != nil {
+		return nil, err
+	}
+	if err := s.resolveAccess(ctx, q, g); err != nil {
+		return nil, err
+	}
+	return g, nil
+}
+
+// resolveAccess fills in g.open, g.me and g.owner for this request.
+func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
+	accounts := s.cfg.AuthMode == config.AuthModeAccounts
+	g.open = !accounts || s.cfg.LinkGroups && g.linkAccess
+	g.me, g.owner = nil, false
+	if !accounts {
+		return nil
+	}
+	u, err := s.currentUser(ctx)
+	if err != nil || u == nil {
+		return err
+	}
+	var id string
+	err = q.QueryRow(ctx, `
+		select id::text, is_owner from members
+		where group_id = $1 and user_id = $2 and left_at is null`, g.id, u.id).Scan(&id, &g.owner)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	g.me = &id
+	return nil
+}
+
+// groupByToken finds a group the request may use: in link mode, or with link
+// access, the token is enough; otherwise the signed-in account must be a
+// member.
+func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock bool) (*group, error) {
+	g, err := s.findGroup(ctx, q, token, lock)
+	if err != nil {
+		return nil, err
+	}
+	if g.open || g.me != nil {
+		return g, nil
+	}
+	if u, err := s.currentUser(ctx); err != nil {
+		return nil, err
+	} else if u == nil {
+		return nil, &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
+	}
+	return nil, forbidden("not_a_member")
 }
 
 func newToken() string {
@@ -168,22 +226,24 @@ func cleanEmoji(e *string) (*string, error) {
 
 // member is a row of the members table.
 type member struct {
-	id    string
-	name  string
-	color *int
-	left  bool
+	id     string
+	name   string
+	color  *int
+	left   bool
+	owner  bool
+	userID *string
 }
 
 func groupMembers(ctx context.Context, q querier, groupID string) ([]member, error) {
 	rows, err := q.Query(ctx, `
-		select id::text, display_name, color, left_at is not null
+		select id::text, display_name, color, left_at is not null, is_owner, user_id::text
 		from members where group_id = $1 order by created_at, id`, groupID)
 	if err != nil {
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (member, error) {
 		var m member
-		err := row.Scan(&m.id, &m.name, &m.color, &m.left)
+		err := row.Scan(&m.id, &m.name, &m.color, &m.left, &m.owner, &m.userID)
 		return m, err
 	})
 }
@@ -229,6 +289,8 @@ func toMember(m member, nets map[string]int64, digits int) Member {
 		Name:    m.name,
 		Color:   m.color,
 		Left:    m.left,
+		Owner:   m.owner,
+		Claimed: m.userID != nil,
 		Balance: domain.FormatAmount(nets[m.id], digits),
 	}
 }
@@ -252,6 +314,8 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 		MinorDigits: g.digits,
 		CreatedAt:   g.createdAt,
 		Members:     make([]Member, 0, len(members)),
+		LinkAccess:  g.open,
+		MyMemberId:  g.me,
 	}
 	for _, m := range members {
 		out.Members = append(out.Members, toMember(m, nets, g.digits))
@@ -259,13 +323,17 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 	return out, nil
 }
 
-// actor resolves the X-Balnana-Member header to a member of the group, or nil.
-func actor(ctx context.Context, q querier, groupID string, header *string) (*string, error) {
+// actor is who is acting in the group: the signed-in account's member, or
+// else the member named by the X-Balnana-Member header (link rules), or nil.
+func actor(ctx context.Context, q querier, g *group, header *string) (*string, error) {
+	if g.me != nil {
+		return g.me, nil
+	}
 	if header == nil || !validUUID(*header) {
 		return nil, nil
 	}
 	var id string
-	err := q.QueryRow(ctx, `select id::text from members where id = $1 and group_id = $2`, *header, groupID).Scan(&id)
+	err := q.QueryRow(ctx, `select id::text from members where id = $1 and group_id = $2`, *header, g.id).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

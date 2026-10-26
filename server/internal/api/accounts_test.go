@@ -1,0 +1,212 @@
+package api
+
+import (
+	"net/http"
+	"testing"
+)
+
+func accountsClient(t *testing.T, env map[string]string) *client {
+	env["BALNANA_AUTH_MODE"] = "accounts"
+	return newClientWith(t, env)
+}
+
+// register signs c up and keeps the bearer token.
+func register(c *client, email, name string) User {
+	c.t.Helper()
+	var s Session
+	c.must(201, "POST", "/auth/register", RegisterInput{Email: email, Password: "correct horse", Name: name}, &s)
+	if s.Token == nil {
+		c.t.Fatal("no token")
+	}
+	c.token = *s.Token
+	return s.User
+}
+
+func TestPasswordHash(t *testing.T) {
+	h := hashPassword("hunter22")
+	if !checkPassword(h, "hunter22") || checkPassword(h, "hunter23") || checkPassword("garbage", "hunter22") {
+		t.Fatal("checkPassword wrong")
+	}
+	if hashPassword("hunter22") == h {
+		t.Fatal("no salt")
+	}
+}
+
+func TestSessions(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	if code := c.errorCode(401, "GET", "/me", nil); code != "sign_in_required" {
+		t.Fatal(code)
+	}
+	u := register(c, "ana@example.com", "Ana")
+	var me User
+	c.must(200, "GET", "/me", nil, &me)
+	if me.Id != u.Id || me.Name != "Ana" || !me.HasPassword {
+		t.Fatalf("me = %+v", me)
+	}
+	if code := c.another().errorCode(409, "POST", "/auth/register", RegisterInput{Email: "ANA@example.com", Password: "12345678", Name: "Other"}); code != "email_taken" {
+		t.Fatal(code)
+	}
+	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: "Ana <a@example.com>", Password: "12345678", Name: "X"}); code != "invalid_email" {
+		t.Fatal(code)
+	}
+	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: "b@example.com", Password: "short", Name: "X"}); code != "invalid_password" {
+		t.Fatal(code)
+	}
+
+	// Sign in on the web: the session lives in an HttpOnly cookie.
+	web := c.another()
+	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "wrong password"}); code != "invalid_credentials" {
+		t.Fatal(code)
+	}
+	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Email: "nobody@example.com", Password: "wrong password"}); code != "invalid_credentials" {
+		t.Fatal(code)
+	}
+	var s Session
+	web.must(200, "POST", "/auth/login", LoginInput{Email: "Ana@Example.com", Password: "correct horse", Cookie: ptr(true)}, &s)
+	if s.Token != nil || len(web.jar) != 1 || !web.jar[0].HttpOnly {
+		t.Fatalf("token %v, cookies %v", s.Token, web.jar)
+	}
+	web.must(200, "PATCH", "/me", UserUpdate{Name: ptr("Ana B"), Locale: ptr("en-GB")}, &me)
+	if me.Name != "Ana B" || me.Locale == nil || *me.Locale != "en-GB" {
+		t.Fatalf("me = %+v", me)
+	}
+
+	// Cookie sessions refuse writes from other sites.
+	web.header = http.Header{"Origin": {"https://evil.example"}}
+	if code := web.errorCode(403, "PATCH", "/me", UserUpdate{Name: ptr("Evil")}); code != "bad_origin" {
+		t.Fatal(code)
+	}
+	web.header = nil
+
+	// Changing the password signs out the other sessions.
+	c.must(204, "POST", "/me/password", PasswordChange{CurrentPassword: ptr("correct horse"), NewPassword: "battery staple"}, nil)
+	web.errorCode(401, "GET", "/me", nil)
+	if len(web.jar) != 0 {
+		t.Fatal("stale cookie kept")
+	}
+	c.must(200, "GET", "/me", nil, nil)
+	if code := c.errorCode(403, "POST", "/me/password", PasswordChange{CurrentPassword: ptr("correct horse"), NewPassword: "whatever123"}); code != "wrong_password" {
+		t.Fatal(code)
+	}
+
+	c.must(204, "POST", "/auth/logout", nil, nil)
+	c.errorCode(401, "GET", "/me", nil)
+}
+
+func TestSignupPolicy(t *testing.T) {
+	c := accountsClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "closed"})
+	register(c, "first@example.com", "First") // the first account is always allowed
+	if code := c.another().errorCode(403, "POST", "/auth/register", RegisterInput{Email: "second@example.com", Password: "12345678", Name: "Second"}); code != "signup_closed" {
+		t.Fatal(code)
+	}
+}
+
+func TestLinkModeHasNoAccounts(t *testing.T) {
+	c := newClient(t)
+	if code := c.errorCode(403, "POST", "/auth/login", LoginInput{Email: "a@example.com", Password: "12345678"}); code != "accounts_off" {
+		t.Fatal(code)
+	}
+}
+
+func TestAccountsGroupAccess(t *testing.T) {
+	ana := accountsClient(t, map[string]string{})
+	if code := ana.errorCode(401, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana"}}); code != "sign_in_required" {
+		t.Fatal(code)
+	}
+	register(ana, "ana@example.com", "Ana")
+	var g Group
+	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	if g.LinkAccess || g.MyMemberId == nil || *g.MyMemberId != g.Members[0].Id || !g.Members[0].Claimed || !g.Members[0].Owner || g.Members[1].Claimed {
+		t.Fatalf("group = %+v", g)
+	}
+	path := "/g/" + g.Token
+
+	// The link alone is not enough.
+	anon := ana.another()
+	if code := anon.errorCode(401, "GET", path, nil); code != "sign_in_required" {
+		t.Fatal(code)
+	}
+	ben := ana.another()
+	register(ben, "ben@example.com", "Benjamin")
+	if code := ben.errorCode(403, "GET", path, nil); code != "not_a_member" {
+		t.Fatal(code)
+	}
+	ben.errorCode(403, "GET", path+"/expenses", nil)
+
+	// Ben sees who he can be and claims his placeholder.
+	var info JoinInfo
+	ben.must(200, "GET", path+"/join", nil, &info)
+	if info.Name != "Flat" || info.Member || len(info.Members) != 2 || !info.Members[0].Claimed || info.Members[1].Claimed {
+		t.Fatalf("info = %+v", info)
+	}
+	if code := ben.errorCode(409, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[0].Id}); code != "member_claimed" {
+		t.Fatal(code)
+	}
+	var joined Group
+	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, &joined)
+	if joined.MyMemberId == nil || *joined.MyMemberId != g.Members[1].Id {
+		t.Fatalf("joined = %+v", joined)
+	}
+	ben.must(200, "GET", path, nil, nil)
+
+	// The account is the actor; the header is ignored.
+	ben.member = g.Members[0].Id
+	var e Expense
+	ben.must(201, "POST", path+"/expenses", ExpenseInput{
+		Title: "Rent", Amount: "100.00", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+		Payers: []PayerInput{{MemberId: g.Members[1].Id, Amount: "100.00"}}, SplitMethod: "equal",
+		Splits: []Share{{MemberId: g.Members[0].Id}, {MemberId: g.Members[1].Id}},
+	}, &e)
+	if e.CreatedBy == nil || *e.CreatedBy != g.Members[1].Id {
+		t.Fatalf("createdBy = %v", e.CreatedBy)
+	}
+	ben.member = ""
+
+	// Only Ana may rename Ana; only the owner may turn on link access.
+	if code := ben.errorCode(403, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Anna"}); code != "not_allowed" {
+		t.Fatal(code)
+	}
+	if code := ben.errorCode(403, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}); code != "owner_only" {
+		t.Fatal(code)
+	}
+
+	// Home lists the account's groups with its balance.
+	var mine GroupSummaryList
+	ben.must(200, "GET", "/me/groups", nil, &mine)
+	if len(mine.Groups) != 1 || mine.Groups[0].Balance == nil || *mine.Groups[0].Balance != "50.00" {
+		t.Fatalf("my groups = %+v", mine)
+	}
+
+	// With link access, the link opens the group to anyone again.
+	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, &g)
+	if !g.LinkAccess {
+		t.Fatal("link access not on")
+	}
+	anon.must(200, "GET", path, nil, nil)
+
+	// A new member joins under their account name, leaves and comes back.
+	cy := ana.another()
+	register(cy, "cy@example.com", "Cy")
+	cy.must(200, "POST", path+"/join", JoinInput{}, &joined)
+	cyID := *joined.MyMemberId
+	cy.must(204, "DELETE", path+"/members/"+cyID, nil, nil)
+	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(false)}, nil)
+	cy.errorCode(403, "GET", path, nil)
+	cy.must(200, "POST", path+"/join", JoinInput{}, &joined)
+	if *joined.MyMemberId != cyID {
+		t.Fatal("rejoining made a new member")
+	}
+}
+
+func TestLinkGroupsOff(t *testing.T) {
+	ana := accountsClient(t, map[string]string{"BALNANA_LINK_GROUPS": "false"})
+	register(ana, "ana@example.com", "Ana")
+	var g Group
+	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana"}, LinkAccess: ptr(true)}, &g)
+	if g.LinkAccess {
+		t.Fatal("link access on though the server forbids it")
+	}
+	if code := ana.errorCode(403, "PATCH", "/g/"+g.Token, GroupUpdate{LinkAccess: ptr(true)}); code != "link_groups_off" {
+		t.Fatal(code)
+	}
+}

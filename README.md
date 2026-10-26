@@ -33,6 +33,13 @@ addresses.
 Every setting is an environment variable; [.env.example](.env.example) lists them
 all, including the access mode (`link` or `accounts`), email and OAuth sign-in.
 
+In **link mode** (the default) a group's private link is all anyone needs. In
+**accounts mode** (`BALNANA_AUTH_MODE=accounts`) people sign in, and a link only lets
+signed-in people join the group, claiming one of its members or adding themselves.
+A group owner can still open a group to anyone with the link, unless
+`BALNANA_LINK_GROUPS=false`. The first account registered on a server can always
+register, even with `BALNANA_AUTH_SIGNUP=closed`.
+
 ### Connecting the apps
 
 - **Web**: the web app talks to the server that serves it. Nothing to configure.

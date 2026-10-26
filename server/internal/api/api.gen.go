@@ -16,6 +16,11 @@ import (
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
+const (
+	BearerScopes = "bearer.Scopes"
+	CookieScopes = "cookie.Scopes"
+)
+
 // Defines values for ExpenseKind.
 const (
 	ExpenseKindExpense ExpenseKind = "expense"
@@ -132,11 +137,17 @@ type Group struct {
 	Currency  string    `json:"currency"`
 	Emoji     *string   `json:"emoji,omitempty"`
 
+	// LinkAccess Whether the link alone opens the group (always in link mode).
+	LinkAccess bool `json:"linkAccess"`
+
 	// Members Everyone, including members who left, oldest first.
 	Members     []Member `json:"members"`
 	MinorDigits int      `json:"minorDigits"`
-	Name        string   `json:"name"`
-	Token       string   `json:"token"`
+
+	// MyMemberId Accounts mode: the signed-in account's member, if any.
+	MyMemberId *string `json:"myMemberId,omitempty"`
+	Name       string  `json:"name"`
+	Token      string  `json:"token"`
 }
 
 // GroupCreate defines model for GroupCreate.
@@ -148,7 +159,10 @@ type GroupCreate struct {
 	Currency string  `json:"currency"`
 	Emoji    *string `json:"emoji,omitempty"`
 
-	// Members Names of the first members, the creator first.
+	// LinkAccess Accounts mode: let anyone with the link in, as in link mode. Ignored unless the server allows it (`linkGroups`).
+	LinkAccess *bool `json:"linkAccess,omitempty"`
+
+	// Members Names of the first members, the creator first. In accounts mode the first is the creator's name in this group.
 	Members     []string `json:"members"`
 	MinorDigits *int     `json:"minorDigits,omitempty"`
 	Name        string   `json:"name"`
@@ -191,17 +205,63 @@ type GroupUpdate struct {
 
 	// Emoji Empty string clears it.
 	Emoji *string `json:"emoji,omitempty"`
-	Name  *string `json:"name,omitempty"`
+
+	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`).
+	LinkAccess *bool   `json:"linkAccess,omitempty"`
+	Name       *string `json:"name,omitempty"`
+}
+
+// JoinInfo defines model for JoinInfo.
+type JoinInfo struct {
+	Color    *int    `json:"color,omitempty"`
+	Currency string  `json:"currency"`
+	Emoji    *string `json:"emoji,omitempty"`
+
+	// Member The account is already a member.
+	Member bool `json:"member"`
+
+	// Members Current members; unclaimed ones can be claimed.
+	Members []JoinMember `json:"members"`
+	Name    string       `json:"name"`
+}
+
+// JoinInput defines model for JoinInput.
+type JoinInput struct {
+	// ClaimMemberId An unclaimed member to become.
+	ClaimMemberId *string `json:"claimMemberId,omitempty"`
+
+	// Name Name for a new member; defaults to the account name.
+	Name *string `json:"name,omitempty"`
+}
+
+// JoinMember defines model for JoinMember.
+type JoinMember struct {
+	Claimed bool   `json:"claimed"`
+	Color   *int   `json:"color,omitempty"`
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+}
+
+// LoginInput defines model for LoginInput.
+type LoginInput struct {
+	// Cookie Web app: keep the session in a cookie instead of returning a token.
+	Cookie   *bool  `json:"cookie,omitempty"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // Member defines model for Member.
 type Member struct {
 	// Balance Decimal amount with up to the group's `minorDigits` decimals.
-	Balance Money  `json:"balance"`
+	Balance Money `json:"balance"`
+
+	// Claimed Accounts mode: an account is linked to this member.
+	Claimed bool   `json:"claimed"`
 	Color   *int   `json:"color,omitempty"`
 	Id      string `json:"id"`
 	Left    bool   `json:"left"`
 	Name    string `json:"name"`
+	Owner   bool   `json:"owner"`
 }
 
 // MemberBalance defines model for MemberBalance.
@@ -224,6 +284,13 @@ type Money = string
 type OAuthProvider struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
+}
+
+// PasswordChange defines model for PasswordChange.
+type PasswordChange struct {
+	// CurrentPassword Required when the account has a password.
+	CurrentPassword *string `json:"currentPassword,omitempty"`
+	NewPassword     string  `json:"newPassword"`
 }
 
 // Payer defines model for Payer.
@@ -249,6 +316,18 @@ type PaymentInput struct {
 	// OccurredAt Defaults to now.
 	OccurredAt *time.Time `json:"occurredAt,omitempty"`
 	ToMemberId string     `json:"toMemberId"`
+}
+
+// RegisterInput defines model for RegisterInput.
+type RegisterInput struct {
+	// Cookie Web app: keep the session in a cookie instead of returning a token.
+	Cookie *bool   `json:"cookie,omitempty"`
+	Email  string  `json:"email"`
+	Locale *string `json:"locale,omitempty"`
+	Name   string  `json:"name"`
+
+	// Password 8 to 200 characters.
+	Password string `json:"password"`
 }
 
 // ServerInfo defines model for ServerInfo.
@@ -283,6 +362,13 @@ type ServerInfoAuthMode string
 // ServerInfoSignup defines model for ServerInfo.Signup.
 type ServerInfoSignup string
 
+// Session defines model for Session.
+type Session struct {
+	// Token Send as `Authorization: Bearer <token>`. Absent with `cookie: true`.
+	Token *string `json:"token,omitempty"`
+	User  User    `json:"user"`
+}
+
 // Share defines model for Share.
 type Share struct {
 	MemberId string `json:"memberId"`
@@ -310,6 +396,23 @@ type Transfer struct {
 	Amount       Money  `json:"amount"`
 	FromMemberId string `json:"fromMemberId"`
 	ToMemberId   string `json:"toMemberId"`
+}
+
+// User defines model for User.
+type User struct {
+	Email         *string `json:"email,omitempty"`
+	EmailVerified bool    `json:"emailVerified"`
+	HasPassword   bool    `json:"hasPassword"`
+	Id            string  `json:"id"`
+	Locale        *string `json:"locale,omitempty"`
+	Name          string  `json:"name"`
+}
+
+// UserUpdate defines model for UserUpdate.
+type UserUpdate struct {
+	// Locale Empty string follows the device.
+	Locale *string `json:"locale,omitempty"`
+	Name   *string `json:"name,omitempty"`
 }
 
 // ActingMember defines model for ActingMember.
@@ -396,6 +499,12 @@ type ResetGroupLinkParams struct {
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginInput
+
+// RegisterJSONRequestBody defines body for Register for application/json ContentType.
+type RegisterJSONRequestBody = RegisterInput
+
 // UpdateGroupJSONRequestBody defines body for UpdateGroup for application/json ContentType.
 type UpdateGroupJSONRequestBody = GroupUpdate
 
@@ -404,6 +513,9 @@ type CreateExpenseJSONRequestBody = ExpenseInput
 
 // UpdateExpenseJSONRequestBody defines body for UpdateExpense for application/json ContentType.
 type UpdateExpenseJSONRequestBody = ExpenseInput
+
+// JoinGroupJSONRequestBody defines body for JoinGroup for application/json ContentType.
+type JoinGroupJSONRequestBody = JoinInput
 
 // AddMemberJSONRequestBody defines body for AddMember for application/json ContentType.
 type AddMemberJSONRequestBody = MemberInput
@@ -420,8 +532,23 @@ type CreateGroupJSONRequestBody = GroupCreate
 // GetGroupSummariesJSONRequestBody defines body for GetGroupSummaries for application/json ContentType.
 type GetGroupSummariesJSONRequestBody = GroupSummaryRequest
 
+// UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
+type UpdateMeJSONRequestBody = UserUpdate
+
+// ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
+type ChangePasswordJSONRequestBody = PasswordChange
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Sign in with email and password (accounts mode)
+	// (POST /auth/login)
+	Login(w http.ResponseWriter, r *http.Request)
+	// End this session
+	// (POST /auth/logout)
+	Logout(w http.ResponseWriter, r *http.Request)
+	// Create an account with email and password (accounts mode)
+	// (POST /auth/register)
+	Register(w http.ResponseWriter, r *http.Request)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(w http.ResponseWriter, r *http.Request, token Token)
@@ -452,6 +579,12 @@ type ServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams)
+	// What a signed-in person needs to decide to join (accounts mode)
+	// (GET /g/{token}/join)
+	GetJoinInfo(w http.ResponseWriter, r *http.Request, token Token)
+	// Become a member, as a new member or by claiming a placeholder
+	// (POST /g/{token}/join)
+	JoinGroup(w http.ResponseWriter, r *http.Request, token Token)
 
 	// (POST /g/{token}/members)
 	AddMember(w http.ResponseWriter, r *http.Request, token Token, params AddMemberParams)
@@ -473,6 +606,18 @@ type ServerInterface interface {
 	// Home screen cards for the groups a device knows
 	// (POST /groups/summaries)
 	GetGroupSummaries(w http.ResponseWriter, r *http.Request)
+	// The signed-in account
+	// (GET /me)
+	GetMe(w http.ResponseWriter, r *http.Request)
+
+	// (PATCH /me)
+	UpdateMe(w http.ResponseWriter, r *http.Request)
+	// Home screen cards for the groups the account is a member of
+	// (GET /me/groups)
+	GetMyGroups(w http.ResponseWriter, r *http.Request)
+	// Set a new password; other sessions are signed out
+	// (POST /me/password)
+	ChangePassword(w http.ResponseWriter, r *http.Request)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(w http.ResponseWriter, r *http.Request)
@@ -487,6 +632,72 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Login(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Logout operation middleware
+func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Logout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Register operation middleware
+func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetGroup operation middleware
 func (siw *ServerInterfaceWrapper) GetGroup(w http.ResponseWriter, r *http.Request) {
 
@@ -500,6 +711,14 @@ func (siw *ServerInterfaceWrapper) GetGroup(w http.ResponseWriter, r *http.Reque
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGroup(w, r, token)
@@ -525,6 +744,14 @@ func (siw *ServerInterfaceWrapper) UpdateGroup(w http.ResponseWriter, r *http.Re
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params UpdateGroupParams
@@ -575,6 +802,14 @@ func (siw *ServerInterfaceWrapper) ListActivity(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListActivityParams
 
@@ -619,6 +854,14 @@ func (siw *ServerInterfaceWrapper) GetBalances(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBalances(w, r, token)
 	}))
@@ -643,6 +886,14 @@ func (siw *ServerInterfaceWrapper) ListExpenses(w http.ResponseWriter, r *http.R
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListExpensesParams
@@ -687,6 +938,14 @@ func (siw *ServerInterfaceWrapper) CreateExpense(w http.ResponseWriter, r *http.
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params CreateExpenseParams
@@ -746,6 +1005,14 @@ func (siw *ServerInterfaceWrapper) DeleteExpense(w http.ResponseWriter, r *http.
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params DeleteExpenseParams
 
@@ -804,6 +1071,14 @@ func (siw *ServerInterfaceWrapper) GetExpense(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetExpense(w, r, token, expenseId)
 	}))
@@ -837,6 +1112,14 @@ func (siw *ServerInterfaceWrapper) UpdateExpense(w http.ResponseWriter, r *http.
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params UpdateExpenseParams
@@ -896,6 +1179,14 @@ func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params RestoreExpenseParams
 
@@ -931,6 +1222,72 @@ func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetJoinInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetJoinInfo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetJoinInfo(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// JoinGroup operation middleware
+func (siw *ServerInterfaceWrapper) JoinGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.JoinGroup(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AddMember operation middleware
 func (siw *ServerInterfaceWrapper) AddMember(w http.ResponseWriter, r *http.Request) {
 
@@ -944,6 +1301,14 @@ func (siw *ServerInterfaceWrapper) AddMember(w http.ResponseWriter, r *http.Requ
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params AddMemberParams
@@ -1003,6 +1368,14 @@ func (siw *ServerInterfaceWrapper) RemoveMember(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params RemoveMemberParams
 
@@ -1061,6 +1434,14 @@ func (siw *ServerInterfaceWrapper) UpdateMember(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params UpdateMemberParams
 
@@ -1109,6 +1490,14 @@ func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params CreatePaymentParams
@@ -1159,6 +1548,14 @@ func (siw *ServerInterfaceWrapper) ResetGroupLink(w http.ResponseWriter, r *http
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ResetGroupLinkParams
 
@@ -1197,6 +1594,14 @@ func (siw *ServerInterfaceWrapper) ResetGroupLink(w http.ResponseWriter, r *http
 // CreateGroup operation middleware
 func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateGroup(w, r)
 	}))
@@ -1211,6 +1616,14 @@ func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Re
 // GetGroupSummaries operation middleware
 func (siw *ServerInterfaceWrapper) GetGroupSummaries(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGroupSummaries(w, r)
 	}))
@@ -1222,8 +1635,104 @@ func (siw *ServerInterfaceWrapper) GetGroupSummaries(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetMe operation middleware
+func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMe operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMe(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMyGroups operation middleware
+func (siw *ServerInterfaceWrapper) GetMyGroups(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMyGroups(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangePassword operation middleware
+func (siw *ServerInterfaceWrapper) ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangePassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetServerInfo operation middleware
 func (siw *ServerInterfaceWrapper) GetServerInfo(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetServerInfo(w, r)
@@ -1356,6 +1865,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.Logout)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}", wrapper.GetGroup)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
@@ -1366,6 +1878,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.GetExpense)
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.UpdateExpense)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses/{expenseId}/restore", wrapper.RestoreExpense)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/join", wrapper.GetJoinInfo)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/join", wrapper.JoinGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members", wrapper.AddMember)
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.RemoveMember)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
@@ -1373,12 +1887,101 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/reset-link", wrapper.ResetGroupLink)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
+	m.HandleFunc("GET "+options.BaseURL+"/me", wrapper.GetMe)
+	m.HandleFunc("PATCH "+options.BaseURL+"/me", wrapper.UpdateMe)
+	m.HandleFunc("GET "+options.BaseURL+"/me/groups", wrapper.GetMyGroups)
+	m.HandleFunc("POST "+options.BaseURL+"/me/password", wrapper.ChangePassword)
 	m.HandleFunc("GET "+options.BaseURL+"/server-info", wrapper.GetServerInfo)
 
 	return m
 }
 
 type ErrorJSONResponse Error
+
+type LoginRequestObject struct {
+	Body *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse Session
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type LogindefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response LogindefaultJSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type LogoutRequestObject struct {
+}
+
+type LogoutResponseObject interface {
+	VisitLogoutResponse(w http.ResponseWriter) error
+}
+
+type Logout204Response struct {
+}
+
+func (response Logout204Response) VisitLogoutResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type LogoutdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response LogoutdefaultJSONResponse) VisitLogoutResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RegisterRequestObject struct {
+	Body *RegisterJSONRequestBody
+}
+
+type RegisterResponseObject interface {
+	VisitRegisterResponse(w http.ResponseWriter) error
+}
+
+type Register201JSONResponse Session
+
+func (response Register201JSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RegisterdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RegisterdefaultJSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
 
 type GetGroupRequestObject struct {
 	Token Token `json:"token"`
@@ -1683,6 +2286,65 @@ func (response RestoreExpensedefaultJSONResponse) VisitRestoreExpenseResponse(w 
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetJoinInfoRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type GetJoinInfoResponseObject interface {
+	VisitGetJoinInfoResponse(w http.ResponseWriter) error
+}
+
+type GetJoinInfo200JSONResponse JoinInfo
+
+func (response GetJoinInfo200JSONResponse) VisitGetJoinInfoResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJoinInfodefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetJoinInfodefaultJSONResponse) VisitGetJoinInfoResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type JoinGroupRequestObject struct {
+	Token Token `json:"token"`
+	Body  *JoinGroupJSONRequestBody
+}
+
+type JoinGroupResponseObject interface {
+	VisitJoinGroupResponse(w http.ResponseWriter) error
+}
+
+type JoinGroup200JSONResponse Group
+
+func (response JoinGroup200JSONResponse) VisitJoinGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type JoinGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response JoinGroupdefaultJSONResponse) VisitJoinGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type AddMemberRequestObject struct {
 	Token  Token `json:"token"`
 	Params AddMemberParams
@@ -1895,6 +2557,119 @@ func (response GetGroupSummariesdefaultJSONResponse) VisitGetGroupSummariesRespo
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetMeRequestObject struct {
+}
+
+type GetMeResponseObject interface {
+	VisitGetMeResponse(w http.ResponseWriter) error
+}
+
+type GetMe200JSONResponse User
+
+func (response GetMe200JSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetMedefaultJSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateMeRequestObject struct {
+	Body *UpdateMeJSONRequestBody
+}
+
+type UpdateMeResponseObject interface {
+	VisitUpdateMeResponse(w http.ResponseWriter) error
+}
+
+type UpdateMe200JSONResponse User
+
+func (response UpdateMe200JSONResponse) VisitUpdateMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateMedefaultJSONResponse) VisitUpdateMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetMyGroupsRequestObject struct {
+}
+
+type GetMyGroupsResponseObject interface {
+	VisitGetMyGroupsResponse(w http.ResponseWriter) error
+}
+
+type GetMyGroups200JSONResponse GroupSummaryList
+
+func (response GetMyGroups200JSONResponse) VisitGetMyGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyGroupsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetMyGroupsdefaultJSONResponse) VisitGetMyGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ChangePasswordRequestObject struct {
+	Body *ChangePasswordJSONRequestBody
+}
+
+type ChangePasswordResponseObject interface {
+	VisitChangePasswordResponse(w http.ResponseWriter) error
+}
+
+type ChangePassword204Response struct {
+}
+
+func (response ChangePassword204Response) VisitChangePasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ChangePassworddefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ChangePassworddefaultJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetServerInfoRequestObject struct {
 }
 
@@ -1913,6 +2688,15 @@ func (response GetServerInfo200JSONResponse) VisitGetServerInfoResponse(w http.R
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Sign in with email and password (accounts mode)
+	// (POST /auth/login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// End this session
+	// (POST /auth/logout)
+	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// Create an account with email and password (accounts mode)
+	// (POST /auth/register)
+	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(ctx context.Context, request GetGroupRequestObject) (GetGroupResponseObject, error)
@@ -1943,6 +2727,12 @@ type StrictServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(ctx context.Context, request RestoreExpenseRequestObject) (RestoreExpenseResponseObject, error)
+	// What a signed-in person needs to decide to join (accounts mode)
+	// (GET /g/{token}/join)
+	GetJoinInfo(ctx context.Context, request GetJoinInfoRequestObject) (GetJoinInfoResponseObject, error)
+	// Become a member, as a new member or by claiming a placeholder
+	// (POST /g/{token}/join)
+	JoinGroup(ctx context.Context, request JoinGroupRequestObject) (JoinGroupResponseObject, error)
 
 	// (POST /g/{token}/members)
 	AddMember(ctx context.Context, request AddMemberRequestObject) (AddMemberResponseObject, error)
@@ -1964,6 +2754,18 @@ type StrictServerInterface interface {
 	// Home screen cards for the groups a device knows
 	// (POST /groups/summaries)
 	GetGroupSummaries(ctx context.Context, request GetGroupSummariesRequestObject) (GetGroupSummariesResponseObject, error)
+	// The signed-in account
+	// (GET /me)
+	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
+
+	// (PATCH /me)
+	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// Home screen cards for the groups the account is a member of
+	// (GET /me/groups)
+	GetMyGroups(ctx context.Context, request GetMyGroupsRequestObject) (GetMyGroupsResponseObject, error)
+	// Set a new password; other sessions are signed out
+	// (POST /me/password)
+	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(ctx context.Context, request GetServerInfoRequestObject) (GetServerInfoResponseObject, error)
@@ -1996,6 +2798,92 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequestObject
+
+	var body LoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Logout operation middleware
+func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var request LogoutRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Logout(ctx, request.(LogoutRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Logout")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LogoutResponseObject); ok {
+		if err := validResponse.VisitLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Register operation middleware
+func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var request RegisterRequestObject
+
+	var body RegisterJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Register(ctx, request.(RegisterRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Register")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegisterResponseObject); ok {
+		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetGroup operation middleware
@@ -2290,6 +3178,65 @@ func (sh *strictHandler) RestoreExpense(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// GetJoinInfo operation middleware
+func (sh *strictHandler) GetJoinInfo(w http.ResponseWriter, r *http.Request, token Token) {
+	var request GetJoinInfoRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetJoinInfo(ctx, request.(GetJoinInfoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetJoinInfo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetJoinInfoResponseObject); ok {
+		if err := validResponse.VisitGetJoinInfoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// JoinGroup operation middleware
+func (sh *strictHandler) JoinGroup(w http.ResponseWriter, r *http.Request, token Token) {
+	var request JoinGroupRequestObject
+
+	request.Token = token
+
+	var body JoinGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.JoinGroup(ctx, request.(JoinGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "JoinGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(JoinGroupResponseObject); ok {
+		if err := validResponse.VisitJoinGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // AddMember operation middleware
 func (sh *strictHandler) AddMember(w http.ResponseWriter, r *http.Request, token Token, params AddMemberParams) {
 	var request AddMemberRequestObject
@@ -2503,6 +3450,116 @@ func (sh *strictHandler) GetGroupSummaries(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetGroupSummariesResponseObject); ok {
 		if err := validResponse.VisitGetGroupSummariesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMe operation middleware
+func (sh *strictHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	var request GetMeRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMe(ctx, request.(GetMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMeResponseObject); ok {
+		if err := validResponse.VisitGetMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMe operation middleware
+func (sh *strictHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	var request UpdateMeRequestObject
+
+	var body UpdateMeJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMe(ctx, request.(UpdateMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMeResponseObject); ok {
+		if err := validResponse.VisitUpdateMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMyGroups operation middleware
+func (sh *strictHandler) GetMyGroups(w http.ResponseWriter, r *http.Request) {
+	var request GetMyGroupsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMyGroups(ctx, request.(GetMyGroupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMyGroups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMyGroupsResponseObject); ok {
+		if err := validResponse.VisitGetMyGroupsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangePassword operation middleware
+func (sh *strictHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	var request ChangePasswordRequestObject
+
+	var body ChangePasswordJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangePassword(ctx, request.(ChangePasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangePassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ChangePasswordResponseObject); ok {
+		if err := validResponse.VisitChangePasswordResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

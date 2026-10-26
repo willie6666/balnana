@@ -38,6 +38,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	mux.Handle("/", web)
 
 	var h http.Handler = mux
+	h = s.sessions(h)
 	h = rateLimit(s.cfg.RateLimit, s.cfg.TrustProxy, h)
 	h = cors(s.cfg.CORSOrigins, h)
 	h = securityHeaders(h)

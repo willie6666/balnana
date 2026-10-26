@@ -353,7 +353,7 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -392,7 +392,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -466,7 +466,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g.id, req.Params.XBalnanaMember)
+		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -511,7 +511,7 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			return err
 		}
 		if deleted != del {
-			who, err := actor(ctx, tx, g.id, header)
+			who, err := actor(ctx, tx, g, header)
 			if err != nil {
 				return err
 			}
