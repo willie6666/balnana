@@ -1,0 +1,91 @@
+{
+  "@@locale": "en",
+
+  "languageEndonym": "English",
+  "@languageEndonym": {
+    "description": "The name of this language, written in this language. Shown in the language picker."
+  },
+
+  "appTitle": "Balnana",
+  "@appTitle": {
+    "description": "The app name. Usually not translated."
+  },
+
+  "commonCancel": "Cancel",
+  "commonRetry": "Retry",
+  "commonSave": "Save",
+
+  "navGroups": "Groups",
+  "@navGroups": { "description": "Navigation destination: the list of groups." },
+  "navActivity": "Activity",
+  "@navActivity": { "description": "Navigation destination: recent changes across groups." },
+  "navSettings": "Settings",
+  "@navSettings": { "description": "Navigation destination: app settings." },
+
+  "groupsEmptyTitle": "No groups yet",
+  "groupsEmptyBody": "Groups you create or open from a link will show up here.",
+  "groupsNoServerTitle": "Connect to a server",
+  "groupsNoServerBody": "Balnana keeps your groups on a server you choose, such as one you host yourself.",
+  "groupsNoServerAction": "Choose server",
+  "groupsUnreachableTitle": "Can't reach the server",
+  "groupsUnreachableBody": "Check your connection, or the server address in Settings.",
+
+  "activityEmptyTitle": "Nothing here yet",
+  "activityEmptyBody": "New expenses and payments in your groups will appear here.",
+
+  "groupLinkTitle": "Group link",
+  "groupLinkBody": "Opening groups from a link is coming in the next version.",
+
+  "notFoundTitle": "Page not found",
+  "notFoundBody": "This address doesn't lead anywhere in Balnana.",
+  "notFoundAction": "Go to groups",
+
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "themeSystem": "System default",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "settingsDynamicColor": "Wallpaper colors",
+  "settingsDynamicColorSubtitle": "Use colors from your device instead of Balnana yellow",
+  "settingsPureBlack": "Pure black",
+  "settingsPureBlackSubtitle": "A darker dark theme for OLED screens",
+
+  "settingsLanguage": "Language",
+  "languageSystem": "System default",
+
+  "settingsConnection": "Connection",
+  "settingsServer": "Server",
+  "serverNotSet": "Not set",
+
+  "settingsAbout": "About",
+  "aboutVersion": "Version",
+  "aboutLicenses": "Open source licenses",
+  "aboutSource": "Source code",
+  "@aboutSource": { "description": "Opens where to get the source code of the server this app is connected to." },
+  "aboutSourceCopied": "Couldn't open a browser, so the link was copied",
+
+  "serverTitle": "Server",
+  "serverIntro": "Enter the address of a Balnana server. Anyone can host one; the address is usually where its web app opens.",
+  "serverUrlLabel": "Server address",
+  "serverUrlHint": "https://balnana.example.com",
+  "serverTest": "Test connection",
+  "serverSaveAnyway": "Save anyway",
+  "serverReset": "Use default",
+  "serverDefault": "Default: {url}",
+  "@serverDefault": {
+    "description": "Shows the server address this app uses when none is chosen.",
+    "placeholders": { "url": { "type": "String", "example": "https://balnana.example.com" } }
+  },
+  "serverConnected": "Connected to Balnana {version}",
+  "@serverConnected": {
+    "description": "Shown after a successful connection test.",
+    "placeholders": { "version": { "type": "String", "example": "1.0.0" } }
+  },
+  "serverModeLink": "Groups are shared by private link. No account needed.",
+  "serverModeAccounts": "People sign in with an account.",
+  "serverInsecure": "This address is not encrypted (http). Anyone on the network could read your data. Use https for servers outside your home network.",
+  "serverErrorInvalid": "Enter a web address, like balnana.example.com",
+  "serverErrorUnreachable": "Couldn't connect. Check the address and that the server is running.",
+  "serverErrorNotBalnana": "Something answered, but it isn't a Balnana server.",
+  "serverSaved": "Server saved"
+}

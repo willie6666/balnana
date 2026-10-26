@@ -1,0 +1,40 @@
+# Self-hosting Balnana:
+#   cp .env.example .env    # then edit it: at least POSTGRES_PASSWORD and BALNANA_PUBLIC_URL
+#   docker compose up -d --build
+# The web app and API are then on http://localhost:${BALNANA_PORT:-8080}.
+# Put a TLS reverse proxy (Caddy, Traefik, nginx) in front for public use.
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: balnana
+      POSTGRES_DB: balnana
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U balnana -d balnana"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  balnana:
+    build: .
+    image: balnana:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BALNANA_DATABASE_URL: postgres://balnana:${POSTGRES_PASSWORD}@db:5432/balnana?sslmode=disable
+      BALNANA_PUBLIC_URL: ${BALNANA_PUBLIC_URL:-http://localhost:8080}
+    ports:
+      - "${BALNANA_PORT:-8080}:8080"
+
+volumes:
+  db-data:

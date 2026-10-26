@@ -1,0 +1,86 @@
+openapi: 3.0.3
+info:
+  title: Balnana API
+  version: 0.1.0
+  description: |
+    Group expense splitting. See docs/PLAN.md for the access model.
+
+    Money is always a decimal string (for example "1234.50"), never a JSON
+    number. The number of decimal places is the group's `minorDigits`.
+    Errors carry a stable machine `code`; clients translate it.
+servers:
+  - url: /api/v1
+paths:
+  /server-info:
+    get:
+      operationId: getServerInfo
+      summary: Mode and enabled features, read by the app on startup
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerInfo"
+components:
+  schemas:
+    ServerInfo:
+      type: object
+      required: [name, version, authMode, password, signup, email, oauthProviders, linkGroups, publicUrl, sourceUrl]
+      properties:
+        name:
+          type: string
+          description: Always "balnana"; lets the app recognise a Balnana server.
+          example: balnana
+        version:
+          type: string
+          example: 0.1.0
+        authMode:
+          type: string
+          enum: [link, accounts]
+        password:
+          type: boolean
+          description: Email + password sign-in is available (accounts mode only).
+        signup:
+          type: string
+          enum: [open, invite_only, closed]
+        email:
+          type: boolean
+          description: The server can send email (verification, reset, invites).
+        oauthProviders:
+          type: array
+          items:
+            $ref: "#/components/schemas/OAuthProvider"
+        linkGroups:
+          type: boolean
+          description: Groups may be opened by link alone. Always true in link mode.
+        publicUrl:
+          type: string
+          description: Base URL used for group links.
+          example: https://balnana.example.com
+        sourceUrl:
+          type: string
+          description: >-
+            Where to get this server's source code (AGPL-3.0). Defaults to the
+            upstream repository.
+          example: https://github.com/willie6666/balnana
+    OAuthProvider:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          example: google
+        name:
+          type: string
+          example: Google
+    Error:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          example: not_found
+        params:
+          type: object
+          additionalProperties: true
