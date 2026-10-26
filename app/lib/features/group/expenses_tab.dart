@@ -538,8 +538,8 @@ class _PaymentSheet extends ConsumerWidget {
   }
 }
 
-/// Deletes [expense] and offers to bring it back.
-Future<void> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group group, Expense expense) async {
+/// Deletes [expense] and offers to bring it back; false when it could not.
+Future<bool> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group group, Expense expense) async {
   final l10n = context.l10n;
   final messenger = ScaffoldMessenger.of(context);
   // The page that asked may be gone by the time someone taps Undo.
@@ -549,7 +549,7 @@ Future<void> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group gr
     await api.deleteExpense(expense.id);
   } on ApiException catch (e) {
     messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
-    return;
+    return false;
   }
   refreshGroupIn(container, group.token);
   messenger.showSnackBar(
@@ -568,4 +568,5 @@ Future<void> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group gr
       ),
     ),
   );
+  return true;
 }

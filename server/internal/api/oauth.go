@@ -335,9 +335,21 @@ func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idCl
 			err := tx.QueryRow(ctx, `select id::text, email_verified from users where email = $1`, *email).Scan(&userID, &verified)
 			switch {
 			case err == nil && !verified:
-				// Whoever made that account may not own the address, and
-				// would keep its password.
-				return conflict("email_taken")
+				// Whoever made that account may not own the address, so the
+				// provider's word wins: the account becomes the address
+				// owner's, and its password and sessions stop working.
+				// Otherwise anyone could take an address first and keep its
+				// owner out. The owner can set a new password afterwards.
+				_, err := tx.Exec(ctx, `update users set email_verified = true, password_hash = null where id = $1`, userID)
+				if err != nil {
+					return err
+				}
+				if _, err := tx.Exec(ctx, `delete from sessions where user_id = $1`, userID); err != nil {
+					return err
+				}
+				if _, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1`, userID); err != nil {
+					return err
+				}
 			case err != nil && !errors.Is(err, pgx.ErrNoRows):
 				return err
 			}
@@ -394,8 +406,8 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 		return nil, err
 	}
 	err = s.db.QueryRow(ctx, `
-		select email::text, email_verified, password_hash is not null, display_name, locale
-		from users where id = $1`, u.id).Scan(&u.email, &u.verified, &u.hasPassword, &u.name, &u.locale)
+		select email::text, username::text, email_verified, password_hash is not null, display_name, locale
+		from users where id = $1`, u.id).Scan(&u.email, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
 	if err != nil {
 		return nil, err
 	}

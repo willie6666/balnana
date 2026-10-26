@@ -9,14 +9,29 @@ plugins {
 }
 
 // Release signing: android/key.properties (kept out of git) names the upload
-// keystore. Without it, release builds are signed with the debug key so
-// `flutter run --release` still works; such builds cannot update an installed
-// release. See README.md, "Android release builds".
+// keystore. Without it, release APKs are signed with the debug key, with a
+// warning, so `flutter run --release` still works; such builds cannot update
+// an installed release. App bundles are only for the Play Store, so they need
+// the real key. See README.md, "Android release builds".
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+
+gradle.taskGraph.whenReady {
+    if (hasReleaseKey) return@whenReady
+    val names = allTasks.map { it.name }
+    if (names.any { it.startsWith("bundle") && it.endsWith("Release") }) {
+        throw GradleException(
+            "No release key: create android/key.properties (README.md, \"Android release builds\") " +
+                "before building an app bundle."
+        )
+    }
+    if (names.any { it.startsWith("assemble") && it.endsWith("Release") }) {
+        logger.warn("WARNING: android/key.properties is missing, so this release APK is signed with the debug key.")
+    }
+}
 
 // Links to the server a build is made for open in the app (Android App
 // Links). The server is the one baked in with

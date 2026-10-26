@@ -30,6 +30,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'signup_closed' => l10n.errorSignupClosed,
     'invalid_credentials' => l10n.errorInvalidCredentials,
     'wrong_password' => l10n.errorWrongPassword,
+    'email_needed' => l10n.errorEmailNeeded,
     'accounts_off' || 'password_off' => l10n.errorAccountsOff,
     'email_off' => l10n.errorEmailOff,
     'invalid_token' => l10n.errorInvalidToken,

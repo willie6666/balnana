@@ -187,6 +187,18 @@ class BalnanaApi {
     (_) {},
   );
 
+  /// Sets the account's email address, or removes it when [email] is empty
+  /// (accounts with a username only). A new address needs verifying again.
+  Future<User> changeEmail(String email, {String? password}) => _send(
+    () => _dio.post<Object?>('/me/email', data: {'email': email, 'password': ?password}),
+    User.fromJson,
+  );
+
+  /// Deletes the account for good. Its members stay in their groups,
+  /// unclaimed; groups nobody else could reach go with it.
+  Future<void> deleteMe({String? password}) =>
+      _send(() => _dio.post<Object?>('/me/delete', data: {'password': ?password}), (_) {});
+
   /// The signed-in account's groups, most recently changed first.
   Future<List<GroupSummary>> myGroups() => _send(() => _dio.get<Object?>('/me/groups'), (data) {
     if (data is! Map<String, Object?> || data['groups'] is! List<Object?>) throw const FormatException('bad groups');
@@ -321,6 +333,10 @@ class GroupApi {
     () => _dio.post<Object?>('$_base/invites', data: {'email': email, 'memberId': ?member}),
     (_) {},
   );
+
+  /// Deletes the group with everything in it. In accounts mode only its
+  /// owner may.
+  Future<void> delete() => _send(() => _dio.delete<Object?>(_base, options: _as), (_) {});
 
   /// Issues a new link; the old one stops working.
   Future<Group> resetLink() =>
@@ -524,6 +540,24 @@ class AdminApi {
   Future<List<AdminSetting>> save(String token, Map<String, String> values) => _api._send(
     () => _dio.put<Object?>('/admin/settings', data: {'values': values}, options: _as(token)),
     AdminSetting.listFromJson,
+  );
+
+  /// Accounts whose name, address or username contains [query], newest
+  /// first, with how many match in all.
+  Future<(List<AdminUser>, int)> users(String token, {String query = ''}) => _api._send(
+    () => _dio.get<Object?>('/admin/users', queryParameters: {'q': query}, options: _as(token)),
+    (data) {
+      if (data case {'users': final List<Object?> users, 'total': final num total}) {
+        return ([for (final u in users) AdminUser.fromJson(u)], total.toInt());
+      }
+      throw const FormatException('bad users');
+    },
+  );
+
+  /// Deletes an account as the owner deleting it would.
+  Future<void> deleteUser(String token, String id) => _api._send(
+    () => _dio.delete<Object?>('/admin/users/${Uri.encodeComponent(id)}', options: _as(token)),
+    (_) {},
   );
 }
 

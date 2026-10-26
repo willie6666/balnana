@@ -156,6 +156,43 @@ paths:
                 $ref: "#/components/schemas/AdminSettings"
         default:
           $ref: "#/components/responses/Error"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      summary: The server's accounts, newest first, at most 200
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+        - name: q
+          in: query
+          description: Only accounts whose name, email address or username contains this.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserList"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: deleteAdminUser
+      summary: Delete an account, as /me/delete does
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "204":
+          description: Deleted
+        default:
+          $ref: "#/components/responses/Error"
   /groups:
     post:
       operationId: createGroup
@@ -504,6 +541,52 @@ paths:
           description: Changed
         default:
           $ref: "#/components/responses/Error"
+  /me/email:
+    post:
+      operationId: changeEmail
+      summary: Set, change or remove the account's email address
+      description: >-
+        A new address starts unverified; a verification link is emailed when
+        the server can send email. An empty address removes it, only from an
+        account that signs in with a username (400 `email_needed`). 409
+        `email_taken` when another account has it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailChange"
+      responses:
+        "200":
+          description: Changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/delete:
+    post:
+      operationId: deleteMe
+      summary: Delete the signed-in account
+      description: >-
+        Sessions, sign-in methods and email links go with it. In its groups
+        the account's member stays, unclaimed, so balances and history still
+        add up; ownership passes to the longest-standing other account. Groups
+        no other account can reach afterwards (no other account member, and
+        not open by link) are deleted. 403 `wrong_password` when the account
+        has a password and it is not given.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountDelete"
+      responses:
+        "204":
+          description: Deleted; the session has ended
+        default:
+          $ref: "#/components/responses/Error"
   /me/verify-email:
     post:
       operationId: sendVerifyEmail
@@ -598,12 +681,27 @@ paths:
                 $ref: "#/components/schemas/Group"
         default:
           $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteGroup
+      summary: Delete the group with everything in it, for good
+      description: >-
+        Accounts mode: the owner only (403 `owner_only`), or any account
+        member when the group has no owner left. Link mode: anyone with the
+        link.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Deleted
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/reset-link:
     parameters:
       - $ref: "#/components/parameters/Token"
     post:
       operationId: resetGroupLink
       summary: Replace the token; the old link stops working
+      description: Accounts mode, members only (403 `not_a_member`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1837,6 +1935,22 @@ components:
           description: Required when the account has a password.
         newPassword:
           type: string
+    EmailChange:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: The new address, or empty to remove it.
+        password:
+          type: string
+          description: Required when the account has a password (403 `wrong_password`).
+    AccountDelete:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Required when the account has a password.
     OAuthExchange:
       type: object
       required: [code, verifier]
@@ -1996,6 +2110,11 @@ components:
           description: >-
             Setting it up also needs the code the server printed in its log,
             since the server already held data when it first needed setting up.
+        privacyUrl:
+          type: string
+          description: >-
+            The server's own privacy policy (BALNANA_PRIVACY_URL). Without it
+            the app shows its built-in one.
     AdminSetupInput:
       type: object
       required: [password]
@@ -2060,6 +2179,44 @@ components:
           type: object
           additionalProperties:
             type: string
+    AdminUser:
+      type: object
+      required: [id, name, emailVerified, hasPassword, oauth, groups, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        emailVerified:
+          type: boolean
+        hasPassword:
+          type: boolean
+        oauth:
+          type: array
+          description: The providers the account signs in with.
+          items:
+            type: string
+        groups:
+          type: integer
+          description: Groups the account is a current member of.
+        createdAt:
+          type: string
+          format: date-time
+    AdminUserList:
+      type: object
+      required: [users, total]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+          description: Accounts matching, of which at most 200 are listed.
     PushDeviceInput:
       type: object
       required: [groups]

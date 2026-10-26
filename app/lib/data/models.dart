@@ -729,3 +729,48 @@ class AdminSetting {
   /// What is in force, the default when nothing sets it.
   String get effective => value ?? defaultValue;
 }
+
+/// One account, as the administrator sees it.
+@immutable
+class AdminUser {
+  const AdminUser({
+    required this.id,
+    required this.name,
+    this.email,
+    this.username,
+    this.emailVerified = false,
+    this.hasPassword = false,
+    this.oauth = const [],
+    this.groups = 0,
+    required this.createdAt,
+  });
+
+  factory AdminUser.fromJson(Object? data) {
+    final json = _object(data);
+    return AdminUser(
+      id: _req(json, 'id'),
+      name: _req(json, 'name'),
+      email: _opt(json, 'email'),
+      username: _opt(json, 'username'),
+      emailVerified: _opt<bool>(json, 'emailVerified') ?? false,
+      hasPassword: _opt<bool>(json, 'hasPassword') ?? false,
+      oauth: [...?_opt<List<Object?>>(json, 'oauth')?.whereType<String>()],
+      groups: _opt<num>(json, 'groups')?.toInt() ?? 0,
+      createdAt: _time(json, 'createdAt'),
+    );
+  }
+
+  final String id;
+  final String name;
+  final String? email;
+  final String? username;
+  final bool emailVerified;
+  final bool hasPassword;
+
+  /// The sign-in providers linked to the account, such as "google".
+  final List<String> oauth;
+
+  /// How many groups it is in.
+  final int groups;
+  final DateTime createdAt;
+}

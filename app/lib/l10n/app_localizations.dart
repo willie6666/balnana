@@ -3150,6 +3150,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to groups'**
   String get linkGoHome;
+
+  /// No description provided for @privacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyTitle;
+
+  /// No description provided for @privacyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Balnana is open-source software. Whoever runs the server this app is connected to (its operator) decides where your data is kept and is responsible for it. This page describes what the software itself stores and does.'**
+  String get privacyIntro;
+
+  /// No description provided for @privacyStoredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What is stored'**
+  String get privacyStoredTitle;
+
+  /// No description provided for @privacyStoredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device.'**
+  String get privacyStoredBody;
+
+  /// No description provided for @privacyUseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it is used'**
+  String get privacyUseTitle;
+
+  /// No description provided for @privacyUseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only to run the app: to show each group to its members, work out balances, and send the emails and notifications the app needs, such as address verification, password resets and invitations. The app has no ads and no analytics, and nothing is sold.'**
+  String get privacyUseBody;
+
+  /// No description provided for @privacySharedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see it'**
+  String get privacySharedTitle;
+
+  /// No description provided for @privacySharedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through Firebase Cloud Messaging.'**
+  String get privacySharedBody;
+
+  /// No description provided for @privacyDeviceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get privacyDeviceTitle;
+
+  /// No description provided for @privacyDeviceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them.'**
+  String get privacyDeviceBody;
+
+  /// No description provided for @privacyDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your data'**
+  String get privacyDeleteTitle;
+
+  /// No description provided for @privacyDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.'**
+  String get privacyDeleteBody;
+
+  /// No description provided for @privacyOperatorPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'The operator\'s privacy policy'**
+  String get privacyOperatorPolicy;
+
+  /// Short link to the privacy policy, under the sign-in form.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacyLink;
+
+  /// No description provided for @accountEmailAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add email address'**
+  String get accountEmailAdd;
+
+  /// No description provided for @accountEmailChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email address'**
+  String get accountEmailChange;
+
+  /// No description provided for @accountEmailNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get accountEmailNew;
+
+  /// No description provided for @accountEmailVerifyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll get a link to confirm the new address.'**
+  String get accountEmailVerifyNote;
+
+  /// No description provided for @accountEmailRemoveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty to remove your address. You keep signing in with your username.'**
+  String get accountEmailRemoveNote;
+
+  /// No description provided for @accountEmailSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address saved'**
+  String get accountEmailSaved;
+
+  /// No description provided for @accountEmailRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address removed'**
+  String get accountEmailRemoved;
+
+  /// No description provided for @accountConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password'**
+  String get accountConfirmPassword;
+
+  /// No description provided for @accountConfirmPasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm it\'s you.'**
+  String get accountConfirmPasswordHelp;
+
+  /// No description provided for @errorEmailNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'You sign in with your email address, so it can\'t be removed.'**
+  String get errorEmailNeeded;
+
+  /// No description provided for @accountDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get accountDelete;
+
+  /// No description provided for @accountDeleteHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove your account from this server'**
+  String get accountDeleteHelp;
+
+  /// No description provided for @accountDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get accountDeleteTitle;
+
+  /// No description provided for @accountDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is deleted for good, and you\'re signed out. In your groups your name stays as a member nobody has claimed, so balances still add up. Groups nobody else is in are deleted.'**
+  String get accountDeleteBody;
+
+  /// No description provided for @accountDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for good'**
+  String get accountDeleteAction;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted.'**
+  String get accountDeleted;
+
+  /// No description provided for @accountDeletePageSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to delete your account on this server.'**
+  String get accountDeletePageSignedOut;
+
+  /// No description provided for @accountDeletePageLinkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'This server has no accounts: a group\'s link is all anyone needs. To delete a group with everything in it, open the group\'s settings and choose Delete group.'**
+  String get accountDeletePageLinkMode;
+
+  /// No description provided for @groupDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete group'**
+  String get groupDelete;
+
+  /// No description provided for @groupDeleteHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete it with all its expenses, for everyone'**
+  String get groupDeleteHelp;
+
+  /// No description provided for @groupDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String groupDeleteTitle(String name);
+
+  /// No description provided for @groupDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The group and all its expenses, payments and history are deleted for everyone. This can\'t be undone. Type the group\'s name to confirm.'**
+  String get groupDeleteBody;
+
+  /// No description provided for @groupDeleteName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get groupDeleteName;
+
+  /// No description provided for @groupDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for good'**
+  String get groupDeleteAction;
+
+  /// No description provided for @groupDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Group deleted'**
+  String get groupDeleted;
+
+  /// No description provided for @groupDeleteOwnerOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the group\'s owner can delete it.'**
+  String get groupDeleteOwnerOnly;
+
+  /// No description provided for @expenseDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get expenseDiscardTitle;
+
+  /// No description provided for @expenseDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to this expense haven\'t been saved.'**
+  String get expenseDiscardBody;
+
+  /// No description provided for @expenseDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get expenseDiscard;
+
+  /// No description provided for @adminPrivacyUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy link'**
+  String get adminPrivacyUrl;
+
+  /// No description provided for @adminPrivacyUrlHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.'**
+  String get adminPrivacyUrlHelp;
+
+  /// No description provided for @adminUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get adminUsers;
+
+  /// No description provided for @adminUsersSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, email or username'**
+  String get adminUsersSearch;
+
+  /// No description provided for @adminUsersShown.
+  ///
+  /// In en, this message translates to:
+  /// **'{shown} of {total} accounts'**
+  String adminUsersShown(int shown, int total);
+
+  /// No description provided for @adminUsersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
+  String adminUsersCount(int count);
+
+  /// No description provided for @adminUsersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts match.'**
+  String get adminUsersEmpty;
+
+  /// No description provided for @adminUserGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No groups} =1{1 group} other{{count} groups}}'**
+  String adminUserGroups(int count);
+
+  /// No description provided for @adminUserUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'not verified'**
+  String get adminUserUnverified;
+
+  /// No description provided for @adminUserDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}\'s account?'**
+  String adminUserDeleteTitle(String name);
+
+  /// No description provided for @adminUserDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is deleted for good and signed out everywhere. Its name stays in its groups as a member nobody has claimed; groups nobody else is in are deleted.'**
+  String get adminUserDeleteBody;
+
+  /// No description provided for @adminUserDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted'**
+  String get adminUserDeleted;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

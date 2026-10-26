@@ -115,6 +115,9 @@ const (
 	createPerMinute = 1
 	inviteBurst     = 20
 	invitePerMinute = 1
+	// Accounts a client may sign up in a row, and how many an hour after.
+	signupBurst   = 10
+	signupPerHour = 6
 )
 
 var errRateLimited = &apiError{status: http.StatusTooManyRequests, code: "rate_limited"}
@@ -126,6 +129,18 @@ func (s *Server) limitCreates(ctx context.Context) error {
 		return nil
 	}
 	if !s.creates.take(requestClient(ctx), 1, time.Now()) {
+		return errRateLimited
+	}
+	return nil
+}
+
+// limitSignups counts a new password account against the client's
+// allowance, before its password is hashed. Off when BALNANA_RATE_LIMIT is 0.
+func (s *Server) limitSignups(ctx context.Context) error {
+	if s.conf().RateLimit == 0 {
+		return nil
+	}
+	if !s.signups.take(requestClient(ctx), 1, time.Now()) {
 		return errRateLimited
 	}
 	return nil

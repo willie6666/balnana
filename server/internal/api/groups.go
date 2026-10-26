@@ -312,6 +312,11 @@ func (s *Server) ResetGroupLink(ctx context.Context, req ResetGroupLinkRequestOb
 		if err != nil {
 			return err
 		}
+		// Whoever holds the link of a group open by link may use it, but
+		// only its members may lock the others out.
+		if s.conf().AuthMode == config.AuthModeAccounts && g.me == nil {
+			return forbidden("not_a_member")
+		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
@@ -337,4 +342,41 @@ func (s *Server) ResetGroupLink(ctx context.Context, req ResetGroupLinkRequestOb
 		return nil, err
 	}
 	return ResetGroupLink200JSONResponse(out), nil
+}
+
+func (s *Server) DeleteGroup(ctx context.Context, req DeleteGroupRequestObject) (DeleteGroupResponseObject, error) {
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		g, err := s.groupByToken(ctx, tx, req.Token, true)
+		if err != nil {
+			return err
+		}
+		if s.conf().AuthMode == config.AuthModeAccounts && !g.owner {
+			if g.me == nil {
+				return forbidden("not_a_member")
+			}
+			// A group whose owner has gone may be deleted by any member.
+			var owned bool
+			err := tx.QueryRow(ctx, `
+				select exists (select 1 from members
+				               where group_id = $1 and is_owner and user_id is not null and left_at is null)`,
+				g.id).Scan(&owned)
+			if err != nil {
+				return err
+			}
+			if owned {
+				return forbidden("owner_only")
+			}
+		}
+		if _, err := tx.Exec(ctx, `delete from groups where id = $1`, g.id); err != nil {
+			return err
+		}
+		// Open apps reload and find it gone.
+		_, err = tx.Exec(ctx, `select pg_notify($1, $2)`, changeChannel, g.id)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.log.Info("group deleted")
+	return DeleteGroup204Response{}, nil
 }

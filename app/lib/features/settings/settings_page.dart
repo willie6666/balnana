@@ -13,6 +13,7 @@ import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
 import 'my_groups.dart';
+import 'privacy_page.dart';
 
 /// Set with `--dart-define=BALNANA_VERSION=...` by release builds.
 const appVersion = String.fromEnvironment('BALNANA_VERSION', defaultValue: 'dev');
@@ -128,6 +129,12 @@ class SettingsPage extends ConsumerWidget {
                 applicationName: l10n.appTitle,
                 applicationVersion: appVersion,
               ),
+            ),
+            GroupedTile(
+              icon: Icons.privacy_tip_outlined,
+              title: l10n.privacyTitle,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => openPrivacyPolicy(context, ref),
             ),
             if (sourceUrl != null)
               GroupedTile(

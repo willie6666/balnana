@@ -1745,4 +1745,204 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkGoHome => 'Go to groups';
+
+  @override
+  String get privacyTitle => 'Privacy policy';
+
+  @override
+  String get privacyIntro =>
+      'Balnana is open-source software. Whoever runs the server this app is connected to (its operator) decides where your data is kept and is responsible for it. This page describes what the software itself stores and does.';
+
+  @override
+  String get privacyStoredTitle => 'What is stored';
+
+  @override
+  String get privacyStoredBody =>
+      'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device.';
+
+  @override
+  String get privacyUseTitle => 'How it is used';
+
+  @override
+  String get privacyUseBody =>
+      'Only to run the app: to show each group to its members, work out balances, and send the emails and notifications the app needs, such as address verification, password resets and invitations. The app has no ads and no analytics, and nothing is sold.';
+
+  @override
+  String get privacySharedTitle => 'Who can see it';
+
+  @override
+  String get privacySharedBody =>
+      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through Firebase Cloud Messaging.';
+
+  @override
+  String get privacyDeviceTitle => 'On this device';
+
+  @override
+  String get privacyDeviceBody =>
+      'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them.';
+
+  @override
+  String get privacyDeleteTitle => 'Deleting your data';
+
+  @override
+  String get privacyDeleteBody =>
+      'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.';
+
+  @override
+  String get privacyOperatorPolicy => 'The operator\'s privacy policy';
+
+  @override
+  String get privacyLink => 'Privacy';
+
+  @override
+  String get accountEmailAdd => 'Add email address';
+
+  @override
+  String get accountEmailChange => 'Change email address';
+
+  @override
+  String get accountEmailNew => 'Email address';
+
+  @override
+  String get accountEmailVerifyNote => 'You\'ll get a link to confirm the new address.';
+
+  @override
+  String get accountEmailRemoveNote =>
+      'Leave it empty to remove your address. You keep signing in with your username.';
+
+  @override
+  String get accountEmailSaved => 'Email address saved';
+
+  @override
+  String get accountEmailRemoved => 'Email address removed';
+
+  @override
+  String get accountConfirmPassword => 'Your password';
+
+  @override
+  String get accountConfirmPasswordHelp => 'To confirm it\'s you.';
+
+  @override
+  String get errorEmailNeeded => 'You sign in with your email address, so it can\'t be removed.';
+
+  @override
+  String get accountDelete => 'Delete account';
+
+  @override
+  String get accountDeleteHelp => 'Remove your account from this server';
+
+  @override
+  String get accountDeleteTitle => 'Delete your account?';
+
+  @override
+  String get accountDeleteBody =>
+      'Your account is deleted for good, and you\'re signed out. In your groups your name stays as a member nobody has claimed, so balances still add up. Groups nobody else is in are deleted.';
+
+  @override
+  String get accountDeleteAction => 'Delete for good';
+
+  @override
+  String get accountDeleted => 'Your account has been deleted.';
+
+  @override
+  String get accountDeletePageSignedOut => 'Sign in to delete your account on this server.';
+
+  @override
+  String get accountDeletePageLinkMode =>
+      'This server has no accounts: a group\'s link is all anyone needs. To delete a group with everything in it, open the group\'s settings and choose Delete group.';
+
+  @override
+  String get groupDelete => 'Delete group';
+
+  @override
+  String get groupDeleteHelp => 'Delete it with all its expenses, for everyone';
+
+  @override
+  String groupDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get groupDeleteBody =>
+      'The group and all its expenses, payments and history are deleted for everyone. This can\'t be undone. Type the group\'s name to confirm.';
+
+  @override
+  String get groupDeleteName => 'Group name';
+
+  @override
+  String get groupDeleteAction => 'Delete for good';
+
+  @override
+  String get groupDeleted => 'Group deleted';
+
+  @override
+  String get groupDeleteOwnerOnly => 'Only the group\'s owner can delete it.';
+
+  @override
+  String get expenseDiscardTitle => 'Discard changes?';
+
+  @override
+  String get expenseDiscardBody => 'Your changes to this expense haven\'t been saved.';
+
+  @override
+  String get expenseDiscard => 'Discard';
+
+  @override
+  String get adminPrivacyUrl => 'Privacy policy link';
+
+  @override
+  String get adminPrivacyUrlHelp =>
+      'Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.';
+
+  @override
+  String get adminUsers => 'Accounts';
+
+  @override
+  String get adminUsersSearch => 'Search by name, email or username';
+
+  @override
+  String adminUsersShown(int shown, int total) {
+    return '$shown of $total accounts';
+  }
+
+  @override
+  String adminUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts',
+      one: '1 account',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminUsersEmpty => 'No accounts match.';
+
+  @override
+  String adminUserGroups(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+      zero: 'No groups',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminUserUnverified => 'not verified';
+
+  @override
+  String adminUserDeleteTitle(String name) {
+    return 'Delete $name\'s account?';
+  }
+
+  @override
+  String get adminUserDeleteBody =>
+      'The account is deleted for good and signed out everywhere. Its name stays in its groups as a member nobody has claimed; groups nobody else is in are deleted.';
+
+  @override
+  String get adminUserDeleted => 'Account deleted';
 }

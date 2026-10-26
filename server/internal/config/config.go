@@ -74,6 +74,9 @@ type Config struct {
 	// SourceURL is where users can get this server's source code, as the AGPL
 	// asks of anyone running a modified version.
 	SourceURL *url.URL
+	// PrivacyURL is the server's own privacy policy; nil shows the app's
+	// built-in one.
+	PrivacyURL *url.URL
 
 	// WebDir serves the Flutter web build from disk instead of the embedded copy.
 	WebDir string
@@ -118,6 +121,7 @@ type Setting struct {
 var Managed = []Setting{
 	{Key: "BALNANA_PUBLIC_URL", Default: "http://localhost:8080"},
 	{Key: "BALNANA_SOURCE_URL", Default: UpstreamSourceURL},
+	{Key: "BALNANA_PRIVACY_URL"},
 	{Key: "BALNANA_AUTH_MODE", Default: string(AuthModeLink)},
 	{Key: "BALNANA_AUTH_PASSWORD", Default: "true"},
 	{Key: "BALNANA_AUTH_REQUIRE_EMAIL", Default: "true"},
@@ -263,6 +267,15 @@ func load(getenv func(string) string) (*Config, error) {
 
 	if c.DatabaseURL == "" {
 		e.fail("BALNANA_DATABASE_URL", "BALNANA_DATABASE_URL is required")
+	} else if pw := getenv("BALNANA_DATABASE_PASSWORD"); pw != "" {
+		// Given apart, the password needs no escaping to go into the URL.
+		u, err := url.Parse(c.DatabaseURL)
+		if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") {
+			e.fail("BALNANA_DATABASE_PASSWORD", "BALNANA_DATABASE_PASSWORD needs a postgres:// BALNANA_DATABASE_URL")
+		} else {
+			u.User = url.UserPassword(u.User.Username(), pw)
+			c.DatabaseURL = u.String()
+		}
 	}
 
 	publicURL := e.managed("BALNANA_PUBLIC_URL")
@@ -278,6 +291,14 @@ func load(getenv func(string) string) (*Config, error) {
 		e.fail("BALNANA_SOURCE_URL", "BALNANA_SOURCE_URL must be an absolute http(s) URL, got %q", sourceURL)
 	} else {
 		c.SourceURL = u
+	}
+
+	if privacyURL := e.managed("BALNANA_PRIVACY_URL"); privacyURL != "" {
+		if u, err := url.Parse(privacyURL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			e.fail("BALNANA_PRIVACY_URL", "BALNANA_PRIVACY_URL must be an absolute http(s) URL, got %q", privacyURL)
+		} else {
+			c.PrivacyURL = u
+		}
 	}
 
 	switch lvl := strings.ToLower(e.str("BALNANA_LOG_LEVEL", "info")); lvl {

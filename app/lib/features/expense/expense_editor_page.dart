@@ -415,8 +415,30 @@ class _EditorState extends ConsumerState<_Editor> {
   Future<void> _delete() async {
     final e = widget.expense!;
     final router = GoRouter.of(context);
-    await deleteExpenseWithUndo(context, ref, _group, e);
-    router.pop();
+    setState(() => _busy = true);
+    if (await deleteExpenseWithUndo(context, ref, _group, e)) {
+      router.pop();
+    } else if (mounted) {
+      setState(() => _busy = false);
+    }
+  }
+
+  /// Asks before leaving with changes that are not saved.
+  Future<void> _leave() async {
+    final l10n = context.l10n;
+    final navigator = Navigator.of(context);
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.expenseDiscardTitle),
+        content: Text(l10n.expenseDiscardBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.expenseDiscard)),
+        ],
+      ),
+    );
+    if (discard == true && mounted) navigator.pop();
   }
 
   @override
@@ -429,161 +451,171 @@ class _EditorState extends ConsumerState<_Editor> {
     final preview = _preview();
     final editing = widget.expense != null;
 
-    return FormPage(
-      title: editing ? l10n.expenseEdit : l10n.expenseNew,
-      submitLabel: l10n.commonSave,
-      busy: _busy,
-      onSubmit: _save,
-      actions: [
-        if (editing)
-          IconButton(tooltip: l10n.expenseDelete, icon: const Icon(Icons.delete_outline), onPressed: _delete),
-      ],
-      children: [
-        if (widget.newer != null && _dirty) ...[
-          Card.filled(
-            color: scheme.secondaryContainer,
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s12, BSpace.s8, BSpace.s8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(l10n.expenseChangedElsewhere, style: TextStyle(color: scheme.onSecondaryContainer)),
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton(
-                      onPressed: () => widget.onReload(widget.newer!),
-                      child: Text(l10n.conflictReload),
-                    ),
-                  ),
-                ],
-              ),
+    return PopScope(
+      canPop: !_dirty || _busy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave();
+      },
+      child: FormPage(
+        title: editing ? l10n.expenseEdit : l10n.expenseNew,
+        submitLabel: l10n.commonSave,
+        busy: _busy,
+        onSubmit: _save,
+        actions: [
+          if (editing)
+            IconButton(
+              tooltip: l10n.expenseDelete,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _busy ? null : _delete,
             ),
-          ),
-          const SizedBox(height: BSpace.s16),
         ],
-        Form(
-          key: _form,
-          autovalidateMode: _tried ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _amount,
-                autofocus: !editing,
-                textAlign: TextAlign.center,
-                style: text.moneyHero.copyWith(fontSize: 44),
-                keyboardType: TextInputType.numberWithOptions(decimal: _digits > 0),
-                inputFormatters: [AmountFormatter(_digits)],
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  filled: false,
-                  hintText: formatAmount(BigInt.zero, _digits),
-                  prefixIcon: FieldAffix(symbol, style: text.headlineMedium),
-                  prefixIconConstraints: const BoxConstraints(),
-                ),
-                validator: (_) {
-                  try {
-                    return _total == null ? l10n.errorInvalidAmount : null;
-                  } on MoneyException catch (e) {
-                    return moneyErrorMessage(l10n, e.error);
-                  }
-                },
-              ),
-              const SizedBox(height: BSpace.s8),
-              TextFormField(
-                controller: _title,
-                textCapitalization: TextCapitalization.sentences,
-                inputFormatters: [LengthLimitingTextInputFormatter(200)],
-                decoration: InputDecoration(labelText: l10n.expenseTitle, hintText: l10n.expenseTitleHint),
-                validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
-              ),
-              const SizedBox(height: BSpace.s12),
-              SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+        children: [
+          if (widget.newer != null && _dirty) ...[
+            Card.filled(
+              color: scheme.secondaryContainer,
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s12, BSpace.s8, BSpace.s8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final c in _group.offeredCategories(_category))
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: BSpace.s8),
-                        child: ChoiceChip(
-                          avatar: Text(c.emoji),
-                          label: Text(c.label(l10n)),
-                          showCheckmark: false,
-                          selected: _category == c.id,
-                          onSelected: (on) => setState(() => _category = on ? c.id : null),
-                        ),
+                    Text(l10n.expenseChangedElsewhere, style: TextStyle(color: scheme.onSecondaryContainer)),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        onPressed: () => widget.onReload(widget.newer!),
+                        child: Text(l10n.conflictReload),
                       ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: BSpace.s12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickDate,
-                      icon: const Icon(Icons.event_outlined),
-                      label: Text(DateFormat.yMMMEd(locale).format(_date)),
+            ),
+            const SizedBox(height: BSpace.s16),
+          ],
+          Form(
+            key: _form,
+            autovalidateMode: _tried ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  controller: _amount,
+                  autofocus: !editing,
+                  textAlign: TextAlign.center,
+                  style: text.moneyHero.copyWith(fontSize: 44),
+                  keyboardType: TextInputType.numberWithOptions(decimal: _digits > 0),
+                  inputFormatters: [AmountFormatter(_digits)],
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    filled: false,
+                    hintText: formatAmount(BigInt.zero, _digits),
+                    prefixIcon: FieldAffix(symbol, style: text.headlineMedium),
+                    prefixIconConstraints: const BoxConstraints(),
+                  ),
+                  validator: (_) {
+                    try {
+                      return _total == null ? l10n.errorInvalidAmount : null;
+                    } on MoneyException catch (e) {
+                      return moneyErrorMessage(l10n, e.error);
+                    }
+                  },
+                ),
+                const SizedBox(height: BSpace.s8),
+                TextFormField(
+                  controller: _title,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [LengthLimitingTextInputFormatter(200)],
+                  decoration: InputDecoration(labelText: l10n.expenseTitle, hintText: l10n.expenseTitleHint),
+                  validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
+                ),
+                const SizedBox(height: BSpace.s12),
+                SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (final c in _group.offeredCategories(_category))
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(end: BSpace.s8),
+                          child: ChoiceChip(
+                            avatar: Text(c.emoji),
+                            label: Text(c.label(l10n)),
+                            showCheckmark: false,
+                            selected: _category == c.id,
+                            onSelected: (on) => setState(() => _category = on ? c.id : null),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: BSpace.s12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickDate,
+                        icon: const Icon(Icons.event_outlined),
+                        label: Text(DateFormat.yMMMEd(locale).format(_date)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: BSpace.s8),
-                  OutlinedButton.icon(
-                    onPressed: _pickTime,
-                    icon: const Icon(Icons.schedule_outlined),
-                    label: Text(DateFormat.jm(locale).format(_date)),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: BSpace.s8),
+                    OutlinedButton.icon(
+                      onPressed: _pickTime,
+                      icon: const Icon(Icons.schedule_outlined),
+                      label: Text(DateFormat.jm(locale).format(_date)),
+                    ),
+                  ],
+                ),
 
-              FormSection(l10n.expensePaidByLabel),
-              _PaidBy(state: this, symbol: symbol),
+                FormSection(l10n.expensePaidByLabel),
+                _PaidBy(state: this, symbol: symbol),
 
-              FormSection(l10n.expenseSplit),
-              SegmentedButton<SplitMethod>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: SplitMethod.equal, label: Text(l10n.splitEqual)),
-                  ButtonSegment(value: SplitMethod.exact, label: Text(l10n.splitExact)),
-                  ButtonSegment(value: SplitMethod.percent, label: Text(l10n.splitPercent)),
-                  ButtonSegment(value: SplitMethod.shares, label: Text(l10n.splitShares)),
-                ],
-                selected: {_method},
-                onSelectionChanged: (s) => _setMethod(s.single),
-              ),
-              const SizedBox(height: BSpace.s12),
-              if (preview.shares case final shares?) SplitBar(people: _people, shares: shares),
-              for (final m in _people)
-                _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
-              _SplitSummary(state: this, error: preview.error),
+                FormSection(l10n.expenseSplit),
+                SegmentedButton<SplitMethod>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: SplitMethod.equal, label: Text(l10n.splitEqual)),
+                    ButtonSegment(value: SplitMethod.exact, label: Text(l10n.splitExact)),
+                    ButtonSegment(value: SplitMethod.percent, label: Text(l10n.splitPercent)),
+                    ButtonSegment(value: SplitMethod.shares, label: Text(l10n.splitShares)),
+                  ],
+                  selected: {_method},
+                  onSelectionChanged: (s) => _setMethod(s.single),
+                ),
+                const SizedBox(height: BSpace.s12),
+                if (preview.shares case final shares?) SplitBar(people: _people, shares: shares),
+                for (final m in _people)
+                  _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
+                _SplitSummary(state: this, error: preview.error),
 
-              FormSection(l10n.expenseNote),
-              TextFormField(
-                controller: _note,
-                minLines: 2,
-                maxLines: 5,
-                textCapitalization: TextCapitalization.sentences,
-                inputFormatters: [LengthLimitingTextInputFormatter(2000)],
-                decoration: InputDecoration(hintText: l10n.expenseNoteHint),
-              ),
+                FormSection(l10n.expenseNote),
+                TextFormField(
+                  controller: _note,
+                  minLines: 2,
+                  maxLines: 5,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [LengthLimitingTextInputFormatter(2000)],
+                  decoration: InputDecoration(hintText: l10n.expenseNoteHint),
+                ),
 
-              FormSection(l10n.expenseReceipt),
-              ReceiptField(
-                token: _group.token,
-                expenseId: widget.expense?.id,
-                saved: widget.hasReceipt && !_dropReceipt,
-                picked: _receipt,
-                onPicked: (r) => setState(() => _receipt = r),
-                onRemoved: () => setState(() {
-                  _receipt = null;
-                  _dropReceipt = widget.hasReceipt;
-                }),
-              ),
-            ],
+                FormSection(l10n.expenseReceipt),
+                ReceiptField(
+                  token: _group.token,
+                  expenseId: widget.expense?.id,
+                  saved: widget.hasReceipt && !_dropReceipt,
+                  picked: _receipt,
+                  onPicked: (r) => setState(() => _receipt = r),
+                  onRemoved: () => setState(() {
+                    _receipt = null;
+                    _dropReceipt = widget.hasReceipt;
+                  }),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
 import '../features/groups/link_page.dart';
 import '../features/not_found_page.dart';
+import '../features/settings/privacy_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/shell/shell.dart';
@@ -53,7 +54,15 @@ String? _redirect(Ref ref, GoRouterState state) {
 
 /// Pages opened from emails or coming back from a sign-in provider, which
 /// work signed out.
-const _publicLinks = ['/verify-email', '/reset-password', '/invite/', '/oauth-done', '/admin', '/link'];
+const _publicLinks = [
+  '/verify-email',
+  '/reset-password',
+  '/invite/',
+  '/oauth-done',
+  '/admin',
+  '/link',
+  '/privacy',
+];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
@@ -96,6 +105,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/invite/:token',
         builder: (context, state) => InvitePage(token: state.pathParameters['token']!),
       ),
+      GoRoute(path: '/privacy', builder: (context, state) => const PrivacyPage()),
+      // For app stores, which ask for a web page where accounts can be deleted.
+      GoRoute(path: '/delete-account', builder: (context, state) => const DeleteAccountPage()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [

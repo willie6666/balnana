@@ -352,6 +352,9 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	if err != nil {
 		return nil, err
 	}
+	if err := s.limitSignups(ctx); err != nil {
+		return nil, err
+	}
 	hash := hashPassword(in.Password)
 	var out Session
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -485,17 +488,8 @@ func (s *Server) ChangePassword(ctx context.Context, req ChangePasswordRequestOb
 	if err := validPassword(in.NewPassword); err != nil {
 		return nil, err
 	}
-	if u.hasPassword {
-		var hash string
-		if err := s.db.QueryRow(ctx, `select password_hash from users where id = $1`, u.id).Scan(&hash); err != nil {
-			return nil, err
-		}
-		if in.CurrentPassword == nil || !checkPassword(hash, *in.CurrentPassword) {
-			for range loginMissWeight {
-				noteMiss(ctx)
-			}
-			return nil, forbidden("wrong_password")
-		}
+	if err := s.confirmPassword(ctx, u, in.CurrentPassword); err != nil {
+		return nil, err
 	}
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `update users set password_hash = $2 where id = $1`, u.id, hashPassword(in.NewPassword)); err != nil {

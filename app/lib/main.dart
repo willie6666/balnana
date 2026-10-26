@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,10 @@ Future<void> main() async {
     final ofl = await rootBundle.loadString('assets/fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(const ['Plus Jakarta Sans'], ofl);
   });
+  // The web build draws on a canvas; without this, screen readers, browser
+  // find and automated tests see an empty page until someone turns on
+  // accessibility by hand.
+  if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   final prefs = await SharedPreferences.getInstance();
 
   runApp(

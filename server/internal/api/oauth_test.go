@@ -244,19 +244,33 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 		t.Fatalf("invitedMemberId = %v", info.InvitedMemberId)
 	}
 
-	// An account with the address that never confirmed it is not taken over.
+	// An account with the address that never confirmed it goes to the person
+	// the provider vouches for: its password and sessions stop working.
 	other := ana.another()
-	if e := oauthError(t, f.login(other, "/groups", person("a", "ana@example.com", "Ana G"))); e != "email_taken" {
-		t.Fatal(e)
-	}
-	// Once confirmed, signing in with the provider reaches it.
-	ana.must(204, "POST", "/me/verify-email", nil, nil)
-	ana.must(204, "POST", "/auth/verify-email", EmailToken{Token: lastPart(mail.next(t, "ana@example.com"))}, nil)
 	if e := oauthError(t, f.login(other, "/groups", person("a", "ana@example.com", "Ana G"))); e != "" {
 		t.Fatal(e)
 	}
 	var me User
 	other.must(200, "GET", "/me", nil, &me)
+	if me.Id != anaUser.Id || me.HasPassword || !me.EmailVerified {
+		t.Fatalf("me = %+v", me)
+	}
+	if code := ana.errorCode(401, "GET", "/me", nil); code != "sign_in_required" {
+		t.Fatal(code)
+	}
+	login := LoginInput{Login: "ana@example.com", Password: "correct horse"}
+	if code := ana.another().errorCode(401, "POST", "/auth/login", login); code != "invalid_credentials" {
+		t.Fatal(code)
+	}
+
+	// The owner sets a password again; another identity with the confirmed
+	// address reaches the same account and leaves it be.
+	other.must(204, "POST", "/me/password", PasswordChange{NewPassword: "a new password"}, nil)
+	third := ana.another()
+	if e := oauthError(t, f.login(third, "/groups", person("a2", "ana@example.com", "Ana G"))); e != "" {
+		t.Fatal(e)
+	}
+	third.must(200, "GET", "/me", nil, &me)
 	if me.Id != anaUser.Id || me.Name != "Ana" || !me.HasPassword {
 		t.Fatalf("me = %+v", me)
 	}

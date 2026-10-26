@@ -12,6 +12,7 @@ import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
+import '../settings/privacy_page.dart';
 import 'email_pages.dart';
 import 'oauth.dart';
 
@@ -297,6 +298,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     ),
                   ),
                 ),
+              const SizedBox(height: BSpace.s24),
+              Center(
+                child: TextButton(
+                  onPressed: () => openPrivacyPolicy(context, ref),
+                  child: Text(l10n.privacyLink),
+                ),
+              ),
             ],
           );
         },

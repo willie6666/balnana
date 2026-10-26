@@ -73,6 +73,12 @@ const (
 	ListExpensesParamsKindPayment ListExpensesParamsKind = "payment"
 )
 
+// AccountDelete defines model for AccountDelete.
+type AccountDelete struct {
+	// Password Required when the account has a password.
+	Password *string `json:"password,omitempty"`
+}
+
 // Activity defines model for Activity.
 type Activity struct {
 	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed. Payments use the expense actions with `kind: payment` in the payload.
@@ -143,6 +149,30 @@ type AdminSetupInput struct {
 	Password string `json:"password"`
 }
 
+// AdminUser defines model for AdminUser.
+type AdminUser struct {
+	CreatedAt     time.Time `json:"createdAt"`
+	Email         *string   `json:"email,omitempty"`
+	EmailVerified bool      `json:"emailVerified"`
+
+	// Groups Groups the account is a current member of.
+	Groups      int    `json:"groups"`
+	HasPassword bool   `json:"hasPassword"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+
+	// Oauth The providers the account signs in with.
+	Oauth    []string `json:"oauth"`
+	Username *string  `json:"username,omitempty"`
+}
+
+// AdminUserList defines model for AdminUserList.
+type AdminUserList struct {
+	// Total Accounts matching, of which at most 200 are listed.
+	Total int         `json:"total"`
+	Users []AdminUser `json:"users"`
+}
+
 // Balances defines model for Balances.
 type Balances struct {
 	Balances []MemberBalance `json:"balances"`
@@ -188,6 +218,15 @@ type CategoryUpdate struct {
 	Emoji  *string `json:"emoji,omitempty"`
 	Hidden *bool   `json:"hidden,omitempty"`
 	Name   *string `json:"name,omitempty"`
+}
+
+// EmailChange defines model for EmailChange.
+type EmailChange struct {
+	// Email The new address, or empty to remove it.
+	Email string `json:"email"`
+
+	// Password Required when the account has a password (403 `wrong_password`).
+	Password *string `json:"password,omitempty"`
 }
 
 // EmailToken defines model for EmailToken.
@@ -629,6 +668,9 @@ type ServerInfo struct {
 	// Password Email + password sign-in is available (accounts mode only).
 	Password bool `json:"password"`
 
+	// PrivacyUrl The server's own privacy policy (BALNANA_PRIVACY_URL). Without it the app shows its built-in one.
+	PrivacyUrl *string `json:"privacyUrl,omitempty"`
+
 	// PublicUrl Base URL used for group links.
 	PublicUrl string `json:"publicUrl"`
 
@@ -760,6 +802,21 @@ type UpdateAdminSettingsParams struct {
 	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
 }
 
+// ListAdminUsersParams defines parameters for ListAdminUsers.
+type ListAdminUsersParams struct {
+	// Q Only accounts whose name, email address or username contains this.
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
+
+// DeleteAdminUserParams defines parameters for DeleteAdminUser.
+type DeleteAdminUserParams struct {
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
+
 // OauthCallbackParams defines parameters for OauthCallback.
 type OauthCallbackParams struct {
 	Code         *string `form:"code,omitempty" json:"code,omitempty"`
@@ -781,6 +838,12 @@ type StartOAuthParams struct {
 
 // StartOAuthParamsApp defines parameters for StartOAuth.
 type StartOAuthParamsApp string
+
+// DeleteGroupParams defines parameters for DeleteGroup.
+type DeleteGroupParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
 
 // UpdateGroupParams defines parameters for UpdateGroup.
 type UpdateGroupParams struct {
@@ -993,6 +1056,12 @@ type GetGroupSummariesJSONRequestBody = GroupSummaryRequest
 // UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
 type UpdateMeJSONRequestBody = UserUpdate
 
+// DeleteMeJSONRequestBody defines body for DeleteMe for application/json ContentType.
+type DeleteMeJSONRequestBody = AccountDelete
+
+// ChangeEmailJSONRequestBody defines body for ChangeEmail for application/json ContentType.
+type ChangeEmailJSONRequestBody = EmailChange
+
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody = PasswordChange
 
@@ -1019,6 +1088,12 @@ type ServerInterface interface {
 	// Set the administrator password, once, on a new server
 	// (POST /admin/setup)
 	AdminSetup(w http.ResponseWriter, r *http.Request)
+	// The server's accounts, newest first, at most 200
+	// (GET /admin/users)
+	ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams)
+	// Delete an account, as /me/delete does
+	// (DELETE /admin/users/{userId})
+	DeleteAdminUser(w http.ResponseWriter, r *http.Request, userId string, params DeleteAdminUserParams)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(w http.ResponseWriter, r *http.Request, inviteToken string)
@@ -1049,6 +1124,9 @@ type ServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(w http.ResponseWriter, r *http.Request)
+	// Delete the group with everything in it, for good
+	// (DELETE /g/{token})
+	DeleteGroup(w http.ResponseWriter, r *http.Request, token Token, params DeleteGroupParams)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(w http.ResponseWriter, r *http.Request, token Token)
@@ -1145,6 +1223,12 @@ type ServerInterface interface {
 
 	// (PATCH /me)
 	UpdateMe(w http.ResponseWriter, r *http.Request)
+	// Delete the signed-in account
+	// (POST /me/delete)
+	DeleteMe(w http.ResponseWriter, r *http.Request)
+	// Set, change or remove the account's email address
+	// (POST /me/email)
+	ChangeEmail(w http.ResponseWriter, r *http.Request)
 	// Home screen cards for the groups the account is a member of
 	// (GET /me/groups)
 	GetMyGroups(w http.ResponseWriter, r *http.Request)
@@ -1401,6 +1485,119 @@ func (siw *ServerInterfaceWrapper) AdminSetup(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminSetup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAdminUsers operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminUsersParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "q", r.URL.Query(), &params.Q)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAdminUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAdminUser operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAdminUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "userId" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteAdminUserParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAdminUser(w, r, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1730,6 +1927,63 @@ func (siw *ServerInterfaceWrapper) VerifyEmail(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.VerifyEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteGroupParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGroup(w, r, token, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3323,6 +3577,50 @@ func (siw *ServerInterfaceWrapper) UpdateMe(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteMe operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMe(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangeEmail operation middleware
+func (siw *ServerInterfaceWrapper) ChangeEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangeEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMyGroups operation middleware
 func (siw *ServerInterfaceWrapper) GetMyGroups(w http.ResponseWriter, r *http.Request) {
 
@@ -3603,6 +3901,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/admin/settings", wrapper.GetAdminSettings)
 	m.HandleFunc("PUT "+options.BaseURL+"/admin/settings", wrapper.UpdateAdminSettings)
 	m.HandleFunc("POST "+options.BaseURL+"/admin/setup", wrapper.AdminSetup)
+	m.HandleFunc("GET "+options.BaseURL+"/admin/users", wrapper.ListAdminUsers)
+	m.HandleFunc("DELETE "+options.BaseURL+"/admin/users/{userId}", wrapper.DeleteAdminUser)
 	m.HandleFunc("GET "+options.BaseURL+"/auth/invites/{inviteToken}", wrapper.GetInvite)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.Logout)
@@ -3613,6 +3913,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset/confirm", wrapper.ResetPassword)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/verify-email", wrapper.VerifyEmail)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}", wrapper.DeleteGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}", wrapper.GetGroup)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
@@ -3645,6 +3946,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
 	m.HandleFunc("GET "+options.BaseURL+"/me", wrapper.GetMe)
 	m.HandleFunc("PATCH "+options.BaseURL+"/me", wrapper.UpdateMe)
+	m.HandleFunc("POST "+options.BaseURL+"/me/delete", wrapper.DeleteMe)
+	m.HandleFunc("POST "+options.BaseURL+"/me/email", wrapper.ChangeEmail)
 	m.HandleFunc("GET "+options.BaseURL+"/me/groups", wrapper.GetMyGroups)
 	m.HandleFunc("POST "+options.BaseURL+"/me/password", wrapper.ChangePassword)
 	m.HandleFunc("POST "+options.BaseURL+"/me/verify-email", wrapper.SendVerifyEmail)
@@ -3825,6 +4128,64 @@ type AdminSetupdefaultJSONResponse struct {
 }
 
 func (response AdminSetupdefaultJSONResponse) VisitAdminSetupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ListAdminUsersRequestObject struct {
+	Params ListAdminUsersParams
+}
+
+type ListAdminUsersResponseObject interface {
+	VisitListAdminUsersResponse(w http.ResponseWriter) error
+}
+
+type ListAdminUsers200JSONResponse AdminUserList
+
+func (response ListAdminUsers200JSONResponse) VisitListAdminUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListAdminUsersdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ListAdminUsersdefaultJSONResponse) VisitListAdminUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteAdminUserRequestObject struct {
+	UserId string `json:"userId"`
+	Params DeleteAdminUserParams
+}
+
+type DeleteAdminUserResponseObject interface {
+	VisitDeleteAdminUserResponse(w http.ResponseWriter) error
+}
+
+type DeleteAdminUser204Response struct {
+}
+
+func (response DeleteAdminUser204Response) VisitDeleteAdminUserResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAdminUserdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteAdminUserdefaultJSONResponse) VisitDeleteAdminUserResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -4122,6 +4483,35 @@ type VerifyEmaildefaultJSONResponse struct {
 }
 
 func (response VerifyEmaildefaultJSONResponse) VisitVerifyEmailResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteGroupRequestObject struct {
+	Token  Token `json:"token"`
+	Params DeleteGroupParams
+}
+
+type DeleteGroupResponseObject interface {
+	VisitDeleteGroupResponse(w http.ResponseWriter) error
+}
+
+type DeleteGroup204Response struct {
+}
+
+func (response DeleteGroup204Response) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteGroupdefaultJSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -5137,6 +5527,63 @@ func (response UpdateMedefaultJSONResponse) VisitUpdateMeResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type DeleteMeRequestObject struct {
+	Body *DeleteMeJSONRequestBody
+}
+
+type DeleteMeResponseObject interface {
+	VisitDeleteMeResponse(w http.ResponseWriter) error
+}
+
+type DeleteMe204Response struct {
+}
+
+func (response DeleteMe204Response) VisitDeleteMeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteMedefaultJSONResponse) VisitDeleteMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ChangeEmailRequestObject struct {
+	Body *ChangeEmailJSONRequestBody
+}
+
+type ChangeEmailResponseObject interface {
+	VisitChangeEmailResponse(w http.ResponseWriter) error
+}
+
+type ChangeEmail200JSONResponse User
+
+func (response ChangeEmail200JSONResponse) VisitChangeEmailResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ChangeEmaildefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ChangeEmaildefaultJSONResponse) VisitChangeEmailResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetMyGroupsRequestObject struct {
 }
 
@@ -5313,6 +5760,12 @@ type StrictServerInterface interface {
 	// Set the administrator password, once, on a new server
 	// (POST /admin/setup)
 	AdminSetup(ctx context.Context, request AdminSetupRequestObject) (AdminSetupResponseObject, error)
+	// The server's accounts, newest first, at most 200
+	// (GET /admin/users)
+	ListAdminUsers(ctx context.Context, request ListAdminUsersRequestObject) (ListAdminUsersResponseObject, error)
+	// Delete an account, as /me/delete does
+	// (DELETE /admin/users/{userId})
+	DeleteAdminUser(ctx context.Context, request DeleteAdminUserRequestObject) (DeleteAdminUserResponseObject, error)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -5343,6 +5796,9 @@ type StrictServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(ctx context.Context, request VerifyEmailRequestObject) (VerifyEmailResponseObject, error)
+	// Delete the group with everything in it, for good
+	// (DELETE /g/{token})
+	DeleteGroup(ctx context.Context, request DeleteGroupRequestObject) (DeleteGroupResponseObject, error)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(ctx context.Context, request GetGroupRequestObject) (GetGroupResponseObject, error)
@@ -5439,6 +5895,12 @@ type StrictServerInterface interface {
 
 	// (PATCH /me)
 	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// Delete the signed-in account
+	// (POST /me/delete)
+	DeleteMe(ctx context.Context, request DeleteMeRequestObject) (DeleteMeResponseObject, error)
+	// Set, change or remove the account's email address
+	// (POST /me/email)
+	ChangeEmail(ctx context.Context, request ChangeEmailRequestObject) (ChangeEmailResponseObject, error)
 	// Home screen cards for the groups the account is a member of
 	// (GET /me/groups)
 	GetMyGroups(ctx context.Context, request GetMyGroupsRequestObject) (GetMyGroupsResponseObject, error)
@@ -5661,6 +6123,59 @@ func (sh *strictHandler) AdminSetup(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminSetupResponseObject); ok {
 		if err := validResponse.VisitAdminSetupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAdminUsers operation middleware
+func (sh *strictHandler) ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams) {
+	var request ListAdminUsersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminUsers(ctx, request.(ListAdminUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAdminUsersResponseObject); ok {
+		if err := validResponse.VisitListAdminUsersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAdminUser operation middleware
+func (sh *strictHandler) DeleteAdminUser(w http.ResponseWriter, r *http.Request, userId string, params DeleteAdminUserParams) {
+	var request DeleteAdminUserRequestObject
+
+	request.UserId = userId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAdminUser(ctx, request.(DeleteAdminUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAdminUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAdminUserResponseObject); ok {
+		if err := validResponse.VisitDeleteAdminUserResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -5951,6 +6466,33 @@ func (sh *strictHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(VerifyEmailResponseObject); ok {
 		if err := validResponse.VisitVerifyEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGroup operation middleware
+func (sh *strictHandler) DeleteGroup(w http.ResponseWriter, r *http.Request, token Token, params DeleteGroupParams) {
+	var request DeleteGroupRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGroup(ctx, request.(DeleteGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGroupResponseObject); ok {
+		if err := validResponse.VisitDeleteGroupResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -6904,6 +7446,68 @@ func (sh *strictHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMeResponseObject); ok {
 		if err := validResponse.VisitUpdateMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMe operation middleware
+func (sh *strictHandler) DeleteMe(w http.ResponseWriter, r *http.Request) {
+	var request DeleteMeRequestObject
+
+	var body DeleteMeJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMe(ctx, request.(DeleteMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteMeResponseObject); ok {
+		if err := validResponse.VisitDeleteMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangeEmail operation middleware
+func (sh *strictHandler) ChangeEmail(w http.ResponseWriter, r *http.Request) {
+	var request ChangeEmailRequestObject
+
+	var body ChangeEmailJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangeEmail(ctx, request.(ChangeEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangeEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ChangeEmailResponseObject); ok {
+		if err := validResponse.VisitChangeEmailResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

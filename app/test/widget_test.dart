@@ -149,7 +149,7 @@ void main() {
 
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Import groups'));
+    await tester.ensureVisible(find.text('Export your groups'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Export your groups'));
     await tester.pumpAndSettle();

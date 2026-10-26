@@ -232,6 +232,27 @@ class _Settings extends ConsumerWidget {
     context.go('/groups');
   }
 
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(context: context, builder: (_) => _DeleteGroupDialog(name: group.name));
+    if (ok != true || !context.mounted) return;
+    try {
+      await groupApiOf(ref, group.token).delete();
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
+      return;
+    }
+    ref.read(knownGroupsProvider.notifier).remove(group.token);
+    ref.invalidate(summariesProvider);
+    ref.invalidate(activityFeedProvider);
+    ref.read(currentGroupProvider.notifier).set(null);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    context.go('/groups');
+    messenger.showSnackBar(SnackBar(content: Text(l10n.groupDeleted)));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
@@ -241,6 +262,10 @@ class _Settings extends ConsumerWidget {
     final accounts = ref.watch(accountsModeProvider);
     final linkGroups = ref.watch(serverInfoProvider.select((i) => i.value?.linkGroups ?? false));
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
+    // In accounts mode a group is its members' business, and deleting it its
+    // owner's (anyone's, once no owner is left).
+    final member = !accounts || me != null;
+    final canDelete = !accounts || (me != null && (me.owner || !group.activeMembers.any((m) => m.owner)));
 
     return BPage(
       title: l10n.groupSettings,
@@ -308,12 +333,13 @@ class _Settings extends ConsumerWidget {
                 value: group.linkAccess,
                 onChanged: (open) => _setLinkAccess(context, ref, open),
               ),
-            GroupedTile(
-              icon: Icons.lock_reset,
-              title: l10n.resetLinkTitle,
-              subtitle: l10n.resetLinkHelp,
-              onTap: () => _resetLink(context, ref),
-            ),
+            if (member)
+              GroupedTile(
+                icon: Icons.lock_reset,
+                title: l10n.resetLinkTitle,
+                subtitle: l10n.resetLinkHelp,
+                onTap: () => _resetLink(context, ref),
+              ),
           ],
         ),
         GroupedList(
@@ -361,6 +387,13 @@ class _Settings extends ConsumerWidget {
               subtitle: l10n.exportCsvHelp,
               onTap: () => _exportCsv(context, ref),
             ),
+            if (canDelete)
+              GroupedTile(
+                icon: Icons.delete_forever_outlined,
+                title: l10n.groupDelete,
+                subtitle: l10n.groupDeleteHelp,
+                onTap: () => _delete(context, ref),
+              ),
           ],
         ),
         if (signedIn && me != null)
@@ -495,6 +528,63 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Confirms deleting a group by having its name typed.
+class _DeleteGroupDialog extends StatefulWidget {
+  const _DeleteGroupDialog({required this.name});
+
+  final String name;
+
+  @override
+  State<_DeleteGroupDialog> createState() => _DeleteGroupDialogState();
+}
+
+class _DeleteGroupDialogState extends State<_DeleteGroupDialog> {
+  final _typed = TextEditingController();
+
+  bool get _matches => _typed.text.trim() == widget.name.trim();
+
+  @override
+  void dispose() {
+    _typed.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    return AlertDialog(
+      icon: const Icon(Icons.delete_forever_outlined),
+      title: Text(l10n.groupDeleteTitle(widget.name)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l10n.groupDeleteBody),
+          const SizedBox(height: BSpace.s16),
+          TextField(
+            controller: _typed,
+            autofocus: true,
+            autocorrect: false,
+            decoration: InputDecoration(labelText: l10n.groupDeleteName, hintText: widget.name),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) {
+              if (_matches) Navigator.of(context).pop(true);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: scheme.error, foregroundColor: scheme.onError),
+          onPressed: _matches ? () => Navigator.of(context).pop(true) : null,
+          child: Text(l10n.groupDeleteAction),
+        ),
+      ],
     );
   }
 }

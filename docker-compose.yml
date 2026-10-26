@@ -32,7 +32,9 @@ services:
       - path: .env
         required: false
     environment:
-      BALNANA_DATABASE_URL: postgres://balnana:${POSTGRES_PASSWORD}@db:5432/balnana?sslmode=disable
+      BALNANA_DATABASE_URL: postgres://balnana@db:5432/balnana?sslmode=disable
+      # Apart from the URL, so the password may hold any character.
+      BALNANA_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
       # Empty unless .env sets it, so it can be set at /admin instead.
       BALNANA_PUBLIC_URL: ${BALNANA_PUBLIC_URL:-}
     ports:

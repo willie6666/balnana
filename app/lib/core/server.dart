@@ -95,6 +95,7 @@ class ServerInfo {
     this.push = false,
     required this.publicUrl,
     this.sourceUrl,
+    this.privacyUrl,
     this.setupRequired = false,
     this.setupCode = false,
   });
@@ -130,6 +131,7 @@ class ServerInfo {
       push: json['push'] == true,
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
+      privacyUrl: _webUrl(json['privacyUrl']),
       setupRequired: json['setupRequired'] == true,
       setupCode: json['setupCode'] == true,
     );
@@ -167,6 +169,9 @@ class ServerInfo {
   /// Where to get the server's source code, if the operator set it. Only
   /// http(s) links are kept, since the app opens it in a browser.
   final Uri? sourceUrl;
+
+  /// The operator's privacy policy, if they set one; else the app shows its own.
+  final Uri? privacyUrl;
 
   /// No administrator password is set yet: the server is new, and the app
   /// sends people to /admin to set one.

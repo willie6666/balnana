@@ -29,6 +29,7 @@ type Server struct {
 	pushing  sync.WaitGroup
 	creates  *buckets // groups created, by client
 	invites  *buckets // invitations sent, by account
+	signups  *buckets // password accounts made, by client
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -50,6 +51,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		hub:     newHub(),
 		creates: newBuckets(createPerMinute, createBurst),
 		invites: newBuckets(invitePerMinute, inviteBurst),
+		signups: &buckets{perSecond: signupPerHour / 3600.0, burst: signupBurst, m: map[string]*bucket{}},
 	}
 	s.apply(cfg)
 	if cfg.FCM != nil {
@@ -99,6 +101,10 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		Push:           s.push != nil,
 		PublicUrl:      cfg.PublicURL.String(),
 		SourceUrl:      cfg.SourceURL.String(),
+	}
+	if cfg.PrivacyURL != nil {
+		privacy := cfg.PrivacyURL.String()
+		info.PrivacyUrl = &privacy
 	}
 	err := s.db.QueryRow(ctx, `select password_hash is null, setup_code is not null from admin`).
 		Scan(&info.SetupRequired, &info.SetupCode)

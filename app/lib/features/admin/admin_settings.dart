@@ -14,6 +14,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import 'admin_page.dart';
+import 'admin_users_page.dart';
 
 /// Settings that are on or off; the server reads them as "true" or "false".
 const _toggles = {'BALNANA_AUTH_PASSWORD', 'BALNANA_AUTH_REQUIRE_EMAIL', 'BALNANA_LINK_GROUPS'};
@@ -208,6 +209,13 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
           title: Text(l10n.adminSettingsTitle),
           actions: [
             IconButton(
+              tooltip: l10n.adminUsers,
+              icon: const Icon(Icons.people_outline),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => AdminUsersPage(token: widget.token)),
+              ),
+            ),
+            IconButton(
               tooltip: l10n.adminChangePassword,
               icon: const Icon(Icons.key_outlined),
               onPressed: () => showDialog<void>(
@@ -262,6 +270,8 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       _textField('BALNANA_PUBLIC_URL', keyboard: TextInputType.url),
       gap,
       _textField('BALNANA_SOURCE_URL', keyboard: TextInputType.url),
+      gap,
+      _textField('BALNANA_PRIVACY_URL', keyboard: TextInputType.url),
       FormSection(l10n.adminSectionAccess),
       _choice('BALNANA_AUTH_MODE', titled: false, {
         'link': (l10n.adminAuthModeLink, l10n.adminAuthModeLinkHelp),
@@ -458,6 +468,7 @@ Future<bool> _confirmDiscard(BuildContext context) async {
 String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrl,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
+  'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrl,
   'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
   'BALNANA_AUTH_PASSWORD' => l10n.adminPasswordLogin,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmail,
@@ -479,6 +490,7 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
 String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
+  'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrlHelp,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmailHelp,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
@@ -489,7 +501,10 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
 
 /// Why the server refused a setting.
 String _problem(AppLocalizations l10n, String key) => switch (key) {
-  'BALNANA_PUBLIC_URL' || 'BALNANA_SOURCE_URL' || 'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
+  'BALNANA_PUBLIC_URL' ||
+  'BALNANA_SOURCE_URL' ||
+  'BALNANA_PRIVACY_URL' ||
+  'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
   'BALNANA_SMTP_FROM' => l10n.adminInvalidFrom,
   'BALNANA_SMTP_PORT' => l10n.adminInvalidPort,
   'BALNANA_OAUTH_GOOGLE_SECRET' ||

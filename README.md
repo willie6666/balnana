@@ -59,7 +59,8 @@ in front and set `BALNANA_PUBLIC_URL` to the public `https://` address: group li
 are built from it. Behind a proxy, also set `BALNANA_TRUST_PROXY=true` so the
 per-client rate limit (`BALNANA_RATE_LIMIT`, requests a minute) sees real client
 addresses. While that limit is on, each client address may also create 30 groups at
-once (then one a minute) and hold 100 live connections, and each account may send 20
+once (then one a minute), create 10 accounts at once (then six an hour) and hold 100
+live connections, and each account may send 20
 email invitations at once (then one a minute), so the server cannot be used to send
 spam. The limits are kept in memory by each server process.
 
@@ -88,7 +89,22 @@ Accounts mode can also offer **Continue with Google** or any OpenID Connect prov
 (Authentik, Keycloak, Dex, ...). Register
 `<BALNANA_PUBLIC_URL>/api/v1/auth/oauth/google/callback` (or `.../oidc/callback`) as
 the redirect URI and set the `BALNANA_OAUTH_*` variables. A provider sign-in joins an
-existing account only when both sides have confirmed the same email.
+existing account only when both sides have confirmed the same email. When the provider
+has confirmed an address that an account claims but never confirmed, the provider's
+person takes that account over, its password removed: whoever typed someone else's
+address at sign-up cannot keep its owner out.
+
+People can change or add their email address and delete their account in the app,
+under Settings → Account; the web page `/delete-account` does the same after signing
+in, for app stores that ask for a deletion link. A deleted account's members stay in
+their groups, unclaimed, so balances still add up; ownership passes to the member who
+joined first, and groups nobody else can reach are deleted with it. Group owners (or,
+in link mode, anyone with the link) can delete a whole group under its settings. The
+administrator can find and delete accounts under `/admin` → Accounts.
+
+The app links a privacy notice from its sign-in page and Settings → About. Set
+`BALNANA_PRIVACY_URL` (or the field under `/admin`) to your own policy; without it the
+app shows a short built-in description of what the server stores.
 
 ### Connecting the apps
 
@@ -158,9 +174,29 @@ keyPassword=...
 ```
 
 `storeFile` may also be relative to `app/android/`. `flutter build apk --release`
-(or `appbundle`) now signs with that key. Without `key.properties`, release builds
-are signed with the debug key: fine for trying them out, but they cannot update an
+(or `appbundle`) now signs with that key. Without `key.properties`,
+`flutter build appbundle` stops with an error, and release APKs are signed with the
+debug key, with a warning: fine for trying them out, but they cannot update an
 installed properly signed app, and the reverse.
+
+### Publishing the Android app
+
+App stores such as Google Play ask for a few things the code cannot supply:
+
+- **A default server.** Build with `--dart-define=BALNANA_SERVER_URL=https://...`
+  so people do not have to type an address on first launch.
+- **A privacy policy URL**, public and reachable without signing in: set
+  `BALNANA_PRIVACY_URL` to your policy, or give the store `<server>/privacy`, the
+  built-in notice.
+- **An account deletion URL** (accounts mode): `<server>/delete-account`.
+- **The release key** (above) for the app bundle: `flutter build appbundle` refuses
+  to build without it. With Play App Signing, add Play's app signing certificate
+  fingerprint to `BALNANA_ANDROID_CERT_SHA256` as well, so app links keep working.
+- The store's data safety form: the server stores names, email addresses, the groups'
+  expenses and receipt photos, and (with push notifications) a Firebase device token.
+
+Push notifications use Firebase Cloud Messaging, a proprietary Google service; builds
+for F-Droid would need it left out.
 
 ## Development
 

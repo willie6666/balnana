@@ -57,6 +57,19 @@ func TestDatabaseURLFallback(t *testing.T) {
 	}
 }
 
+func TestDatabasePassword(t *testing.T) {
+	c, err := load(envMap(map[string]string{
+		"BALNANA_DATABASE_URL":      "postgres://balnana@db:5432/balnana?sslmode=disable",
+		"BALNANA_DATABASE_PASSWORD": "p@ss/w:rd#?",
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.DatabaseURL != "postgres://balnana:p%40ss%2Fw%3Ard%23%3F@db:5432/balnana?sslmode=disable" {
+		t.Fatalf("got %q", c.DatabaseURL)
+	}
+}
+
 func TestReportsAllErrors(t *testing.T) {
 	_, err := load(envMap(map[string]string{
 		"BALNANA_AUTH_MODE":  "magic",
