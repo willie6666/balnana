@@ -2460,6 +2460,534 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'it\'s in another currency without an exchange rate.'**
   String get errorImportRowCurrency;
+
+  /// No description provided for @adminSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up this server'**
+  String get adminSetupTitle;
+
+  /// No description provided for @adminSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password for the administrator. It guards this page, where the server\'s settings live. There is no username: whoever knows the password can change the settings.'**
+  String get adminSetupBody;
+
+  /// No description provided for @adminSetupCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup code'**
+  String get adminSetupCode;
+
+  /// No description provided for @adminSetupCodeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This server already holds data, so it printed a setup code in its log when it started. With Docker: docker compose logs balnana'**
+  String get adminSetupCodeHelp;
+
+  /// No description provided for @adminSetupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set password'**
+  String get adminSetupAction;
+
+  /// No description provided for @adminPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Administrator password'**
+  String get adminPassword;
+
+  /// No description provided for @adminPasswordRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat the password'**
+  String get adminPasswordRepeat;
+
+  /// No description provided for @adminPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords don\'t match.'**
+  String get adminPasswordMismatch;
+
+  /// No description provided for @adminLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Administration'**
+  String get adminLoginTitle;
+
+  /// No description provided for @adminLoginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the administrator password to change this server\'s settings.'**
+  String get adminLoginBody;
+
+  /// No description provided for @adminLoginAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get adminLoginAction;
+
+  /// No description provided for @adminSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server settings'**
+  String get adminSettingsTitle;
+
+  /// No description provided for @adminSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings saved. They apply right away.'**
+  String get adminSaved;
+
+  /// No description provided for @adminSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was saved. Check the highlighted settings.'**
+  String get adminSaveFailed;
+
+  /// No description provided for @adminChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change administrator password'**
+  String get adminChangePassword;
+
+  /// No description provided for @adminPasswordCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get adminPasswordCurrent;
+
+  /// No description provided for @adminPasswordNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get adminPasswordNew;
+
+  /// No description provided for @adminPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. Other administrator sessions are signed out.'**
+  String get adminPasswordChanged;
+
+  /// No description provided for @adminSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of administration'**
+  String get adminSignOut;
+
+  /// No description provided for @adminDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get adminDiscardTitle;
+
+  /// No description provided for @adminDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to the settings haven\'t been saved.'**
+  String get adminDiscardBody;
+
+  /// No description provided for @adminDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get adminDiscard;
+
+  /// Helper text of a setting an environment variable fixes, so it can't be changed here.
+  ///
+  /// In en, this message translates to:
+  /// **'Set on the server by {key}'**
+  String adminLocked(String key);
+
+  /// Hint showing a setting's value when nothing sets it.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {value}'**
+  String adminDefault(String value);
+
+  /// No description provided for @adminSecretSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Type a new one to replace it.'**
+  String get adminSecretSaved;
+
+  /// No description provided for @adminSecretRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Will be removed when you save.'**
+  String get adminSecretRemoved;
+
+  /// No description provided for @adminSecretRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved value'**
+  String get adminSecretRemove;
+
+  /// No description provided for @adminSectionGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get adminSectionGeneral;
+
+  /// No description provided for @adminSectionAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get adminSectionAccess;
+
+  /// No description provided for @adminSectionAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get adminSectionAccounts;
+
+  /// No description provided for @adminSectionAccountsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These apply when access is set to accounts.'**
+  String get adminSectionAccountsBody;
+
+  /// No description provided for @adminSectionEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (SMTP)'**
+  String get adminSectionEmail;
+
+  /// No description provided for @adminSectionEmailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.'**
+  String get adminSectionEmailBody;
+
+  /// No description provided for @adminSectionGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get adminSectionGoogle;
+
+  /// No description provided for @adminSectionGoogleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Register {url} as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.'**
+  String adminSectionGoogleBody(String url);
+
+  /// No description provided for @adminSectionOidc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with OpenID Connect'**
+  String get adminSectionOidc;
+
+  /// No description provided for @adminSectionOidcBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register {url} as the redirect URI. Leave the issuer empty to turn it off.'**
+  String adminSectionOidcBody(String url);
+
+  /// No description provided for @adminSectionAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Android app links'**
+  String get adminSectionAndroid;
+
+  /// No description provided for @adminSectionAndroidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.'**
+  String get adminSectionAndroidBody;
+
+  /// No description provided for @adminSectionAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Administrator'**
+  String get adminSectionAdmin;
+
+  /// No description provided for @adminPublicUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Public address'**
+  String get adminPublicUrl;
+
+  /// No description provided for @adminPublicUrlHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The address people use to reach this server. Group links and email links are built from it.'**
+  String get adminPublicUrlHelp;
+
+  /// No description provided for @adminSourceUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Source code link'**
+  String get adminSourceUrl;
+
+  /// No description provided for @adminSourceUrlHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Where people can get this server\'s source code, as its license (AGPL-3.0) asks when you run a changed version.'**
+  String get adminSourceUrlHelp;
+
+  /// No description provided for @adminAuthMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get adminAuthMode;
+
+  /// No description provided for @adminAuthModeLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Group links'**
+  String get adminAuthModeLink;
+
+  /// No description provided for @adminAuthModeLinkHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'No sign-in: a group\'s private link is all anyone needs.'**
+  String get adminAuthModeLinkHelp;
+
+  /// No description provided for @adminAuthModeAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get adminAuthModeAccounts;
+
+  /// No description provided for @adminAuthModeAccountsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'People sign in, and a link only lets signed-in people join a group.'**
+  String get adminAuthModeAccountsHelp;
+
+  /// No description provided for @adminPasswordLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password sign-in'**
+  String get adminPasswordLogin;
+
+  /// No description provided for @adminSignup.
+  ///
+  /// In en, this message translates to:
+  /// **'Who may create an account'**
+  String get adminSignup;
+
+  /// No description provided for @adminSignupOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone'**
+  String get adminSignupOpen;
+
+  /// No description provided for @adminSignupInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited people'**
+  String get adminSignupInvite;
+
+  /// No description provided for @adminSignupClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody'**
+  String get adminSignupClosed;
+
+  /// No description provided for @adminSignupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The first account can always be created.'**
+  String get adminSignupHelp;
+
+  /// No description provided for @adminLinkGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups may be opened by link'**
+  String get adminLinkGroups;
+
+  /// No description provided for @adminLinkGroupsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Group owners may let anyone with the link in, without signing in.'**
+  String get adminLinkGroupsHelp;
+
+  /// No description provided for @adminSmtpHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Mail server'**
+  String get adminSmtpHost;
+
+  /// No description provided for @adminSmtpPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get adminSmtpPort;
+
+  /// No description provided for @adminSmtpUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User name'**
+  String get adminSmtpUser;
+
+  /// No description provided for @adminSmtpPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get adminSmtpPassword;
+
+  /// No description provided for @adminSmtpFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Sender'**
+  String get adminSmtpFrom;
+
+  /// No description provided for @adminSmtpFromHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Balnana <balnana@example.com>'**
+  String get adminSmtpFromHint;
+
+  /// No description provided for @adminClientId.
+  ///
+  /// In en, this message translates to:
+  /// **'Client ID'**
+  String get adminClientId;
+
+  /// No description provided for @adminClientSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Client secret'**
+  String get adminClientSecret;
+
+  /// No description provided for @adminOidcIssuer.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer URL'**
+  String get adminOidcIssuer;
+
+  /// No description provided for @adminOidcName.
+  ///
+  /// In en, this message translates to:
+  /// **'Button name'**
+  String get adminOidcName;
+
+  /// No description provided for @adminOidcNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown as \"Continue with …\" on the sign-in page.'**
+  String get adminOidcNameHelp;
+
+  /// No description provided for @adminFingerprints.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate fingerprints'**
+  String get adminFingerprints;
+
+  /// No description provided for @adminFingerprintsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256, separated by commas. keytool -list -v and apksigner verify --print-certs show them.'**
+  String get adminFingerprintsHelp;
+
+  /// No description provided for @adminInvalidValue.
+  ///
+  /// In en, this message translates to:
+  /// **'This value isn\'t valid.'**
+  String get adminInvalidValue;
+
+  /// No description provided for @adminInvalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a full address starting with https:// or http://.'**
+  String get adminInvalidUrl;
+
+  /// No description provided for @adminInvalidFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a sender such as Balnana <balnana@example.com>; email needs one.'**
+  String get adminInvalidFrom;
+
+  /// No description provided for @adminInvalidPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a port number from 1 to 65535.'**
+  String get adminInvalidPort;
+
+  /// No description provided for @adminInvalidRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in provider needs it.'**
+  String get adminInvalidRequired;
+
+  /// No description provided for @adminInvalidFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter SHA-256 fingerprints: 64 hexadecimal digits each, colons allowed.'**
+  String get adminInvalidFingerprint;
+
+  /// No description provided for @adminNeedsSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts need a way to sign in: turn on email and password, or set up a provider.'**
+  String get adminNeedsSignIn;
+
+  /// No description provided for @adminLockedChange.
+  ///
+  /// In en, this message translates to:
+  /// **'This is set on the server and can\'t be changed here.'**
+  String get adminLockedChange;
+
+  /// No description provided for @errorAdminRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your administrator session has ended. Sign in again.'**
+  String get errorAdminRequired;
+
+  /// No description provided for @errorAdminWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'That password isn\'t right.'**
+  String get errorAdminWrongPassword;
+
+  /// No description provided for @errorInvalidSetupCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That setup code isn\'t right. Look for it in the server\'s log.'**
+  String get errorInvalidSetupCode;
+
+  /// No description provided for @errorAlreadySetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'This server has been set up already. Sign in with its administrator password.'**
+  String get errorAlreadySetUp;
+
+  /// No description provided for @linkOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening link…'**
+  String get linkOpening;
+
+  /// No description provided for @linkForeignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is for another server'**
+  String get linkForeignTitle;
+
+  /// No description provided for @linkForeignBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is connected to {server}, and the link belongs to a different server. Change the server in Settings to open it.'**
+  String linkForeignBody(String server);
+
+  /// No description provided for @linkInvalidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This link can\'t be opened'**
+  String get linkInvalidTitle;
+
+  /// No description provided for @linkInvalidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It isn\'t a Balnana link this app knows.'**
+  String get linkInvalidBody;
+
+  /// No description provided for @linkGoHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to groups'**
+  String get linkGoHome;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

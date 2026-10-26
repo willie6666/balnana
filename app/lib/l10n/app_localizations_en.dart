@@ -1367,4 +1367,289 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorImportRowCurrency => 'it\'s in another currency without an exchange rate.';
+
+  @override
+  String get adminSetupTitle => 'Set up this server';
+
+  @override
+  String get adminSetupBody =>
+      'Choose a password for the administrator. It guards this page, where the server\'s settings live. There is no username: whoever knows the password can change the settings.';
+
+  @override
+  String get adminSetupCode => 'Setup code';
+
+  @override
+  String get adminSetupCodeHelp =>
+      'This server already holds data, so it printed a setup code in its log when it started. With Docker: docker compose logs balnana';
+
+  @override
+  String get adminSetupAction => 'Set password';
+
+  @override
+  String get adminPassword => 'Administrator password';
+
+  @override
+  String get adminPasswordRepeat => 'Repeat the password';
+
+  @override
+  String get adminPasswordMismatch => 'The passwords don\'t match.';
+
+  @override
+  String get adminLoginTitle => 'Administration';
+
+  @override
+  String get adminLoginBody => 'Enter the administrator password to change this server\'s settings.';
+
+  @override
+  String get adminLoginAction => 'Sign in';
+
+  @override
+  String get adminSettingsTitle => 'Server settings';
+
+  @override
+  String get adminSaved => 'Settings saved. They apply right away.';
+
+  @override
+  String get adminSaveFailed => 'Nothing was saved. Check the highlighted settings.';
+
+  @override
+  String get adminChangePassword => 'Change administrator password';
+
+  @override
+  String get adminPasswordCurrent => 'Current password';
+
+  @override
+  String get adminPasswordNew => 'New password';
+
+  @override
+  String get adminPasswordChanged => 'Password changed. Other administrator sessions are signed out.';
+
+  @override
+  String get adminSignOut => 'Sign out of administration';
+
+  @override
+  String get adminDiscardTitle => 'Discard changes?';
+
+  @override
+  String get adminDiscardBody => 'Your changes to the settings haven\'t been saved.';
+
+  @override
+  String get adminDiscard => 'Discard';
+
+  @override
+  String adminLocked(String key) {
+    return 'Set on the server by $key';
+  }
+
+  @override
+  String adminDefault(String value) {
+    return 'Default: $value';
+  }
+
+  @override
+  String get adminSecretSaved => 'Saved. Type a new one to replace it.';
+
+  @override
+  String get adminSecretRemoved => 'Will be removed when you save.';
+
+  @override
+  String get adminSecretRemove => 'Remove saved value';
+
+  @override
+  String get adminSectionGeneral => 'General';
+
+  @override
+  String get adminSectionAccess => 'Access';
+
+  @override
+  String get adminSectionAccounts => 'Accounts';
+
+  @override
+  String get adminSectionAccountsBody => 'These apply when access is set to accounts.';
+
+  @override
+  String get adminSectionEmail => 'Email (SMTP)';
+
+  @override
+  String get adminSectionEmailBody =>
+      'Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.';
+
+  @override
+  String get adminSectionGoogle => 'Sign in with Google';
+
+  @override
+  String adminSectionGoogleBody(String url) {
+    return 'Register $url as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.';
+  }
+
+  @override
+  String get adminSectionOidc => 'Sign in with OpenID Connect';
+
+  @override
+  String adminSectionOidcBody(String url) {
+    return 'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register $url as the redirect URI. Leave the issuer empty to turn it off.';
+  }
+
+  @override
+  String get adminSectionAndroid => 'Android app links';
+
+  @override
+  String get adminSectionAndroidBody =>
+      'Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.';
+
+  @override
+  String get adminSectionAdmin => 'Administrator';
+
+  @override
+  String get adminPublicUrl => 'Public address';
+
+  @override
+  String get adminPublicUrlHelp =>
+      'The address people use to reach this server. Group links and email links are built from it.';
+
+  @override
+  String get adminSourceUrl => 'Source code link';
+
+  @override
+  String get adminSourceUrlHelp =>
+      'Where people can get this server\'s source code, as its license (AGPL-3.0) asks when you run a changed version.';
+
+  @override
+  String get adminAuthMode => 'Access';
+
+  @override
+  String get adminAuthModeLink => 'Group links';
+
+  @override
+  String get adminAuthModeLinkHelp => 'No sign-in: a group\'s private link is all anyone needs.';
+
+  @override
+  String get adminAuthModeAccounts => 'Accounts';
+
+  @override
+  String get adminAuthModeAccountsHelp =>
+      'People sign in, and a link only lets signed-in people join a group.';
+
+  @override
+  String get adminPasswordLogin => 'Email and password sign-in';
+
+  @override
+  String get adminSignup => 'Who may create an account';
+
+  @override
+  String get adminSignupOpen => 'Anyone';
+
+  @override
+  String get adminSignupInvite => 'Invited people';
+
+  @override
+  String get adminSignupClosed => 'Nobody';
+
+  @override
+  String get adminSignupHelp => 'The first account can always be created.';
+
+  @override
+  String get adminLinkGroups => 'Groups may be opened by link';
+
+  @override
+  String get adminLinkGroupsHelp => 'Group owners may let anyone with the link in, without signing in.';
+
+  @override
+  String get adminSmtpHost => 'Mail server';
+
+  @override
+  String get adminSmtpPort => 'Port';
+
+  @override
+  String get adminSmtpUser => 'User name';
+
+  @override
+  String get adminSmtpPassword => 'Password';
+
+  @override
+  String get adminSmtpFrom => 'Sender';
+
+  @override
+  String get adminSmtpFromHint => 'Balnana <balnana@example.com>';
+
+  @override
+  String get adminClientId => 'Client ID';
+
+  @override
+  String get adminClientSecret => 'Client secret';
+
+  @override
+  String get adminOidcIssuer => 'Issuer URL';
+
+  @override
+  String get adminOidcName => 'Button name';
+
+  @override
+  String get adminOidcNameHelp => 'Shown as \"Continue with …\" on the sign-in page.';
+
+  @override
+  String get adminFingerprints => 'Certificate fingerprints';
+
+  @override
+  String get adminFingerprintsHelp =>
+      'SHA-256, separated by commas. keytool -list -v and apksigner verify --print-certs show them.';
+
+  @override
+  String get adminInvalidValue => 'This value isn\'t valid.';
+
+  @override
+  String get adminInvalidUrl => 'Enter a full address starting with https:// or http://.';
+
+  @override
+  String get adminInvalidFrom => 'Enter a sender such as Balnana <balnana@example.com>; email needs one.';
+
+  @override
+  String get adminInvalidPort => 'Enter a port number from 1 to 65535.';
+
+  @override
+  String get adminInvalidRequired => 'This sign-in provider needs it.';
+
+  @override
+  String get adminInvalidFingerprint =>
+      'Enter SHA-256 fingerprints: 64 hexadecimal digits each, colons allowed.';
+
+  @override
+  String get adminNeedsSignIn =>
+      'Accounts need a way to sign in: turn on email and password, or set up a provider.';
+
+  @override
+  String get adminLockedChange => 'This is set on the server and can\'t be changed here.';
+
+  @override
+  String get errorAdminRequired => 'Your administrator session has ended. Sign in again.';
+
+  @override
+  String get errorAdminWrongPassword => 'That password isn\'t right.';
+
+  @override
+  String get errorInvalidSetupCode => 'That setup code isn\'t right. Look for it in the server\'s log.';
+
+  @override
+  String get errorAlreadySetUp =>
+      'This server has been set up already. Sign in with its administrator password.';
+
+  @override
+  String get linkOpening => 'Opening link…';
+
+  @override
+  String get linkForeignTitle => 'This link is for another server';
+
+  @override
+  String linkForeignBody(String server) {
+    return 'This app is connected to $server, and the link belongs to a different server. Change the server in Settings to open it.';
+  }
+
+  @override
+  String get linkInvalidTitle => 'This link can\'t be opened';
+
+  @override
+  String get linkInvalidBody => 'It isn\'t a Balnana link this app knows.';
+
+  @override
+  String get linkGoHome => 'Go to groups';
 }

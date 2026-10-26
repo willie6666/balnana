@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -134,5 +135,89 @@ func TestFCMCredentials(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "BALNANA_FCM_CREDENTIALS") {
 			t.Errorf("%s: %v", bad, err)
 		}
+	}
+}
+
+func TestStoredSettings(t *testing.T) {
+	t.Setenv("BALNANA_DATABASE_URL", "postgres:///x")
+	t.Setenv("BALNANA_PUBLIC_URL", "https://env.example.com")
+	stored := map[string]string{
+		"BALNANA_PUBLIC_URL":   "https://stored.example.com",
+		"BALNANA_AUTH_MODE":    "accounts",
+		"BALNANA_SMTP_HOST":    "smtp.example.com",
+		"BALNANA_SMTP_FROM":    "Balnana <b@example.com>",
+		"BALNANA_RATE_LIMIT":   "1", // not managed: ignored
+		"BALNANA_DATABASE_URL": "postgres:///stolen",
+	}
+	c, err := LoadWith(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.PublicURL.String() != "https://env.example.com" {
+		t.Errorf("the environment must win, got %s", c.PublicURL)
+	}
+	if c.AuthMode != AuthModeAccounts || !c.SMTP.Enabled() {
+		t.Errorf("stored settings not used: %+v", c)
+	}
+	if c.RateLimit != 600 || c.DatabaseURL != "postgres:///x" {
+		t.Errorf("unmanaged settings came from storage: %+v", c)
+	}
+	if !Environment("BALNANA_PUBLIC_URL") || Environment("BALNANA_AUTH_MODE") {
+		t.Error("Environment reports the wrong settings")
+	}
+}
+
+func TestErrorKeys(t *testing.T) {
+	t.Setenv("BALNANA_DATABASE_URL", "postgres:///x")
+	_, err := LoadWith(map[string]string{
+		"BALNANA_SMTP_HOST":              "smtp.example.com",
+		"BALNANA_SMTP_PORT":              "70000",
+		"BALNANA_OAUTH_GOOGLE_CLIENT_ID": "id",
+		"BALNANA_ANDROID_CERT_SHA256":    "nope",
+		"BALNANA_AUTH_MODE":              "accounts",
+		"BALNANA_AUTH_PASSWORD":          "false",
+		"BALNANA_OAUTH_OIDC_ISSUER":      "issuer",
+		"BALNANA_OAUTH_OIDC_CLIENT_ID":   "id",
+		"BALNANA_OAUTH_OIDC_SECRET":      "secret",
+	})
+	keys := ErrorKeys(err)
+	slices.Sort(keys)
+	want := []string{
+		"BALNANA_ANDROID_CERT_SHA256", "BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_OIDC_ISSUER",
+		"BALNANA_SMTP_FROM", "BALNANA_SMTP_PORT",
+	}
+	if !slices.Equal(keys, want) {
+		t.Fatalf("keys = %v, want %v (err %v)", keys, want, err)
+	}
+}
+
+func TestStartupLeavesManagedSettingsForLater(t *testing.T) {
+	t.Setenv("BALNANA_DATABASE_URL", "postgres:///x")
+	t.Setenv("BALNANA_AUTH_MODE", "accounts")
+	t.Setenv("BALNANA_AUTH_PASSWORD", "false")
+	if _, err := Startup(); err != nil {
+		t.Fatalf("a stored OAuth provider may complete this: %v", err)
+	}
+	if _, err := Load(); err == nil {
+		t.Fatal("the environment alone has no sign-in method")
+	}
+	t.Setenv("BALNANA_RATE_LIMIT", "-1")
+	if _, err := Startup(); err == nil || !strings.Contains(err.Error(), "BALNANA_RATE_LIMIT") {
+		t.Fatalf("want a rate limit error, got %v", err)
+	}
+}
+
+func TestAndroidFingerprints(t *testing.T) {
+	colons := "14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5"
+	plain := strings.ToLower(strings.ReplaceAll(colons, ":", ""))
+	c, err := load(envMap(map[string]string{
+		"BALNANA_DATABASE_URL":        "postgres:///x",
+		"BALNANA_ANDROID_CERT_SHA256": colons + ", " + plain,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(c.AndroidCertSHA256, []string{colons, colons}) {
+		t.Fatalf("got %v", c.AndroidCertSHA256)
 	}
 }

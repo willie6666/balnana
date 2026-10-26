@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Behind the splash logo: the app's dark surface color. -->
+    <color name="splash_background">#FF18130A</color>
+</resources>

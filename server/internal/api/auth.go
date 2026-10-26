@@ -69,11 +69,8 @@ type authState struct {
 // would need a second connection, and enough such requests at once would
 // wait on each other forever.
 func (s *Server) sessions(next http.Handler) http.Handler {
-	if s.cfg.AuthMode != config.AuthModeAccounts {
-		return next
-	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, BasePath+"/") {
+		if !strings.HasPrefix(r.URL.Path, BasePath+"/") || s.conf().AuthMode != config.AuthModeAccounts {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -127,7 +124,8 @@ func (s *Server) sameOrigin(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	return u.Host == r.Host || u.Scheme == s.cfg.PublicURL.Scheme && u.Host == s.cfg.PublicURL.Host
+	public := s.conf().PublicURL
+	return u.Host == r.Host || u.Scheme == public.Scheme && u.Host == public.Host
 }
 
 // secretToken makes a session, email or invitation secret.
@@ -196,7 +194,7 @@ func (s *Server) requireUser(ctx context.Context) (*user, error) {
 }
 
 func (s *Server) requireAccounts() error {
-	if s.cfg.AuthMode != config.AuthModeAccounts {
+	if s.conf().AuthMode != config.AuthModeAccounts {
 		return forbidden("accounts_off")
 	}
 	return nil
@@ -206,7 +204,7 @@ func (s *Server) requirePasswords() error {
 	if err := s.requireAccounts(); err != nil {
 		return err
 	}
-	if !s.cfg.Password {
+	if !s.conf().Password {
 		return forbidden("password_off")
 	}
 	return nil
@@ -235,7 +233,7 @@ func (s *Server) setSessionCookie(st *authState, token string) {
 		Path:     "/api/",
 		MaxAge:   int(sessionLifetime.Seconds()),
 		HttpOnly: true,
-		Secure:   s.cfg.PublicURL.Scheme == "https",
+		Secure:   s.conf().PublicURL.Scheme == "https",
 		SameSite: http.SameSiteLaxMode,
 	})
 }
@@ -246,7 +244,7 @@ func (s *Server) clearSessionCookie(st *authState) {
 		Path:     "/api/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   s.cfg.PublicURL.Scheme == "https",
+		Secure:   s.conf().PublicURL.Scheme == "https",
 		SameSite: http.SameSiteLaxMode,
 	})
 }
@@ -276,14 +274,14 @@ func cleanLocale(l *string) (*string, error) {
 // not. The first account on a server is always allowed, so closed servers
 // can start.
 func (s *Server) signupAllowed(ctx context.Context, q querier, invited bool) error {
-	if s.cfg.Signup == config.SignupOpen {
+	if s.conf().Signup == config.SignupOpen {
 		return nil
 	}
 	var first bool
 	if err := q.QueryRow(ctx, `select not exists (select 1 from users)`).Scan(&first); err != nil {
 		return err
 	}
-	if first || s.cfg.Signup == config.SignupInviteOnly && invited {
+	if first || s.conf().Signup == config.SignupInviteOnly && invited {
 		return nil
 	}
 	return forbidden("signup_closed")

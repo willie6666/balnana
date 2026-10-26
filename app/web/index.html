@@ -23,7 +23,7 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Balnana">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" href="icons/Icon-maskable-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
@@ -32,8 +32,31 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#E8A800">
   <meta name="referrer" content="no-referrer">
+  <!-- The logo while the app loads, on the app's surface color. -->
+  <style>
+    body { margin: 0; background: #FFF8F3; }
+    #splash {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 200ms ease-out;
+    }
+    #splash img { width: 96px; height: 96px; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #18130A; }
+    }
+  </style>
 </head>
 <body>
+  <div id="splash" aria-hidden="true"><img src="icons/logo.svg" alt=""></div>
+  <script>
+    // The engine fires this once Flutter has drawn its first frame.
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('splash');
+      if (!splash) return;
+      splash.style.opacity = '0';
+      setTimeout(function () { splash.remove(); }, 200);
+    }, { once: true });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

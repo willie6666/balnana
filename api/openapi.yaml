@@ -21,6 +21,11 @@ info:
     the group has link access, in which case its link alone is enough, as in
     link mode. Without a session they answer 401 `sign_in_required`; for a
     signed-in non-member, 403 `not_a_member` (see /g/{token}/join).
+
+    Administration (/admin/...): one password, set once at /admin/setup
+    while server-info says `setupRequired`. /admin/login trades it for a
+    token to send as `X-Balnana-Admin`; without a valid one, admin
+    endpoints answer 401 `admin_required`.
 servers:
   - url: /api/v1
 security:
@@ -39,6 +44,118 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServerInfo"
+  /admin/setup:
+    post:
+      operationId: adminSetup
+      summary: Set the administrator password, once, on a new server
+      description: >-
+        Only while server-info says `setupRequired`; afterwards 409
+        `already_set_up`. When server-info also says `setupCode`, the code the
+        server printed in its log is needed too (403 `invalid_setup_code`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSetupInput"
+      responses:
+        "201":
+          description: Set; signed in as the administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/login:
+    post:
+      operationId: adminLogin
+      summary: Sign in as the administrator
+      description: 401 `invalid_credentials` for a wrong password, 409 `setup_required` before setup.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      summary: End this administrator session
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "204":
+          description: Signed out
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/password:
+    post:
+      operationId: changeAdminPassword
+      summary: Set a new administrator password; other admin sessions end
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChange"
+      responses:
+        "204":
+          description: Changed
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/settings:
+    get:
+      operationId: getAdminSettings
+      summary: The server settings an administrator can change
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateAdminSettings
+      summary: Change server settings
+      description: >-
+        Only the settings named in `values` change; an empty string returns
+        one to its default. The server checks the result as a whole and
+        changes nothing when something is wrong: 400 `invalid_settings` with
+        `params.keys`, the settings at fault (unknown, set by the
+        environment, or invalid).
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSettingsInput"
+      responses:
+        "200":
+          description: Saved; the settings now in force
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+        default:
+          $ref: "#/components/responses/Error"
   /groups:
     post:
       operationId: createGroup
@@ -953,6 +1070,13 @@ paths:
           $ref: "#/components/responses/Error"
 components:
   parameters:
+    AdminToken:
+      name: X-Balnana-Admin
+      in: header
+      required: false
+      description: The token from /admin/login or /admin/setup.
+      schema:
+        type: string
     Token:
       name: token
       in: path
@@ -1683,7 +1807,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, push, publicUrl, sourceUrl]
+      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
       properties:
         name:
           type: string
@@ -1731,6 +1855,80 @@ components:
             Where to get this server's source code (AGPL-3.0). Defaults to the
             upstream repository.
           example: https://github.com/willie6666/balnana
+        setupRequired:
+          type: boolean
+          description: >-
+            No administrator password is set yet; the app sends people to
+            /admin to set one.
+        setupCode:
+          type: boolean
+          description: >-
+            Setting it up also needs the code the server printed in its log,
+            since the server already held data when it first needed setting up.
+    AdminSetupInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          description: At least 8 characters.
+        code:
+          type: string
+          description: The setup code from the server's log, when server-info asks for one.
+    AdminLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+    AdminSession:
+      type: object
+      required: [token, expiresAt]
+      properties:
+        token:
+          type: string
+          description: Send as the X-Balnana-Admin header.
+        expiresAt:
+          type: string
+          format: date-time
+    AdminSetting:
+      type: object
+      required: [key, default, locked, secret, set]
+      properties:
+        key:
+          type: string
+          description: The environment variable that sets it, as listed in .env.example.
+          example: BALNANA_SMTP_HOST
+        value:
+          type: string
+          description: The value in force. Never sent for secrets.
+        default:
+          type: string
+          description: The value when nothing sets it.
+        locked:
+          type: boolean
+          description: Set by an environment variable, which wins; it cannot be changed here.
+        secret:
+          type: boolean
+        set:
+          type: boolean
+          description: Something sets it, the environment or this page.
+    AdminSettings:
+      type: object
+      required: [settings]
+      properties:
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSetting"
+    AdminSettingsInput:
+      type: object
+      required: [values]
+      properties:
+        values:
+          type: object
+          additionalProperties:
+            type: string
     PushDeviceInput:
       type: object
       required: [groups]

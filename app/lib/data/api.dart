@@ -452,6 +452,56 @@ class GroupApi {
   );
 }
 
+/// The administrator's part of the API. It goes through a client without
+/// the account's session; the token comes from [setup] or [login].
+class AdminApi {
+  AdminApi(Dio dio) : _api = BalnanaApi(dio), _dio = dio;
+
+  final BalnanaApi _api;
+  final Dio _dio;
+
+  Options _as(String token) => Options(headers: {'X-Balnana-Admin': token});
+
+  static String _token(Object? data) {
+    if (data case {'token': final String token}) return token;
+    throw const FormatException('expected a session');
+  }
+
+  /// Sets the password on a new server; [code] is the setup code from the
+  /// server's log, when it asks for one. Returns a session token.
+  Future<String> setup({required String password, String? code}) => _api._send(
+    () => _dio.post<Object?>('/admin/setup', data: {'password': password, 'code': ?code}),
+    _token,
+  );
+
+  Future<String> login(String password) =>
+      _api._send(() => _dio.post<Object?>('/admin/login', data: {'password': password}), _token);
+
+  Future<void> logout(String token) =>
+      _api._send(() => _dio.post<Object?>('/admin/logout', options: _as(token)), (_) {});
+
+  /// Ends every other admin session.
+  Future<void> changePassword(String token, {required String current, required String next}) => _api._send(
+    () => _dio.post<Object?>(
+      '/admin/password',
+      data: {'currentPassword': current, 'newPassword': next},
+      options: _as(token),
+    ),
+    (_) {},
+  );
+
+  Future<List<AdminSetting>> settings(String token) =>
+      _api._send(() => _dio.get<Object?>('/admin/settings', options: _as(token)), AdminSetting.listFromJson);
+
+  /// Changes the settings in [values] (empty for the default) and returns
+  /// all of them as now in force. Throws `invalid_settings` with the keys at
+  /// fault in `params['keys']`, changing nothing.
+  Future<List<AdminSetting>> save(String token, Map<String, String> values) => _api._send(
+    () => _dio.put<Object?>('/admin/settings', data: {'values': values}, options: _as(token)),
+    AdminSetting.listFromJson,
+  );
+}
+
 /// The API of the chosen server, or null when none is set.
 final balnanaApiProvider = Provider<BalnanaApi?>((ref) {
   final dio = ref.watch(apiProvider);

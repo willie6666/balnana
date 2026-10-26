@@ -1,8 +1,40 @@
+import java.net.URI
+import java.util.Base64
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Release signing: android/key.properties (kept out of git) names the upload
+// keystore. Without it, release builds are signed with the debug key so
+// `flutter run --release` still works; such builds cannot update an installed
+// release. See README.md, "Android release builds".
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+
+// Links to the server a build is made for open in the app (Android App
+// Links). The server is the one baked in with
+// --dart-define=BALNANA_SERVER_URL=https://..., which also makes it the app's
+// default server. Builds without one leave links to the browser.
+val dartDefines: Map<String, String> =
+    (project.findProperty("dart-defines") as String?)
+        ?.split(",")
+        ?.mapNotNull { encoded ->
+            String(Base64.getDecoder().decode(encoded)).split("=", limit = 2)
+                .takeIf { it.size == 2 }
+                ?.let { it[0] to it[1] }
+        }
+        ?.toMap() ?: emptyMap()
+val linkServer: URI? =
+    dartDefines["BALNANA_SERVER_URL"]?.trim()?.takeIf { it.isNotEmpty() }
+        ?.let { URI(if ("://" in it) it else "https://$it") }
+        ?.takeIf { (it.scheme == "https" || it.scheme == "http") && !it.host.isNullOrEmpty() }
 
 android {
     namespace = "io.github.willie6666.balnana"
@@ -15,7 +47,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "io.github.willie6666.balnana"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -27,14 +58,34 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Used by src/applinks/AndroidManifest.xml.
+        manifestPlaceholders["balnanaLinkScheme"] = linkServer?.scheme ?: ""
+        manifestPlaceholders["balnanaLinkHost"] = linkServer?.host ?: ""
+        manifestPlaceholders["balnanaLinkPath"] = linkServer?.path?.trimEnd('/') ?: ""
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
         }
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        if (linkServer != null) variant.sources.manifests.addStaticManifestFile("src/applinks/AndroidManifest.xml")
     }
 }
 

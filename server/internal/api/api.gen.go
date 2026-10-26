@@ -92,6 +92,57 @@ type ActivityPage struct {
 	NextCursor *string    `json:"nextCursor,omitempty"`
 }
 
+// AdminLoginInput defines model for AdminLoginInput.
+type AdminLoginInput struct {
+	Password string `json:"password"`
+}
+
+// AdminSession defines model for AdminSession.
+type AdminSession struct {
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Token Send as the X-Balnana-Admin header.
+	Token string `json:"token"`
+}
+
+// AdminSetting defines model for AdminSetting.
+type AdminSetting struct {
+	// Default The value when nothing sets it.
+	Default string `json:"default"`
+
+	// Key The environment variable that sets it, as listed in .env.example.
+	Key string `json:"key"`
+
+	// Locked Set by an environment variable, which wins; it cannot be changed here.
+	Locked bool `json:"locked"`
+	Secret bool `json:"secret"`
+
+	// Set Something sets it, the environment or this page.
+	Set bool `json:"set"`
+
+	// Value The value in force. Never sent for secrets.
+	Value *string `json:"value,omitempty"`
+}
+
+// AdminSettings defines model for AdminSettings.
+type AdminSettings struct {
+	Settings []AdminSetting `json:"settings"`
+}
+
+// AdminSettingsInput defines model for AdminSettingsInput.
+type AdminSettingsInput struct {
+	Values map[string]string `json:"values"`
+}
+
+// AdminSetupInput defines model for AdminSetupInput.
+type AdminSetupInput struct {
+	// Code The setup code from the server's log, when server-info asks for one.
+	Code *string `json:"code,omitempty"`
+
+	// Password At least 8 characters.
+	Password string `json:"password"`
+}
+
 // Balances defines model for Balances.
 type Balances struct {
 	Balances []MemberBalance `json:"balances"`
@@ -541,8 +592,14 @@ type ServerInfo struct {
 	PublicUrl string `json:"publicUrl"`
 
 	// Push The server sends push notifications through Firebase Cloud Messaging, to apps built with the same Firebase project.
-	Push   bool             `json:"push"`
-	Signup ServerInfoSignup `json:"signup"`
+	Push bool `json:"push"`
+
+	// SetupCode Setting it up also needs the code the server printed in its log, since the server already held data when it first needed setting up.
+	SetupCode bool `json:"setupCode"`
+
+	// SetupRequired No administrator password is set yet; the app sends people to /admin to set one.
+	SetupRequired bool             `json:"setupRequired"`
+	Signup        ServerInfoSignup `json:"signup"`
 
 	// SourceUrl Where to get this server's source code (AGPL-3.0). Defaults to the upstream repository.
 	SourceUrl string `json:"sourceUrl"`
@@ -611,6 +668,9 @@ type UserUpdate struct {
 // ActingMember defines model for ActingMember.
 type ActingMember = string
 
+// AdminToken defines model for AdminToken.
+type AdminToken = string
+
 // ExpenseId defines model for ExpenseId.
 type ExpenseId = string
 
@@ -628,6 +688,30 @@ type To = time.Time
 
 // Token defines model for Token.
 type Token = string
+
+// AdminLogoutParams defines parameters for AdminLogout.
+type AdminLogoutParams struct {
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
+
+// ChangeAdminPasswordParams defines parameters for ChangeAdminPassword.
+type ChangeAdminPasswordParams struct {
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
+
+// GetAdminSettingsParams defines parameters for GetAdminSettings.
+type GetAdminSettingsParams struct {
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
+
+// UpdateAdminSettingsParams defines parameters for UpdateAdminSettings.
+type UpdateAdminSettingsParams struct {
+	// XBalnanaAdmin The token from /admin/login or /admin/setup.
+	XBalnanaAdmin *AdminToken `json:"X-Balnana-Admin,omitempty"`
+}
 
 // OauthCallbackParams defines parameters for OauthCallback.
 type OauthCallbackParams struct {
@@ -772,6 +856,18 @@ type GetStatsParams struct {
 	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
+// AdminLoginJSONRequestBody defines body for AdminLogin for application/json ContentType.
+type AdminLoginJSONRequestBody = AdminLoginInput
+
+// ChangeAdminPasswordJSONRequestBody defines body for ChangeAdminPassword for application/json ContentType.
+type ChangeAdminPasswordJSONRequestBody = PasswordChange
+
+// UpdateAdminSettingsJSONRequestBody defines body for UpdateAdminSettings for application/json ContentType.
+type UpdateAdminSettingsJSONRequestBody = AdminSettingsInput
+
+// AdminSetupJSONRequestBody defines body for AdminSetup for application/json ContentType.
+type AdminSetupJSONRequestBody = AdminSetupInput
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginInput
 
@@ -834,6 +930,24 @@ type RegisterPushDeviceJSONRequestBody = PushDeviceInput
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Sign in as the administrator
+	// (POST /admin/login)
+	AdminLogin(w http.ResponseWriter, r *http.Request)
+	// End this administrator session
+	// (POST /admin/logout)
+	AdminLogout(w http.ResponseWriter, r *http.Request, params AdminLogoutParams)
+	// Set a new administrator password; other admin sessions end
+	// (POST /admin/password)
+	ChangeAdminPassword(w http.ResponseWriter, r *http.Request, params ChangeAdminPasswordParams)
+	// The server settings an administrator can change
+	// (GET /admin/settings)
+	GetAdminSettings(w http.ResponseWriter, r *http.Request, params GetAdminSettingsParams)
+	// Change server settings
+	// (PUT /admin/settings)
+	UpdateAdminSettings(w http.ResponseWriter, r *http.Request, params UpdateAdminSettingsParams)
+	// Set the administrator password, once, on a new server
+	// (POST /admin/setup)
+	AdminSetup(w http.ResponseWriter, r *http.Request)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(w http.ResponseWriter, r *http.Request, inviteToken string)
@@ -979,6 +1093,242 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// AdminLogin operation middleware
+func (siw *ServerInterfaceWrapper) AdminLogin(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminLogout operation middleware
+func (siw *ServerInterfaceWrapper) AdminLogout(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AdminLogoutParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminLogout(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangeAdminPassword operation middleware
+func (siw *ServerInterfaceWrapper) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ChangeAdminPasswordParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangeAdminPassword(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAdminSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAdminSettingsParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminSettings(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAdminSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAdminSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateAdminSettingsParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Admin" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Admin")]; found {
+		var XBalnanaAdmin AdminToken
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Admin", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Admin", valueList[0], &XBalnanaAdmin, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Admin", Err: err})
+			return
+		}
+
+		params.XBalnanaAdmin = &XBalnanaAdmin
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAdminSettings(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetup operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetInvite operation middleware
 func (siw *ServerInterfaceWrapper) GetInvite(w http.ResponseWriter, r *http.Request) {
@@ -2978,6 +3328,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("POST "+options.BaseURL+"/admin/login", wrapper.AdminLogin)
+	m.HandleFunc("POST "+options.BaseURL+"/admin/logout", wrapper.AdminLogout)
+	m.HandleFunc("POST "+options.BaseURL+"/admin/password", wrapper.ChangeAdminPassword)
+	m.HandleFunc("GET "+options.BaseURL+"/admin/settings", wrapper.GetAdminSettings)
+	m.HandleFunc("PUT "+options.BaseURL+"/admin/settings", wrapper.UpdateAdminSettings)
+	m.HandleFunc("POST "+options.BaseURL+"/admin/setup", wrapper.AdminSetup)
 	m.HandleFunc("GET "+options.BaseURL+"/auth/invites/{inviteToken}", wrapper.GetInvite)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.Logout)
@@ -3028,6 +3384,180 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 }
 
 type ErrorJSONResponse Error
+
+type AdminLoginRequestObject struct {
+	Body *AdminLoginJSONRequestBody
+}
+
+type AdminLoginResponseObject interface {
+	VisitAdminLoginResponse(w http.ResponseWriter) error
+}
+
+type AdminLogin200JSONResponse AdminSession
+
+func (response AdminLogin200JSONResponse) VisitAdminLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AdminLogindefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response AdminLogindefaultJSONResponse) VisitAdminLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AdminLogoutRequestObject struct {
+	Params AdminLogoutParams
+}
+
+type AdminLogoutResponseObject interface {
+	VisitAdminLogoutResponse(w http.ResponseWriter) error
+}
+
+type AdminLogout204Response struct {
+}
+
+func (response AdminLogout204Response) VisitAdminLogoutResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type AdminLogoutdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response AdminLogoutdefaultJSONResponse) VisitAdminLogoutResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ChangeAdminPasswordRequestObject struct {
+	Params ChangeAdminPasswordParams
+	Body   *ChangeAdminPasswordJSONRequestBody
+}
+
+type ChangeAdminPasswordResponseObject interface {
+	VisitChangeAdminPasswordResponse(w http.ResponseWriter) error
+}
+
+type ChangeAdminPassword204Response struct {
+}
+
+func (response ChangeAdminPassword204Response) VisitChangeAdminPasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ChangeAdminPassworddefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ChangeAdminPassworddefaultJSONResponse) VisitChangeAdminPasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetAdminSettingsRequestObject struct {
+	Params GetAdminSettingsParams
+}
+
+type GetAdminSettingsResponseObject interface {
+	VisitGetAdminSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetAdminSettings200JSONResponse AdminSettings
+
+func (response GetAdminSettings200JSONResponse) VisitGetAdminSettingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAdminSettingsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetAdminSettingsdefaultJSONResponse) VisitGetAdminSettingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateAdminSettingsRequestObject struct {
+	Params UpdateAdminSettingsParams
+	Body   *UpdateAdminSettingsJSONRequestBody
+}
+
+type UpdateAdminSettingsResponseObject interface {
+	VisitUpdateAdminSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateAdminSettings200JSONResponse AdminSettings
+
+func (response UpdateAdminSettings200JSONResponse) VisitUpdateAdminSettingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateAdminSettingsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateAdminSettingsdefaultJSONResponse) VisitUpdateAdminSettingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AdminSetupRequestObject struct {
+	Body *AdminSetupJSONRequestBody
+}
+
+type AdminSetupResponseObject interface {
+	VisitAdminSetupResponse(w http.ResponseWriter) error
+}
+
+type AdminSetup201JSONResponse AdminSession
+
+func (response AdminSetup201JSONResponse) VisitAdminSetupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AdminSetupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response AdminSetupdefaultJSONResponse) VisitAdminSetupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
 
 type GetInviteRequestObject struct {
 	InviteToken string `json:"inviteToken"`
@@ -4400,6 +4930,24 @@ func (response GetServerInfo200JSONResponse) VisitGetServerInfoResponse(w http.R
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Sign in as the administrator
+	// (POST /admin/login)
+	AdminLogin(ctx context.Context, request AdminLoginRequestObject) (AdminLoginResponseObject, error)
+	// End this administrator session
+	// (POST /admin/logout)
+	AdminLogout(ctx context.Context, request AdminLogoutRequestObject) (AdminLogoutResponseObject, error)
+	// Set a new administrator password; other admin sessions end
+	// (POST /admin/password)
+	ChangeAdminPassword(ctx context.Context, request ChangeAdminPasswordRequestObject) (ChangeAdminPasswordResponseObject, error)
+	// The server settings an administrator can change
+	// (GET /admin/settings)
+	GetAdminSettings(ctx context.Context, request GetAdminSettingsRequestObject) (GetAdminSettingsResponseObject, error)
+	// Change server settings
+	// (PUT /admin/settings)
+	UpdateAdminSettings(ctx context.Context, request UpdateAdminSettingsRequestObject) (UpdateAdminSettingsResponseObject, error)
+	// Set the administrator password, once, on a new server
+	// (POST /admin/setup)
+	AdminSetup(ctx context.Context, request AdminSetupRequestObject) (AdminSetupResponseObject, error)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -4564,6 +5112,186 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// AdminLogin operation middleware
+func (sh *strictHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
+	var request AdminLoginRequestObject
+
+	var body AdminLoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminLogin(ctx, request.(AdminLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminLogin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminLoginResponseObject); ok {
+		if err := validResponse.VisitAdminLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminLogout operation middleware
+func (sh *strictHandler) AdminLogout(w http.ResponseWriter, r *http.Request, params AdminLogoutParams) {
+	var request AdminLogoutRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminLogout(ctx, request.(AdminLogoutRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminLogout")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminLogoutResponseObject); ok {
+		if err := validResponse.VisitAdminLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangeAdminPassword operation middleware
+func (sh *strictHandler) ChangeAdminPassword(w http.ResponseWriter, r *http.Request, params ChangeAdminPasswordParams) {
+	var request ChangeAdminPasswordRequestObject
+
+	request.Params = params
+
+	var body ChangeAdminPasswordJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangeAdminPassword(ctx, request.(ChangeAdminPasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangeAdminPassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ChangeAdminPasswordResponseObject); ok {
+		if err := validResponse.VisitChangeAdminPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAdminSettings operation middleware
+func (sh *strictHandler) GetAdminSettings(w http.ResponseWriter, r *http.Request, params GetAdminSettingsParams) {
+	var request GetAdminSettingsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminSettings(ctx, request.(GetAdminSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAdminSettingsResponseObject); ok {
+		if err := validResponse.VisitGetAdminSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAdminSettings operation middleware
+func (sh *strictHandler) UpdateAdminSettings(w http.ResponseWriter, r *http.Request, params UpdateAdminSettingsParams) {
+	var request UpdateAdminSettingsRequestObject
+
+	request.Params = params
+
+	var body UpdateAdminSettingsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateAdminSettings(ctx, request.(UpdateAdminSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAdminSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAdminSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateAdminSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetup operation middleware
+func (sh *strictHandler) AdminSetup(w http.ResponseWriter, r *http.Request) {
+	var request AdminSetupRequestObject
+
+	var body AdminSetupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetup(ctx, request.(AdminSetupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetupResponseObject); ok {
+		if err := validResponse.VisitAdminSetupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetInvite operation middleware

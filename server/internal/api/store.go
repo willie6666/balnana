@@ -97,8 +97,8 @@ func (s *Server) findGroup(ctx context.Context, q querier, token string, lock bo
 
 // resolveAccess fills in g.open, g.me and g.owner for this request.
 func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
-	accounts := s.cfg.AuthMode == config.AuthModeAccounts
-	g.open = !accounts || s.cfg.LinkGroups && g.linkAccess
+	accounts := s.conf().AuthMode == config.AuthModeAccounts
+	g.open = !accounts || s.conf().LinkGroups && g.linkAccess
 	g.me, g.owner = nil, false
 	if !accounts {
 		return nil

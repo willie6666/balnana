@@ -3,7 +3,7 @@
     "short_name": "Balnana",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#FFF8F0",
+    "background_color": "#FFF8F3",
     "theme_color": "#E8A800",
     "description": "Split group expenses: who paid what, who owes whom.",
     "prefer_related_applications": false,

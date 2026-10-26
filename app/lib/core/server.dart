@@ -94,6 +94,8 @@ class ServerInfo {
     this.push = false,
     required this.publicUrl,
     this.sourceUrl,
+    this.setupRequired = false,
+    this.setupCode = false,
   });
 
   factory ServerInfo.fromJson(Object? json) {
@@ -126,6 +128,8 @@ class ServerInfo {
       push: json['push'] == true,
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
+      setupRequired: json['setupRequired'] == true,
+      setupCode: json['setupCode'] == true,
     );
   }
 
@@ -157,6 +161,13 @@ class ServerInfo {
   /// Where to get the server's source code, if the operator set it. Only
   /// http(s) links are kept, since the app opens it in a browser.
   final Uri? sourceUrl;
+
+  /// No administrator password is set yet: the server is new, and the app
+  /// sends people to /admin to set one.
+  final bool setupRequired;
+
+  /// Setting it up also needs the code the server printed in its log.
+  final bool setupCode;
 }
 
 @immutable
@@ -213,6 +224,10 @@ Dio _cachedDio(Ref ref, String url, String account) {
   return dio;
 }
 
+/// A client for [serverUrl] that sends no session and keeps no offline
+/// copies, for the administrator's pages.
+Dio plainDio(String serverUrl) => _newDio(serverUrl);
+
 class NoServerException implements Exception {
   const NoServerException();
 }
@@ -235,6 +250,12 @@ final serverPublicUrlProvider = Provider<String?>((ref) {
   final info = ref.watch(serverInfoProvider);
   return info.isLoading || info.hasError ? null : info.value?.publicUrl;
 });
+
+/// Whether the chosen server still needs its administrator password set;
+/// false until its info has loaded.
+final setupRequiredProvider = Provider<bool>(
+  (ref) => ref.watch(serverInfoProvider.select((info) => info.value?.setupRequired ?? false)),
+);
 
 /// Whether the chosen server has accounts; false until its info has loaded.
 final accountsModeProvider = Provider<bool>(

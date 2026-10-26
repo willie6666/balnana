@@ -33,7 +33,7 @@ func importRowError(line int, problem string) error {
 // does the same work, reports what the group would hold and keeps nothing.
 func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) (ImportGroupResponseObject, error) {
 	var creator *user
-	if s.cfg.AuthMode == config.AuthModeAccounts {
+	if s.conf().AuthMode == config.AuthModeAccounts {
 		u, err := s.requireUser(ctx)
 		if err != nil {
 			return nil, err
