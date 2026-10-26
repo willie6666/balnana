@@ -15,9 +15,9 @@ made before transaction direction was stored need to be imported again from the
 original CSV into a new group to recover correct spending statistics; an upgrade
 cannot infer the missing direction from the old balance rows.
 
-> Status: early development (milestone M0). The server, the app shell, settings and
-> the money engine are in place; groups and expenses come next. See
-> [docs/PLAN.md](docs/PLAN.md).
+> Status: early development, preparing the first release (milestone M6). Groups,
+> expenses, balances, both access modes, live updates, statistics, imports and
+> exports, receipts and push notifications work. See [docs/PLAN.md](docs/PLAN.md).
 
 ## Self-hosting with Docker
 
@@ -103,6 +103,30 @@ same project's values (step 3).
 Settings → Notifications then turns them off and on per device. Without these
 values the app never contacts Firebase.
 
+### Android release builds
+
+Release APKs are signed with your own upload key. Create one once and keep it, and
+its passwords, safe: every later update must be signed with the same key.
+
+```bash
+keytool -genkeypair -v -keystore ~/balnana-upload.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+Then create `app/android/key.properties` (git ignores it):
+
+```properties
+storeFile=/home/you/balnana-upload.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+`storeFile` may also be relative to `app/android/`. `flutter build apk --release`
+(or `appbundle`) now signs with that key. Without `key.properties`, release builds
+are signed with the debug key: fine for trying them out, but they cannot update an
+installed properly signed app, and the reverse.
+
 ## Development
 
 The repository is a monorepo:
@@ -151,6 +175,10 @@ flutter run -d emulator-5554   # then enter http://10.0.2.2:8080 as the server
 ```
 
 `10.0.2.2` is how the Android emulator reaches your computer.
+
+The launcher icons, splash logos and web icons are all drawn by
+`scripts/make-icons.py` (needs Pillow). Change the shape or colors there and run it
+again rather than editing the generated files.
 
 Flutter 3.47 moved Material out of the SDK into the `material_ui` package: import
 `package:material_ui/material_ui.dart`, not `package:flutter/material.dart`.
