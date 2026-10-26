@@ -6,6 +6,8 @@ import 'core/l10n.dart';
 import 'core/router.dart';
 import 'core/settings.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/offline_bar.dart';
+import 'ui/widgets/push_handler.dart';
 
 class BalnanaApp extends ConsumerWidget {
   const BalnanaApp({super.key});
@@ -32,6 +34,7 @@ class BalnanaApp extends ConsumerWidget {
           localizationsDelegates: const [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates],
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
+          builder: (context, child) => PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
         );
       },
     );

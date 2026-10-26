@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'offline_cache.dart';
 import 'session.dart';
 import 'settings.dart';
 
@@ -90,6 +91,7 @@ class ServerInfo {
     this.linkGroups = true,
     this.email = false,
     this.oauthProviders = const [],
+    this.push = false,
     required this.publicUrl,
     this.sourceUrl,
   });
@@ -121,6 +123,7 @@ class ServerInfo {
           for (final p in list)
             if (p case {'id': final String id, 'name': final String name}) OAuthProvider(id: id, name: name),
       ],
+      push: json['push'] == true,
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
     );
@@ -145,6 +148,10 @@ class ServerInfo {
 
   /// Google or OpenID Connect sign-in, as buttons on the sign-in page.
   final List<OAuthProvider> oauthProviders;
+
+  /// The server sends push notifications, to builds of the app made for its
+  /// Firebase project.
+  final bool push;
   final String publicUrl;
 
   /// Where to get the server's source code, if the operator set it. Only
@@ -186,11 +193,25 @@ final apiProvider = Provider<Dio?>((ref) {
   final url = ref.watch(serverUrlProvider);
   if (url == null) return null;
   final session = ref.watch(sessionProvider);
-  final dio = _newDio(url);
+  final dio = _cachedDio(ref, url);
   if (session.token case final token?) dio.options.headers['Authorization'] = 'Bearer $token';
   ref.onDispose(dio.close);
   return dio;
 });
+
+/// A client for [url] that falls back on what this device saved when the
+/// server cannot be reached.
+Dio _cachedDio(Ref ref, String url) {
+  final dio = _newDio(url);
+  if (ref.watch(cacheDbProvider) case final db?) {
+    dio.interceptors.add(
+      OfflineCache(db, url, (offline) {
+        if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
+      }),
+    );
+  }
+  return dio;
+}
 
 class NoServerException implements Exception {
   const NoServerException();
@@ -199,7 +220,7 @@ class NoServerException implements Exception {
 final serverInfoProvider = FutureProvider<ServerInfo>((ref) async {
   final url = ref.watch(serverUrlProvider);
   if (url == null) throw const NoServerException();
-  final dio = _newDio(url);
+  final dio = _cachedDio(ref, url);
   try {
     final res = await dio.get<Object?>('/server-info');
     return ServerInfo.fromJson(res.data);

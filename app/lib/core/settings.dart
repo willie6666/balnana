@@ -12,6 +12,7 @@ class Settings {
     this.dynamicColor = false,
     this.pureBlack = false,
     this.serverUrl,
+    this.notifications = true,
   });
 
   final ThemeMode themeMode;
@@ -26,12 +27,16 @@ class Settings {
   /// The server the user chose. Null means [defaultServerUrl] is used.
   final String? serverUrl;
 
+  /// Push notifications, where the build and the server have them.
+  final bool notifications;
+
   Settings copyWith({
     ThemeMode? themeMode,
     Locale? Function()? locale,
     bool? dynamicColor,
     bool? pureBlack,
     String? Function()? serverUrl,
+    bool? notifications,
   }) {
     return Settings(
       themeMode: themeMode ?? this.themeMode,
@@ -39,6 +44,7 @@ class Settings {
       dynamicColor: dynamicColor ?? this.dynamicColor,
       pureBlack: pureBlack ?? this.pureBlack,
       serverUrl: serverUrl != null ? serverUrl() : this.serverUrl,
+      notifications: notifications ?? this.notifications,
     );
   }
 }
@@ -51,6 +57,7 @@ class SettingsNotifier extends Notifier<Settings> {
   static const _dynamicColor = 'settings.dynamicColor';
   static const _pureBlack = 'settings.pureBlack';
   static const _server = 'settings.server';
+  static const _notifications = 'settings.notifications';
 
   @override
   Settings build() {
@@ -62,6 +69,7 @@ class SettingsNotifier extends Notifier<Settings> {
       dynamicColor: prefs.getBool(_dynamicColor) ?? false,
       pureBlack: prefs.getBool(_pureBlack) ?? false,
       serverUrl: prefs.getString(_server),
+      notifications: prefs.getBool(_notifications) ?? true,
     );
   }
 
@@ -84,6 +92,11 @@ class SettingsNotifier extends Notifier<Settings> {
   void setPureBlack(bool on) {
     state = state.copyWith(pureBlack: on);
     ref.read(prefsProvider).setBool(_pureBlack, on);
+  }
+
+  void setNotifications(bool on) {
+    state = state.copyWith(notifications: on);
+    ref.read(prefsProvider).setBool(_notifications, on);
   }
 
   /// [url] must already be normalized; null returns to the default server.

@@ -13,6 +13,7 @@
 
   "commonCancel": "Cancel",
   "commonRetry": "Retry",
+  "offlineBar": "Offline. Showing what this device saved; changes wait until you reconnect.",
   "commonSave": "Save",
   "commonRemove": "Remove",
   "commonUndo": "Undo",
@@ -299,6 +300,8 @@
   "settingsLanguage": "Language",
   "languageSystem": "System default",
 
+  "settingsNotifications": "Notifications",
+  "settingsNotificationsSubtitle": "When someone adds, changes or deletes an expense you are in",
   "settingsConnection": "Connection",
   "settingsServer": "Server",
   "serverNotSet": "Not set",

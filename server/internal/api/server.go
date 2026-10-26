@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"balnana/internal/config"
 	"balnana/internal/mail"
+	"balnana/internal/push"
 )
 
 // Server implements StrictServerInterface.
@@ -24,6 +26,8 @@ type Server struct {
 	mail    mail.Sender // nil when the server has no email
 	oauth   map[string]*oauthProvider
 	hub     *hub
+	push    push.Sender // nil when the server sends no push notifications
+	pushing sync.WaitGroup
 }
 
 var _ StrictServerInterface = (*Server)(nil)
@@ -36,6 +40,13 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 			log.Error("email is off", "err", err) // config.Load checks the address first
 		} else {
 			s.mail = m
+		}
+	}
+	if cfg.FCM != nil {
+		if f, err := push.NewFCM(cfg.FCM); err != nil {
+			log.Error("push notifications are off", "err", err)
+		} else {
+			s.push = f
 		}
 	}
 	return s
@@ -52,6 +63,7 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		Email:          s.mail != nil,
 		OauthProviders: []OAuthProvider{},
 		LinkGroups:     !accounts || s.cfg.LinkGroups,
+		Push:           s.push != nil,
 		PublicUrl:      s.cfg.PublicURL.String(),
 		SourceUrl:      s.cfg.SourceURL.String(),
 	}

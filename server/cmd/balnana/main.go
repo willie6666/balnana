@@ -93,7 +93,9 @@ func run() error {
 	log.Info("shutting down")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return httpServer.Shutdown(shutdownCtx)
+	err = httpServer.Shutdown(shutdownCtx)
+	srv.FinishPushes()
+	return err
 }
 
 // connect retries for a while: in docker compose the database may still be

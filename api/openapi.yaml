@@ -408,6 +408,44 @@ paths:
                 $ref: "#/components/schemas/GroupSummaryList"
         default:
           $ref: "#/components/responses/Error"
+  /push/devices/{device}:
+    parameters:
+      - name: device
+        in: path
+        required: true
+        description: The device's Firebase Cloud Messaging registration token.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 4096
+    put:
+      operationId: registerPushDevice
+      summary: Send this device notifications about the groups it follows
+      description: >-
+        Replaces what the device was told about before. A signed-in device is
+        also told about the account's groups, until the session ends. Groups
+        the link alone does not open, unknown tokens and members not in the
+        group are left out without an error. Only when `push` is on in
+        /server-info; otherwise `push_off`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushDeviceInput"
+      responses:
+        "204":
+          description: Registered
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: removePushDevice
+      summary: Stop sending this device notifications
+      responses:
+        "204":
+          description: Removed, or was never registered
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -1421,7 +1459,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, publicUrl, sourceUrl]
+      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, push, publicUrl, sourceUrl]
       properties:
         name:
           type: string
@@ -1454,6 +1492,11 @@ components:
         linkGroups:
           type: boolean
           description: Groups may be opened by link alone. Always true in link mode.
+        push:
+          type: boolean
+          description: >-
+            The server sends push notifications through Firebase Cloud
+            Messaging, to apps built with the same Firebase project.
         publicUrl:
           type: string
           description: Base URL used for group links.
@@ -1464,6 +1507,22 @@ components:
             Where to get this server's source code (AGPL-3.0). Defaults to the
             upstream repository.
           example: https://github.com/willie6666/balnana
+    PushDeviceInput:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          maxItems: 200
+          description: The link groups this device knows, and who it is in each.
+          items:
+            type: object
+            required: [token, memberId]
+            properties:
+              token:
+                type: string
+              memberId:
+                type: string
     OAuthProvider:
       type: object
       required: [id, name]

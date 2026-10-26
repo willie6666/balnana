@@ -417,6 +417,15 @@ type PaymentInput struct {
 	ToMemberId string     `json:"toMemberId"`
 }
 
+// PushDeviceInput defines model for PushDeviceInput.
+type PushDeviceInput struct {
+	// Groups The link groups this device knows, and who it is in each.
+	Groups []struct {
+		MemberId string `json:"memberId"`
+		Token    string `json:"token"`
+	} `json:"groups"`
+}
+
 // RegisterInput defines model for RegisterInput.
 type RegisterInput struct {
 	// Cookie Web app: keep the session in a cookie instead of returning a token.
@@ -453,8 +462,11 @@ type ServerInfo struct {
 	Password bool `json:"password"`
 
 	// PublicUrl Base URL used for group links.
-	PublicUrl string           `json:"publicUrl"`
-	Signup    ServerInfoSignup `json:"signup"`
+	PublicUrl string `json:"publicUrl"`
+
+	// Push The server sends push notifications through Firebase Cloud Messaging, to apps built with the same Firebase project.
+	Push   bool             `json:"push"`
+	Signup ServerInfoSignup `json:"signup"`
 
 	// SourceUrl Where to get this server's source code (AGPL-3.0). Defaults to the upstream repository.
 	SourceUrl string `json:"sourceUrl"`
@@ -686,6 +698,9 @@ type UpdateMeJSONRequestBody = UserUpdate
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody = PasswordChange
 
+// RegisterPushDeviceJSONRequestBody defines body for RegisterPushDevice for application/json ContentType.
+type RegisterPushDeviceJSONRequestBody = PushDeviceInput
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// The invitation behind an invitation link
@@ -799,6 +814,12 @@ type ServerInterface interface {
 	// Email a new verification link to the account's address
 	// (POST /me/verify-email)
 	SendVerifyEmail(w http.ResponseWriter, r *http.Request)
+	// Stop sending this device notifications
+	// (DELETE /push/devices/{device})
+	RemovePushDevice(w http.ResponseWriter, r *http.Request, device string)
+	// Send this device notifications about the groups it follows
+	// (PUT /push/devices/{device})
+	RegisterPushDevice(w http.ResponseWriter, r *http.Request, device string)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(w http.ResponseWriter, r *http.Request)
@@ -2277,6 +2298,72 @@ func (siw *ServerInterfaceWrapper) SendVerifyEmail(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// RemovePushDevice operation middleware
+func (siw *ServerInterfaceWrapper) RemovePushDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "device" -------------
+	var device string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "device", r.PathValue("device"), &device, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "device", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemovePushDevice(w, r, device)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterPushDevice operation middleware
+func (siw *ServerInterfaceWrapper) RegisterPushDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "device" -------------
+	var device string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "device", r.PathValue("device"), &device, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "device", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterPushDevice(w, r, device)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetServerInfo operation middleware
 func (siw *ServerInterfaceWrapper) GetServerInfo(w http.ResponseWriter, r *http.Request) {
 
@@ -2456,6 +2543,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/me/groups", wrapper.GetMyGroups)
 	m.HandleFunc("POST "+options.BaseURL+"/me/password", wrapper.ChangePassword)
 	m.HandleFunc("POST "+options.BaseURL+"/me/verify-email", wrapper.SendVerifyEmail)
+	m.HandleFunc("DELETE "+options.BaseURL+"/push/devices/{device}", wrapper.RemovePushDevice)
+	m.HandleFunc("PUT "+options.BaseURL+"/push/devices/{device}", wrapper.RegisterPushDevice)
 	m.HandleFunc("GET "+options.BaseURL+"/server-info", wrapper.GetServerInfo)
 
 	return m
@@ -3580,6 +3669,63 @@ func (response SendVerifyEmaildefaultJSONResponse) VisitSendVerifyEmailResponse(
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type RemovePushDeviceRequestObject struct {
+	Device string `json:"device"`
+}
+
+type RemovePushDeviceResponseObject interface {
+	VisitRemovePushDeviceResponse(w http.ResponseWriter) error
+}
+
+type RemovePushDevice204Response struct {
+}
+
+func (response RemovePushDevice204Response) VisitRemovePushDeviceResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemovePushDevicedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RemovePushDevicedefaultJSONResponse) VisitRemovePushDeviceResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RegisterPushDeviceRequestObject struct {
+	Device string `json:"device"`
+	Body   *RegisterPushDeviceJSONRequestBody
+}
+
+type RegisterPushDeviceResponseObject interface {
+	VisitRegisterPushDeviceResponse(w http.ResponseWriter) error
+}
+
+type RegisterPushDevice204Response struct {
+}
+
+func (response RegisterPushDevice204Response) VisitRegisterPushDeviceResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RegisterPushDevicedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RegisterPushDevicedefaultJSONResponse) VisitRegisterPushDeviceResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetServerInfoRequestObject struct {
 }
 
@@ -3709,6 +3855,12 @@ type StrictServerInterface interface {
 	// Email a new verification link to the account's address
 	// (POST /me/verify-email)
 	SendVerifyEmail(ctx context.Context, request SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error)
+	// Stop sending this device notifications
+	// (DELETE /push/devices/{device})
+	RemovePushDevice(ctx context.Context, request RemovePushDeviceRequestObject) (RemovePushDeviceResponseObject, error)
+	// Send this device notifications about the groups it follows
+	// (PUT /push/devices/{device})
+	RegisterPushDevice(ctx context.Context, request RegisterPushDeviceRequestObject) (RegisterPushDeviceResponseObject, error)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(ctx context.Context, request GetServerInfoRequestObject) (GetServerInfoResponseObject, error)
@@ -4821,6 +4973,65 @@ func (sh *strictHandler) SendVerifyEmail(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SendVerifyEmailResponseObject); ok {
 		if err := validResponse.VisitSendVerifyEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemovePushDevice operation middleware
+func (sh *strictHandler) RemovePushDevice(w http.ResponseWriter, r *http.Request, device string) {
+	var request RemovePushDeviceRequestObject
+
+	request.Device = device
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemovePushDevice(ctx, request.(RemovePushDeviceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemovePushDevice")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemovePushDeviceResponseObject); ok {
+		if err := validResponse.VisitRemovePushDeviceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RegisterPushDevice operation middleware
+func (sh *strictHandler) RegisterPushDevice(w http.ResponseWriter, r *http.Request, device string) {
+	var request RegisterPushDeviceRequestObject
+
+	request.Device = device
+
+	var body RegisterPushDeviceJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RegisterPushDevice(ctx, request.(RegisterPushDeviceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RegisterPushDevice")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegisterPushDeviceResponseObject); ok {
+		if err := validResponse.VisitRegisterPushDeviceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

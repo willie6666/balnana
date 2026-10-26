@@ -350,8 +350,10 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 
 func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObject) (CreateExpenseResponseObject, error) {
 	var out Expense
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		g, err := s.groupByToken(ctx, tx, req.Token, true)
+	var g *group
+	var who *string
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
 		}
@@ -359,7 +361,7 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
+		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -373,6 +375,7 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 	if err != nil {
 		return nil, err
 	}
+	s.notifyExpense(g, who, "added", out)
 	return CreateExpense201JSONResponse(out), nil
 }
 
@@ -383,8 +386,10 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 		occurred = *in.OccurredAt
 	}
 	var out Expense
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		g, err := s.groupByToken(ctx, tx, req.Token, true)
+	var g *group
+	var who *string
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
 		}
@@ -398,7 +403,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
+		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -419,6 +424,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 	if err != nil {
 		return nil, err
 	}
+	s.notifyExpense(g, who, "added", out)
 	return CreatePayment201JSONResponse(out), nil
 }
 
@@ -453,8 +459,10 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		return nil, badRequest("version_required")
 	}
 	var out Expense
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		g, err := s.groupByToken(ctx, tx, req.Token, true)
+	var g *group
+	var who *string
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
 		}
@@ -472,7 +480,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
+		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
@@ -501,14 +509,18 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 	if err != nil {
 		return nil, err
 	}
+	s.notifyExpense(g, who, "edited", out)
 	return UpdateExpense200JSONResponse(out), nil
 }
 
 // setDeleted deletes or restores an expense. Doing it twice changes nothing.
 func (s *Server) setDeleted(ctx context.Context, token, id string, header *string, del bool) (Expense, error) {
 	var out Expense
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		g, err := s.groupByToken(ctx, tx, token, true)
+	var g *group
+	var who *string
+	changed := false
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+		g, err = s.groupByToken(ctx, tx, token, true)
 		if err != nil {
 			return err
 		}
@@ -517,7 +529,8 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			return err
 		}
 		if deleted != del {
-			who, err := actor(ctx, tx, g, header)
+			changed = true
+			who, err = actor(ctx, tx, g, header)
 			if err != nil {
 				return err
 			}
@@ -543,6 +556,9 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 		out, err = loadExpense(ctx, tx, g, id)
 		return err
 	})
+	if err == nil && changed && del {
+		s.notifyExpense(g, who, "deleted", out)
+	}
 	return out, err
 }
 

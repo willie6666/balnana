@@ -115,6 +115,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get commonRetry;
 
+  /// No description provided for @offlineBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline. Showing what this device saved; changes wait until you reconnect.'**
+  String get offlineBar;
+
   /// No description provided for @commonSave.
   ///
   /// In en, this message translates to:
@@ -1458,6 +1464,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System default'**
   String get languageSystem;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When someone adds, changes or deletes an expense you are in'**
+  String get settingsNotificationsSubtitle;
 
   /// No description provided for @settingsConnection.
   ///

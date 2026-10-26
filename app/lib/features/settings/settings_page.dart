@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n.dart';
+import '../../core/push.dart';
 import '../../core/server.dart';
 import '../../core/settings.dart';
 import '../../ui/widgets/grouped_list.dart';
@@ -81,6 +82,19 @@ class SettingsPage extends ConsumerWidget {
             ),
           ],
         ),
+        if (ref.watch(pushAvailableProvider))
+          GroupedList(
+            title: l10n.settingsNotifications,
+            children: [
+              GroupedSwitchTile(
+                icon: Icons.notifications_outlined,
+                title: l10n.settingsNotifications,
+                subtitle: l10n.settingsNotificationsSubtitle,
+                value: settings.notifications,
+                onChanged: notifier.setNotifications,
+              ),
+            ],
+          ),
         if (canChooseServer)
           GroupedList(
             title: l10n.settingsConnection,

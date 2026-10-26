@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:balnana/app.dart';
 import 'package:balnana/core/money.dart';
+import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
@@ -109,6 +110,7 @@ Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) a
       retry: (retryCount, error) => null,
       overrides: [
         prefsProvider.overrideWithValue(prefs),
+        cacheDbProvider.overrideWithValue(null),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
         summariesProvider.overrideWith((ref) async => (groups: <GroupSummary>[], missing: <String>[])),
         balancesProvider.overrideWith((ref, token) async => const Balances(nets: {}, transfers: [])),

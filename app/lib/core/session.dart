@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'offline_cache.dart';
 import 'prefs.dart';
 import 'server.dart';
 
@@ -58,6 +59,8 @@ class SessionNotifier extends Notifier<SessionKey> {
       tokens[server] = token;
     }
     ref.read(prefsProvider).setString(_key, jsonEncode(tokens));
+    // What the last account saw is not for the next one.
+    ref.read(cacheDbProvider)?.forget(server).ignore();
     state = SessionKey(token, state.generation + 1);
   }
 }

@@ -65,6 +65,40 @@ existing account only when both sides have confirmed the same email.
 - A web app hosted on another origin needs that origin listed in
   `BALNANA_CORS_ORIGINS`.
 
+### Push notifications (optional)
+
+The server can notify phones when someone adds, changes or deletes an expense they
+are in. It needs a Firebase project, and only reaches Android builds made with that
+same project's values (step 3).
+
+1. In the [Firebase console](https://console.firebase.google.com/), create a project
+   and add an Android app with the package name `io.github.willie6666.balnana`.
+2. Under Project settings → Service accounts, generate a private key. Mount the file
+   into the container and point `BALNANA_FCM_CREDENTIALS` at it, for example with a
+   `docker-compose.override.yml`:
+
+   ```yaml
+   services:
+     balnana:
+       environment:
+         BALNANA_FCM_CREDENTIALS: /run/secrets/firebase.json
+       volumes:
+         - ./firebase.json:/run/secrets/firebase.json:ro
+   ```
+
+3. Build the app with the Android app's values from Project settings → General:
+
+   ```bash
+   flutter build apk \
+     --dart-define=BALNANA_FIREBASE_API_KEY=... \
+     --dart-define=BALNANA_FIREBASE_APP_ID=... \
+     --dart-define=BALNANA_FIREBASE_SENDER_ID=... \
+     --dart-define=BALNANA_FIREBASE_PROJECT_ID=...
+   ```
+
+Settings → Notifications then turns them off and on per device. Without these
+values the app never contacts Firebase.
+
 ## Development
 
 The repository is a monorepo:

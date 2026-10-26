@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -103,5 +105,34 @@ func TestCORSOrigins(t *testing.T) {
 	}
 	if strings.Join(c.CORSOrigins, "|") != "http://localhost:5000|https://a.example" {
 		t.Fatalf("got %v", c.CORSOrigins)
+	}
+}
+
+func TestFCMCredentials(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, body string) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+	good := write("good.json", `{"type":"service_account","project_id":"p","client_email":"a@p.iam.gserviceaccount.com","private_key":"k"}`)
+	c, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_FCM_CREDENTIALS": good}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.FCM == nil || c.FCM.ProjectID != "p" || c.FCM.TokenURI != "https://oauth2.googleapis.com/token" {
+		t.Fatalf("fcm %+v", c.FCM)
+	}
+	for _, bad := range []string{
+		write("user.json", `{"type":"authorized_user","project_id":"p","client_email":"a","private_key":"k"}`),
+		write("broken.json", `{`),
+		filepath.Join(dir, "missing.json"),
+	} {
+		_, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_FCM_CREDENTIALS": bad}))
+		if err == nil || !strings.Contains(err.Error(), "BALNANA_FCM_CREDENTIALS") {
+			t.Errorf("%s: %v", bad, err)
+		}
 	}
 }

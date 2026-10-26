@@ -22,6 +22,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRetry => 'Retry';
 
   @override
+  String get offlineBar => 'Offline. Showing what this device saved; changes wait until you reconnect.';
+
+  @override
   String get commonSave => 'Save';
 
   @override
@@ -776,6 +779,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSystem => 'System default';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsNotificationsSubtitle => 'When someone adds, changes or deletes an expense you are in';
 
   @override
   String get settingsConnection => 'Connection';

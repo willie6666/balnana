@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Push notification text. The server sends a key and its arguments, so the
+     phone words the notification in its own language. -->
+<resources>
+    <!-- 1: who, 2: expense title, 3: amount with currency. -->
+    <string name="push_expense_added">%1$s added %2$s · %3$s</string>
+    <string name="push_expense_edited">%1$s changed %2$s · %3$s</string>
+    <string name="push_expense_deleted">%1$s deleted %2$s · %3$s</string>
+    <!-- 1: expense title, 2: amount with currency. -->
+    <string name="push_expense_added_anon">%1$s was added · %2$s</string>
+    <string name="push_expense_edited_anon">%1$s was changed · %2$s</string>
+    <string name="push_expense_deleted_anon">%1$s was deleted · %2$s</string>
+    <!-- 1: who paid, 2: who was paid, 3: amount with currency. -->
+    <string name="push_payment_added">%1$s paid %2$s %3$s</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status bar icon for notifications: a coin split in two. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11,2.05A10,10 0,0 0,11 21.95ZM13,2.05V21.95A10,10 0,0 0,13 2.05Z" />
+</vector>

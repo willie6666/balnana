@@ -250,6 +250,21 @@ class BalnanaApi {
 
   /// Calls about one group, made as [memberId] when this device knows who it is.
   GroupApi group(String token, {String? memberId}) => GroupApi._(this, token, memberId);
+
+  /// Asks for notifications about [groups] (and, signed in, the account's
+  /// groups) on the device with push [token].
+  Future<void> registerPushDevice(String token, List<({String token, String memberId})> groups) => _send(
+    () => _dio.put<Object?>(
+      '/push/devices/${Uri.encodeComponent(token)}',
+      data: {
+        'groups': [for (final g in groups) {'token': g.token, 'memberId': g.memberId}],
+      },
+    ),
+    (_) {},
+  );
+
+  Future<void> removePushDevice(String token) =>
+      _send(() => _dio.delete<Object?>('/push/devices/${Uri.encodeComponent(token)}'), (_) {});
 }
 
 class GroupApi {

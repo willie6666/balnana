@@ -3,6 +3,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -49,6 +50,14 @@ type OIDC struct {
 	Name   string // shown on the sign-in button
 }
 
+// FCMAccount is the Firebase service account that sends push notifications.
+type FCMAccount struct {
+	ProjectID   string `json:"project_id"`
+	ClientEmail string `json:"client_email"`
+	PrivateKey  string `json:"private_key"`
+	TokenURI    string `json:"token_uri"`
+}
+
 // UpstreamSourceURL is the official Balnana repository, the default source link.
 const UpstreamSourceURL = "https://github.com/willie6666/balnana"
 
@@ -79,6 +88,9 @@ type Config struct {
 	SMTP       SMTP
 	Google     *OAuthClient
 	OIDC       *OIDC
+
+	// FCM sends push notifications to the Android app; nil turns them off.
+	FCM *FCMAccount
 }
 
 // Load reads the environment. It returns every problem at once so a
@@ -182,6 +194,14 @@ func load(getenv func(string) string) (*Config, error) {
 		}
 	}
 
+	if path := e.str("BALNANA_FCM_CREDENTIALS", ""); path != "" {
+		if a, err := loadFCMAccount(path); err != nil {
+			e.fail("BALNANA_FCM_CREDENTIALS: %v", err)
+		} else {
+			c.FCM = a
+		}
+	}
+
 	if c.AuthMode == AuthModeAccounts && !c.Password && c.Google == nil && c.OIDC == nil {
 		e.fail("accounts mode needs at least one sign-in method: BALNANA_AUTH_PASSWORD=true or an OAuth provider")
 	}
@@ -190,6 +210,29 @@ func load(getenv func(string) string) (*Config, error) {
 		return nil, errors.Join(e.errs...)
 	}
 	return c, nil
+}
+
+// loadFCMAccount reads a service account key file downloaded from the
+// Firebase console (Project settings, Service accounts).
+func loadFCMAccount(path string) (*FCMAccount, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var a struct {
+		Type string `json:"type"`
+		FCMAccount
+	}
+	if err := json.Unmarshal(data, &a); err != nil {
+		return nil, fmt.Errorf("%s is not a service account key: %v", path, err)
+	}
+	if a.Type != "service_account" || a.ProjectID == "" || a.ClientEmail == "" || a.PrivateKey == "" {
+		return nil, fmt.Errorf("%s is not a service account key", path)
+	}
+	if a.TokenURI == "" {
+		a.TokenURI = "https://oauth2.googleapis.com/token"
+	}
+	return &a.FCMAccount, nil
 }
 
 // OAuthProvider is a sign-in provider shown in the app.
