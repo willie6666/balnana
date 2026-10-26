@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import 'email_pages.dart';
+import 'oauth.dart';
 
 /// The sign-in page, coming back to [next] afterwards.
 String signInPath(String next) => Uri(path: '/sign-in', queryParameters: {'next': next}).toString();
@@ -107,6 +108,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final passwords = info?.password ?? true;
     final canRegister = info?.signup != SignupPolicy.closed || widget.prefill?.invite != null;
     final canReset = info?.email ?? false;
+    final providers = info?.oauthProviders ?? const <OAuthProvider>[];
 
     return Scaffold(
       appBar: AppBar(
@@ -131,9 +133,31 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: BSpace.s24),
-              if (!passwords)
+              for (final provider in providers) ...[
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : () => startOAuth(ref, provider, safeNext(widget.next) ?? '/groups'),
+                  icon: const Icon(Icons.login),
+                  label: Text(l10n.signInWith(provider.name)),
+                ),
+                const SizedBox(height: BSpace.s8),
+              ],
+              if (providers.isNotEmpty && passwords) ...[
+                const SizedBox(height: BSpace.s8),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
+                      child: Text(l10n.signInOr, style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: BSpace.s16),
+              ],
+              if (!passwords && providers.isEmpty)
                 Text(l10n.signInNoPassword, style: text.bodyLarge)
-              else
+              else if (passwords)
                 AutofillGroup(
                   child: Form(
                     key: _form,

@@ -49,6 +49,21 @@ void main() {
       }
     });
 
+    test('reads sign-in providers, skipping malformed ones', () {
+      expect(ServerInfo.fromJson(json()).oauthProviders, isEmpty);
+      final providers = ServerInfo.fromJson(
+        json({
+          'oauthProviders': [
+            {'id': 'google', 'name': 'Google'},
+            {'id': 'oidc'},
+            'x',
+            {'id': 'oidc', 'name': 'Company SSO'},
+          ],
+        }),
+      ).oauthProviders;
+      expect([for (final p in providers) '${p.id}:${p.name}'], ['google:Google', 'oidc:Company SSO']);
+    });
+
     test('rejects other servers', () {
       expect(() => ServerInfo.fromJson(json({'name': 'other'})), throwsFormatException);
     });

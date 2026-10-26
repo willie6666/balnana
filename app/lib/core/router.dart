@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/providers.dart';
 import '../features/account/email_pages.dart';
+import '../features/account/oauth.dart';
 import '../features/account/sign_in_page.dart';
 import '../features/activity/activity_page.dart';
 import '../features/expense/expense_editor_page.dart';
@@ -32,13 +33,14 @@ String? _accountsRedirect(Ref ref, GoRouterState state) {
   final public =
       path.startsWith('/settings') ||
       (path.startsWith('/g/') && !path.endsWith('/join')) ||
-      _emailLinks.any(path.startsWith);
+      _publicLinks.any(path.startsWith);
   if (!signedIn && !public) return signInPath(state.uri.toString());
   return null;
 }
 
-/// Pages opened from emails, which work signed out.
-const _emailLinks = ['/verify-email', '/reset-password', '/invite/'];
+/// Pages opened from emails or coming back from a sign-in provider, which
+/// work signed out.
+const _publicLinks = ['/verify-email', '/reset-password', '/invite/', '/oauth-done'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
@@ -70,6 +72,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) => ResetPasswordPage(token: state.uri.queryParameters['token'] ?? ''),
+      ),
+      GoRoute(
+        path: '/oauth-done',
+        builder: (context, state) => OAuthDonePage(
+          code: state.uri.queryParameters['code'],
+          error: state.uri.queryParameters['error'],
+          next: state.uri.queryParameters['next'],
+        ),
       ),
       GoRoute(
         path: '/invite/:token',

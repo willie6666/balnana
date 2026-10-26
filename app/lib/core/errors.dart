@@ -30,6 +30,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'accounts_off' || 'password_off' => l10n.errorAccountsOff,
     'email_off' => l10n.errorEmailOff,
     'invalid_token' => l10n.errorInvalidToken,
+    'oauth_failed' => l10n.errorOAuthFailed,
+    'oauth_cancelled' => l10n.errorOAuthCancelled,
     'rate_limited' => l10n.errorRateLimited,
     final code =>
       MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??

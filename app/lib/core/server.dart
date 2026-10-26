@@ -88,6 +88,7 @@ class ServerInfo {
     this.signup = SignupPolicy.open,
     this.linkGroups = true,
     this.email = false,
+    this.oauthProviders = const [],
     required this.publicUrl,
     this.sourceUrl,
   });
@@ -113,6 +114,11 @@ class ServerInfo {
       },
       linkGroups: json['linkGroups'] != false,
       email: json['email'] == true,
+      oauthProviders: [
+        if (json['oauthProviders'] case final List<Object?> list)
+          for (final p in list)
+            if (p case {'id': final String id, 'name': final String name}) OAuthProvider(id: id, name: name),
+      ],
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
     );
@@ -130,11 +136,24 @@ class ServerInfo {
 
   /// The server sends email: verification, password reset and invitations.
   final bool email;
+
+  /// Google or OpenID Connect sign-in, as buttons on the sign-in page.
+  final List<OAuthProvider> oauthProviders;
   final String publicUrl;
 
   /// Where to get the server's source code, if the operator set it. Only
   /// http(s) links are kept, since the app opens it in a browser.
   final Uri? sourceUrl;
+}
+
+@immutable
+class OAuthProvider {
+  const OAuthProvider({required this.id, required this.name});
+
+  final String id;
+
+  /// What the button says: "Google", or the operator's name for their provider.
+  final String name;
 }
 
 Uri? _webUrl(Object? value) {

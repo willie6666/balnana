@@ -396,5 +396,13 @@
   "inviteAction": "Open invitation",
   "inviteMissingTitle": "This invitation doesn't work",
   "inviteMissingBody": "It may have expired or been used. Ask for a new one.",
-  "joinInvitedAs": "You were invited as this person"
+  "joinInvitedAs": "You were invited as this person",
+  "signInWith": "Continue with {provider}",
+  "@signInWith": {"placeholders": {"provider": {"type": "String"}}},
+  "signInOr": "or",
+  "oauthFailedTitle": "Couldn't sign you in",
+  "oauthEmailTaken": "There's already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.",
+  "oauthBackToSignIn": "Back to sign in",
+  "errorOAuthFailed": "Signing in didn't work. Try again.",
+  "errorOAuthCancelled": "Signing in was cancelled."
 }

@@ -1932,6 +1932,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You were invited as this person'**
   String get joinInvitedAs;
+
+  /// No description provided for @signInWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {provider}'**
+  String signInWith(String provider);
+
+  /// No description provided for @signInOr.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get signInOr;
+
+  /// No description provided for @oauthFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sign you in'**
+  String get oauthFailedTitle;
+
+  /// No description provided for @oauthEmailTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.'**
+  String get oauthEmailTaken;
+
+  /// No description provided for @oauthBackToSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get oauthBackToSignIn;
+
+  /// No description provided for @errorOAuthFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in didn\'t work. Try again.'**
+  String get errorOAuthFailed;
+
+  /// No description provided for @errorOAuthCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in was cancelled.'**
+  String get errorOAuthCancelled;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1032,4 +1032,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinInvitedAs => 'You were invited as this person';
+
+  @override
+  String signInWith(String provider) {
+    return 'Continue with $provider';
+  }
+
+  @override
+  String get signInOr => 'or';
+
+  @override
+  String get oauthFailedTitle => 'Couldn\'t sign you in';
+
+  @override
+  String get oauthEmailTaken =>
+      'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.';
+
+  @override
+  String get oauthBackToSignIn => 'Back to sign in';
+
+  @override
+  String get errorOAuthFailed => 'Signing in didn\'t work. Try again.';
+
+  @override
+  String get errorOAuthCancelled => 'Signing in was cancelled.';
 }

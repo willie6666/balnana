@@ -22,12 +22,13 @@ type Server struct {
 	log     *slog.Logger
 	version string
 	mail    mail.Sender // nil when the server has no email
+	oauth   map[string]*oauthProvider
 }
 
 var _ StrictServerInterface = (*Server)(nil)
 
 func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version string) *Server {
-	s := &Server{cfg: cfg, db: db, log: log, version: version}
+	s := &Server{cfg: cfg, db: db, log: log, version: version, oauth: newOAuthProviders(cfg)}
 	if cfg.SMTP.Enabled() {
 		m, err := mail.NewSMTP(cfg.SMTP)
 		if err != nil {

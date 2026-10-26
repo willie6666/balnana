@@ -40,6 +40,12 @@ A group owner can still open a group to anyone with the link, unless
 `BALNANA_LINK_GROUPS=false`. The first account registered on a server can always
 register, even with `BALNANA_AUTH_SIGNUP=closed`.
 
+Accounts mode can also offer **Continue with Google** or any OpenID Connect provider
+(Authentik, Keycloak, Dex, ...). Register
+`<BALNANA_PUBLIC_URL>/api/v1/auth/oauth/google/callback` (or `.../oidc/callback`) as
+the redirect URI and set the `BALNANA_OAUTH_*` variables. A provider sign-in joins an
+existing account only when both sides have confirmed the same email.
+
 ### Connecting the apps
 
 - **Web**: the web app talks to the server that serves it. Nothing to configure.

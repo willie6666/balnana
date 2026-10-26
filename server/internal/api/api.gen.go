@@ -48,6 +48,12 @@ const (
 	Shares  SplitMethod = "shares"
 )
 
+// Defines values for StartOAuthParamsApp.
+const (
+	Android StartOAuthParamsApp = "android"
+	Web     StartOAuthParamsApp = "web"
+)
+
 // Activity defines model for Activity.
 type Activity struct {
 	// Action group.created, group.updated, group.link_reset, member.added, member.updated, member.removed, expense.created, expense.updated, expense.deleted, expense.restored. Payments use the expense actions with `kind: payment` in the payload.
@@ -306,6 +312,12 @@ type MemberInput struct {
 // Money Decimal amount with up to the group's `minorDigits` decimals.
 type Money = string
 
+// OAuthExchange defines model for OAuthExchange.
+type OAuthExchange struct {
+	Code     string `json:"code"`
+	Verifier string `json:"verifier"`
+}
+
 // OAuthProvider defines model for OAuthProvider.
 type OAuthProvider struct {
 	Id   string `json:"id"`
@@ -464,8 +476,33 @@ type ExpenseId = string
 // MemberId defines model for MemberId.
 type MemberId = string
 
+// OAuthProviderId defines model for OAuthProviderId.
+type OAuthProviderId = string
+
 // Token defines model for Token.
 type Token = string
+
+// OauthCallbackParams defines parameters for OauthCallback.
+type OauthCallbackParams struct {
+	Code         *string `form:"code,omitempty" json:"code,omitempty"`
+	State        *string `form:"state,omitempty" json:"state,omitempty"`
+	Error        *string `form:"error,omitempty" json:"error,omitempty"`
+	BalnanaOauth *string `form:"balnana_oauth,omitempty" json:"balnana_oauth,omitempty"`
+}
+
+// StartOAuthParams defines parameters for StartOAuth.
+type StartOAuthParams struct {
+	App StartOAuthParamsApp `form:"app" json:"app"`
+
+	// Next App path to open afterwards, such as `/groups`.
+	Next *string `form:"next,omitempty" json:"next,omitempty"`
+
+	// Challenge Android only: base64url SHA-256 of a random verifier the app keeps, sent again with the code to /auth/oauth/exchange.
+	Challenge *string `form:"challenge,omitempty" json:"challenge,omitempty"`
+}
+
+// StartOAuthParamsApp defines parameters for StartOAuth.
+type StartOAuthParamsApp string
 
 // UpdateGroupParams defines parameters for UpdateGroup.
 type UpdateGroupParams struct {
@@ -542,6 +579,9 @@ type ResetGroupLinkParams struct {
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginInput
 
+// ExchangeOAuthCodeJSONRequestBody defines body for ExchangeOAuthCode for application/json ContentType.
+type ExchangeOAuthCodeJSONRequestBody = OAuthExchange
+
 // RequestPasswordResetJSONRequestBody defines body for RequestPasswordReset for application/json ContentType.
 type RequestPasswordResetJSONRequestBody = PasswordResetRequest
 
@@ -601,6 +641,15 @@ type ServerInterface interface {
 	// End this session
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
+	// Trade the code the Android app got back for a session
+	// (POST /auth/oauth/exchange)
+	ExchangeOAuthCode(w http.ResponseWriter, r *http.Request)
+	// Where the provider sends the browser back
+	// (GET /auth/oauth/{provider}/callback)
+	OauthCallback(w http.ResponseWriter, r *http.Request, provider OAuthProviderId, params OauthCallbackParams)
+	// Leave for the provider's sign-in page (opened in a browser)
+	// (GET /auth/oauth/{provider}/start)
+	StartOAuth(w http.ResponseWriter, r *http.Request, provider OAuthProviderId, params StartOAuthParams)
 	// Email a password reset link
 	// (POST /auth/password-reset)
 	RequestPasswordReset(w http.ResponseWriter, r *http.Request)
@@ -770,6 +819,170 @@ func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Logout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExchangeOAuthCode operation middleware
+func (siw *ServerInterfaceWrapper) ExchangeOAuthCode(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExchangeOAuthCode(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// OauthCallback operation middleware
+func (siw *ServerInterfaceWrapper) OauthCallback(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "provider" -------------
+	var provider OAuthProviderId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", r.PathValue("provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params OauthCallbackParams
+
+	// ------------- Optional query parameter "code" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "code", r.URL.Query(), &params.Code)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "state", r.URL.Query(), &params.State)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "error" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "error", r.URL.Query(), &params.Error)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "error", Err: err})
+		return
+	}
+
+	{
+		var cookie *http.Cookie
+
+		if cookie, err = r.Cookie("balnana_oauth"); err == nil {
+			var value string
+			err = runtime.BindStyledParameterWithOptions("simple", "balnana_oauth", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false})
+			if err != nil {
+				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "balnana_oauth", Err: err})
+				return
+			}
+			params.BalnanaOauth = &value
+
+		}
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.OauthCallback(w, r, provider, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartOAuth operation middleware
+func (siw *ServerInterfaceWrapper) StartOAuth(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "provider" -------------
+	var provider OAuthProviderId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", r.PathValue("provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StartOAuthParams
+
+	// ------------- Required query parameter "app" -------------
+
+	if paramValue := r.URL.Query().Get("app"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "app"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "app", r.URL.Query(), &params.App)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "app", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "next" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "next", r.URL.Query(), &params.Next)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "next", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "challenge" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "challenge", r.URL.Query(), &params.Challenge)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "challenge", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartOAuth(w, r, provider, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2092,6 +2305,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/auth/invites/{inviteToken}", wrapper.GetInvite)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.Logout)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/oauth/exchange", wrapper.ExchangeOAuthCode)
+	m.HandleFunc("GET "+options.BaseURL+"/auth/oauth/{provider}/callback", wrapper.OauthCallback)
+	m.HandleFunc("GET "+options.BaseURL+"/auth/oauth/{provider}/start", wrapper.StartOAuth)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset", wrapper.RequestPasswordReset)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset/confirm", wrapper.ResetPassword)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/register", wrapper.Register)
@@ -2207,6 +2423,105 @@ type LogoutdefaultJSONResponse struct {
 }
 
 func (response LogoutdefaultJSONResponse) VisitLogoutResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ExchangeOAuthCodeRequestObject struct {
+	Body *ExchangeOAuthCodeJSONRequestBody
+}
+
+type ExchangeOAuthCodeResponseObject interface {
+	VisitExchangeOAuthCodeResponse(w http.ResponseWriter) error
+}
+
+type ExchangeOAuthCode200JSONResponse Session
+
+func (response ExchangeOAuthCode200JSONResponse) VisitExchangeOAuthCodeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExchangeOAuthCodedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ExchangeOAuthCodedefaultJSONResponse) VisitExchangeOAuthCodeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type OauthCallbackRequestObject struct {
+	Provider OAuthProviderId `json:"provider"`
+	Params   OauthCallbackParams
+}
+
+type OauthCallbackResponseObject interface {
+	VisitOauthCallbackResponse(w http.ResponseWriter) error
+}
+
+type OauthCallback302ResponseHeaders struct {
+	Location string
+}
+
+type OauthCallback302Response struct {
+	Headers OauthCallback302ResponseHeaders
+}
+
+func (response OauthCallback302Response) VisitOauthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(302)
+	return nil
+}
+
+type OauthCallbackdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response OauthCallbackdefaultJSONResponse) VisitOauthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type StartOAuthRequestObject struct {
+	Provider OAuthProviderId `json:"provider"`
+	Params   StartOAuthParams
+}
+
+type StartOAuthResponseObject interface {
+	VisitStartOAuthResponse(w http.ResponseWriter) error
+}
+
+type StartOAuth302ResponseHeaders struct {
+	Location string
+}
+
+type StartOAuth302Response struct {
+	Headers StartOAuth302ResponseHeaders
+}
+
+func (response StartOAuth302Response) VisitStartOAuthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(302)
+	return nil
+}
+
+type StartOAuthdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response StartOAuthdefaultJSONResponse) VisitStartOAuthResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -3096,6 +3411,15 @@ type StrictServerInterface interface {
 	// End this session
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// Trade the code the Android app got back for a session
+	// (POST /auth/oauth/exchange)
+	ExchangeOAuthCode(ctx context.Context, request ExchangeOAuthCodeRequestObject) (ExchangeOAuthCodeResponseObject, error)
+	// Where the provider sends the browser back
+	// (GET /auth/oauth/{provider}/callback)
+	OauthCallback(ctx context.Context, request OauthCallbackRequestObject) (OauthCallbackResponseObject, error)
+	// Leave for the provider's sign-in page (opened in a browser)
+	// (GET /auth/oauth/{provider}/start)
+	StartOAuth(ctx context.Context, request StartOAuthRequestObject) (StartOAuthResponseObject, error)
 	// Email a password reset link
 	// (POST /auth/password-reset)
 	RequestPasswordReset(ctx context.Context, request RequestPasswordResetRequestObject) (RequestPasswordResetResponseObject, error)
@@ -3291,6 +3615,91 @@ func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(LogoutResponseObject); ok {
 		if err := validResponse.VisitLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExchangeOAuthCode operation middleware
+func (sh *strictHandler) ExchangeOAuthCode(w http.ResponseWriter, r *http.Request) {
+	var request ExchangeOAuthCodeRequestObject
+
+	var body ExchangeOAuthCodeJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExchangeOAuthCode(ctx, request.(ExchangeOAuthCodeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExchangeOAuthCode")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExchangeOAuthCodeResponseObject); ok {
+		if err := validResponse.VisitExchangeOAuthCodeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// OauthCallback operation middleware
+func (sh *strictHandler) OauthCallback(w http.ResponseWriter, r *http.Request, provider OAuthProviderId, params OauthCallbackParams) {
+	var request OauthCallbackRequestObject
+
+	request.Provider = provider
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.OauthCallback(ctx, request.(OauthCallbackRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "OauthCallback")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(OauthCallbackResponseObject); ok {
+		if err := validResponse.VisitOauthCallbackResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartOAuth operation middleware
+func (sh *strictHandler) StartOAuth(w http.ResponseWriter, r *http.Request, provider OAuthProviderId, params StartOAuthParams) {
+	var request StartOAuthRequestObject
+
+	request.Provider = provider
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StartOAuth(ctx, request.(StartOAuthRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartOAuth")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartOAuthResponseObject); ok {
+		if err := validResponse.VisitStartOAuthResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

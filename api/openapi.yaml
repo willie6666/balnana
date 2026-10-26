@@ -184,6 +184,103 @@ paths:
           description: Changed
         default:
           $ref: "#/components/responses/Error"
+  /auth/oauth/{provider}/start:
+    parameters:
+      - $ref: "#/components/parameters/OAuthProviderId"
+    get:
+      operationId: startOAuth
+      summary: Leave for the provider's sign-in page (opened in a browser)
+      description: >-
+        The app opens this in the browser rather than calling it. It comes
+        back through the callback to `/oauth-done` in the web app, or to
+        `balnana://app/oauth-done` in the Android app, with `next` and either
+        `code` (Android: trade it with /auth/oauth/exchange) or `error`.
+      parameters:
+        - name: app
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [web, android]
+        - name: next
+          in: query
+          description: App path to open afterwards, such as `/groups`.
+          schema:
+            type: string
+        - name: challenge
+          in: query
+          description: >-
+            Android only: base64url SHA-256 of a random verifier the app keeps,
+            sent again with the code to /auth/oauth/exchange.
+          schema:
+            type: string
+      responses:
+        "302":
+          description: To the provider
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/oauth/{provider}/callback:
+    parameters:
+      - $ref: "#/components/parameters/OAuthProviderId"
+    get:
+      operationId: oauthCallback
+      summary: Where the provider sends the browser back
+      description: >-
+        Signs in to the account with this provider identity. Otherwise an
+        account with the same address, when the provider has verified it,
+        gets the identity added; failing both, a new account is made when
+        sign-up allows it. Errors: `oauth_failed`, `oauth_cancelled`,
+        `email_taken` (an account has the address but has not confirmed it),
+        `signup_closed`.
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: error
+          in: query
+          schema:
+            type: string
+        - name: balnana_oauth
+          in: cookie
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Back to the app
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/oauth/exchange:
+    post:
+      operationId: exchangeOAuthCode
+      summary: Trade the code the Android app got back for a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthExchange"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
   /auth/invites/{inviteToken}:
     parameters:
       - name: inviteToken
@@ -633,6 +730,13 @@ components:
       name: expenseId
       in: path
       required: true
+      schema:
+        type: string
+    OAuthProviderId:
+      name: provider
+      in: path
+      required: true
+      description: An id from `oauthProviders` in /server-info.
       schema:
         type: string
     ActingMember:
@@ -1099,6 +1203,14 @@ components:
           type: string
           description: Required when the account has a password.
         newPassword:
+          type: string
+    OAuthExchange:
+      type: object
+      required: [code, verifier]
+      properties:
+        code:
+          type: string
+        verifier:
           type: string
     EmailToken:
       type: object

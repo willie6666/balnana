@@ -127,6 +127,13 @@ class BalnanaApi {
     _session,
   );
 
+  /// Trades the code a Google or OpenID Connect sign-in sent back to the
+  /// Android app for a session; [verifier] proves this app started it.
+  Future<(String?, User)> exchangeOAuthCode({required String code, required String verifier}) => _send(
+    () => _dio.post<Object?>('/auth/oauth/exchange', data: {'code': code, 'verifier': verifier}),
+    _session,
+  );
+
   static (String?, User) _session(Object? data) {
     if (data is! Map<String, Object?>) throw const FormatException('expected an object');
     final token = data['token'];

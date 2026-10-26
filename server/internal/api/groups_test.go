@@ -70,6 +70,8 @@ type client struct {
 	token  string         // bearer session token
 	jar    []*http.Cookie // cookies the server set
 	header http.Header    // extra request headers
+	// location is the Location header of the last answer.
+	location string
 }
 
 func newClient(t *testing.T) *client {
@@ -115,6 +117,7 @@ func (c *client) call(method, path string, body any, out any) int {
 	}
 	rec := httptest.NewRecorder()
 	c.h.ServeHTTP(rec, req)
+	c.location = rec.Header().Get("Location")
 	for _, ck := range rec.Result().Cookies() {
 		c.jar = slices.DeleteFunc(c.jar, func(old *http.Cookie) bool { return old.Name == ck.Name })
 		if ck.MaxAge >= 0 {
