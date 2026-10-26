@@ -635,3 +635,49 @@ class GroupStats {
   /// Oldest first, only months with spending.
   final List<({DateTime month, BigInt amount})> months;
 }
+
+/// One server setting on the admin page, by the environment variable that
+/// sets it (see .env.example).
+@immutable
+class AdminSetting {
+  const AdminSetting({
+    required this.key,
+    this.value,
+    this.defaultValue = '',
+    this.locked = false,
+    this.secret = false,
+    this.set = false,
+  });
+
+  factory AdminSetting.fromJson(Object? data) {
+    final json = _object(data);
+    return AdminSetting(
+      key: _req(json, 'key'),
+      value: _opt(json, 'value'),
+      defaultValue: _opt<String>(json, 'default') ?? '',
+      locked: _opt<bool>(json, 'locked') ?? false,
+      secret: _opt<bool>(json, 'secret') ?? false,
+      set: _opt<bool>(json, 'set') ?? false,
+    );
+  }
+
+  static List<AdminSetting> listFromJson(Object? data) => [
+    for (final s in _objects(_object(data), 'settings')) AdminSetting.fromJson(s),
+  ];
+
+  final String key;
+
+  /// The value in force; never sent for secrets.
+  final String? value;
+  final String defaultValue;
+
+  /// Set by an environment variable on the server, which wins.
+  final bool locked;
+  final bool secret;
+
+  /// Something sets it: the environment or the admin page.
+  final bool set;
+
+  /// What is in force, the default when nothing sets it.
+  String get effective => value ?? defaultValue;
+}

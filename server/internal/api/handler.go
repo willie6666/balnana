@@ -42,13 +42,14 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 		writeError(w, http.StatusNotFound, "not_found")
 	})
 	mux.HandleFunc("GET /healthz", s.Healthz)
+	mux.HandleFunc("GET /.well-known/assetlinks.json", s.assetLinks)
 	mux.Handle("/", web)
 
 	var h http.Handler = mux
 	h = s.sessions(h)
 	h = checkBodies(h)
-	h = rateLimit(s.cfg.RateLimit, s.cfg.TrustProxy, h)
-	h = cors(s.cfg.CORSOrigins, h)
+	h = rateLimit(s.conf().RateLimit, s.conf().TrustProxy, h)
+	h = cors(s.conf().CORSOrigins, h)
 	h = securityHeaders(h)
 	h = recoverer(s.log, h)
 	h = logRequests(s.log, h)
@@ -99,7 +100,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		// Group URLs are secrets: never leak them through the Referer header.
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Content-Type-Options", "nosniff")
-		if strings.HasPrefix(r.URL.Path, "/g/") {
+		if strings.HasPrefix(r.URL.Path, "/g/") || r.URL.Path == "/admin" || strings.HasPrefix(r.URL.Path, "/admin/") {
 			h.Set("X-Robots-Tag", "noindex, nofollow")
 		}
 		next.ServeHTTP(w, r)
@@ -124,7 +125,7 @@ func cors(origins []string, next http.Handler) http.Handler {
 		h.Set("Access-Control-Allow-Origin", origin)
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
-			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Balnana-Member")
+			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Balnana-Member, X-Balnana-Admin")
 			h.Set("Access-Control-Max-Age", "600")
 			w.WriteHeader(http.StatusNoContent)
 			return

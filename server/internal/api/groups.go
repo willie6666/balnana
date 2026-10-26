@@ -19,13 +19,13 @@ var currencyCode = regexp.MustCompile(`^[A-Z]{3}$`)
 func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) (CreateGroupResponseObject, error) {
 	var creator *user
 	linkAccess := true
-	if s.cfg.AuthMode == config.AuthModeAccounts {
+	if s.conf().AuthMode == config.AuthModeAccounts {
 		u, err := s.requireUser(ctx)
 		if err != nil {
 			return nil, err
 		}
 		creator = u
-		linkAccess = s.cfg.LinkGroups && req.Body.LinkAccess != nil && *req.Body.LinkAccess
+		linkAccess = s.conf().LinkGroups && req.Body.LinkAccess != nil && *req.Body.LinkAccess
 	}
 	in := req.Body
 	name, err := cleanName(in.Name)
@@ -254,8 +254,8 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 		return nil, err
 	}
 	clearEmoji := in.Emoji != nil && emoji == nil
-	accounts := s.cfg.AuthMode == config.AuthModeAccounts
-	if in.LinkAccess != nil && accounts && *in.LinkAccess && !s.cfg.LinkGroups {
+	accounts := s.conf().AuthMode == config.AuthModeAccounts
+	if in.LinkAccess != nil && accounts && *in.LinkAccess && !s.conf().LinkGroups {
 		return nil, forbidden("link_groups_off")
 	}
 

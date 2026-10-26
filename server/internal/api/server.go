@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,29 +20,29 @@ import (
 
 // Server implements StrictServerInterface.
 type Server struct {
-	cfg     *config.Config
-	db      *pgxpool.Pool
-	log     *slog.Logger
-	version string
-	mail    mail.Sender // nil when the server has no email
-	oauth   map[string]*oauthProvider
-	hub     *hub
-	push    push.Sender // nil when the server sends no push notifications
-	pushing sync.WaitGroup
+	settings atomic.Pointer[settings]
+	db       *pgxpool.Pool
+	log      *slog.Logger
+	version  string
+	hub      *hub
+	push     push.Sender // nil when the server sends no push notifications
+	pushing  sync.WaitGroup
+}
+
+// settings are the configuration in force and what it sets up. An
+// administrator can change them while the server runs (see admin.go), so
+// handlers read them once per use through Server.conf and friends.
+type settings struct {
+	cfg   *config.Config
+	mail  mail.Sender // nil when the server has no email
+	oauth map[string]*oauthProvider
 }
 
 var _ StrictServerInterface = (*Server)(nil)
 
 func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version string) *Server {
-	s := &Server{cfg: cfg, db: db, log: log, version: version, oauth: newOAuthProviders(cfg), hub: newHub()}
-	if cfg.SMTP.Enabled() {
-		m, err := mail.NewSMTP(cfg.SMTP)
-		if err != nil {
-			log.Error("email is off", "err", err) // config.Load checks the address first
-		} else {
-			s.mail = m
-		}
-	}
+	s := &Server{db: db, log: log, version: version, hub: newHub()}
+	s.apply(cfg)
 	if cfg.FCM != nil {
 		if f, err := push.NewFCM(cfg.FCM); err != nil {
 			log.Error("push notifications are off", "err", err)
@@ -52,22 +53,49 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 	return s
 }
 
+// apply puts cfg in force.
+func (s *Server) apply(cfg *config.Config) {
+	st := &settings{cfg: cfg, oauth: newOAuthProviders(cfg)}
+	if cfg.SMTP.Enabled() {
+		m, err := mail.NewSMTP(cfg.SMTP)
+		if err != nil {
+			s.log.Error("email is off", "err", err) // config.Load checks the address first
+		} else {
+			st.mail = m
+		}
+	}
+	s.settings.Store(st)
+}
+
+// conf is the configuration in force.
+func (s *Server) conf() *config.Config { return s.settings.Load().cfg }
+
+// mailer sends email; nil when the server has none.
+func (s *Server) mailer() mail.Sender { return s.settings.Load().mail }
+
 func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject) (GetServerInfoResponseObject, error) {
-	accounts := s.cfg.AuthMode == config.AuthModeAccounts
+	st := s.settings.Load()
+	cfg := st.cfg
+	accounts := cfg.AuthMode == config.AuthModeAccounts
 	info := ServerInfo{
 		Name:           "balnana",
 		Version:        s.version,
-		AuthMode:       ServerInfoAuthMode(s.cfg.AuthMode),
-		Password:       accounts && s.cfg.Password,
-		Signup:         ServerInfoSignup(s.cfg.Signup),
-		Email:          s.mail != nil,
+		AuthMode:       ServerInfoAuthMode(cfg.AuthMode),
+		Password:       accounts && cfg.Password,
+		Signup:         ServerInfoSignup(cfg.Signup),
+		Email:          st.mail != nil,
 		OauthProviders: []OAuthProvider{},
-		LinkGroups:     !accounts || s.cfg.LinkGroups,
+		LinkGroups:     !accounts || cfg.LinkGroups,
 		Push:           s.push != nil,
-		PublicUrl:      s.cfg.PublicURL.String(),
-		SourceUrl:      s.cfg.SourceURL.String(),
+		PublicUrl:      cfg.PublicURL.String(),
+		SourceUrl:      cfg.SourceURL.String(),
 	}
-	if info.Password && s.cfg.Signup != config.SignupOpen {
+	err := s.db.QueryRow(ctx, `select password_hash is null, setup_code is not null from admin`).
+		Scan(&info.SetupRequired, &info.SetupCode)
+	if err != nil {
+		return nil, err
+	}
+	if info.Password && cfg.Signup != config.SignupOpen {
 		// The first account may always sign up, so a closed server can start.
 		err := s.db.QueryRow(ctx, `select not exists (select 1 from users)`).Scan(&info.FirstAccount)
 		if err != nil {
@@ -75,7 +103,7 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		}
 	}
 	if accounts {
-		for _, p := range s.cfg.OAuthProviders() {
+		for _, p := range cfg.OAuthProviders() {
 			info.OauthProviders = append(info.OauthProviders, OAuthProvider{Id: p.ID, Name: p.Name})
 		}
 	}

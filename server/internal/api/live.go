@@ -99,6 +99,7 @@ func (h *hub) changedAll() {
 }
 
 // ListenForChanges keeps a database connection listening for group changes
+// and saved settings
 // until ctx ends, then closes all event streams. Run it once per server.
 func (s *Server) ListenForChanges(ctx context.Context) {
 	defer close(s.hub.done)
@@ -111,6 +112,8 @@ func (s *Server) ListenForChanges(ctx context.Context) {
 				first = false
 			} else {
 				s.hub.changedAll()
+				// Settings may have changed while nobody was listening.
+				go s.reloadSettings(ctx)
 			}
 			backoff = time.Second
 		})
@@ -135,7 +138,7 @@ func (s *Server) listenOnce(ctx context.Context, listening func()) error {
 	// The connection leaves the pool for good: it stays in LISTEN.
 	conn := pooled.Hijack()
 	defer conn.Close(context.Background())
-	if _, err := conn.Exec(ctx, "listen "+changeChannel); err != nil {
+	if _, err := conn.Exec(ctx, "listen "+changeChannel+"; listen "+settingsChannel); err != nil {
 		return err
 	}
 	listening()
@@ -143,6 +146,10 @@ func (s *Server) listenOnce(ctx context.Context, listening func()) error {
 		n, err := conn.WaitForNotification(ctx)
 		if err != nil {
 			return err
+		}
+		if n.Channel == settingsChannel {
+			go s.reloadSettings(ctx)
+			continue
 		}
 		s.hub.changed(n.Payload)
 	}

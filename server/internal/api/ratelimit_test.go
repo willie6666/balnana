@@ -73,11 +73,11 @@ func TestRateLimitRequests(t *testing.T) {
 	h := testHandler(t, baseConfig(t, map[string]string{"BALNANA_RATE_LIMIT": "60"}))
 	// The burst for 60 a minute is 20.
 	for i := range 20 {
-		if rec := get(t, h, "/api/v1/server-info", nil); rec.Code != http.StatusOK {
+		if rec := get(t, h, "/api/v1/nope", nil); rec.Code != http.StatusNotFound {
 			t.Fatalf("request %d: status %d", i, rec.Code)
 		}
 	}
-	rec := get(t, h, "/api/v1/server-info", nil)
+	rec := get(t, h, "/api/v1/nope", nil)
 	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
 		t.Fatalf("status %d, Retry-After %q", rec.Code, rec.Header().Get("Retry-After"))
 	}

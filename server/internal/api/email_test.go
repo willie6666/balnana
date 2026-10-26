@@ -53,7 +53,7 @@ func mailClient(t *testing.T, env map[string]string) (*client, fakeMail) {
 	env["BALNANA_AUTH_MODE"] = "accounts"
 	s := NewServer(baseConfig(t, env), testDB(t), slog.New(slog.DiscardHandler), "test")
 	f := make(fakeMail, 10)
-	s.mail = f
+	s.settings.Load().mail = f
 	return &client{t: t, h: NewHandler(s, http.NotFoundHandler())}, f
 }
 

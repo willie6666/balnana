@@ -48,7 +48,8 @@ func main() {
 }
 
 func run() error {
-	cfg, err := config.Load()
+	// Settings an administrator saved are checked once the database is up.
+	cfg, err := config.Startup()
 	if err != nil {
 		return fmt.Errorf("invalid configuration:\n%w", err)
 	}
@@ -68,6 +69,12 @@ func run() error {
 	}
 
 	srv := api.NewServer(cfg, pool, log, version)
+	if err := srv.LoadSettings(ctx); err != nil {
+		return fmt.Errorf("invalid configuration:\n%w", err)
+	}
+	if err := srv.PrepareAdmin(ctx); err != nil {
+		return err
+	}
 	// Stops with ctx, which also ends open event streams so shutdown need
 	// not wait for them.
 	go srv.ListenForChanges(ctx)
@@ -80,8 +87,7 @@ func run() error {
 
 	errc := make(chan error, 1)
 	go func() {
-		log.Info("balnana listening", "addr", cfg.Listen, "public_url", cfg.PublicURL.String(),
-			"version", version, "auth_mode", cfg.AuthMode)
+		log.Info("balnana listening", "addr", cfg.Listen, "version", version)
 		errc <- httpServer.ListenAndServe()
 	}()
 

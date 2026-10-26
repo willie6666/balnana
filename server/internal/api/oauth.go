@@ -86,7 +86,7 @@ func (s *Server) oauthProvider(id string) (*oauthProvider, error) {
 	if err := s.requireAccounts(); err != nil {
 		return nil, err
 	}
-	p := s.oauth[id]
+	p := s.settings.Load().oauth[id]
 	if p == nil {
 		return nil, errNotFound
 	}
@@ -114,7 +114,7 @@ func (s *Server) setOAuthCookie(ctx context.Context, value string, maxAge int) {
 		Path:     BasePath + "/auth/oauth/",
 		MaxAge:   maxAge,
 		HttpOnly: true,
-		Secure:   s.cfg.PublicURL.Scheme == "https",
+		Secure:   s.conf().PublicURL.Scheme == "https",
 		SameSite: http.SameSiteLaxMode,
 	})
 }

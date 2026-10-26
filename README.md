@@ -25,12 +25,30 @@ You need Docker with the Compose plugin.
 
 ```bash
 cp .env.example .env
-# Edit .env: set POSTGRES_PASSWORD and BALNANA_PUBLIC_URL at least.
+# Edit .env: set POSTGRES_PASSWORD at least.
 docker compose up -d --build
 ```
 
 The web app and the API are then on `http://localhost:8080` (change the port with
 `BALNANA_PORT`). Database migrations run automatically on startup.
+
+### Administration
+
+The first time anyone opens a new server, the app sends them to `/admin` to choose
+the administrator password (there is no username). After that, `/admin` asks for
+the password and shows the server's settings: its public address, link or accounts
+mode, password sign-in and sign-up, email (SMTP), Google and OpenID Connect sign-in,
+and Android app links. Changes apply at once, on every server sharing the database.
+Nothing in the app links to `/admin`; open it by typing the address.
+
+Set it up right after starting a new server: until the password is set, whoever
+opens the server first can set it. A server that already held groups or accounts
+before it had administration also asks for a setup code, printed in its log
+(`docker compose logs balnana`), so an upgrade cannot be taken over by a visitor.
+
+Every setting can also be an environment variable; one that is set wins, and
+`/admin` shows it as fixed. [.env.example](.env.example) marks which ones `/admin`
+can change.
 
 For anything beyond your own machine, put a TLS reverse proxy (Caddy, Traefik, nginx)
 in front and set `BALNANA_PUBLIC_URL` to the public `https://` address: group links
@@ -44,8 +62,8 @@ header the server sends, and Caddy and Traefik need no setup. Serve over HTTP/2 
 you can: browsers allow only six HTTP/1.1 connections per site, and each open group
 tab holds one.
 
-Every setting is an environment variable; [.env.example](.env.example) lists them
-all, including the access mode (`link` or `accounts`), email and OAuth sign-in.
+[.env.example](.env.example) lists every setting, including the access mode (`link`
+or `accounts`), email and OAuth sign-in.
 
 In **link mode** (the default) a group's private link is all anyone needs. In
 **accounts mode** (`BALNANA_AUTH_MODE=accounts`) people sign in, and a link only lets
@@ -66,6 +84,11 @@ existing account only when both sides have confirmed the same email.
 - **Android**: on first launch the app asks for the server address. It can be
   changed later in Settings → Server. A build can also bake in a default:
   `flutter build apk --dart-define=BALNANA_SERVER_URL=https://balnana.example.com`.
+  Such a build also opens that server's group, invitation and email links in the
+  app. For Android to do so without asking, enter the SHA-256 fingerprint of the
+  build's signing certificate under `/admin` → Android app links (or set
+  `BALNANA_ANDROID_CERT_SHA256`); `keytool -list -v -keystore <your keystore>`
+  prints it. The server then serves `/.well-known/assetlinks.json`.
 - A web app hosted on another origin needs that origin listed in
   `BALNANA_CORS_ORIGINS`.
 

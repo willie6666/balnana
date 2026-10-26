@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Added to builds made with BALNANA_SERVER_URL (see build.gradle.kts):
+     that server's group, invitation and email links open in the app.
+     MainActivity hands the whole link to the app, which checks it belongs to
+     the server it is using before opening it. With
+     BALNANA_ANDROID_CERT_SHA256 set on the server (or at /admin), Android
+     opens them without asking. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name=".MainActivity">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${balnanaLinkScheme}" />
+                <data android:host="${balnanaLinkHost}" />
+                <data android:pathPrefix="${balnanaLinkPath}/g/" />
+                <data android:pathPrefix="${balnanaLinkPath}/invite/" />
+                <data android:path="${balnanaLinkPath}/verify-email" />
+                <data android:path="${balnanaLinkPath}/reset-password" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

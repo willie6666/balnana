@@ -7,6 +7,7 @@ import '../features/account/email_pages.dart';
 import '../features/account/oauth.dart';
 import '../features/account/sign_in_page.dart';
 import '../features/activity/activity_page.dart';
+import '../features/admin/admin_page.dart';
 import '../features/expense/expense_editor_page.dart';
 import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
@@ -15,6 +16,7 @@ import '../features/group/stats_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
+import '../features/groups/link_page.dart';
 import '../features/not_found_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
@@ -23,9 +25,12 @@ import 'server.dart';
 
 final _root = GlobalKey<NavigatorState>();
 
-/// In accounts mode, signed-out people only see signing in, settings and
-/// groups opened by link (which ask them to sign in unless open to anyone).
-String? _accountsRedirect(Ref ref, GoRouterState state) {
+/// A new server sends everyone to /admin until its administrator password
+/// is set. In accounts mode, signed-out people only see signing in, settings
+/// and groups opened by link (which ask them to sign in unless open to
+/// anyone).
+String? _redirect(Ref ref, GoRouterState state) {
+  if (ref.read(setupRequiredProvider)) return state.matchedLocation == '/admin' ? null : '/admin';
   if (!ref.read(accountsModeProvider)) return null;
   final account = ref.read(accountProvider);
   if (account.isLoading || account.hasError) return null;
@@ -42,7 +47,7 @@ String? _accountsRedirect(Ref ref, GoRouterState state) {
 
 /// Pages opened from emails or coming back from a sign-in provider, which
 /// work signed out.
-const _publicLinks = ['/verify-email', '/reset-password', '/invite/', '/oauth-done'];
+const _publicLinks = ['/verify-email', '/reset-password', '/invite/', '/oauth-done', '/admin', '/link'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
@@ -50,16 +55,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   void bump(Object? _, Object? _) => refresh.value++;
   ref.listen(accountProvider, bump);
   ref.listen(accountsModeProvider, bump);
+  ref.listen(setupRequiredProvider, bump);
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
     navigatorKey: _root,
     initialLocation: '/groups',
     refreshListenable: refresh,
-    redirect: (context, state) => _accountsRedirect(ref, state),
+    redirect: (context, state) => _redirect(ref, state),
     errorBuilder: (context, state) => const NotFoundPage(),
     routes: [
       GoRoute(path: '/', redirect: (context, state) => '/groups'),
+      // Server administration. Nothing links here; the operator knows it.
+      GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
         path: '/sign-in',
         builder: (context, state) => SignInPage(
@@ -83,6 +91,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           next: state.uri.queryParameters['next'],
         ),
       ),
+      // A link to the server, opened in the Android app.
+      GoRoute(path: '/link', builder: (context, state) => LinkPage(url: state.uri.queryParameters['url'])),
       GoRoute(
         path: '/invite/:token',
         builder: (context, state) => InvitePage(token: state.pathParameters['token']!),

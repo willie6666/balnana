@@ -22,20 +22,21 @@ const (
 // sendMail delivers m in the background, so a slow mail server never holds
 // up a request, and how long a request takes reveals nothing.
 func (s *Server) sendMail(m mail.Message) {
-	if s.mail == nil {
+	mailer := s.mailer()
+	if mailer == nil {
 		return
 	}
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		if err := s.mail.Send(ctx, m); err != nil {
+		if err := mailer.Send(ctx, m); err != nil {
 			s.log.Warn("sending email failed", "err", err)
 		}
 	}()
 }
 
 func (s *Server) requireEmail() error {
-	if s.mail == nil {
+	if s.mailer() == nil {
 		return forbidden("email_off")
 	}
 	return nil
@@ -43,7 +44,7 @@ func (s *Server) requireEmail() error {
 
 // appLink is a link into the web app.
 func (s *Server) appLink(path string, query url.Values) string {
-	u := *s.cfg.PublicURL
+	u := *s.conf().PublicURL
 	u.Path = strings.TrimSuffix(u.Path, "/") + path
 	u.RawQuery = query.Encode()
 	return u.String()

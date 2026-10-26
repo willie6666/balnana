@@ -10,14 +10,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"balnana/internal/config"
 )
 
 func testHandler(t *testing.T, cfg *config.Config) http.Handler {
 	t.Helper()
+	return testHandlerDB(t, cfg, nil)
+}
+
+// testHandlerDB is testHandler on a database, for handlers that need one.
+func testHandlerDB(t *testing.T, cfg *config.Config, pool *pgxpool.Pool) http.Handler {
+	t.Helper()
 	web := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, "web") })
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewHandler(NewServer(cfg, nil, log, "test"), web)
+	return NewHandler(NewServer(cfg, pool, log, "test"), web)
 }
 
 func baseConfig(t *testing.T, env map[string]string) *config.Config {
@@ -45,13 +53,13 @@ func get(t *testing.T, h http.Handler, path string, header http.Header) *httptes
 }
 
 func TestServerInfoLinkMode(t *testing.T) {
-	h := testHandler(t, baseConfig(t, map[string]string{
+	h := testHandlerDB(t, baseConfig(t, map[string]string{
 		"BALNANA_PUBLIC_URL":             "https://split.example.com/",
 		"BALNANA_OAUTH_GOOGLE_CLIENT_ID": "id",
 		"BALNANA_OAUTH_GOOGLE_SECRET":    "secret",
 		"BALNANA_LINK_GROUPS":            "false",
 		"BALNANA_SOURCE_URL":             "https://git.example.com/balnana",
-	}))
+	}), testDB(t))
 	rec := get(t, h, "/api/v1/server-info", nil)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d", rec.Code)
@@ -70,18 +78,21 @@ func TestServerInfoLinkMode(t *testing.T) {
 	if info.SourceUrl != "https://git.example.com/balnana" {
 		t.Fatalf("source url %q", info.SourceUrl)
 	}
+	if !info.SetupRequired || info.SetupCode {
+		t.Fatalf("a new server needs setting up, without a code: %+v", info)
+	}
 	if rec.Header().Get("Referrer-Policy") != "no-referrer" {
 		t.Fatal("missing Referrer-Policy")
 	}
 }
 
 func TestServerInfoAccountsMode(t *testing.T) {
-	h := testHandler(t, baseConfig(t, map[string]string{
+	h := testHandlerDB(t, baseConfig(t, map[string]string{
 		"BALNANA_AUTH_MODE":              "accounts",
 		"BALNANA_OAUTH_GOOGLE_CLIENT_ID": "id",
 		"BALNANA_OAUTH_GOOGLE_SECRET":    "secret",
 		"BALNANA_LINK_GROUPS":            "false",
-	}))
+	}), testDB(t))
 	var info ServerInfo
 	if err := json.NewDecoder(get(t, h, "/api/v1/server-info", nil).Body).Decode(&info); err != nil {
 		t.Fatal(err)
@@ -108,16 +119,16 @@ func TestUnknownAPIPathIsJSON404(t *testing.T) {
 func TestCORS(t *testing.T) {
 	h := testHandler(t, baseConfig(t, map[string]string{"BALNANA_CORS_ORIGINS": "http://localhost:5000"}))
 
-	allowed := get(t, h, "/api/v1/server-info", http.Header{"Origin": {"http://localhost:5000"}})
+	allowed := get(t, h, "/api/v1/nope", http.Header{"Origin": {"http://localhost:5000"}})
 	if allowed.Header().Get("Access-Control-Allow-Origin") != "http://localhost:5000" {
 		t.Fatal("allowed origin not echoed")
 	}
-	other := get(t, h, "/api/v1/server-info", http.Header{"Origin": {"https://evil.example"}})
+	other := get(t, h, "/api/v1/nope", http.Header{"Origin": {"https://evil.example"}})
 	if other.Header().Get("Access-Control-Allow-Origin") != "" {
 		t.Fatal("unlisted origin allowed")
 	}
 
-	req := httptest.NewRequest(http.MethodOptions, "/api/v1/server-info", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/nope", nil)
 	req.Header.Set("Origin", "http://localhost:5000")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	rec := httptest.NewRecorder()
