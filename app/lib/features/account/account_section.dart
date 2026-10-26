@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/server.dart';
 import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
@@ -35,6 +36,16 @@ class AccountSection extends ConsumerWidget {
     }
   }
 
+  Future<void> _sendVerify(BuildContext context, WidgetRef ref, String email) async {
+    final l10n = context.l10n;
+    try {
+      await ref.read(balnanaApiProvider)!.sendVerifyEmail();
+      if (context.mounted) _snack(context, l10n.verifyEmailSent(email));
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     await signOut(ref);
     if (context.mounted) context.go('/sign-in');
@@ -44,6 +55,7 @@ class AccountSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final account = ref.watch(accountProvider).value;
+    final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     if (account == null) {
       return GroupedList(
         title: l10n.settingsAccount,
@@ -67,6 +79,13 @@ class AccountSection extends ConsumerWidget {
           trailing: const Icon(Icons.edit_outlined),
           onTap: () => _rename(context, ref, account.name),
         ),
+        if (email && !account.emailVerified && account.email != null)
+          GroupedTile(
+            icon: Icons.mark_email_unread_outlined,
+            title: l10n.verifyEmailTitle,
+            subtitle: l10n.verifyEmailHelp,
+            onTap: () => _sendVerify(context, ref, account.email!),
+          ),
         if (account.hasPassword)
           GroupedTile(
             icon: Icons.password,

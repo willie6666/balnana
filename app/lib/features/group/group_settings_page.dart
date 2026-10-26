@@ -20,6 +20,7 @@ import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
+import 'invite_dialog.dart';
 
 /// A group's name and look, its link, its people, and this device's place in it.
 class GroupSettingsPage extends ConsumerWidget {
@@ -213,6 +214,7 @@ class _Settings extends ConsumerWidget {
     final signedIn = ref.watch(signedInProvider);
     final accounts = ref.watch(accountsModeProvider);
     final linkGroups = ref.watch(serverInfoProvider.select((i) => i.value?.linkGroups ?? false));
+    final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
 
     return BPage(
       title: l10n.groupSettings,
@@ -265,6 +267,13 @@ class _Settings extends ConsumerWidget {
                   : l10n.groupCopyLinkHelp,
               onTap: () => copyGroupLink(context, ref, group.token),
             ),
+            if (signedIn && email && me != null)
+              GroupedTile(
+                icon: Icons.forward_to_inbox_outlined,
+                title: l10n.inviteByEmail,
+                subtitle: l10n.inviteByEmailHelp,
+                onTap: () => showInviteDialog(context, group),
+              ),
             if (accounts && linkGroups && me != null && me.owner)
               GroupedSwitchTile(
                 icon: Icons.public,

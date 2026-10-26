@@ -101,9 +101,12 @@ class _JoinPageState extends ConsumerState<JoinPage> {
       );
     } else {
       final account = ref.watch(accountProvider).value;
+      // The member an invitation named comes first.
       final open = [
         for (final m in info.members)
-          if (!m.claimed) m,
+          if (!m.claimed && m.id == info.invitedMemberId) m,
+        for (final m in info.members)
+          if (!m.claimed && m.id != info.invitedMemberId) m,
       ];
       final taken = [
         for (final m in info.members)
@@ -141,6 +144,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
                   ),
                   leading: MemberAvatar(member: _asMember(m)),
                   title: Text(m.name, style: text.titleMedium),
+                  subtitle: m.id == info.invitedMemberId ? Text(l10n.joinInvitedAs) : null,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _join(claim: m.id),
                 ),

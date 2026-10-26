@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/providers.dart';
+import '../features/account/email_pages.dart';
 import '../features/account/sign_in_page.dart';
 import '../features/activity/activity_page.dart';
 import '../features/expense/expense_editor_page.dart';
@@ -28,10 +29,16 @@ String? _accountsRedirect(Ref ref, GoRouterState state) {
   final signedIn = account.value != null;
   final path = state.matchedLocation;
   if (path == '/sign-in') return signedIn ? safeNext(state.uri.queryParameters['next']) ?? '/groups' : null;
-  final public = path.startsWith('/settings') || (path.startsWith('/g/') && !path.endsWith('/join'));
+  final public =
+      path.startsWith('/settings') ||
+      (path.startsWith('/g/') && !path.endsWith('/join')) ||
+      _emailLinks.any(path.startsWith);
   if (!signedIn && !public) return signInPath(state.uri.toString());
   return null;
 }
+
+/// Pages opened from emails, which work signed out.
+const _emailLinks = ['/verify-email', '/reset-password', '/invite/'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
@@ -51,7 +58,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', redirect: (context, state) => '/groups'),
       GoRoute(
         path: '/sign-in',
-        builder: (context, state) => SignInPage(next: state.uri.queryParameters['next']),
+        builder: (context, state) => SignInPage(
+          next: state.uri.queryParameters['next'],
+          prefill: state.extra is SignInPrefill ? state.extra as SignInPrefill : null,
+        ),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token'] ?? ''),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => ResetPasswordPage(token: state.uri.queryParameters['token'] ?? ''),
+      ),
+      GoRoute(
+        path: '/invite/:token',
+        builder: (context, state) => InvitePage(token: state.pathParameters['token']!),
       ),
       // A private group link; the token never leaves this device except to the server.
       GoRoute(

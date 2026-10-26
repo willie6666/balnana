@@ -75,6 +75,11 @@ type Balances struct {
 	Transfers []Transfer `json:"transfers"`
 }
 
+// EmailToken defines model for EmailToken.
+type EmailToken struct {
+	Token string `json:"token"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Code   string                  `json:"code"`
@@ -211,11 +216,32 @@ type GroupUpdate struct {
 	Name       *string `json:"name,omitempty"`
 }
 
+// InviteInfo defines model for InviteInfo.
+type InviteInfo struct {
+	Email      string `json:"email"`
+	GroupName  string `json:"groupName"`
+	GroupToken string `json:"groupToken"`
+
+	// InvitedBy The name of the member who sent the invitation.
+	InvitedBy *string `json:"invitedBy,omitempty"`
+}
+
+// InviteInput defines model for InviteInput.
+type InviteInput struct {
+	Email string `json:"email"`
+
+	// MemberId An unclaimed member the person is invited to join as.
+	MemberId *string `json:"memberId,omitempty"`
+}
+
 // JoinInfo defines model for JoinInfo.
 type JoinInfo struct {
 	Color    *int    `json:"color,omitempty"`
 	Currency string  `json:"currency"`
 	Emoji    *string `json:"emoji,omitempty"`
+
+	// InvitedMemberId The unclaimed member the account was invited to join as.
+	InvitedMemberId *string `json:"invitedMemberId,omitempty"`
 
 	// Member The account is already a member.
 	Member bool `json:"member"`
@@ -293,6 +319,17 @@ type PasswordChange struct {
 	NewPassword     string  `json:"newPassword"`
 }
 
+// PasswordReset defines model for PasswordReset.
+type PasswordReset struct {
+	NewPassword string `json:"newPassword"`
+	Token       string `json:"token"`
+}
+
+// PasswordResetRequest defines model for PasswordResetRequest.
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
 // Payer defines model for Payer.
 type Payer struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
@@ -321,8 +358,11 @@ type PaymentInput struct {
 // RegisterInput defines model for RegisterInput.
 type RegisterInput struct {
 	// Cookie Web app: keep the session in a cookie instead of returning a token.
-	Cookie *bool   `json:"cookie,omitempty"`
-	Email  string  `json:"email"`
+	Cookie *bool  `json:"cookie,omitempty"`
+	Email  string `json:"email"`
+
+	// Invite The secret from an invitation email for this address. It lets the account in on an invite_only server and verifies the address.
+	Invite *string `json:"invite,omitempty"`
 	Locale *string `json:"locale,omitempty"`
 	Name   string  `json:"name"`
 
@@ -502,8 +542,17 @@ type ResetGroupLinkParams struct {
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginInput
 
+// RequestPasswordResetJSONRequestBody defines body for RequestPasswordReset for application/json ContentType.
+type RequestPasswordResetJSONRequestBody = PasswordResetRequest
+
+// ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
+type ResetPasswordJSONRequestBody = PasswordReset
+
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterInput
+
+// VerifyEmailJSONRequestBody defines body for VerifyEmail for application/json ContentType.
+type VerifyEmailJSONRequestBody = EmailToken
 
 // UpdateGroupJSONRequestBody defines body for UpdateGroup for application/json ContentType.
 type UpdateGroupJSONRequestBody = GroupUpdate
@@ -513,6 +562,9 @@ type CreateExpenseJSONRequestBody = ExpenseInput
 
 // UpdateExpenseJSONRequestBody defines body for UpdateExpense for application/json ContentType.
 type UpdateExpenseJSONRequestBody = ExpenseInput
+
+// InviteToGroupJSONRequestBody defines body for InviteToGroup for application/json ContentType.
+type InviteToGroupJSONRequestBody = InviteInput
 
 // JoinGroupJSONRequestBody defines body for JoinGroup for application/json ContentType.
 type JoinGroupJSONRequestBody = JoinInput
@@ -540,15 +592,27 @@ type ChangePasswordJSONRequestBody = PasswordChange
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// The invitation behind an invitation link
+	// (GET /auth/invites/{inviteToken})
+	GetInvite(w http.ResponseWriter, r *http.Request, inviteToken string)
 	// Sign in with email and password (accounts mode)
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
 	// End this session
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
+	// Email a password reset link
+	// (POST /auth/password-reset)
+	RequestPasswordReset(w http.ResponseWriter, r *http.Request)
+	// Set a new password with the token from a reset email
+	// (POST /auth/password-reset/confirm)
+	ResetPassword(w http.ResponseWriter, r *http.Request)
 	// Create an account with email and password (accounts mode)
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// Confirm an email address with the token from a verification email
+	// (POST /auth/verify-email)
+	VerifyEmail(w http.ResponseWriter, r *http.Request)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(w http.ResponseWriter, r *http.Request, token Token)
@@ -579,6 +643,9 @@ type ServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams)
+	// Email someone an invitation to the group (accounts mode)
+	// (POST /g/{token}/invites)
+	InviteToGroup(w http.ResponseWriter, r *http.Request, token Token)
 	// What a signed-in person needs to decide to join (accounts mode)
 	// (GET /g/{token}/join)
 	GetJoinInfo(w http.ResponseWriter, r *http.Request, token Token)
@@ -618,6 +685,9 @@ type ServerInterface interface {
 	// Set a new password; other sessions are signed out
 	// (POST /me/password)
 	ChangePassword(w http.ResponseWriter, r *http.Request)
+	// Email a new verification link to the account's address
+	// (POST /me/verify-email)
+	SendVerifyEmail(w http.ResponseWriter, r *http.Request)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(w http.ResponseWriter, r *http.Request)
@@ -631,6 +701,39 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetInvite operation middleware
+func (siw *ServerInterfaceWrapper) GetInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "inviteToken" -------------
+	var inviteToken string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "inviteToken", r.PathValue("inviteToken"), &inviteToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inviteToken", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInvite(w, r, inviteToken)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
@@ -676,6 +779,50 @@ func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request
 	handler.ServeHTTP(w, r)
 }
 
+// RequestPasswordReset operation middleware
+func (siw *ServerInterfaceWrapper) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestPasswordReset(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetPassword operation middleware
+func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Register operation middleware
 func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Request) {
 
@@ -689,6 +836,28 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyEmail operation middleware
+func (siw *ServerInterfaceWrapper) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyEmail(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1222,6 +1391,39 @@ func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// InviteToGroup operation middleware
+func (siw *ServerInterfaceWrapper) InviteToGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InviteToGroup(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetJoinInfo operation middleware
 func (siw *ServerInterfaceWrapper) GetJoinInfo(w http.ResponseWriter, r *http.Request) {
 
@@ -1723,6 +1925,28 @@ func (siw *ServerInterfaceWrapper) ChangePassword(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// SendVerifyEmail operation middleware
+func (siw *ServerInterfaceWrapper) SendVerifyEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendVerifyEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetServerInfo operation middleware
 func (siw *ServerInterfaceWrapper) GetServerInfo(w http.ResponseWriter, r *http.Request) {
 
@@ -1865,9 +2089,13 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("GET "+options.BaseURL+"/auth/invites/{inviteToken}", wrapper.GetInvite)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.Logout)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset", wrapper.RequestPasswordReset)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset/confirm", wrapper.ResetPassword)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/register", wrapper.Register)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/verify-email", wrapper.VerifyEmail)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}", wrapper.GetGroup)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
@@ -1878,6 +2106,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.GetExpense)
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.UpdateExpense)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses/{expenseId}/restore", wrapper.RestoreExpense)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/invites", wrapper.InviteToGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/join", wrapper.GetJoinInfo)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/join", wrapper.JoinGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members", wrapper.AddMember)
@@ -1891,12 +2120,42 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("PATCH "+options.BaseURL+"/me", wrapper.UpdateMe)
 	m.HandleFunc("GET "+options.BaseURL+"/me/groups", wrapper.GetMyGroups)
 	m.HandleFunc("POST "+options.BaseURL+"/me/password", wrapper.ChangePassword)
+	m.HandleFunc("POST "+options.BaseURL+"/me/verify-email", wrapper.SendVerifyEmail)
 	m.HandleFunc("GET "+options.BaseURL+"/server-info", wrapper.GetServerInfo)
 
 	return m
 }
 
 type ErrorJSONResponse Error
+
+type GetInviteRequestObject struct {
+	InviteToken string `json:"inviteToken"`
+}
+
+type GetInviteResponseObject interface {
+	VisitGetInviteResponse(w http.ResponseWriter) error
+}
+
+type GetInvite200JSONResponse InviteInfo
+
+func (response GetInvite200JSONResponse) VisitGetInviteResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetInvitedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetInvitedefaultJSONResponse) VisitGetInviteResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
 
 type LoginRequestObject struct {
 	Body *LoginJSONRequestBody
@@ -1954,6 +2213,62 @@ func (response LogoutdefaultJSONResponse) VisitLogoutResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type RequestPasswordResetRequestObject struct {
+	Body *RequestPasswordResetJSONRequestBody
+}
+
+type RequestPasswordResetResponseObject interface {
+	VisitRequestPasswordResetResponse(w http.ResponseWriter) error
+}
+
+type RequestPasswordReset204Response struct {
+}
+
+func (response RequestPasswordReset204Response) VisitRequestPasswordResetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RequestPasswordResetdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RequestPasswordResetdefaultJSONResponse) VisitRequestPasswordResetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ResetPasswordRequestObject struct {
+	Body *ResetPasswordJSONRequestBody
+}
+
+type ResetPasswordResponseObject interface {
+	VisitResetPasswordResponse(w http.ResponseWriter) error
+}
+
+type ResetPassword204Response struct {
+}
+
+func (response ResetPassword204Response) VisitResetPasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResetPassworddefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ResetPassworddefaultJSONResponse) VisitResetPasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type RegisterRequestObject struct {
 	Body *RegisterJSONRequestBody
 }
@@ -1977,6 +2292,34 @@ type RegisterdefaultJSONResponse struct {
 }
 
 func (response RegisterdefaultJSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type VerifyEmailRequestObject struct {
+	Body *VerifyEmailJSONRequestBody
+}
+
+type VerifyEmailResponseObject interface {
+	VisitVerifyEmailResponse(w http.ResponseWriter) error
+}
+
+type VerifyEmail204Response struct {
+}
+
+func (response VerifyEmail204Response) VisitVerifyEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type VerifyEmaildefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response VerifyEmaildefaultJSONResponse) VisitVerifyEmailResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -2280,6 +2623,35 @@ type RestoreExpensedefaultJSONResponse struct {
 }
 
 func (response RestoreExpensedefaultJSONResponse) VisitRestoreExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type InviteToGroupRequestObject struct {
+	Token Token `json:"token"`
+	Body  *InviteToGroupJSONRequestBody
+}
+
+type InviteToGroupResponseObject interface {
+	VisitInviteToGroupResponse(w http.ResponseWriter) error
+}
+
+type InviteToGroup204Response struct {
+}
+
+func (response InviteToGroup204Response) VisitInviteToGroupResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type InviteToGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response InviteToGroupdefaultJSONResponse) VisitInviteToGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -2670,6 +3042,33 @@ func (response ChangePassworddefaultJSONResponse) VisitChangePasswordResponse(w 
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type SendVerifyEmailRequestObject struct {
+}
+
+type SendVerifyEmailResponseObject interface {
+	VisitSendVerifyEmailResponse(w http.ResponseWriter) error
+}
+
+type SendVerifyEmail204Response struct {
+}
+
+func (response SendVerifyEmail204Response) VisitSendVerifyEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SendVerifyEmaildefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response SendVerifyEmaildefaultJSONResponse) VisitSendVerifyEmailResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetServerInfoRequestObject struct {
 }
 
@@ -2688,15 +3087,27 @@ func (response GetServerInfo200JSONResponse) VisitGetServerInfoResponse(w http.R
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// The invitation behind an invitation link
+	// (GET /auth/invites/{inviteToken})
+	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
 	// Sign in with email and password (accounts mode)
 	// (POST /auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
 	// End this session
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// Email a password reset link
+	// (POST /auth/password-reset)
+	RequestPasswordReset(ctx context.Context, request RequestPasswordResetRequestObject) (RequestPasswordResetResponseObject, error)
+	// Set a new password with the token from a reset email
+	// (POST /auth/password-reset/confirm)
+	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
 	// Create an account with email and password (accounts mode)
 	// (POST /auth/register)
 	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
+	// Confirm an email address with the token from a verification email
+	// (POST /auth/verify-email)
+	VerifyEmail(ctx context.Context, request VerifyEmailRequestObject) (VerifyEmailResponseObject, error)
 	// The group, its members and their balances
 	// (GET /g/{token})
 	GetGroup(ctx context.Context, request GetGroupRequestObject) (GetGroupResponseObject, error)
@@ -2727,6 +3138,9 @@ type StrictServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(ctx context.Context, request RestoreExpenseRequestObject) (RestoreExpenseResponseObject, error)
+	// Email someone an invitation to the group (accounts mode)
+	// (POST /g/{token}/invites)
+	InviteToGroup(ctx context.Context, request InviteToGroupRequestObject) (InviteToGroupResponseObject, error)
 	// What a signed-in person needs to decide to join (accounts mode)
 	// (GET /g/{token}/join)
 	GetJoinInfo(ctx context.Context, request GetJoinInfoRequestObject) (GetJoinInfoResponseObject, error)
@@ -2766,6 +3180,9 @@ type StrictServerInterface interface {
 	// Set a new password; other sessions are signed out
 	// (POST /me/password)
 	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
+	// Email a new verification link to the account's address
+	// (POST /me/verify-email)
+	SendVerifyEmail(ctx context.Context, request SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error)
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(ctx context.Context, request GetServerInfoRequestObject) (GetServerInfoResponseObject, error)
@@ -2798,6 +3215,32 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetInvite operation middleware
+func (sh *strictHandler) GetInvite(w http.ResponseWriter, r *http.Request, inviteToken string) {
+	var request GetInviteRequestObject
+
+	request.InviteToken = inviteToken
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetInvite(ctx, request.(GetInviteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetInvite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetInviteResponseObject); ok {
+		if err := validResponse.VisitGetInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // Login operation middleware
@@ -2855,6 +3298,68 @@ func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// RequestPasswordReset operation middleware
+func (sh *strictHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	var request RequestPasswordResetRequestObject
+
+	var body RequestPasswordResetJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestPasswordReset(ctx, request.(RequestPasswordResetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestPasswordReset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequestPasswordResetResponseObject); ok {
+		if err := validResponse.VisitRequestPasswordResetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetPassword operation middleware
+func (sh *strictHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var request ResetPasswordRequestObject
+
+	var body ResetPasswordJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetPassword(ctx, request.(ResetPasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetPassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetPasswordResponseObject); ok {
+		if err := validResponse.VisitResetPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Register operation middleware
 func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var request RegisterRequestObject
@@ -2879,6 +3384,37 @@ func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RegisterResponseObject); ok {
 		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyEmail operation middleware
+func (sh *strictHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var request VerifyEmailRequestObject
+
+	var body VerifyEmailJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyEmail(ctx, request.(VerifyEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyEmailResponseObject); ok {
+		if err := validResponse.VisitVerifyEmailResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3171,6 +3707,39 @@ func (sh *strictHandler) RestoreExpense(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RestoreExpenseResponseObject); ok {
 		if err := validResponse.VisitRestoreExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InviteToGroup operation middleware
+func (sh *strictHandler) InviteToGroup(w http.ResponseWriter, r *http.Request, token Token) {
+	var request InviteToGroupRequestObject
+
+	request.Token = token
+
+	var body InviteToGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InviteToGroup(ctx, request.(InviteToGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InviteToGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InviteToGroupResponseObject); ok {
+		if err := validResponse.VisitInviteToGroupResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3560,6 +4129,30 @@ func (sh *strictHandler) ChangePassword(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ChangePasswordResponseObject); ok {
 		if err := validResponse.VisitChangePasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SendVerifyEmail operation middleware
+func (sh *strictHandler) SendVerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var request SendVerifyEmailRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SendVerifyEmail(ctx, request.(SendVerifyEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SendVerifyEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SendVerifyEmailResponseObject); ok {
+		if err := validResponse.VisitSendVerifyEmailResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

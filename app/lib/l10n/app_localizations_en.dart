@@ -925,4 +925,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String joinTaken(String names) {
     return 'Already joined: $names';
   }
+
+  @override
+  String get commonContinue => 'Continue';
+
+  @override
+  String get errorEmailOff => 'This server doesn\'t send email.';
+
+  @override
+  String get errorInvalidToken => 'This link has expired or was already used.';
+
+  @override
+  String get forgotPasswordTitle => 'Forgot password?';
+
+  @override
+  String get forgotPasswordBody => 'We\'ll email you a link to choose a new password.';
+
+  @override
+  String get forgotPasswordAction => 'Send link';
+
+  @override
+  String get forgotPasswordSent => 'If there\'s an account for that address, a link is on its way.';
+
+  @override
+  String get resetPasswordTitle => 'Choose a new password';
+
+  @override
+  String get resetPasswordBody =>
+      'You\'ll be signed out everywhere, then you can sign in with the new password.';
+
+  @override
+  String get resetPasswordAction => 'Save password';
+
+  @override
+  String get resetPasswordDone => 'Password changed. Sign in with your new password.';
+
+  @override
+  String get verifyEmailTitle => 'Confirm your email';
+
+  @override
+  String get verifyEmailHelp => 'So you can reset your password if you forget it';
+
+  @override
+  String verifyEmailSent(String email) {
+    return 'Check $email for a link.';
+  }
+
+  @override
+  String get verifyEmailDone => 'Email confirmed';
+
+  @override
+  String get verifyEmailDoneBody => 'Thanks! Your address is confirmed.';
+
+  @override
+  String get verifyEmailFailed => 'Couldn\'t confirm your email';
+
+  @override
+  String get inviteByEmail => 'Invite by email';
+
+  @override
+  String get inviteByEmailHelp => 'Send someone a link to join';
+
+  @override
+  String get inviteAs => 'Join as';
+
+  @override
+  String get inviteAsHelp => 'They can take over this person\'s expenses';
+
+  @override
+  String get inviteAsAnyone => 'Someone new';
+
+  @override
+  String get inviteSend => 'Send invite';
+
+  @override
+  String inviteSent(String email) {
+    return 'Invite sent to $email.';
+  }
+
+  @override
+  String inviteTitle(String name, String group) {
+    return '$name invited you to $group';
+  }
+
+  @override
+  String inviteTitleAnonymous(String group) {
+    return 'You\'re invited to $group';
+  }
+
+  @override
+  String inviteBody(String email) {
+    return 'Create an account with $email to join, or sign in if you have one.';
+  }
+
+  @override
+  String get inviteBodySignedIn => 'Join to add expenses and see your balance.';
+
+  @override
+  String get inviteAction => 'Open invitation';
+
+  @override
+  String get inviteMissingTitle => 'This invitation doesn\'t work';
+
+  @override
+  String get inviteMissingBody => 'It may have expired or been used. Ask for a new one.';
+
+  @override
+  String get joinInvitedAs => 'You were invited as this person';
 }

@@ -89,8 +89,8 @@ paths:
       summary: Create an account with email and password (accounts mode)
       description: >-
         Refused with 403 `signup_closed` when BALNANA_AUTH_SIGNUP is closed,
-        or invite_only and the address has no invitation. The first account
-        on a server can always be created.
+        or invite_only and there is no invitation for the address. The first
+        account on a server can always be created.
       requestBody:
         required: true
         content:
@@ -132,6 +132,76 @@ paths:
       responses:
         "204":
           description: Signed out
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/verify-email:
+    post:
+      operationId: verifyEmail
+      summary: Confirm an email address with the token from a verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailToken"
+      responses:
+        "204":
+          description: Verified
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/password-reset:
+    post:
+      operationId: requestPasswordReset
+      summary: Email a password reset link
+      description: >-
+        Answers the same whether or not an account has the address, so it
+        cannot be used to find out who has an account. 403 `email_off` when
+        the server has no email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+      responses:
+        "204":
+          description: Sent, if the address has an account
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/password-reset/confirm:
+    post:
+      operationId: resetPassword
+      summary: Set a new password with the token from a reset email
+      description: Every session of the account is signed out.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordReset"
+      responses:
+        "204":
+          description: Changed
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/invites/{inviteToken}:
+    parameters:
+      - name: inviteToken
+        in: path
+        required: true
+        description: The secret from an invitation email.
+        schema:
+          type: string
+    get:
+      operationId: getInvite
+      summary: The invitation behind an invitation link
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteInfo"
         default:
           $ref: "#/components/responses/Error"
   /me:
@@ -177,6 +247,15 @@ paths:
       responses:
         "204":
           description: Changed
+        default:
+          $ref: "#/components/responses/Error"
+  /me/verify-email:
+    post:
+      operationId: sendVerifyEmail
+      summary: Email a new verification link to the account's address
+      responses:
+        "204":
+          description: Sent, or already verified
         default:
           $ref: "#/components/responses/Error"
   /me/groups:
@@ -277,6 +356,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/invites:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: inviteToGroup
+      summary: Email someone an invitation to the group (accounts mode)
+      description: >-
+        Optionally for one unclaimed member, whom the invited person is
+        offered to join as. The invitation also lets them register on an
+        invite_only server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteInput"
+      responses:
+        "204":
+          description: Sent
         default:
           $ref: "#/components/responses/Error"
   /g/{token}/members:
@@ -942,6 +1042,11 @@ components:
         cookie:
           type: boolean
           description: 'Web app: keep the session in a cookie instead of returning a token.'
+        invite:
+          type: string
+          description: >-
+            The secret from an invitation email for this address. It lets the
+            account in on an invite_only server and verifies the address.
     LoginInput:
       type: object
       required: [email, password]
@@ -995,6 +1100,48 @@ components:
           description: Required when the account has a password.
         newPassword:
           type: string
+    EmailToken:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+    PasswordReset:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+    InviteInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+        memberId:
+          type: string
+          description: An unclaimed member the person is invited to join as.
+    InviteInfo:
+      type: object
+      required: [email, groupToken, groupName]
+      properties:
+        email:
+          type: string
+        groupToken:
+          type: string
+        groupName:
+          type: string
+        invitedBy:
+          type: string
+          description: The name of the member who sent the invitation.
     JoinInfo:
       type: object
       required: [name, currency, members, member]
@@ -1015,6 +1162,9 @@ components:
           description: Current members; unclaimed ones can be claimed.
           items:
             $ref: "#/components/schemas/JoinMember"
+        invitedMemberId:
+          type: string
+          description: The unclaimed member the account was invited to join as.
     JoinMember:
       type: object
       required: [id, name, claimed]

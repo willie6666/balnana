@@ -106,6 +106,13 @@ func (s *Server) sameOrigin(r *http.Request) bool {
 	return u.Host == r.Host || u.Scheme == s.cfg.PublicURL.Scheme && u.Host == s.cfg.PublicURL.Host
 }
 
+// secretToken makes a session, email or invitation secret.
+func secretToken() string {
+	b := make([]byte, 32)
+	_, _ = rand.Read(b)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
 func hashToken(token string) []byte {
 	h := sha256.Sum256([]byte(token))
 	return h[:]
@@ -184,9 +191,7 @@ func (s *Server) requirePasswords() error {
 // startSession signs userID in. With cookie, the token goes into the session
 // cookie and nil is returned; otherwise the token is returned.
 func (s *Server) startSession(ctx context.Context, q querier, userID string, cookie bool) (*string, error) {
-	b := make([]byte, 32)
-	_, _ = rand.Read(b)
-	token := base64.RawURLEncoding.EncodeToString(b)
+	token := secretToken()
 	_, err := q.Exec(ctx, `insert into sessions (user_id, token_hash, expires_at) values ($1, $2, $3)`,
 		userID, hashToken(token), time.Now().Add(sessionLifetime))
 	if err != nil {
@@ -243,17 +248,15 @@ func cleanLocale(l *string) (*string, error) {
 	return l, nil
 }
 
-// signupAllowed applies BALNANA_AUTH_SIGNUP to a new account for email. The
-// first account on a server is always allowed, so closed servers can start.
-func (s *Server) signupAllowed(ctx context.Context, q querier, email string) error {
+// signupAllowed applies BALNANA_AUTH_SIGNUP to a new account, invited or
+// not. The first account on a server is always allowed, so closed servers
+// can start.
+func (s *Server) signupAllowed(ctx context.Context, q querier, invited bool) error {
 	if s.cfg.Signup == config.SignupOpen {
 		return nil
 	}
-	var first, invited bool
-	err := q.QueryRow(ctx, `
-		select not exists (select 1 from users),
-		       exists (select 1 from invites where email = $1)`, email).Scan(&first, &invited)
-	if err != nil {
+	var first bool
+	if err := q.QueryRow(ctx, `select not exists (select 1 from users)`).Scan(&first); err != nil {
 		return err
 	}
 	if first || s.cfg.Signup == config.SignupInviteOnly && invited {
@@ -289,13 +292,18 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 		if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
 			return err
 		}
-		if err := s.signupAllowed(ctx, tx, email); err != nil {
+		// An invitation link reached this address, which verifies it.
+		invited, err := validInvite(ctx, tx, in.Invite, email)
+		if err != nil {
 			return err
 		}
-		u := user{email: &email, hasPassword: true, name: name, locale: locale}
-		err := tx.QueryRow(ctx, `
-			insert into users (email, password_hash, display_name, locale)
-			values ($1, $2, $3, $4) returning id::text`, email, hash, name, locale).Scan(&u.id)
+		if err := s.signupAllowed(ctx, tx, invited); err != nil {
+			return err
+		}
+		u := user{email: &email, verified: invited, hasPassword: true, name: name, locale: locale}
+		err = tx.QueryRow(ctx, `
+			insert into users (email, email_verified, password_hash, display_name, locale)
+			values ($1, $2, $3, $4, $5) returning id::text`, email, invited, hash, name, locale).Scan(&u.id)
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return conflict("email_taken")
 		}

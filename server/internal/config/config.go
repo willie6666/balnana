@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"net/url"
 	"os"
 	"strconv"
@@ -155,8 +156,10 @@ func load(getenv func(string) string) (*Config, error) {
 		e.fail("BALNANA_RATE_LIMIT must be 0 (no limit) or more, got %d", c.RateLimit)
 	}
 
-	if c.SMTP.Enabled() && c.SMTP.From == "" {
-		e.fail("BALNANA_SMTP_FROM is required when BALNANA_SMTP_HOST is set")
+	if c.SMTP.Enabled() {
+		if _, err := mail.ParseAddress(c.SMTP.From); err != nil {
+			e.fail("BALNANA_SMTP_FROM must be an address such as \"Balnana <balnana@example.com>\" when BALNANA_SMTP_HOST is set, got %q", c.SMTP.From)
+		}
 	}
 
 	if id := e.str("BALNANA_OAUTH_GOOGLE_CLIENT_ID", ""); id != "" {

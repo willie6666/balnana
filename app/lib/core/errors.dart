@@ -28,6 +28,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_credentials' => l10n.errorInvalidCredentials,
     'wrong_password' => l10n.errorWrongPassword,
     'accounts_off' || 'password_off' => l10n.errorAccountsOff,
+    'email_off' => l10n.errorEmailOff,
+    'invalid_token' => l10n.errorInvalidToken,
     'rate_limited' => l10n.errorRateLimited,
     final code =>
       MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??

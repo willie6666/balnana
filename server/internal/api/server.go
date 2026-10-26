@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"balnana/internal/config"
+	"balnana/internal/mail"
 )
 
 // Server implements StrictServerInterface.
@@ -20,12 +21,22 @@ type Server struct {
 	db      *pgxpool.Pool
 	log     *slog.Logger
 	version string
+	mail    mail.Sender // nil when the server has no email
 }
 
 var _ StrictServerInterface = (*Server)(nil)
 
 func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version string) *Server {
-	return &Server{cfg: cfg, db: db, log: log, version: version}
+	s := &Server{cfg: cfg, db: db, log: log, version: version}
+	if cfg.SMTP.Enabled() {
+		m, err := mail.NewSMTP(cfg.SMTP)
+		if err != nil {
+			log.Error("email is off", "err", err) // config.Load checks the address first
+		} else {
+			s.mail = m
+		}
+	}
+	return s
 }
 
 func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject) (GetServerInfoResponseObject, error) {
@@ -36,7 +47,7 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		AuthMode:       ServerInfoAuthMode(s.cfg.AuthMode),
 		Password:       accounts && s.cfg.Password,
 		Signup:         ServerInfoSignup(s.cfg.Signup),
-		Email:          s.cfg.SMTP.Enabled(),
+		Email:          s.mail != nil,
 		OauthProviders: []OAuthProvider{},
 		LinkGroups:     !accounts || s.cfg.LinkGroups,
 		PublicUrl:      s.cfg.PublicURL.String(),

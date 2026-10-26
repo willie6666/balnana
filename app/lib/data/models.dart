@@ -343,13 +343,21 @@ class Page<T> {
 /// A signed-in account (accounts mode).
 @immutable
 class User {
-  const User({required this.id, this.email, required this.name, this.locale, required this.hasPassword});
+  const User({
+    required this.id,
+    this.email,
+    this.emailVerified = false,
+    required this.name,
+    this.locale,
+    required this.hasPassword,
+  });
 
   factory User.fromJson(Object? data) {
     final json = _object(data);
     return User(
       id: _req(json, 'id'),
       email: _opt(json, 'email'),
+      emailVerified: _opt<bool>(json, 'emailVerified') ?? false,
       name: _req(json, 'name'),
       locale: _opt(json, 'locale'),
       hasPassword: _opt<bool>(json, 'hasPassword') ?? false,
@@ -358,9 +366,31 @@ class User {
 
   final String id;
   final String? email;
+  final bool emailVerified;
   final String name;
   final String? locale;
   final bool hasPassword;
+}
+
+/// An invitation to a group, sent by email (accounts mode).
+@immutable
+class InviteInfo {
+  const InviteInfo({required this.email, required this.groupToken, required this.groupName, this.invitedBy});
+
+  factory InviteInfo.fromJson(Object? data) {
+    final json = _object(data);
+    return InviteInfo(
+      email: _req(json, 'email'),
+      groupToken: _req(json, 'groupToken'),
+      groupName: _req(json, 'groupName'),
+      invitedBy: _opt(json, 'invitedBy'),
+    );
+  }
+
+  final String email;
+  final String groupToken;
+  final String groupName;
+  final String? invitedBy;
 }
 
 /// What someone sees before joining a group by its link.
@@ -373,6 +403,7 @@ class JoinInfo {
     required this.currency,
     required this.member,
     required this.members,
+    this.invitedMemberId,
   });
 
   factory JoinInfo.fromJson(Object? data) {
@@ -392,6 +423,7 @@ class JoinInfo {
             claimed: _req(m, 'claimed'),
           ),
       ],
+      invitedMemberId: _opt(json, 'invitedMemberId'),
     );
   }
 
@@ -403,6 +435,9 @@ class JoinInfo {
   /// The account already belongs to the group.
   final bool member;
   final List<JoinMember> members;
+
+  /// The unclaimed member an email invitation asked this account to be.
+  final String? invitedMemberId;
 }
 
 @immutable

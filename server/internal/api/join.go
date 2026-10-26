@@ -10,7 +10,8 @@ import (
 // the invitation, whether or not the group has link access.
 
 func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) (GetJoinInfoResponseObject, error) {
-	if _, err := s.requireUser(ctx); err != nil {
+	u, err := s.requireUser(ctx)
+	if err != nil {
 		return nil, err
 	}
 	g, err := s.findGroup(ctx, s.db, req.Token, false)
@@ -33,6 +34,9 @@ func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) 
 		if !m.left {
 			out.Members = append(out.Members, JoinMember{Id: m.id, Name: m.name, Color: m.color, Claimed: m.userID != nil})
 		}
+	}
+	if out.InvitedMemberId, err = invitedMember(ctx, s.db, g, u); err != nil {
+		return nil, err
 	}
 	return GetJoinInfo200JSONResponse(out), nil
 }
@@ -133,6 +137,11 @@ func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) erro
 			insert into members (group_id, display_name, user_id, created_at)
 			values ($1, $2, $3, clock_timestamp()) returning id::text`, g.id, name, u.id).Scan(&m.id)
 		if err != nil {
+			return err
+		}
+	}
+	if u.email != nil {
+		if _, err := tx.Exec(ctx, `delete from invites where group_id = $1 and email = $2`, g.id, *u.email); err != nil {
 			return err
 		}
 	}

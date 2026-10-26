@@ -12,6 +12,7 @@ import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
+import 'email_pages.dart';
 
 /// The sign-in page, coming back to [next] afterwards.
 String signInPath(String next) => Uri(path: '/sign-in', queryParameters: {'next': next}).toString();
@@ -23,11 +24,24 @@ String? safeNext(String? next) {
   return next;
 }
 
+/// What an invitation fills in on the sign-in page. It travels as the
+/// route's extra, so the address never shows in the location bar.
+class SignInPrefill {
+  const SignInPrefill({this.email, this.invite, this.register = false});
+
+  final String? email;
+
+  /// The invitation token, which lets the address sign up and verifies it.
+  final String? invite;
+  final bool register;
+}
+
 /// Sign in, or create an account (accounts mode).
 class SignInPage extends ConsumerStatefulWidget {
-  const SignInPage({super.key, this.next});
+  const SignInPage({super.key, this.next, this.prefill});
 
   final String? next;
+  final SignInPrefill? prefill;
 
   @override
   ConsumerState<SignInPage> createState() => _SignInPageState();
@@ -36,9 +50,9 @@ class SignInPage extends ConsumerStatefulWidget {
 class _SignInPageState extends ConsumerState<SignInPage> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
-  final _email = TextEditingController();
+  late final _email = TextEditingController(text: widget.prefill?.email);
   final _password = TextEditingController();
-  bool _register = false;
+  late bool _register = widget.prefill?.register ?? false;
   bool _showPassword = false;
   bool _busy = false;
   String? _error;
@@ -68,6 +82,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               password: _password.text,
               name: _name.text.trim(),
               locale: locale,
+              invite: widget.prefill?.invite,
             )
           : await api.login(email: _email.text.trim(), password: _password.text);
       if (!mounted) return;
@@ -90,7 +105,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final scheme = Theme.of(context).colorScheme;
     final info = ref.watch(serverInfoProvider).value;
     final passwords = info?.password ?? true;
-    final canRegister = info?.signup != SignupPolicy.closed;
+    final canRegister = info?.signup != SignupPolicy.closed || widget.prefill?.invite != null;
+    final canReset = info?.email ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -191,6 +207,15 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                                 )
                               : Text(_register ? l10n.registerAction : l10n.signIn),
                         ),
+                        if (canReset && !_register) ...[
+                          const SizedBox(height: BSpace.s8),
+                          TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => showForgotPasswordDialog(context, email: _email.text.trim()),
+                            child: Text(l10n.forgotPasswordTitle),
+                          ),
+                        ],
                         if (canRegister || _register) ...[
                           const SizedBox(height: BSpace.s8),
                           TextButton(

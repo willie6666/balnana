@@ -1740,6 +1740,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already joined: {names}'**
   String joinTaken(String names);
+
+  /// No description provided for @commonContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get commonContinue;
+
+  /// No description provided for @errorEmailOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This server doesn\'t send email.'**
+  String get errorEmailOff;
+
+  /// No description provided for @errorInvalidToken.
+  ///
+  /// In en, this message translates to:
+  /// **'This link has expired or was already used.'**
+  String get errorInvalidToken;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll email you a link to choose a new password.'**
+  String get forgotPasswordBody;
+
+  /// No description provided for @forgotPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send link'**
+  String get forgotPasswordAction;
+
+  /// No description provided for @forgotPasswordSent.
+  ///
+  /// In en, this message translates to:
+  /// **'If there\'s an account for that address, a link is on its way.'**
+  String get forgotPasswordSent;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new password'**
+  String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be signed out everywhere, then you can sign in with the new password.'**
+  String get resetPasswordBody;
+
+  /// No description provided for @resetPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save password'**
+  String get resetPasswordAction;
+
+  /// No description provided for @resetPasswordDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. Sign in with your new password.'**
+  String get resetPasswordDone;
+
+  /// No description provided for @verifyEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your email'**
+  String get verifyEmailTitle;
+
+  /// No description provided for @verifyEmailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'So you can reset your password if you forget it'**
+  String get verifyEmailHelp;
+
+  /// No description provided for @verifyEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check {email} for a link.'**
+  String verifyEmailSent(String email);
+
+  /// No description provided for @verifyEmailDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Email confirmed'**
+  String get verifyEmailDone;
+
+  /// No description provided for @verifyEmailDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your address is confirmed.'**
+  String get verifyEmailDoneBody;
+
+  /// No description provided for @verifyEmailFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm your email'**
+  String get verifyEmailFailed;
+
+  /// No description provided for @inviteByEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by email'**
+  String get inviteByEmail;
+
+  /// No description provided for @inviteByEmailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Send someone a link to join'**
+  String get inviteByEmailHelp;
+
+  /// No description provided for @inviteAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Join as'**
+  String get inviteAs;
+
+  /// No description provided for @inviteAsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'They can take over this person\'s expenses'**
+  String get inviteAsHelp;
+
+  /// No description provided for @inviteAsAnyone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone new'**
+  String get inviteAsAnyone;
+
+  /// No description provided for @inviteSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invite'**
+  String get inviteSend;
+
+  /// No description provided for @inviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent to {email}.'**
+  String inviteSent(String email);
+
+  /// No description provided for @inviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} invited you to {group}'**
+  String inviteTitle(String name, String group);
+
+  /// No description provided for @inviteTitleAnonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re invited to {group}'**
+  String inviteTitleAnonymous(String group);
+
+  /// No description provided for @inviteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account with {email} to join, or sign in if you have one.'**
+  String inviteBody(String email);
+
+  /// No description provided for @inviteBodySignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Join to add expenses and see your balance.'**
+  String get inviteBodySignedIn;
+
+  /// No description provided for @inviteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invitation'**
+  String get inviteAction;
+
+  /// No description provided for @inviteMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation doesn\'t work'**
+  String get inviteMissingTitle;
+
+  /// No description provided for @inviteMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have expired or been used. Ask for a new one.'**
+  String get inviteMissingBody;
+
+  /// No description provided for @joinInvitedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'You were invited as this person'**
+  String get joinInvitedAs;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -87,6 +87,7 @@ class ServerInfo {
     this.password = false,
     this.signup = SignupPolicy.open,
     this.linkGroups = true,
+    this.email = false,
     required this.publicUrl,
     this.sourceUrl,
   });
@@ -111,6 +112,7 @@ class ServerInfo {
         _ => SignupPolicy.open,
       },
       linkGroups: json['linkGroups'] != false,
+      email: json['email'] == true,
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
     );
@@ -125,6 +127,9 @@ class ServerInfo {
 
   /// Group owners may open a group to anyone with its link.
   final bool linkGroups;
+
+  /// The server sends email: verification, password reset and invitations.
+  final bool email;
   final String publicUrl;
 
   /// Where to get the server's source code, if the operator set it. Only

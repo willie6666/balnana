@@ -105,10 +105,18 @@ class BalnanaApi {
     required String password,
     required String name,
     String? locale,
+    String? invite,
   }) => _send(
     () => _dio.post<Object?>(
       '/auth/register',
-      data: {'email': email, 'password': password, 'name': name, 'locale': ?locale, 'cookie': _cookie},
+      data: {
+        'email': email,
+        'password': password,
+        'name': name,
+        'locale': ?locale,
+        'invite': ?invite,
+        'cookie': _cookie,
+      },
     ),
     _session,
   );
@@ -124,6 +132,25 @@ class BalnanaApi {
     final token = data['token'];
     return (token is String ? token : null, User.fromJson(data['user']));
   }
+
+  /// Emails a link for choosing a new password, if the address has an account.
+  Future<void> requestPasswordReset(String email) =>
+      _send(() => _dio.post<Object?>('/auth/password-reset', data: {'email': email}), (_) {});
+
+  /// Signs out every session of the account.
+  Future<void> resetPassword({required String token, required String password}) => _send(
+    () => _dio.post<Object?>('/auth/password-reset/confirm', data: {'token': token, 'newPassword': password}),
+    (_) {},
+  );
+
+  Future<void> verifyEmail(String token) =>
+      _send(() => _dio.post<Object?>('/auth/verify-email', data: {'token': token}), (_) {});
+
+  /// Emails the signed-in account a link confirming its address.
+  Future<void> sendVerifyEmail() => _send(() => _dio.post<Object?>('/me/verify-email'), (_) {});
+
+  Future<InviteInfo> invite(String token) =>
+      _send(() => _dio.get<Object?>('/auth/invites/${Uri.encodeComponent(token)}'), InviteInfo.fromJson);
 
   Future<void> logout() => _send(() => _dio.post<Object?>('/auth/logout'), (_) {});
 
@@ -223,6 +250,12 @@ class GroupApi {
   Future<Group> join({String? claim, String? name}) => _send(
     () => _dio.post<Object?>('$_base/join', data: {'claimMemberId': ?claim, 'name': ?name}),
     Group.fromJson,
+  );
+
+  /// Emails [email] a link to join, optionally as the unclaimed [member].
+  Future<void> invite(String email, {String? member}) => _send(
+    () => _dio.post<Object?>('$_base/invites', data: {'email': email, 'memberId': ?member}),
+    (_) {},
   );
 
   /// Issues a new link; the old one stops working.
