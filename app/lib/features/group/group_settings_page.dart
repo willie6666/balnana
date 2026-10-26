@@ -8,6 +8,7 @@ import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../data/api.dart';
+import '../../data/home_group.dart';
 import '../../data/known_groups.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -208,6 +209,7 @@ class _Settings extends ConsumerWidget {
     try {
       await groupApiOf(ref, group.token).removeMember(me.id);
       refreshGroup(ref, group.token);
+      ref.read(currentGroupProvider.notifier).set(null);
       if (context.mounted) context.go('/groups');
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
@@ -226,6 +228,7 @@ class _Settings extends ConsumerWidget {
     ref.read(knownGroupsProvider.notifier).remove(group.token);
     ref.invalidate(summariesProvider);
     ref.invalidate(activityFeedProvider);
+    ref.read(currentGroupProvider.notifier).set(null);
     context.go('/groups');
   }
 

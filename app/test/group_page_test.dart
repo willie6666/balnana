@@ -182,7 +182,8 @@ class _Receipts implements HttpClientAdapter {
   ) async {
     final path = options.uri.path;
     final body = requestStream == null ? <int>[] : await requestStream.expand((b) => b).toList();
-    requests.add('${options.method} $path${body.isEmpty ? '' : ' ${options.contentType} ${body.length}'}');
+    // The group page below the editor lists expenses whenever it likes.
+    if (path != '/api/v1/g/tok/expenses') requests.add('${options.method} $path${body.isEmpty ? '' : ' ${options.contentType} ${body.length}'}');
     ResponseBody json(Object data) => ResponseBody.fromString(
       jsonEncode(data),
       200,
@@ -334,6 +335,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(pages.secondPage, 1);
+    // Below the group's header, which scrolls away.
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(pages.secondPage, 1);
     expect(find.text('Retry'), findsOneWidget);
 
     pages.failing = false;
@@ -376,13 +381,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Flat 2'), findsWidgets);
 
-    // Changed while the page was closed; the group stays cached meanwhile.
-    await _go(tester, container, '/groups');
+    // Changed while another group was open; this one stays cached meanwhile.
+    await _go(tester, container, '/g/other');
     name = 'Flat 3';
     await _go(tester, container, '/g/tok');
     expect(find.text('Flat 2'), findsWidgets);
     final before = gets;
-    expect(streams, hasLength(2));
+    expect(streams, hasLength(3));
     streams.last.add(LiveEvent.connected);
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
@@ -434,6 +439,10 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
       ..httpClientAdapter = search;
     final periods = <Period?>[];
+    // Tall enough for the charts below the group's header.
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final container = await _boot(tester, [
       apiProvider.overrideWithValue(dio),
       groupProvider.overrideWith((ref, token) async => _group('Flat')),
@@ -460,7 +469,7 @@ void main() {
       }),
     ]);
     await _go(tester, container, '/g/tok');
-    await tester.tap(find.byTooltip('Spending'));
+    await tester.tap(find.widgetWithText(Tab, 'Spending'));
     await tester.pumpAndSettle();
 
     expect(periods, [null]);
@@ -505,8 +514,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Export as CSV'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(of: find.byType(GroupSettingsPage), matching: find.byType(Scrollable)).first,
     );
+    await tester.ensureVisible(find.text('Export as CSV'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Export as CSV'));
     await tester.pumpAndSettle();
 
@@ -539,7 +550,7 @@ void main() {
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(server.requests.where((r) => r != 'GET /api/v1/g/tok/expenses'), [
+    expect(server.requests, [
       'PUT /api/v1/g/tok/expenses/e1/receipt image/png ${_png.length}',
     ]);
 

@@ -173,6 +173,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupNew => 'New group';
 
   @override
+  String get groupSwitch => 'Switch group';
+
+  @override
+  String get groupReorder => 'Drag to reorder';
+
+  @override
   String get groupCreate => 'Create group';
 
   @override
@@ -180,12 +186,6 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count people', one: '1 person');
     return '$_temp0';
   }
-
-  @override
-  String get totalOwed => 'You\'re owed';
-
-  @override
-  String get totalOwe => 'You owe';
 
   @override
   String pillOwed(String amount) {
@@ -403,9 +403,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabExpenses => 'Expenses';
 
   @override
-  String get tabBalances => 'Balances';
-
-  @override
   String get heroWhoTitle => 'Who are you in this group?';
 
   @override
@@ -436,9 +433,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String heroYouAre(String name) {
     return 'You are $name';
   }
-
-  @override
-  String get settleUp => 'Settle up';
 
   @override
   String get expenseAdd => 'Add expense';

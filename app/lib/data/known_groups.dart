@@ -111,4 +111,13 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
       _update((mine) => [for (final g in mine) g.token == oldToken ? g.copyWith(token: newToken) : g]);
 
   void remove(String token) => _update((mine) => [for (final g in mine) if (g.token != token) g]);
+
+  /// Puts the groups in the order of [tokens]; others keep their place at the end.
+  void reorder(List<String> tokens) => _update((mine) {
+    final index = {for (final (i, t) in tokens.indexed) t: i};
+    return [
+      for (final t in tokens) ?byToken(t),
+      for (final g in mine) if (!index.containsKey(g.token)) g,
+    ];
+  });
 }

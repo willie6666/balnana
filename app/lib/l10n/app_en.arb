@@ -67,13 +67,12 @@
   "categoryOther": "Other",
 
   "groupNew": "New group",
+  "groupSwitch": "Switch group",
+  "@groupSwitch": {"description": "Tooltip on the group name at the top of a group page, which lists the groups."},
+  "groupReorder": "Drag to reorder",
   "groupCreate": "Create group",
   "groupMemberCount": "{count, plural, =1{1 person} other{{count} people}}",
   "@groupMemberCount": {"placeholders": {"count": {"type": "int"}}},
-  "totalOwed": "You're owed",
-  "@totalOwed": {"description": "Label above the total others owe the reader across groups."},
-  "totalOwe": "You owe",
-  "@totalOwe": {"description": "Label above the total the reader owes across groups."},
   "pillOwed": "You're owed {amount}",
   "@pillOwed": {"placeholders": {"amount": {"type": "String"}}},
   "pillOwe": "You owe {amount}",
@@ -150,7 +149,6 @@
   "leaveAction": "Leave",
 
   "tabExpenses": "Expenses",
-  "tabBalances": "Balances",
   "heroWhoTitle": "Who are you in this group?",
   "heroWhoBody": "Pick your name to see what you owe and are owed.",
   "heroWhoAction": "Choose",
@@ -162,7 +160,6 @@
   "heroSettled": "You're settled up",
   "heroYouAre": "You are {name}",
   "@heroYouAre": {"placeholders": {"name": {"type": "String"}}},
-  "settleUp": "Settle up",
 
   "expenseAdd": "Add expense",
   "expensesEmptyTitle": "No expenses yet",

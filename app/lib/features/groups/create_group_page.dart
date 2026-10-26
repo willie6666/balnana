@@ -71,7 +71,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
         ref.read(knownGroupsProvider.notifier).add(group.token, memberId: group.members.first.id);
       }
       ref.invalidate(summariesProvider);
-      if (mounted) context.pushReplacement('/g/${group.token}');
+      if (mounted) context.go('/g/${group.token}');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

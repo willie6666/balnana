@@ -415,6 +415,18 @@ abstract class AppLocalizations {
   /// **'New group'**
   String get groupNew;
 
+  /// Tooltip on the group name at the top of a group page, which lists the groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch group'**
+  String get groupSwitch;
+
+  /// No description provided for @groupReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get groupReorder;
+
   /// No description provided for @groupCreate.
   ///
   /// In en, this message translates to:
@@ -426,18 +438,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 person} other{{count} people}}'**
   String groupMemberCount(int count);
-
-  /// Label above the total others owe the reader across groups.
-  ///
-  /// In en, this message translates to:
-  /// **'You\'re owed'**
-  String get totalOwed;
-
-  /// Label above the total the reader owes across groups.
-  ///
-  /// In en, this message translates to:
-  /// **'You owe'**
-  String get totalOwe;
 
   /// No description provided for @pillOwed.
   ///
@@ -841,12 +841,6 @@ abstract class AppLocalizations {
   /// **'Expenses'**
   String get tabExpenses;
 
-  /// No description provided for @tabBalances.
-  ///
-  /// In en, this message translates to:
-  /// **'Balances'**
-  String get tabBalances;
-
   /// No description provided for @heroWhoTitle.
   ///
   /// In en, this message translates to:
@@ -906,12 +900,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You are {name}'**
   String heroYouAre(String name);
-
-  /// No description provided for @settleUp.
-  ///
-  /// In en, this message translates to:
-  /// **'Settle up'**
-  String get settleUp;
 
   /// No description provided for @expenseAdd.
   ///

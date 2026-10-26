@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderOrFamily;
 import '../core/server.dart';
 import '../core/session.dart';
 import 'api.dart';
+import 'home_group.dart';
 import 'known_groups.dart';
 import 'models.dart';
 
@@ -57,12 +58,13 @@ typedef Summaries = ({List<GroupSummary> groups, List<String> missing});
 final summariesProvider = FutureProvider<Summaries>((ref) async {
   final api = _api(ref);
   if (await ref.watch(accountProvider.future) != null) {
-    return (groups: await api.myGroups(), missing: <String>[]);
+    final order = ref.watch(groupOrderProvider);
+    return (groups: inChosenOrder(await api.myGroups(), order), missing: <String>[]);
   }
   final known = ref.watch(knownGroupsProvider);
   if (known.isEmpty) return (groups: <GroupSummary>[], missing: <String>[]);
   final (groups, missing) = await api.summaries({for (final g in known) g.token: g.memberId});
-  // Keep this device's order: most recently added first.
+  // Keep this device's order.
   final order = {for (final (i, g) in known.indexed) g.token: i};
   groups.sort((a, b) => (order[a.token] ?? 0).compareTo(order[b.token] ?? 0));
   return (groups: groups, missing: missing);

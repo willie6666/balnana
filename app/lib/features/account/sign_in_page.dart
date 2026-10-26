@@ -114,15 +114,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final providers = info?.oauthProviders ?? const <OAuthProvider>[];
 
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            tooltip: l10n.navSettings,
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
-      ),
+      appBar: AppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final side = math.max(BSpace.s16, (constraints.maxWidth - formMaxWidth) / 2);

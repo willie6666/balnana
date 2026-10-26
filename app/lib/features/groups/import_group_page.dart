@@ -95,7 +95,7 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
         ref.read(knownGroupsProvider.notifier).add(group.token, memberId: mine?.id);
       }
       ref.invalidate(summariesProvider);
-      if (mounted) context.pushReplacement('/g/${group.token}');
+      if (mounted) context.go('/g/${group.token}');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {

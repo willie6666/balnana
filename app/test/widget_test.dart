@@ -103,7 +103,10 @@ void main() {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          expect(options.uri.toString(), '$server/api/v1/groups/summaries');
+          // Home opens the first group, which is out of reach here.
+          if (options.uri.toString() != '$server/api/v1/groups/summaries') {
+            return handler.reject(DioException.connectionError(requestOptions: options, reason: 'offline'));
+          }
           final groups = (options.data as Map)['groups'] as List;
           sent.add([for (final g in groups) (g as Map)['token'] as String]);
           handler.resolve(
@@ -126,6 +129,8 @@ void main() {
       ],
     );
 
+    await tester.tap(find.byTooltip('Switch group'));
+    await tester.pumpAndSettle();
     final beforeOpening = sent.length;
     await tester.tap(find.byTooltip('Open a group link'));
     await tester.pumpAndSettle();
@@ -182,6 +187,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Added 1 group'), findsOneWidget);
     await tester.tap(find.text('Groups'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Switch group'));
     await tester.pumpAndSettle();
     expect(sent.last, [other, newer, older]);
     expect(sent.expand((tokens) => tokens), isNot(contains('FFFFFFFFFFFFFFFFFFFFFF')));

@@ -11,20 +11,22 @@ import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
+import '../../data/home_group.dart';
 import '../../data/known_groups.dart';
 import '../../data/live.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
-import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../account/sign_in_page.dart';
-import 'balances_tab.dart';
+import '../groups/group_switcher.dart';
+import 'balances.dart';
 import 'expenses_tab.dart';
 import 'identity_sheet.dart';
+import 'spending_tab.dart';
 
 /// Who this app acts as in [token]'s group: the signed-in account's member,
 /// or else the member this device picked. Null when neither is known.
@@ -69,12 +71,18 @@ class GroupTheme extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // The wallpaper's colors, when chosen, color every page alike.
+    if (WallpaperColors.of(context)) return child;
     final brightness = Theme.of(context).brightness;
     final pureBlack = ref.watch(settingsProvider.select((s) => s.pureBlack));
     final scheme = ColorScheme.fromSeed(
       seedColor: paletteColor(group.color, group.token),
       brightness: brightness,
-      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+      // Fidelity keeps the group's own color, which in the dark is often
+      // too bright for text on it; tonal spot keeps the hue with calmer tones.
+      dynamicSchemeVariant: brightness == Brightness.dark
+          ? DynamicSchemeVariant.tonalSpot
+          : DynamicSchemeVariant.fidelity,
     );
     return Theme(
       data: buildTheme(scheme, pureBlack: pureBlack),
@@ -104,6 +112,10 @@ class _GroupPageState extends ConsumerState<GroupPage> {
       if (group != null) {
         _opened(group);
         _goLive();
+        // Home opens this group next time.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) ref.read(currentGroupProvider.notifier).set(widget.token);
+        });
       }
     }, fireImmediately: true);
     // A new session reloads everything already; follow the group as that account.
@@ -174,7 +186,13 @@ class _GroupPageState extends ConsumerState<GroupPage> {
 
   bool _sentToJoin = false;
 
-  void _back() => context.canPop() ? context.pop() : context.go('/groups');
+  /// A page for the group while it cannot be shown, from which to switch to another.
+  Widget _blank(Widget body) => Scaffold(
+    appBar: AppBar(automaticallyImplyLeading: false, title: const GroupSwitcher()),
+    body: Center(
+      child: Padding(padding: const EdgeInsets.all(BSpace.s16), child: body),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -193,29 +211,23 @@ class _GroupPageState extends ConsumerState<GroupPage> {
           if (!_sentToJoin) {
             _sentToJoin = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) context.go('/g/${widget.token}/join');
+              if (!mounted) return;
+              // Not home any more, or closing the join page would come back here.
+              if (ref.read(currentGroupProvider) == widget.token) ref.read(currentGroupProvider.notifier).set(null);
+              context.go('/g/${widget.token}/join');
             });
           }
-          return Scaffold(
-            appBar: AppBar(leading: BackButton(onPressed: _back)),
-            body: const Center(child: CircularProgressIndicator()),
-          );
+          return _blank(const CircularProgressIndicator());
         }
         if (error is ApiException && error.code == 'sign_in_required') {
-          return Scaffold(
-            appBar: AppBar(leading: BackButton(onPressed: _back)),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(BSpace.s16),
-                child: EmptyState(
-                  icon: Icons.lock_outline,
-                  title: l10n.groupSignInTitle,
-                  body: l10n.groupSignInBody,
-                  action: FilledButton(
-                    onPressed: () => context.go(signInPath('/g/${widget.token}')),
-                    child: Text(l10n.signIn),
-                  ),
-                ),
+          return _blank(
+            EmptyState(
+              icon: Icons.lock_outline,
+              title: l10n.groupSignInTitle,
+              body: l10n.groupSignInBody,
+              action: FilledButton(
+                onPressed: () => context.go(signInPath('/g/${widget.token}')),
+                child: Text(l10n.signIn),
               ),
             ),
           );
@@ -229,6 +241,9 @@ class _GroupPageState extends ConsumerState<GroupPage> {
               ? FilledButton.tonal(
                   onPressed: () {
                     ref.read(knownGroupsProvider.notifier).remove(widget.token);
+                    if (ref.read(currentGroupProvider) == widget.token) {
+                      ref.read(currentGroupProvider.notifier).set(null);
+                    }
                     context.go('/groups');
                   },
                   child: Text(l10n.groupForget),
@@ -241,12 +256,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
       } else {
         body = const CircularProgressIndicator();
       }
-      return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: _back)),
-        body: Center(
-          child: Padding(padding: const EdgeInsets.all(BSpace.s16), child: body),
-        ),
-      );
+      return _blank(body);
     }
 
     return GroupTheme(
@@ -256,27 +266,10 @@ class _GroupPageState extends ConsumerState<GroupPage> {
         child: Builder(
           builder: (context) => Scaffold(
             appBar: AppBar(
-              leading: BackButton(onPressed: _back),
-              titleSpacing: 0,
-              title: Row(
-                children: [
-                  GroupBadge(
-                    token: group.token,
-                    name: group.name,
-                    emoji: group.emoji,
-                    color: group.color,
-                    size: 36,
-                  ),
-                  const SizedBox(width: BSpace.s12),
-                  Expanded(child: Text(group.name, overflow: TextOverflow.ellipsis)),
-                ],
-              ),
+              automaticallyImplyLeading: false,
+              titleSpacing: BSpace.s8,
+              title: GroupSwitcher(group: group),
               actions: [
-                IconButton(
-                  tooltip: l10n.statsTitle,
-                  icon: const Icon(Icons.insights_outlined),
-                  onPressed: () => context.push('/g/${group.token}/stats'),
-                ),
                 IconButton(
                   tooltip: l10n.groupShare,
                   icon: const Icon(Icons.share_outlined),
@@ -301,7 +294,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                   headerSliverBuilder: (context, _) => [
                     SliverPadding(
                       padding: EdgeInsets.fromLTRB(side, BSpace.s8, side, BSpace.s8),
-                      sliver: SliverToBoxAdapter(child: BalanceHero(group: group)),
+                      sliver: SliverToBoxAdapter(child: BalanceCard(group: group)),
                     ),
                     SliverOverlapAbsorber(
                       handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -313,7 +306,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                           tabs: TabBar(
                             tabs: [
                               Tab(text: l10n.tabExpenses),
-                              Tab(text: l10n.tabBalances),
+                              Tab(text: l10n.statsTitle),
                             ],
                           ),
                         ),
@@ -323,7 +316,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                   body: TabBarView(
                     children: [
                       ExpensesTab(group: group, sidePadding: side),
-                      BalancesTab(group: group, sidePadding: side),
+                      SpendingTab(group: group, sidePadding: side),
                     ],
                   ),
                 );
@@ -360,97 +353,4 @@ class _TabsHeader extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_TabsHeader old) => old.tabs != tabs || old.color != color || old.padding != padding;
-}
-
-/// The top of a group page: where this device's member stands.
-class BalanceHero extends ConsumerWidget {
-  const BalanceHero({super.key, required this.group});
-
-  final Group group;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final me = group.member(myMemberId(ref, group.token));
-
-    final Widget content;
-    if ((me == null || me.left) && ref.watch(signedInProvider)) {
-      // An open group the account is not in yet.
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.heroJoinTitle, style: text.titleLarge?.copyWith(color: scheme.onPrimaryContainer)),
-          const SizedBox(height: BSpace.s4),
-          Text(l10n.heroJoinBody, style: text.bodyMedium?.copyWith(color: scheme.onPrimaryContainer)),
-          const SizedBox(height: BSpace.s16),
-          FilledButton(onPressed: () => context.push('/g/${group.token}/join'), child: Text(l10n.joinAction)),
-        ],
-      );
-    } else if (me == null || me.left) {
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.heroWhoTitle, style: text.titleLarge?.copyWith(color: scheme.onPrimaryContainer)),
-          const SizedBox(height: BSpace.s4),
-          Text(l10n.heroWhoBody, style: text.bodyMedium?.copyWith(color: scheme.onPrimaryContainer)),
-          const SizedBox(height: BSpace.s16),
-          FilledButton(onPressed: () => showIdentitySheet(context, group), child: Text(l10n.heroWhoAction)),
-        ],
-      );
-    } else {
-      final balance = me.balance;
-      final label = switch (balance.sign) {
-        1 => l10n.heroOwed,
-        -1 => l10n.heroOwe,
-        _ => l10n.heroSettled,
-      };
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              MemberAvatar(member: me, size: 28),
-              const SizedBox(width: BSpace.s8),
-              Expanded(
-                child: Text(
-                  l10n.heroYouAre(me.name),
-                  style: text.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: BSpace.s16),
-          Text(label, style: text.titleMedium?.copyWith(color: scheme.onPrimaryContainer)),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              formatMoney(context, balance.abs(), group.minorDigits, group.currency),
-              style: text.moneyHero.copyWith(color: scheme.onPrimaryContainer),
-            ),
-          ),
-          if (balance != BigInt.zero) ...[
-            const SizedBox(height: BSpace.s12),
-            FilledButton.icon(
-              onPressed: () => DefaultTabController.of(context).animateTo(1),
-              icon: const Icon(Icons.handshake_outlined),
-              label: Text(l10n.settleUp),
-            ),
-          ],
-        ],
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(BSpace.s24),
-      decoration: ShapeDecoration(
-        color: scheme.primaryContainer,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.xl))),
-      ),
-      child: content,
-    );
-  }
 }

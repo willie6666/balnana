@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -10,49 +9,42 @@ import '../../core/l10n.dart';
 import '../../data/categories.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
-import '../../ui/layout.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/menu_chip.dart';
-import 'group_page.dart';
 
 /// What a group spent: in total, by category, per person and by month.
-class StatsPage extends ConsumerStatefulWidget {
-  const StatsPage({super.key, required this.token});
+class SpendingTab extends ConsumerStatefulWidget {
+  const SpendingTab({super.key, required this.group, required this.sidePadding});
 
-  final String token;
+  final Group group;
+  final double sidePadding;
 
   @override
-  ConsumerState<StatsPage> createState() => _StatsPageState();
+  ConsumerState<SpendingTab> createState() => _SpendingTabState();
 }
 
-class _StatsPageState extends ConsumerState<StatsPage> {
+class _SpendingTabState extends ConsumerState<SpendingTab> {
   Period? _period;
 
   /// The last stats shown, kept on screen while another period loads.
   GroupStats? _shown;
 
-  /// Shows the expenses behind a row of the stats on the group page.
+  /// Shows the expenses behind a row of the stats in the expenses tab.
   void _showExpenses(ExpenseFilter filter) {
-    ref.read(expenseFilterProvider(widget.token).notifier).set(filter.copyWith(period: () => _period));
-    context.pop();
+    ref.read(expenseFilterProvider(widget.group.token).notifier).set(filter.copyWith(period: () => _period));
+    DefaultTabController.of(context).animateTo(0);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final group = ref.watch(groupProvider(widget.token)).value;
-    if (group == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.statsTitle)),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final async = ref.watch(statsProvider((token: widget.token, period: _period)));
+    final group = widget.group;
+    final side = widget.sidePadding;
+    final async = ref.watch(statsProvider((token: group.token, period: _period)));
     if (async.value case final stats?) _shown = stats;
     final stats = _shown;
 
@@ -83,15 +75,15 @@ class _StatsPageState extends ConsumerState<StatsPage> {
       );
     }
 
-    return GroupTheme(
-      group: group,
-      child: Scaffold(
-        appBar: AppBar(title: Text(l10n.statsTitle)),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final side = math.max(BSpace.s16, (constraints.maxWidth - contentMaxWidth) / 2);
-            return ListView(
-              padding: EdgeInsets.fromLTRB(side, BSpace.s8, side, BSpace.s32),
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey('spending'),
+        slivers: [
+          SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
+          SliverPadding(
+            // Room at the end for the floating button.
+            padding: EdgeInsets.fromLTRB(side, BSpace.s16, side, 88),
+            sliver: SliverList.list(
               children: [
                 Align(
                   alignment: AlignmentDirectional.centerStart,
@@ -109,9 +101,9 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                 const SizedBox(height: BSpace.s16),
                 body,
               ],
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

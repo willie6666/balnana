@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../data/home_group.dart';
 import '../data/providers.dart';
 import '../features/account/email_pages.dart';
 import '../features/account/oauth.dart';
@@ -12,7 +13,6 @@ import '../features/expense/expense_editor_page.dart';
 import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
-import '../features/group/stats_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
@@ -28,20 +28,25 @@ final _root = GlobalKey<NavigatorState>();
 /// A new server sends everyone to /admin until its administrator password
 /// is set. In accounts mode, signed-out people only see signing in, settings
 /// and groups opened by link (which ask them to sign in unless open to
-/// anyone).
+/// anyone). Home is a group: the one opened last, when there is one.
 String? _redirect(Ref ref, GoRouterState state) {
-  if (ref.read(setupRequiredProvider)) return state.matchedLocation == '/admin' ? null : '/admin';
-  if (!ref.read(accountsModeProvider)) return null;
-  final account = ref.read(accountProvider);
-  if (account.isLoading || account.hasError) return null;
-  final signedIn = account.value != null;
   final path = state.matchedLocation;
-  if (path == '/sign-in') return signedIn ? safeNext(state.uri.queryParameters['next']) ?? '/groups' : null;
-  final public =
-      path.startsWith('/settings') ||
-      (path.startsWith('/g/') && !path.endsWith('/join')) ||
-      _publicLinks.any(path.startsWith);
-  if (!signedIn && !public) return signInPath(state.uri.toString());
+  if (ref.read(setupRequiredProvider)) return path == '/admin' ? null : '/admin';
+  if (ref.read(accountsModeProvider)) {
+    final account = ref.read(accountProvider);
+    if (account.isLoading || account.hasError) return null;
+    final signedIn = account.value != null;
+    if (path == '/sign-in') return signedIn ? safeNext(state.uri.queryParameters['next']) ?? '/groups' : null;
+    final public =
+        path.startsWith('/settings') ||
+        (path.startsWith('/g/') && !path.endsWith('/join')) ||
+        _publicLinks.any(path.startsWith);
+    if (!signedIn && !public) return signInPath(state.uri.toString());
+  }
+  if (path == '/groups') {
+    final home = homeGroup(ref);
+    if (home != null) return '/g/$home';
+  }
   return null;
 }
 
@@ -69,13 +74,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Server administration. Nothing links here; the operator knows it.
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
-        path: '/sign-in',
-        builder: (context, state) => SignInPage(
-          next: state.uri.queryParameters['next'],
-          prefill: state.extra is SignInPrefill ? state.extra as SignInPrefill : null,
-        ),
-      ),
-      GoRoute(
         path: '/verify-email',
         builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token'] ?? ''),
       ),
@@ -96,42 +94,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/invite/:token',
         builder: (context, state) => InvitePage(token: state.pathParameters['token']!),
-      ),
-      // A private group link; the token never leaves this device except to the server.
-      GoRoute(
-        path: '/g/:token',
-        builder: (context, state) => GroupPage(token: state.pathParameters['token']!),
-        routes: [
-          GoRoute(
-            path: 'expenses/new',
-            pageBuilder: (context, state) => MaterialPage(
-              fullscreenDialog: true,
-              child: ExpenseEditorPage(token: state.pathParameters['token']!),
-            ),
-          ),
-          GoRoute(
-            path: 'expenses/:id',
-            pageBuilder: (context, state) => MaterialPage(
-              fullscreenDialog: true,
-              child: ExpenseEditorPage(
-                token: state.pathParameters['token']!,
-                expenseId: state.pathParameters['id'],
-              ),
-            ),
-          ),
-          GoRoute(
-            path: 'settings',
-            builder: (context, state) => GroupSettingsPage(token: state.pathParameters['token']!),
-          ),
-          GoRoute(
-            path: 'stats',
-            builder: (context, state) => StatsPage(token: state.pathParameters['token']!),
-          ),
-          GoRoute(
-            path: 'join',
-            builder: (context, state) => JoinPage(token: state.pathParameters['token']!),
-          ),
-        ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
@@ -155,6 +117,52 @@ final routerProvider = Provider<GoRouter>((ref) {
                         const MaterialPage(fullscreenDialog: true, child: ImportGroupPage()),
                   ),
                 ],
+              ),
+              // A private group link; the token never leaves this device except to the server.
+              GoRoute(
+                path: '/g/:token',
+                // Keyed, since switching groups keeps the page and only changes the token.
+                builder: (context, state) {
+                  final token = state.pathParameters['token']!;
+                  return GroupPage(key: ValueKey(token), token: token);
+                },
+                routes: [
+                  GoRoute(
+                    path: 'expenses/new',
+                    parentNavigatorKey: _root,
+                    pageBuilder: (context, state) => MaterialPage(
+                      fullscreenDialog: true,
+                      child: ExpenseEditorPage(token: state.pathParameters['token']!),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'expenses/:id',
+                    parentNavigatorKey: _root,
+                    pageBuilder: (context, state) => MaterialPage(
+                      fullscreenDialog: true,
+                      child: ExpenseEditorPage(
+                        token: state.pathParameters['token']!,
+                        expenseId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => GroupSettingsPage(token: state.pathParameters['token']!),
+                  ),
+                  GoRoute(
+                    path: 'join',
+                    builder: (context, state) => JoinPage(token: state.pathParameters['token']!),
+                  ),
+                ],
+              ),
+              // Under the navigation, which stays put while signing in.
+              GoRoute(
+                path: '/sign-in',
+                builder: (context, state) => SignInPage(
+                  next: state.uri.queryParameters['next'],
+                  prefill: state.extra is SignInPrefill ? state.extra as SignInPrefill : null,
+                ),
               ),
             ],
           ),

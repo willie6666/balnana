@@ -45,7 +45,7 @@ String? tokenFromLink(String input, {required String? serverUrl, String? publicU
 /// Asks for a group link and opens it.
 Future<void> showOpenLinkDialog(BuildContext context) async {
   final token = await showDialog<String>(context: context, builder: (context) => const _OpenLinkDialog());
-  if (token != null && context.mounted) await context.push('/g/$token');
+  if (token != null && context.mounted) context.go('/g/$token');
 }
 
 class _OpenLinkDialog extends ConsumerStatefulWidget {

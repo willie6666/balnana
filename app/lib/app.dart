@@ -20,9 +20,8 @@ class BalnanaApp extends ConsumerWidget {
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
         var light = brandScheme(Brightness.light), dark = brandScheme(Brightness.dark);
-        if (settings.dynamicColor && lightDynamic != null && darkDynamic != null) {
-          (light, dark) = (lightDynamic, darkDynamic);
-        }
+        final wallpaper = settings.dynamicColor && lightDynamic != null && darkDynamic != null;
+        if (wallpaper) (light, dark) = (lightDynamic, darkDynamic);
         return MaterialApp.router(
           onGenerateTitle: (context) => context.l10n.appTitle,
           debugShowCheckedModeBanner: false,
@@ -34,7 +33,10 @@ class BalnanaApp extends ConsumerWidget {
           localizationsDelegates: const [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates],
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
-          builder: (context, child) => PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
+          builder: (context, child) => WallpaperColors(
+            on: wallpaper,
+            child: PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
+          ),
         );
       },
     );

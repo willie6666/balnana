@@ -94,7 +94,7 @@ class ActivityTile extends StatelessWidget {
         '${group.name} · ${DateFormat.jm(locale).format(item.activity.createdAt.toLocal())}',
         style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
       ),
-      onTap: () => context.push('/g/${group.token}'),
+      onTap: () => context.go('/g/${group.token}'),
     );
   }
 }

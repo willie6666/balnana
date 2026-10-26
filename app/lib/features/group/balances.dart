@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
@@ -8,97 +9,123 @@ import '../../core/money.dart';
 import '../../data/api.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
-import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
-import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import 'group_page.dart';
+import 'identity_sheet.dart';
 
-class BalancesTab extends ConsumerWidget {
-  const BalancesTab({super.key, required this.group, required this.sidePadding});
+/// The top of a group page: where this device's member stands, everyone's
+/// balance and the payments that would settle them.
+class BalanceCard extends ConsumerWidget {
+  const BalanceCard({super.key, required this.group});
 
   final Group group;
-  final double sidePadding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final async = ref.watch(balancesProvider(group.token));
-    final balances = async.value;
-    final me = myMemberId(ref, group.token);
+    final text = Theme.of(context).textTheme;
+    final myId = myMemberId(ref, group.token);
+    final me = group.member(myId);
+    final onHeader = scheme.onPrimaryContainer;
 
-    final List<Widget> slivers;
-    if (balances == null) {
-      slivers = [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(
-            child: async.hasError && !async.isLoading
-                ? EmptyState(
-                    icon: Icons.cloud_off_outlined,
-                    title: l10n.groupsUnreachableTitle,
-                    body: errorMessage(l10n, async.error!),
-                    action: FilledButton.tonal(
-                      onPressed: () => ref.invalidate(balancesProvider(group.token)),
-                      child: Text(l10n.commonRetry),
-                    ),
-                  )
-                : const CircularProgressIndicator(),
-          ),
-        ),
-      ];
+    Widget prompt(String title, String body, String action, VoidCallback onPressed) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: text.titleLarge?.copyWith(color: onHeader)),
+        const SizedBox(height: BSpace.s4),
+        Text(body, style: text.bodyMedium?.copyWith(color: onHeader)),
+        const SizedBox(height: BSpace.s16),
+        FilledButton(onPressed: onPressed, child: Text(action)),
+      ],
+    );
+
+    final Widget header;
+    if ((me == null || me.left) && ref.watch(signedInProvider)) {
+      // An open group the account is not in yet.
+      header = prompt(
+        l10n.heroJoinTitle,
+        l10n.heroJoinBody,
+        l10n.joinAction,
+        () => context.push('/g/${group.token}/join'),
+      );
+    } else if (me == null || me.left) {
+      header = prompt(l10n.heroWhoTitle, l10n.heroWhoBody, l10n.heroWhoAction, () => showIdentitySheet(context, group));
     } else {
-      final largest = balances.nets.values.fold(BigInt.zero, (a, b) => b.abs() > a ? b.abs() : a);
-      // Suggestions that involve this device's member first.
-      final transfers = [
-        ...balances.transfers.where((t) => t.from == me || t.to == me),
-        ...balances.transfers.where((t) => t.from != me && t.to != me),
-      ];
-      slivers = [
-        SliverPadding(
-          padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s16, sidePadding, 88),
-          sliver: SliverList.list(
-            children: [
-              for (final MapEntry(key: id, value: net) in balances.nets.entries)
-                if (group.member(id) case final member?)
-                  BalanceBeam(
-                    member: member,
-                    isMe: id == me,
-                    net: net,
-                    largest: largest,
-                    amount: formatMoney(context, net, group.minorDigits, group.currency, signed: true),
-                  ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(BSpace.s4, BSpace.s24, BSpace.s4, BSpace.s8),
-                child: Text(l10n.suggestedPayments, style: text.labelLarge?.copyWith(color: scheme.primary)),
-              ),
-              if (transfers.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: BSpace.s4, vertical: BSpace.s8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.celebration_outlined, color: context.bColors.owed),
-                      const SizedBox(width: BSpace.s12),
-                      Expanded(child: Text(l10n.allSettled, style: text.bodyLarge)),
-                    ],
-                  ),
-                )
-              else
-                for (final t in transfers) _TransferTile(group: group, transfer: t, me: me),
-            ],
+      final balance = me.balance;
+      final label = switch (balance.sign) {
+        1 => l10n.heroOwed,
+        -1 => l10n.heroOwe,
+        _ => l10n.heroSettled,
+      };
+      header = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: text.titleMedium?.copyWith(color: onHeader)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              formatMoney(context, balance.abs(), group.minorDigits, group.currency),
+              style: text.moneyHero.copyWith(color: onHeader),
+            ),
           ),
-        ),
-      ];
+        ],
+      );
     }
 
-    return Builder(
-      builder: (context) => CustomScrollView(
-        key: const PageStorageKey('balances'),
-        slivers: [SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)), ...slivers],
+    // Members who left stay while they still owe or are owed something.
+    final members = [
+      for (final m in group.members)
+        if (!m.left || m.balance != BigInt.zero) m,
+    ];
+    final largest = members.fold(BigInt.zero, (a, m) => m.balance.abs() > a ? m.balance.abs() : a);
+    final balances = ref.watch(balancesProvider(group.token)).value;
+    // Suggestions that involve this device's member first.
+    final transfers = [
+      ...?balances?.transfers.where((t) => t.from == myId || t.to == myId),
+      ...?balances?.transfers.where((t) => t.from != myId && t.to != myId),
+    ];
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(BShape.xl)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ColoredBox(
+            color: scheme.primaryContainer,
+            child: Padding(padding: const EdgeInsets.all(BSpace.s24), child: header),
+          ),
+          ColoredBox(
+            color: scheme.surfaceContainerLow,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(BSpace.s16, BSpace.s8, BSpace.s16, BSpace.s12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final m in members)
+                    BalanceBeam(
+                      member: m,
+                      isMe: m.id == myId,
+                      net: m.balance,
+                      largest: largest,
+                      amount: formatMoney(context, m.balance, group.minorDigits, group.currency, signed: true),
+                    ),
+                  if (transfers.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(BSpace.s4, BSpace.s12, BSpace.s4, BSpace.s8),
+                      child: Text(l10n.suggestedPayments, style: text.labelLarge?.copyWith(color: scheme.primary)),
+                    ),
+                    for (final t in transfers) _TransferTile(group: group, transfer: t, me: myId),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -241,7 +268,7 @@ class _TransferTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: BSpace.tileGap * 2),
       child: Material(
-        color: involved ? scheme.secondaryContainer : scheme.surfaceContainer,
+        color: involved ? scheme.secondaryContainer : scheme.surfaceContainerHigh,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(BSpace.s12, BSpace.s8, BSpace.s8, BSpace.s8),
