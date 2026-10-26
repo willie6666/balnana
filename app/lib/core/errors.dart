@@ -33,6 +33,15 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'oauth_failed' => l10n.errorOAuthFailed,
     'oauth_cancelled' => l10n.errorOAuthCancelled,
     'rate_limited' => l10n.errorRateLimited,
+    'import_file' when error.params['problem'] == 'currency' => l10n.errorImportCurrency,
+    'import_file' when error.params['problem'] == 'too_many_rows' => l10n.errorImportTooBig,
+    'import_file' => l10n.errorImportFile,
+    'import_row' => l10n.errorImportRow(
+      (error.params['line'] as num?)?.toInt() ?? 0,
+      _importProblem(l10n, '${error.params['problem']}'),
+    ),
+    'import_me' => l10n.errorImportMe,
+    'too_large' => l10n.errorImportTooBig,
     final code =>
       MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??
           l10n.errorGeneric,
@@ -48,4 +57,15 @@ String moneyErrorMessage(AppLocalizations l10n, MoneyError error) => switch (err
   MoneyError.invalidShare => l10n.errorInvalidShare,
   MoneyError.exactTotal => l10n.errorExactTotal,
   MoneyError.percentTotal => l10n.errorPercentTotal,
+};
+
+/// Why one row of an imported file was refused.
+String _importProblem(AppLocalizations l10n, String problem) => switch (problem) {
+  'amount' => l10n.errorImportAmount,
+  'counts' => l10n.errorImportCounts,
+  'date' => l10n.errorImportDate,
+  'type' => l10n.errorImportType,
+  'transfer' => l10n.errorImportTransfer,
+  'currency' => l10n.errorImportRowCurrency,
+  _ => errorMessage(l10n, ApiException(problem)),
 };

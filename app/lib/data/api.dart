@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -199,6 +201,33 @@ class BalnanaApi {
     ),
     Group.fromJson,
   );
+
+  /// What importing a Settle Up export would create. Nothing is kept.
+  Future<ImportPreview> previewImport(Uint8List file) =>
+      _send(() => _dio.post<Object?>('/groups/import', data: _import(file, dryRun: true)), ImportPreview.fromJson);
+
+  /// Creates a group from a Settle Up export. [me] is the person in the file
+  /// this app is; [untitled] names expenses without a purpose.
+  Future<Group> importGroup(Uint8List file, {required String name, required String me, required String untitled}) =>
+      _send(
+        () => _dio.post<Object?>('/groups/import', data: _import(file, name: name, me: me, untitled: untitled)),
+        Group.fromJson,
+      );
+
+  static Map<String, Object?> _import(
+    Uint8List file, {
+    bool dryRun = false,
+    String? name,
+    String? me,
+    String? untitled,
+  }) => {
+    'format': 'settle_up',
+    'file': base64Encode(file),
+    'dryRun': dryRun,
+    'name': ?name,
+    'me': ?me,
+    'untitled': ?untitled,
+  };
 
   /// Summaries of the groups this device knows. The second list holds the
   /// tokens the server no longer recognizes.

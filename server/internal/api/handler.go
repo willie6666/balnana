@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -18,6 +19,11 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	strict := NewStrictHandlerWithOptions(s, nil, StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			s.log.Debug("bad request", "path", r.URL.Path, "err", err)
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				writeError(w, http.StatusRequestEntityTooLarge, "too_large")
+				return
+			}
 			writeError(w, http.StatusBadRequest, "bad_request")
 		},
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
@@ -38,6 +44,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	mux.Handle("/", web)
 
 	var h http.Handler = mux
+	h = limitBodies(h)
 	h = s.sessions(h)
 	h = rateLimit(s.cfg.RateLimit, s.cfg.TrustProxy, h)
 	h = cors(s.cfg.CORSOrigins, h)
@@ -45,6 +52,23 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	h = recoverer(s.log, h)
 	h = logRequests(s.log, h)
 	return h
+}
+
+// Request bodies are small JSON, except imported files.
+const (
+	maxBody       = 1 << 20
+	maxImportBody = 16 << 20
+)
+
+func limitBodies(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		limit := int64(maxBody)
+		if r.URL.Path == BasePath+"/groups/import" {
+			limit = maxImportBody
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func securityHeaders(next http.Handler) http.Handler {

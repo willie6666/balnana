@@ -61,6 +61,46 @@ paths:
                 $ref: "#/components/schemas/Group"
         default:
           $ref: "#/components/responses/Error"
+  /groups/import:
+    post:
+      operationId: importGroup
+      summary: Create a group from another app's export
+      description: >-
+        Reads a Settle Up CSV export and creates a group with its people,
+        expenses and transfers, all in one go: if any row cannot be imported,
+        nothing is. With `dryRun` nothing is stored and the response is a
+        preview. Amounts in other currencies use the export's converted
+        amounts, so the group has one currency. In accounts mode the creator
+        must be signed in and say which person in the file they are (`me`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportInput"
+      responses:
+        "200":
+          description: The preview, for `dryRun`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportPreview"
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        default:
+          description: >-
+            `import_file` (params.problem: `encoding`, `header`, `empty`,
+            `too_many_rows`, `currency`) when the file is not a usable export;
+            `import_row` (params.line, params.problem) for a row that cannot
+            be imported; `import_me` when `me` is not a person in the file.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /groups/summaries:
     post:
       operationId: getGroupSummaries
@@ -825,6 +865,65 @@ components:
           description: >-
             Accounts mode: let anyone with the link in, as in link mode.
             Ignored unless the server allows it (`linkGroups`).
+    ImportInput:
+      type: object
+      required: [format, file]
+      properties:
+        format:
+          type: string
+          enum: [settle_up]
+        file:
+          type: string
+          format: byte
+          description: The exported file, base64. UTF-8 and UTF-16 are read.
+        name:
+          type: string
+          description: The new group's name. Required unless `dryRun`.
+        me:
+          type: string
+          description: >-
+            Which person in the file the creator is. They become the owner;
+            in accounts mode, required, and the member is linked to the
+            account.
+        untitled:
+          type: string
+          description: Title for expenses the file has no purpose for.
+        dryRun:
+          type: boolean
+    ImportPreview:
+      type: object
+      required: [currency, minorDigits, members, expenses, payments, skipped]
+      properties:
+        currency:
+          type: string
+        minorDigits:
+          type: integer
+        members:
+          type: array
+          description: In the order they first appear in the file.
+          items:
+            $ref: "#/components/schemas/ImportMember"
+        expenses:
+          type: integer
+        payments:
+          type: integer
+        skipped:
+          type: integer
+          description: Rows with a zero amount, which are left out.
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+    ImportMember:
+      type: object
+      required: [name, balance]
+      properties:
+        name:
+          type: string
+        balance:
+          $ref: "#/components/schemas/Money"
     GroupUpdate:
       type: object
       properties:

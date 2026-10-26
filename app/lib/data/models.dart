@@ -297,6 +297,51 @@ class Balances {
   final List<Transfer> transfers;
 }
 
+/// What importing a file would create, see `POST /groups/import`.
+@immutable
+class ImportPreview {
+  const ImportPreview({
+    required this.currency,
+    required this.minorDigits,
+    required this.members,
+    required this.expenses,
+    required this.payments,
+    required this.skipped,
+    this.from,
+    this.to,
+  });
+
+  factory ImportPreview.fromJson(Object? data) {
+    final json = _object(data);
+    final digits = _req<int>(json, 'minorDigits');
+    return ImportPreview(
+      currency: _req(json, 'currency'),
+      minorDigits: digits,
+      members: [for (final m in _objects(json, 'members')) (name: _req<String>(m, 'name'), balance: _money(m, 'balance', digits))],
+      expenses: _req(json, 'expenses'),
+      payments: _req(json, 'payments'),
+      skipped: _req(json, 'skipped'),
+      from: json['from'] == null ? null : _time(json, 'from'),
+      to: json['to'] == null ? null : _time(json, 'to'),
+    );
+  }
+
+  final String currency;
+  final int minorDigits;
+
+  /// Everyone in the file, with the balance they would start with.
+  final List<({String name, BigInt balance})> members;
+  final int expenses;
+  final int payments;
+
+  /// Rows that move no money.
+  final int skipped;
+
+  /// When the first and last entries happened.
+  final DateTime? from;
+  final DateTime? to;
+}
+
 @immutable
 class Activity {
   const Activity({
@@ -330,6 +375,8 @@ class Activity {
   final DateTime createdAt;
 
   String? text(String key) => payload[key] is String ? payload[key] as String : null;
+
+  int? number(String key) => payload[key] is num ? (payload[key] as num).toInt() : null;
 }
 
 @immutable

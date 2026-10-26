@@ -13,6 +13,7 @@ import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
+import '../features/groups/import_group_page.dart';
 import '../features/not_found_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
@@ -131,6 +132,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _root,
                     pageBuilder: (context, state) =>
                         const MaterialPage(fullscreenDialog: true, child: CreateGroupPage()),
+                  ),
+                  GoRoute(
+                    path: 'import',
+                    parentNavigatorKey: _root,
+                    pageBuilder: (context, state) =>
+                        const MaterialPage(fullscreenDialog: true, child: ImportGroupPage()),
                   ),
                 ],
               ),

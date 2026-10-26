@@ -28,6 +28,11 @@ const (
 	ExpenseKindPayment ExpenseKind = "payment"
 )
 
+// Defines values for ImportInputFormat.
+const (
+	SettleUp ImportInputFormat = "settle_up"
+)
+
 // Defines values for ServerInfoAuthMode.
 const (
 	Accounts ServerInfoAuthMode = "accounts"
@@ -221,6 +226,50 @@ type GroupUpdate struct {
 	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`).
 	LinkAccess *bool   `json:"linkAccess,omitempty"`
 	Name       *string `json:"name,omitempty"`
+}
+
+// ImportInput defines model for ImportInput.
+type ImportInput struct {
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// File The exported file, base64. UTF-8 and UTF-16 are read.
+	File   []byte            `json:"file"`
+	Format ImportInputFormat `json:"format"`
+
+	// Me Which person in the file the creator is. They become the owner; in accounts mode, required, and the member is linked to the account.
+	Me *string `json:"me,omitempty"`
+
+	// Name The new group's name. Required unless `dryRun`.
+	Name *string `json:"name,omitempty"`
+
+	// Untitled Title for expenses the file has no purpose for.
+	Untitled *string `json:"untitled,omitempty"`
+}
+
+// ImportInputFormat defines model for ImportInput.Format.
+type ImportInputFormat string
+
+// ImportMember defines model for ImportMember.
+type ImportMember struct {
+	// Balance Decimal amount with up to the group's `minorDigits` decimals.
+	Balance Money  `json:"balance"`
+	Name    string `json:"name"`
+}
+
+// ImportPreview defines model for ImportPreview.
+type ImportPreview struct {
+	Currency string     `json:"currency"`
+	Expenses int        `json:"expenses"`
+	From     *time.Time `json:"from,omitempty"`
+
+	// Members In the order they first appear in the file.
+	Members     []ImportMember `json:"members"`
+	MinorDigits int            `json:"minorDigits"`
+	Payments    int            `json:"payments"`
+
+	// Skipped Rows with a zero amount, which are left out.
+	Skipped int        `json:"skipped"`
+	To      *time.Time `json:"to,omitempty"`
 }
 
 // InviteInfo defines model for InviteInfo.
@@ -622,6 +671,9 @@ type CreatePaymentJSONRequestBody = PaymentInput
 // CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
 type CreateGroupJSONRequestBody = GroupCreate
 
+// ImportGroupJSONRequestBody defines body for ImportGroup for application/json ContentType.
+type ImportGroupJSONRequestBody = ImportInput
+
 // GetGroupSummariesJSONRequestBody defines body for GetGroupSummaries for application/json ContentType.
 type GetGroupSummariesJSONRequestBody = GroupSummaryRequest
 
@@ -723,6 +775,9 @@ type ServerInterface interface {
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(w http.ResponseWriter, r *http.Request)
+	// Create a group from another app's export
+	// (POST /groups/import)
+	ImportGroup(w http.ResponseWriter, r *http.Request)
 	// Home screen cards for the groups a device knows
 	// (POST /groups/summaries)
 	GetGroupSummaries(w http.ResponseWriter, r *http.Request)
@@ -2065,6 +2120,28 @@ func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ImportGroup operation middleware
+func (siw *ServerInterfaceWrapper) ImportGroup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportGroup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetGroupSummaries operation middleware
 func (siw *ServerInterfaceWrapper) GetGroupSummaries(w http.ResponseWriter, r *http.Request) {
 
@@ -2369,6 +2446,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/reset-link", wrapper.ResetGroupLink)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
+	m.HandleFunc("POST "+options.BaseURL+"/groups/import", wrapper.ImportGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
 	m.HandleFunc("GET "+options.BaseURL+"/me", wrapper.GetMe)
 	m.HandleFunc("PATCH "+options.BaseURL+"/me", wrapper.UpdateMe)
@@ -3292,6 +3370,44 @@ func (response CreateGroupdefaultJSONResponse) VisitCreateGroupResponse(w http.R
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type ImportGroupRequestObject struct {
+	Body *ImportGroupJSONRequestBody
+}
+
+type ImportGroupResponseObject interface {
+	VisitImportGroupResponse(w http.ResponseWriter) error
+}
+
+type ImportGroup200JSONResponse ImportPreview
+
+func (response ImportGroup200JSONResponse) VisitImportGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportGroup201JSONResponse Group
+
+func (response ImportGroup201JSONResponse) VisitImportGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ImportGroupdefaultJSONResponse) VisitImportGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetGroupSummariesRequestObject struct {
 	Body *GetGroupSummariesJSONRequestBody
 }
@@ -3569,6 +3685,9 @@ type StrictServerInterface interface {
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
+	// Create a group from another app's export
+	// (POST /groups/import)
+	ImportGroup(ctx context.Context, request ImportGroupRequestObject) (ImportGroupResponseObject, error)
 	// Home screen cards for the groups a device knows
 	// (POST /groups/summaries)
 	GetGroupSummaries(ctx context.Context, request GetGroupSummariesRequestObject) (GetGroupSummariesResponseObject, error)
@@ -4503,6 +4622,37 @@ func (sh *strictHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateGroupResponseObject); ok {
 		if err := validResponse.VisitCreateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportGroup operation middleware
+func (sh *strictHandler) ImportGroup(w http.ResponseWriter, r *http.Request) {
+	var request ImportGroupRequestObject
+
+	var body ImportGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportGroup(ctx, request.(ImportGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportGroupResponseObject); ok {
+		if err := validResponse.VisitImportGroupResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

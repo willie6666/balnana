@@ -97,6 +97,13 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
     final l10n = context.l10n;
     return FormPage(
       title: l10n.groupNew,
+      actions: [
+        TextButton.icon(
+          onPressed: () => context.pushReplacement('/groups/import'),
+          icon: const Icon(Icons.upload_file),
+          label: Text(l10n.importAction),
+        ),
+      ],
       submitLabel: l10n.groupCreate,
       onSubmit: _create,
       busy: _busy,

@@ -1243,6 +1243,12 @@ abstract class AppLocalizations {
   /// **'{who} restored a payment of {amount}'**
   String activityPaymentRestored(String who, String amount);
 
+  /// No description provided for @activityGroupImported.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} imported {count, plural, =1{1 entry} other{{count} entries}} from {source}'**
+  String activityGroupImported(String who, int count, String source);
+
   /// No description provided for @activityOther.
   ///
   /// In en, this message translates to:
@@ -1974,6 +1980,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signing in was cancelled.'**
   String get errorOAuthCancelled;
+
+  /// No description provided for @importTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Settle Up'**
+  String get importTitle;
+
+  /// No description provided for @importAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importAction;
+
+  /// No description provided for @importIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'In Settle Up, export the group as a CSV file, then choose the file here. Expenses, payments and everyone in the group come along, and balances stay the same.'**
+  String get importIntro;
+
+  /// No description provided for @importChooseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose CSV file'**
+  String get importChooseFile;
+
+  /// No description provided for @importChooseOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another file'**
+  String get importChooseOther;
+
+  /// No description provided for @importReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the file…'**
+  String get importReading;
+
+  /// No description provided for @importSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{expenses, plural, =1{1 expense} other{{expenses} expenses}}, {payments, plural, =1{1 payment} other{{payments} payments}}'**
+  String importSummary(int expenses, int payments);
+
+  /// No description provided for @importDates.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} to {to}'**
+  String importDates(String from, String to);
+
+  /// No description provided for @importCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency: {currency}. Entries in other currencies use the amounts Settle Up converted.'**
+  String importCurrency(String currency);
+
+  /// No description provided for @importSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 entry of zero is left out.} other{{count} entries of zero are left out.}}'**
+  String importSkipped(int count);
+
+  /// No description provided for @importWhoAreYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Which one are you?'**
+  String get importWhoAreYou;
+
+  /// No description provided for @importUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get importUntitled;
+
+  /// No description provided for @errorImportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This doesn\'t look like a Settle Up CSV export.'**
+  String get errorImportFile;
+
+  /// No description provided for @errorImportCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'The file has no entries without an exchange rate, so the group\'s currency is unclear.'**
+  String get errorImportCurrency;
+
+  /// No description provided for @errorImportTooBig.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too big to import.'**
+  String get errorImportTooBig;
+
+  /// No description provided for @errorImportMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which person you are.'**
+  String get errorImportMe;
+
+  /// No description provided for @errorImportRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line} of the file can\'t be imported: {reason}'**
+  String errorImportRow(int line, String reason);
+
+  /// No description provided for @errorImportAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'an amount can\'t be read.'**
+  String get errorImportAmount;
+
+  /// No description provided for @errorImportCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'the names and amounts don\'t match up.'**
+  String get errorImportCounts;
+
+  /// No description provided for @errorImportDate.
+  ///
+  /// In en, this message translates to:
+  /// **'the date can\'t be read.'**
+  String get errorImportDate;
+
+  /// No description provided for @errorImportType.
+  ///
+  /// In en, this message translates to:
+  /// **'the type isn\'t expense, transfer or income.'**
+  String get errorImportType;
+
+  /// No description provided for @errorImportTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'a transfer needs one person paying someone else.'**
+  String get errorImportTransfer;
+
+  /// No description provided for @errorImportRowCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'it\'s in another currency without an exchange rate.'**
+  String get errorImportRowCurrency;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

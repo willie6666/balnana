@@ -663,6 +663,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String activityGroupImported(String who, int count, String source) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count entries', one: '1 entry');
+    return '$who imported $_temp0 from $source';
+  }
+
+  @override
   String activityOther(String who) {
     return '$who made a change';
   }
@@ -1056,4 +1062,103 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorOAuthCancelled => 'Signing in was cancelled.';
+
+  @override
+  String get importTitle => 'Import from Settle Up';
+
+  @override
+  String get importAction => 'Import';
+
+  @override
+  String get importIntro =>
+      'In Settle Up, export the group as a CSV file, then choose the file here. Expenses, payments and everyone in the group come along, and balances stay the same.';
+
+  @override
+  String get importChooseFile => 'Choose CSV file';
+
+  @override
+  String get importChooseOther => 'Choose another file';
+
+  @override
+  String get importReading => 'Reading the file…';
+
+  @override
+  String importSummary(int expenses, int payments) {
+    String _temp0 = intl.Intl.pluralLogic(
+      expenses,
+      locale: localeName,
+      other: '$expenses expenses',
+      one: '1 expense',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      payments,
+      locale: localeName,
+      other: '$payments payments',
+      one: '1 payment',
+    );
+    return '$_temp0, $_temp1';
+  }
+
+  @override
+  String importDates(String from, String to) {
+    return '$from to $to';
+  }
+
+  @override
+  String importCurrency(String currency) {
+    return 'Currency: $currency. Entries in other currencies use the amounts Settle Up converted.';
+  }
+
+  @override
+  String importSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries of zero are left out.',
+      one: '1 entry of zero is left out.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importWhoAreYou => 'Which one are you?';
+
+  @override
+  String get importUntitled => 'Untitled';
+
+  @override
+  String get errorImportFile => 'This doesn\'t look like a Settle Up CSV export.';
+
+  @override
+  String get errorImportCurrency =>
+      'The file has no entries without an exchange rate, so the group\'s currency is unclear.';
+
+  @override
+  String get errorImportTooBig => 'This file is too big to import.';
+
+  @override
+  String get errorImportMe => 'Choose which person you are.';
+
+  @override
+  String errorImportRow(int line, String reason) {
+    return 'Line $line of the file can\'t be imported: $reason';
+  }
+
+  @override
+  String get errorImportAmount => 'an amount can\'t be read.';
+
+  @override
+  String get errorImportCounts => 'the names and amounts don\'t match up.';
+
+  @override
+  String get errorImportDate => 'the date can\'t be read.';
+
+  @override
+  String get errorImportType => 'the type isn\'t expense, transfer or income.';
+
+  @override
+  String get errorImportTransfer => 'a transfer needs one person paying someone else.';
+
+  @override
+  String get errorImportRowCurrency => 'it\'s in another currency without an exchange rate.';
 }

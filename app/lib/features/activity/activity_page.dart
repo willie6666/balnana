@@ -119,6 +119,7 @@ String activitySentence(BuildContext context, FeedItem item) {
   final payment = a.text('kind') == 'payment';
   return switch (a.action) {
     'group.created' => l10n.activityGroupCreated(who, name.isEmpty ? g.name : name),
+    'group.imported' => l10n.activityGroupImported(who, a.number('count') ?? 0, a.text('from') ?? ''),
     'group.updated' => l10n.activityGroupUpdated(who),
     'group.link_reset' => l10n.activityLinkReset(who),
     'member.added' => l10n.activityMemberAdded(who, name),

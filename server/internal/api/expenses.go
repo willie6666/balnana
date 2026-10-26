@@ -182,6 +182,15 @@ func (d *expenseData) payload(digits int) map[string]any {
 
 // insertExpense stores a validated expense and logs it.
 func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData, payload map[string]any) (string, error) {
+	id, err := storeExpense(ctx, tx, g, who, d)
+	if err != nil {
+		return "", err
+	}
+	return id, logActivity(ctx, tx, g.id, who, "expense.created", &id, payload)
+}
+
+// storeExpense stores a validated expense without logging it.
+func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData) (string, error) {
 	var id string
 	err := tx.QueryRow(ctx, `
 		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note, created_by_member)
@@ -190,10 +199,7 @@ func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *exp
 	if err != nil {
 		return "", err
 	}
-	if err := insertParts(ctx, tx, id, d); err != nil {
-		return "", err
-	}
-	return id, logActivity(ctx, tx, g.id, who, "expense.created", &id, payload)
+	return id, insertParts(ctx, tx, id, d)
 }
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
