@@ -100,6 +100,10 @@ func securityHeaders(next http.Handler) http.Handler {
 		// Group URLs are secrets: never leak them through the Referer header.
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Content-Type-Options", "nosniff")
+		// No other site may show these pages in a frame and trick people
+		// into clicking in them (the administrator's settings, say).
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
 		if strings.HasPrefix(r.URL.Path, "/g/") || r.URL.Path == "/admin" || strings.HasPrefix(r.URL.Path, "/admin/") {
 			h.Set("X-Robots-Tag", "noindex, nofollow")
 		}

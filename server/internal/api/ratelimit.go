@@ -89,12 +89,46 @@ func (b *buckets) sweep(now time.Time) {
 
 type missesKey struct{}
 
+type clientCtxKey struct{}
+
+// requestClient is the key rateLimit gave this request's client ("" when
+// the request did not come through it).
+func requestClient(ctx context.Context) string {
+	key, _ := ctx.Value(clientCtxKey{}).(string)
+	return key
+}
+
 // noteMiss records that this request asked for a group token that does not
 // exist, for the rate limiter.
 func noteMiss(ctx context.Context) {
 	if n, ok := ctx.Value(missesKey{}).(*int); ok {
 		*n++
 	}
+}
+
+// Groups a client may create in a row, and how fast that allowance comes
+// back; invitation emails an account may send likewise. They keep one client
+// from filling the database, or the server's mailbox from becoming a way to
+// send spam.
+const (
+	createBurst     = 30
+	createPerMinute = 1
+	inviteBurst     = 20
+	invitePerMinute = 1
+)
+
+var errRateLimited = &apiError{status: http.StatusTooManyRequests, code: "rate_limited"}
+
+// limitCreates counts a new group against the client's allowance. Like the
+// request rate limit, it is off when BALNANA_RATE_LIMIT is 0.
+func (s *Server) limitCreates(ctx context.Context) error {
+	if s.conf().RateLimit == 0 {
+		return nil
+	}
+	if !s.creates.take(requestClient(ctx), 1, time.Now()) {
+		return errRateLimited
+	}
+	return nil
 }
 
 // rateLimit caps API requests per client (perMinute, 0 for no cap) and blocks
@@ -122,7 +156,8 @@ func rateLimit(perMinute int, trustProxy bool, next http.Handler) http.Handler {
 			return
 		}
 		var n int
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), missesKey{}, &n)))
+		ctx := context.WithValue(r.Context(), missesKey{}, &n)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, clientCtxKey{}, key)))
 		if n > 0 {
 			misses.take(key, float64(n), time.Now())
 		}

@@ -69,6 +69,9 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 		}
 		names = append(names, n)
 	}
+	if err := s.limitCreates(ctx); err != nil {
+		return nil, err
+	}
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {

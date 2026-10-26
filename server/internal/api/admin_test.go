@@ -274,3 +274,37 @@ func TestSettingsReachOtherServers(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 	}
 }
+
+func TestResetAdmin(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	token := setUp(c)
+	code, err := ResetAdmin(context.Background(), pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info := serverInfo(c); !info.SetupRequired || !info.SetupCode {
+		t.Fatalf("a reset server needs setting up with the code: %+v", info)
+	}
+	if e := c.asAdmin(token).errorCode(401, "GET", "/admin/settings", nil); e != "admin_required" {
+		t.Fatal("administrators stay signed in after a reset")
+	}
+	if e := c.errorCode(403, "POST", "/admin/setup", AdminSetupInput{Password: "a new password"}); e != "invalid_setup_code" {
+		t.Fatal(e)
+	}
+	c.must(201, "POST", "/admin/setup", AdminSetupInput{Password: "a new password", Code: &code}, nil)
+	c.must(200, "POST", "/admin/login", AdminLoginInput{Password: "a new password"}, nil)
+}
+
+func TestSweepExpired(t *testing.T) {
+	c, s, pool := adminClient(t, map[string]string{})
+	token := setUp(c)
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `insert into admin_sessions (token_hash, expires_at) values ('\x00', now() - interval '1 second')`); err != nil {
+		t.Fatal(err)
+	}
+	n, err := s.sweepExpired(ctx)
+	if err != nil || n != 1 {
+		t.Fatalf("swept %d rows, err %v", n, err)
+	}
+	c.asAdmin(token).must(200, "GET", "/admin/settings", nil, nil)
+}

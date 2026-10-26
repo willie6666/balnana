@@ -2,6 +2,7 @@
 //
 //	balnana              start the server (configured by BALNANA_* env vars)
 //	balnana healthcheck  exit 0 if the local server is healthy (for Docker)
+//	balnana reset-admin  forget the administrator password and print a setup code
 //	balnana version      print the version
 package main
 
@@ -33,11 +34,17 @@ func main() {
 		switch os.Args[1] {
 		case "healthcheck":
 			os.Exit(healthcheck())
+		case "reset-admin":
+			if err := resetAdmin(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
 		case "version":
 			fmt.Println(version)
 			return
 		default:
-			fmt.Fprintf(os.Stderr, "unknown command %q (expected healthcheck or version)\n", os.Args[1])
+			fmt.Fprintf(os.Stderr, "unknown command %q (expected healthcheck, reset-admin or version)\n", os.Args[1])
 			os.Exit(2)
 		}
 	}
@@ -78,6 +85,7 @@ func run() error {
 	// Stops with ctx, which also ends open event streams so shutdown need
 	// not wait for them.
 	go srv.ListenForChanges(ctx)
+	go srv.SweepExpired(ctx)
 	httpServer := &http.Server{
 		Addr:              cfg.Listen,
 		Handler:           api.NewHandler(srv, web.Handler(cfg.WebDir)),
@@ -102,6 +110,33 @@ func run() error {
 	err = httpServer.Shutdown(shutdownCtx)
 	srv.FinishPushes()
 	return err
+}
+
+// resetAdmin is for a lost administrator password: /admin then asks for a
+// new one, with the code it prints.
+func resetAdmin() error {
+	cfg, err := config.Startup()
+	if err != nil {
+		return fmt.Errorf("invalid configuration:\n%w", err)
+	}
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: cfg.LogLevel}))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	pool, err := connect(ctx, log, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+	if err := db.Migrate(ctx, pool, log); err != nil {
+		return err
+	}
+	code, err := api.ResetAdmin(ctx, pool)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("The administrator password is cleared and everyone is signed out of /admin.\n"+
+		"Open /admin to set a new password, with this setup code: %s\n", code)
+	return nil
 }
 
 // connect retries for a while: in docker compose the database may still be

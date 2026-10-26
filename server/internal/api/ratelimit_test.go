@@ -102,3 +102,68 @@ func TestRateLimitTokenMisses(t *testing.T) {
 		t.Fatal("blocked client can still call the API")
 	}
 }
+
+func TestCreateLimit(t *testing.T) {
+	c := newClient(t)
+	for range createBurst {
+		createGroup(c, "Ana")
+	}
+	if code := c.errorCode(429, "POST", "/groups", GroupCreate{Name: "One more", Currency: "EUR", Members: []string{"Ana"}}); code != "rate_limited" {
+		t.Fatal(code)
+	}
+	// With rate limits off, so is this one.
+	c = newClientWith(t, map[string]string{"BALNANA_RATE_LIMIT": "0"})
+	for range createBurst + 1 {
+		createGroup(c, "Ana")
+	}
+}
+
+func TestInviteLimit(t *testing.T) {
+	ana, f := mailClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	path := "/g/" + createGroup(ana, "Ana").Token
+	for range inviteBurst {
+		ana.must(204, "POST", path+"/invites", InviteInput{Email: "ben@example.com"}, nil)
+		f.next(t, "ben@example.com")
+	}
+	if code := ana.errorCode(429, "POST", path+"/invites", InviteInput{Email: "ben@example.com"}); code != "rate_limited" {
+		t.Fatal(code)
+	}
+	f.none(t)
+	// The cap is per account.
+	ben := ana.another()
+	register(ben, "ben@example.com", "Ben")
+	ben.must(204, "POST", "/g/"+createGroup(ben, "Ben").Token+"/invites", InviteInput{Email: "ana@example.com"}, nil)
+}
+
+func TestStreamsPerClient(t *testing.T) {
+	h := newHub()
+	var chans []chan struct{}
+	for range maxClientStreams {
+		ch, err := h.subscribe("g", "a")
+		if err != nil {
+			t.Fatal(err)
+		}
+		chans = append(chans, ch)
+	}
+	if _, err := h.subscribe("g", "a"); err != errRateLimited {
+		t.Fatalf("stream %d: %v", maxClientStreams+1, err)
+	}
+	if _, err := h.subscribe("g", "b"); err != nil {
+		t.Fatal("another client refused:", err)
+	}
+	h.unsubscribe("g", "a", chans[0])
+	h.unsubscribe("g", "a", chans[0]) // twice counts once
+	if _, err := h.subscribe("g", "a"); err != nil {
+		t.Fatal("closing a stream frees its place:", err)
+	}
+	if _, err := h.subscribe("g", "a"); err != errRateLimited {
+		t.Fatal(err)
+	}
+	for _, ch := range chans[1:] {
+		h.unsubscribe("g", "a", ch)
+	}
+	if h.clients["a"] != 1 {
+		t.Fatalf("client a holds %d streams, want 1", h.clients["a"])
+	}
+}
