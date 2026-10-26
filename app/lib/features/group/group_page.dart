@@ -50,7 +50,7 @@ String? myMemberIdRead(WidgetRef ref, String token) {
 
 /// The link that opens [token]'s group, for sharing.
 String groupLink(WidgetRef ref, String token) {
-  final base = ref.read(serverInfoProvider).value?.publicUrl ?? ref.read(serverUrlProvider) ?? '';
+  final base = ref.read(serverPublicUrlProvider) ?? ref.read(serverUrlProvider) ?? '';
   return '$base/g/$token';
 }
 

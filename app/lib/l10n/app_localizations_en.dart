@@ -211,6 +211,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupForget => 'Remove from this device';
 
   @override
+  String get groupLinkOtherServer =>
+      'These links belong to another server. Connect to that server before opening or importing them.';
+
+  @override
   String get openLinkTitle => 'Open a group link';
 
   @override

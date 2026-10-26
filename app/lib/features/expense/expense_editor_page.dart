@@ -58,6 +58,7 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
           key: ValueKey(base?.version),
           group: g,
           expense: base,
+          hasReceipt: latest?.hasReceipt ?? false,
           newer: latest != null && latest.version != base?.version ? latest : null,
           onReload: _adopt,
         ),
@@ -89,10 +90,20 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
 }
 
 class _Editor extends ConsumerStatefulWidget {
-  const _Editor({super.key, required this.group, this.expense, this.newer, required this.onReload});
+  const _Editor({
+    super.key,
+    required this.group,
+    this.expense,
+    required this.hasReceipt,
+    this.newer,
+    required this.onReload,
+  });
 
   final Group group;
   final Expense? expense;
+
+  /// Live receipt metadata, independent of the financial draft version.
+  final bool hasReceipt;
 
   /// A version of [expense] someone else saved since the form started.
   final Expense? newer;
@@ -549,12 +560,12 @@ class _EditorState extends ConsumerState<_Editor> {
               ReceiptField(
                 token: _group.token,
                 expenseId: widget.expense?.id,
-                saved: (widget.expense?.hasReceipt ?? false) && !_dropReceipt,
+                saved: widget.hasReceipt && !_dropReceipt,
                 picked: _receipt,
                 onPicked: (r) => setState(() => _receipt = r),
                 onRemoved: () => setState(() {
                   _receipt = null;
-                  _dropReceipt = widget.expense?.hasReceipt ?? false;
+                  _dropReceipt = widget.hasReceipt;
                 }),
               ),
             ],

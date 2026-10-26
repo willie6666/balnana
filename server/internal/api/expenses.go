@@ -20,22 +20,23 @@ const (
 
 // expenseData is a validated expense, ready to store.
 type expenseData struct {
-	kind       string
-	title      string
-	category   *string
-	amount     int64
-	occurredAt time.Time
-	note       *string
-	method     domain.SplitMethod
-	payers     map[string]int64
-	splits     map[string]int64
-	shares     map[string]string // entered percentage or weight, 4 decimals
+	kind            string
+	transactionType string
+	title           string
+	category        *string
+	amount          int64
+	occurredAt      time.Time
+	note            *string
+	method          domain.SplitMethod
+	payers          map[string]int64
+	splits          map[string]int64
+	shares          map[string]string // entered percentage or weight, 4 decimals
 }
 
 // validateExpense checks an expense against the group: every member must
 // belong to it, payers must add up to the amount and the split must work.
 func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput) (*expenseData, error) {
-	d := &expenseData{kind: kind, occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
+	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
 
 	minTitle := 1
 	if kind == kindPayment {
@@ -194,9 +195,9 @@ func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *exp
 func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData) (string, error) {
 	var id string
 	err := tx.QueryRow(ctx, `
-		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note, created_by_member)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id::text`,
-		g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who).Scan(&id)
+		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note, created_by_member, transaction_type)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id::text`,
+		g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who, d.transactionType).Scan(&id)
 	if err != nil {
 		return "", err
 	}
@@ -204,7 +205,7 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 }
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
-	created_by_member::text, created_at, updated_at, deleted_at, version,
+	created_by_member::text, created_at, updated_at, deleted_at, version, transaction_type,
 	exists (select 1 from receipts r where r.expense_id = expenses.id)`
 
 // loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
@@ -218,7 +219,7 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		var kind, method string
 		var amount int64
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
-			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.HasReceipt)
+			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt)
 		e.Kind = ExpenseKind(kind)
 		e.SplitMethod = SplitMethod(method)
 		e.Amount = domain.FormatAmount(amount, digits)

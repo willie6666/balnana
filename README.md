@@ -9,7 +9,11 @@ computed as whole minor units (cents), never as floating point.
 
 Coming from Settle Up? Export the group as CSV there, then choose **New group →
 Import** in Balnana: expenses, payments and members come along, and balances stay
-the same.
+the same. New imports preserve refunds and income: spending subtracts refunds
+and excludes income, while balances still include every transaction. Imports
+made before transaction direction was stored need to be imported again from the
+original CSV into a new group to recover correct spending statistics; an upgrade
+cannot infer the missing direction from the old balance rows.
 
 > Status: early development (milestone M0). The server, the app shell, settings and
 > the money engine are in place; groups and expenses come next. See

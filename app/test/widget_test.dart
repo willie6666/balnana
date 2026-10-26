@@ -1,9 +1,10 @@
 import 'package:balnana/app.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
-import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
+import 'package:balnana/features/groups/open_link.dart';
 import 'package:balnana/features/settings/my_groups.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -87,7 +88,9 @@ void main() {
 
   testWidgets('link mode copies every group link out and pastes them back in', (tester) async {
     const server = 'https://split.example.com';
-    const older = 'AAAAAAAAAAAAAAAAAAAAAA', newer = 'BBBBBBBBBBBBBBBBBBBBBB', other = 'CCCCCCCCCCCCCCCCCCCCCC';
+    const older = 'AAAAAAAAAAAAAAAAAAAAAA',
+        newer = 'BBBBBBBBBBBBBBBBBBBBBB',
+        other = 'CCCCCCCCCCCCCCCCCCCCCC';
     final prefs = await _prefs({
       'settings.server': server,
       'groups.known':
@@ -95,6 +98,20 @@ void main() {
           '{"server":"$server","token":"$older","addedAt":"2026-01-01T00:00:00Z"}]',
     });
     final info = ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: server);
+    final sent = <List<String>>[];
+    final dio = Dio(BaseOptions(baseUrl: '$server/api/v1'));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          expect(options.uri.toString(), '$server/api/v1/groups/summaries');
+          final groups = (options.data as Map)['groups'] as List;
+          sent.add([for (final g in groups) (g as Map)['token'] as String]);
+          handler.resolve(
+            Response(requestOptions: options, data: {'groups': <Object>[], 'missing': <String>[]}),
+          );
+        },
+      ),
+    );
     String? copied;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
       if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
@@ -105,9 +122,25 @@ void main() {
       prefs,
       overrides: [
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
-        summariesProvider.overrideWith((ref) async => (groups: <GroupSummary>[], missing: <String>[])),
+        apiProvider.overrideWithValue(dio),
       ],
     );
+
+    final beforeOpening = sent.length;
+    await tester.tap(find.byTooltip('Open a group link'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'https://foreign.example/g/FFFFFFFFFFFFFFFFFFFFFF');
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'These links belong to another server. Connect to that server before opening or importing them.',
+      ),
+      findsOneWidget,
+    );
+    expect(sent.length, beforeOpening);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
@@ -127,18 +160,75 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('There are no Balnana group links in that text.'), findsOneWidget);
 
+    final beforeImport = prefs.getString('groups.known');
+    final requestsBeforeImport = sent.length;
+    await tester.enterText(
+      find.byType(TextField),
+      '$server/g/$other https://foreign.example/g/FFFFFFFFFFFFFFFFFFFFFF',
+    );
+    await tester.tap(find.text('Import'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'These links belong to another server. Connect to that server before opening or importing them.',
+      ),
+      findsOneWidget,
+    );
+    expect(prefs.getString('groups.known'), beforeImport);
+    expect(sent.length, requestsBeforeImport);
+
     await tester.enterText(find.byType(TextField), 'Our trip: $server/g/$other\n$server/g/$older, $other');
     await tester.tap(find.text('Import'));
     await tester.pumpAndSettle();
     expect(find.text('Added 1 group'), findsOneWidget);
+    await tester.tap(find.text('Groups'));
+    await tester.pumpAndSettle();
+    expect(sent.last, [other, newer, older]);
+    expect(sent.expand((tokens) => tokens), isNot(contains('FFFFFFFFFFFFFFFFFFFFFF')));
     final known = prefs.getString('groups.known')!;
     expect(RegExp('"token":"(\\w+)"').allMatches(known).map((m) => m[1]), [other, newer, older]);
   });
 
   test('pasted text yields each group token once', () {
     const a = 'AAAAAAAAAAAAAAAAAAAAAA', b = 'BBBBBBBBBBBBBBBBBBBBBB';
-    expect(tokensIn('https://x.example/g/$a\n\n$b;https://y.example/g/$a?x=1 junk'), [a, b]);
-    expect(tokensIn(''), isEmpty);
+    expect(
+      tokensIn(
+        'https://x.example/g/$a\n\n$b;https://x.example/g/$a?x=1 junk',
+        serverUrl: 'https://x.example',
+      ),
+      [a, b],
+    );
+    expect(tokensIn('', serverUrl: 'https://x.example'), isEmpty);
+  });
+
+  test('group links require the configured server or its advertised alias', () {
+    const token = 'AAAAAAAAAAAAAAAAAAAAAA';
+    const server = 'http://local.example/balnana';
+    const public = 'https://public.example/split/';
+    for (final link in ['$server/g/$token', '${public}g/$token?x=1', token]) {
+      expect(tokenFromLink(link, serverUrl: server, publicUrl: public), token);
+    }
+    for (final link in [
+      'https://foreign.example/g/$token',
+      'http://local.example/other/g/$token',
+      'http://local.example/balnana/other/g/$token',
+      'https://public.example/g/$token',
+      'https://public.example:444/split/g/$token',
+    ]) {
+      expect(
+        () => tokenFromLink(link, serverUrl: server, publicUrl: public),
+        throwsA(isA<ForeignGroupLink>()),
+      );
+      // A mixed list fails as a whole, even when a valid bare token comes first.
+      expect(
+        () => tokensIn('$token $link', serverUrl: server, publicUrl: public),
+        throwsA(isA<ForeignGroupLink>()),
+      );
+    }
+    for (final link in ['file:///g/$token', '/g/$token', 'https://user@public.example/split/g/$token']) {
+      expect(tokenFromLink(link, serverUrl: server, publicUrl: public), isNull);
+    }
+    expect(tokenFromLink(token, serverUrl: null), isNull);
   });
 
   testWidgets('a closed server offers sign-up only for its first account', (tester) async {

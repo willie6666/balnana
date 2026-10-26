@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/l10n.dart';
+import '../../core/server.dart';
 import '../../data/known_groups.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
@@ -12,8 +13,9 @@ import '../groups/open_link.dart';
 
 /// Every group token in [text]: links or bare tokens, separated by spaces,
 /// lines or commas, in order and without repeats.
-List<String> tokensIn(String text) => {
-  for (final word in text.split(RegExp(r'[\s,;]+'))) ?tokenFromLink(word),
+List<String> tokensIn(String text, {required String? serverUrl, String? publicUrl}) => {
+  for (final word in text.split(RegExp(r'[\s,;]+')))
+    ?tokenFromLink(word, serverUrl: serverUrl, publicUrl: publicUrl),
 }.toList();
 
 /// Link mode keeps the list of groups on the device only, so it can be copied
@@ -38,10 +40,21 @@ class MyGroupsSection extends ConsumerWidget {
   Future<void> _import(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final tokens = await showDialog<List<String>>(context: context, builder: (context) => const _ImportDialog());
+    final server = ref.read(serverUrlProvider);
+    final tokens = await showDialog<List<String>>(
+      context: context,
+      builder: (context) => const _ImportDialog(),
+    );
     if (tokens == null) return;
+    if (server != ref.read(serverUrlProvider)) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.groupLinkOtherServer)));
+      return;
+    }
     final known = ref.read(knownGroupsProvider.notifier);
-    final added = [for (final t in tokens) if (known.byToken(t) == null) t];
+    final added = [
+      for (final t in tokens)
+        if (known.byToken(t) == null) t,
+    ];
     for (final t in added) {
       known.add(t);
     }
@@ -73,14 +86,14 @@ class MyGroupsSection extends ConsumerWidget {
   }
 }
 
-class _ImportDialog extends StatefulWidget {
+class _ImportDialog extends ConsumerStatefulWidget {
   const _ImportDialog();
 
   @override
-  State<_ImportDialog> createState() => _ImportDialogState();
+  ConsumerState<_ImportDialog> createState() => _ImportDialogState();
 }
 
-class _ImportDialogState extends State<_ImportDialog> {
+class _ImportDialogState extends ConsumerState<_ImportDialog> {
   final _controller = TextEditingController();
   String? _error;
 
@@ -91,7 +104,17 @@ class _ImportDialogState extends State<_ImportDialog> {
   }
 
   void _submit() {
-    final tokens = tokensIn(_controller.text);
+    final List<String> tokens;
+    try {
+      tokens = tokensIn(
+        _controller.text,
+        serverUrl: ref.read(serverUrlProvider),
+        publicUrl: ref.read(serverPublicUrlProvider),
+      );
+    } on ForeignGroupLink {
+      setState(() => _error = context.l10n.groupLinkOtherServer);
+      return;
+    }
     if (tokens.isEmpty) {
       setState(() => _error = context.l10n.myGroupsImportInvalid);
       return;

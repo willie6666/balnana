@@ -753,7 +753,8 @@ paths:
       operationId: putReceipt
       summary: Attach a photo of the receipt, replacing any earlier one
       description: >-
-        JPEG, PNG or WebP up to 10 MiB. The server stores it as a JPEG of at
+        JPEG, PNG or WebP up to 10 MiB, 16 million pixels, and 16,384 pixels
+        per side. The server stores it as a JPEG of at
         most 2048 pixels a side, turned upright and without metadata such as
         where it was taken. The expense's version does not change.
       parameters:
@@ -1306,13 +1307,20 @@ components:
       enum: [equal, exact, percent, shares]
     Expense:
       type: object
-      required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version, hasReceipt]
+      required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version, hasReceipt, transactionType]
       properties:
         id:
           type: string
         kind:
           type: string
           enum: [expense, payment]
+        transactionType:
+          type: string
+          enum: [expense, refund, income]
+          description: |
+            Imported transaction direction. Refunds offset spending; income is
+            excluded from spending. Incoming entries retain reversed payer/split
+            rows for balances. Preserved when editing an imported entry.
         title:
           type: string
         categoryId:
@@ -1394,6 +1402,10 @@ components:
           items:
             $ref: "#/components/schemas/Transfer"
     GroupStats:
+      description: |
+        Net spending: expenses minus refunds, excluding payments and income.
+        Refund paid/share figures negate the original receiver/beneficiary amounts.
+        Date filters apply independently to each entry, including refunds.
       type: object
       required: [total, count, categories, members, months]
       properties:
@@ -1401,7 +1413,7 @@ components:
           $ref: "#/components/schemas/Money"
         count:
           type: integer
-          description: How many expenses the total is made of.
+          description: Number of expenses and refunds included; income is excluded.
         categories:
           type: array
           description: Largest first.

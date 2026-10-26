@@ -91,11 +91,17 @@ class _Pages implements HttpClientAdapter {
       },
     );
     if (options.queryParameters['cursor'] == null) {
-      return reply({'items': [_expenseJson('e1')], 'nextCursor': 'page2'}, 200);
+      return reply({
+        'items': [_expenseJson('e1')],
+        'nextCursor': 'page2',
+      }, 200);
     }
     secondPage++;
     if (failing) return reply({'code': 'internal', 'message': 'boom'}, 500);
-    return reply({'items': [_expenseJson('e2')], 'nextCursor': null}, 200);
+    return reply({
+      'items': [_expenseJson('e2')],
+      'nextCursor': null,
+    }, 200);
   }
 
   @override
@@ -159,7 +165,9 @@ class _Export implements HttpClientAdapter {
 }
 
 /// A picture of one transparent pixel.
-final _png = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+final _png = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+);
 
 /// Answers what the expense editor asks about receipts of `e1`, and keeps
 /// every request as "METHOD path content-type".
@@ -183,15 +191,23 @@ class _Receipts implements HttpClientAdapter {
       },
     );
     return switch ((options.method, path)) {
-      ('GET', '/api/v1/g/tok/expenses/e1/receipt') => ResponseBody.fromBytes(_png, 200, headers: {
-        'content-type': ['image/jpeg'],
-      }),
+      ('GET', '/api/v1/g/tok/expenses/e1/receipt') => ResponseBody.fromBytes(
+        _png,
+        200,
+        headers: {
+          'content-type': ['image/jpeg'],
+        },
+      ),
       ('PUT', '/api/v1/g/tok/expenses/e1/receipt') => json({..._expenseJson('e1'), 'hasReceipt': true}),
       ('DELETE', '/api/v1/g/tok/expenses/e1/receipt') => ResponseBody.fromString('', 204),
       ('GET', '/api/v1/g/tok/expenses') => json({'items': <Object>[], 'nextCursor': null}),
-      _ => ResponseBody.fromString('{"code":"not_found"}', 404, headers: {
-        'content-type': ['application/json'],
-      }),
+      _ => ResponseBody.fromString(
+        '{"code":"not_found"}',
+        404,
+        headers: {
+          'content-type': ['application/json'],
+        },
+      ),
     };
   }
 
@@ -486,7 +502,11 @@ void main() {
       groupProvider.overrideWith((ref, token) async => _group('Trip: Japan/Korea')),
     ]);
     await _go(tester, container, '/g/tok/settings');
-    await tester.scrollUntilVisible(find.text('Export as CSV'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      find.text('Export as CSV'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Export as CSV'));
     await tester.pumpAndSettle();
 
@@ -539,10 +559,74 @@ void main() {
     expect(server.requests.where((r) => r.startsWith('PUT')), isEmpty);
   });
 
+  for (final dirty in [false, true]) {
+    testWidgets('live receipt changes preserve the editor (dirty: $dirty)', (tester) async {
+      final server = _Receipts();
+      final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+        ..httpClientAdapter = server;
+      var remote = _expense(1, 'Lunch');
+      final container = await _boot(tester, [
+        apiProvider.overrideWithValue(dio),
+        groupProvider.overrideWith((ref, token) async => _group('Flat')),
+        expenseProvider.overrideWith((ref, key) async => remote),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      ]);
+      await _go(tester, container, '/g/tok/expenses/e1');
+      if (dirty) await tester.enterText(find.widgetWithText(TextField, 'Lunch'), 'My draft');
+      Future<void> refresh(bool hasReceipt) async {
+        remote = _expense(1, 'Lunch', hasReceipt: hasReceipt);
+        container.invalidate(expenseProvider((token: 'tok', id: 'e1')));
+        container.invalidate(receiptProvider((token: 'tok', id: 'e1')));
+        await tester.pumpAndSettle();
+      }
+
+      ReceiptField field() => tester.widget<ReceiptField>(find.byType(ReceiptField));
+      expect(field().saved, isFalse);
+      await refresh(true);
+      expect(field().saved, isTrue);
+      expect(server.requests.where((r) => r.startsWith('GET')), hasLength(1));
+      await refresh(true); // A remote replacement reloads the actual photo too.
+      expect(field().saved, isTrue);
+      expect(server.requests.where((r) => r.startsWith('GET')), hasLength(2));
+      await refresh(false);
+      expect(field().saved, isFalse);
+      expect(find.text(dirty ? 'My draft' : 'Lunch'), findsOneWidget);
+
+      // Local picks survive remote adds and removals.
+      field().onPicked((bytes: _png, type: 'image/png'));
+      await tester.pumpAndSettle();
+      await refresh(true);
+      expect(field().picked?.bytes, _png);
+      await refresh(false);
+      expect(field().picked?.bytes, _png);
+      expect(find.text(dirty ? 'My draft' : 'Lunch'), findsOneWidget);
+
+      // A pending local removal also survives a remote replacement/removal.
+      await refresh(true);
+      field().onRemoved();
+      await tester.pumpAndSettle();
+      expect(field().saved, isFalse);
+      await refresh(false);
+      await refresh(true);
+      expect(field().saved, isFalse);
+      expect(field().picked, isNull);
+      expect(find.text(dirty ? 'My draft' : 'Lunch'), findsOneWidget);
+      if (!dirty) {
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(server.requests, contains('DELETE /api/v1/g/tok/expenses/e1/receipt'));
+        expect(server.requests.where((r) => r.startsWith('PUT')), isEmpty);
+      }
+    });
+  }
+
   test('only JPEG, PNG and WebP pictures are sent', () {
     expect(receiptType(_png), 'image/png');
     expect(receiptType(Uint8List.fromList([0xff, 0xd8, 0xff, 0xe0])), 'image/jpeg');
-    expect(receiptType(Uint8List.fromList([...'RIFF'.codeUnits, 0, 0, 0, 0, ...'WEBP'.codeUnits])), 'image/webp');
+    expect(
+      receiptType(Uint8List.fromList([...'RIFF'.codeUnits, 0, 0, 0, 0, ...'WEBP'.codeUnits])),
+      'image/webp',
+    );
     expect(receiptType(Uint8List.fromList('GIF89a'.codeUnits)), isNull);
     expect(receiptType(Uint8List(0)), isNull);
   });
@@ -557,16 +641,13 @@ void main() {
     expect(const ExpenseFilter().query, isEmpty);
     expect(const ExpenseFilter(text: '   ').isEmpty, isTrue);
     final from = DateTime(2026, 10), to = DateTime(2026, 11);
-    expect(
-      ExpenseFilter(text: ' taxi ', member: 'a', payments: true, period: (from: from, to: to)).query,
-      {
-        'q': 'taxi',
-        'member': 'a',
-        'kind': 'payment',
-        'from': from.toUtc().toIso8601String(),
-        'to': to.toUtc().toIso8601String(),
-      },
-    );
+    expect(ExpenseFilter(text: ' taxi ', member: 'a', payments: true, period: (from: from, to: to)).query, {
+      'q': 'taxi',
+      'member': 'a',
+      'kind': 'payment',
+      'from': from.toUtc().toIso8601String(),
+      'to': to.toUtc().toIso8601String(),
+    });
     expect(const ExpenseFilter(category: 'food').query, {'category': 'food'});
   });
 

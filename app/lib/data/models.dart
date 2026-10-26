@@ -213,6 +213,7 @@ class Expense {
     this.deletedAt,
     required this.version,
     this.hasReceipt = false,
+    this.transactionType = 'expense',
   });
 
   factory Expense.fromJson(Object? data, int digits) {
@@ -245,6 +246,7 @@ class Expense {
       version: _req(json, 'version'),
       // Answers cached before receipts existed do not say.
       hasReceipt: _opt<bool>(json, 'hasReceipt') ?? false,
+      transactionType: _opt<String>(json, 'transactionType') ?? 'expense',
     );
   }
 
@@ -266,6 +268,9 @@ class Expense {
 
   /// Whether a photo of the receipt is attached.
   final bool hasReceipt;
+
+  /// Imported direction, preserved independently of the balance ledger.
+  final String transactionType;
 
   bool get isPayment => kind == ExpenseKind.payment;
 
@@ -323,7 +328,10 @@ class ImportPreview {
     return ImportPreview(
       currency: _req(json, 'currency'),
       minorDigits: digits,
-      members: [for (final m in _objects(json, 'members')) (name: _req<String>(m, 'name'), balance: _money(m, 'balance', digits))],
+      members: [
+        for (final m in _objects(json, 'members'))
+          (name: _req<String>(m, 'name'), balance: _money(m, 'balance', digits)),
+      ],
       expenses: _req(json, 'expenses'),
       payments: _req(json, 'payments'),
       skipped: _req(json, 'skipped'),
@@ -549,7 +557,10 @@ class ExpenseFilter {
     'member': ?member,
     'category': ?category,
     if (payments) 'kind': 'payment',
-    if (period case final p?) ...{'from': p.from.toUtc().toIso8601String(), 'to': p.to.toUtc().toIso8601String()},
+    if (period case final p?) ...{
+      'from': p.from.toUtc().toIso8601String(),
+      'to': p.to.toUtc().toIso8601String(),
+    },
   };
 
   @override
@@ -584,14 +595,23 @@ class GroupStats {
       count: _req(json, 'count'),
       categories: [
         for (final c in _objects(json, 'categories'))
-          (category: _opt<String>(c, 'categoryId'), amount: _money(c, 'amount', digits), count: _req<int>(c, 'count')),
+          (
+            category: _opt<String>(c, 'categoryId'),
+            amount: _money(c, 'amount', digits),
+            count: _req<int>(c, 'count'),
+          ),
       ],
       members: [
         for (final m in _objects(json, 'members'))
-          (member: _req<String>(m, 'memberId'), paid: _money(m, 'paid', digits), share: _money(m, 'share', digits)),
+          (
+            member: _req<String>(m, 'memberId'),
+            paid: _money(m, 'paid', digits),
+            share: _money(m, 'share', digits),
+          ),
       ],
       months: [
-        for (final m in _objects(json, 'months')) (month: _month(_req(m, 'month')), amount: _money(m, 'amount', digits)),
+        for (final m in _objects(json, 'months'))
+          (month: _month(_req(m, 'month')), amount: _money(m, 'amount', digits)),
       ],
     );
   }

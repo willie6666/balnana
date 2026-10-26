@@ -23,17 +23,31 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 	if offset < -840 || offset > 840 {
 		return nil, badRequest("invalid_offset")
 	}
-	g, err := s.groupByToken(ctx, s.db, req.Token, false)
+	var out ExportCsv200TextcsvResponse
+	err := pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly},
+		func(tx pgx.Tx) error {
+			g, err := s.groupByToken(ctx, tx, req.Token, false)
+			if err != nil {
+				return err
+			}
+			out, err = exportCsv(ctx, tx, g, offset)
+			return err
+		})
 	if err != nil {
 		return nil, err
 	}
-	members, err := groupMembers(ctx, s.db, g.id)
+	return out, nil
+}
+
+// exportCsv builds all columns and rows from the caller's database snapshot.
+func exportCsv(ctx context.Context, q querier, g *group, offset int) (ExportCsv200TextcsvResponse, error) {
+	members, err := groupMembers(ctx, q, g.id)
 	if err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 
 	// Paid counts up and shares count down, as in the balances.
-	rows, err := s.db.Query(ctx, `
+	rows, err := q.Query(ctx, `
 		select x.expense_id::text, x.member_id::text, sum(x.amount)::bigint from (
 			select expense_id, member_id, amount from expense_payers
 			union all
@@ -42,7 +56,7 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 		where e.group_id = $1 and e.deleted_at is null
 		group by 1, 2`, g.id)
 	if err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 	nets := map[string]map[string]int64{}
 	var eid, mid string
@@ -55,7 +69,7 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 
 	var buf bytes.Buffer
@@ -66,15 +80,15 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 		header = append(header, cellText(m.name))
 	}
 	if err := w.Write(header); err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 
-	rows, err = s.db.Query(ctx, `
-		select id::text, kind::text, title, coalesce(category_id, ''), amount, occurred_at, coalesce(note, '')
+	rows, err = q.Query(ctx, `
+		select id::text, case when transaction_type = 'expense' then kind::text else transaction_type end, title, coalesce(category_id, ''), amount, occurred_at, coalesce(note, '')
 		from expenses where group_id = $1 and deleted_at is null
 		order by occurred_at, id`, g.id)
 	if err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 	zone := time.FixedZone("", offset*60)
 	var kind, title, category, note string
@@ -89,11 +103,11 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 		return w.Write(record)
 	})
 	if err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 	w.Flush()
 	if err := w.Error(); err != nil {
-		return nil, err
+		return ExportCsv200TextcsvResponse{}, err
 	}
 	return ExportCsv200TextcsvResponse{
 		Body:          &buf,

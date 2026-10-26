@@ -79,11 +79,13 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 		return nil, err
 	}
 
+	where += " and transaction_type <> 'income'"
+	const netAmount = "case when transaction_type = 'refund' then -amount else amount end"
 	out := GroupStats{Categories: []CategoryStats{}, Members: []MemberStats{}, Months: []MonthStats{}}
 	err = pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly},
 		func(tx pgx.Tx) error {
 			var total int64
-			err := tx.QueryRow(ctx, `select coalesce(sum(amount), 0)::bigint, count(*) from expenses where `+where, args...).
+			err := tx.QueryRow(ctx, `select coalesce(sum(`+netAmount+`), 0)::bigint, count(*) from expenses where `+where, args...).
 				Scan(&total, &out.Count)
 			if err != nil {
 				return err
@@ -91,7 +93,7 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 			out.Total = domain.FormatAmount(total, g.digits)
 
 			rows, err := tx.Query(ctx, `
-				select category_id, sum(amount)::bigint as total, count(*) from expenses where `+where+`
+				select category_id, sum(`+netAmount+`)::bigint as total, count(*) from expenses where `+where+`
 				group by category_id order by total desc, category_id nulls last`, args...)
 			if err != nil {
 				return err
@@ -108,11 +110,21 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 			}
 
 			rows, err = tx.Query(ctx, `
-				with e as (select id from expenses where `+where+`),
-				paid as (select member_id, sum(amount) as amount from expense_payers
-					where expense_id in (select id from e) group by member_id),
-				share as (select member_id, sum(amount) as amount from expense_splits
-					where expense_id in (select id from e) group by member_id)
+				with e as (select id, transaction_type from expenses where `+where+`),
+				parts as (
+					select p.member_id, p.amount,
+						case when e.transaction_type = 'refund' then 'share' else 'paid' end as side,
+						case when e.transaction_type = 'refund' then -1 else 1 end as sign
+					from expense_payers p join e on e.id = p.expense_id
+					union all
+					select p.member_id, p.amount,
+						case when e.transaction_type = 'refund' then 'paid' else 'share' end,
+						case when e.transaction_type = 'refund' then -1 else 1 end
+					from expense_splits p join e on e.id = p.expense_id),
+				paid as (select member_id, sum(amount * sign) as amount from parts
+					where side = 'paid' group by member_id),
+				share as (select member_id, sum(amount * sign) as amount from parts
+					where side = 'share' group by member_id)
 				select m.id::text, coalesce(paid.amount, 0)::bigint, coalesce(share.amount, 0)::bigint
 				from members m
 				left join paid on paid.member_id = m.id
@@ -137,9 +149,9 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 			n := len(args) + 1
 			rows, err = tx.Query(ctx, fmt.Sprintf(`
 				select to_char((occurred_at at time zone 'UTC') + make_interval(mins => $%d), 'YYYY-MM') as month,
-					sum(amount)::bigint
+					sum(%s)::bigint
 				from expenses where %s
-				group by month order by month`, n, where), append(args, offset)...)
+				group by month order by month`, n, netAmount, where), append(args, offset)...)
 			if err != nil {
 				return err
 			}

@@ -82,6 +82,7 @@
   "groupMissingTitle": "Group not found",
   "groupMissingBody": "This group was deleted, or its link was reset. Ask someone in the group for the new link.",
   "groupForget": "Remove from this device",
+  "groupLinkOtherServer": "These links belong to another server. Connect to that server before opening or importing them.",
   "openLinkTitle": "Open a group link",
   "openLinkBody": "Paste a link someone shared with you to join their group.",
   "openLinkLabel": "Group link",

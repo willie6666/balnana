@@ -2,15 +2,22 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // halves is a w×h picture, red on the left half and blue on the right.
@@ -184,6 +191,184 @@ func TestJpegOrientation(t *testing.T) {
 	for _, raw := range [][]byte{nil, {0xff, 0xd8}, {0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff}, []byte("hello world")} {
 		if got := jpegOrientation(raw); got != 1 {
 			t.Errorf("%q: %d", raw, got)
+		}
+	}
+}
+
+// watchedReceipt detects even the first attempted body read. Rejected requests
+// must leave it untouched, before either DecodeConfig or Decode can run.
+type watchedReceipt struct {
+	io.Reader
+	reads  atomic.Int32
+	before func()
+}
+
+func (r *watchedReceipt) Read(p []byte) (int, error) {
+	if r.reads.Add(1) == 1 && r.before != nil {
+		r.before()
+	}
+	return r.Reader.Read(p)
+}
+func (*watchedReceipt) Close() error { return nil }
+
+func receiptExpense(c *client, g Group) Expense {
+	c.t.Helper()
+	var e Expense
+	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{Title: "Lunch", Amount: "10",
+		OccurredAt:  mustTime(c.t, "2026-01-01T00:00:00Z"),
+		Payers:      []PayerInput{{MemberId: g.Members[0].Id, Amount: "10"}},
+		SplitMethod: "equal", Splits: []Share{{MemberId: g.Members[1].Id}}}, &e)
+	return e
+}
+
+func TestReceiptAuthorizationBeforeBody(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	register(c, "ana@example.test", "Ana")
+	g := createGroup(c, "Ana", "Ben")
+	other := createGroup(c, "Ana", "Ben")
+	e := receiptExpense(c, g)
+	foreign := receiptExpense(c, other)
+	gone := receiptExpense(c, g)
+	c.must(204, "DELETE", "/g/"+g.Token+"/expenses/"+gone.Id, nil, nil)
+	outsider := c.another()
+	register(outsider, "outsider@example.test", "Outsider")
+	for _, tc := range []struct {
+		name, token, id, bearer string
+		status                  int
+	}{
+		{"anonymous", g.Token, e.Id, "", 401},
+		{"nonmember", g.Token, e.Id, outsider.token, 403},
+		{"missing group", "AAAAAAAAAAAAAAAAAAAAAA", e.Id, c.token, 404},
+		{"invalid group", "bad", e.Id, c.token, 404},
+		{"invalid expense", g.Token, "bad", c.token, 404},
+		{"missing expense", g.Token, "00000000-0000-0000-0000-000000000000", c.token, 404},
+		{"wrong group", g.Token, foreign.Id, c.token, 404},
+		{"deleted expense", g.Token, gone.Id, c.token, 404},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := &watchedReceipt{Reader: bytes.NewReader([]byte("not a PNG"))}
+			req := httptest.NewRequest("PUT", BasePath+"/g/"+tc.token+"/expenses/"+tc.id+"/receipt", body)
+			req.Header.Set("Content-Type", "image/png")
+			if tc.bearer != "" {
+				req.Header.Set("Authorization", "Bearer "+tc.bearer)
+			}
+			rec := httptest.NewRecorder()
+			c.h.ServeHTTP(rec, req)
+			if rec.Code != tc.status || body.reads.Load() != 0 {
+				t.Fatalf("status %d reads %d: %s", rec.Code, body.reads.Load(), rec.Body)
+			}
+		})
+	}
+}
+
+func TestReceiptRechecksAfterProcessing(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	register(c, "ana@example.test", "Ana")
+	g := createGroup(c, "Ana", "Ben")
+	base := "/g/" + g.Token
+	c.must(200, "PATCH", base, GroupUpdate{LinkAccess: ptr(true)}, nil)
+	raw := pngBytes(t, halves(4, 4))
+	for _, change := range []string{"delete", "permissions", "rotate"} {
+		t.Run(change, func(t *testing.T) {
+			e := receiptExpense(c, g)
+			body := &watchedReceipt{Reader: bytes.NewReader(raw), before: func() {
+				// These writes complete while the upload is reading: no group write
+				// lock is held during body reads or image processing.
+				switch change {
+				case "delete":
+					c.must(204, "DELETE", base+"/expenses/"+e.Id, nil, nil)
+				case "permissions":
+					c.must(200, "PATCH", base, GroupUpdate{LinkAccess: ptr(false)}, nil)
+				case "rotate":
+					c.must(200, "POST", base+"/reset-link", nil, nil)
+				}
+			}}
+			req := httptest.NewRequest("PUT", BasePath+base+"/expenses/"+e.Id+"/receipt", body)
+			req.Header.Set("Content-Type", "image/png")
+			rec := httptest.NewRecorder()
+			c.h.ServeHTTP(rec, req)
+			want := 404
+			if change == "permissions" {
+				want = 401
+			}
+			if rec.Code != want || body.reads.Load() == 0 {
+				t.Fatalf("status %d reads %d: %s", rec.Code, body.reads.Load(), rec.Body)
+			}
+			if change == "permissions" {
+				c.must(200, "PATCH", base, GroupUpdate{LinkAccess: ptr(true)}, nil)
+			}
+		})
+	}
+}
+
+func TestReceiptProcessingBound(t *testing.T) {
+	pool := testDB(t)
+	s := NewServer(baseConfig(t, map[string]string{}), pool, slog.New(slog.DiscardHandler), "test")
+	c := &client{t: t, h: NewHandler(s, http.NotFoundHandler())}
+	g := createGroup(c, "Ana", "Ben")
+	e := receiptExpense(c, g)
+	started, release := make(chan struct{}), make(chan struct{})
+	first := &watchedReceipt{Reader: bytes.NewReader(pngBytes(t, halves(4, 4))), before: func() { close(started); <-release }}
+	done := make(chan error, 1)
+	go func() {
+		_, err := s.PutReceipt(context.Background(), PutReceiptRequestObject{Token: g.Token, ExpenseId: e.Id, ContentType: "image/png", Body: first})
+		done <- err
+	}()
+	defer func() {
+		close(release)
+		if err := <-done; err != nil {
+			t.Error(err)
+		}
+	}()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first upload never started")
+	}
+	second := &watchedReceipt{Reader: bytes.NewReader([]byte("not a PNG"))}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	_, err := s.PutReceipt(ctx, PutReceiptRequestObject{Token: g.Token, ExpenseId: e.Id, ContentType: "image/png", Body: second})
+	if !errors.Is(err, context.DeadlineExceeded) || second.reads.Load() != 0 {
+		t.Fatalf("waiting upload read before a worker was free: reads=%d err=%v", second.reads.Load(), err)
+	}
+}
+
+var receiptDecoderTests atomic.Uint32
+
+func TestReceiptPixelBudget(t *testing.T) {
+	// A registered probe decoder distinguishes rejecting dimensions at the
+	// config stage from allocating/decoding the pixel frame.
+	var decoded atomic.Int32
+	magic := fmt.Sprintf("RECEIPT%08d", receiptDecoderTests.Add(1))
+	image.RegisterFormat("receipt-budget", magic, func(r io.Reader) (image.Image, error) {
+		decoded.Add(1)
+		return image.NewRGBA(image.Rect(0, 0, 1, 1)), nil
+	}, func(r io.Reader) (image.Config, error) {
+		raw, _ := io.ReadAll(r)
+		return image.Config{ColorModel: color.RGBA64Model, Width: int(binary.BigEndian.Uint32(raw[len(magic):])), Height: int(binary.BigEndian.Uint32(raw[len(magic)+4:]))}, nil
+	})
+	for _, tc := range []struct {
+		w, h    int
+		allowed bool
+	}{
+		{4000, 4000, true},
+		{4001, 4000, false},
+		{maxReceiptDimension + 1, 1, false},
+		{1, maxReceiptDimension + 1, false},
+		{100_000, 100_000, false},
+		{0, 1, false},
+	} {
+		raw := binary.BigEndian.AppendUint32([]byte(magic), uint32(tc.w))
+		raw = binary.BigEndian.AppendUint32(raw, uint32(tc.h))
+		before := decoded.Load()
+		_, err := receiptJPEG(raw)
+		if tc.allowed {
+			if err != nil || decoded.Load() != before+1 {
+				t.Fatalf("allowed %dx%d: %v", tc.w, tc.h, err)
+			}
+		} else if err != errBadImage || decoded.Load() != before {
+			t.Fatalf("decoded excessive %dx%d: %v", tc.w, tc.h, err)
 		}
 	}
 }

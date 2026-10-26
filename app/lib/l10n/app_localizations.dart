@@ -475,6 +475,12 @@ abstract class AppLocalizations {
   /// **'Remove from this device'**
   String get groupForget;
 
+  /// No description provided for @groupLinkOtherServer.
+  ///
+  /// In en, this message translates to:
+  /// **'These links belong to another server. Connect to that server before opening or importing them.'**
+  String get groupLinkOtherServer;
+
   /// No description provided for @openLinkTitle.
   ///
   /// In en, this message translates to:

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"unicode/utf16"
@@ -196,5 +198,104 @@ func TestImportWithAccounts(t *testing.T) {
 	}
 	if code := c.another().errorCode(401, "POST", "/groups/import", importInputFor(file, true)); code == "" {
 		t.Error("no code without a session")
+	}
+}
+
+// Refunds use negative spending and original payer/share roles in reports,
+// while the balance ledger keeps the imported incoming-money effects.
+func TestImportIncomingStats(t *testing.T) {
+	for _, tc := range []struct {
+		refund    int
+		converted bool
+	}{{4, false}, {10, false}, {4, true}, {10, true}} {
+		t.Run(fmt.Sprintf("%d/converted=%v", tc.refund, tc.converted), func(t *testing.T) {
+			refund := tc.refund
+			c := newClient(t)
+			refundRow := fmt.Sprintf(`"Ana","-%d","USD","Ben","-%d","Refund","🍔","2026-02-01 10:00:00","","","","expense",""`, refund, refund)
+			if tc.converted {
+				refundRow = fmt.Sprintf(`"Ana","-%d","EUR","Ben","-%d","Refund","🍔","2026-02-01 10:00:00","","1","-%d","expense",""`, refund, refund, refund)
+			}
+			file := settleUpFile(
+				`"Ana","10","USD","Ben","10","Purchase","🍔","2026-01-01 10:00:00","","","","expense",""`,
+				refundRow,
+				`"Ana","7","USD","Ben","7","Income","📦","2026-03-01 10:00:00","","","","income",""`,
+			)
+			var g Group
+			c.must(201, "POST", "/groups/import", importInputFor(file, false), &g)
+			base := "/g/" + g.Token
+			ids := map[string]string{}
+			for _, m := range g.Members {
+				ids[m.Name] = m.Id
+				want := 10 - refund - 7
+				if m.Name == "Ben" {
+					want = -want
+				}
+				if m.Balance != fmt.Sprintf("%d.00", want) {
+					t.Fatalf("%s balance %s, want %d", m.Name, m.Balance, want)
+				}
+			}
+			check := func(query, total string, count int, paid, share string) GroupStats {
+				t.Helper()
+				var stats GroupStats
+				c.must(200, "GET", base+"/stats"+query, nil, &stats)
+				if stats.Total != total || stats.Count != count {
+					t.Fatalf("stats %+v", stats)
+				}
+				members := map[string]MemberStats{}
+				for _, m := range stats.Members {
+					members[m.MemberId] = m
+				}
+				if count > 0 && (members[ids["Ana"]].Paid != paid || members[ids["Ana"]].Share != "0.00" ||
+					members[ids["Ben"]].Paid != "0.00" || members[ids["Ben"]].Share != share) {
+					t.Fatalf("members %+v", stats.Members)
+				}
+				return stats
+			}
+			net := fmt.Sprintf("%d.00", 10-refund)
+			all := check("", net, 2, net, net)
+			if len(all.Categories) != 1 || *all.Categories[0].CategoryId != "food" || all.Categories[0].Amount != net || all.Categories[0].Count != 2 {
+				t.Fatalf("categories %+v", all.Categories)
+			}
+			negative := fmt.Sprintf("-%d.00", refund)
+			if len(all.Months) != 2 || all.Months[0].Amount != "10.00" || all.Months[1].Amount != negative {
+				t.Fatalf("months %+v", all.Months)
+			}
+			check("?to=2026-02-01T00:00:00Z", "10.00", 1, "10.00", "10.00")
+			onlyRefund := check("?from=2026-02-01T00:00:00Z&to=2026-03-01T00:00:00Z", negative, 1, negative, negative)
+			if onlyRefund.Categories[0].Amount != negative || onlyRefund.Months[0].Amount != negative {
+				t.Fatalf("refund %+v", onlyRefund)
+			}
+			onlyIncome := check("?from=2026-03-01T00:00:00Z", "0.00", 0, "", "")
+			if len(onlyIncome.Categories) != 0 || len(onlyIncome.Months) != 0 || len(onlyIncome.Members) != 0 {
+				t.Fatalf("income %+v", onlyIncome)
+			}
+			var page ExpensePage
+			c.must(200, "GET", base+"/expenses?category=food&from=2026-02-01T00:00:00Z", nil, &page)
+			if len(page.Items) != 1 || page.Items[0].TransactionType != "refund" {
+				t.Fatalf("refund filter %+v", page)
+			}
+			e := page.Items[0]
+			// Metadata survives ordinary edits and delete/restore.
+			input := ExpenseInput{Title: "Edited refund", Amount: e.Amount, OccurredAt: e.OccurredAt,
+				CategoryId: e.CategoryId, SplitMethod: e.SplitMethod, Version: &e.Version}
+			for _, p := range e.Payers {
+				input.Payers = append(input.Payers, PayerInput{MemberId: p.MemberId, Amount: p.Amount})
+			}
+			for _, p := range e.Splits {
+				input.Splits = append(input.Splits, Share{MemberId: p.MemberId, Value: &p.Amount})
+			}
+			c.must(200, "PUT", base+"/expenses/"+e.Id, input, &e)
+			if e.TransactionType != "refund" {
+				t.Fatalf("edit lost direction: %+v", e)
+			}
+			c.must(204, "DELETE", base+"/expenses/"+e.Id, nil, nil)
+			c.must(200, "POST", base+"/expenses/"+e.Id+"/restore", nil, &e)
+			check("", net, 2, net, net)
+			rec := httptest.NewRecorder()
+			c.h.ServeHTTP(rec, httptest.NewRequest("GET", BasePath+base+"/export.csv", nil))
+			if rec.Code != 200 || !strings.Contains(rec.Body.String(), ",refund,") || !strings.Contains(rec.Body.String(), ",income,") {
+				t.Fatalf("export %d %s", rec.Code, rec.Body)
+			}
+		})
 	}
 }

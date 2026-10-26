@@ -229,6 +229,13 @@ final serverInfoProvider = FutureProvider<ServerInfo>((ref) async {
   }
 });
 
+/// Only settled metadata can advertise an alias: a dependency reload can keep
+/// the previous server's value while the newly selected server is loading.
+final serverPublicUrlProvider = Provider<String?>((ref) {
+  final info = ref.watch(serverInfoProvider);
+  return info.isLoading || info.hasError ? null : info.value?.publicUrl;
+});
+
 /// Whether the chosen server has accounts; false until its info has loaded.
 final accountsModeProvider = Provider<bool>(
   (ref) => ref.watch(serverInfoProvider.select((info) => info.value?.authMode == AuthMode.accounts)),

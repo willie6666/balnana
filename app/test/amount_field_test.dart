@@ -32,8 +32,8 @@ void main() {
 
   test('tokenFromLink accepts links and bare tokens', () {
     const token = 'abcdefghijklmnopqrstuv';
-    expect(tokenFromLink('https://example.com/g/$token'), token);
-    expect(tokenFromLink(token), token);
-    expect(tokenFromLink('https://example.com/groups'), isNull);
+    expect(tokenFromLink('https://example.com/g/$token', serverUrl: 'https://example.com'), token);
+    expect(tokenFromLink(token, serverUrl: 'https://example.com'), token);
+    expect(tokenFromLink('https://example.com/groups', serverUrl: 'https://example.com'), isNull);
   });
 }

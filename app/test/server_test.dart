@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:balnana/core/server.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -24,6 +27,34 @@ void main() {
     expect(isInsecureServerUrl('http://172.20.0.1'), isFalse);
     expect(isInsecureServerUrl('http://nas.local'), isFalse);
     expect(isInsecureServerUrl('http://[::1]:8080'), isFalse);
+  });
+
+  test('link aliases ignore previous server metadata during reload or failure', () async {
+    const old = ServerInfo(version: 'test', authMode: AuthMode.link, publicUrl: 'https://old.example');
+    var server = 'https://old.example';
+    var answer = Completer<ServerInfo>();
+    final container = ProviderContainer.test(
+      retry: (retryCount, error) => null,
+      overrides: [
+        serverUrlProvider.overrideWith((ref) => server),
+        serverInfoProvider.overrideWith((ref) {
+          ref.watch(serverUrlProvider);
+          return answer.future;
+        }),
+      ],
+    );
+    container.listen(serverPublicUrlProvider, (previous, next) {});
+    answer.complete(old);
+    await container.read(serverInfoProvider.future);
+    expect(container.read(serverPublicUrlProvider), old.publicUrl);
+    server = 'https://new.example';
+    answer = Completer<ServerInfo>();
+    container.invalidate(serverUrlProvider);
+    expect(container.read(serverInfoProvider).value, old);
+    expect(container.read(serverPublicUrlProvider), isNull);
+    answer.completeError(StateError('offline'));
+    await expectLater(container.read(serverInfoProvider.future), throwsStateError);
+    expect(container.read(serverPublicUrlProvider), isNull);
   });
 
   group('ServerInfo.fromJson', () {

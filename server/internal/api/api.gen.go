@@ -28,6 +28,13 @@ const (
 	ExpenseKindPayment ExpenseKind = "payment"
 )
 
+// Defines values for ExpenseTransactionType.
+const (
+	ExpenseTransactionTypeExpense ExpenseTransactionType = "expense"
+	ExpenseTransactionTypeIncome  ExpenseTransactionType = "income"
+	ExpenseTransactionTypeRefund  ExpenseTransactionType = "refund"
+)
+
 // Defines values for ImportInputFormat.
 const (
 	SettleUp ImportInputFormat = "settle_up"
@@ -135,12 +142,22 @@ type Expense struct {
 	SplitMethod SplitMethod `json:"splitMethod"`
 	Splits      []SplitPart `json:"splits"`
 	Title       string      `json:"title"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	Version     int         `json:"version"`
+
+	// TransactionType Imported transaction direction. Refunds offset spending; income is
+	// excluded from spending. Incoming entries retain reversed payer/split
+	// rows for balances. Preserved when editing an imported entry.
+	TransactionType ExpenseTransactionType `json:"transactionType"`
+	UpdatedAt       time.Time              `json:"updatedAt"`
+	Version         int                    `json:"version"`
 }
 
 // ExpenseKind defines model for Expense.Kind.
 type ExpenseKind string
+
+// ExpenseTransactionType Imported transaction direction. Refunds offset spending; income is
+// excluded from spending. Incoming entries retain reversed payer/split
+// rows for balances. Preserved when editing an imported entry.
+type ExpenseTransactionType string
 
 // ExpenseInput defines model for ExpenseInput.
 type ExpenseInput struct {
@@ -204,12 +221,14 @@ type GroupCreate struct {
 	Name        string   `json:"name"`
 }
 
-// GroupStats defines model for GroupStats.
+// GroupStats Net spending: expenses minus refunds, excluding payments and income.
+// Refund paid/share figures negate the original receiver/beneficiary amounts.
+// Date filters apply independently to each entry, including refunds.
 type GroupStats struct {
 	// Categories Largest first.
 	Categories []CategoryStats `json:"categories"`
 
-	// Count How many expenses the total is made of.
+	// Count Number of expenses and refunds included; income is excluded.
 	Count int `json:"count"`
 
 	// Members Every member who paid or had a share, in the group's member order.

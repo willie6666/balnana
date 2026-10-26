@@ -190,6 +190,13 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 				}
 				return err
 			}
+			if kind == kindExpense {
+				if e.Type == "income" {
+					d.transactionType = "income"
+				} else if importReceived(e, currency, digits) {
+					d.transactionType = "refund"
+				}
+			}
 			if _, err := storeExpense(ctx, tx, g, &actor, d); err != nil {
 				return err
 			}
@@ -313,6 +320,28 @@ func toMinor(s string, digits int) (int64, bool) {
 		return -q.Int64(), true
 	}
 	return q.Int64(), true
+}
+
+// importReceived reads the sign of the amounts importInput uses for payers.
+// That function has already validated their signs and conversion counts.
+func importReceived(e importer.Entry, currency string, digits int) bool {
+	if e.Type == "income" {
+		return true
+	}
+	if e.Currency != currency {
+		for _, amount := range e.Converted {
+			if v, _ := toMinor(amount, digits); v < 0 {
+				return true
+			}
+		}
+	} else {
+		for _, p := range e.Payers {
+			if v, _ := toMinor(p.Amount, digits); v < 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // share is one person's amount on a row, summed when a name repeats.

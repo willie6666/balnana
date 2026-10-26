@@ -23,9 +23,15 @@ const (
 	// to read the small print, small enough to keep the database lean.
 	receiptSide = 2048
 	// maxReceiptPixels stops images that are tiny files but huge pictures.
-	maxReceiptPixels = 50_000_000
-	receiptQuality   = 82
+	maxReceiptPixels    = 16_000_000
+	maxReceiptDimension = 16_384
+	receiptQuality      = 82
 )
+
+// One upload at a time bounds compressed input, the decoded frame (up to
+// 8 bytes per pixel), resize buffers and the optional orientation copy across
+// all server instances in this process. Acquire before reading the body.
+var receiptWorkers = make(chan struct{}, 1)
 
 var errBadImage = &apiError{status: http.StatusUnsupportedMediaType, code: "bad_image"}
 
@@ -51,16 +57,42 @@ func (s *Server) GetReceipt(ctx context.Context, req GetReceiptRequestObject) (G
 }
 
 func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (PutReceiptResponseObject, error) {
+	if !validUUID(req.ExpenseId) {
+		return nil, errNotFound
+	}
+	// Authorize and check the target without taking a write lock while the
+	// caller uploads or the decoder works. Recheck both in the final transaction.
+	g, err := s.groupByToken(ctx, s.db, req.Token, false)
+	if err != nil {
+		return nil, err
+	}
+	var exists bool
+	if err := s.db.QueryRow(ctx, `select exists (select 1 from expenses
+		where id = $1 and group_id = $2 and deleted_at is null)`, req.ExpenseId, g.id).Scan(&exists); err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, errNotFound
+	}
 	if t, _, err := mime.ParseMediaType(req.ContentType); err != nil || !strings.HasPrefix(t, "image/") {
 		return nil, errBadImage
 	}
-	raw, err := io.ReadAll(req.Body)
+	select {
+	case receiptWorkers <- struct{}{}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	defer func() { <-receiptWorkers }()
+	raw, err := io.ReadAll(io.LimitReader(req.Body, maxReceiptBody+1))
 	if err != nil {
 		var tooBig *http.MaxBytesError
 		if errors.As(err, &tooBig) {
 			return nil, &apiError{status: http.StatusRequestEntityTooLarge, code: "too_large"}
 		}
 		return nil, err
+	}
+	if len(raw) > maxReceiptBody {
+		return nil, &apiError{status: http.StatusRequestEntityTooLarge, code: "too_large"}
 	}
 	data, err := receiptJPEG(raw)
 	if err != nil {
@@ -136,7 +168,8 @@ func (s *Server) DeleteReceipt(ctx context.Context, req DeleteReceiptRequestObje
 // file but its pixels is kept.
 func receiptJPEG(raw []byte) ([]byte, error) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
-	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > maxReceiptPixels {
+	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width > maxReceiptDimension || cfg.Height > maxReceiptDimension ||
+		cfg.Width > maxReceiptPixels/cfg.Height {
 		return nil, errBadImage
 	}
 	img, format, err := image.Decode(bytes.NewReader(raw))
@@ -156,7 +189,10 @@ func receiptJPEG(raw []byte) ([]byte, error) {
 	// JPEG has no transparency: see-through parts become white paper.
 	small := image.NewRGBA(image.Rect(0, 0, w, h))
 	draw.Draw(small, small.Bounds(), image.White, image.Point{}, draw.Src)
-	draw.CatmullRom.Scale(small, small.Bounds(), img, b, draw.Over, nil)
+	// ApproxBiLinear avoids the full-height float64 intermediate allocated by
+	// kernel scalers, keeping the working set bounded by the decoded frame and
+	// the small output/orientation buffers.
+	draw.ApproxBiLinear.Scale(small, small.Bounds(), img, b, draw.Over, nil)
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, upright(small, orientation), &jpeg.Options{Quality: receiptQuality}); err != nil {
