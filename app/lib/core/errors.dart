@@ -25,6 +25,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_email' => l10n.errorInvalidEmail,
     'invalid_password' => l10n.errorInvalidPassword,
     'email_taken' => l10n.errorEmailTaken,
+    'username_taken' => l10n.errorUsernameTaken,
+    'invalid_username' => l10n.errorInvalidUsername,
     'signup_closed' => l10n.errorSignupClosed,
     'invalid_credentials' => l10n.errorInvalidCredentials,
     'wrong_password' => l10n.errorWrongPassword,

@@ -48,9 +48,13 @@ class SignInPage extends ConsumerStatefulWidget {
   ConsumerState<SignInPage> createState() => _SignInPageState();
 }
 
+/// What the server accepts as a username, see RegisterInput in api/openapi.yaml.
+final _usernameRule = RegExp(r'^[a-z0-9][a-z0-9._-]{2,31}$');
+
 class _SignInPageState extends ConsumerState<SignInPage> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _username = TextEditingController();
   late final _email = TextEditingController(text: widget.prefill?.email);
   final _password = TextEditingController();
   late bool _register = widget.prefill?.register ?? false;
@@ -61,6 +65,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   @override
   void dispose() {
     _name.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -72,6 +77,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     if (api == null) return;
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final emailRequired = ref.read(serverInfoProvider).value?.emailRequired ?? true;
+    final email = _email.text.trim();
     setState(() {
       _busy = true;
       _error = null;
@@ -79,13 +86,14 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     try {
       final (token, _) = _register
           ? await api.register(
-              email: _email.text.trim(),
+              email: email.isEmpty ? null : email,
+              username: emailRequired ? null : _username.text.trim(),
               password: _password.text,
               name: _name.text.trim(),
               locale: locale,
               invite: widget.prefill?.invite,
             )
-          : await api.login(email: _email.text.trim(), password: _password.text);
+          : await api.login(login: email, password: _password.text);
       if (!mounted) return;
       TextInput.finishAutofillContext();
       // Whether a first account may still sign up has changed.
@@ -111,6 +119,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final canRegister =
         info?.signup != SignupPolicy.closed || (info?.firstAccount ?? false) || widget.prefill?.invite != null;
     final canReset = info?.email ?? false;
+    // Without required addresses, new accounts pick a username and the
+    // sign-in field takes either.
+    final emailRequired = info?.emailRequired ?? true;
     final providers = info?.oauthProviders ?? const <OAuthProvider>[];
 
     return Scaffold(
@@ -175,15 +186,50 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                           ),
                           const SizedBox(height: BSpace.s16),
                         ],
+                        if (_register && !emailRequired) ...[
+                          TextFormField(
+                            controller: _username,
+                            enabled: !_busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.newUsername],
+                            inputFormatters: [LengthLimitingTextInputFormatter(32)],
+                            decoration: InputDecoration(
+                              labelText: l10n.accountUsername,
+                              helperText: l10n.accountUsernameHelp,
+                              helperMaxLines: 3,
+                            ),
+                            validator: (v) => _usernameRule.hasMatch((v ?? '').trim().toLowerCase())
+                                ? null
+                                : l10n.errorInvalidUsername,
+                          ),
+                          const SizedBox(height: BSpace.s16),
+                        ],
                         TextFormField(
                           controller: _email,
                           enabled: !_busy,
                           keyboardType: TextInputType.emailAddress,
                           autocorrect: false,
                           textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
-                          decoration: InputDecoration(labelText: l10n.accountEmail),
-                          validator: (v) => (v ?? '').contains('@') ? null : l10n.errorInvalidEmail,
+                          autofillHints: [
+                            if (_register || emailRequired) AutofillHints.email else AutofillHints.username,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: switch ((_register, emailRequired)) {
+                              (_, true) => l10n.accountEmail,
+                              (true, false) => l10n.accountEmailOptional,
+                              (false, false) => l10n.accountLogin,
+                            },
+                            helperText: _register && !emailRequired ? l10n.accountEmailOptionalHelp : null,
+                            helperMaxLines: 3,
+                          ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            if (!emailRequired && !_register) return value.isEmpty ? l10n.errorRequired : null;
+                            if (!emailRequired && value.isEmpty) return null;
+                            return value.contains('@') ? null : l10n.errorInvalidEmail;
+                          },
                         ),
                         const SizedBox(height: BSpace.s16),
                         TextFormField(

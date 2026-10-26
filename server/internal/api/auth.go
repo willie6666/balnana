@@ -30,12 +30,16 @@ const (
 	loginMissWeight = 5
 )
 
-var localeTag = regexp.MustCompile(`^[a-zA-Z]{2,3}([-_][a-zA-Z0-9]{2,8}){0,3}$`)
+var (
+	localeTag    = regexp.MustCompile(`^[a-zA-Z]{2,3}([-_][a-zA-Z0-9]{2,8}){0,3}$`)
+	usernameRule = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{2,31}$`)
+)
 
 // user is the signed-in account.
 type user struct {
 	id          string
 	email       *string
+	username    *string
 	verified    bool
 	hasPassword bool
 	name        string
@@ -44,7 +48,15 @@ type user struct {
 }
 
 func (u *user) api() User {
-	return User{Id: u.id, Email: u.email, EmailVerified: u.verified, HasPassword: u.hasPassword, Name: u.name, Locale: u.locale}
+	return User{
+		Id:            u.id,
+		Email:         u.email,
+		Username:      u.username,
+		EmailVerified: u.verified,
+		HasPassword:   u.hasPassword,
+		Name:          u.name,
+		Locale:        u.locale,
+	}
 }
 
 type authKey struct{}
@@ -152,11 +164,11 @@ func (s *Server) currentUser(ctx context.Context) (*user, error) {
 	var u user
 	var lastUsed time.Time
 	err := s.db.QueryRow(ctx, `
-		select s.id::text, s.last_used_at, u.id::text, u.email::text, u.email_verified,
+		select s.id::text, s.last_used_at, u.id::text, u.email::text, u.username::text, u.email_verified,
 		       u.password_hash is not null, u.display_name, u.locale
 		from sessions s join users u on u.id = s.user_id
 		where s.token_hash = $1 and s.expires_at > now()`, hashToken(st.token)).
-		Scan(&u.sessionID, &lastUsed, &u.id, &u.email, &u.verified, &u.hasPassword, &u.name, &u.locale)
+		Scan(&u.sessionID, &lastUsed, &u.id, &u.email, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		st.loaded = true
@@ -260,6 +272,19 @@ func cleanEmail(s string) (string, error) {
 	return s, nil
 }
 
+// cleanUsername checks a username and returns it trimmed and in lower case.
+// It never holds "@", so it cannot be mistaken for an address.
+func cleanUsername(s *string) (string, error) {
+	if s == nil {
+		return "", badRequest("invalid_username")
+	}
+	v := strings.ToLower(strings.TrimSpace(*s))
+	if !usernameRule.MatchString(v) {
+		return "", badRequest("invalid_username")
+	}
+	return v, nil
+}
+
 func cleanLocale(l *string) (*string, error) {
 	if l == nil || *l == "" {
 		return nil, nil
@@ -295,9 +320,26 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 		return nil, err
 	}
 	in := req.Body
-	email, err := cleanEmail(in.Email)
-	if err != nil {
-		return nil, err
+	// Without a required address the account is known by its username, and
+	// may still give an address for invitations and password resets.
+	var email, username *string
+	if in.Email != nil && (s.conf().RequireEmail || strings.TrimSpace(*in.Email) != "") {
+		e, err := cleanEmail(*in.Email)
+		if err != nil {
+			return nil, err
+		}
+		email = &e
+	}
+	if s.conf().RequireEmail {
+		if email == nil {
+			return nil, badRequest("invalid_email")
+		}
+	} else {
+		u, err := cleanUsername(in.Username)
+		if err != nil {
+			return nil, err
+		}
+		username = &u
 	}
 	if err := validPassword(in.Password); err != nil {
 		return nil, err
@@ -318,18 +360,24 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 			return err
 		}
 		// An invitation link reached this address, which verifies it.
-		invited, err := validInvite(ctx, tx, in.Invite, email)
-		if err != nil {
-			return err
+		invited := false
+		if email != nil {
+			invited, err = validInvite(ctx, tx, in.Invite, *email)
+			if err != nil {
+				return err
+			}
 		}
 		if err := s.signupAllowed(ctx, tx, invited); err != nil {
 			return err
 		}
-		u := user{email: &email, verified: invited, hasPassword: true, name: name, locale: locale}
+		u := user{email: email, username: username, verified: invited, hasPassword: true, name: name, locale: locale}
 		err = tx.QueryRow(ctx, `
-			insert into users (email, email_verified, password_hash, display_name, locale)
-			values ($1, $2, $3, $4, $5) returning id::text`, email, invited, hash, name, locale).Scan(&u.id)
+			insert into users (email, username, email_verified, password_hash, display_name, locale)
+			values ($1, $2, $3, $4, $5, $6) returning id::text`, email, username, invited, hash, name, locale).Scan(&u.id)
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if pgErr.ConstraintName == "users_username_key" {
+				return conflict("username_taken")
+			}
 			return conflict("email_taken")
 		}
 		if err != nil {
@@ -356,9 +404,9 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 	var u user
 	var hash *string
 	err := s.db.QueryRow(ctx, `
-		select id::text, email::text, email_verified, password_hash, display_name, locale
-		from users where email = $1`, strings.TrimSpace(in.Email)).
-		Scan(&u.id, &u.email, &u.verified, &hash, &u.name, &u.locale)
+		select id::text, email::text, username::text, email_verified, password_hash, display_name, locale
+		from users where email = $1 or username = $1`, strings.TrimSpace(in.Login)).
+		Scan(&u.id, &u.email, &u.username, &u.verified, &hash, &u.name, &u.locale)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
 	}

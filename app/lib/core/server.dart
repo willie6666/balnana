@@ -90,6 +90,7 @@ class ServerInfo {
     this.firstAccount = false,
     this.linkGroups = true,
     this.email = false,
+    this.emailRequired = true,
     this.oauthProviders = const [],
     this.push = false,
     required this.publicUrl,
@@ -120,6 +121,7 @@ class ServerInfo {
       firstAccount: json['firstAccount'] == true,
       linkGroups: json['linkGroups'] != false,
       email: json['email'] == true,
+      emailRequired: json['emailRequired'] != false,
       oauthProviders: [
         if (json['oauthProviders'] case final List<Object?> list)
           for (final p in list)
@@ -149,6 +151,10 @@ class ServerInfo {
 
   /// The server sends email: verification, password reset and invitations.
   final bool email;
+
+  /// Password accounts sign up with an email address; when false, with a
+  /// username, and the address is optional.
+  final bool emailRequired;
 
   /// Google or OpenID Connect sign-in, as buttons on the sign-in page.
   final List<OAuthProvider> oauthProviders;

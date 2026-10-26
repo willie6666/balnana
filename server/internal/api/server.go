@@ -93,6 +93,7 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		Password:       accounts && cfg.Password,
 		Signup:         ServerInfoSignup(cfg.Signup),
 		Email:          st.mail != nil,
+		EmailRequired:  cfg.RequireEmail,
 		OauthProviders: []OAuthProvider{},
 		LinkGroups:     !accounts || cfg.LinkGroups,
 		Push:           s.push != nil,

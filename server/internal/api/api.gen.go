@@ -465,8 +465,10 @@ type JoinMember struct {
 // LoginInput defines model for LoginInput.
 type LoginInput struct {
 	// Cookie Web app: keep the session in a cookie instead of returning a token.
-	Cookie   *bool  `json:"cookie,omitempty"`
-	Email    string `json:"email"`
+	Cookie *bool `json:"cookie,omitempty"`
+
+	// Login The account's email address or username.
+	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
@@ -587,8 +589,10 @@ type PushDeviceInput struct {
 // RegisterInput defines model for RegisterInput.
 type RegisterInput struct {
 	// Cookie Web app: keep the session in a cookie instead of returning a token.
-	Cookie *bool  `json:"cookie,omitempty"`
-	Email  string `json:"email"`
+	Cookie *bool `json:"cookie,omitempty"`
+
+	// Email Required unless the server's emailRequired is false.
+	Email *string `json:"email,omitempty"`
 
 	// Invite The secret from an invitation email for this address. It lets the account in on an invite_only server and verifies the address.
 	Invite *string `json:"invite,omitempty"`
@@ -597,6 +601,9 @@ type RegisterInput struct {
 
 	// Password 8 to 200 characters.
 	Password string `json:"password"`
+
+	// Username Required when the server's emailRequired is false, and ignored otherwise. 3 to 32 of a-z, 0-9, ".", "_" and "-", starting with a letter or digit; stored in lower case.
+	Username *string `json:"username,omitempty"`
 }
 
 // ServerInfo defines model for ServerInfo.
@@ -605,6 +612,9 @@ type ServerInfo struct {
 
 	// Email The server can send email (verification, reset, invites).
 	Email bool `json:"email"`
+
+	// EmailRequired Password accounts sign up with an email address. When false they sign up with a username instead, and the address is optional.
+	EmailRequired bool `json:"emailRequired"`
 
 	// FirstAccount No account exists yet, so the first one may sign up with a password even though signup is not open. Only ever true then.
 	FirstAccount bool `json:"firstAccount"`
@@ -687,6 +697,9 @@ type User struct {
 	Id            string  `json:"id"`
 	Locale        *string `json:"locale,omitempty"`
 	Name          string  `json:"name"`
+
+	// Username Set on accounts made without an email address.
+	Username *string `json:"username,omitempty"`
 }
 
 // UserUpdate defines model for UserUpdate.
@@ -1030,7 +1043,7 @@ type ServerInterface interface {
 	// Set a new password with the token from a reset email
 	// (POST /auth/password-reset/confirm)
 	ResetPassword(w http.ResponseWriter, r *http.Request)
-	// Create an account with email and password (accounts mode)
+	// Create an account with a password (accounts mode)
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
 	// Confirm an email address with the token from a verification email
@@ -5324,7 +5337,7 @@ type StrictServerInterface interface {
 	// Set a new password with the token from a reset email
 	// (POST /auth/password-reset/confirm)
 	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
-	// Create an account with email and password (accounts mode)
+	// Create an account with a password (accounts mode)
 	// (POST /auth/register)
 	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
 	// Confirm an email address with the token from a verification email

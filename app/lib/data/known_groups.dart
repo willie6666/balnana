@@ -48,7 +48,8 @@ class KnownGroup {
   );
 }
 
-/// The groups this device knows on the current server, newest first.
+/// The groups this device knows on the current server, in the order the
+/// person arranged them; a newly added group comes first.
 final knownGroupsProvider = NotifierProvider<KnownGroupsNotifier, List<KnownGroup>>(KnownGroupsNotifier.new);
 
 class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {

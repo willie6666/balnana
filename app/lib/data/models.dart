@@ -450,6 +450,7 @@ class User {
   const User({
     required this.id,
     this.email,
+    this.username,
     this.emailVerified = false,
     required this.name,
     this.locale,
@@ -461,6 +462,7 @@ class User {
     return User(
       id: _req(json, 'id'),
       email: _opt(json, 'email'),
+      username: _opt(json, 'username'),
       emailVerified: _opt<bool>(json, 'emailVerified') ?? false,
       name: _req(json, 'name'),
       locale: _opt(json, 'locale'),
@@ -470,6 +472,9 @@ class User {
 
   final String id;
   final String? email;
+
+  /// Set on accounts made without an email address.
+  final String? username;
   final bool emailVerified;
   final String name;
   final String? locale;

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
@@ -143,7 +144,17 @@ class _PasswordPageState extends ConsumerState<_PasswordPage> {
     final setup = widget.setup;
 
     return Scaffold(
-      appBar: AppBar(),
+      // A new server has nowhere else to go until it is set up.
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: setup
+            ? null
+            : IconButton(
+                tooltip: l10n.adminBackHome,
+                icon: const Icon(Icons.home_outlined),
+                onPressed: () => context.go('/'),
+              ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final side = math.max(BSpace.s16, (constraints.maxWidth - formMaxWidth) / 2);

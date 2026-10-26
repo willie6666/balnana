@@ -75,7 +75,7 @@ class AccountSection extends ConsumerWidget {
         GroupedTile(
           icon: Icons.account_circle_outlined,
           title: account.name,
-          subtitle: account.email,
+          subtitle: account.email ?? account.username,
           trailing: const Icon(Icons.edit_outlined),
           onTap: () => _rename(context, ref, account.name),
         ),

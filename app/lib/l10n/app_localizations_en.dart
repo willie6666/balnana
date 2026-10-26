@@ -1488,6 +1488,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSignOut => 'Sign out of administration';
 
   @override
+  String get adminBackHome => 'Back to Balnana';
+
+  @override
+  String get adminRequireEmail => 'Require an email address';
+
+  @override
+  String get adminRequireEmailHelp =>
+      'When off, people sign up with a username and may leave the email address out. They sign in with either.';
+
+  @override
+  String get accountUsername => 'Username';
+
+  @override
+  String get accountUsernameHelp =>
+      '3 to 32 letters, digits, dots, dashes or underscores. You sign in with it.';
+
+  @override
+  String get accountEmailOptional => 'Email (optional)';
+
+  @override
+  String get accountEmailOptionalHelp => 'Lets you get group invitations and reset a forgotten password.';
+
+  @override
+  String get accountLogin => 'Email or username';
+
+  @override
+  String get errorInvalidUsername =>
+      'Use 3 to 32 letters, digits, dots, dashes or underscores, starting with a letter or digit.';
+
+  @override
+  String get errorUsernameTaken => 'Someone already has that username.';
+
+  @override
   String get adminDiscardTitle => 'Discard changes?';
 
   @override

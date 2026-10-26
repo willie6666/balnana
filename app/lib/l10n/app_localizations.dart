@@ -2677,6 +2677,66 @@ abstract class AppLocalizations {
   /// **'Sign out of administration'**
   String get adminSignOut;
 
+  /// No description provided for @adminBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Balnana'**
+  String get adminBackHome;
+
+  /// No description provided for @adminRequireEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Require an email address'**
+  String get adminRequireEmail;
+
+  /// No description provided for @adminRequireEmailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, people sign up with a username and may leave the email address out. They sign in with either.'**
+  String get adminRequireEmailHelp;
+
+  /// No description provided for @accountUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get accountUsername;
+
+  /// No description provided for @accountUsernameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'3 to 32 letters, digits, dots, dashes or underscores. You sign in with it.'**
+  String get accountUsernameHelp;
+
+  /// No description provided for @accountEmailOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (optional)'**
+  String get accountEmailOptional;
+
+  /// No description provided for @accountEmailOptionalHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets you get group invitations and reset a forgotten password.'**
+  String get accountEmailOptionalHelp;
+
+  /// No description provided for @accountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or username'**
+  String get accountLogin;
+
+  /// No description provided for @errorInvalidUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 3 to 32 letters, digits, dots, dashes or underscores, starting with a letter or digit.'**
+  String get errorInvalidUsername;
+
+  /// No description provided for @errorUsernameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone already has that username.'**
+  String get errorUsernameTaken;
+
   /// No description provided for @adminDiscardTitle.
   ///
   /// In en, this message translates to:

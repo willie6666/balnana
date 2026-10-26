@@ -105,9 +105,9 @@ func TestPasswordReset(t *testing.T) {
 	}
 	// Every session is signed out, and only the new password works.
 	c.errorCode(401, "GET", "/me", nil)
-	anon.errorCode(401, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "correct horse"})
+	anon.errorCode(401, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "correct horse"})
 	var s Session
-	anon.must(200, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "new password"}, &s)
+	anon.must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "new password"}, &s)
 	if !s.User.EmailVerified {
 		t.Fatal("reset did not verify the address")
 	}
@@ -156,14 +156,14 @@ func TestInvites(t *testing.T) {
 	ben.errorCode(404, "GET", "/auth/invites/nonsense", nil)
 
 	// Without the link, or for another address, signing up stays closed.
-	if code := ben.errorCode(403, "POST", "/auth/register", RegisterInput{Email: "ben@example.com", Password: "12345678", Name: "Ben"}); code != "signup_closed" {
+	if code := ben.errorCode(403, "POST", "/auth/register", RegisterInput{Email: ptr("ben@example.com"), Password: "12345678", Name: "Ben"}); code != "signup_closed" {
 		t.Fatal(code)
 	}
-	if code := ben.errorCode(403, "POST", "/auth/register", RegisterInput{Email: "eve@example.com", Password: "12345678", Name: "Eve", Invite: &token}); code != "signup_closed" {
+	if code := ben.errorCode(403, "POST", "/auth/register", RegisterInput{Email: ptr("eve@example.com"), Password: "12345678", Name: "Eve", Invite: &token}); code != "signup_closed" {
 		t.Fatal(code)
 	}
 	var s Session
-	ben.must(201, "POST", "/auth/register", RegisterInput{Email: "ben@example.com", Password: "12345678", Name: "Benjamin", Invite: &token}, &s)
+	ben.must(201, "POST", "/auth/register", RegisterInput{Email: ptr("ben@example.com"), Password: "12345678", Name: "Benjamin", Invite: &token}, &s)
 	if !s.User.EmailVerified {
 		t.Fatal("invited account not verified")
 	}
@@ -183,7 +183,7 @@ func TestInvites(t *testing.T) {
 	cy := ana.another()
 	ana.must(204, "POST", path+"/invites", InviteInput{Email: "cy@example.com"}, nil)
 	cyToken := lastPart(f.next(t, "cy@example.com"))
-	cy.must(201, "POST", "/auth/register", RegisterInput{Email: "cy@example.com", Password: "12345678", Name: "Cy", Invite: &cyToken}, &s)
+	cy.must(201, "POST", "/auth/register", RegisterInput{Email: ptr("cy@example.com"), Password: "12345678", Name: "Cy", Invite: &cyToken}, &s)
 	cy.token = *s.Token
 	if code := cy.errorCode(403, "POST", "/g/"+g.Token+"/invites", InviteInput{Email: "dee@example.com"}); code != "not_a_member" {
 		t.Fatal(code)

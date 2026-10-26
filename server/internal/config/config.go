@@ -85,13 +85,16 @@ type Config struct {
 	// for servers behind a reverse proxy.
 	TrustProxy bool
 
-	AuthMode   AuthMode
-	Password   bool
-	Signup     Signup
-	LinkGroups bool
-	SMTP       SMTP
-	Google     *OAuthClient
-	OIDC       *OIDC
+	AuthMode AuthMode
+	Password bool
+	// RequireEmail false lets password accounts sign up with a username and
+	// no email address.
+	RequireEmail bool
+	Signup       Signup
+	LinkGroups   bool
+	SMTP         SMTP
+	Google       *OAuthClient
+	OIDC         *OIDC
 
 	// FCM sends push notifications to the Android app; nil turns them off.
 	FCM *FCMAccount
@@ -117,6 +120,7 @@ var Managed = []Setting{
 	{Key: "BALNANA_SOURCE_URL", Default: UpstreamSourceURL},
 	{Key: "BALNANA_AUTH_MODE", Default: string(AuthModeLink)},
 	{Key: "BALNANA_AUTH_PASSWORD", Default: "true"},
+	{Key: "BALNANA_AUTH_REQUIRE_EMAIL", Default: "true"},
 	{Key: "BALNANA_AUTH_SIGNUP", Default: string(SignupOpen)},
 	{Key: "BALNANA_LINK_GROUPS", Default: "true"},
 	{Key: "BALNANA_SMTP_HOST"},
@@ -237,16 +241,17 @@ func unwrapAll(err error) []error {
 func load(getenv func(string) string) (*Config, error) {
 	e := env{get: getenv}
 	c := &Config{
-		Listen:      e.str("BALNANA_LISTEN", ":8080"),
-		DatabaseURL: e.str("BALNANA_DATABASE_URL", getenv("DATABASE_URL")),
-		WebDir:      e.str("BALNANA_WEB_DIR", ""),
-		CORSOrigins: e.list("BALNANA_CORS_ORIGINS"),
-		RateLimit:   e.int("BALNANA_RATE_LIMIT", 600),
-		TrustProxy:  e.bool("BALNANA_TRUST_PROXY", false),
-		AuthMode:    AuthMode(e.managed("BALNANA_AUTH_MODE")),
-		Password:    e.managedBool("BALNANA_AUTH_PASSWORD"),
-		Signup:      Signup(e.managed("BALNANA_AUTH_SIGNUP")),
-		LinkGroups:  e.managedBool("BALNANA_LINK_GROUPS"),
+		Listen:       e.str("BALNANA_LISTEN", ":8080"),
+		DatabaseURL:  e.str("BALNANA_DATABASE_URL", getenv("DATABASE_URL")),
+		WebDir:       e.str("BALNANA_WEB_DIR", ""),
+		CORSOrigins:  e.list("BALNANA_CORS_ORIGINS"),
+		RateLimit:    e.int("BALNANA_RATE_LIMIT", 600),
+		TrustProxy:   e.bool("BALNANA_TRUST_PROXY", false),
+		AuthMode:     AuthMode(e.managed("BALNANA_AUTH_MODE")),
+		Password:     e.managedBool("BALNANA_AUTH_PASSWORD"),
+		RequireEmail: e.managedBool("BALNANA_AUTH_REQUIRE_EMAIL"),
+		Signup:       Signup(e.managed("BALNANA_AUTH_SIGNUP")),
+		LinkGroups:   e.managedBool("BALNANA_LINK_GROUPS"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.int("BALNANA_SMTP_PORT", 587),

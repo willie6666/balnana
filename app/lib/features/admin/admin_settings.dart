@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
@@ -15,7 +16,7 @@ import '../../ui/widgets/form_page.dart';
 import 'admin_page.dart';
 
 /// Settings that are on or off; the server reads them as "true" or "false".
-const _toggles = {'BALNANA_AUTH_PASSWORD', 'BALNANA_LINK_GROUPS'};
+const _toggles = {'BALNANA_AUTH_PASSWORD', 'BALNANA_AUTH_REQUIRE_EMAIL', 'BALNANA_LINK_GROUPS'};
 
 /// Settings picked from a few values.
 const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP'};
@@ -140,12 +141,14 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
   }
 
   Future<void> _signOut() async {
+    final router = GoRouter.of(context);
     try {
       await _api.logout(widget.token);
     } on ApiException {
       // Forget the session here all the same.
     }
     ref.read(adminTokenProvider.notifier).set(null);
+    router.go('/');
   }
 
   void _pick(String key, String value) {
@@ -250,6 +253,10 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final publicUrl = settings['BALNANA_PUBLIC_URL']?.effective ?? '';
     String callback(String provider) => '$publicUrl$apiBasePath/auth/oauth/$provider/callback';
     const gap = SizedBox(height: BSpace.s16);
+    // Only what the picked mode uses; hidden settings keep their values.
+    String current(String key) => _picked[key] ?? settings[key]?.effective ?? '';
+    final accounts = current('BALNANA_AUTH_MODE') == 'accounts';
+    final passwords = current('BALNANA_AUTH_PASSWORD') == 'true';
     return [
       FormSection(l10n.adminSectionGeneral),
       _textField('BALNANA_PUBLIC_URL', keyboard: TextInputType.url),
@@ -260,41 +267,44 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
         'link': (l10n.adminAuthModeLink, l10n.adminAuthModeLinkHelp),
         'accounts': (l10n.adminAuthModeAccounts, l10n.adminAuthModeAccountsHelp),
       }),
-      FormSection(l10n.adminSectionAccounts),
-      _note(l10n.adminSectionAccountsBody),
-      _toggle('BALNANA_AUTH_PASSWORD'),
-      _toggle('BALNANA_LINK_GROUPS'),
-      gap,
-      _choice('BALNANA_AUTH_SIGNUP', {
-        'open': (l10n.adminSignupOpen, null),
-        'invite_only': (l10n.adminSignupInvite, null),
-        'closed': (l10n.adminSignupClosed, null),
-      }),
-      FormSection(l10n.adminSectionEmail),
-      _note(l10n.adminSectionEmailBody),
-      _textField('BALNANA_SMTP_HOST', keyboard: TextInputType.url),
-      gap,
-      _textField('BALNANA_SMTP_PORT', keyboard: TextInputType.number),
-      gap,
-      _textField('BALNANA_SMTP_USER'),
-      gap,
-      _textField('BALNANA_SMTP_PASSWORD'),
-      gap,
-      _textField('BALNANA_SMTP_FROM', hint: l10n.adminSmtpFromHint),
-      FormSection(l10n.adminSectionGoogle),
-      _note(l10n.adminSectionGoogleBody(callback('google'))),
-      _textField('BALNANA_OAUTH_GOOGLE_CLIENT_ID'),
-      gap,
-      _textField('BALNANA_OAUTH_GOOGLE_SECRET'),
-      FormSection(l10n.adminSectionOidc),
-      _note(l10n.adminSectionOidcBody(callback('oidc'))),
-      _textField('BALNANA_OAUTH_OIDC_ISSUER', keyboard: TextInputType.url),
-      gap,
-      _textField('BALNANA_OAUTH_OIDC_CLIENT_ID'),
-      gap,
-      _textField('BALNANA_OAUTH_OIDC_SECRET'),
-      gap,
-      _textField('BALNANA_OAUTH_OIDC_NAME'),
+      if (accounts) ...[
+        FormSection(l10n.adminSectionAccounts),
+        _note(l10n.adminSectionAccountsBody),
+        _toggle('BALNANA_AUTH_PASSWORD'),
+        if (passwords) _toggle('BALNANA_AUTH_REQUIRE_EMAIL'),
+        _toggle('BALNANA_LINK_GROUPS'),
+        gap,
+        _choice('BALNANA_AUTH_SIGNUP', {
+          'open': (l10n.adminSignupOpen, null),
+          'invite_only': (l10n.adminSignupInvite, null),
+          'closed': (l10n.adminSignupClosed, null),
+        }),
+        FormSection(l10n.adminSectionEmail),
+        _note(l10n.adminSectionEmailBody),
+        _textField('BALNANA_SMTP_HOST', keyboard: TextInputType.url),
+        gap,
+        _textField('BALNANA_SMTP_PORT', keyboard: TextInputType.number),
+        gap,
+        _textField('BALNANA_SMTP_USER'),
+        gap,
+        _textField('BALNANA_SMTP_PASSWORD'),
+        gap,
+        _textField('BALNANA_SMTP_FROM', hint: l10n.adminSmtpFromHint),
+        FormSection(l10n.adminSectionGoogle),
+        _note(l10n.adminSectionGoogleBody(callback('google'))),
+        _textField('BALNANA_OAUTH_GOOGLE_CLIENT_ID'),
+        gap,
+        _textField('BALNANA_OAUTH_GOOGLE_SECRET'),
+        FormSection(l10n.adminSectionOidc),
+        _note(l10n.adminSectionOidcBody(callback('oidc'))),
+        _textField('BALNANA_OAUTH_OIDC_ISSUER', keyboard: TextInputType.url),
+        gap,
+        _textField('BALNANA_OAUTH_OIDC_CLIENT_ID'),
+        gap,
+        _textField('BALNANA_OAUTH_OIDC_SECRET'),
+        gap,
+        _textField('BALNANA_OAUTH_OIDC_NAME'),
+      ],
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
@@ -450,6 +460,7 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
   'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
   'BALNANA_AUTH_PASSWORD' => l10n.adminPasswordLogin,
+  'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmail,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignup,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroups,
   'BALNANA_SMTP_HOST' => l10n.adminSmtpHost,
@@ -469,6 +480,7 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
+  'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmailHelp,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
   'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcNameHelp,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprintsHelp,

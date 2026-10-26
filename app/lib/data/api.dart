@@ -113,7 +113,8 @@ class BalnanaApi {
 
   /// Returns the session token, or null on the web.
   Future<(String?, User)> register({
-    required String email,
+    String? email,
+    String? username,
     required String password,
     required String name,
     String? locale,
@@ -122,7 +123,8 @@ class BalnanaApi {
     () => _dio.post<Object?>(
       '/auth/register',
       data: {
-        'email': email,
+        'email': ?email,
+        'username': ?username,
         'password': password,
         'name': name,
         'locale': ?locale,
@@ -133,9 +135,10 @@ class BalnanaApi {
     _session,
   );
 
-  /// Returns the session token, or null on the web.
-  Future<(String?, User)> login({required String email, required String password}) => _send(
-    () => _dio.post<Object?>('/auth/login', data: {'email': email, 'password': password, 'cookie': _cookie}),
+  /// Signs in with an email address or username. Returns the session token,
+  /// or null on the web.
+  Future<(String?, User)> login({required String login, required String password}) => _send(
+    () => _dio.post<Object?>('/auth/login', data: {'login': login, 'password': password, 'cookie': _cookie}),
     _session,
   );
 

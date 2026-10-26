@@ -20,7 +20,7 @@ func accountsClient(t *testing.T, env map[string]string) *client {
 func register(c *client, email, name string) User {
 	c.t.Helper()
 	var s Session
-	c.must(201, "POST", "/auth/register", RegisterInput{Email: email, Password: "correct horse", Name: name}, &s)
+	c.must(201, "POST", "/auth/register", RegisterInput{Email: ptr(email), Password: "correct horse", Name: name}, &s)
 	if s.Token == nil {
 		c.t.Fatal("no token")
 	}
@@ -49,26 +49,26 @@ func TestSessions(t *testing.T) {
 	if me.Id != u.Id || me.Name != "Ana" || !me.HasPassword {
 		t.Fatalf("me = %+v", me)
 	}
-	if code := c.another().errorCode(409, "POST", "/auth/register", RegisterInput{Email: "ANA@example.com", Password: "12345678", Name: "Other"}); code != "email_taken" {
+	if code := c.another().errorCode(409, "POST", "/auth/register", RegisterInput{Email: ptr("ANA@example.com"), Password: "12345678", Name: "Other"}); code != "email_taken" {
 		t.Fatal(code)
 	}
-	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: "Ana <a@example.com>", Password: "12345678", Name: "X"}); code != "invalid_email" {
+	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: ptr("Ana <a@example.com>"), Password: "12345678", Name: "X"}); code != "invalid_email" {
 		t.Fatal(code)
 	}
-	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: "b@example.com", Password: "short", Name: "X"}); code != "invalid_password" {
+	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Email: ptr("b@example.com"), Password: "short", Name: "X"}); code != "invalid_password" {
 		t.Fatal(code)
 	}
 
 	// Sign in on the web: the session lives in an HttpOnly cookie.
 	web := c.another()
-	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "wrong password"}); code != "invalid_credentials" {
+	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "wrong password"}); code != "invalid_credentials" {
 		t.Fatal(code)
 	}
-	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Email: "nobody@example.com", Password: "wrong password"}); code != "invalid_credentials" {
+	if code := web.errorCode(401, "POST", "/auth/login", LoginInput{Login: "nobody@example.com", Password: "wrong password"}); code != "invalid_credentials" {
 		t.Fatal(code)
 	}
 	var s Session
-	web.must(200, "POST", "/auth/login", LoginInput{Email: "Ana@Example.com", Password: "correct horse", Cookie: ptr(true)}, &s)
+	web.must(200, "POST", "/auth/login", LoginInput{Login: "Ana@Example.com", Password: "correct horse", Cookie: ptr(true)}, &s)
 	if s.Token != nil || len(web.jar) != 1 || !web.jar[0].HttpOnly {
 		t.Fatalf("token %v, cookies %v", s.Token, web.jar)
 	}
@@ -102,14 +102,64 @@ func TestSessions(t *testing.T) {
 func TestSignupPolicy(t *testing.T) {
 	c := accountsClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "closed"})
 	register(c, "first@example.com", "First") // the first account is always allowed
-	if code := c.another().errorCode(403, "POST", "/auth/register", RegisterInput{Email: "second@example.com", Password: "12345678", Name: "Second"}); code != "signup_closed" {
+	if code := c.another().errorCode(403, "POST", "/auth/register", RegisterInput{Email: ptr("second@example.com"), Password: "12345678", Name: "Second"}); code != "signup_closed" {
 		t.Fatal(code)
+	}
+}
+
+func TestUsernameAccounts(t *testing.T) {
+	c := accountsClient(t, map[string]string{"BALNANA_AUTH_REQUIRE_EMAIL": "false"})
+	var info ServerInfo
+	c.must(200, "GET", "/server-info", nil, &info)
+	if info.EmailRequired {
+		t.Fatal("email required")
+	}
+	if code := c.errorCode(400, "POST", "/auth/register", RegisterInput{Password: "12345678", Name: "Ana"}); code != "invalid_username" {
+		t.Fatal(code)
+	}
+	for _, bad := range []string{"an", "ana@home", ".ana", "ana nas"} {
+		in := RegisterInput{Username: ptr(bad), Password: "12345678", Name: "Ana"}
+		if code := c.errorCode(400, "POST", "/auth/register", in); code != "invalid_username" {
+			t.Fatalf("%q: %s", bad, code)
+		}
+	}
+	// No address at all, and a blank one counts as none.
+	var s Session
+	in := RegisterInput{Username: ptr(" Ana.B "), Email: ptr(""), Password: "correct horse", Name: "Ana"}
+	c.must(201, "POST", "/auth/register", in, &s)
+	if s.User.Username == nil || *s.User.Username != "ana.b" || s.User.Email != nil {
+		t.Fatalf("user = %+v", s.User)
+	}
+	other := c.another()
+	in = RegisterInput{Username: ptr("ANA.B"), Password: "12345678", Name: "Other"}
+	if code := other.errorCode(409, "POST", "/auth/register", in); code != "username_taken" {
+		t.Fatal(code)
+	}
+	// An address may come along, and then signs in too.
+	in = RegisterInput{Username: ptr("ben"), Email: ptr("ben@example.com"), Password: "correct horse", Name: "Ben"}
+	other.must(201, "POST", "/auth/register", in, nil)
+	for _, login := range []string{"Ana.B", "ben", "ben@example.com"} {
+		c.another().must(200, "POST", "/auth/login", LoginInput{Login: login, Password: "correct horse"}, nil)
+	}
+
+	// Requiring addresses again ignores usernames for new accounts, while
+	// accounts that have one still sign in with it.
+	req := accountsClient(t, map[string]string{"BALNANA_AUTH_REQUIRE_EMAIL": "true"})
+	in = RegisterInput{Username: ptr("cy"), Password: "12345678", Name: "Cy"}
+	if code := req.errorCode(400, "POST", "/auth/register", in); code != "invalid_email" {
+		t.Fatal(code)
+	}
+	in = RegisterInput{Username: ptr("cy"), Email: ptr("cy@example.com"), Password: "12345678", Name: "Cy"}
+	var cy Session
+	req.must(201, "POST", "/auth/register", in, &cy)
+	if cy.User.Username != nil {
+		t.Fatalf("username kept: %v", *cy.User.Username)
 	}
 }
 
 func TestLinkModeHasNoAccounts(t *testing.T) {
 	c := newClient(t)
-	if code := c.errorCode(403, "POST", "/auth/login", LoginInput{Email: "a@example.com", Password: "12345678"}); code != "accounts_off" {
+	if code := c.errorCode(403, "POST", "/auth/login", LoginInput{Login: "a@example.com", Password: "12345678"}); code != "accounts_off" {
 		t.Fatal(code)
 	}
 }
@@ -261,11 +311,11 @@ func TestCookieSessionsNeedSameOrigin(t *testing.T) {
 
 	web := c.another()
 	web.header = evil
-	login := LoginInput{Email: "ana@example.com", Password: "correct horse", Cookie: ptr(true)}
+	login := LoginInput{Login: "ana@example.com", Password: "correct horse", Cookie: ptr(true)}
 	if code := web.errorCode(403, "POST", "/auth/login", login); code != "bad_origin" || len(web.jar) != 0 {
 		t.Fatalf("cross-site login: %s, cookies %v", code, web.jar)
 	}
-	in := RegisterInput{Email: "ben@example.com", Password: "correct horse", Name: "Ben", Cookie: ptr(true)}
+	in := RegisterInput{Email: ptr("ben@example.com"), Password: "correct horse", Name: "Ben", Cookie: ptr(true)}
 	if code := web.errorCode(403, "POST", "/auth/register", in); code != "bad_origin" || len(web.jar) != 0 {
 		t.Fatalf("cross-site register: %s, cookies %v", code, web.jar)
 	}
@@ -281,7 +331,7 @@ func TestCookieSessionsNeedSameOrigin(t *testing.T) {
 
 	// Native apps send no Origin; a bearer login from elsewhere is fine.
 	web.header = http.Header{"Origin": {"https://evil.example"}}
-	web.must(200, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "correct horse"}, nil)
+	web.must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "correct horse"}, nil)
 	same := c.another()
 	same.header = http.Header{"Origin": {"http://example.com"}, "Sec-Fetch-Site": {"same-origin"}}
 	same.must(200, "POST", "/auth/login", login, nil)
@@ -303,7 +353,7 @@ func TestFirstAccountOnClosedServer(t *testing.T) {
 	if info.FirstAccount {
 		t.Fatal("first account still offered")
 	}
-	in := RegisterInput{Email: "ben@example.com", Password: "correct horse", Name: "Ben"}
+	in := RegisterInput{Email: ptr("ben@example.com"), Password: "correct horse", Name: "Ben"}
 	if code := c.another().errorCode(403, "POST", "/auth/register", in); code != "signup_closed" {
 		t.Fatal(code)
 	}

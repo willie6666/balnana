@@ -243,11 +243,12 @@ paths:
   /auth/register:
     post:
       operationId: register
-      summary: Create an account with email and password (accounts mode)
+      summary: Create an account with a password (accounts mode)
       description: >-
         Refused with 403 `signup_closed` when BALNANA_AUTH_SIGNUP is closed,
         or invite_only and there is no invitation for the address. The first
-        account on a server can always be created.
+        account on a server can always be created. 409 `email_taken` or
+        `username_taken` when another account has it; 400 `invalid_username`.
       requestBody:
         required: true
         content:
@@ -1753,10 +1754,17 @@ components:
           format: date-time
     RegisterInput:
       type: object
-      required: [email, password, name]
+      required: [password, name]
       properties:
         email:
           type: string
+          description: Required unless the server's emailRequired is false.
+        username:
+          type: string
+          description: >-
+            Required when the server's emailRequired is false, and ignored
+            otherwise. 3 to 32 of a-z, 0-9, ".", "_" and "-", starting with a
+            letter or digit; stored in lower case.
         password:
           type: string
           description: 8 to 200 characters.
@@ -1774,10 +1782,11 @@ components:
             account in on an invite_only server and verifies the address.
     LoginInput:
       type: object
-      required: [email, password]
+      required: [login, password]
       properties:
-        email:
+        login:
           type: string
+          description: The account's email address or username.
         password:
           type: string
         cookie:
@@ -1800,6 +1809,9 @@ components:
           type: string
         email:
           type: string
+        username:
+          type: string
+          description: Set on accounts made without an email address.
         emailVerified:
           type: boolean
         name:
@@ -1921,7 +1933,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, firstAccount, email, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
+      required: [name, version, authMode, password, signup, firstAccount, email, emailRequired, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
       properties:
         name:
           type: string
@@ -1947,6 +1959,11 @@ components:
         email:
           type: boolean
           description: The server can send email (verification, reset, invites).
+        emailRequired:
+          type: boolean
+          description: >-
+            Password accounts sign up with an email address. When false they
+            sign up with a username instead, and the address is optional.
         oauthProviders:
           type: array
           items:

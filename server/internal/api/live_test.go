@@ -158,7 +158,7 @@ func TestEventsAccounts(t *testing.T) {
 	ana.must(204, "POST", "/auth/logout", nil, nil)
 	again := ana.another()
 	var s Session
-	again.must(200, "POST", "/auth/login", LoginInput{Email: "ana@example.com", Password: "correct horse"}, &s)
+	again.must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "correct horse"}, &s)
 	again.token = *s.Token
 	again.must(201, "POST", path+"/members", MemberInput{Name: "Cy"}, nil)
 	if e := nextEvent(t, anaEvents); e != "gone" {
