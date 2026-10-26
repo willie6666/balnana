@@ -498,7 +498,7 @@ class _EditorState extends ConsumerState<_Editor> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    for (final c in Category.values)
+                    for (final c in _group.offeredCategories(_category))
                       Padding(
                         padding: const EdgeInsetsDirectional.only(end: BSpace.s8),
                         child: ChoiceChip(

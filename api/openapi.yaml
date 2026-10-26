@@ -729,6 +729,70 @@ paths:
           description: Removed
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/categories:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: addCategory
+      summary: Add a category of the group's own
+      description: At most 50 per group; error `too_many_categories` otherwise.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/categories/{categoryId}:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/CategoryId"
+    patch:
+      operationId: updateCategory
+      summary: Change a category, or hide or show it in this group
+      description: >-
+        Built-in categories can only be hidden or shown; error
+        `builtin_category` for other changes.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteCategory
+      summary: Delete one of the group's own categories
+      description: >-
+        Its expenses are left without a category. Built-in categories are
+        hidden instead; error `builtin_category`.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Deleted
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/expenses:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -1084,6 +1148,12 @@ components:
       description: The group's secret token from its link.
       schema:
         type: string
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema:
+        type: string
     MemberId:
       name: memberId
       in: path
@@ -1257,7 +1327,7 @@ components:
             (`linkGroups`).
     Group:
       type: object
-      required: [token, name, currency, minorDigits, createdAt, members, linkAccess]
+      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess]
       properties:
         token:
           type: string
@@ -1279,12 +1349,56 @@ components:
           description: Everyone, including members who left, oldest first.
           items:
             $ref: "#/components/schemas/Member"
+        categories:
+          type: array
+          description: The built-in categories, then the group's own, including hidden ones.
+          items:
+            $ref: "#/components/schemas/Category"
         linkAccess:
           type: boolean
           description: Whether the link alone opens the group (always in link mode).
         myMemberId:
           type: string
           description: 'Accounts mode: the signed-in account''s member, if any.'
+    Category:
+      type: object
+      required: [id, emoji, color, builtIn, hidden]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: Only for the group's own; the app names built-in ones.
+        emoji:
+          type: string
+        color:
+          type: integer
+        builtIn:
+          type: boolean
+        hidden:
+          type: boolean
+          description: Not offered for new expenses in this group.
+    CategoryInput:
+      type: object
+      required: [name, emoji]
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+        hidden:
+          type: boolean
     Member:
       type: object
       required: [id, name, left, balance, owner, claimed]

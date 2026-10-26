@@ -126,6 +126,9 @@ String activitySentence(BuildContext context, FeedItem item) {
     'member.updated' => l10n.activityMemberRenamed(who, a.text('oldName') ?? name, name),
     'member.removed' => l10n.activityMemberRemoved(who, name),
     'member.joined' => l10n.activityMemberJoined(name),
+    'category.added' => l10n.activityCategoryAdded(who, name),
+    'category.updated' => l10n.activityCategoryUpdated(who),
+    'category.deleted' => l10n.activityCategoryDeleted(who, name),
     'expense.created' when payment => l10n.activityPaymentAdded(
       who,
       a.text('from') ?? l10n.someone,

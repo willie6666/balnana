@@ -86,6 +86,7 @@ class Group {
     required this.minorDigits,
     required this.createdAt,
     required this.members,
+    this.categories = const [],
     this.linkAccess = true,
     this.myMemberId,
   });
@@ -102,6 +103,7 @@ class Group {
       minorDigits: digits,
       createdAt: _time(json, 'createdAt'),
       members: [for (final m in _req<List<Object?>>(json, 'members')) Member.fromJson(m, digits)],
+      categories: [for (final c in _opt<List<Object?>>(json, 'categories') ?? const []) GroupCategory.fromJson(c)],
       linkAccess: _opt<bool>(json, 'linkAccess') ?? true,
       myMemberId: _opt(json, 'myMemberId'),
     );
@@ -117,6 +119,10 @@ class Group {
 
   /// Everyone who ever belonged, current members first in the order they joined.
   final List<Member> members;
+
+  /// The built-in categories, then the group's own, hidden ones included.
+  /// Empty from a server that predates them.
+  final List<GroupCategory> categories;
 
   /// The link alone opens the group. Always true in link mode.
   final bool linkAccess;
@@ -135,6 +141,43 @@ class Group {
     }
     return null;
   }
+}
+
+/// A category expenses can have: a built-in one, which the app names, or one
+/// the group added under its own name.
+@immutable
+class GroupCategory {
+  const GroupCategory({
+    required this.id,
+    this.name,
+    required this.emoji,
+    required this.rgb,
+    this.builtIn = false,
+    this.hidden = false,
+  });
+
+  factory GroupCategory.fromJson(Object? data) {
+    final json = _object(data);
+    return GroupCategory(
+      id: _req(json, 'id'),
+      name: _opt(json, 'name'),
+      emoji: _req(json, 'emoji'),
+      rgb: _req(json, 'color'),
+      builtIn: _opt<bool>(json, 'builtIn') ?? false,
+      hidden: _opt<bool>(json, 'hidden') ?? false,
+    );
+  }
+
+  final String id;
+
+  /// Only for the group's own categories.
+  final String? name;
+  final String emoji;
+  final int rgb;
+  final bool builtIn;
+
+  /// Not offered for new expenses.
+  final bool hidden;
 }
 
 @immutable

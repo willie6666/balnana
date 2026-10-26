@@ -12,6 +12,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_name' => l10n.errorInvalidName,
     'duplicate_name' => l10n.errorDuplicateName,
     'too_many_members' => l10n.errorTooManyMembers,
+    'too_many_categories' => l10n.errorTooManyCategories,
     'invalid_currency' => l10n.errorInvalidCurrency,
     'invalid_title' => l10n.errorInvalidTitle,
     'member_has_balance' => l10n.errorMemberHasBalance,

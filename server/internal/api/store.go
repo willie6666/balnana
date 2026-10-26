@@ -305,6 +305,10 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 	if err != nil {
 		return Group{}, err
 	}
+	categories, err := groupCategories(ctx, q, g.id)
+	if err != nil {
+		return Group{}, err
+	}
 	out := Group{
 		Token:       g.token,
 		Name:        g.name,
@@ -314,6 +318,7 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 		MinorDigits: g.digits,
 		CreatedAt:   g.createdAt,
 		Members:     make([]Member, 0, len(members)),
+		Categories:  categories,
 		LinkAccess:  g.open,
 		MyMemberId:  g.me,
 	}

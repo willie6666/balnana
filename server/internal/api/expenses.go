@@ -63,7 +63,9 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 
 	if in.CategoryId != nil && *in.CategoryId != "" {
 		var exists bool
-		if err := q.QueryRow(ctx, `select exists (select 1 from categories where id = $1)`, *in.CategoryId).Scan(&exists); err != nil {
+		if err := q.QueryRow(ctx, `
+			select exists (select 1 from categories where id = $1 and (group_id is null or group_id = $2))`,
+			*in.CategoryId, g.id).Scan(&exists); err != nil {
 			return nil, err
 		}
 		if !exists {

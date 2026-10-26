@@ -19,6 +19,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/menu_chip.dart';
+import 'categories_page.dart';
 import 'group_page.dart';
 
 class ExpensesTab extends ConsumerWidget {
@@ -225,7 +226,7 @@ class _ExpenseFilterBarState extends ConsumerState<ExpenseFilterBar> {
     });
 
     final member = group.member(filter.member);
-    final category = Category.byId(filter.category);
+    final category = group.category(filter.category);
     void set(ExpenseFilter f) => _notifier.set(f);
 
     return Column(
@@ -293,7 +294,7 @@ class _ExpenseFilterBarState extends ConsumerState<ExpenseFilterBar> {
                     onPressed: () => set(filter.copyWith(category: () => null, payments: false)),
                     child: Text(l10n.filterAnyCategory),
                   ),
-                  for (final c in Category.values)
+                  for (final c in group.offeredCategories(filter.category))
                     MenuItemButton(
                       leadingIcon: Text(c.emoji),
                       onPressed: () => set(filter.copyWith(category: () => c.id, payments: false)),
@@ -352,9 +353,10 @@ class DateHeader extends StatelessWidget {
 
 /// A category emoji in a soft circle of the category color, or a payment icon.
 class CategoryIcon extends StatelessWidget {
-  const CategoryIcon({super.key, required this.expense, this.size = 44});
+  const CategoryIcon({super.key, required this.expense, required this.group, this.size = 44});
 
   final Expense expense;
+  final Group group;
   final double size;
 
   @override
@@ -368,16 +370,9 @@ class CategoryIcon extends StatelessWidget {
         child: Icon(Icons.payments_outlined, color: scheme.onTertiaryContainer, size: size * 0.5),
       );
     }
-    final category = Category.byId(expense.categoryId) ?? Category.other;
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(category.color.withValues(alpha: 0.25), scheme.surface),
-        shape: BoxShape.circle,
-      ),
-      child: Text(category.emoji, style: TextStyle(fontSize: size * 0.48)),
+    return CategoryBubble(
+      category: group.category(expense.categoryId) ?? Category.other.asGroupCategory,
+      size: size,
     );
   }
 }
@@ -440,7 +435,7 @@ class ExpenseTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: BSpace.s12, vertical: BSpace.s8),
           child: Row(
             children: [
-              CategoryIcon(expense: e),
+              CategoryIcon(expense: e, group: group),
               const SizedBox(width: BSpace.s16),
               Expanded(
                 child: Column(
@@ -517,7 +512,7 @@ class _PaymentSheet extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CategoryIcon(expense: payment, size: 56),
+            CategoryIcon(expense: payment, group: group, size: 56),
             const SizedBox(height: BSpace.s16),
             Text(l10n.paymentTitle(from, to), style: text.titleLarge, textAlign: TextAlign.center),
             Text(

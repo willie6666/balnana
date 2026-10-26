@@ -158,7 +158,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 		}
 
 		categories := map[string]string{}
-		rows, err := tx.Query(ctx, `select id, emoji from categories`)
+		rows, err := tx.Query(ctx, `select id, emoji from categories where group_id is null`)
 		if err != nil {
 			return err
 		}

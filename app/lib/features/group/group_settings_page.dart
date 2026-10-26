@@ -350,6 +350,12 @@ class _Settings extends ConsumerWidget {
           title: l10n.groupData,
           children: [
             GroupedTile(
+              icon: Icons.category_outlined,
+              title: l10n.categoriesTitle,
+              subtitle: l10n.categoriesHelp,
+              onTap: () => context.go('/g/${group.token}/settings/categories'),
+            ),
+            GroupedTile(
               icon: Icons.download_outlined,
               title: l10n.exportCsv,
               subtitle: l10n.exportCsvHelp,

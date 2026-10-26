@@ -187,6 +187,18 @@ abstract class AppLocalizations {
   /// **'This group has as many people as it can hold.'**
   String get errorTooManyMembers;
 
+  /// No description provided for @errorTooManyCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has as many categories as it can hold.'**
+  String get errorTooManyCategories;
+
+  /// No description provided for @errorDuplicateCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'This group already has a category with that name.'**
+  String get errorDuplicateCategory;
+
   /// No description provided for @errorInvalidCurrency.
   ///
   /// In en, this message translates to:
@@ -768,6 +780,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Data'**
   String get groupData;
+
+  /// No description provided for @categoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesTitle;
+
+  /// No description provided for @categoriesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your own, or hide the ones you don\'t use'**
+  String get categoriesHelp;
+
+  /// No description provided for @categoriesOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'This group\'s'**
+  String get categoriesOwn;
+
+  /// No description provided for @categoriesOwnEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories of the group\'s own yet.'**
+  String get categoriesOwnEmpty;
+
+  /// No description provided for @categoriesBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get categoriesBuiltIn;
+
+  /// No description provided for @categoriesBuiltInHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden categories are not offered for new expenses. Expenses that have one keep it.'**
+  String get categoriesBuiltInHelp;
+
+  /// No description provided for @categoryAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get categoryAdd;
+
+  /// No description provided for @categoryEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get categoryEdit;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get categoryName;
+
+  /// Example emoji shown in the empty emoji field. Not translated.
+  ///
+  /// In en, this message translates to:
+  /// **'🐶'**
+  String get categoryEmojiHint;
+
+  /// No description provided for @categoryDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category'**
+  String get categoryDelete;
+
+  /// No description provided for @categoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String categoryDeleteTitle(String name);
+
+  /// No description provided for @categoryDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses in this category will have none.'**
+  String get categoryDeleteBody;
+
+  /// No description provided for @categoryDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get categoryDeleteAction;
 
   /// No description provided for @exportCsv.
   ///
@@ -1416,6 +1512,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{who} removed {name}'**
   String activityMemberRemoved(String who, String name);
+
+  /// No description provided for @activityCategoryAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} added the category {name}'**
+  String activityCategoryAdded(String who, String name);
+
+  /// No description provided for @activityCategoryUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} changed the categories'**
+  String activityCategoryUpdated(String who);
+
+  /// No description provided for @activityCategoryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} deleted the category {name}'**
+  String activityCategoryDeleted(String who, String name);
 
   /// No description provided for @activityMemberJoined.
   ///

@@ -58,6 +58,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorTooManyMembers => 'This group has as many people as it can hold.';
 
   @override
+  String get errorTooManyCategories => 'This group has as many categories as it can hold.';
+
+  @override
+  String get errorDuplicateCategory => 'This group already has a category with that name.';
+
+  @override
   String get errorInvalidCurrency => 'Enter a three-letter currency code, such as USD.';
 
   @override
@@ -365,6 +371,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupData => 'Data';
+
+  @override
+  String get categoriesTitle => 'Categories';
+
+  @override
+  String get categoriesHelp => 'Add your own, or hide the ones you don\'t use';
+
+  @override
+  String get categoriesOwn => 'This group\'s';
+
+  @override
+  String get categoriesOwnEmpty => 'No categories of the group\'s own yet.';
+
+  @override
+  String get categoriesBuiltIn => 'Built-in';
+
+  @override
+  String get categoriesBuiltInHelp =>
+      'Hidden categories are not offered for new expenses. Expenses that have one keep it.';
+
+  @override
+  String get categoryAdd => 'Add category';
+
+  @override
+  String get categoryEdit => 'Edit category';
+
+  @override
+  String get categoryName => 'Name';
+
+  @override
+  String get categoryEmojiHint => '🐶';
+
+  @override
+  String get categoryDelete => 'Delete category';
+
+  @override
+  String categoryDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get categoryDeleteBody => 'Expenses in this category will have none.';
+
+  @override
+  String get categoryDeleteAction => 'Delete';
 
   @override
   String get exportCsv => 'Export as CSV';
@@ -743,6 +794,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String activityMemberRemoved(String who, String name) {
     return '$who removed $name';
+  }
+
+  @override
+  String activityCategoryAdded(String who, String name) {
+    return '$who added the category $name';
+  }
+
+  @override
+  String activityCategoryUpdated(String who) {
+    return '$who changed the categories';
+  }
+
+  @override
+  String activityCategoryDeleted(String who, String name) {
+    return '$who deleted the category $name';
   }
 
   @override

@@ -84,9 +84,11 @@ func exportCsv(ctx context.Context, q querier, g *group, offset int) (ExportCsv2
 	}
 
 	rows, err = q.Query(ctx, `
-		select id::text, case when transaction_type = 'expense' then kind::text else transaction_type end, title, coalesce(category_id, ''), amount, occurred_at, coalesce(note, '')
-		from expenses where group_id = $1 and deleted_at is null
-		order by occurred_at, id`, g.id)
+		select e.id::text, case when e.transaction_type = 'expense' then e.kind::text else e.transaction_type end,
+		       e.title, coalesce(c.name, e.category_id, ''), e.amount, e.occurred_at, coalesce(e.note, '')
+		from expenses e left join categories c on c.id = e.category_id
+		where e.group_id = $1 and e.deleted_at is null
+		order by e.occurred_at, e.id`, g.id)
 	if err != nil {
 		return ExportCsv200TextcsvResponse{}, err
 	}

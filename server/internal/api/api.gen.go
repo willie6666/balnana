@@ -151,6 +151,27 @@ type Balances struct {
 	Transfers []Transfer `json:"transfers"`
 }
 
+// Category defines model for Category.
+type Category struct {
+	BuiltIn bool   `json:"builtIn"`
+	Color   int    `json:"color"`
+	Emoji   string `json:"emoji"`
+
+	// Hidden Not offered for new expenses in this group.
+	Hidden bool   `json:"hidden"`
+	Id     string `json:"id"`
+
+	// Name Only for the group's own; the app names built-in ones.
+	Name *string `json:"name,omitempty"`
+}
+
+// CategoryInput defines model for CategoryInput.
+type CategoryInput struct {
+	Color *int   `json:"color,omitempty"`
+	Emoji string `json:"emoji"`
+	Name  string `json:"name"`
+}
+
 // CategoryStats defines model for CategoryStats.
 type CategoryStats struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
@@ -159,6 +180,14 @@ type CategoryStats struct {
 	// CategoryId Absent for expenses without a category.
 	CategoryId *string `json:"categoryId,omitempty"`
 	Count      int     `json:"count"`
+}
+
+// CategoryUpdate defines model for CategoryUpdate.
+type CategoryUpdate struct {
+	Color  *int    `json:"color,omitempty"`
+	Emoji  *string `json:"emoji,omitempty"`
+	Hidden *bool   `json:"hidden,omitempty"`
+	Name   *string `json:"name,omitempty"`
 }
 
 // EmailToken defines model for EmailToken.
@@ -236,10 +265,12 @@ type ExpensePage struct {
 
 // Group defines model for Group.
 type Group struct {
-	Color     *int      `json:"color,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-	Currency  string    `json:"currency"`
-	Emoji     *string   `json:"emoji,omitempty"`
+	// Categories The built-in categories, then the group's own, including hidden ones.
+	Categories []Category `json:"categories"`
+	Color      *int       `json:"color,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	Currency   string     `json:"currency"`
+	Emoji      *string    `json:"emoji,omitempty"`
 
 	// LinkAccess Whether the link alone opens the group (always in link mode).
 	LinkAccess bool `json:"linkAccess"`
@@ -671,6 +702,9 @@ type ActingMember = string
 // AdminToken defines model for AdminToken.
 type AdminToken = string
 
+// CategoryId defines model for CategoryId.
+type CategoryId = string
+
 // ExpenseId defines model for ExpenseId.
 type ExpenseId = string
 
@@ -745,6 +779,24 @@ type UpdateGroupParams struct {
 type ListActivityParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// AddCategoryParams defines parameters for AddCategory.
+type AddCategoryParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// DeleteCategoryParams defines parameters for DeleteCategory.
+type DeleteCategoryParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateCategoryParams defines parameters for UpdateCategory.
+type UpdateCategoryParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // ListExpensesParams defines parameters for ListExpenses.
@@ -889,6 +941,12 @@ type VerifyEmailJSONRequestBody = EmailToken
 // UpdateGroupJSONRequestBody defines body for UpdateGroup for application/json ContentType.
 type UpdateGroupJSONRequestBody = GroupUpdate
 
+// AddCategoryJSONRequestBody defines body for AddCategory for application/json ContentType.
+type AddCategoryJSONRequestBody = CategoryInput
+
+// UpdateCategoryJSONRequestBody defines body for UpdateCategory for application/json ContentType.
+type UpdateCategoryJSONRequestBody = CategoryUpdate
+
 // CreateExpenseJSONRequestBody defines body for CreateExpense for application/json ContentType.
 type CreateExpenseJSONRequestBody = ExpenseInput
 
@@ -990,6 +1048,15 @@ type ServerInterface interface {
 	// Net balances and the payments that settle them
 	// (GET /g/{token}/balances)
 	GetBalances(w http.ResponseWriter, r *http.Request, token Token)
+	// Add a category of the group's own
+	// (POST /g/{token}/categories)
+	AddCategory(w http.ResponseWriter, r *http.Request, token Token, params AddCategoryParams)
+	// Delete one of the group's own categories
+	// (DELETE /g/{token}/categories/{categoryId})
+	DeleteCategory(w http.ResponseWriter, r *http.Request, token Token, categoryId CategoryId, params DeleteCategoryParams)
+	// Change a category, or hide or show it in this group
+	// (PATCH /g/{token}/categories/{categoryId})
+	UpdateCategory(w http.ResponseWriter, r *http.Request, token Token, categoryId CategoryId, params UpdateCategoryParams)
 	// Live notices that the group changed (server-sent events)
 	// (GET /g/{token}/events)
 	GroupEvents(w http.ResponseWriter, r *http.Request, token Token)
@@ -1825,6 +1892,195 @@ func (siw *ServerInterfaceWrapper) GetBalances(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBalances(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddCategory operation middleware
+func (siw *ServerInterfaceWrapper) AddCategory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AddCategoryParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddCategory(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCategory operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "categoryId" -------------
+	var categoryId CategoryId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "categoryId", r.PathValue("categoryId"), &categoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "categoryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteCategoryParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCategory(w, r, token, categoryId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCategory operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "categoryId" -------------
+	var categoryId CategoryId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "categoryId", r.PathValue("categoryId"), &categoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "categoryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateCategoryParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCategory(w, r, token, categoryId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3348,6 +3604,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/balances", wrapper.GetBalances)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/categories", wrapper.AddCategory)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/categories/{categoryId}", wrapper.DeleteCategory)
+	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/categories/{categoryId}", wrapper.UpdateCategory)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/events", wrapper.GroupEvents)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses", wrapper.ListExpenses)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses", wrapper.CreateExpense)
@@ -3969,6 +4228,99 @@ type GetBalancesdefaultJSONResponse struct {
 }
 
 func (response GetBalancesdefaultJSONResponse) VisitGetBalancesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AddCategoryRequestObject struct {
+	Token  Token `json:"token"`
+	Params AddCategoryParams
+	Body   *AddCategoryJSONRequestBody
+}
+
+type AddCategoryResponseObject interface {
+	VisitAddCategoryResponse(w http.ResponseWriter) error
+}
+
+type AddCategory201JSONResponse Category
+
+func (response AddCategory201JSONResponse) VisitAddCategoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddCategorydefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response AddCategorydefaultJSONResponse) VisitAddCategoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteCategoryRequestObject struct {
+	Token      Token      `json:"token"`
+	CategoryId CategoryId `json:"categoryId"`
+	Params     DeleteCategoryParams
+}
+
+type DeleteCategoryResponseObject interface {
+	VisitDeleteCategoryResponse(w http.ResponseWriter) error
+}
+
+type DeleteCategory204Response struct {
+}
+
+func (response DeleteCategory204Response) VisitDeleteCategoryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteCategorydefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteCategorydefaultJSONResponse) VisitDeleteCategoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateCategoryRequestObject struct {
+	Token      Token      `json:"token"`
+	CategoryId CategoryId `json:"categoryId"`
+	Params     UpdateCategoryParams
+	Body       *UpdateCategoryJSONRequestBody
+}
+
+type UpdateCategoryResponseObject interface {
+	VisitUpdateCategoryResponse(w http.ResponseWriter) error
+}
+
+type UpdateCategory200JSONResponse Category
+
+func (response UpdateCategory200JSONResponse) VisitUpdateCategoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCategorydefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateCategorydefaultJSONResponse) VisitUpdateCategoryResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -4990,6 +5342,15 @@ type StrictServerInterface interface {
 	// Net balances and the payments that settle them
 	// (GET /g/{token}/balances)
 	GetBalances(ctx context.Context, request GetBalancesRequestObject) (GetBalancesResponseObject, error)
+	// Add a category of the group's own
+	// (POST /g/{token}/categories)
+	AddCategory(ctx context.Context, request AddCategoryRequestObject) (AddCategoryResponseObject, error)
+	// Delete one of the group's own categories
+	// (DELETE /g/{token}/categories/{categoryId})
+	DeleteCategory(ctx context.Context, request DeleteCategoryRequestObject) (DeleteCategoryResponseObject, error)
+	// Change a category, or hide or show it in this group
+	// (PATCH /g/{token}/categories/{categoryId})
+	UpdateCategory(ctx context.Context, request UpdateCategoryRequestObject) (UpdateCategoryResponseObject, error)
 	// Live notices that the group changed (server-sent events)
 	// (GET /g/{token}/events)
 	GroupEvents(ctx context.Context, request GroupEventsRequestObject) (GroupEventsResponseObject, error)
@@ -5690,6 +6051,103 @@ func (sh *strictHandler) GetBalances(w http.ResponseWriter, r *http.Request, tok
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetBalancesResponseObject); ok {
 		if err := validResponse.VisitGetBalancesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddCategory operation middleware
+func (sh *strictHandler) AddCategory(w http.ResponseWriter, r *http.Request, token Token, params AddCategoryParams) {
+	var request AddCategoryRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body AddCategoryJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddCategory(ctx, request.(AddCategoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddCategory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddCategoryResponseObject); ok {
+		if err := validResponse.VisitAddCategoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteCategory operation middleware
+func (sh *strictHandler) DeleteCategory(w http.ResponseWriter, r *http.Request, token Token, categoryId CategoryId, params DeleteCategoryParams) {
+	var request DeleteCategoryRequestObject
+
+	request.Token = token
+	request.CategoryId = categoryId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteCategory(ctx, request.(DeleteCategoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteCategory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteCategoryResponseObject); ok {
+		if err := validResponse.VisitDeleteCategoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCategory operation middleware
+func (sh *strictHandler) UpdateCategory(w http.ResponseWriter, r *http.Request, token Token, categoryId CategoryId, params UpdateCategoryParams) {
+	var request UpdateCategoryRequestObject
+
+	request.Token = token
+	request.CategoryId = categoryId
+	request.Params = params
+
+	var body UpdateCategoryJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateCategory(ctx, request.(UpdateCategoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCategory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateCategoryResponseObject); ok {
+		if err := validResponse.VisitUpdateCategoryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

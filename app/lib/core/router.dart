@@ -10,6 +10,7 @@ import '../features/account/sign_in_page.dart';
 import '../features/activity/activity_page.dart';
 import '../features/admin/admin_page.dart';
 import '../features/expense/expense_editor_page.dart';
+import '../features/group/categories_page.dart';
 import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
@@ -149,6 +150,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'settings',
                     builder: (context, state) => GroupSettingsPage(token: state.pathParameters['token']!),
+                    routes: [
+                      GoRoute(
+                        path: 'categories',
+                        builder: (context, state) => CategoriesPage(token: state.pathParameters['token']!),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'join',

@@ -77,7 +77,7 @@ func (b *exportBarrier) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data p
 func (*exportBarrier) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
 
 func TestExportCsvSnapshot(t *testing.T) {
-	for _, boundary := range []string{"select x.expense_id", "coalesce(category_id"} {
+	for _, boundary := range []string{"select x.expense_id", "coalesce(c.name, e.category_id"} {
 		t.Run(boundary, func(t *testing.T) {
 			pool := testDB(t)
 			cfg := baseConfig(t, map[string]string{})

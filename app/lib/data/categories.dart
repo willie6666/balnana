@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/l10n.dart';
 import '../ui/colors.dart';
+import 'models.dart';
 
 /// The built-in categories. Ids, emoji and colors match the server's seed
 /// (server/migrations/00001_init.sql).
@@ -25,9 +26,10 @@ enum Category {
   final int rgb;
 
   String get id => name;
-  Color get color => BalnanaColors.fromRgb(rgb);
 
   static Category? byId(String? id) => id == null ? null : values.asNameMap()[id];
+
+  GroupCategory get asGroupCategory => GroupCategory(id: id, emoji: emoji, rgb: rgb, builtIn: true);
 
   String label(AppLocalizations l10n) => switch (this) {
     food => l10n.categoryFood,
@@ -43,4 +45,32 @@ enum Category {
     gifts => l10n.categoryGifts,
     other => l10n.categoryOther,
   };
+}
+
+extension GroupCategoryLook on GroupCategory {
+  /// Built-in categories in the reader's language; the group's own by their name.
+  String label(AppLocalizations l10n) => Category.byId(builtIn ? id : null)?.label(l10n) ?? name ?? id;
+
+  Color get color => BalnanaColors.fromRgb(rgb);
+}
+
+extension GroupCategories on Group {
+  /// Every category the group knows, hidden ones included.
+  List<GroupCategory> get allCategories =>
+      categories.isEmpty ? [for (final c in Category.values) c.asGroupCategory] : categories;
+
+  /// The categories to pick from, plus [keep] (already chosen) even if hidden.
+  List<GroupCategory> offeredCategories([String? keep]) => [
+    for (final c in allCategories)
+      if (!c.hidden || c.id == keep) c,
+  ];
+
+  /// Null when there is no such category, as for one since deleted.
+  GroupCategory? category(String? id) {
+    if (id == null) return null;
+    for (final c in allCategories) {
+      if (c.id == id) return c;
+    }
+    return Category.byId(id)?.asGroupCategory;
+  }
 }

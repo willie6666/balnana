@@ -336,6 +336,28 @@ class GroupApi {
   Future<void> removeMember(String id) =>
       _send(() => _dio.delete<Object?>('$_base/members/$id', options: _as), (_) {});
 
+  Future<GroupCategory> addCategory({required String name, required String emoji, int? color}) => _send(
+    () => _dio.post<Object?>(
+      '$_base/categories',
+      data: {'name': name, 'emoji': emoji, 'color': ?color},
+      options: _as,
+    ),
+    GroupCategory.fromJson,
+  );
+
+  /// Built-in categories can only be hidden or shown.
+  Future<GroupCategory> updateCategory(String id, {String? name, String? emoji, int? color, bool? hidden}) => _send(
+    () => _dio.patch<Object?>(
+      '$_base/categories/$id',
+      data: {'name': ?name, 'emoji': ?emoji, 'color': ?color, 'hidden': ?hidden},
+      options: _as,
+    ),
+    GroupCategory.fromJson,
+  );
+
+  Future<void> deleteCategory(String id) =>
+      _send(() => _dio.delete<Object?>('$_base/categories/$id', options: _as), (_) {});
+
   Future<Page<Expense>> expenses(
     int digits, {
     String? cursor,

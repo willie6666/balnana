@@ -171,7 +171,7 @@ class _StatsBody extends StatelessWidget {
             children: [
               for (final c in stats.categories)
                 _CategoryRow(
-                  category: Category.byId(c.category),
+                  category: group.category(c.category),
                   amount: money(c.amount),
                   count: c.count,
                   fraction: _fraction(c.amount, biggestCategory),
@@ -320,7 +320,7 @@ class _CategoryRow extends StatelessWidget {
   });
 
   /// Null for expenses without a category.
-  final Category? category;
+  final GroupCategory? category;
   final String amount;
   final int count;
   final double fraction;
