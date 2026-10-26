@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import '../../core/server.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
+import '../../data/live.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
@@ -92,14 +94,65 @@ class GroupPage extends ConsumerStatefulWidget {
 
 class _GroupPageState extends ConsumerState<GroupPage> {
   bool _askedIdentity = false;
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     ref.listenManual(groupProvider(widget.token), (_, next) {
       final group = next.value;
-      if (group != null) _opened(group);
+      if (group != null) {
+        _opened(group);
+        _goLive();
+      }
     }, fireImmediately: true);
+    // A new session reloads everything already; follow the group as that account.
+    ref.listenManual(apiProvider, (_, _) {
+      _stopLive();
+      _wasLive = false;
+      _goLive();
+    });
+    // Phones and browsers keep hidden apps' connections only so long; catch up
+    // when the app is shown again instead.
+    _lifecycle = AppLifecycleListener(onHide: _stopLive, onShow: _goLive);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    _stopLive();
+    _reload?.cancel();
+    super.dispose();
+  }
+
+  StreamSubscription<LiveEvent>? _live;
+  bool _wasLive = false;
+  Timer? _reload;
+
+  /// Follows changes others make to the group while it is open and shown.
+  void _goLive() {
+    final dio = ref.read(apiProvider);
+    if (_live != null || dio == null || ref.read(groupProvider(widget.token)).value == null) return;
+    _live = groupEvents(dio, widget.token).listen(_onLive, onDone: () => _live = null);
+  }
+
+  void _stopLive() {
+    _live?.cancel();
+    _live = null;
+  }
+
+  void _onLive(LiveEvent event) {
+    // The first connection follows a fresh load; later ones may have missed
+    // changes. Gone reloads too, to show why the group is no longer there.
+    if (event == LiveEvent.connected && !_wasLive) {
+      _wasLive = true;
+      return;
+    }
+    // Changes often come in a burst, such as an expense and its undo.
+    _reload?.cancel();
+    _reload = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) refreshGroup(ref, widget.token);
+    });
   }
 
   /// Remembers a group opened from a link and asks who this device is. A

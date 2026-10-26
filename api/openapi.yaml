@@ -711,6 +711,28 @@ paths:
                 $ref: "#/components/schemas/ActivityPage"
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/events:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: groupEvents
+      summary: Live notices that the group changed (server-sent events)
+      description: >-
+        A text/event-stream that stays open. It sends a `change` event
+        whenever something in the group changes (no data: reload what is
+        shown), comments to keep the connection alive, and a `gone` event
+        before closing when the request may no longer see the group (link
+        reset, removed from it, signed out). Events missed while not connected
+        are not replayed, so reload after connecting.
+      responses:
+        "200":
+          description: The event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
 components:
   parameters:
     Token:

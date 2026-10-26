@@ -68,6 +68,9 @@ func run() error {
 	}
 
 	srv := api.NewServer(cfg, pool, log, version)
+	// Stops with ctx, which also ends open event streams so shutdown need
+	// not wait for them.
+	go srv.ListenForChanges(ctx)
 	httpServer := &http.Server{
 		Addr:              cfg.Listen,
 		Handler:           api.NewHandler(srv, web.Handler(cfg.WebDir)),

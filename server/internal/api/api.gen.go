@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -674,6 +675,9 @@ type ServerInterface interface {
 	// Net balances and the payments that settle them
 	// (GET /g/{token}/balances)
 	GetBalances(w http.ResponseWriter, r *http.Request, token Token)
+	// Live notices that the group changed (server-sent events)
+	// (GET /g/{token}/events)
+	GroupEvents(w http.ResponseWriter, r *http.Request, token Token)
 	// Expenses and payments, newest first
 	// (GET /g/{token}/expenses)
 	ListExpenses(w http.ResponseWriter, r *http.Request, token Token, params ListExpensesParams)
@@ -1246,6 +1250,39 @@ func (siw *ServerInterfaceWrapper) GetBalances(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBalances(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GroupEvents operation middleware
+func (siw *ServerInterfaceWrapper) GroupEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GroupEvents(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2316,6 +2353,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/activity", wrapper.ListActivity)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/balances", wrapper.GetBalances)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/events", wrapper.GroupEvents)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses", wrapper.ListExpenses)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses", wrapper.CreateExpense)
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.DeleteExpense)
@@ -2754,6 +2792,45 @@ type GetBalancesdefaultJSONResponse struct {
 }
 
 func (response GetBalancesdefaultJSONResponse) VisitGetBalancesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GroupEventsRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type GroupEventsResponseObject interface {
+	VisitGroupEventsResponse(w http.ResponseWriter) error
+}
+
+type GroupEvents200TexteventStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GroupEvents200TexteventStreamResponse) VisitGroupEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GroupEventsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GroupEventsdefaultJSONResponse) VisitGroupEventsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -3444,6 +3521,9 @@ type StrictServerInterface interface {
 	// Net balances and the payments that settle them
 	// (GET /g/{token}/balances)
 	GetBalances(ctx context.Context, request GetBalancesRequestObject) (GetBalancesResponseObject, error)
+	// Live notices that the group changed (server-sent events)
+	// (GET /g/{token}/events)
+	GroupEvents(ctx context.Context, request GroupEventsRequestObject) (GroupEventsResponseObject, error)
 	// Expenses and payments, newest first
 	// (GET /g/{token}/expenses)
 	ListExpenses(ctx context.Context, request ListExpensesRequestObject) (ListExpensesResponseObject, error)
@@ -3937,6 +4017,32 @@ func (sh *strictHandler) GetBalances(w http.ResponseWriter, r *http.Request, tok
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetBalancesResponseObject); ok {
 		if err := validResponse.VisitGetBalancesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GroupEvents operation middleware
+func (sh *strictHandler) GroupEvents(w http.ResponseWriter, r *http.Request, token Token) {
+	var request GroupEventsRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GroupEvents(ctx, request.(GroupEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GroupEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GroupEventsResponseObject); ok {
+		if err := validResponse.VisitGroupEventsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

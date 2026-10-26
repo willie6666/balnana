@@ -30,6 +30,12 @@ are built from it. Behind a proxy, also set `BALNANA_TRUST_PROXY=true` so the
 per-client rate limit (`BALNANA_RATE_LIMIT`, requests a minute) sees real client
 addresses.
 
+Open groups update live over Server-Sent Events (`/api/v1/g/<token>/events`). The
+proxy must not buffer those responses; nginx honours the `X-Accel-Buffering: no`
+header the server sends, and Caddy and Traefik need no setup. Serve over HTTP/2 if
+you can: browsers allow only six HTTP/1.1 connections per site, and each open group
+tab holds one.
+
 Every setting is an environment variable; [.env.example](.env.example) lists them
 all, including the access mode (`link` or `accounts`), email and OAuth sign-in.
 
