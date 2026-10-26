@@ -42,6 +42,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     ),
     'import_me' => l10n.errorImportMe,
     'too_large' => l10n.errorImportTooBig,
+    'bad_image' => l10n.errorBadImage,
     final code =>
       MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??
           l10n.errorGeneric,

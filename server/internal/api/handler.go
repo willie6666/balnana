@@ -55,26 +55,34 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	return h
 }
 
-// Request bodies are small JSON, except imported files.
+// Request bodies are small JSON, except imported files and receipt photos.
 const (
-	maxBody       = 1 << 20
-	maxImportBody = 16 << 20
+	maxBody        = 1 << 20
+	maxImportBody  = 16 << 20
+	maxReceiptBody = 10 << 20
 )
 
 // checkBodies limits the size of request bodies and, for the API, wants them
-// to be JSON: a page on another site can post a plain-text form without
-// asking first, but not JSON.
+// to be JSON, or an image for a receipt: a page on another site can post a
+// plain-text form without asking first, but not those.
 func checkBodies(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receipt := r.Method == http.MethodPut && strings.HasSuffix(r.URL.Path, "/receipt")
 		if !safeMethod(r.Method) && r.ContentLength != 0 && strings.HasPrefix(r.URL.Path, BasePath+"/") {
-			if t, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || t != "application/json" {
+			t, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+			if receipt && err == nil && strings.HasPrefix(t, "image/") {
+				// An image, as it should be.
+			} else if err != nil || t != "application/json" {
 				writeError(w, http.StatusUnsupportedMediaType, "not_json")
 				return
 			}
 		}
 		limit := int64(maxBody)
-		if r.URL.Path == BasePath+"/groups/import" {
+		switch {
+		case r.URL.Path == BasePath+"/groups/import":
 			limit = maxImportBody
+		case receipt:
+			limit = maxReceiptBody
 		}
 		if r.ContentLength > limit {
 			writeError(w, http.StatusRequestEntityTooLarge, "too_large")

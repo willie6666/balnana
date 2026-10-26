@@ -68,7 +68,7 @@ const (
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.updated, group.link_reset, member.added, member.updated, member.removed, expense.created, expense.updated, expense.deleted, expense.restored. Payments use the expense actions with `kind: payment` in the payload.
+	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed. Payments use the expense actions with `kind: payment` in the payload.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -122,8 +122,11 @@ type Expense struct {
 	CreatedAt  time.Time `json:"createdAt"`
 
 	// CreatedBy Member id of whoever added it, when known.
-	CreatedBy   *string     `json:"createdBy,omitempty"`
-	DeletedAt   *time.Time  `json:"deletedAt,omitempty"`
+	CreatedBy *string    `json:"createdBy,omitempty"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+
+	// HasReceipt Whether a photo of the receipt is attached (`/receipt`).
+	HasReceipt  bool        `json:"hasReceipt"`
 	Id          string      `json:"id"`
 	Kind        ExpenseKind `json:"kind"`
 	Note        *string     `json:"note,omitempty"`
@@ -684,10 +687,28 @@ type UpdateExpenseParams struct {
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
+// DeleteReceiptParams defines parameters for DeleteReceipt.
+type DeleteReceiptParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// PutReceiptParams defines parameters for PutReceipt.
+type PutReceiptParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
 // RestoreExpenseParams defines parameters for RestoreExpense.
 type RestoreExpenseParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// ExportCsvParams defines parameters for ExportCsv.
+type ExportCsvParams struct {
+	// UtcOffset Minutes east of UTC to write dates in, for the reader's time zone.
+	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
 // AddMemberParams defines parameters for AddMember.
@@ -854,9 +875,21 @@ type ServerInterface interface {
 
 	// (PUT /g/{token}/expenses/{expenseId})
 	UpdateExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params UpdateExpenseParams)
+	// Remove the photo of the receipt
+	// (DELETE /g/{token}/expenses/{expenseId}/receipt)
+	DeleteReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params DeleteReceiptParams)
+	// The photo of the expense's receipt
+	// (GET /g/{token}/expenses/{expenseId}/receipt)
+	GetReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId)
+	// Attach a photo of the receipt, replacing any earlier one
+	// (PUT /g/{token}/expenses/{expenseId}/receipt)
+	PutReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params PutReceiptParams)
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams)
+	// Every expense and payment of the group as a spreadsheet
+	// (GET /g/{token}/export.csv)
+	ExportCsv(w http.ResponseWriter, r *http.Request, token Token, params ExportCsvParams)
 	// Email someone an invitation to the group (accounts mode)
 	// (POST /g/{token}/invites)
 	InviteToGroup(w http.ResponseWriter, r *http.Request, token Token)
@@ -1796,6 +1829,180 @@ func (siw *ServerInterfaceWrapper) UpdateExpense(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteReceipt operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteReceiptParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReceipt(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReceipt operation middleware
+func (siw *ServerInterfaceWrapper) GetReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReceipt(w, r, token, expenseId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutReceipt operation middleware
+func (siw *ServerInterfaceWrapper) PutReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutReceiptParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutReceipt(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // RestoreExpense operation middleware
 func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http.Request) {
 
@@ -1853,6 +2060,50 @@ func (siw *ServerInterfaceWrapper) RestoreExpense(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RestoreExpense(w, r, token, expenseId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportCsv operation middleware
+func (siw *ServerInterfaceWrapper) ExportCsv(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ExportCsvParams
+
+	// ------------- Optional query parameter "utcOffset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "utcOffset", r.URL.Query(), &params.UtcOffset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "utcOffset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportCsv(w, r, token, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2728,7 +2979,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.DeleteExpense)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.GetExpense)
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/expenses/{expenseId}", wrapper.UpdateExpense)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/expenses/{expenseId}/receipt", wrapper.DeleteReceipt)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/expenses/{expenseId}/receipt", wrapper.GetReceipt)
+	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/expenses/{expenseId}/receipt", wrapper.PutReceipt)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/expenses/{expenseId}/restore", wrapper.RestoreExpense)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/export.csv", wrapper.ExportCsv)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/invites", wrapper.InviteToGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/join", wrapper.GetJoinInfo)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/join", wrapper.JoinGroup)
@@ -3363,6 +3618,109 @@ func (response UpdateExpensedefaultJSONResponse) VisitUpdateExpenseResponse(w ht
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type DeleteReceiptRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+	Params    DeleteReceiptParams
+}
+
+type DeleteReceiptResponseObject interface {
+	VisitDeleteReceiptResponse(w http.ResponseWriter) error
+}
+
+type DeleteReceipt204Response struct {
+}
+
+func (response DeleteReceipt204Response) VisitDeleteReceiptResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteReceiptdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteReceiptdefaultJSONResponse) VisitDeleteReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetReceiptRequestObject struct {
+	Token     Token     `json:"token"`
+	ExpenseId ExpenseId `json:"expenseId"`
+}
+
+type GetReceiptResponseObject interface {
+	VisitGetReceiptResponse(w http.ResponseWriter) error
+}
+
+type GetReceipt200ImagejpegResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetReceipt200ImagejpegResponse) VisitGetReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "image/jpeg")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetReceiptdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetReceiptdefaultJSONResponse) VisitGetReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type PutReceiptRequestObject struct {
+	Token       Token     `json:"token"`
+	ExpenseId   ExpenseId `json:"expenseId"`
+	Params      PutReceiptParams
+	ContentType string
+	Body        io.Reader
+}
+
+type PutReceiptResponseObject interface {
+	VisitPutReceiptResponse(w http.ResponseWriter) error
+}
+
+type PutReceipt200JSONResponse Expense
+
+func (response PutReceipt200JSONResponse) VisitPutReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutReceiptdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response PutReceiptdefaultJSONResponse) VisitPutReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type RestoreExpenseRequestObject struct {
 	Token     Token     `json:"token"`
 	ExpenseId ExpenseId `json:"expenseId"`
@@ -3388,6 +3746,52 @@ type RestoreExpensedefaultJSONResponse struct {
 }
 
 func (response RestoreExpensedefaultJSONResponse) VisitRestoreExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ExportCsvRequestObject struct {
+	Token  Token `json:"token"`
+	Params ExportCsvParams
+}
+
+type ExportCsvResponseObject interface {
+	VisitExportCsvResponse(w http.ResponseWriter) error
+}
+
+type ExportCsv200ResponseHeaders struct {
+	ContentDisposition string
+}
+
+type ExportCsv200TextcsvResponse struct {
+	Body          io.Reader
+	Headers       ExportCsv200ResponseHeaders
+	ContentLength int64
+}
+
+func (response ExportCsv200TextcsvResponse) VisitExportCsvResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/csv")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprint(response.Headers.ContentDisposition))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ExportCsvdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ExportCsvdefaultJSONResponse) VisitExportCsvResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -4037,9 +4441,21 @@ type StrictServerInterface interface {
 
 	// (PUT /g/{token}/expenses/{expenseId})
 	UpdateExpense(ctx context.Context, request UpdateExpenseRequestObject) (UpdateExpenseResponseObject, error)
+	// Remove the photo of the receipt
+	// (DELETE /g/{token}/expenses/{expenseId}/receipt)
+	DeleteReceipt(ctx context.Context, request DeleteReceiptRequestObject) (DeleteReceiptResponseObject, error)
+	// The photo of the expense's receipt
+	// (GET /g/{token}/expenses/{expenseId}/receipt)
+	GetReceipt(ctx context.Context, request GetReceiptRequestObject) (GetReceiptResponseObject, error)
+	// Attach a photo of the receipt, replacing any earlier one
+	// (PUT /g/{token}/expenses/{expenseId}/receipt)
+	PutReceipt(ctx context.Context, request PutReceiptRequestObject) (PutReceiptResponseObject, error)
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(ctx context.Context, request RestoreExpenseRequestObject) (RestoreExpenseResponseObject, error)
+	// Every expense and payment of the group as a spreadsheet
+	// (GET /g/{token}/export.csv)
+	ExportCsv(ctx context.Context, request ExportCsvRequestObject) (ExportCsvResponseObject, error)
 	// Email someone an invitation to the group (accounts mode)
 	// (POST /g/{token}/invites)
 	InviteToGroup(ctx context.Context, request InviteToGroupRequestObject) (InviteToGroupResponseObject, error)
@@ -4711,6 +5127,92 @@ func (sh *strictHandler) UpdateExpense(w http.ResponseWriter, r *http.Request, t
 	}
 }
 
+// DeleteReceipt operation middleware
+func (sh *strictHandler) DeleteReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params DeleteReceiptParams) {
+	var request DeleteReceiptRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteReceipt(ctx, request.(DeleteReceiptRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteReceipt")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteReceiptResponseObject); ok {
+		if err := validResponse.VisitDeleteReceiptResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetReceipt operation middleware
+func (sh *strictHandler) GetReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId) {
+	var request GetReceiptRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReceipt(ctx, request.(GetReceiptRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReceipt")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetReceiptResponseObject); ok {
+		if err := validResponse.VisitGetReceiptResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutReceipt operation middleware
+func (sh *strictHandler) PutReceipt(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params PutReceiptParams) {
+	var request PutReceiptRequestObject
+
+	request.Token = token
+	request.ExpenseId = expenseId
+	request.Params = params
+	request.ContentType = r.Header.Get("Content-Type")
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutReceipt(ctx, request.(PutReceiptRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutReceipt")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutReceiptResponseObject); ok {
+		if err := validResponse.VisitPutReceiptResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // RestoreExpense operation middleware
 func (sh *strictHandler) RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams) {
 	var request RestoreExpenseRequestObject
@@ -4732,6 +5234,33 @@ func (sh *strictHandler) RestoreExpense(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RestoreExpenseResponseObject); ok {
 		if err := validResponse.VisitRestoreExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExportCsv operation middleware
+func (sh *strictHandler) ExportCsv(w http.ResponseWriter, r *http.Request, token Token, params ExportCsvParams) {
+	var request ExportCsvRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExportCsv(ctx, request.(ExportCsvRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExportCsv")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExportCsvResponseObject); ok {
+		if err := validResponse.VisitExportCsvResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

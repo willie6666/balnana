@@ -732,6 +732,58 @@ paths:
           description: Deleted
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/expenses/{expenseId}/receipt:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/ExpenseId"
+    get:
+      operationId: getReceipt
+      summary: The photo of the expense's receipt
+      responses:
+        "200":
+          description: A JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: putReceipt
+      summary: Attach a photo of the receipt, replacing any earlier one
+      description: >-
+        JPEG, PNG or WebP up to 10 MiB. The server stores it as a JPEG of at
+        most 2048 pixels a side, turned upright and without metadata such as
+        where it was taken. The expense's version does not change.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          image/*:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: The expense, now with `hasReceipt`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteReceipt
+      summary: Remove the photo of the receipt
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Removed, or there was none
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/expenses/{expenseId}/restore:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -813,6 +865,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupStats"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/export.csv:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: exportCsv
+      summary: Every expense and payment of the group as a spreadsheet
+      description: >-
+        UTF-8 CSV with a byte order mark, oldest first. Columns: date, title,
+        category, type (`expense` or `payment`), amount, currency, note, then
+        one per member with what the entry did to their balance (paid minus
+        share), so each member column adds up to their balance.
+      parameters:
+        - name: utcOffset
+          in: query
+          description: Minutes east of UTC to write dates in, for the reader's time zone.
+          schema:
+            type: integer
+            minimum: -840
+            maximum: 840
+            default: 0
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
         default:
           $ref: "#/components/responses/Error"
   /g/{token}/activity:
@@ -1220,7 +1306,7 @@ components:
       enum: [equal, exact, percent, shares]
     Expense:
       type: object
-      required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version]
+      required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version, hasReceipt]
       properties:
         id:
           type: string
@@ -1262,6 +1348,9 @@ components:
           format: date-time
         version:
           type: integer
+        hasReceipt:
+          type: boolean
+          description: Whether a photo of the receipt is attached (`/receipt`).
     Payer:
       type: object
       required: [memberId, amount]
@@ -1396,10 +1485,11 @@ components:
         action:
           type: string
           description: >-
-            group.created, group.updated, group.link_reset, member.added,
-            member.updated, member.removed, expense.created, expense.updated,
-            expense.deleted, expense.restored. Payments use the expense
-            actions with `kind: payment` in the payload.
+            group.created, group.imported, group.updated, group.link_reset,
+            member.added, member.updated, member.removed, member.joined,
+            expense.created, expense.updated, expense.deleted,
+            expense.restored, receipt.added, receipt.removed. Payments use
+            the expense actions with `kind: payment` in the payload.
         actorMemberId:
           type: string
         subjectId:

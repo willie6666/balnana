@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderOrFamily;
 
@@ -189,6 +191,7 @@ void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
   invalidate(statsProvider);
   invalidate(summariesProvider);
   invalidate(activityFeedProvider);
+  invalidate(receiptProvider);
 }
 
 /// One expense, for the editor.
@@ -199,6 +202,11 @@ final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String toke
   final group = await ref.watch(groupProvider(key.token).future);
   return _api(ref).group(key.token).expense(key.id, group.minorDigits);
 });
+
+/// The photo of an expense's receipt.
+final receiptProvider = FutureProvider.autoDispose.family<Uint8List, ({String token, String id})>(
+  (ref, key) => _api(ref).group(key.token).receipt(key.id),
+);
 
 /// What a group spent in a period, or all time when it is null.
 final statsProvider = FutureProvider.autoDispose.family<GroupStats, ({String token, Period? period})>((

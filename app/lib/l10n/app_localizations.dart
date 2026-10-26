@@ -757,6 +757,30 @@ abstract class AppLocalizations {
   /// **'This device'**
   String get groupThisDevice;
 
+  /// No description provided for @groupData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get groupData;
+
+  /// No description provided for @exportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as CSV'**
+  String get exportCsv;
+
+  /// No description provided for @exportCsvHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Every expense and payment, for a spreadsheet'**
+  String get exportCsvHelp;
+
+  /// No description provided for @exportCsvDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported'**
+  String get exportCsvDone;
+
   /// No description provided for @forgetTitle.
   ///
   /// In en, this message translates to:
@@ -1183,6 +1207,48 @@ abstract class AppLocalizations {
   /// **'Optional'**
   String get expenseNoteHint;
 
+  /// No description provided for @expenseReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get expenseReceipt;
+
+  /// No description provided for @expenseHasReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Has a receipt photo'**
+  String get expenseHasReceipt;
+
+  /// No description provided for @receiptTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get receiptTakePhoto;
+
+  /// No description provided for @receiptChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a picture'**
+  String get receiptChoose;
+
+  /// No description provided for @receiptRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get receiptRemove;
+
+  /// No description provided for @receiptView.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt photo'**
+  String get receiptView;
+
+  /// No description provided for @receiptNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The expense was saved, but not its receipt photo. {reason}'**
+  String receiptNotSaved(String reason);
+
   /// No description provided for @expensePaidByLabel.
   ///
   /// In en, this message translates to:
@@ -1411,6 +1477,18 @@ abstract class AppLocalizations {
   /// **'{who} imported {count, plural, =1{1 entry} other{{count} entries}} from {source}'**
   String activityGroupImported(String who, int count, String source);
 
+  /// No description provided for @activityReceiptAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} added a receipt photo to “{title}”'**
+  String activityReceiptAdded(String who, String title);
+
+  /// No description provided for @activityReceiptRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} removed the receipt photo from “{title}”'**
+  String activityReceiptRemoved(String who, String title);
+
   /// No description provided for @activityOther.
   ///
   /// In en, this message translates to:
@@ -1632,6 +1710,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection'**
   String get settingsConnection;
+
+  /// No description provided for @myGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups'**
+  String get myGroups;
+
+  /// No description provided for @myGroupsExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export your groups'**
+  String get myGroupsExport;
+
+  /// No description provided for @myGroupsExportHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the links of every group on this device, to keep them safe or open them on another device'**
+  String get myGroupsExportHelp;
+
+  /// No description provided for @myGroupsExported.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copied 1 group link} other{Copied {count} group links}}'**
+  String myGroupsExported(int count);
+
+  /// No description provided for @myGroupsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no groups on this device yet.'**
+  String get myGroupsNone;
+
+  /// No description provided for @myGroupsImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import groups'**
+  String get myGroupsImport;
+
+  /// No description provided for @myGroupsImportHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste group links to add them all at once'**
+  String get myGroupsImportHelp;
+
+  /// No description provided for @myGroupsImportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the links you exported from another device. Anything else in the text is skipped.'**
+  String get myGroupsImportBody;
+
+  /// No description provided for @myGroupsImportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group links'**
+  String get myGroupsImportLabel;
+
+  /// No description provided for @myGroupsImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get myGroupsImportAction;
+
+  /// No description provided for @myGroupsImportInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no Balnana group links in that text.'**
+  String get myGroupsImportInvalid;
+
+  /// No description provided for @myGroupsImported.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Those groups were already here} =1{Added 1 group} other{Added {count} groups}}'**
+  String myGroupsImported(int count);
 
   /// No description provided for @settingsServer.
   ///
@@ -2244,6 +2394,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This file is too big to import.'**
   String get errorImportTooBig;
+
+  /// No description provided for @errorBadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'That picture can\'t be used. Choose a JPEG, PNG or WebP image.'**
+  String get errorBadImage;
+
+  /// No description provided for @errorReceiptTooBig.
+  ///
+  /// In en, this message translates to:
+  /// **'That picture is too big. Choose one under 10 MB.'**
+  String get errorReceiptTooBig;
 
   /// No description provided for @errorImportMe.
   ///

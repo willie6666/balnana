@@ -204,7 +204,8 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 }
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
-	created_by_member::text, created_at, updated_at, deleted_at, version`
+	created_by_member::text, created_at, updated_at, deleted_at, version,
+	exists (select 1 from receipts r where r.expense_id = expenses.id)`
 
 // loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
 func loadExpenses(ctx context.Context, q querier, digits int, sql string, args ...any) ([]Expense, error) {
@@ -217,7 +218,7 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		var kind, method string
 		var amount int64
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
-			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version)
+			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.HasReceipt)
 		e.Kind = ExpenseKind(kind)
 		e.SplitMethod = SplitMethod(method)
 		e.Amount = domain.FormatAmount(amount, digits)

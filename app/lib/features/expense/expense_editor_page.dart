@@ -21,6 +21,7 @@ import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
+import 'receipt.dart';
 
 /// Adds an expense to a group, or edits one when [expenseId] is set.
 class ExpenseEditorPage extends ConsumerStatefulWidget {
@@ -120,6 +121,11 @@ class _EditorState extends ConsumerState<_Editor> {
   final _included = <String>{};
   final _values = <String, TextEditingController>{};
 
+  /// A new photo of the receipt, and whether the saved one is to go; both
+  /// wait for the expense to be saved.
+  PickedReceipt? _receipt;
+  bool _dropReceipt = false;
+
   bool _busy = false;
   bool _tried = false;
 
@@ -195,7 +201,9 @@ class _EditorState extends ConsumerState<_Editor> {
 
   late final List<Object?> _initial;
 
-  bool get _dirty => !listEquals(_snapshot(), _initial);
+  bool get _formDirty => !listEquals(_snapshot(), _initial);
+
+  bool get _dirty => _formDirty || _receipt != null || _dropReceipt;
 
   @override
   void didUpdateWidget(_Editor old) {
@@ -319,12 +327,16 @@ class _EditorState extends ConsumerState<_Editor> {
     setState(() => _busy = true);
     final api = groupApiOf(ref, _group.token);
     try {
+      final String id;
       if (widget.expense case final e?) {
-        await api.updateExpense(e.id, draft, _digits, version: e.version);
-        ref.invalidate(expenseProvider((token: _group.token, id: e.id)));
+        id = e.id;
+        // A new photo alone leaves the expense as it is.
+        if (_formDirty) await api.updateExpense(e.id, draft, _digits, version: e.version);
       } else {
-        await api.createExpense(draft, _digits);
+        id = (await api.createExpense(draft, _digits)).id;
       }
+      await _saveReceipt(api, id);
+      ref.invalidate(expenseProvider((token: _group.token, id: id)));
       refreshGroup(ref, _group.token);
       if (mounted) context.pop();
     } on ApiException catch (e) {
@@ -335,6 +347,22 @@ class _EditorState extends ConsumerState<_Editor> {
       } else {
         messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
       }
+    }
+  }
+
+  /// Uploads or removes the photo once the expense is saved. The expense
+  /// stays saved when this fails, so it is only told.
+  Future<void> _saveReceipt(GroupApi api, String id) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (_receipt case final r?) {
+        await api.putReceipt(id, r.bytes, r.type, _digits);
+      } else if (_dropReceipt) {
+        await api.deleteReceipt(id);
+      }
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.receiptNotSaved(errorMessage(l10n, e)))));
     }
   }
 
@@ -515,6 +543,19 @@ class _EditorState extends ConsumerState<_Editor> {
                 textCapitalization: TextCapitalization.sentences,
                 inputFormatters: [LengthLimitingTextInputFormatter(2000)],
                 decoration: InputDecoration(hintText: l10n.expenseNoteHint),
+              ),
+
+              FormSection(l10n.expenseReceipt),
+              ReceiptField(
+                token: _group.token,
+                expenseId: widget.expense?.id,
+                saved: (widget.expense?.hasReceipt ?? false) && !_dropReceipt,
+                picked: _receipt,
+                onPicked: (r) => setState(() => _receipt = r),
+                onRemoved: () => setState(() {
+                  _receipt = null;
+                  _dropReceipt = widget.expense?.hasReceipt ?? false;
+                }),
               ),
             ],
           ),

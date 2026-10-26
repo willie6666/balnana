@@ -11,10 +11,14 @@ import 'package:balnana/core/server.dart';
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
+import 'package:balnana/features/expense/receipt.dart';
+import 'package:balnana/features/group/group_settings_page.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,7 +36,7 @@ Group _group(String name) => Group(
   ],
 );
 
-Expense _expense(int version, String title) => Expense(
+Expense _expense(int version, String title, {bool hasReceipt = false}) => Expense(
   id: 'e1',
   kind: ExpenseKind.expense,
   title: title,
@@ -44,6 +48,7 @@ Expense _expense(int version, String title) => Expense(
   createdAt: DateTime.utc(2026, 1, 2),
   updatedAt: DateTime.utc(2026, 1, 2),
   version: version,
+  hasReceipt: hasReceipt,
 );
 
 Map<String, Object?> _expenseJson(String id) => {
@@ -126,6 +131,107 @@ class _Search implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) {}
+}
+
+/// Answers the CSV export of group `tok` and keeps the time zone it was asked in.
+class _Export implements HttpClientAdapter {
+  Object? utcOffset;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    expect(options.uri.path, '/api/v1/g/tok/export.csv');
+    utcOffset = options.queryParameters['utcOffset'];
+    return ResponseBody.fromBytes(
+      utf8.encode('Date,Title\n'),
+      200,
+      headers: {
+        'content-type': ['text/csv'],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// A picture of one transparent pixel.
+final _png = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+/// Answers what the expense editor asks about receipts of `e1`, and keeps
+/// every request as "METHOD path content-type".
+class _Receipts implements HttpClientAdapter {
+  final requests = <String>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final path = options.uri.path;
+    final body = requestStream == null ? <int>[] : await requestStream.expand((b) => b).toList();
+    requests.add('${options.method} $path${body.isEmpty ? '' : ' ${options.contentType} ${body.length}'}');
+    ResponseBody json(Object data) => ResponseBody.fromString(
+      jsonEncode(data),
+      200,
+      headers: {
+        'content-type': ['application/json'],
+      },
+    );
+    return switch ((options.method, path)) {
+      ('GET', '/api/v1/g/tok/expenses/e1/receipt') => ResponseBody.fromBytes(_png, 200, headers: {
+        'content-type': ['image/jpeg'],
+      }),
+      ('PUT', '/api/v1/g/tok/expenses/e1/receipt') => json({..._expenseJson('e1'), 'hasReceipt': true}),
+      ('DELETE', '/api/v1/g/tok/expenses/e1/receipt') => ResponseBody.fromString('', 204),
+      ('GET', '/api/v1/g/tok/expenses') => json({'items': <Object>[], 'nextCursor': null}),
+      _ => ResponseBody.fromString('{"code":"not_found"}', 404, headers: {
+        'content-type': ['application/json'],
+      }),
+    };
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Hands over [_png] for every photo asked for, and keeps where it was asked from.
+class _Camera extends ImagePickerPlatform {
+  final sources = <ImageSource>[];
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async {
+    sources.add(source);
+    return XFile.fromData(_png, name: 'receipt.png');
+  }
+}
+
+/// Keeps what would have been saved.
+class _Saver extends FilePickerPlatform {
+  final saved = <(String, String, String)>[];
+
+  @override
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+    String? dialogTitle,
+    String? initialDirectory,
+    Function(FilePickerStatus)? onFileSaving,
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    saved.add((fileName, utf8.decode(bytes), mimeType));
+    return Uri.parse('content://saved/$fileName');
+  }
 }
 
 /// Starts the app in link mode with this device as Ana in group `tok`.
@@ -367,6 +473,84 @@ void main() {
     expect(container.read(expenseFilterProvider('tok')), const ExpenseFilter(category: 'transport'));
     expect(search.queries.last['category'], 'transport');
     expect(find.text('Clear filters'), findsOneWidget);
+  });
+
+  testWidgets('a group exports as a CSV file', (tester) async {
+    final export = _Export();
+    final saver = _Saver();
+    FilePickerPlatform.instance = saver;
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = export;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Trip: Japan/Korea')),
+    ]);
+    await _go(tester, container, '/g/tok/settings');
+    await tester.scrollUntilVisible(find.text('Export as CSV'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Export as CSV'));
+    await tester.pumpAndSettle();
+
+    expect(saver.saved, [('Trip JapanKorea.csv', 'Date,Title\n', 'text/csv')]);
+    expect(export.utcOffset, DateTime.now().timeZoneOffset.inMinutes);
+    expect(find.text('Exported'), findsOneWidget);
+  });
+
+  testWidgets('a receipt photo waits for save, and alone leaves the expense as it is', (tester) async {
+    final server = _Receipts();
+    final camera = _Camera();
+    ImagePickerPlatform.instance = camera;
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    var remote = _expense(1, 'Lunch');
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expenseProvider.overrideWith((ref, key) async => remote),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/e1');
+    await tester.ensureVisible(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+    expect(camera.sources, [ImageSource.camera]);
+    expect(find.text('Remove'), findsOneWidget);
+    expect(server.requests, isEmpty);
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(server.requests.where((r) => r != 'GET /api/v1/g/tok/expenses'), [
+      'PUT /api/v1/g/tok/expenses/e1/receipt image/png ${_png.length}',
+    ]);
+
+    // A saved photo shows, and removing it is sent on save.
+    server.requests.clear();
+    remote = _expense(1, 'Lunch', hasReceipt: true);
+    await _go(tester, container, '/g/tok/expenses/e1');
+    await tester.ensureVisible(find.text('Remove'));
+    await tester.pumpAndSettle();
+    expect(server.requests, ['GET /api/v1/g/tok/expenses/e1/receipt']);
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a picture'), findsOneWidget);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(server.requests, contains('DELETE /api/v1/g/tok/expenses/e1/receipt'));
+    expect(server.requests.where((r) => r.startsWith('PUT')), isEmpty);
+  });
+
+  test('only JPEG, PNG and WebP pictures are sent', () {
+    expect(receiptType(_png), 'image/png');
+    expect(receiptType(Uint8List.fromList([0xff, 0xd8, 0xff, 0xe0])), 'image/jpeg');
+    expect(receiptType(Uint8List.fromList([...'RIFF'.codeUnits, 0, 0, 0, 0, ...'WEBP'.codeUnits])), 'image/webp');
+    expect(receiptType(Uint8List.fromList('GIF89a'.codeUnits)), isNull);
+    expect(receiptType(Uint8List(0)), isNull);
+  });
+
+  test('file names keep what is safe', () {
+    expect(fileName('Trip: Japan/Korea'), 'Trip JapanKorea');
+    expect(fileName('Café 2026 🏖'), 'Café 2026 🏖');
+    expect(fileName(' ?* '), 'balnana');
   });
 
   test('a filter asks for what it narrows to', () {

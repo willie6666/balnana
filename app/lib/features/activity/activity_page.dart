@@ -138,6 +138,8 @@ String activitySentence(BuildContext context, FeedItem item) {
     'expense.deleted' => l10n.activityExpenseDeleted(who, title),
     'expense.restored' when payment => l10n.activityPaymentRestored(who, amount()),
     'expense.restored' => l10n.activityExpenseRestored(who, title),
+    'receipt.added' => l10n.activityReceiptAdded(who, title),
+    'receipt.removed' => l10n.activityReceiptRemoved(who, title),
     _ => l10n.activityOther(who),
   };
 }

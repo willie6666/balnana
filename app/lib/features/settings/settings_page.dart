@@ -12,6 +12,7 @@ import '../../core/settings.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
+import 'my_groups.dart';
 
 /// Set with `--dart-define=BALNANA_VERSION=...` by release builds.
 const appVersion = String.fromEnvironment('BALNANA_VERSION', defaultValue: 'dev');
@@ -95,6 +96,7 @@ class SettingsPage extends ConsumerWidget {
               ),
             ],
           ),
+        if (ref.watch(serverInfoProvider).value?.authMode == AuthMode.link) const MyGroupsSection(),
         if (canChooseServer)
           GroupedList(
             title: l10n.settingsConnection,

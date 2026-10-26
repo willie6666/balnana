@@ -360,6 +360,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupThisDevice => 'This device';
 
   @override
+  String get groupData => 'Data';
+
+  @override
+  String get exportCsv => 'Export as CSV';
+
+  @override
+  String get exportCsvHelp => 'Every expense and payment, for a spreadsheet';
+
+  @override
+  String get exportCsvDone => 'Exported';
+
+  @override
   String get forgetTitle => 'Remove from this device';
 
   @override
@@ -599,6 +611,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseNoteHint => 'Optional';
 
   @override
+  String get expenseReceipt => 'Receipt';
+
+  @override
+  String get expenseHasReceipt => 'Has a receipt photo';
+
+  @override
+  String get receiptTakePhoto => 'Take a photo';
+
+  @override
+  String get receiptChoose => 'Choose a picture';
+
+  @override
+  String get receiptRemove => 'Remove';
+
+  @override
+  String get receiptView => 'Receipt photo';
+
+  @override
+  String receiptNotSaved(String reason) {
+    return 'The expense was saved, but not its receipt photo. $reason';
+  }
+
+  @override
   String get expensePaidByLabel => 'Paid by';
 
   @override
@@ -759,6 +794,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String activityReceiptAdded(String who, String title) {
+    return '$who added a receipt photo to “$title”';
+  }
+
+  @override
+  String activityReceiptRemoved(String who, String title) {
+    return '$who removed the receipt photo from “$title”';
+  }
+
+  @override
   String activityOther(String who) {
     return '$who made a change';
   }
@@ -871,6 +916,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsConnection => 'Connection';
+
+  @override
+  String get myGroups => 'Your groups';
+
+  @override
+  String get myGroupsExport => 'Export your groups';
+
+  @override
+  String get myGroupsExportHelp =>
+      'Copy the links of every group on this device, to keep them safe or open them on another device';
+
+  @override
+  String myGroupsExported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Copied $count group links',
+      one: 'Copied 1 group link',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get myGroupsNone => 'There are no groups on this device yet.';
+
+  @override
+  String get myGroupsImport => 'Import groups';
+
+  @override
+  String get myGroupsImportHelp => 'Paste group links to add them all at once';
+
+  @override
+  String get myGroupsImportBody =>
+      'Paste the links you exported from another device. Anything else in the text is skipped.';
+
+  @override
+  String get myGroupsImportLabel => 'Group links';
+
+  @override
+  String get myGroupsImportAction => 'Import';
+
+  @override
+  String get myGroupsImportInvalid => 'There are no Balnana group links in that text.';
+
+  @override
+  String myGroupsImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count groups',
+      one: 'Added 1 group',
+      zero: 'Those groups were already here',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get settingsServer => 'Server';
@@ -1231,6 +1331,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorImportTooBig => 'This file is too big to import.';
+
+  @override
+  String get errorBadImage => 'That picture can\'t be used. Choose a JPEG, PNG or WebP image.';
+
+  @override
+  String get errorReceiptTooBig => 'That picture is too big. Choose one under 10 MB.';
 
   @override
   String get errorImportMe => 'Choose which person you are.';

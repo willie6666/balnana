@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +22,13 @@ import '../../ui/widgets/page.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
+
+/// [name] made safe to use as a file name.
+@visibleForTesting
+String fileName(String name) {
+  final safe = name.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '').trim();
+  return safe.isEmpty ? 'balnana' : safe;
+}
 
 /// A group's name and look, its link, its people, and this device's place in it.
 class GroupSettingsPage extends ConsumerWidget {
@@ -109,6 +117,21 @@ class _Settings extends ConsumerWidget {
       if (!context.mounted) return;
       _snack(context, l10n.resetLinkDone);
       context.go('/g/${updated.token}');
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
+  Future<void> _exportCsv(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    try {
+      final bytes = await groupApiOf(ref, group.token).exportCsv();
+      final saved = await FilePicker.saveFile(
+        fileName: '${fileName(group.name)}.csv',
+        bytes: bytes,
+        mimeType: 'text/csv',
+      );
+      if (saved != null && context.mounted) _snack(context, l10n.exportCsvDone);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
     }
@@ -317,6 +340,17 @@ class _Settings extends ConsumerWidget {
               icon: Icons.person_add_alt,
               title: l10n.memberAdd,
               onTap: () => _addMember(context, ref),
+            ),
+          ],
+        ),
+        GroupedList(
+          title: l10n.groupData,
+          children: [
+            GroupedTile(
+              icon: Icons.download_outlined,
+              title: l10n.exportCsv,
+              subtitle: l10n.exportCsvHelp,
+              onTap: () => _exportCsv(context, ref),
             ),
           ],
         ),

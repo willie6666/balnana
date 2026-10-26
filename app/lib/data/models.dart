@@ -212,6 +212,7 @@ class Expense {
     required this.updatedAt,
     this.deletedAt,
     required this.version,
+    this.hasReceipt = false,
   });
 
   factory Expense.fromJson(Object? data, int digits) {
@@ -242,6 +243,8 @@ class Expense {
       updatedAt: _time(json, 'updatedAt'),
       deletedAt: deleted == null ? null : DateTime.tryParse(deleted),
       version: _req(json, 'version'),
+      // Answers cached before receipts existed do not say.
+      hasReceipt: _opt<bool>(json, 'hasReceipt') ?? false,
     );
   }
 
@@ -260,6 +263,9 @@ class Expense {
   final DateTime updatedAt;
   final DateTime? deletedAt;
   final int version;
+
+  /// Whether a photo of the receipt is attached.
+  final bool hasReceipt;
 
   bool get isPayment => kind == ExpenseKind.payment;
 

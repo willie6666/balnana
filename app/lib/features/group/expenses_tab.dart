@@ -446,7 +446,22 @@ class ExpenseTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(title, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        if (e.hasReceipt) ...[
+                          const SizedBox(width: BSpace.s4),
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 16,
+                            color: scheme.onSurfaceVariant,
+                            semanticLabel: l10n.expenseHasReceipt,
+                          ),
+                        ],
+                      ],
+                    ),
                     Text(
                       subtitle,
                       style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),

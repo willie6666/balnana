@@ -82,7 +82,7 @@ class BalnanaApi {
     } on DioException catch (e) {
       final res = e.response;
       if (res == null) throw const ApiException(ApiException.network);
-      final body = res.data;
+      final body = _errorBody(res.data);
       if (body is Map<String, Object?> && body['code'] is String) {
         final params = body['params'];
         throw ApiException(
@@ -94,6 +94,16 @@ class BalnanaApi {
       throw ApiException('http_${res.statusCode}', status: res.statusCode);
     } on FormatException {
       throw const ApiException('bad_response');
+    }
+  }
+
+  /// The error of a request that asked for bytes is JSON all the same.
+  static Object? _errorBody(Object? data) {
+    if (data is! List<int>) return data;
+    try {
+      return jsonDecode(utf8.decode(data));
+    } on FormatException {
+      return null;
     }
   }
 
@@ -367,6 +377,26 @@ class GroupApi {
   Future<void> deleteExpense(String id) =>
       _send(() => _dio.delete<Object?>('$_base/expenses/$id', options: _as), (_) {});
 
+  /// The photo of the expense's receipt, as JPEG bytes.
+  Future<Uint8List> receipt(String id) => _send(
+    () => _dio.get<Object?>('$_base/expenses/$id/receipt', options: Options(responseType: ResponseType.bytes)),
+    (data) => data is List<int> ? Uint8List.fromList(data) : throw const FormatException('bad receipt'),
+  );
+
+  /// Attaches a photo of the receipt ([contentType] image/jpeg, image/png or
+  /// image/webp), replacing any earlier one.
+  Future<Expense> putReceipt(String id, Uint8List bytes, String contentType, int digits) => _send(
+    () => _dio.put<Object?>(
+      '$_base/expenses/$id/receipt',
+      data: bytes,
+      options: _as.copyWith(contentType: contentType),
+    ),
+    (data) => Expense.fromJson(data, digits),
+  );
+
+  Future<void> deleteReceipt(String id) =>
+      _send(() => _dio.delete<Object?>('$_base/expenses/$id/receipt', options: _as), (_) {});
+
   Future<Expense> restoreExpense(String id, int digits) => _send(
     () => _dio.post<Object?>('$_base/expenses/$id/restore', options: _as),
     (data) => Expense.fromJson(data, digits),
@@ -389,11 +419,24 @@ class GroupApi {
     () => _dio.get<Object?>(
       '$_base/stats',
       queryParameters: {
-        if (period != null) ...{'from': period.from.toUtc().toIso8601String(), 'to': period.to.toUtc().toIso8601String()},
+        if (period != null) ...{
+          'from': period.from.toUtc().toIso8601String(),
+          'to': period.to.toUtc().toIso8601String(),
+        },
         'utcOffset': DateTime.now().timeZoneOffset.inMinutes,
       },
     ),
     (data) => GroupStats.fromJson(data, digits),
+  );
+
+  /// Every expense and payment as a CSV file, dated in this device's time zone.
+  Future<Uint8List> exportCsv() => _send(
+    () => _dio.get<Object?>(
+      '$_base/export.csv',
+      queryParameters: {'utcOffset': DateTime.now().timeZoneOffset.inMinutes},
+      options: Options(responseType: ResponseType.bytes),
+    ),
+    (data) => data is List<int> ? Uint8List.fromList(data) : throw const FormatException('bad csv'),
   );
 
   Future<Page<Activity>> activity({String? cursor, int limit = 50}) => _send(
