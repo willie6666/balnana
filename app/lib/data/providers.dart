@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderOrFamily;
 
+import '../core/server.dart';
+import '../core/session.dart';
 import 'api.dart';
 import 'known_groups.dart';
 import 'models.dart';
@@ -17,11 +19,44 @@ GroupApi groupApiOf(WidgetRef ref, String token) {
   return api.group(token, memberId: ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId);
 }
 
+/// The signed-in account, or null when signed out or the server has no
+/// accounts.
+final accountProvider = FutureProvider<User?>((ref) async {
+  final info = await ref.watch(serverInfoProvider.future);
+  if (info.authMode != AuthMode.accounts) return null;
+  try {
+    return await _api(ref).me();
+  } on ApiException catch (e) {
+    if (e.status == 401) return null;
+    rethrow;
+  }
+});
+
+/// Whether an account is signed in, as far as is known yet.
+final signedInProvider = Provider<bool>((ref) => ref.watch(accountProvider.select((a) => a.value != null)));
+
+/// Keeps a new session and reloads everything as that account.
+void startSession(WidgetRef ref, String? token) => ref.read(sessionProvider.notifier).set(token);
+
+/// Ends the session here and on the server.
+Future<void> signOut(WidgetRef ref) async {
+  try {
+    await ref.read(balnanaApiProvider)?.logout();
+  } on ApiException {
+    // Forget the session here all the same.
+  }
+  ref.read(sessionProvider.notifier).set(null);
+}
+
 typedef Summaries = ({List<GroupSummary> groups, List<String> missing});
 
-/// The groups on this device as the server sees them now.
+/// The groups to show at home: the account's groups when signed in, else the
+/// groups on this device, as the server sees them now.
 final summariesProvider = FutureProvider<Summaries>((ref) async {
   final api = _api(ref);
+  if (await ref.watch(accountProvider.future) != null) {
+    return (groups: await api.myGroups(), missing: <String>[]);
+  }
   final known = ref.watch(knownGroupsProvider);
   if (known.isEmpty) return (groups: <GroupSummary>[], missing: <String>[]);
   final (groups, missing) = await api.summaries({for (final g in known) g.token: g.memberId});
@@ -49,7 +84,9 @@ class ExpenseList {
   bool get hasMore => nextCursor != null;
 }
 
-final expensesProvider = AsyncNotifierProvider.family<ExpensesNotifier, ExpenseList, String>(ExpensesNotifier.new);
+final expensesProvider = AsyncNotifierProvider.family<ExpensesNotifier, ExpenseList, String>(
+  ExpensesNotifier.new,
+);
 
 class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
   ExpensesNotifier(this.token);
@@ -82,15 +119,15 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
 /// One entry of the activity feed across all groups on this device.
 typedef FeedItem = ({Activity activity, Group group});
 
-/// The latest changes in every group on this device, newest first.
+/// The latest changes in every group at home, newest first.
 final activityFeedProvider = FutureProvider<List<FeedItem>>((ref) async {
   final api = _api(ref);
-  final known = ref.watch(knownGroupsProvider);
+  final home = await ref.watch(summariesProvider.future);
   final perGroup = await Future.wait(
-    known.map((k) async {
+    home.groups.map((g) async {
       try {
-        final group = await ref.watch(groupProvider(k.token).future);
-        final page = await api.group(k.token).activity(limit: 30);
+        final group = await ref.watch(groupProvider(g.token).future);
+        final page = await api.group(g.token).activity(limit: 30);
         return [for (final a in page.items) (activity: a, group: group)];
       } on ApiException catch (e) {
         if (e.isNotFound) return <FeedItem>[];
@@ -117,7 +154,10 @@ void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
 }
 
 /// One expense, for the editor.
-final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String token, String id})>((ref, key) async {
+final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String token, String id})>((
+  ref,
+  key,
+) async {
   final group = await ref.watch(groupProvider(key.token).future);
   return _api(ref).group(key.token).expense(key.id, group.minorDigits);
 });

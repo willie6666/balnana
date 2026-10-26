@@ -37,6 +37,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_currency.text.isEmpty) _currency.text = localCurrency(Localizations.localeOf(context));
+    if (_me.text.isEmpty) _me.text = ref.read(accountProvider).value?.name ?? '';
   }
 
   @override
@@ -64,8 +65,11 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
         minorDigits: defaultMinorDigits(currency),
         members: names,
       );
-      // The creator is the first member.
-      ref.read(knownGroupsProvider.notifier).add(group.token, memberId: group.members.first.id);
+      // The creator is the first member. A signed-in account keeps its groups
+      // on the server instead.
+      if (!ref.read(signedInProvider)) {
+        ref.read(knownGroupsProvider.notifier).add(group.token, memberId: group.members.first.id);
+      }
       ref.invalidate(summariesProvider);
       if (mounted) context.pushReplacement('/g/${group.token}');
     } on ApiException catch (e) {
@@ -136,7 +140,10 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                   FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
                   LengthLimitingTextInputFormatter(3),
                 ],
-                decoration: InputDecoration(labelText: l10n.groupCurrency, helperText: l10n.groupCurrencyHelp),
+                decoration: InputDecoration(
+                  labelText: l10n.groupCurrency,
+                  helperText: l10n.groupCurrencyHelp,
+                ),
                 validator: (v) =>
                     RegExp(r'^[A-Za-z]{3}$').hasMatch((v ?? '').trim()) ? null : l10n.errorInvalidCurrency,
               ),
@@ -151,7 +158,10 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                 controller: _me,
                 textCapitalization: TextCapitalization.words,
                 inputFormatters: [LengthLimitingTextInputFormatter(100)],
-                decoration: InputDecoration(labelText: l10n.groupYourName, prefixIcon: const Icon(Icons.person)),
+                decoration: InputDecoration(
+                  labelText: l10n.groupYourName,
+                  prefixIcon: const Icon(Icons.person),
+                ),
                 validator: _required,
               ),
               for (final (i, c) in _others.indexed) ...[
@@ -190,9 +200,8 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                 padding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
                 child: Text(
                   l10n.groupPeopleHelp,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ],

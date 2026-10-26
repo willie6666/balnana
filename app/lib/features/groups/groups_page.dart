@@ -74,7 +74,9 @@ class GroupsPage extends ConsumerWidget {
       label: Text(l10n.groupNew),
     );
 
-    if (known.isEmpty) {
+    // A signed-in account's groups live on the server, not on this device.
+    final empty = ref.watch(signedInProvider) ? summaries.value?.groups.isEmpty ?? false : known.isEmpty;
+    if (empty) {
       return _empty(
         context,
         EmptyState(

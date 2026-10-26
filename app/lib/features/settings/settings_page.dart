@@ -10,6 +10,7 @@ import '../../core/server.dart';
 import '../../core/settings.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
+import '../account/account_section.dart';
 
 /// Set with `--dart-define=BALNANA_VERSION=...` by release builds.
 const appVersion = String.fromEnvironment('BALNANA_VERSION', defaultValue: 'dev');
@@ -42,6 +43,7 @@ class SettingsPage extends ConsumerWidget {
     return BPage(
       title: l10n.navSettings,
       children: [
+        if (ref.watch(accountsModeProvider)) const AccountSection(),
         GroupedList(
           title: l10n.settingsAppearance,
           children: [

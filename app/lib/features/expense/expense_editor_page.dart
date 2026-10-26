@@ -9,7 +9,6 @@ import '../../core/l10n.dart';
 import '../../core/money.dart';
 import '../../data/api.dart';
 import '../../data/categories.dart';
-import '../../data/known_groups.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/money.dart';
@@ -235,7 +234,9 @@ class _EditorState extends ConsumerState<_Editor> {
     );
     if (picked == null) return;
     // Keep the time of day, so expenses on one day stay in the order they were added.
-    setState(() => _date = DateTime(picked.year, picked.month, picked.day, _date.hour, _date.minute, _date.second));
+    setState(
+      () => _date = DateTime(picked.year, picked.month, picked.day, _date.hour, _date.minute, _date.second),
+    );
   }
 
   Future<void> _save() async {
@@ -413,7 +414,8 @@ class _EditorState extends ConsumerState<_Editor> {
               ),
               const SizedBox(height: BSpace.s12),
               if (preview.shares case final shares?) SplitBar(people: _people, shares: shares),
-              for (final m in _people) _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
+              for (final m in _people)
+                _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
               _SplitSummary(state: this, error: preview.error),
 
               FormSection(l10n.expenseNote),
@@ -432,9 +434,6 @@ class _EditorState extends ConsumerState<_Editor> {
     );
   }
 }
-
-/// [myMemberId] for one-off reads outside build.
-String? myMemberIdRead(WidgetRef ref, String token) => ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId;
 
 class _PaidBy extends StatelessWidget {
   const _PaidBy({required this.state, required this.symbol});
@@ -540,7 +539,8 @@ class _SplitRow extends StatelessWidget {
           children: [
             Checkbox(
               value: included,
-              onChanged: (on) => s._update(() => on! ? s._included.add(member.id) : s._included.remove(member.id)),
+              onChanged: (on) =>
+                  s._update(() => on! ? s._included.add(member.id) : s._included.remove(member.id)),
             ),
             MemberAvatar(member: member, size: 32),
             const SizedBox(width: BSpace.s12),
@@ -670,7 +670,8 @@ class _Note extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.end,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: error ? scheme.error : scheme.onSurfaceVariant),
+        style: Theme.of(context).textTheme.bodyMedium
+            ?.copyWith(color: error ? scheme.error : scheme.onSurfaceVariant),
       ),
     );
   }

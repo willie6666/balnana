@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/money.dart';
@@ -55,7 +56,8 @@ class ExpenseDraft {
     'occurredAt': occurredAt.toUtc().toIso8601String(),
     'note': ?note,
     'payers': [
-      for (final MapEntry(:key, :value) in payers.entries) {'memberId': key, 'amount': formatAmount(value, digits)},
+      for (final MapEntry(:key, :value) in payers.entries)
+        {'memberId': key, 'amount': formatAmount(value, digits)},
     ],
     'splitMethod': splitMethod.name,
     'splits': [
@@ -92,6 +94,55 @@ class BalnanaApi {
       throw const ApiException('bad_response');
     }
   }
+
+  /// Where to keep the session: the web keeps it in an HttpOnly cookie,
+  /// Android gets a token back.
+  static const _cookie = kIsWeb;
+
+  /// Returns the session token, or null on the web.
+  Future<(String?, User)> register({
+    required String email,
+    required String password,
+    required String name,
+    String? locale,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/auth/register',
+      data: {'email': email, 'password': password, 'name': name, 'locale': ?locale, 'cookie': _cookie},
+    ),
+    _session,
+  );
+
+  /// Returns the session token, or null on the web.
+  Future<(String?, User)> login({required String email, required String password}) => _send(
+    () => _dio.post<Object?>('/auth/login', data: {'email': email, 'password': password, 'cookie': _cookie}),
+    _session,
+  );
+
+  static (String?, User) _session(Object? data) {
+    if (data is! Map<String, Object?>) throw const FormatException('expected an object');
+    final token = data['token'];
+    return (token is String ? token : null, User.fromJson(data['user']));
+  }
+
+  Future<void> logout() => _send(() => _dio.post<Object?>('/auth/logout'), (_) {});
+
+  Future<User> me() => _send(() => _dio.get<Object?>('/me'), User.fromJson);
+
+  Future<User> updateMe({String? name, String? locale}) =>
+      _send(() => _dio.patch<Object?>('/me', data: {'name': ?name, 'locale': ?locale}), User.fromJson);
+
+  /// Signs out every other session of the account.
+  Future<void> changePassword({String? current, required String next}) => _send(
+    () => _dio.post<Object?>('/me/password', data: {'currentPassword': ?current, 'newPassword': next}),
+    (_) {},
+  );
+
+  /// The signed-in account's groups, most recently changed first.
+  Future<List<GroupSummary>> myGroups() => _send(() => _dio.get<Object?>('/me/groups'), (data) {
+    if (data is! Map<String, Object?> || data['groups'] is! List<Object?>) throw const FormatException('bad groups');
+    return [for (final g in data['groups'] as List<Object?>) GroupSummary.fromJson(g)];
+  });
 
   Future<Group> createGroup({
     required String name,
@@ -154,14 +205,29 @@ class GroupApi {
 
   Future<Group> get() => _send(() => _dio.get<Object?>(_base), Group.fromJson);
 
-  /// An empty [emoji] removes it.
-  Future<Group> update({String? name, String? emoji, int? color}) => _send(
-    () => _dio.patch<Object?>(_base, data: {'name': ?name, 'emoji': ?emoji, 'color': ?color}, options: _as),
+  /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode.
+  Future<Group> update({String? name, String? emoji, int? color, bool? linkAccess}) => _send(
+    () => _dio.patch<Object?>(
+      _base,
+      data: {'name': ?name, 'emoji': ?emoji, 'color': ?color, 'linkAccess': ?linkAccess},
+      options: _as,
+    ),
+    Group.fromJson,
+  );
+
+  /// The group as seen before joining it (accounts mode).
+  Future<JoinInfo> joinInfo() => _send(() => _dio.get<Object?>('$_base/join'), JoinInfo.fromJson);
+
+  /// Joins as the unclaimed member [claim], or as someone new called [name]
+  /// (the account's name when null).
+  Future<Group> join({String? claim, String? name}) => _send(
+    () => _dio.post<Object?>('$_base/join', data: {'claimMemberId': ?claim, 'name': ?name}),
     Group.fromJson,
   );
 
   /// Issues a new link; the old one stops working.
-  Future<Group> resetLink() => _send(() => _dio.post<Object?>('$_base/reset-link', options: _as), Group.fromJson);
+  Future<Group> resetLink() =>
+      _send(() => _dio.post<Object?>('$_base/reset-link', options: _as), Group.fromJson);
 
   Future<Member> addMember(String name, {int? color, required int digits}) => _send(
     () => _dio.post<Object?>('$_base/members', data: {'name': name, 'color': ?color}, options: _as),
@@ -182,10 +248,9 @@ class GroupApi {
       if (data is! Map<String, Object?> || data['items'] is! List<Object?>) {
         throw const FormatException('bad page');
       }
-      return Page(
-        [for (final e in data['items'] as List<Object?>) Expense.fromJson(e, digits)],
-        data['nextCursor'] as String?,
-      );
+      return Page([
+        for (final e in data['items'] as List<Object?>) Expense.fromJson(e, digits),
+      ], data['nextCursor'] as String?);
     },
   );
 
@@ -199,7 +264,11 @@ class GroupApi {
 
   /// Fails with `expense_version_conflict` when someone else changed it since [version].
   Future<Expense> updateExpense(String id, ExpenseDraft draft, int digits, {required int version}) => _send(
-    () => _dio.put<Object?>('$_base/expenses/$id', data: draft.toJson(digits, version: version), options: _as),
+    () => _dio.put<Object?>(
+      '$_base/expenses/$id',
+      data: draft.toJson(digits, version: version),
+      options: _as,
+    ),
     (data) => Expense.fromJson(data, digits),
   );
 
@@ -229,7 +298,9 @@ class GroupApi {
       if (data is! Map<String, Object?> || data['items'] is! List<Object?>) {
         throw const FormatException('bad page');
       }
-      return Page([for (final a in data['items'] as List<Object?>) Activity.fromJson(a)], data['nextCursor'] as String?);
+      return Page([
+        for (final a in data['items'] as List<Object?>) Activity.fromJson(a),
+      ], data['nextCursor'] as String?);
     },
   );
 }

@@ -19,19 +19,32 @@ import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../account/sign_in_page.dart';
 import 'balances_tab.dart';
 import 'expenses_tab.dart';
 import 'identity_sheet.dart';
 
-/// The member this device acts as in [token]'s group, if it picked one.
-String? myMemberId(WidgetRef ref, String token) => ref.watch(
-  knownGroupsProvider.select((list) {
-    for (final g in list) {
-      if (g.token == token) return g.memberId;
-    }
-    return null;
-  }),
-);
+/// Who this app acts as in [token]'s group: the signed-in account's member,
+/// or else the member this device picked. Null when neither is known.
+String? myMemberId(WidgetRef ref, String token) {
+  final fromAccount = ref.watch(groupProvider(token).select((g) => g.value?.myMemberId));
+  if (fromAccount != null || ref.watch(signedInProvider)) return fromAccount;
+  return ref.watch(
+    knownGroupsProvider.select((list) {
+      for (final g in list) {
+        if (g.token == token) return g.memberId;
+      }
+      return null;
+    }),
+  );
+}
+
+/// [myMemberId] for one-off reads outside build.
+String? myMemberIdRead(WidgetRef ref, String token) {
+  final fromAccount = ref.read(groupProvider(token)).value?.myMemberId;
+  if (fromAccount != null || ref.read(signedInProvider)) return fromAccount;
+  return ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId;
+}
 
 /// The link that opens [token]'s group, for sharing.
 String groupLink(WidgetRef ref, String token) {
@@ -61,7 +74,10 @@ class GroupTheme extends ConsumerWidget {
       brightness: brightness,
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
-    return Theme(data: buildTheme(scheme, pureBlack: pureBlack), child: child);
+    return Theme(
+      data: buildTheme(scheme, pureBlack: pureBlack),
+      child: child,
+    );
   }
 }
 
@@ -86,8 +102,14 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     }, fireImmediately: true);
   }
 
-  /// Remembers a group opened from a link and asks who this device is.
-  void _opened(Group group) {
+  /// Remembers a group opened from a link and asks who this device is. A
+  /// signed-in account has its groups on the server instead.
+  Future<void> _opened(Group group) async {
+    // The server names the member only for a signed-in account; otherwise wait
+    // for the account to load before deciding.
+    if (group.myMemberId != null) return;
+    final account = await ref.read(accountProvider.future).catchError((_) => null);
+    if (!mounted || account != null) return;
     final known = ref.read(knownGroupsProvider.notifier);
     if (known.byToken(group.token) == null) {
       known.add(group.token);
@@ -102,6 +124,8 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     }
   }
 
+  bool _sentToJoin = false;
+
   void _back() => context.canPop() ? context.pop() : context.go('/groups');
 
   @override
@@ -110,10 +134,44 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     final async = ref.watch(groupProvider(widget.token));
     final group = async.value;
 
+    if (group != null) _sentToJoin = false;
     if (group == null) {
       final Widget body;
       if (async.hasError && !async.isLoading) {
         final error = async.error;
+        if (error is ApiException && error.code == 'not_a_member') {
+          // The join page is a child route, so this page stays below it and
+          // must send people there only once.
+          if (!_sentToJoin) {
+            _sentToJoin = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) context.go('/g/${widget.token}/join');
+            });
+          }
+          return Scaffold(
+            appBar: AppBar(leading: BackButton(onPressed: _back)),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (error is ApiException && error.code == 'sign_in_required') {
+          return Scaffold(
+            appBar: AppBar(leading: BackButton(onPressed: _back)),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(BSpace.s16),
+                child: EmptyState(
+                  icon: Icons.lock_outline,
+                  title: l10n.groupSignInTitle,
+                  body: l10n.groupSignInBody,
+                  action: FilledButton(
+                    onPressed: () => context.go(signInPath('/g/${widget.token}')),
+                    child: Text(l10n.signIn),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
         final missing = error is ApiException && error.isNotFound;
         body = EmptyState(
           icon: missing ? Icons.link_off : Icons.cloud_off_outlined,
@@ -200,7 +258,10 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                           color: Theme.of(context).colorScheme.surface,
                           padding: side,
                           tabs: TabBar(
-                            tabs: [Tab(text: l10n.tabExpenses), Tab(text: l10n.tabBalances)],
+                            tabs: [
+                              Tab(text: l10n.tabExpenses),
+                              Tab(text: l10n.tabBalances),
+                            ],
                           ),
                         ),
                       ),
@@ -262,7 +323,19 @@ class BalanceHero extends ConsumerWidget {
     final me = group.member(myMemberId(ref, group.token));
 
     final Widget content;
-    if (me == null || me.left) {
+    if ((me == null || me.left) && ref.watch(signedInProvider)) {
+      // An open group the account is not in yet.
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.heroJoinTitle, style: text.titleLarge?.copyWith(color: scheme.onPrimaryContainer)),
+          const SizedBox(height: BSpace.s4),
+          Text(l10n.heroJoinBody, style: text.bodyMedium?.copyWith(color: scheme.onPrimaryContainer)),
+          const SizedBox(height: BSpace.s16),
+          FilledButton(onPressed: () => context.push('/g/${group.token}/join'), child: Text(l10n.joinAction)),
+        ],
+      );
+    } else if (me == null || me.left) {
       content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

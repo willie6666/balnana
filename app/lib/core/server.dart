@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'session.dart';
 import 'settings.dart';
 
 const apiBasePath = '/api/v1';
@@ -75,10 +76,20 @@ bool _isPrivateIPv4(String host) {
 
 enum AuthMode { link, accounts }
 
+enum SignupPolicy { open, inviteOnly, closed }
+
 /// GET /server-info, see api/openapi.yaml.
 @immutable
 class ServerInfo {
-  const ServerInfo({required this.version, required this.authMode, required this.publicUrl, this.sourceUrl});
+  const ServerInfo({
+    required this.version,
+    required this.authMode,
+    this.password = false,
+    this.signup = SignupPolicy.open,
+    this.linkGroups = true,
+    required this.publicUrl,
+    this.sourceUrl,
+  });
 
   factory ServerInfo.fromJson(Object? json) {
     if (json is! Map<String, Object?>) throw const FormatException('server-info is not an object');
@@ -93,6 +104,13 @@ class ServerInfo {
     return ServerInfo(
       version: version,
       authMode: authMode,
+      password: json['password'] == true,
+      signup: switch (json['signup']) {
+        'invite_only' => SignupPolicy.inviteOnly,
+        'closed' => SignupPolicy.closed,
+        _ => SignupPolicy.open,
+      },
+      linkGroups: json['linkGroups'] != false,
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
     );
@@ -100,6 +118,13 @@ class ServerInfo {
 
   final String version;
   final AuthMode authMode;
+
+  /// Email and password sign-in is available.
+  final bool password;
+  final SignupPolicy signup;
+
+  /// Group owners may open a group to anyone with its link.
+  final bool linkGroups;
   final String publicUrl;
 
   /// Where to get the server's source code, if the operator set it. Only
@@ -124,10 +149,15 @@ Dio _newDio(String serverUrl) => Dio(
 );
 
 /// The HTTP client for the chosen server, or null when no server is set.
+///
+/// It is made anew when the session changes, so everything loaded through it
+/// reloads as the new account.
 final apiProvider = Provider<Dio?>((ref) {
   final url = ref.watch(serverUrlProvider);
   if (url == null) return null;
+  final session = ref.watch(sessionProvider);
   final dio = _newDio(url);
+  if (session.token case final token?) dio.options.headers['Authorization'] = 'Bearer $token';
   ref.onDispose(dio.close);
   return dio;
 });
@@ -137,11 +167,21 @@ class NoServerException implements Exception {
 }
 
 final serverInfoProvider = FutureProvider<ServerInfo>((ref) async {
-  final dio = ref.watch(apiProvider);
-  if (dio == null) throw const NoServerException();
-  final res = await dio.get<Object?>('/server-info');
-  return ServerInfo.fromJson(res.data);
+  final url = ref.watch(serverUrlProvider);
+  if (url == null) throw const NoServerException();
+  final dio = _newDio(url);
+  try {
+    final res = await dio.get<Object?>('/server-info');
+    return ServerInfo.fromJson(res.data);
+  } finally {
+    dio.close();
+  }
 });
+
+/// Whether the chosen server has accounts; false until its info has loaded.
+final accountsModeProvider = Provider<bool>(
+  (ref) => ref.watch(serverInfoProvider.select((info) => info.value?.authMode == AuthMode.accounts)),
+);
 
 enum ProbeError { unreachable, notBalnana }
 

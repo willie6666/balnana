@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/server.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
 import '../../data/models.dart';
@@ -51,7 +52,10 @@ class GroupSettingsPage extends ConsumerWidget {
         ],
       );
     }
-    return GroupTheme(group: group, child: _Settings(group: group));
+    return GroupTheme(
+      group: group,
+      child: _Settings(group: group),
+    );
   }
 }
 
@@ -63,14 +67,22 @@ class _Settings extends ConsumerWidget {
   void _snack(BuildContext context, String message) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
-  Future<bool> _confirm(BuildContext context, {required String title, required String body, required String action}) async {
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required String action,
+  }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
         content: Text(body),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(context.l10n.commonCancel)),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.commonCancel),
+          ),
           FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(action)),
         ],
       ),
@@ -80,7 +92,12 @@ class _Settings extends ConsumerWidget {
 
   Future<void> _resetLink(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    if (!await _confirm(context, title: l10n.resetLinkTitle, body: l10n.resetLinkBody, action: l10n.resetLinkAction)) {
+    if (!await _confirm(
+      context,
+      title: l10n.resetLinkTitle,
+      body: l10n.resetLinkBody,
+      action: l10n.resetLinkAction,
+    )) {
       return;
     }
     try {
@@ -110,10 +127,18 @@ class _Settings extends ConsumerWidget {
 
   Future<void> _renameMember(BuildContext context, WidgetRef ref, Member member) async {
     final l10n = context.l10n;
-    final name = await askForName(context, title: l10n.memberRenameTitle, action: l10n.commonSave, initial: member.name);
+    final name = await askForName(
+      context,
+      title: l10n.memberRenameTitle,
+      action: l10n.commonSave,
+      initial: member.name,
+    );
     if (name == null || name == member.name || !context.mounted) return;
     try {
-      await groupApiOf(ref, group.token).updateMember(member.id, name, color: member.color, digits: group.minorDigits);
+      await groupApiOf(
+        ref,
+        group.token,
+      ).updateMember(member.id, name, color: member.color, digits: group.minorDigits);
       refreshGroup(ref, group.token);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
@@ -137,9 +162,42 @@ class _Settings extends ConsumerWidget {
     }
   }
 
+  Future<void> _setLinkAccess(BuildContext context, WidgetRef ref, bool open) async {
+    final l10n = context.l10n;
+    try {
+      await groupApiOf(ref, group.token).update(linkAccess: open);
+      refreshGroup(ref, group.token);
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
+  Future<void> _leave(BuildContext context, WidgetRef ref, Member me) async {
+    final l10n = context.l10n;
+    final ok = await _confirm(
+      context,
+      title: l10n.leaveTitle,
+      body: l10n.leaveBody,
+      action: l10n.leaveAction,
+    );
+    if (!ok || !context.mounted) return;
+    try {
+      await groupApiOf(ref, group.token).removeMember(me.id);
+      refreshGroup(ref, group.token);
+      if (context.mounted) context.go('/groups');
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
   Future<void> _forget(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    final ok = await _confirm(context, title: l10n.forgetTitle, body: l10n.forgetBody, action: l10n.commonRemove);
+    final ok = await _confirm(
+      context,
+      title: l10n.forgetTitle,
+      body: l10n.forgetBody,
+      action: l10n.commonRemove,
+    );
     if (!ok || !context.mounted) return;
     ref.read(knownGroupsProvider.notifier).remove(group.token);
     ref.invalidate(summariesProvider);
@@ -152,6 +210,9 @@ class _Settings extends ConsumerWidget {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final me = group.member(myMemberId(ref, group.token));
+    final signedIn = ref.watch(signedInProvider);
+    final accounts = ref.watch(accountsModeProvider);
+    final linkGroups = ref.watch(serverInfoProvider.select((i) => i.value?.linkGroups ?? false));
 
     return BPage(
       title: l10n.groupSettings,
@@ -160,7 +221,13 @@ class _Settings extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: BSpace.s24),
           child: Row(
             children: [
-              GroupBadge(token: group.token, name: group.name, emoji: group.emoji, color: group.color, size: 64),
+              GroupBadge(
+                token: group.token,
+                name: group.name,
+                emoji: group.emoji,
+                color: group.color,
+                size: 64,
+              ),
               const SizedBox(width: BSpace.s16),
               Expanded(
                 child: Column(
@@ -193,9 +260,19 @@ class _Settings extends ConsumerWidget {
             GroupedTile(
               icon: Icons.link,
               title: l10n.groupCopyLink,
-              subtitle: l10n.groupCopyLinkHelp,
+              subtitle: accounts && !group.linkAccess
+                  ? l10n.groupCopyLinkHelpAccounts
+                  : l10n.groupCopyLinkHelp,
               onTap: () => copyGroupLink(context, ref, group.token),
             ),
+            if (accounts && linkGroups && me != null && me.owner)
+              GroupedSwitchTile(
+                icon: Icons.public,
+                title: l10n.linkAccessTitle,
+                subtitle: l10n.linkAccessHelp,
+                value: group.linkAccess,
+                onChanged: (open) => _setLinkAccess(context, ref, open),
+              ),
             GroupedTile(
               icon: Icons.lock_reset,
               title: l10n.resetLinkTitle,
@@ -219,35 +296,51 @@ class _Settings extends ConsumerWidget {
                 ),
                 onTap: () => _renameMember(context, ref, m),
                 trailing: PopupMenuButton<String>(
-                  onSelected: (action) => action == 'rename'
-                      ? _renameMember(context, ref, m)
-                      : _removeMember(context, ref, m),
+                  onSelected: (action) =>
+                      action == 'rename' ? _renameMember(context, ref, m) : _removeMember(context, ref, m),
                   itemBuilder: (context) => [
                     PopupMenuItem(value: 'rename', child: Text(l10n.memberRename)),
                     PopupMenuItem(value: 'remove', child: Text(l10n.commonRemove)),
                   ],
                 ),
               ),
-            GroupedTile(icon: Icons.person_add_alt, title: l10n.memberAdd, onTap: () => _addMember(context, ref)),
-          ],
-        ),
-        GroupedList(
-          title: l10n.groupThisDevice,
-          children: [
             GroupedTile(
-              icon: Icons.badge_outlined,
-              title: l10n.identityChange,
-              subtitle: me == null ? l10n.identityNone : l10n.heroYouAre(me.name),
-              onTap: () => showIdentitySheet(context, group),
-            ),
-            GroupedTile(
-              icon: Icons.logout,
-              title: l10n.forgetTitle,
-              subtitle: l10n.forgetHelp,
-              onTap: () => _forget(context, ref),
+              icon: Icons.person_add_alt,
+              title: l10n.memberAdd,
+              onTap: () => _addMember(context, ref),
             ),
           ],
         ),
+        if (signedIn && me != null)
+          GroupedList(
+            title: l10n.groupYou,
+            children: [
+              GroupedTile(
+                icon: Icons.logout,
+                title: l10n.leaveTitle,
+                subtitle: l10n.leaveHelp,
+                onTap: () => _leave(context, ref, me),
+              ),
+            ],
+          )
+        else if (!signedIn)
+          GroupedList(
+            title: l10n.groupThisDevice,
+            children: [
+              GroupedTile(
+                icon: Icons.badge_outlined,
+                title: l10n.identityChange,
+                subtitle: me == null ? l10n.identityNone : l10n.heroYouAre(me.name),
+                onTap: () => showIdentitySheet(context, group),
+              ),
+              GroupedTile(
+                icon: Icons.logout,
+                title: l10n.forgetTitle,
+                subtitle: l10n.forgetHelp,
+                onTap: () => _forget(context, ref),
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -281,11 +374,10 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
     final l10n = context.l10n;
     setState(() => _busy = true);
     try {
-      await groupApiOf(ref, widget.group.token).update(
-        name: _name.text.trim(),
-        emoji: _emoji.text.trim(),
-        color: _color.toARGB32() & 0xFFFFFF,
-      );
+      await groupApiOf(
+        ref,
+        widget.group.token,
+      ).update(name: _name.text.trim(), emoji: _emoji.text.trim(), color: _color.toARGB32() & 0xFFFFFF);
       refreshGroup(ref, widget.group.token);
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
@@ -308,7 +400,11 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(l10n.groupEdit, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+                Text(
+                  l10n.groupEdit,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: BSpace.s16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -217,6 +217,72 @@ abstract class AppLocalizations {
   /// **'Too many requests. Wait a minute and try again.'**
   String get errorRateLimited;
 
+  /// No description provided for @errorNotAMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not in this group yet.'**
+  String get errorNotAMember;
+
+  /// No description provided for @errorNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Only that person or the group\'s owner can do this.'**
+  String get errorNotAllowed;
+
+  /// No description provided for @errorLinkGroupsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This server doesn\'t allow opening groups by link alone.'**
+  String get errorLinkGroupsOff;
+
+  /// No description provided for @errorMemberClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone has already joined as that person.'**
+  String get errorMemberClaimed;
+
+  /// No description provided for @errorInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an email address.'**
+  String get errorInvalidEmail;
+
+  /// No description provided for @errorInvalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 8 to 200 characters.'**
+  String get errorInvalidPassword;
+
+  /// No description provided for @errorEmailTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s already an account with that email. Sign in instead.'**
+  String get errorEmailTaken;
+
+  /// No description provided for @errorSignupClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This server isn\'t taking new accounts.'**
+  String get errorSignupClosed;
+
+  /// No description provided for @errorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'That email and password don\'t match.'**
+  String get errorInvalidCredentials;
+
+  /// No description provided for @errorWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current password isn\'t right.'**
+  String get errorWrongPassword;
+
+  /// No description provided for @errorAccountsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This server doesn\'t use accounts.'**
+  String get errorAccountsOff;
+
   /// No description provided for @errorInvalidAmount.
   ///
   /// In en, this message translates to:
@@ -631,6 +697,24 @@ abstract class AppLocalizations {
   /// **'Anyone with the link can see and edit this group.'**
   String get groupCopyLinkHelp;
 
+  /// No description provided for @groupCopyLinkHelpAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'People with the link can ask to join after signing in.'**
+  String get groupCopyLinkHelpAccounts;
+
+  /// No description provided for @linkAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open to anyone with the link'**
+  String get linkAccessTitle;
+
+  /// No description provided for @linkAccessHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Let people see and edit without an account'**
+  String get linkAccessHelp;
+
   /// No description provided for @resetLinkTitle.
   ///
   /// In en, this message translates to:
@@ -685,6 +769,36 @@ abstract class AppLocalizations {
   /// **'You can open it again with the link.'**
   String get forgetBody;
 
+  /// No description provided for @groupYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get groupYou;
+
+  /// No description provided for @leaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave group'**
+  String get leaveTitle;
+
+  /// No description provided for @leaveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your expenses stay; you can join again with the link'**
+  String get leaveHelp;
+
+  /// No description provided for @leaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The group disappears from your list. Your expenses and balance stay in the group.'**
+  String get leaveBody;
+
+  /// No description provided for @leaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get leaveAction;
+
   /// No description provided for @tabExpenses.
   ///
   /// In en, this message translates to:
@@ -714,6 +828,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose'**
   String get heroWhoAction;
+
+  /// No description provided for @heroJoinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re viewing this group'**
+  String get heroJoinTitle;
+
+  /// No description provided for @heroJoinBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Join to add expenses and see what you owe.'**
+  String get heroJoinBody;
+
+  /// No description provided for @joinAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get joinAction;
 
   /// No description provided for @heroOwed.
   ///
@@ -1063,6 +1195,12 @@ abstract class AppLocalizations {
   /// **'{who} removed {name}'**
   String activityMemberRemoved(String who, String name);
 
+  /// No description provided for @activityMemberJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} joined'**
+  String activityMemberJoined(String name);
+
   /// No description provided for @activityExpenseAdded.
   ///
   /// In en, this message translates to:
@@ -1206,6 +1344,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Appearance'**
   String get settingsAppearance;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccount;
+
+  /// No description provided for @accountRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Change name'**
+  String get accountRename;
+
+  /// No description provided for @passwordChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get passwordChange;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. Other devices are signed out.'**
+  String get passwordChanged;
+
+  /// No description provided for @passwordCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get passwordCurrent;
+
+  /// No description provided for @passwordNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get passwordNew;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
 
   /// No description provided for @settingsTheme.
   ///
@@ -1410,6 +1590,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Server saved'**
   String get serverSaved;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @groupSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to open this group'**
+  String get groupSignInTitle;
+
+  /// No description provided for @groupSignInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This group is only for its members. Sign in to see it or to join.'**
+  String get groupSignInBody;
+
+  /// No description provided for @signInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get signInTitle;
+
+  /// No description provided for @signInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your groups.'**
+  String get signInBody;
+
+  /// No description provided for @signInNoPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'This server signs people in another way. Ask whoever runs it.'**
+  String get signInNoPassword;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get registerTitle;
+
+  /// No description provided for @registerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your groups on every device.'**
+  String get registerBody;
+
+  /// No description provided for @registerAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get registerAction;
+
+  /// No description provided for @registerHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get registerHaveAccount;
+
+  /// No description provided for @signInNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get signInNoAccount;
+
+  /// No description provided for @accountName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get accountName;
+
+  /// No description provided for @accountNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'What people in your groups will see'**
+  String get accountNameHelp;
+
+  /// No description provided for @accountEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get accountEmail;
+
+  /// No description provided for @accountPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get accountPassword;
+
+  /// No description provided for @accountPasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get accountPasswordHelp;
+
+  /// No description provided for @passwordShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get passwordShow;
+
+  /// No description provided for @passwordHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get passwordHide;
+
+  /// No description provided for @joinPickName.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick another name'**
+  String get joinPickName;
+
+  /// No description provided for @joinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join {name}'**
+  String joinTitle(String name);
+
+  /// No description provided for @joinBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you one of these people? Pick yourself to take over their expenses.'**
+  String get joinBody;
+
+  /// No description provided for @joinBodyNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Join to add expenses and see your balance.'**
+  String get joinBodyNew;
+
+  /// No description provided for @joinAsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m someone new'**
+  String get joinAsNew;
+
+  /// No description provided for @joinAsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Join as {name}'**
+  String joinAsName(String name);
+
+  /// No description provided for @joinTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Already joined: {names}'**
+  String joinTaken(String names);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

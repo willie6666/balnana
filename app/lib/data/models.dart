@@ -28,11 +28,20 @@ DateTime _time(Map<String, Object?> json, String key) {
   return t;
 }
 
-BigInt _money(Map<String, Object?> json, String key, int digits) => parseAmount(_req<String>(json, key), digits);
+BigInt _money(Map<String, Object?> json, String key, int digits) =>
+    parseAmount(_req<String>(json, key), digits);
 
 @immutable
 class Member {
-  const Member({required this.id, required this.name, this.color, this.left = false, required this.balance});
+  const Member({
+    required this.id,
+    required this.name,
+    this.color,
+    this.left = false,
+    this.owner = false,
+    this.claimed = false,
+    required this.balance,
+  });
 
   factory Member.fromJson(Object? data, int digits) {
     final json = _object(data);
@@ -41,6 +50,8 @@ class Member {
       name: _req(json, 'name'),
       color: _opt(json, 'color'),
       left: _opt<bool>(json, 'left') ?? false,
+      owner: _opt<bool>(json, 'owner') ?? false,
+      claimed: _opt<bool>(json, 'claimed') ?? false,
       balance: _money(json, 'balance', digits),
     );
   }
@@ -53,6 +64,12 @@ class Member {
 
   /// Removed from the group; kept so old expenses still name them.
   final bool left;
+
+  /// May change the group's access settings (accounts mode).
+  final bool owner;
+
+  /// Linked to an account (accounts mode).
+  final bool claimed;
 
   /// Positive: is owed. Negative: owes.
   final BigInt balance;
@@ -69,6 +86,8 @@ class Group {
     required this.minorDigits,
     required this.createdAt,
     required this.members,
+    this.linkAccess = true,
+    this.myMemberId,
   });
 
   factory Group.fromJson(Object? data) {
@@ -83,6 +102,8 @@ class Group {
       minorDigits: digits,
       createdAt: _time(json, 'createdAt'),
       members: [for (final m in _req<List<Object?>>(json, 'members')) Member.fromJson(m, digits)],
+      linkAccess: _opt<bool>(json, 'linkAccess') ?? true,
+      myMemberId: _opt(json, 'myMemberId'),
     );
   }
 
@@ -97,7 +118,16 @@ class Group {
   /// Everyone who ever belonged, current members first in the order they joined.
   final List<Member> members;
 
-  List<Member> get activeMembers => [for (final m in members) if (!m.left) m];
+  /// The link alone opens the group. Always true in link mode.
+  final bool linkAccess;
+
+  /// The signed-in account's member (accounts mode).
+  final String? myMemberId;
+
+  List<Member> get activeMembers => [
+    for (final m in members)
+      if (!m.left) m,
+  ];
 
   Member? member(String? id) {
     for (final m in members) {
@@ -200,7 +230,8 @@ class Expense {
       note: _opt(json, 'note'),
       splitMethod: method,
       payers: [
-        for (final p in _objects(json, 'payers')) ExpensePart(_req(p, 'memberId'), _money(p, 'amount', digits)),
+        for (final p in _objects(json, 'payers'))
+          ExpensePart(_req(p, 'memberId'), _money(p, 'amount', digits)),
       ],
       splits: [
         for (final s in _objects(json, 'splits'))
@@ -249,7 +280,9 @@ class Balances {
   factory Balances.fromJson(Object? data, int digits) {
     final json = _object(data);
     return Balances(
-      nets: {for (final b in _objects(json, 'balances')) _req<String>(b, 'memberId'): _money(b, 'amount', digits)},
+      nets: {
+        for (final b in _objects(json, 'balances')) _req<String>(b, 'memberId'): _money(b, 'amount', digits),
+      },
       transfers: [
         for (final t in _objects(json, 'transfers'))
           Transfer(_req(t, 'fromMemberId'), _req(t, 'toMemberId'), _money(t, 'amount', digits)),
@@ -305,4 +338,81 @@ class Page<T> {
 
   final List<T> items;
   final String? nextCursor;
+}
+
+/// A signed-in account (accounts mode).
+@immutable
+class User {
+  const User({required this.id, this.email, required this.name, this.locale, required this.hasPassword});
+
+  factory User.fromJson(Object? data) {
+    final json = _object(data);
+    return User(
+      id: _req(json, 'id'),
+      email: _opt(json, 'email'),
+      name: _req(json, 'name'),
+      locale: _opt(json, 'locale'),
+      hasPassword: _opt<bool>(json, 'hasPassword') ?? false,
+    );
+  }
+
+  final String id;
+  final String? email;
+  final String name;
+  final String? locale;
+  final bool hasPassword;
+}
+
+/// What someone sees before joining a group by its link.
+@immutable
+class JoinInfo {
+  const JoinInfo({
+    required this.name,
+    this.emoji,
+    this.color,
+    required this.currency,
+    required this.member,
+    required this.members,
+  });
+
+  factory JoinInfo.fromJson(Object? data) {
+    final json = _object(data);
+    return JoinInfo(
+      name: _req(json, 'name'),
+      emoji: _opt(json, 'emoji'),
+      color: _opt(json, 'color'),
+      currency: _req(json, 'currency'),
+      member: _opt<bool>(json, 'member') ?? false,
+      members: [
+        for (final m in _objects(json, 'members'))
+          JoinMember(
+            id: _req(m, 'id'),
+            name: _req(m, 'name'),
+            color: _opt(m, 'color'),
+            claimed: _req(m, 'claimed'),
+          ),
+      ],
+    );
+  }
+
+  final String name;
+  final String? emoji;
+  final int? color;
+  final String currency;
+
+  /// The account already belongs to the group.
+  final bool member;
+  final List<JoinMember> members;
+}
+
+@immutable
+class JoinMember {
+  const JoinMember({required this.id, required this.name, this.color, required this.claimed});
+
+  final String id;
+  final String name;
+  final int? color;
+
+  /// Someone's account already is this member.
+  final bool claimed;
 }

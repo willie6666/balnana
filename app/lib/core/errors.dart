@@ -17,9 +17,21 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'member_has_balance' => l10n.errorMemberHasBalance,
     'expense_version_conflict' => l10n.errorVersionConflict,
     'sign_in_required' => l10n.errorSignInRequired,
+    'not_a_member' => l10n.errorNotAMember,
+    'not_allowed' || 'owner_only' => l10n.errorNotAllowed,
+    'link_groups_off' => l10n.errorLinkGroupsOff,
+    'member_claimed' => l10n.errorMemberClaimed,
+    'invalid_email' => l10n.errorInvalidEmail,
+    'invalid_password' => l10n.errorInvalidPassword,
+    'email_taken' => l10n.errorEmailTaken,
+    'signup_closed' => l10n.errorSignupClosed,
+    'invalid_credentials' => l10n.errorInvalidCredentials,
+    'wrong_password' => l10n.errorWrongPassword,
+    'accounts_off' || 'password_off' => l10n.errorAccountsOff,
     'rate_limited' => l10n.errorRateLimited,
-    final code => MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??
-        l10n.errorGeneric,
+    final code =>
+      MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??
+          l10n.errorGeneric,
   };
 }
 

@@ -74,6 +74,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorRateLimited => 'Too many requests. Wait a minute and try again.';
 
   @override
+  String get errorNotAMember => 'You\'re not in this group yet.';
+
+  @override
+  String get errorNotAllowed => 'Only that person or the group\'s owner can do this.';
+
+  @override
+  String get errorLinkGroupsOff => 'This server doesn\'t allow opening groups by link alone.';
+
+  @override
+  String get errorMemberClaimed => 'Someone has already joined as that person.';
+
+  @override
+  String get errorInvalidEmail => 'Enter an email address.';
+
+  @override
+  String get errorInvalidPassword => 'Use 8 to 200 characters.';
+
+  @override
+  String get errorEmailTaken => 'There\'s already an account with that email. Sign in instead.';
+
+  @override
+  String get errorSignupClosed => 'This server isn\'t taking new accounts.';
+
+  @override
+  String get errorInvalidCredentials => 'That email and password don\'t match.';
+
+  @override
+  String get errorWrongPassword => 'Your current password isn\'t right.';
+
+  @override
+  String get errorAccountsOff => 'This server doesn\'t use accounts.';
+
+  @override
   String get errorInvalidAmount => 'Enter an amount greater than zero.';
 
   @override
@@ -296,6 +329,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCopyLinkHelp => 'Anyone with the link can see and edit this group.';
 
   @override
+  String get groupCopyLinkHelpAccounts => 'People with the link can ask to join after signing in.';
+
+  @override
+  String get linkAccessTitle => 'Open to anyone with the link';
+
+  @override
+  String get linkAccessHelp => 'Let people see and edit without an account';
+
+  @override
   String get resetLinkTitle => 'Reset link';
 
   @override
@@ -324,6 +366,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgetBody => 'You can open it again with the link.';
 
   @override
+  String get groupYou => 'You';
+
+  @override
+  String get leaveTitle => 'Leave group';
+
+  @override
+  String get leaveHelp => 'Your expenses stay; you can join again with the link';
+
+  @override
+  String get leaveBody => 'The group disappears from your list. Your expenses and balance stay in the group.';
+
+  @override
+  String get leaveAction => 'Leave';
+
+  @override
   String get tabExpenses => 'Expenses';
 
   @override
@@ -337,6 +394,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get heroWhoAction => 'Choose';
+
+  @override
+  String get heroJoinTitle => 'You\'re viewing this group';
+
+  @override
+  String get heroJoinBody => 'Join to add expenses and see what you owe.';
+
+  @override
+  String get joinAction => 'Join';
 
   @override
   String get heroOwed => 'You\'re owed';
@@ -557,6 +623,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String activityMemberJoined(String name) {
+    return '$name joined';
+  }
+
+  @override
   String activityExpenseAdded(String who, String title, String amount) {
     return '$who added “$title” ($amount)';
   }
@@ -644,6 +715,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get accountRename => 'Change name';
+
+  @override
+  String get passwordChange => 'Change password';
+
+  @override
+  String get passwordChanged => 'Password changed. Other devices are signed out.';
+
+  @override
+  String get passwordCurrent => 'Current password';
+
+  @override
+  String get passwordNew => 'New password';
+
+  @override
+  String get signOut => 'Sign out';
 
   @override
   String get settingsTheme => 'Theme';
@@ -752,4 +844,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverSaved => 'Server saved';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get groupSignInTitle => 'Sign in to open this group';
+
+  @override
+  String get groupSignInBody => 'This group is only for its members. Sign in to see it or to join.';
+
+  @override
+  String get signInTitle => 'Welcome back';
+
+  @override
+  String get signInBody => 'Sign in to see your groups.';
+
+  @override
+  String get signInNoPassword => 'This server signs people in another way. Ask whoever runs it.';
+
+  @override
+  String get registerTitle => 'Create your account';
+
+  @override
+  String get registerBody => 'Keep your groups on every device.';
+
+  @override
+  String get registerAction => 'Create account';
+
+  @override
+  String get registerHaveAccount => 'I already have an account';
+
+  @override
+  String get signInNoAccount => 'Create an account';
+
+  @override
+  String get accountName => 'Your name';
+
+  @override
+  String get accountNameHelp => 'What people in your groups will see';
+
+  @override
+  String get accountEmail => 'Email';
+
+  @override
+  String get accountPassword => 'Password';
+
+  @override
+  String get accountPasswordHelp => 'At least 8 characters';
+
+  @override
+  String get passwordShow => 'Show password';
+
+  @override
+  String get passwordHide => 'Hide password';
+
+  @override
+  String get joinPickName => 'Pick another name';
+
+  @override
+  String joinTitle(String name) {
+    return 'Join $name';
+  }
+
+  @override
+  String get joinBody => 'Are you one of these people? Pick yourself to take over their expenses.';
+
+  @override
+  String get joinBodyNew => 'Join to add expenses and see your balance.';
+
+  @override
+  String get joinAsNew => 'I\'m someone new';
+
+  @override
+  String joinAsName(String name) {
+    return 'Join as $name';
+  }
+
+  @override
+  String joinTaken(String names) {
+    return 'Already joined: $names';
+  }
 }

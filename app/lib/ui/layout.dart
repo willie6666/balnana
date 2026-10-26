@@ -19,3 +19,6 @@ enum WindowSize {
 
 /// Widest a column of reading content gets.
 const contentMaxWidth = 720.0;
+
+/// Narrower, for short forms such as signing in.
+const formMaxWidth = 440.0;

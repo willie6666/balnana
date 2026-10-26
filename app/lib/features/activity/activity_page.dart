@@ -82,7 +82,13 @@ class ActivityTile extends StatelessWidget {
     return ListTile(
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
       contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s8),
-      leading: GroupBadge(token: group.token, name: group.name, emoji: group.emoji, color: group.color, size: 40),
+      leading: GroupBadge(
+        token: group.token,
+        name: group.name,
+        emoji: group.emoji,
+        color: group.color,
+        size: 40,
+      ),
       title: Text(activitySentence(context, item), style: text.bodyLarge),
       subtitle: Text(
         '${group.name} · ${DateFormat.jm(locale).format(item.activity.createdAt.toLocal())}',
@@ -118,6 +124,7 @@ String activitySentence(BuildContext context, FeedItem item) {
     'member.added' => l10n.activityMemberAdded(who, name),
     'member.updated' => l10n.activityMemberRenamed(who, a.text('oldName') ?? name, name),
     'member.removed' => l10n.activityMemberRemoved(who, name),
+    'member.joined' => l10n.activityMemberJoined(name),
     'expense.created' when payment => l10n.activityPaymentAdded(
       who,
       a.text('from') ?? l10n.someone,
