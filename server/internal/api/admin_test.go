@@ -244,7 +244,7 @@ func TestAssetLinks(t *testing.T) {
 	rec := get(t, c.h, "/.well-known/assetlinks.json", nil)
 	body := rec.Body.String()
 	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" ||
-		!strings.Contains(body, `"package_name":"io.github.willie6666.balnana"`) ||
+		!strings.Contains(body, `"package_name":"me.devvillie.balnana"`) ||
 		!strings.Contains(body, strings.TrimSuffix(strings.Repeat("AB:", 32), ":")) {
 		t.Fatalf("%d %s", rec.Code, body)
 	}

@@ -54,7 +54,7 @@ val linkServer: URI? =
         ?.takeIf { (it.scheme == "https" || it.scheme == "http") && !it.host.isNullOrEmpty() }
 
 android {
-    namespace = "io.github.willie6666.balnana"
+    namespace = "me.devvillie.balnana"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -66,7 +66,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.github.willie6666.balnana"
+        applicationId = "me.devvillie.balnana"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
