@@ -446,3 +446,101 @@ func TestOAuthIssuers(t *testing.T) {
 		t.Fatal("Ana lost her account")
 	}
 }
+
+// A web app on another origin listed in BALNANA_CORS_ORIGINS cannot use this
+// server's cookie: it signs in with a bearer token, by password or through a
+// provider, as the Android app does.
+func TestCrossOriginWebApp(t *testing.T) {
+	const app = "https://app.example"
+	f := newFakeIdP(t)
+	c, _, s := mailServer(t, f.env(map[string]string{"BALNANA_CORS_ORIGINS": app}))
+	browser := http.Header{"Origin": {app}, "Sec-Fetch-Site": {"cross-site"}}
+	c.header = browser
+
+	// The preflight lets it send its token.
+	req := httptest.NewRequest(http.MethodOptions, BasePath+"/me", nil)
+	req.Header.Set("Origin", app)
+	req.Header.Set("Access-Control-Request-Method", "GET")
+	req.Header.Set("Access-Control-Request-Headers", "authorization")
+	rec := httptest.NewRecorder()
+	c.h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent || rec.Header().Get("Access-Control-Allow-Origin") != app ||
+		!strings.Contains(rec.Header().Get("Access-Control-Allow-Headers"), "Authorization") {
+		t.Fatalf("preflight: %d %v", rec.Code, rec.Header())
+	}
+
+	in := RegisterInput{Email: ptr("ana@example.com"), Password: "correct horse", Name: "Ana", Cookie: ptr(true)}
+	if code := c.errorCode(403, "POST", "/auth/register", in); code != "bad_origin" {
+		t.Fatal(code)
+	}
+	in.Cookie = ptr(false)
+	var signedUp Session
+	c.must(201, "POST", "/auth/register", in, &signedUp)
+	if signedUp.Token == nil || len(c.jar) != 0 {
+		t.Fatalf("session %+v, cookies %v", signedUp, c.jar)
+	}
+	login := c.another()
+	login.header = browser
+	var signedIn Session
+	login.must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "correct horse"}, &signedIn)
+	login.token = *signedIn.Token
+	var me User
+	login.must(200, "GET", "/me", nil, &me)
+	if me.Name != "Ana" {
+		t.Fatalf("me = %+v", me)
+	}
+
+	// A session in use is renewed without a cookie.
+	ctx := context.Background()
+	if _, err := s.db.Exec(ctx, `update sessions set last_used_at = now() - interval '2 days',
+		expires_at = now() + interval '1 hour' where token_hash = $1`, hashToken(login.token)); err != nil {
+		t.Fatal(err)
+	}
+	login.must(200, "GET", "/me", nil, nil)
+	var expires time.Time
+	if err := s.db.QueryRow(ctx, `select expires_at from sessions where token_hash = $1`, hashToken(login.token)).
+		Scan(&expires); err != nil || time.Until(expires) < sessionLifetime-time.Hour || len(login.jar) != 0 {
+		t.Fatalf("expires %v (%v), cookies %v", expires, err, login.jar)
+	}
+
+	// A provider's sign-in comes back to the app as a code for its verifier.
+	start := func(q url.Values) *client {
+		b := c.another()
+		b.must(302, "GET", "/auth/oauth/oidc/start?"+q.Encode(), nil, nil)
+		return b
+	}
+	sum := sha256.Sum256([]byte("the web app's verifier"))
+	challenge := base64.RawURLEncoding.EncodeToString(sum[:])
+	for _, q := range []url.Values{
+		{"app": {"web"}, "origin": {"https://evil.example"}, "challenge": {challenge}},
+		{"app": {"web"}, "origin": {app + "/"}, "challenge": {challenge}},
+	} {
+		if code := c.errorCode(400, "GET", "/auth/oauth/oidc/start?"+q.Encode(), nil); code != "invalid_origin" {
+			t.Fatal(q, code)
+		}
+	}
+	noChallenge := "/auth/oauth/oidc/start?app=web&origin=" + url.QueryEscape(app)
+	if code := c.errorCode(400, "GET", noChallenge, nil); code != "invalid_challenge" {
+		t.Fatal(code)
+	}
+	b := start(url.Values{"app": {"web"}, "origin": {app}, "challenge": {challenge}, "next": {"/groups"}})
+	b.must(302, "GET", f.approve(b, person("1", "ana@example.com", "Ana")), nil, nil)
+	u, err := url.Parse(b.location)
+	if err != nil || !strings.HasPrefix(b.location, app+"/oauth-done?") || u.Query().Get("next") != "/groups" {
+		t.Fatal(b.location)
+	}
+	b.errorCode(401, "GET", "/me", nil)
+	var viaProvider Session
+	exchange := OAuthExchange{Code: u.Query().Get("code"), Verifier: "the web app's verifier"}
+	c.must(200, "POST", "/auth/oauth/exchange", exchange, &viaProvider)
+	if viaProvider.Token == nil || viaProvider.User.Id != me.Id {
+		t.Fatalf("session = %+v", viaProvider)
+	}
+
+	// A "*" list lets any site call the API, but sends codes to none.
+	wild := accountsClient(t, f.env(map[string]string{"BALNANA_CORS_ORIGINS": "*"}))
+	q := url.Values{"app": {"web"}, "origin": {app}, "challenge": {challenge}}
+	if code := wild.errorCode(400, "GET", "/auth/oauth/oidc/start?"+q.Encode(), nil); code != "invalid_origin" {
+		t.Fatal(code)
+	}
+}

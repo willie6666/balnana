@@ -24,6 +24,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'not_allowed' || 'owner_only' => l10n.errorNotAllowed,
     'link_groups_off' => l10n.errorLinkGroupsOff,
     'member_claimed' => l10n.errorMemberClaimed,
+    'member_left' => l10n.errorMemberLeft,
     'invalid_email' => l10n.errorInvalidEmail,
     'invalid_password' => l10n.errorInvalidPassword,
     'email_taken' => l10n.errorEmailTaken,

@@ -17,6 +17,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	// Readers' time zones are looked up even in an image without tzdata.
+	_ "time/tzdata"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 

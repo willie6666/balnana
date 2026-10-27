@@ -16,21 +16,18 @@ import (
 // ExportCsv writes every live expense and payment of the group, oldest first,
 // with one column per member holding what the entry did to their balance.
 func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (ExportCsvResponseObject, error) {
-	offset := 0
-	if req.Params.UtcOffset != nil {
-		offset = *req.Params.UtcOffset
-	}
-	if offset < -840 || offset > 840 {
-		return nil, badRequest("invalid_offset")
+	zone, err := readerZone(req.Params.UtcOffset, req.Params.TimeZone)
+	if err != nil {
+		return nil, err
 	}
 	var out ExportCsv200TextcsvResponse
-	err := pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly},
+	err = pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly},
 		func(tx pgx.Tx) error {
 			g, err := s.groupByToken(ctx, tx, req.Token, false)
 			if err != nil {
 				return err
 			}
-			out, err = exportCsv(ctx, tx, g, offset)
+			out, err = exportCsv(ctx, tx, g, zone)
 			return err
 		})
 	if err != nil {
@@ -40,7 +37,7 @@ func (s *Server) ExportCsv(ctx context.Context, req ExportCsvRequestObject) (Exp
 }
 
 // exportCsv builds all columns and rows from the caller's database snapshot.
-func exportCsv(ctx context.Context, q querier, g *group, offset int) (ExportCsv200TextcsvResponse, error) {
+func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (ExportCsv200TextcsvResponse, error) {
 	members, err := groupMembers(ctx, q, g.id)
 	if err != nil {
 		return ExportCsv200TextcsvResponse{}, err
@@ -92,7 +89,6 @@ func exportCsv(ctx context.Context, q querier, g *group, offset int) (ExportCsv2
 	if err != nil {
 		return ExportCsv200TextcsvResponse{}, err
 	}
-	zone := time.FixedZone("", offset*60)
 	var kind, title, category, note string
 	var amount int64
 	var at time.Time

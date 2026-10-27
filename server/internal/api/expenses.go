@@ -35,7 +35,10 @@ type expenseData struct {
 
 // validateExpense checks an expense against the group: every member must
 // belong to it, payers must add up to the amount and the split must work.
-func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput) (*expenseData, error) {
+// Members who left may only stay in an expense they were already part of
+// (those in already), so no one gains a new balance after leaving.
+func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput,
+	already map[string]bool) (*expenseData, error) {
 	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
 
 	minTitle := 1
@@ -88,8 +91,12 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		return nil, err
 	}
 	known := func(id string) error {
-		if findMember(members, id) == nil {
+		m := findMember(members, id)
+		if m == nil {
 			return badRequest("unknown_member")
+		}
+		if m.left && !already[id] {
+			return badRequest("member_left")
 		}
 		return nil
 	}
@@ -383,7 +390,7 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body)
+		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil)
 		if err != nil {
 			return err
 		}
@@ -425,7 +432,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 			Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
 			SplitMethod: SplitMethod(domain.SplitExact),
 			Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
-		})
+		}, nil)
 		if err != nil {
 			return err
 		}
@@ -456,11 +463,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 
 func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (GetExpenseResponseObject, error) {
 	var out Expense
-	err := s.snapshot(ctx, func(tx pgx.Tx) error {
-		g, err := s.groupByToken(ctx, tx, req.Token, false)
-		if err != nil {
-			return err
-		}
+	err := s.groupSnapshot(ctx, req.Token, func(tx pgx.Tx, g *group) (err error) {
 		out, err = loadExpense(ctx, tx, g, req.ExpenseId)
 		return err
 	})
@@ -468,6 +471,25 @@ func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (G
 		return nil, err
 	}
 	return GetExpense200JSONResponse(out), nil
+}
+
+// expenseMembers returns who pays or shares in an expense.
+func expenseMembers(ctx context.Context, q querier, id string) (map[string]bool, error) {
+	rows, err := q.Query(ctx, `
+		select member_id::text from expense_payers where expense_id = $1
+		union select member_id::text from expense_splits where expense_id = $1`, id)
+	if err != nil {
+		return nil, err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		set[id] = true
+	}
+	return set, nil
 }
 
 // lockExpense reads an expense's kind, version and deleted state, holding the row.
@@ -491,6 +513,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 	var out Expense
 	var g *group
 	var who *string
+	var before map[string]bool
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
 		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
@@ -506,7 +529,11 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if version != *req.Body.Version {
 			return &apiError{status: 409, code: "expense_version_conflict", params: map[string]any{"version": version}}
 		}
-		d, err := validateExpense(ctx, tx, g, kind, *req.Body)
+		before, err = expenseMembers(ctx, tx, req.ExpenseId)
+		if err != nil {
+			return err
+		}
+		d, err := validateExpense(ctx, tx, g, kind, *req.Body, before)
 		if err != nil {
 			return err
 		}
@@ -539,8 +566,31 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 	if err != nil {
 		return nil, err
 	}
-	s.notifyExpense(g, who, "edited", out)
+	// Someone the edit took out of the expense sees their balance change too.
+	earlier := make([]string, 0, len(before))
+	for id := range before {
+		earlier = append(earlier, id)
+	}
+	s.notifyExpense(g, who, "edited", out, earlier...)
 	return UpdateExpense200JSONResponse(out), nil
+}
+
+// noneLeft fails with member_left when someone in the expense has left.
+func noneLeft(ctx context.Context, q querier, id string) error {
+	var left bool
+	err := q.QueryRow(ctx, `
+		select exists (
+			select 1 from members m
+			where m.left_at is not null and m.id in (
+				select member_id from expense_payers where expense_id = $1
+				union select member_id from expense_splits where expense_id = $1))`, id).Scan(&left)
+	if err != nil {
+		return err
+	}
+	if left {
+		return &apiError{status: 409, code: "member_left"}
+	}
+	return nil
 }
 
 // setDeleted deletes or restores an expense. Doing it twice changes nothing.
@@ -559,6 +609,12 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			return err
 		}
 		if deleted != del {
+			if !del {
+				// Restoring would give back a balance to whoever left since.
+				if err := noneLeft(ctx, tx, id); err != nil {
+					return err
+				}
+			}
 			changed = true
 			who, err = actor(ctx, tx, g, header)
 			if err != nil {

@@ -233,11 +233,12 @@ func summarize(ctx context.Context, q querier, g *group, me *string) (GroupSumma
 }
 
 func (s *Server) GetGroup(ctx context.Context, req GetGroupRequestObject) (GetGroupResponseObject, error) {
-	g, err := s.groupByToken(ctx, s.db, req.Token, false)
-	if err != nil {
-		return nil, err
-	}
-	out, err := loadGroup(ctx, s.db, g)
+	var out Group
+	// One snapshot, so the members, balances and categories agree.
+	err := s.groupSnapshot(ctx, req.Token, func(tx pgx.Tx, g *group) (err error) {
+		out, err = loadGroup(ctx, tx, g)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

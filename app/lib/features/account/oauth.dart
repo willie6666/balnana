@@ -32,7 +32,9 @@ Future<void> startOAuth(WidgetRef ref, OAuthProvider provider, String next) asyn
   final server = ref.read(serverUrlProvider);
   if (server == null) return;
   final query = {'app': kIsWeb ? 'web' : 'android', 'next': next};
-  if (!kIsWeb) {
+  if (!cookieSession(server)) {
+    // A web app on another origin gets the sign-in back there as a code.
+    if (kIsWeb) query['origin'] = Uri.base.origin;
     // Only this app knows the verifier, so another app catching the link
     // back cannot use its code.
     final random = Random.secure();
@@ -54,7 +56,7 @@ Future<void> startOAuth(WidgetRef ref, OAuthProvider provider, String next) asyn
 class OAuthDonePage extends ConsumerStatefulWidget {
   const OAuthDonePage({super.key, this.code, this.error, this.next});
 
-  /// Android: the code to trade for a session.
+  /// Android, or a web app on another origin: the code to trade for a session.
   final String? code;
   final String? error;
   final String? next;
@@ -77,7 +79,7 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
       if (verifier == null) throw const ApiException('invalid_token');
       (token, _) = await ref.read(balnanaApiProvider)!.exchangeOAuthCode(code: code, verifier: verifier);
     }
-    // On the web the server already set the session cookie.
+    // The web app on its own server already has the session cookie.
     if (startSession(ref, token, from: who) && mounted) context.go(safeNext(widget.next) ?? '/groups');
   }
 

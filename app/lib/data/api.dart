@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 import '../core/money.dart';
 import '../core/server.dart';
@@ -111,9 +112,9 @@ class BalnanaApi {
     }
   }
 
-  /// Where to keep the session: the web keeps it in an HttpOnly cookie,
-  /// Android gets a token back.
-  static const _cookie = kIsWeb;
+  /// Where to keep the session: the web app on its own server keeps it in an
+  /// HttpOnly cookie, others get a token back.
+  bool get _cookie => cookieSession(_dio.options.baseUrl);
 
   /// Returns the session token, or null on the web.
   Future<(String?, User)> register({
@@ -471,29 +472,48 @@ class GroupApi {
       _send(() => _dio.get<Object?>('$_base/balances'), (data) => Balances.fromJson(data, digits));
 
   /// What the group spent in [period], with months starting in this device's time zone.
-  Future<GroupStats> stats(int digits, {Period? period}) => _send(
-    () => _dio.get<Object?>(
-      '$_base/stats',
-      queryParameters: {
-        if (period != null) ...{
-          'from': period.from.toUtc().toIso8601String(),
-          'to': period.to.toUtc().toIso8601String(),
+  Future<GroupStats> stats(int digits, {Period? period}) => _inLocalTime(
+    (zone) => _send(
+      () => _dio.get<Object?>(
+        '$_base/stats',
+        queryParameters: {
+          if (period != null) ...{
+            'from': period.from.toUtc().toIso8601String(),
+            'to': period.to.toUtc().toIso8601String(),
+          },
+          ...zone,
         },
-        'utcOffset': DateTime.now().timeZoneOffset.inMinutes,
-      },
+      ),
+      (data) => GroupStats.fromJson(data, digits),
     ),
-    (data) => GroupStats.fromJson(data, digits),
   );
 
   /// Every expense and payment as a CSV file, dated in this device's time zone.
-  Future<Uint8List> exportCsv() => _send(
-    () => _dio.get<Object?>(
-      '$_base/export.csv',
-      queryParameters: {'utcOffset': DateTime.now().timeZoneOffset.inMinutes},
-      options: Options(responseType: ResponseType.bytes),
+  Future<Uint8List> exportCsv() => _inLocalTime(
+    (zone) => _send(
+      () => _dio.get<Object?>(
+        '$_base/export.csv',
+        queryParameters: zone,
+        options: Options(responseType: ResponseType.bytes),
+      ),
+      (data) => data is List<int> ? Uint8List.fromList(data) : throw const FormatException('bad csv'),
     ),
-    (data) => data is List<int> ? Uint8List.fromList(data) : throw const FormatException('bad csv'),
   );
+
+  /// Asks with this device's time zone. Its name lets the server date each
+  /// expense by the offset in force then, across daylight saving time; the
+  /// current offset is for a server that does not know the name.
+  Future<T> _inLocalTime<T>(Future<T> Function(Map<String, Object> zone) ask) async {
+    final offset = {'utcOffset': DateTime.now().timeZoneOffset.inMinutes};
+    final name = await deviceTimeZone();
+    if (name == null) return ask(offset);
+    try {
+      return await ask({...offset, 'timeZone': name});
+    } on ApiException catch (e) {
+      if (e.code != 'invalid_time_zone') rethrow;
+      return ask(offset);
+    }
+  }
 
   Future<Page<Activity>> activity({String? cursor, int limit = 50}) => _send(
     () => _dio.get<Object?>('$_base/activity', queryParameters: {'cursor': ?cursor, 'limit': limit}),
@@ -577,6 +597,18 @@ class AdminApi {
 }
 
 /// The API of the chosen server, or null when none is set.
+/// This device's IANA time zone, such as "Europe/Berlin", or null when the
+/// platform does not say. Tests replace it.
+@visibleForTesting
+Future<String?> Function() deviceTimeZone = () async {
+  try {
+    final zone = (await FlutterTimezone.getLocalTimezone()).identifier;
+    return zone.isEmpty ? null : zone;
+  } on Object {
+    return null;
+  }
+};
+
 final balnanaApiProvider = Provider<BalnanaApi?>((ref) {
   final dio = ref.watch(apiProvider);
   return dio == null ? null : BalnanaApi(dio);

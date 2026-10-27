@@ -10,15 +10,19 @@ import (
 )
 
 func (s *Server) GetBalances(ctx context.Context, req GetBalancesRequestObject) (GetBalancesResponseObject, error) {
-	g, err := s.groupByToken(ctx, s.db, req.Token, false)
-	if err != nil {
-		return nil, err
-	}
-	members, err := groupMembers(ctx, s.db, g.id)
-	if err != nil {
-		return nil, err
-	}
-	nets, err := groupNets(ctx, s.db, g.id)
+	var g *group
+	var members []member
+	var nets map[string]int64
+	// One snapshot, so every member a transfer names is in the list.
+	err := s.groupSnapshot(ctx, req.Token, func(tx pgx.Tx, found *group) (err error) {
+		g = found
+		members, err = groupMembers(ctx, tx, g.id)
+		if err != nil {
+			return err
+		}
+		nets, err = groupNets(ctx, tx, g.id)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

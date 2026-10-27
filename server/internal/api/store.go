@@ -149,6 +149,22 @@ func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock
 	return nil, forbidden("not_a_member")
 }
 
+// groupSnapshot runs fn on the group in one snapshot, so its separate
+// queries agree. A malformed token is a miss that never reaches the database.
+func (s *Server) groupSnapshot(ctx context.Context, token string, fn func(pgx.Tx, *group) error) error {
+	if !validToken(token) {
+		noteMiss(ctx)
+		return errNotFound
+	}
+	return s.snapshot(ctx, func(tx pgx.Tx) error {
+		g, err := s.groupByToken(ctx, tx, token, false)
+		if err != nil {
+			return err
+		}
+		return fn(tx, g)
+	})
+}
+
 func newToken() string {
 	b := make([]byte, tokenBytes)
 	_, _ = rand.Read(b) // never fails
@@ -354,9 +370,11 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 }
 
 // actor is who is acting in the group: the signed-in account's member, or
-// else the member named by the X-Balnana-Member header (link rules), or nil.
+// else, in link mode, the member named by the X-Balnana-Member header, or nil.
+// In accounts mode the header proves nothing, as anyone opening a group by
+// its link could name any member: only the session says who acts.
 func actor(ctx context.Context, q querier, g *group, header *string) (*string, error) {
-	if g.me != nil {
+	if g.me != nil || g.accounts {
 		return g.me, nil
 	}
 	if header == nil || !validUUID(*header) {

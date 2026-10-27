@@ -487,3 +487,73 @@ func TestPushLogsHideDevices(t *testing.T) {
 		t.Fatalf("device token in logs: %s", logs.String())
 	}
 }
+
+// In accounts mode a link holder cannot act as a claimed member by naming
+// them: the write is nobody's, and the member still hears about it.
+func TestPushAccountsLinkHolderIsNobody(t *testing.T) {
+	ana, f, s := pushClient(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
+	register(ana, "ana@example.com", "Ana")
+	var g Group
+	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	ana.must(200, "PATCH", "/g/"+g.Token, GroupUpdate{LinkAccess: ptr(true)}, nil)
+	subscribe(ana, "ana-phone", follow(g.Token, g.Members[0].Id))
+	base := "/g/" + g.Token
+
+	anon := ana.another()
+	anon.member = g.Members[0].Id
+	in := ExpenseInput{
+		Title: "Rent", Amount: "10.00", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+		Payers: []PayerInput{{MemberId: g.Members[1].Id, Amount: "10.00"}}, SplitMethod: "equal",
+		Splits: []Share{{MemberId: g.Members[0].Id}, {MemberId: g.Members[1].Id}},
+	}
+	var e Expense
+	anon.must(201, "POST", base+"/expenses", in, &e)
+	if e.CreatedBy != nil {
+		t.Fatalf("createdBy = %v", *e.CreatedBy)
+	}
+	if sent := f.take(s); len(sent) != 1 || sent[0].phone != "ana-phone" {
+		t.Fatalf("sent on create %+v", sent)
+	}
+	in.Title, in.Version = "Rent, March", ptr(e.Version)
+	anon.must(200, "PUT", base+"/expenses/"+e.Id, in, nil)
+	if sent := f.take(s); len(sent) != 1 || sent[0].phone != "ana-phone" {
+		t.Fatalf("sent on edit %+v", sent)
+	}
+
+	var acts ActivityPage
+	ana.must(200, "GET", base+"/activity?limit=2", nil, &acts)
+	for _, a := range acts.Items {
+		if a.ActorMemberId != nil {
+			t.Errorf("%s by %s", a.Action, *a.ActorMemberId)
+		}
+	}
+}
+
+// An edit that takes someone out of an expense changes their balance too,
+// so their phone hears about it.
+func TestPushEditTellsWhoWasTakenOut(t *testing.T) {
+	c, f, s := pushClient(t, map[string]string{})
+	g := createGroup(c, "Ana", "Ben", "Cy")
+	ana, ben, cy := g.Members[0].Id, g.Members[1].Id, g.Members[2].Id
+	subscribe(c, "ana-phone", follow(g.Token, ana))
+	subscribe(c, "ben-phone", follow(g.Token, ben))
+	subscribe(c, "cy-phone", follow(g.Token, cy))
+	base := "/g/" + g.Token
+	c.member = ana
+	in := ExpenseInput{
+		Title: "Pizza", Amount: "12", OccurredAt: mustTime(t, "2026-10-01T19:00:00Z"),
+		Payers: []PayerInput{{MemberId: ana, Amount: "12"}}, SplitMethod: "equal",
+		Splits: []Share{{MemberId: ana}, {MemberId: ben}, {MemberId: cy}},
+	}
+	var e Expense
+	c.must(201, "POST", base+"/expenses", in, &e)
+	f.take(s)
+
+	in.Splits, in.Version = in.Splits[:2], ptr(e.Version)
+	c.must(200, "PUT", base+"/expenses/"+e.Id, in, nil)
+	sent := f.take(s)
+	if len(sent) != 2 || sent[0].phone != "ben-phone" || sent[1].phone != "cy-phone" ||
+		sent[1].n.Key != "push_expense_edited" {
+		t.Fatalf("sent %+v", sent)
+	}
+}

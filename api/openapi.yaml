@@ -390,9 +390,10 @@ paths:
       summary: Leave for the provider's sign-in page (opened in a browser)
       description: >-
         The app opens this in the browser rather than calling it. It comes
-        back through the callback to `/oauth-done` in the web app, or to
-        `balnana://app/oauth-done` in the Android app, with `next` and either
-        `code` (Android: trade it with /auth/oauth/exchange) or `error`.
+        back through the callback to `/oauth-done` in the web app (on `origin`
+        when given), or to `balnana://app/oauth-done` in the Android app, with
+        `next` and either `code` (Android, or a web app on another origin:
+        trade it with /auth/oauth/exchange) or `error`.
       parameters:
         - name: app
           in: query
@@ -408,8 +409,17 @@ paths:
         - name: challenge
           in: query
           description: >-
-            Android only: base64url SHA-256 of a random verifier the app keeps,
-            sent again with the code to /auth/oauth/exchange.
+            Android, or with `origin`: base64url SHA-256 of a random verifier
+            the app keeps, sent again with the code to /auth/oauth/exchange.
+          schema:
+            type: string
+        - name: origin
+          in: query
+          description: >-
+            A web app on another origin than this server's, such as
+            `https://app.example`: it must be listed by name in
+            BALNANA_CORS_ORIGINS (`*` is not enough), or the answer is
+            `invalid_origin`. The sign-in comes back to it as a code.
           schema:
             type: string
       responses:
@@ -963,6 +973,9 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       operationId: createExpense
+      description: >-
+        Every payer and split member must be in the group and not have left
+        it (400 `unknown_member` or `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1001,6 +1014,8 @@ paths:
       description: >-
         `version` must be the version that was read; otherwise the expense
         changed meanwhile and the answer is 409 `expense_version_conflict`.
+        A member who left may stay in an expense they were already part of,
+        but not be added to one (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1088,6 +1103,9 @@ paths:
     post:
       operationId: restoreExpense
       summary: Undo a delete
+      description: >-
+        409 `member_left` when someone in the expense has left the group
+        since, as restoring it would give them a balance again.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1105,6 +1123,7 @@ paths:
     post:
       operationId: createPayment
       summary: Record that one member paid another
+      description: Both members must not have left the group (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1147,9 +1166,12 @@ paths:
       parameters:
         - $ref: "#/components/parameters/From"
         - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/TimeZone"
         - name: utcOffset
           in: query
-          description: Minutes east of UTC that months begin at, for the reader's time zone.
+          description: >-
+            Minutes east of UTC that months begin at, when `timeZone` is not
+            given. One offset cannot follow daylight saving time.
           schema:
             type: integer
             minimum: -840
@@ -1176,9 +1198,12 @@ paths:
         one per member with what the entry did to their balance (paid minus
         share), so each member column adds up to their balance.
       parameters:
+        - $ref: "#/components/parameters/TimeZone"
         - name: utcOffset
           in: query
-          description: Minutes east of UTC to write dates in, for the reader's time zone.
+          description: >-
+            Minutes east of UTC to write dates in, when `timeZone` is not
+            given. One offset cannot follow daylight saving time.
           schema:
             type: integer
             minimum: -840
@@ -1302,13 +1327,25 @@ components:
       schema:
         type: string
         format: date-time
+    TimeZone:
+      name: timeZone
+      in: query
+      required: false
+      description: >-
+        The reader's IANA time zone, such as `Europe/Berlin`. Each entry is
+        dated by the offset in force when it happened. 400
+        `invalid_time_zone` for a name the server does not know.
+      schema:
+        type: string
+        maxLength: 64
     ActingMember:
       name: X-Balnana-Member
       in: header
       required: false
       description: >-
         Link mode: the member this device acts as, recorded in the activity
-        log. Ignored when it is not a member of the group.
+        log. Ignored when it is not a member of the group, and always in
+        accounts mode, where only the signed-in account names the actor.
       schema:
         type: string
   securitySchemes:
@@ -1900,7 +1937,10 @@ components:
           type: string
         cookie:
           type: boolean
-          description: 'Web app: keep the session in a cookie instead of returning a token.'
+          description: >-
+            The web app served by this server: keep the session in a cookie
+            instead of returning a token. A web app on another origin cannot
+            (the answer is bad_origin) and keeps the token.
         invite:
           type: string
           description: >-
@@ -1917,7 +1957,10 @@ components:
           type: string
         cookie:
           type: boolean
-          description: 'Web app: keep the session in a cookie instead of returning a token.'
+          description: >-
+            The web app served by this server: keep the session in a cookie
+            instead of returning a token. A web app on another origin cannot
+            (the answer is bad_origin) and keeps the token.
     Session:
       type: object
       required: [user]

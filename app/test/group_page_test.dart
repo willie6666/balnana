@@ -10,7 +10,7 @@ import 'package:balnana/core/push.dart';
 import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
-import 'package:balnana/data/api.dart' show PushSubscription;
+import 'package:balnana/data/api.dart' show PushSubscription, deviceTimeZone;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
@@ -145,6 +145,7 @@ class _Search implements HttpClientAdapter {
 /// Answers the CSV export of group `tok` and keeps the time zone it was asked in.
 class _Export implements HttpClientAdapter {
   Object? utcOffset;
+  Object? timeZone;
 
   @override
   Future<ResponseBody> fetch(
@@ -154,6 +155,7 @@ class _Export implements HttpClientAdapter {
   ) async {
     expect(options.uri.path, '/api/v1/g/tok/export.csv');
     utcOffset = options.queryParameters['utcOffset'];
+    timeZone = options.queryParameters['timeZone'];
     return ResponseBody.fromBytes(
       utf8.encode('Date,Title\n'),
       200,
@@ -599,6 +601,10 @@ void main() {
     final export = _Export();
     final saver = _Saver();
     FilePickerPlatform.instance = saver;
+    // The test has no platform to name the zone.
+    final zone = deviceTimeZone;
+    addTearDown(() => deviceTimeZone = zone);
+    deviceTimeZone = () async => 'Asia/Taipei';
     final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
       ..httpClientAdapter = export;
     final container = await _boot(tester, [
@@ -618,6 +624,7 @@ void main() {
 
     expect(saver.saved, [('Trip JapanKorea.csv', 'Date,Title\n', 'text/csv')]);
     expect(export.utcOffset, DateTime.now().timeZoneOffset.inMinutes);
+    expect(export.timeZone, 'Asia/Taipei');
     expect(find.text('Exported'), findsOneWidget);
   });
 

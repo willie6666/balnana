@@ -183,7 +183,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			if problem != "" {
 				return importRowError(e.Line, problem)
 			}
-			d, err := validateExpense(ctx, tx, g, kind, input)
+			d, err := validateExpense(ctx, tx, g, kind, input, nil)
 			if err != nil {
 				var ae *apiError
 				var dc domain.Code

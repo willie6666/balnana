@@ -20,6 +20,12 @@ String? get defaultServerUrl {
   return null;
 }
 
+/// Whether the session lives in [serverUrl]'s cookie: only in the web app it
+/// serves. A web app on another origin cannot use that cookie, so it keeps a
+/// token as the Android app does.
+bool cookieSession(String serverUrl, {bool web = kIsWeb, Uri? page}) =>
+    web && Uri.parse(serverUrl).origin == (page ?? Uri.base).origin;
+
 /// Whether people pick the server in Settings. The web app always talks to
 /// the server it came from, so it has nothing to choose.
 const canChooseServer = !kIsWeb;

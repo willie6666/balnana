@@ -507,3 +507,59 @@ func minor(t *testing.T, s string) int64 {
 	}
 	return v
 }
+
+// Someone who left gains no new balance: new expenses and payments may not
+// name them, and a deleted expense with them stays deleted, but expenses they
+// were already in can still be edited.
+func TestDepartedMembers(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana", "Ben", "Cy")
+	ana, ben, cy := g.Members[0].Id, g.Members[1].Id, g.Members[2].Id
+	base := "/g/" + g.Token
+	expense := func(title, amount string, splits ...string) ExpenseInput {
+		in := ExpenseInput{
+			Title: title, Amount: amount, OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+			Payers: []PayerInput{{MemberId: ana, Amount: amount}}, SplitMethod: "equal",
+		}
+		for _, id := range splits {
+			in.Splits = append(in.Splits, Share{MemberId: id})
+		}
+		return in
+	}
+	var taxi, gone, lunch Expense
+	c.must(201, "POST", base+"/expenses", expense("Taxi", "10.00", ana, cy), &taxi)
+	c.must(201, "POST", base+"/expenses", expense("Snacks", "2.00", ana, cy), &gone)
+	c.must(204, "DELETE", base+"/expenses/"+gone.Id, nil, nil)
+	c.must(201, "POST", base+"/expenses", expense("Lunch", "6.00", ana, ben), &lunch)
+	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: cy, ToMemberId: ana, Amount: "5.00"}, nil)
+	c.must(204, "DELETE", base+"/members/"+cy, nil, nil)
+
+	if code := c.errorCode(400, "POST", base+"/expenses", expense("Dinner", "4.00", ana, cy)); code != "member_left" {
+		t.Fatalf("new expense: %q", code)
+	}
+	for _, p := range []PaymentInput{{FromMemberId: cy, ToMemberId: ana}, {FromMemberId: ana, ToMemberId: cy}} {
+		p.Amount = "1.00"
+		if code := c.errorCode(400, "POST", base+"/payments", p); code != "member_left" {
+			t.Fatalf("payment %+v: %q", p, code)
+		}
+	}
+	add := expense("Lunch", "6.00", ana, ben, cy)
+	add.Version = ptr(lunch.Version)
+	if code := c.errorCode(400, "PUT", base+"/expenses/"+lunch.Id, add); code != "member_left" {
+		t.Fatalf("adding to an expense: %q", code)
+	}
+	if code := c.errorCode(409, "POST", base+"/expenses/"+gone.Id+"/restore", nil); code != "member_left" {
+		t.Fatalf("restore: %q", code)
+	}
+
+	edit := expense("Taxi home", "10.00", ana, cy)
+	edit.Version = ptr(taxi.Version)
+	c.must(200, "PUT", base+"/expenses/"+taxi.Id, edit, nil)
+	var b Balances
+	c.must(200, "GET", base+"/balances", nil, &b)
+	for _, m := range b.Balances {
+		if m.MemberId == cy && m.Amount != "0.00" {
+			t.Fatalf("cy's balance %s", m.Amount)
+		}
+	}
+}

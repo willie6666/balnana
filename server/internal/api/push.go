@@ -180,10 +180,11 @@ func (s *Server) RemovePushDevice(ctx context.Context, req RemovePushDeviceReque
 // FinishPushes waits for the notifications still being sent.
 func (s *Server) FinishPushes() { s.pushing.Wait() }
 
-// notifyExpense tells the phones of the members e involves about action
-// ("added", "edited" or "deleted"), leaving out who made the change. It runs
-// after the change is committed, in the background, and never fails it.
-func (s *Server) notifyExpense(g *group, who *string, action string, e Expense) {
+// notifyExpense tells the phones of the members e involves, and of those in
+// earlier (whom an edit took out of it), about action ("added", "edited" or
+// "deleted"), leaving out who made the change. It runs after the change is
+// committed, in the background, and never fails it.
+func (s *Server) notifyExpense(g *group, who *string, action string, e Expense, earlier ...string) {
 	if s.push == nil {
 		return
 	}
@@ -192,17 +193,21 @@ func (s *Server) notifyExpense(g *group, who *string, action string, e Expense) 
 		defer s.pushing.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), pushTimeout)
 		defer cancel()
-		if err := s.sendExpense(ctx, g, who, action, e); err != nil {
+		if err := s.sendExpense(ctx, g, who, action, e, earlier); err != nil {
 			s.log.Warn("push failed", "group", g.id, "err", err)
 		}
 	}()
 }
 
-func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action string, e Expense) error {
+func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action string, e Expense,
+	earlier []string) error {
 	if e.Kind == ExpenseKindPayment && action != "added" {
 		return nil
 	}
 	involved := map[string]bool{}
+	for _, id := range earlier {
+		involved[id] = true
+	}
 	for _, p := range e.Payers {
 		involved[p.MemberId] = true
 	}

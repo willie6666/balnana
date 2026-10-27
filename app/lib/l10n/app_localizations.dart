@@ -355,6 +355,12 @@ abstract class AppLocalizations {
   /// **'Someone has already joined as that person.'**
   String get errorMemberClaimed;
 
+  /// No description provided for @errorMemberLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone in this has left the group.'**
+  String get errorMemberLeft;
+
   /// No description provided for @errorInvalidEmail.
   ///
   /// In en, this message translates to:

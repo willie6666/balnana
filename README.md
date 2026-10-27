@@ -117,8 +117,16 @@ app shows a short built-in description of what the server stores.
   build's signing certificate under `/admin` → Android app links (or set
   `BALNANA_ANDROID_CERT_SHA256`); `keytool -list -v -keystore <your keystore>`
   prints it. The server then serves `/.well-known/assetlinks.json`.
-- A web app hosted on another origin needs that origin listed in
-  `BALNANA_CORS_ORIGINS`.
+- **Web app on another origin**: build it with
+  `flutter build web --dart-define=BALNANA_SERVER_URL=https://balnana.example.com`
+  and list its origin (scheme, host and port, such as `https://app.example.com`)
+  in `BALNANA_CORS_ORIGINS`. Browsers keep the server's session cookie from
+  other sites, so such an app keeps a bearer token in the browser's local
+  storage instead, as the Android app keeps one on the phone. Password sign-in
+  works as it does on the server's own web app. Google and OpenID Connect
+  sign-in come back to the app's `/oauth-done` page with a one-time code, which
+  only works for an origin listed by name: `*` lets any site call the API but
+  sends sign-ins to none. Links in emails still open the server's own web app.
 
 ### Push notifications
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -94,11 +95,15 @@ func (s *Server) oauthProvider(id string) (*oauthProvider, error) {
 }
 
 // oauthReturn is where the browser goes once the provider is done: the web
-// app's /oauth-done page, or the Android app's.
-func (s *Server) oauthReturn(app, next string, q url.Values) string {
+// app's /oauth-done page, on origin when it is another one, or the Android
+// app's.
+func (s *Server) oauthReturn(app string, origin *string, next string, q url.Values) string {
 	q.Set("next", next)
-	if app == "android" {
+	switch {
+	case app == "android":
 		return androidReturn + "?" + q.Encode()
+	case origin != nil:
+		return *origin + "/oauth-done?" + q.Encode()
 	}
 	return s.appLink("/oauth-done", q)
 }
@@ -129,16 +134,27 @@ func (s *Server) StartOAuth(ctx context.Context, req StartOAuthRequestObject) (S
 	if in.Next != nil && strings.HasPrefix(*in.Next, "/") && !strings.HasPrefix(*in.Next, "//") && !strings.Contains(*in.Next, `\`) {
 		next = *in.Next
 	}
-	var challenge *string
+	var challenge, origin *string
 	switch in.App {
 	case "web":
+		// A web app elsewhere cannot read this server's cookie: it gets a
+		// code as the Android app does. Only an origin listed by name, as
+		// the code travels to it in the address.
+		if in.Origin != nil {
+			if !slices.Contains(s.conf().CORSOrigins, *in.Origin) {
+				return nil, badRequest("invalid_origin")
+			}
+			origin = in.Origin
+		}
 	case "android":
+	default:
+		return nil, badRequest("invalid_app")
+	}
+	if in.App == "android" || origin != nil {
 		if in.Challenge == nil || !pkceChallenge.MatchString(*in.Challenge) {
 			return nil, badRequest("invalid_challenge")
 		}
 		challenge = in.Challenge
-	default:
-		return nil, badRequest("invalid_app")
 	}
 	app := string(in.App)
 
@@ -146,7 +162,7 @@ func (s *Server) StartOAuth(ctx context.Context, req StartOAuthRequestObject) (S
 	if err != nil {
 		s.log.Warn("OpenID Connect discovery failed", "provider", p.id, "err", err)
 		return StartOAuth302Response{Headers: StartOAuth302ResponseHeaders{
-			Location: s.oauthReturn(app, next, url.Values{"error": {"oauth_failed"}}),
+			Location: s.oauthReturn(app, origin, next, url.Values{"error": {"oauth_failed"}}),
 		}}, nil
 	}
 	state, verifier, nonce := secretToken(), oauth2.GenerateVerifier(), secretToken()
@@ -154,9 +170,9 @@ func (s *Server) StartOAuth(ctx context.Context, req StartOAuthRequestObject) (S
 		return nil, err
 	}
 	_, err = s.db.Exec(ctx, `
-		insert into oauth_logins (state_hash, provider, verifier, nonce, app, next, challenge, expires_at)
-		values ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		hashToken(state), p.id, verifier, nonce, app, next, challenge, time.Now().Add(oauthLifetime))
+		insert into oauth_logins (state_hash, provider, verifier, nonce, app, next, challenge, origin, expires_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		hashToken(state), p.id, verifier, nonce, app, next, challenge, origin, time.Now().Add(oauthLifetime))
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +191,7 @@ func (s *Server) StartOAuth(ctx context.Context, req StartOAuthRequestObject) (S
 
 type oauthLogin struct {
 	app, next, verifier, nonce string
-	challenge                  *string
+	challenge, origin          *string
 }
 
 // takeOAuthLogin spends the sign-in that state belongs to. The browser must
@@ -188,8 +204,8 @@ func takeOAuthLogin(ctx context.Context, q querier, provider string, state, cook
 	var l oauthLogin
 	err := q.QueryRow(ctx, `
 		delete from oauth_logins where state_hash = $1 and provider = $2 and expires_at > now()
-		returning app, next, verifier, nonce, challenge`, hashToken(*state), provider).
-		Scan(&l.app, &l.next, &l.verifier, &l.nonce, &l.challenge)
+		returning app, next, verifier, nonce, challenge, origin`, hashToken(*state), provider).
+		Scan(&l.app, &l.next, &l.verifier, &l.nonce, &l.challenge, &l.origin)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -207,19 +223,21 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 	if err != nil {
 		return nil, err
 	}
-	redirect := func(app, next string, q url.Values) OauthCallbackResponseObject {
-		return OauthCallback302Response{Headers: OauthCallback302ResponseHeaders{Location: s.oauthReturn(app, next, q)}}
+	redirect := func(app string, origin *string, next string, q url.Values) OauthCallbackResponseObject {
+		return OauthCallback302Response{Headers: OauthCallback302ResponseHeaders{
+			Location: s.oauthReturn(app, origin, next, q),
+		}}
 	}
 	if login == nil {
 		noteMiss(ctx)
-		return redirect("web", "/groups", url.Values{"error": {"oauth_failed"}}), nil
+		return redirect("web", nil, "/groups", url.Values{"error": {"oauth_failed"}}), nil
 	}
 
 	// The sign-in is made in the same transaction as the account is found
 	// in, so the address owner taking the account back meanwhile ends it.
 	var code, session string
 	issue := func(tx pgx.Tx, userID string) error {
-		if login.app != "android" {
+		if login.challenge == nil {
 			var err error
 			session, err = startSession(ctx, tx, userID)
 			return err
@@ -243,7 +261,7 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 	case session != "":
 		s.handOut(ctx, session, true)
 	}
-	return redirect(login.app, login.next, q), nil
+	return redirect(login.app, login.origin, login.next, q), nil
 }
 
 // finishOAuth trades the provider's code for an ID token and signs in to its

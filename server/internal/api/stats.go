@@ -61,13 +61,31 @@ func (f expenseFilter) where(groupID string) (string, []any, error) {
 	return strings.Join(conds, " and "), args, nil
 }
 
-func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetStatsResponseObject, error) {
+// readerZone is the time zone the reader counts dates in: the named IANA zone,
+// which knows when daylight saving time began and ended, or else one fixed
+// offset in minutes east of UTC, which older apps send.
+func readerZone(utcOffset *int, timeZone *string) (*time.Location, error) {
+	if timeZone != nil && *timeZone != "" {
+		loc, err := time.LoadLocation(*timeZone)
+		if err != nil || *timeZone == "Local" || len(*timeZone) > 64 {
+			return nil, badRequest("invalid_time_zone")
+		}
+		return loc, nil
+	}
 	offset := 0
-	if req.Params.UtcOffset != nil {
-		offset = *req.Params.UtcOffset
+	if utcOffset != nil {
+		offset = *utcOffset
 	}
 	if offset < -840 || offset > 840 {
 		return nil, badRequest("invalid_offset")
+	}
+	return time.FixedZone("", offset*60), nil
+}
+
+func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetStatsResponseObject, error) {
+	zone, err := readerZone(req.Params.UtcOffset, req.Params.TimeZone)
+	if err != nil {
+		return nil, err
 	}
 	g, err := s.groupByToken(ctx, s.db, req.Token, false)
 	if err != nil {
@@ -146,12 +164,18 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 				return err
 			}
 
+			// Each expense falls in the month it was in where the reader is,
+			// under the offset in force when it happened.
 			n := len(args) + 1
+			local, arg := fmt.Sprintf("occurred_at at time zone $%d", n), any(zone.String())
+			if zone.String() == "" { // a fixed offset
+				_, offset := time.Now().In(zone).Zone()
+				local, arg = fmt.Sprintf("(occurred_at at time zone 'UTC') + make_interval(secs => $%d)", n), offset
+			}
 			rows, err = tx.Query(ctx, fmt.Sprintf(`
-				select to_char((occurred_at at time zone 'UTC') + make_interval(mins => $%d), 'YYYY-MM') as month,
-					sum(%s)::bigint
+				select to_char(%s, 'YYYY-MM') as month, sum(%s)::bigint
 				from expenses where %s
-				group by month order by month`, n, netAmount, where), append(args, offset)...)
+				group by month order by month`, local, netAmount, where), append(args, arg)...)
 			if err != nil {
 				return err
 			}

@@ -55,6 +55,7 @@
   "errorNotAllowed": "Only that person or the group's owner can do this.",
   "errorLinkGroupsOff": "This server doesn't allow opening groups by link alone.",
   "errorMemberClaimed": "Someone has already joined as that person.",
+  "errorMemberLeft": "Someone in this has left the group.",
   "errorInvalidEmail": "Enter an email address.",
   "errorInvalidPassword": "Use 8 to 200 characters.",
   "errorEmailTaken": "There's already an account with that email. Sign in instead.",

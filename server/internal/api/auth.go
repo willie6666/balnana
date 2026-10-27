@@ -111,7 +111,8 @@ func (s *Server) sessions(next http.Handler) http.Handler {
 
 // cookieOrigin refuses to start a cookie session for another site: it
 // could sign a visitor in to an account it controls (login CSRF). Only the
-// web app on this server asks for cookies.
+// web app on this server asks for cookies; one on another origin keeps a
+// bearer token, as the Android app does.
 func cookieOrigin(ctx context.Context, cookie *bool) error {
 	st, _ := ctx.Value(authKey{}).(*authState)
 	if cookie != nil && *cookie && st != nil && st.crossSite {

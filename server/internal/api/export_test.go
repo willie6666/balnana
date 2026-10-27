@@ -219,3 +219,53 @@ func TestExpenseReadSnapshot(t *testing.T) {
 		})
 	}
 }
+
+// A group or its balances read while someone joins and spends is one state
+// throughout: no transfer names a member missing from the members read.
+func TestGroupReadSnapshot(t *testing.T) {
+	for _, path := range []string{"", "/balances"} {
+		t.Run("GET"+path, func(t *testing.T) {
+			pool := testDB(t)
+			cfg := baseConfig(t, map[string]string{})
+			log := slog.New(slog.DiscardHandler)
+			writer := &client{t: t, h: NewHandler(NewServer(cfg, pool, log, "test"), http.NotFoundHandler())}
+			g := createGroup(writer, "Ana", "Ben")
+			base := "/g/" + g.Token
+
+			changed := false
+			traced := pool.Config()
+			traced.ConnConfig.Tracer = &exportBarrier{before: func(sql string) {
+				if changed || !strings.Contains(sql, "select member_id::text, sum(amount)") {
+					return
+				}
+				changed = true
+				var m Member
+				writer.must(201, "POST", base+"/members", MemberInput{Name: "Cy"}, &m)
+				writer.must(201, "POST", base+"/expenses", ExpenseInput{
+					Title: "Pizza", Amount: "10", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+					Payers:      []PayerInput{{MemberId: g.Members[0].Id, Amount: "10"}},
+					SplitMethod: "equal", Splits: []Share{{MemberId: m.Id}},
+				}, nil)
+			}}
+			readerPool, err := pgxpool.NewWithConfig(context.Background(), traced)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer readerPool.Close()
+			reader := &client{t: t, h: NewHandler(NewServer(cfg, readerPool, log, "test"), http.NotFoundHandler())}
+			if path == "" {
+				var got Group
+				reader.must(200, "GET", base, nil, &got)
+				if !changed || len(got.Members) != 2 || got.Members[0].Balance != "0.00" {
+					t.Fatalf("changed=%v, read %+v", changed, got.Members)
+				}
+			} else {
+				var got Balances
+				reader.must(200, "GET", base+path, nil, &got)
+				if !changed || len(got.Balances) != 2 || len(got.Transfers) != 0 {
+					t.Fatalf("changed=%v, read %+v", changed, got)
+				}
+			}
+		})
+	}
+}

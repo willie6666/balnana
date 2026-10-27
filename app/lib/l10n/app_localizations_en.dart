@@ -143,6 +143,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorMemberClaimed => 'Someone has already joined as that person.';
 
   @override
+  String get errorMemberLeft => 'Someone in this has left the group.';
+
+  @override
   String get errorInvalidEmail => 'Enter an email address.';
 
   @override

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"net/http/httptest"
 	"net/url"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -152,4 +154,45 @@ func TestStats(t *testing.T) {
 		t.Fatalf("bad offset: %q", code)
 	}
 	c.errorCode(404, "GET", "/g/not-a-group/stats", nil)
+}
+
+// A named time zone dates each expense by the offset in force when it
+// happened, which one offset for the whole year cannot do.
+func TestStatsAndExportFollowDaylightSaving(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana")
+	ana := g.Members[0].Id
+	base := "/g/" + g.Token
+	// New Year's Eve under EST (UTC-5), and July 1 under EDT (UTC-4).
+	for _, at := range []string{"2026-01-01T04:30:00Z", "2026-07-01T04:30:00Z"} {
+		c.must(201, "POST", base+"/expenses", ExpenseInput{Title: "Taxi", Amount: "10",
+			OccurredAt: mustTime(t, at), Payers: []PayerInput{{MemberId: ana, Amount: "10"}},
+			SplitMethod: "equal", Splits: []Share{{MemberId: ana}}}, nil)
+	}
+	for query, want := range map[string][2]string{
+		"timeZone=America/New_York": {"2025-12", "2026-07"},
+		"utcOffset=-300":            {"2025-12", "2026-06"},
+		"utcOffset=-240":            {"2026-01", "2026-07"},
+	} {
+		var s GroupStats
+		c.must(200, "GET", base+"/stats?"+query, nil, &s)
+		if len(s.Months) != 2 || s.Months[0].Month != want[0] || s.Months[1].Month != want[1] {
+			t.Errorf("%s: months %+v", query, s.Months)
+		}
+		rec := httptest.NewRecorder()
+		c.h.ServeHTTP(rec, httptest.NewRequest("GET", BasePath+base+"/export.csv?"+query, nil))
+		lines := strings.Split(rec.Body.String(), "\n")
+		if rec.Code != 200 || len(lines) < 3 || lines[1][:7] != want[0] || lines[2][:7] != want[1] {
+			t.Errorf("%s: csv %d %q", query, rec.Code, rec.Body)
+		}
+	}
+	for _, zone := range []string{"Mars/Olympus", "Local", "../etc/passwd"} {
+		if code := c.errorCode(400, "GET", base+"/stats?timeZone="+url.QueryEscape(zone), nil); code != "invalid_time_zone" {
+			t.Errorf("%s: %q", zone, code)
+		}
+		path := base + "/export.csv?timeZone=" + url.QueryEscape(zone)
+		if code := c.errorCode(400, "GET", path, nil); code != "invalid_time_zone" {
+			t.Errorf("%s: %q", zone, code)
+		}
+	}
 }

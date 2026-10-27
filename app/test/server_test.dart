@@ -17,6 +17,17 @@ void main() {
     expect(normalizeServerUrl('https://user:pw@example.com'), isNull);
   });
 
+  // A browser keeps a server's cookie from web apps on other origins: they
+  // keep a token instead.
+  test('cookieSession', () {
+    final page = Uri.parse('https://balnana.example.com/groups');
+    expect(cookieSession('https://balnana.example.com', web: true, page: page), isTrue);
+    expect(cookieSession('https://balnana.example.com/api/v1', web: true, page: page), isTrue);
+    expect(cookieSession('https://api.example.com', web: true, page: page), isFalse);
+    expect(cookieSession('http://balnana.example.com', web: true, page: page), isFalse);
+    expect(cookieSession('https://balnana.example.com', web: false, page: page), isFalse);
+  });
+
   test('isInsecureServerUrl', () {
     expect(isInsecureServerUrl('https://example.com'), isFalse);
     expect(isInsecureServerUrl('http://example.com'), isTrue);

@@ -515,7 +515,7 @@ type JoinMember struct {
 
 // LoginInput defines model for LoginInput.
 type LoginInput struct {
-	// Cookie Web app: keep the session in a cookie instead of returning a token.
+	// Cookie The web app served by this server: keep the session in a cookie instead of returning a token. A web app on another origin cannot (the answer is bad_origin) and keeps the token.
 	Cookie *bool `json:"cookie,omitempty"`
 
 	// Login The account's email address or username.
@@ -648,7 +648,7 @@ type PushDeviceInput struct {
 
 // RegisterInput defines model for RegisterInput.
 type RegisterInput struct {
-	// Cookie Web app: keep the session in a cookie instead of returning a token.
+	// Cookie The web app served by this server: keep the session in a cookie instead of returning a token. A web app on another origin cannot (the answer is bad_origin) and keeps the token.
 	Cookie *bool `json:"cookie,omitempty"`
 
 	// Email Required unless the server's emailRequired is false.
@@ -799,6 +799,9 @@ type MemberId = string
 // OAuthProviderId defines model for OAuthProviderId.
 type OAuthProviderId = string
 
+// TimeZone defines model for TimeZone.
+type TimeZone = string
+
 // To defines model for To.
 type To = time.Time
 
@@ -859,8 +862,11 @@ type StartOAuthParams struct {
 	// Next App path to open afterwards, such as `/groups`.
 	Next *string `form:"next,omitempty" json:"next,omitempty"`
 
-	// Challenge Android only: base64url SHA-256 of a random verifier the app keeps, sent again with the code to /auth/oauth/exchange.
+	// Challenge Android, or with `origin`: base64url SHA-256 of a random verifier the app keeps, sent again with the code to /auth/oauth/exchange.
 	Challenge *string `form:"challenge,omitempty" json:"challenge,omitempty"`
+
+	// Origin A web app on another origin than this server's, such as `https://app.example`: it must be listed by name in BALNANA_CORS_ORIGINS (`*` is not enough), or the answer is `invalid_origin`. The sign-in comes back to it as a code.
+	Origin *string `form:"origin,omitempty" json:"origin,omitempty"`
 }
 
 // StartOAuthParamsApp defines parameters for StartOAuth.
@@ -868,13 +874,13 @@ type StartOAuthParamsApp string
 
 // DeleteGroupParams defines parameters for DeleteGroup.
 type DeleteGroupParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // UpdateGroupParams defines parameters for UpdateGroup.
 type UpdateGroupParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
@@ -886,19 +892,19 @@ type ListActivityParams struct {
 
 // AddCategoryParams defines parameters for AddCategory.
 type AddCategoryParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // DeleteCategoryParams defines parameters for DeleteCategory.
 type DeleteCategoryParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // UpdateCategoryParams defines parameters for UpdateCategory.
 type UpdateCategoryParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
@@ -929,73 +935,76 @@ type ListExpensesParamsKind string
 
 // CreateExpenseParams defines parameters for CreateExpense.
 type CreateExpenseParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // DeleteExpenseParams defines parameters for DeleteExpense.
 type DeleteExpenseParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // UpdateExpenseParams defines parameters for UpdateExpense.
 type UpdateExpenseParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // DeleteReceiptParams defines parameters for DeleteReceipt.
 type DeleteReceiptParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // PutReceiptParams defines parameters for PutReceipt.
 type PutReceiptParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // RestoreExpenseParams defines parameters for RestoreExpense.
 type RestoreExpenseParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // ExportCsvParams defines parameters for ExportCsv.
 type ExportCsvParams struct {
-	// UtcOffset Minutes east of UTC to write dates in, for the reader's time zone.
+	// TimeZone The reader's IANA time zone, such as `Europe/Berlin`. Each entry is dated by the offset in force when it happened. 400 `invalid_time_zone` for a name the server does not know.
+	TimeZone *TimeZone `form:"timeZone,omitempty" json:"timeZone,omitempty"`
+
+	// UtcOffset Minutes east of UTC to write dates in, when `timeZone` is not given. One offset cannot follow daylight saving time.
 	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
 // AddMemberParams defines parameters for AddMember.
 type AddMemberParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // RemoveMemberParams defines parameters for RemoveMember.
 type RemoveMemberParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // UpdateMemberParams defines parameters for UpdateMember.
 type UpdateMemberParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // CreatePaymentParams defines parameters for CreatePayment.
 type CreatePaymentParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
 // ResetGroupLinkParams defines parameters for ResetGroupLink.
 type ResetGroupLinkParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group.
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
@@ -1007,7 +1016,10 @@ type GetStatsParams struct {
 	// To Only what happened before this time.
 	To *To `form:"to,omitempty" json:"to,omitempty"`
 
-	// UtcOffset Minutes east of UTC that months begin at, for the reader's time zone.
+	// TimeZone The reader's IANA time zone, such as `Europe/Berlin`. Each entry is dated by the offset in force when it happened. 400 `invalid_time_zone` for a name the server does not know.
+	TimeZone *TimeZone `form:"timeZone,omitempty" json:"timeZone,omitempty"`
+
+	// UtcOffset Minutes east of UTC that months begin at, when `timeZone` is not given. One offset cannot follow daylight saving time.
 	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
@@ -1861,6 +1873,14 @@ func (siw *ServerInterfaceWrapper) StartOAuth(w http.ResponseWriter, r *http.Req
 	err = runtime.BindQueryParameter("form", true, false, "challenge", r.URL.Query(), &params.Challenge)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "challenge", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "origin" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "origin", r.URL.Query(), &params.Origin)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "origin", Err: err})
 		return
 	}
 
@@ -3013,6 +3033,14 @@ func (siw *ServerInterfaceWrapper) ExportCsv(w http.ResponseWriter, r *http.Requ
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ExportCsvParams
 
+	// ------------- Optional query parameter "timeZone" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "timeZone", r.URL.Query(), &params.TimeZone)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timeZone", Err: err})
+		return
+	}
+
 	// ------------- Optional query parameter "utcOffset" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "utcOffset", r.URL.Query(), &params.UtcOffset)
@@ -3472,6 +3500,14 @@ func (siw *ServerInterfaceWrapper) GetStats(w http.ResponseWriter, r *http.Reque
 	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "timeZone" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "timeZone", r.URL.Query(), &params.TimeZone)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timeZone", Err: err})
 		return
 	}
 
