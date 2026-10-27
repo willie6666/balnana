@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
@@ -234,7 +235,12 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 	}
 	amount := e.Amount + " " + g.currency
 	if g.symbol != nil {
-		amount = *g.symbol + e.Amount
+		// As the app shows it: a symbol ending in a letter is spaced from the number.
+		sep := ""
+		if r, _ := utf8.DecodeLastRuneInString(*g.symbol); unicode.IsLetter(r) {
+			sep = " "
+		}
+		amount = *g.symbol + sep + e.Amount
 	}
 	n := notification{Group: g.token, Expense: e.Id, Title: clip(g.name)}
 	switch {

@@ -45,6 +45,8 @@
   "errorDuplicateCategory": "This group already has a category with that name.",
   "errorInvalidCurrency": "Enter a three-letter currency code, such as USD.",
   "errorInvalidTitle": "Enter a title of up to 200 characters.",
+  "errorInvalidSymbol": "Enter a symbol of up to 8 characters.",
+  "errorInvalidEmoji": "Pick a single emoji as the icon.",
   "errorMemberHasBalance": "Settle this person's balance before removing them.",
   "errorVersionConflict": "Someone else changed this expense while you were editing it. Reload to see their changes.",
   "errorSignInRequired": "Sign in to do this.",

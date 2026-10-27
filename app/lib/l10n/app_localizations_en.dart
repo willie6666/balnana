@@ -112,6 +112,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorInvalidTitle => 'Enter a title of up to 200 characters.';
 
   @override
+  String get errorInvalidSymbol => 'Enter a symbol of up to 8 characters.';
+
+  @override
+  String get errorInvalidEmoji => 'Pick a single emoji as the icon.';
+
+  @override
   String get errorMemberHasBalance => 'Settle this person\'s balance before removing them.';
 
   @override

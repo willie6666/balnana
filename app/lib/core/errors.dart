@@ -15,6 +15,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'too_many_categories' => l10n.errorTooManyCategories,
     'invalid_currency' => l10n.errorInvalidCurrency,
     'invalid_title' => l10n.errorInvalidTitle,
+    'invalid_symbol' => l10n.errorInvalidSymbol,
+    'invalid_emoji' => l10n.errorInvalidEmoji,
     'member_has_balance' => l10n.errorMemberHasBalance,
     'expense_version_conflict' => l10n.errorVersionConflict,
     'sign_in_required' => l10n.errorSignInRequired,

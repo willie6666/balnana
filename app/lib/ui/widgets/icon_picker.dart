@@ -409,8 +409,12 @@ class _IconPickerState extends State<_IconPicker> {
     final text = Theme.of(context).textTheme;
     final typed = _query.text.trim();
     final words = typed.toLowerCase().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    // Anything but plain letters is taken as an emoji typed in, if the server takes it.
-    final custom = typed.isNotEmpty && typed.runes.length <= 16 && !RegExp(r'^[\x00-\x7F]*$').hasMatch(typed)
+    // Text with no letters that isn't plain ASCII is taken as an emoji typed in, if the server takes it.
+    final custom =
+        typed.isNotEmpty &&
+            typed.runes.length <= 16 &&
+            !RegExp(r'^[\x00-\x7F]*$').hasMatch(typed) &&
+            !RegExp(r'\p{L}', unicode: true).hasMatch(typed)
         ? typed
         : null;
     final sections = [

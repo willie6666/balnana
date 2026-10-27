@@ -13,7 +13,8 @@ class SymbolField extends StatelessWidget {
   final String currency;
   final int digits;
 
-  /// As many characters as the server keeps.
+  /// As many characters as the server keeps, counted as it counts them: by
+  /// code point, so an emoji made of several takes several.
   static const maxLength = 8;
 
   List<String> _choices(String locale) {
@@ -43,7 +44,7 @@ class SymbolField extends StatelessWidget {
           controller: controller,
           inputFormatters: [
             FilteringTextInputFormatter.deny(RegExp(r'\n')),
-            LengthLimitingTextInputFormatter(maxLength),
+            TextInputFormatter.withFunction((old, value) => value.text.runes.length > maxLength ? old : value),
           ],
           decoration: InputDecoration(
             labelText: l10n.groupSymbol,

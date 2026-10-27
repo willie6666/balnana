@@ -172,6 +172,16 @@ func TestPushLinkMode(t *testing.T) {
 	if sent = f.take(s); len(sent) != 2 || !slices.Equal(sent[0].n.Args, []string{"Cy", "Ana", "€5.00"}) {
 		t.Errorf("payment with symbol sent %+v", sent)
 	}
+	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("NT$")}, nil)
+	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	if sent = f.take(s); len(sent) != 2 || sent[0].n.Args[2] != "NT$5.00" {
+		t.Errorf("payment with symbol sent %+v", sent)
+	}
+	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("TWD")}, nil)
+	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	if sent = f.take(s); len(sent) != 2 || sent[0].n.Args[2] != "TWD 5.00" {
+		t.Errorf("payment with letter symbol sent %+v", sent)
+	}
 	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("")}, nil)
 
 	// Without knowing who did it, everyone involved hears.

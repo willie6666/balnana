@@ -295,6 +295,18 @@ abstract class AppLocalizations {
   /// **'Enter a title of up to 200 characters.'**
   String get errorInvalidTitle;
 
+  /// No description provided for @errorInvalidSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a symbol of up to 8 characters.'**
+  String get errorInvalidSymbol;
+
+  /// No description provided for @errorInvalidEmoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a single emoji as the icon.'**
+  String get errorInvalidEmoji;
+
   /// No description provided for @errorMemberHasBalance.
   ///
   /// In en, this message translates to:
