@@ -47,6 +47,7 @@ dependencies:
   intl: ^0.20.3
   material_ui: ^1.8.0
   path_provider: ^2.1.6
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.6
   # 6.2 adds webcrypto (a native BoringSSL build) and window_manager, which
   # Android push needs neither of: the Android connector decrypts messages itself.

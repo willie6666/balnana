@@ -34,7 +34,7 @@ class BalnanaApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
           builder: (context, child) => WallpaperColors(
-            on: wallpaper,
+            on: wallpaper && settings.wallpaperGroups,
             child: PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
           ),
         );

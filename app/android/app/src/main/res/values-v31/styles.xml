@@ -8,6 +8,13 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
     </style>
+    <!-- The same in wallpaper colors. MainActivity makes it the splash screen
+         of later launches (Android 13+) while Wallpaper colors is on. -->
+    <style name="LaunchTheme.Wallpaper">
+        <item name="android:windowSplashScreenBackground">@color/splash_wallpaper_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_wallpaper_coin</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_wallpaper_icon_background</item>
+    </style>
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>

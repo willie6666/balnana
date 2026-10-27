@@ -196,7 +196,12 @@ class _GroupTile extends StatelessWidget {
               ? Text(l10n.groupMemberCount(summary.memberCount))
               : Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: BalancePill(amount: balance, digits: summary.minorDigits, currency: summary.currency),
+                  child: BalancePill(
+                    amount: balance,
+                    digits: summary.minorDigits,
+                    currency: summary.currency,
+                    symbol: summary.symbol,
+                  ),
                 ),
           trailing: ReorderableDragStartListener(
             index: index,
@@ -213,18 +218,25 @@ class _GroupTile extends StatelessWidget {
 
 /// "you're owed $12", "you owe $5" or "settled up" in a soft colored pill.
 class BalancePill extends StatelessWidget {
-  const BalancePill({super.key, required this.amount, required this.digits, required this.currency});
+  const BalancePill({
+    super.key,
+    required this.amount,
+    required this.digits,
+    required this.currency,
+    this.symbol,
+  });
 
   final BigInt amount;
   final int digits;
   final String currency;
+  final String? symbol;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final c = context.bColors;
     final scheme = Theme.of(context).colorScheme;
-    final money = formatMoney(context, amount.abs(), digits, currency);
+    final money = formatMoney(context, amount.abs(), digits, currency, symbol: symbol);
     final (label, background, foreground) = switch (amount.sign) {
       1 => (l10n.pillOwed(money), c.owedContainer, c.onOwedContainer),
       -1 => (l10n.pillOwe(money), c.oweContainer, c.onOweContainer),

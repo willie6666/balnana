@@ -12,6 +12,8 @@ import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/form_page.dart';
+import '../../ui/widgets/icon_picker.dart';
+import '../../ui/widgets/symbol_field.dart';
 
 class CreateGroupPage extends ConsumerStatefulWidget {
   const CreateGroupPage({super.key});
@@ -23,14 +25,18 @@ class CreateGroupPage extends ConsumerStatefulWidget {
 class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
-  final _emoji = TextEditingController();
   final _currency = TextEditingController();
+  final _symbol = TextEditingController(text: r'$');
   final _me = TextEditingController();
   final _others = <TextEditingController>[TextEditingController()];
 
   /// The field "Add person" just made, which takes the focus.
   TextEditingController? _added;
   Color _color = BalnanaColors.palette.first;
+
+  /// Empty for none. Until one is chosen, it follows the name.
+  String _icon = '';
+  bool _iconChosen = false;
   bool _busy = false;
 
   @override
@@ -42,7 +48,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
 
   @override
   void dispose() {
-    for (final c in [_name, _emoji, _currency, _me, ..._others]) {
+    for (final c in [_name, _currency, _symbol, _me, ..._others]) {
       c.dispose();
     }
     super.dispose();
@@ -54,14 +60,16 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
     final api = ref.read(balnanaApiProvider);
     if (api == null) return;
     final currency = _currency.text.trim().toUpperCase();
+    final symbol = _symbol.text.trim();
     final names = [_me.text.trim(), ..._others.map((c) => c.text.trim()).where((n) => n.isNotEmpty)];
     setState(() => _busy = true);
     try {
       final group = await api.createGroup(
         name: _name.text.trim(),
-        emoji: _emoji.text.trim().isEmpty ? null : _emoji.text.trim(),
+        emoji: _icon.isEmpty ? null : _icon,
         color: _color.toARGB32() & 0xFFFFFF,
         currency: currency,
+        symbol: symbol.isEmpty ? null : symbol,
         minorDigits: defaultMinorDigits(currency),
         members: names,
       );
@@ -77,6 +85,12 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
+  }
+
+  void _suggestIcon(String name) {
+    if (_iconChosen) return;
+    final icon = suggestIcon(name) ?? '';
+    if (icon != _icon) setState(() => _icon = icon);
   }
 
   String? _required(String? value) => (value ?? '').trim().isEmpty ? context.l10n.errorRequired : null;
@@ -116,21 +130,21 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 72,
-                    child: TextFormField(
-                      controller: _emoji,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 24),
-                      inputFormatters: [LengthLimitingTextInputFormatter(8)],
-                      decoration: InputDecoration(hintText: l10n.groupEmojiHint),
-                    ),
+                  IconField(
+                    icon: _icon,
+                    color: _color,
+                    allowNone: true,
+                    onChanged: (icon) => setState(() {
+                      _icon = icon;
+                      _iconChosen = true;
+                    }),
                   ),
                   const SizedBox(width: BSpace.s12),
                   Expanded(
                     child: TextFormField(
                       controller: _name,
                       autofocus: true,
+                      onChanged: _suggestIcon,
                       textCapitalization: TextCapitalization.sentences,
                       inputFormatters: [LengthLimitingTextInputFormatter(100)],
                       decoration: InputDecoration(labelText: l10n.groupName, hintText: l10n.groupNameHint),
@@ -153,6 +167,18 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                 ),
                 validator: (v) =>
                     RegExp(r'^[A-Za-z]{3}$').hasMatch((v ?? '').trim()) ? null : l10n.errorInvalidCurrency,
+              ),
+              const SizedBox(height: BSpace.s16),
+              ListenableBuilder(
+                listenable: _currency,
+                builder: (context, _) {
+                  final currency = _currency.text.trim().toUpperCase();
+                  return SymbolField(
+                    controller: _symbol,
+                    currency: currency,
+                    digits: defaultMinorDigits(currency),
+                  );
+                },
               ),
               FormSection(l10n.groupColor),
               ColorPicker(

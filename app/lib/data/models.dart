@@ -83,6 +83,7 @@ class Group {
     this.emoji,
     this.color,
     required this.currency,
+    this.symbol,
     required this.minorDigits,
     required this.createdAt,
     required this.members,
@@ -100,6 +101,7 @@ class Group {
       emoji: _opt(json, 'emoji'),
       color: _opt(json, 'color'),
       currency: _req(json, 'currency'),
+      symbol: _opt(json, 'symbol'),
       minorDigits: digits,
       createdAt: _time(json, 'createdAt'),
       members: [for (final m in _req<List<Object?>>(json, 'members')) Member.fromJson(m, digits)],
@@ -114,6 +116,9 @@ class Group {
   final String? emoji;
   final int? color;
   final String currency;
+
+  /// Shown before amounts in place of the currency's own symbol.
+  final String? symbol;
   final int minorDigits;
   final DateTime createdAt;
 
@@ -188,6 +193,7 @@ class GroupSummary {
     this.emoji,
     this.color,
     required this.currency,
+    this.symbol,
     required this.minorDigits,
     required this.memberCount,
     this.balance,
@@ -204,6 +210,7 @@ class GroupSummary {
       emoji: _opt(json, 'emoji'),
       color: _opt(json, 'color'),
       currency: _req(json, 'currency'),
+      symbol: _opt(json, 'symbol'),
       minorDigits: digits,
       memberCount: _req(json, 'memberCount'),
       balance: balance == null ? null : parseAmount(balance, digits),
@@ -216,6 +223,9 @@ class GroupSummary {
   final String? emoji;
   final int? color;
   final String currency;
+
+  /// Shown before amounts in place of the currency's own symbol.
+  final String? symbol;
   final int minorDigits;
   final int memberCount;
 

@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +15,7 @@ class Settings {
     this.themeMode = ThemeMode.system,
     this.locale,
     this.dynamicColor = false,
+    this.wallpaperGroups = false,
     this.pureBlack = false,
     this.serverUrl,
     this.notifications = true,
@@ -23,6 +28,10 @@ class Settings {
 
   /// Use the wallpaper palette (Android 12+) instead of the brand palette.
   final bool dynamicColor;
+
+  /// With [dynamicColor], group pages wear the wallpaper's colors too instead
+  /// of their own.
+  final bool wallpaperGroups;
   final bool pureBlack;
 
   /// The server the user chose. Null means [defaultServerUrl] is used.
@@ -35,6 +44,7 @@ class Settings {
     ThemeMode? themeMode,
     Locale? Function()? locale,
     bool? dynamicColor,
+    bool? wallpaperGroups,
     bool? pureBlack,
     String? Function()? serverUrl,
     bool? notifications,
@@ -43,6 +53,7 @@ class Settings {
       themeMode: themeMode ?? this.themeMode,
       locale: locale != null ? locale() : this.locale,
       dynamicColor: dynamicColor ?? this.dynamicColor,
+      wallpaperGroups: wallpaperGroups ?? this.wallpaperGroups,
       pureBlack: pureBlack ?? this.pureBlack,
       serverUrl: serverUrl != null ? serverUrl() : this.serverUrl,
       notifications: notifications ?? this.notifications,
@@ -56,6 +67,7 @@ class SettingsNotifier extends Notifier<Settings> {
   static const _theme = 'settings.theme';
   static const _locale = 'settings.locale';
   static const _dynamicColor = 'settings.dynamicColor';
+  static const _wallpaperGroups = 'settings.wallpaperGroups';
   static const _pureBlack = 'settings.pureBlack';
   static const _server = 'settings.server';
   static const _notifications = 'settings.notifications';
@@ -66,7 +78,8 @@ class SettingsNotifier extends Notifier<Settings> {
     return Settings(
       themeMode: ThemeMode.values.asNameMap()[prefs.getString(_theme)] ?? ThemeMode.system,
       locale: savedLocale(prefs),
-      dynamicColor: prefs.getBool(_dynamicColor) ?? false,
+      dynamicColor: dynamicColorOn(prefs),
+      wallpaperGroups: prefs.getBool(_wallpaperGroups) ?? false,
       pureBlack: prefs.getBool(_pureBlack) ?? false,
       serverUrl: prefs.getString(_server),
       notifications: notificationsOn(prefs),
@@ -87,6 +100,12 @@ class SettingsNotifier extends Notifier<Settings> {
   void setDynamicColor(bool on) {
     state = state.copyWith(dynamicColor: on);
     ref.read(prefsProvider).setBool(_dynamicColor, on);
+    unawaited(wallpaperSplash(on));
+  }
+
+  void setWallpaperGroups(bool on) {
+    state = state.copyWith(wallpaperGroups: on);
+    ref.read(prefsProvider).setBool(_wallpaperGroups, on);
   }
 
   void setPureBlack(bool on) {
@@ -105,6 +124,9 @@ class SettingsNotifier extends Notifier<Settings> {
     final prefs = ref.read(prefsProvider);
     url == null ? prefs.remove(_server) : prefs.setString(_server, url);
   }
+
+  /// Whether the wallpaper palette is on, as [Settings.dynamicColor] says.
+  static bool dynamicColorOn(SharedPreferences prefs) => prefs.getBool(_dynamicColor) ?? false;
 
   /// Whether notifications are on, as [Settings.notifications] says.
   static bool notificationsOn(SharedPreferences prefs) => prefs.getBool(_notifications) ?? true;
@@ -127,5 +149,20 @@ class SettingsNotifier extends Notifier<Settings> {
       }
     }
     return Locale.fromSubtags(languageCode: parts[0], scriptCode: script, countryCode: region);
+  }
+}
+
+const _splash = MethodChannel('balnana/splash');
+
+/// Has Android 13+ show the splash screen of later launches in the wallpaper's
+/// colors, [on], or in Balnana yellow, so it matches the app that follows.
+Future<void> wallpaperSplash(bool on) async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+  try {
+    await _splash.invokeMethod<void>('setWallpaper', on);
+  } on MissingPluginException {
+    // Tests, and builds without the channel.
+  } on PlatformException {
+    // Android 12 and older keep the yellow one.
   }
 }

@@ -28,6 +28,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSave => 'Save';
 
   @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get iconChoose => 'Choose an icon';
+
+  @override
+  String get iconNone => 'No icon';
+
+  @override
+  String get iconSearchHint => 'Search, or type any emoji';
+
+  @override
+  String get iconUseTyped => 'Use this emoji';
+
+  @override
+  String get iconNoMatch => 'No icons match. Type an emoji to use it.';
+
+  @override
+  String get iconSectionTravel => 'Travel & places';
+
+  @override
+  String get iconSectionFood => 'Food & drink';
+
+  @override
+  String get iconSectionActivities => 'Activities';
+
+  @override
+  String get iconSectionHome => 'Home & bills';
+
+  @override
+  String get iconSectionPeople => 'People';
+
+  @override
+  String get iconSectionNature => 'Animals & nature';
+
+  @override
+  String get iconSectionObjects => 'Money & things';
+
+  @override
+  String get iconSectionSymbols => 'Symbols';
+
+  @override
   String get commonRemove => 'Remove';
 
   @override
@@ -218,7 +260,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupLinkOtherServer =>
-      'These links belong to another server. Connect to that server before opening or importing them.';
+      'This link belongs to another server. Connect to that server to open it.';
 
   @override
   String get openLinkTitle => 'Open a group link';
@@ -236,9 +278,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openLinkInvalid => 'That doesn\'t look like a Balnana group link.';
 
   @override
-  String get groupEmojiHint => '🏝️';
-
-  @override
   String get groupName => 'Group name';
 
   @override
@@ -249,6 +288,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupCurrencyHelp => 'All expenses in this group use this currency. It can\'t be changed later.';
+
+  @override
+  String get groupSymbol => 'Symbol';
+
+  @override
+  String get groupSymbolChoose => 'Choose a symbol';
+
+  @override
+  String groupSymbolExample(String example) {
+    return 'Amounts look like $example';
+  }
 
   @override
   String get groupColor => 'Color';
@@ -329,7 +379,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupLinkCopied => 'Link copied. Anyone with it can open this group.';
 
   @override
-  String get groupShare => 'Copy link';
+  String get groupShare => 'Share link';
 
   @override
   String get groupSettings => 'Group settings';
@@ -404,9 +454,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryName => 'Name';
-
-  @override
-  String get categoryEmojiHint => '🐶';
 
   @override
   String get categoryDelete => 'Delete category';
@@ -966,6 +1013,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDynamicColorSubtitle => 'Use colors from your device instead of Balnana yellow';
 
   @override
+  String get settingsWallpaperGroups => 'Wallpaper colors in groups';
+
+  @override
+  String get settingsWallpaperGroupsSubtitle => 'Groups use your device colors too, instead of their own';
+
+  @override
   String get settingsPureBlack => 'Pure black';
 
   @override
@@ -1026,61 +1079,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsConnection => 'Connection';
-
-  @override
-  String get myGroups => 'Your groups';
-
-  @override
-  String get myGroupsExport => 'Export your groups';
-
-  @override
-  String get myGroupsExportHelp =>
-      'Copy the links of every group on this device, to keep them safe or open them on another device';
-
-  @override
-  String myGroupsExported(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Copied $count group links',
-      one: 'Copied 1 group link',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get myGroupsNone => 'There are no groups on this device yet.';
-
-  @override
-  String get myGroupsImport => 'Import groups';
-
-  @override
-  String get myGroupsImportHelp => 'Paste group links to add them all at once';
-
-  @override
-  String get myGroupsImportBody =>
-      'Paste the links you exported from another device. Anything else in the text is skipped.';
-
-  @override
-  String get myGroupsImportLabel => 'Group links';
-
-  @override
-  String get myGroupsImportAction => 'Import';
-
-  @override
-  String get myGroupsImportInvalid => 'There are no Balnana group links in that text.';
-
-  @override
-  String myGroupsImported(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Added $count groups',
-      one: 'Added 1 group',
-      zero: 'Those groups were already here',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get settingsServer => 'Server';

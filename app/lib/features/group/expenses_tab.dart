@@ -394,7 +394,7 @@ class ExpenseTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final c = context.bColors;
-    String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency);
+    String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency, symbol: group.symbol);
 
     final e = expense;
     final time = DateFormat.jm(Localizations.localeOf(context).toLanguageTag()).format(e.occurredAt.toLocal());
@@ -521,7 +521,7 @@ class _PaymentSheet extends ConsumerWidget {
             const SizedBox(height: BSpace.s16),
             Text(l10n.paymentTitle(from, to), style: text.titleLarge, textAlign: TextAlign.center),
             Text(
-              formatMoney(context, payment.amount, group.minorDigits, group.currency),
+              formatMoney(context, payment.amount, group.minorDigits, group.currency, symbol: group.symbol),
               style: text.moneyLarge,
             ),
             Text(DateFormat.yMMMEd(locale).add_jm().format(payment.occurredAt.toLocal()), style: text.bodyMedium),

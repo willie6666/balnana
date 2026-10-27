@@ -12,7 +12,6 @@ import '../../core/settings.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
-import 'my_groups.dart';
 import 'privacy_page.dart';
 
 /// Set with `--dart-define=BALNANA_VERSION=...` by release builds.
@@ -37,6 +36,12 @@ class SettingsPage extends ConsumerWidget {
       ThemeMode.system => l10n.themeSystem,
       ThemeMode.light => l10n.themeLight,
       ThemeMode.dark => l10n.themeDark,
+    };
+    // Pure black only changes the dark theme, so it shows only while dark.
+    final dark = switch (settings.themeMode) {
+      ThemeMode.system => MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+      ThemeMode.light => false,
+      ThemeMode.dark => true,
     };
     final locale = settings.locale;
     final languageLabel = locale == null
@@ -64,13 +69,22 @@ class SettingsPage extends ConsumerWidget {
                 value: settings.dynamicColor,
                 onChanged: notifier.setDynamicColor,
               ),
-            GroupedSwitchTile(
-              icon: Icons.contrast,
-              title: l10n.settingsPureBlack,
-              subtitle: l10n.settingsPureBlackSubtitle,
-              value: settings.pureBlack,
-              onChanged: notifier.setPureBlack,
-            ),
+            if (_hasDynamicColor && settings.dynamicColor)
+              GroupedSwitchTile(
+                icon: Icons.format_paint_outlined,
+                title: l10n.settingsWallpaperGroups,
+                subtitle: l10n.settingsWallpaperGroupsSubtitle,
+                value: settings.wallpaperGroups,
+                onChanged: notifier.setWallpaperGroups,
+              ),
+            if (dark)
+              GroupedSwitchTile(
+                icon: Icons.contrast,
+                title: l10n.settingsPureBlack,
+                subtitle: l10n.settingsPureBlackSubtitle,
+                value: settings.pureBlack,
+                onChanged: notifier.setPureBlack,
+              ),
           ],
         ),
         GroupedList(
@@ -97,7 +111,6 @@ class SettingsPage extends ConsumerWidget {
               ),
             ],
           ),
-        if (ref.watch(serverInfoProvider).value?.authMode == AuthMode.link) const MyGroupsSection(),
         if (canChooseServer)
           GroupedList(
             title: l10n.settingsConnection,

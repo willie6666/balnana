@@ -127,6 +127,90 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get commonSave;
 
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @iconChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an icon'**
+  String get iconChoose;
+
+  /// No description provided for @iconNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No icon'**
+  String get iconNone;
+
+  /// No description provided for @iconSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search, or type any emoji'**
+  String get iconSearchHint;
+
+  /// No description provided for @iconUseTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this emoji'**
+  String get iconUseTyped;
+
+  /// No description provided for @iconNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No icons match. Type an emoji to use it.'**
+  String get iconNoMatch;
+
+  /// No description provided for @iconSectionTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel & places'**
+  String get iconSectionTravel;
+
+  /// No description provided for @iconSectionFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food & drink'**
+  String get iconSectionFood;
+
+  /// No description provided for @iconSectionActivities.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get iconSectionActivities;
+
+  /// No description provided for @iconSectionHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home & bills'**
+  String get iconSectionHome;
+
+  /// No description provided for @iconSectionPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get iconSectionPeople;
+
+  /// No description provided for @iconSectionNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Animals & nature'**
+  String get iconSectionNature;
+
+  /// No description provided for @iconSectionObjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Money & things'**
+  String get iconSectionObjects;
+
+  /// No description provided for @iconSectionSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get iconSectionSymbols;
+
   /// No description provided for @commonRemove.
   ///
   /// In en, this message translates to:
@@ -490,7 +574,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupLinkOtherServer.
   ///
   /// In en, this message translates to:
-  /// **'These links belong to another server. Connect to that server before opening or importing them.'**
+  /// **'This link belongs to another server. Connect to that server to open it.'**
   String get groupLinkOtherServer;
 
   /// No description provided for @openLinkTitle.
@@ -523,12 +607,6 @@ abstract class AppLocalizations {
   /// **'That doesn\'t look like a Balnana group link.'**
   String get openLinkInvalid;
 
-  /// Example emoji shown in the empty emoji field. Not translated.
-  ///
-  /// In en, this message translates to:
-  /// **'🏝️'**
-  String get groupEmojiHint;
-
   /// No description provided for @groupName.
   ///
   /// In en, this message translates to:
@@ -552,6 +630,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All expenses in this group use this currency. It can\'t be changed later.'**
   String get groupCurrencyHelp;
+
+  /// No description provided for @groupSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol'**
+  String get groupSymbol;
+
+  /// No description provided for @groupSymbolChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a symbol'**
+  String get groupSymbolChoose;
+
+  /// No description provided for @groupSymbolExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts look like {example}'**
+  String groupSymbolExample(String example);
 
   /// No description provided for @groupColor.
   ///
@@ -694,7 +790,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupShare.
   ///
   /// In en, this message translates to:
-  /// **'Copy link'**
+  /// **'Share link'**
   String get groupShare;
 
   /// No description provided for @groupSettings.
@@ -840,12 +936,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name'**
   String get categoryName;
-
-  /// Example emoji shown in the empty emoji field. Not translated.
-  ///
-  /// In en, this message translates to:
-  /// **'🐶'**
-  String get categoryEmojiHint;
 
   /// No description provided for @categoryDelete.
   ///
@@ -1783,6 +1873,18 @@ abstract class AppLocalizations {
   /// **'Use colors from your device instead of Balnana yellow'**
   String get settingsDynamicColorSubtitle;
 
+  /// No description provided for @settingsWallpaperGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallpaper colors in groups'**
+  String get settingsWallpaperGroups;
+
+  /// No description provided for @settingsWallpaperGroupsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups use your device colors too, instead of their own'**
+  String get settingsWallpaperGroupsSubtitle;
+
   /// No description provided for @settingsPureBlack.
   ///
   /// In en, this message translates to:
@@ -1878,78 +1980,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection'**
   String get settingsConnection;
-
-  /// No description provided for @myGroups.
-  ///
-  /// In en, this message translates to:
-  /// **'Your groups'**
-  String get myGroups;
-
-  /// No description provided for @myGroupsExport.
-  ///
-  /// In en, this message translates to:
-  /// **'Export your groups'**
-  String get myGroupsExport;
-
-  /// No description provided for @myGroupsExportHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy the links of every group on this device, to keep them safe or open them on another device'**
-  String get myGroupsExportHelp;
-
-  /// No description provided for @myGroupsExported.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Copied 1 group link} other{Copied {count} group links}}'**
-  String myGroupsExported(int count);
-
-  /// No description provided for @myGroupsNone.
-  ///
-  /// In en, this message translates to:
-  /// **'There are no groups on this device yet.'**
-  String get myGroupsNone;
-
-  /// No description provided for @myGroupsImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import groups'**
-  String get myGroupsImport;
-
-  /// No description provided for @myGroupsImportHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste group links to add them all at once'**
-  String get myGroupsImportHelp;
-
-  /// No description provided for @myGroupsImportBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste the links you exported from another device. Anything else in the text is skipped.'**
-  String get myGroupsImportBody;
-
-  /// No description provided for @myGroupsImportLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Group links'**
-  String get myGroupsImportLabel;
-
-  /// No description provided for @myGroupsImportAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Import'**
-  String get myGroupsImportAction;
-
-  /// No description provided for @myGroupsImportInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'There are no Balnana group links in that text.'**
-  String get myGroupsImportInvalid;
-
-  /// No description provided for @myGroupsImported.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =0{Those groups were already here} =1{Added 1 group} other{Added {count} groups}}'**
-  String myGroupsImported(int count);
 
   /// No description provided for @settingsServer.
   ///

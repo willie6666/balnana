@@ -313,9 +313,6 @@ class _Taps implements PushService {
   Future<void> requestPermission() async {}
 
   @override
-  Future<PushTarget?> initialGroup() async => null;
-
-  @override
   Stream<PushTarget> get openedGroups => taps.stream;
 }
 

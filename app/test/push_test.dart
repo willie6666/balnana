@@ -46,9 +46,6 @@ class _FakePush implements PushService {
   }
 
   @override
-  Future<PushTarget?> initialGroup() async => null;
-
-  @override
   Stream<PushTarget> get openedGroups => const Stream.empty();
 }
 

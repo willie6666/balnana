@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/money.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/categories.dart';
 import '../../data/models.dart';
@@ -48,9 +49,20 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
     final group = ref.watchCurrent(groupProvider(token));
     final expense = expenseId == null ? null : ref.watchCurrent(expenseProvider((token: token, id: expenseId)));
     final error = group.error ?? expense?.error;
+    // A row of the list holds the whole expense, so the form opens from it at
+    // once while the latest version loads.
+    final listed = expense == null || expense.hasValue || expense.hasError
+        ? null
+        : ref
+              .read(expensesProvider(token))
+              .current(ref.read(identityProvider))
+              .value
+              ?.items
+              .where((e) => e.id == expenseId)
+              .firstOrNull;
 
-    if (group.value case final g? when expense == null || expense.hasValue) {
-      final latest = expense?.value;
+    if (group.value case final g? when expense == null || expense.hasValue || listed != null) {
+      final latest = expense?.value ?? listed;
       final base = _base ??= latest;
       return GroupTheme(
         group: g,
@@ -450,7 +462,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final symbol = currencySymbol(locale, _group.currency);
+    final symbol = moneySymbol(locale, _group.currency, _group.symbol);
     final preview = _preview();
     final editing = widget.expense != null;
 
@@ -710,6 +722,7 @@ class _PaidBy extends StatelessWidget {
             }),
             digits: s._digits,
             currency: s._group.currency,
+            symbol: s._group.symbol,
           ),
         ],
       ],
@@ -779,7 +792,9 @@ class _SplitRow extends StatelessWidget {
               SizedBox(
                 width: 96,
                 child: Text(
-                  included && share != null ? formatMoney(context, share!, s._digits, s._group.currency) : '',
+                  included && share != null
+                      ? formatMoney(context, share!, s._digits, s._group.currency, symbol: s._group.symbol)
+                      : '',
                   textAlign: TextAlign.end,
                   style: text.moneySmall.copyWith(color: scheme.onSurfaceVariant),
                   maxLines: 1,
@@ -839,7 +854,13 @@ class _SplitSummary extends StatelessWidget {
             // Shown by the field.
           }
         }
-        return _Remaining(total: s._total, sum: sum, digits: s._digits, currency: s._group.currency);
+        return _Remaining(
+          total: s._total,
+          sum: sum,
+          digits: s._digits,
+          currency: s._group.currency,
+          symbol: s._group.symbol,
+        );
       case SplitMethod.percent:
         var sum = BigInt.zero;
         for (final id in s._included) {
@@ -866,12 +887,19 @@ class _SplitSummary extends StatelessWidget {
 }
 
 class _Remaining extends StatelessWidget {
-  const _Remaining({required this.total, required this.sum, required this.digits, required this.currency});
+  const _Remaining({
+    required this.total,
+    required this.sum,
+    required this.digits,
+    required this.currency,
+    this.symbol,
+  });
 
   final BigInt? total;
   final BigInt sum;
   final int digits;
   final String currency;
+  final String? symbol;
 
   @override
   Widget build(BuildContext context) {
@@ -879,7 +907,7 @@ class _Remaining extends StatelessWidget {
     if (total == null) return const SizedBox.shrink();
     final left = total! - sum;
     if (left == BigInt.zero) return const SizedBox.shrink();
-    final money = formatMoney(context, left.abs(), digits, currency);
+    final money = formatMoney(context, left.abs(), digits, currency, symbol: symbol);
     return _Note(text: left.isNegative ? l10n.splitOver(money) : l10n.splitLeft(money), error: true);
   }
 }

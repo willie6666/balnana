@@ -3,9 +3,7 @@ import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/groups/open_link.dart';
-import 'package:balnana/features/settings/my_groups.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -86,11 +84,10 @@ void main() {
     expect(find.text('https://git.example.com/balnana'), findsOneWidget);
   });
 
-  testWidgets('link mode copies every group link out and pastes them back in', (tester) async {
+  testWidgets('link mode refuses to open a group link of another server', (tester) async {
     const server = 'https://split.example.com';
     const older = 'AAAAAAAAAAAAAAAAAAAAAA',
-        newer = 'BBBBBBBBBBBBBBBBBBBBBB',
-        other = 'CCCCCCCCCCCCCCCCCCCCCC';
+        newer = 'BBBBBBBBBBBBBBBBBBBBBB';
     final prefs = await _prefs({
       'settings.server': server,
       'groups.known':
@@ -115,11 +112,6 @@ void main() {
         },
       ),
     );
-    String? copied;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
-      return null;
-    });
     await _boot(
       tester,
       prefs,
@@ -138,74 +130,11 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        'These links belong to another server. Connect to that server before opening or importing them.',
-      ),
+      find.text('This link belongs to another server. Connect to that server to open it.'),
       findsOneWidget,
     );
     expect(sent.length, beforeOpening);
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Settings'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Export your groups'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Export your groups'));
-    await tester.pumpAndSettle();
-    expect(copied, '$server/g/$older\n$server/g/$newer\n');
-    expect(find.text('Copied 2 group links'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Import groups'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'hello');
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-    expect(find.text('There are no Balnana group links in that text.'), findsOneWidget);
-
-    final beforeImport = prefs.getString('groups.known');
-    final requestsBeforeImport = sent.length;
-    await tester.enterText(
-      find.byType(TextField),
-      '$server/g/$other https://foreign.example/g/FFFFFFFFFFFFFFFFFFFFFF',
-    );
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'These links belong to another server. Connect to that server before opening or importing them.',
-      ),
-      findsOneWidget,
-    );
-    expect(prefs.getString('groups.known'), beforeImport);
-    expect(sent.length, requestsBeforeImport);
-
-    await tester.enterText(find.byType(TextField), 'Our trip: $server/g/$other\n$server/g/$older, $other');
-    await tester.tap(find.text('Import'));
-    await tester.pumpAndSettle();
-    expect(find.text('Added 1 group'), findsOneWidget);
-    await tester.tap(find.text('Groups'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Switch group'));
-    await tester.pumpAndSettle();
-    expect(sent.last, [other, newer, older]);
     expect(sent.expand((tokens) => tokens), isNot(contains('FFFFFFFFFFFFFFFFFFFFFF')));
-    final known = prefs.getString('groups.known')!;
-    expect(RegExp('"token":"(\\w+)"').allMatches(known).map((m) => m[1]), [other, newer, older]);
-  });
-
-  test('pasted text yields each group token once', () {
-    const a = 'AAAAAAAAAAAAAAAAAAAAAA', b = 'BBBBBBBBBBBBBBBBBBBBBB';
-    expect(
-      tokensIn(
-        'https://x.example/g/$a\n\n$b;https://x.example/g/$a?x=1 junk',
-        serverUrl: 'https://x.example',
-      ),
-      [a, b],
-    );
-    expect(tokensIn('', serverUrl: 'https://x.example'), isEmpty);
   });
 
   test('group links require the configured server or its advertised alias', () {
@@ -224,11 +153,6 @@ void main() {
     ]) {
       expect(
         () => tokenFromLink(link, serverUrl: server, publicUrl: public),
-        throwsA(isA<ForeignGroupLink>()),
-      );
-      // A mixed list fails as a whole, even when a valid bare token comes first.
-      expect(
-        () => tokensIn('$token $link', serverUrl: server, publicUrl: public),
         throwsA(isA<ForeignGroupLink>()),
       );
     }

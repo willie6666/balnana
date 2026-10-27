@@ -157,8 +157,7 @@ extension MoneyTextTheme on TextTheme {
       titleSmall!.copyWith(fontWeight: FontWeight.w700, fontFeatures: const [FontFeature.tabularFigures()]);
 }
 
-/// Whether the app wears the wallpaper's colors, which group pages then keep
-/// instead of their own.
+/// Whether group pages wear the app's wallpaper colors instead of their own.
 class WallpaperColors extends InheritedWidget {
   const WallpaperColors({super.key, required this.on, required super.child});
 

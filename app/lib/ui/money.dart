@@ -6,12 +6,26 @@ import 'colors.dart';
 
 /// Formats [minor] units of [currency] for display, e.g. "$1,234.50" or
 /// "-NT$300". The sign comes first; [signed] adds "+" to positive amounts.
-String formatMoney(BuildContext context, BigInt minor, int digits, String currency, {bool signed = false}) {
+String formatMoney(
+  BuildContext context,
+  BigInt minor,
+  int digits,
+  String currency, {
+  bool signed = false,
+  String? symbol,
+}) {
   final locale = Localizations.localeOf(context).toLanguageTag();
-  final symbol = currencySymbol(locale, currency);
+  symbol = moneySymbol(locale, currency, symbol);
   final number = formatAmountLocalized(minor.abs(), digits, locale);
   final sign = minor.isNegative ? '-' : (signed && minor > BigInt.zero ? '+' : '');
   return '$sign$symbol$number';
+}
+
+/// What amounts start with: the group's own [symbol] when it has one, else
+/// [currencySymbol]. A symbol ending in a letter, such as "TWD", gets a space.
+String moneySymbol(String locale, String currency, String? symbol) {
+  if (symbol == null || symbol.isEmpty) return currencySymbol(locale, currency);
+  return RegExp(r'\p{L}$', unicode: true).hasMatch(symbol) ? '$symbol ' : symbol;
 }
 
 /// The symbol people expect for [currency], or the code itself followed by a

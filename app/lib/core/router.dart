@@ -23,6 +23,7 @@ import '../features/settings/privacy_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/shell/shell.dart';
+import 'push.dart';
 import 'server.dart';
 
 final _root = GlobalKey<NavigatorState>();
@@ -73,9 +74,13 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.listen(setupRequiredProvider, bump);
   ref.onDispose(refresh.dispose);
 
+  // Opened by a notification of this server: start at its group, not at home.
+  final launched = ref.read(launchTargetProvider);
   final router = GoRouter(
     navigatorKey: _root,
-    initialLocation: '/groups',
+    initialLocation: launched != null && launched.server == ref.read(serverUrlProvider)
+        ? '/g/${launched.token}'
+        : '/groups',
     refreshListenable: refresh,
     redirect: (context, state) => _redirect(ref, state),
     errorBuilder: (context, state) => const NotFoundPage(),

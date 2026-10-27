@@ -7,8 +7,9 @@ import '../../core/push.dart';
 import '../../core/router.dart';
 import '../../core/server.dart';
 
-/// Keeps push registration current and opens the group of a tapped
-/// notification, when it came from the server the app now talks to. Builds
+/// Keeps push registration current and opens the group of a notification
+/// tapped while the app runs, when it came from the server the app now talks
+/// to (the router starts at the one that opened the app). Builds
 /// [child] unchanged.
 class PushHandler extends ConsumerStatefulWidget {
   const PushHandler({super.key, required this.child});
@@ -28,9 +29,6 @@ class _PushHandlerState extends ConsumerState<PushHandler> {
     final push = ref.read(pushServiceProvider);
     if (push == null) return;
     _opened = push.openedGroups.listen(_open);
-    push.initialGroup().then((target) {
-      if (target != null) _open(target);
-    }, onError: (Object _) {});
   }
 
   void _open(PushTarget target) {

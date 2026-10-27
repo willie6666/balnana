@@ -33,9 +33,6 @@ abstract interface class PushService {
   /// Asks to show notifications, where the system wants that asked.
   Future<void> requestPermission();
 
-  /// The group of the notification that opened the app, if one did.
-  Future<PushTarget?> initialGroup();
-
   /// The group of each notification tapped while the app runs.
   Stream<PushTarget> get openedGroups;
 }
@@ -165,19 +162,28 @@ class _UnifiedPush implements PushService {
   }
 
   @override
-  Future<PushTarget?> initialGroup() async {
-    await _ready;
-    final launch = await _notifications.getNotificationAppLaunchDetails();
-    if (launch == null || !launch.didNotificationLaunchApp) return null;
-    return notificationTarget(launch.notificationResponse?.payload);
-  }
-
-  @override
   Stream<PushTarget> get openedGroups {
     _ready.ignore();
     return _opened.stream;
   }
 }
+
+/// The group of the notification that opened the app, if one did. It is read
+/// before the first screen, so the app opens on that group straight away.
+Future<PushTarget?> launchedFromNotification() async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return null;
+  try {
+    await _notifications.initialize(settings: _notificationSettings);
+    final launch = await _notifications.getNotificationAppLaunchDetails();
+    if (launch == null || !launch.didNotificationLaunchApp) return null;
+    return notificationTarget(launch.notificationResponse?.payload);
+  } on Exception {
+    return null;
+  }
+}
+
+/// What [launchedFromNotification] found when the app started.
+final launchTargetProvider = Provider<PushTarget?>((ref) => null);
 
 /// Receives push messages while the app is closed. The UnifiedPush plugin
 /// starts the app's `main` with `--unifiedpush-bg` for that, with no screen

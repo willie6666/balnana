@@ -15,6 +15,18 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Back from Activity or Settings goes to the groups first, and only then
+    // leaves the app.
+    return PopScope(
+      canPop: shell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _go(0);
+      },
+      child: _frame(context),
+    );
+  }
+
+  Widget _frame(BuildContext context) {
     final l10n = context.l10n;
     final destinations = [
       (Icons.groups_outlined, Icons.groups, l10n.navGroups),

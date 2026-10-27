@@ -180,8 +180,13 @@ func ptr[T any](v T) *T { return &v }
 func TestCreateAndReadGroup(t *testing.T) {
 	c := newClient(t)
 	g := createGroup(c, "Ana", "Ben", "Cleo")
-	if len(g.Token) != tokenLen || g.Currency != "EUR" || g.MinorDigits != 2 {
+	if len(g.Token) != tokenLen || g.Currency != "EUR" || g.MinorDigits != 2 || g.Symbol != nil {
 		t.Fatalf("group: %+v", g)
+	}
+	var dollars Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Taipei", Currency: "TWD", Symbol: ptr("$"), Members: []string{"Ana"}}, &dollars)
+	if dollars.Symbol == nil || *dollars.Symbol != "$" {
+		t.Fatalf("symbol: %+v", dollars)
 	}
 	if len(g.Members) != 3 || g.Members[0].Name != "Ana" || g.Members[2].Name != "Cleo" {
 		t.Fatalf("members out of order: %+v", g.Members)
@@ -461,6 +466,24 @@ func TestMembersSummariesAndLinkReset(t *testing.T) {
 	c.must(200, "PATCH", "/g/"+reset.Token, GroupUpdate{Emoji: ptr("")}, &cleared)
 	if cleared.Emoji != nil || cleared.Name != "Lisbon" {
 		t.Fatalf("clear emoji: %+v", cleared)
+	}
+
+	var dollar Group
+	c.must(200, "PATCH", "/g/"+reset.Token, GroupUpdate{Symbol: ptr(" $ ")}, &dollar)
+	if dollar.Symbol == nil || *dollar.Symbol != "$" || dollar.Emoji != nil {
+		t.Fatalf("symbol: %+v", dollar)
+	}
+	c.must(200, "PATCH", "/g/"+reset.Token, GroupUpdate{Name: ptr("Porto")}, &dollar)
+	if dollar.Symbol == nil || *dollar.Symbol != "$" {
+		t.Fatalf("symbol kept: %+v", dollar)
+	}
+	if code := c.errorCode(400, "PATCH", "/g/"+reset.Token, GroupUpdate{Symbol: ptr("much too long")}); code != "invalid_symbol" {
+		t.Fatalf("long symbol: %s", code)
+	}
+	var plain Group
+	c.must(200, "PATCH", "/g/"+reset.Token, GroupUpdate{Symbol: ptr("")}, &plain)
+	if plain.Symbol != nil {
+		t.Fatalf("clear symbol: %+v", plain)
 	}
 }
 

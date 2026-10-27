@@ -214,6 +214,7 @@ class BalnanaApi {
     String? emoji,
     int? color,
     required String currency,
+    String? symbol,
     required int minorDigits,
     required List<String> members,
   }) => _send(
@@ -224,6 +225,7 @@ class BalnanaApi {
         'emoji': ?emoji,
         'color': ?color,
         'currency': currency,
+        'symbol': ?symbol,
         'minorDigits': minorDigits,
         'members': members,
       },
@@ -321,10 +323,11 @@ class GroupApi {
   Future<Group> get() => _send(() => _dio.get<Object?>(_base), Group.fromJson);
 
   /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode.
-  Future<Group> update({String? name, String? emoji, int? color, bool? linkAccess}) => _send(
+  /// An empty [emoji] or [symbol] clears it.
+  Future<Group> update({String? name, String? emoji, int? color, String? symbol, bool? linkAccess}) => _send(
     () => _dio.patch<Object?>(
       _base,
-      data: {'name': ?name, 'emoji': ?emoji, 'color': ?color, 'linkAccess': ?linkAccess},
+      data: {'name': ?name, 'emoji': ?emoji, 'color': ?color, 'symbol': ?symbol, 'linkAccess': ?linkAccess},
       options: _as,
     ),
     Group.fromJson,

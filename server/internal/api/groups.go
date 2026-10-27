@@ -43,6 +43,10 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 	if !currencyCode.MatchString(currency) {
 		return nil, badRequest("invalid_currency")
 	}
+	symbol, err := cleanSymbol(in.Symbol)
+	if err != nil {
+		return nil, err
+	}
 	digits := 2
 	if in.MinorDigits != nil {
 		digits = *in.MinorDigits
@@ -76,9 +80,9 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		g, err := scanGroup(tx.QueryRow(ctx, `
-			insert into groups (token, name, emoji, color, currency, minor_digits, link_access)
-			values ($1, $2, $3, $4, $5, $6, $7)
-			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, digits, linkAccess))
+			insert into groups (token, name, emoji, color, currency, symbol, minor_digits, link_access)
+			values ($1, $2, $3, $4, $5, $6, $7, $8)
+			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, symbol, digits, linkAccess))
 		if err != nil {
 			return err
 		}
@@ -159,7 +163,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	groups, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*group, error) {
 		var g group
 		var me string
-		err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.digits, &g.linkAccess, &g.createdAt, &me, &g.owner)
+		err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.symbol, &g.digits, &g.linkAccess, &g.createdAt, &me, &g.owner)
 		g.me = &me
 		return &g, err
 	})
@@ -195,6 +199,7 @@ func summarize(ctx context.Context, q querier, g *group, me *string) (GroupSumma
 		Emoji:       g.emoji,
 		Color:       g.color,
 		Currency:    g.currency,
+		Symbol:      g.symbol,
 		MinorDigits: g.digits,
 	}
 	var updated *time.Time
@@ -257,6 +262,11 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 		return nil, err
 	}
 	clearEmoji := in.Emoji != nil && emoji == nil
+	symbol, err := cleanSymbol(in.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	clearSymbol := in.Symbol != nil && symbol == nil
 	accounts := s.conf().AuthMode == config.AuthModeAccounts
 	if in.LinkAccess != nil && accounts && *in.LinkAccess && !s.conf().LinkGroups {
 		return nil, forbidden("link_groups_off")
@@ -284,9 +294,10 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 				name = coalesce($2, name),
 				emoji = case when $4 then null else coalesce($3, emoji) end,
 				color = coalesce($5, color),
-				link_access = coalesce($6, link_access)
+				link_access = coalesce($6, link_access),
+				symbol = case when $8 then null else coalesce($7, symbol) end
 			where id = $1
-			returning `+groupColumns, g.id, name, emoji, clearEmoji, in.Color, linkAccess))
+			returning `+groupColumns, g.id, name, emoji, clearEmoji, in.Color, linkAccess, symbol, clearSymbol))
 		if err != nil {
 			return err
 		}

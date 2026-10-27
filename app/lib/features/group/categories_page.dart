@@ -13,6 +13,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/grouped_list.dart';
+import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/page.dart';
 import 'group_page.dart';
 
@@ -145,7 +146,7 @@ class CategoryBubble extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Color.alphaBlend(category.color.withValues(alpha: 0.25), scheme.surface),
+        color: iconBackground(category.color, scheme),
         shape: BoxShape.circle,
       ),
       child: Text(category.emoji, style: TextStyle(fontSize: size * 0.48)),
@@ -154,6 +155,9 @@ class CategoryBubble extends StatelessWidget {
 }
 
 /// Adds a category of the group's own, or changes or deletes one.
+/// A new category's icon until a better one is chosen or suggested.
+const _defaultIcon = '🏷️';
+
 class _CategorySheet extends ConsumerStatefulWidget {
   const _CategorySheet({required this.group, this.category});
 
@@ -169,14 +173,16 @@ class _CategorySheet extends ConsumerStatefulWidget {
 class _CategorySheetState extends ConsumerState<_CategorySheet> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.category?.name ?? '');
-  late final _emoji = TextEditingController(text: widget.category?.emoji ?? '');
+  late String _icon = widget.category?.emoji ?? _defaultIcon;
+
+  /// A new category's icon follows its name until one is chosen.
+  late bool _iconChosen = widget.category != null;
   late Color _color = widget.category?.color ?? BalnanaColors.palette.first;
   bool _busy = false;
 
   @override
   void dispose() {
     _name.dispose();
-    _emoji.dispose();
     super.dispose();
   }
 
@@ -197,7 +203,7 @@ class _CategorySheetState extends ConsumerState<_CategorySheet> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    final name = _name.text.trim(), emoji = _emoji.text.trim(), color = _color.toARGB32() & 0xFFFFFF;
+    final name = _name.text.trim(), emoji = _icon, color = _color.toARGB32() & 0xFFFFFF;
     final c = widget.category;
     await _run(
       (api) => c == null
@@ -245,21 +251,23 @@ class _CategorySheetState extends ConsumerState<_CategorySheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 72,
-                      child: TextFormField(
-                        controller: _emoji,
-                        textAlign: TextAlign.center,
-                        inputFormatters: [LengthLimitingTextInputFormatter(16)],
-                        decoration: InputDecoration(hintText: l10n.categoryEmojiHint),
-                        validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
-                      ),
+                    IconField(
+                      icon: _icon,
+                      color: _color,
+                      onChanged: (icon) => setState(() {
+                        _icon = icon;
+                        _iconChosen = true;
+                      }),
                     ),
                     const SizedBox(width: BSpace.s12),
                     Expanded(
                       child: TextFormField(
                         controller: _name,
                         autofocus: c == null,
+                        onChanged: (name) {
+                          if (_iconChosen) return;
+                          setState(() => _icon = suggestIcon(name) ?? _defaultIcon);
+                        },
                         textCapitalization: TextCapitalization.sentences,
                         inputFormatters: [LengthLimitingTextInputFormatter(100)],
                         decoration: InputDecoration(labelText: l10n.categoryName),

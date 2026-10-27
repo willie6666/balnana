@@ -18,8 +18,10 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/grouped_list.dart';
+import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
+import '../../ui/widgets/symbol_field.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
@@ -359,7 +361,14 @@ class _Settings extends ConsumerWidget {
                 leading: MemberAvatar(member: m),
                 title: Text(m.id == me?.id ? l10n.memberYou(m.name) : m.name),
                 subtitle: Text(
-                  formatMoney(context, m.balance, group.minorDigits, group.currency, signed: true),
+                  formatMoney(
+                    context,
+                    m.balance,
+                    group.minorDigits,
+                    group.currency,
+                    signed: true,
+                    symbol: group.symbol,
+                  ),
                   style: TextStyle(color: balanceColor(context, m.balance)),
                 ),
                 onTap: () => _renameMember(context, ref, m),
@@ -450,14 +459,15 @@ class _EditGroupSheet extends ConsumerStatefulWidget {
 class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.group.name);
-  late final _emoji = TextEditingController(text: widget.group.emoji ?? '');
+  late String _icon = widget.group.emoji ?? '';
+  late final _symbol = TextEditingController(text: widget.group.symbol ?? '');
   late Color _color = paletteColor(widget.group.color, widget.group.token);
   bool _busy = false;
 
   @override
   void dispose() {
     _name.dispose();
-    _emoji.dispose();
+    _symbol.dispose();
     super.dispose();
   }
 
@@ -466,10 +476,12 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
     final l10n = context.l10n;
     setState(() => _busy = true);
     try {
-      await groupApiOf(
-        ref,
-        widget.group.token,
-      ).update(name: _name.text.trim(), emoji: _emoji.text.trim(), color: _color.toARGB32() & 0xFFFFFF);
+      await groupApiOf(ref, widget.group.token).update(
+        name: _name.text.trim(),
+        emoji: _icon,
+        color: _color.toARGB32() & 0xFFFFFF,
+        symbol: _symbol.text.trim(),
+      );
       refreshGroup(ref, widget.group.token);
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
@@ -501,14 +513,11 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 72,
-                      child: TextFormField(
-                        controller: _emoji,
-                        textAlign: TextAlign.center,
-                        inputFormatters: [LengthLimitingTextInputFormatter(16)],
-                        decoration: InputDecoration(hintText: l10n.groupEmojiHint),
-                      ),
+                    IconField(
+                      icon: _icon,
+                      color: _color,
+                      allowNone: true,
+                      onChanged: (icon) => setState(() => _icon = icon),
                     ),
                     const SizedBox(width: BSpace.s12),
                     Expanded(
@@ -522,6 +531,8 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
                     ),
                   ],
                 ),
+                const SizedBox(height: BSpace.s16),
+                SymbolField(controller: _symbol, currency: widget.group.currency, digits: widget.group.minorDigits),
                 FormSection(l10n.groupColor),
                 ColorPicker(
                   colors: BalnanaColors.palette,

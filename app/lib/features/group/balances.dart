@@ -69,7 +69,7 @@ class BalanceCard extends ConsumerWidget {
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
             child: Text(
-              formatMoney(context, balance.abs(), group.minorDigits, group.currency),
+              formatMoney(context, balance.abs(), group.minorDigits, group.currency, symbol: group.symbol),
               style: text.moneyHero.copyWith(color: onHeader),
             ),
           ),
@@ -112,7 +112,14 @@ class BalanceCard extends ConsumerWidget {
                       isMe: m.id == myId,
                       net: m.balance,
                       largest: largest,
-                      amount: formatMoney(context, m.balance, group.minorDigits, group.currency, signed: true),
+                      amount: formatMoney(
+                        context,
+                        m.balance,
+                        group.minorDigits,
+                        group.currency,
+                        signed: true,
+                        symbol: group.symbol,
+                      ),
                     ),
                   if (transfers.isNotEmpty) ...[
                     Padding(
@@ -284,7 +291,7 @@ class _TransferTile extends ConsumerWidget {
                   children: [
                     Text(label, style: text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
                     Text(
-                      formatMoney(context, transfer.amount, group.minorDigits, group.currency),
+                      formatMoney(context, transfer.amount, group.minorDigits, group.currency, symbol: group.symbol),
                       style: text.moneyRow,
                     ),
                   ],
@@ -373,7 +380,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
             inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))],
             decoration: InputDecoration(
               labelText: l10n.expenseAmount,
-              prefixText: currencySymbol(locale, g.currency),
+              prefixText: moneySymbol(locale, g.currency, g.symbol),
               errorText: _error,
             ),
             onSubmitted: (_) => _submit(),

@@ -110,7 +110,7 @@ String activitySentence(BuildContext context, FeedItem item) {
     final raw = a.text('amount');
     if (raw == null) return '';
     try {
-      return formatMoney(context, parseAmount(raw, g.minorDigits), g.minorDigits, g.currency);
+      return formatMoney(context, parseAmount(raw, g.minorDigits), g.minorDigits, g.currency, symbol: g.symbol);
     } on MoneyException {
       return raw;
     }

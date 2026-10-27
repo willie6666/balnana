@@ -1349,6 +1349,9 @@ components:
           type: string
           description: ISO 4217 code
           example: EUR
+        symbol:
+          type: string
+          description: Shown before amounts; the currency's own symbol when left out.
         minorDigits:
           type: integer
           minimum: 0
@@ -1433,6 +1436,9 @@ components:
         emoji:
           type: string
           description: Empty string clears it.
+        symbol:
+          type: string
+          description: Empty string goes back to the currency's own symbol.
         color:
           type: integer
         linkAccess:
@@ -1454,6 +1460,9 @@ components:
           type: integer
         currency:
           type: string
+        symbol:
+          type: string
+          description: Shown before amounts in place of the currency's own symbol.
         minorDigits:
           type: integer
         createdAt:
@@ -1583,6 +1592,9 @@ components:
           type: integer
         currency:
           type: string
+        symbol:
+          type: string
+          description: Shown before amounts in place of the currency's own symbol.
         minorDigits:
           type: integer
         memberCount:

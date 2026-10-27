@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
@@ -62,6 +64,13 @@ Future<void> copyGroupLink(BuildContext context, WidgetRef ref, String token) as
   final message = context.l10n.groupLinkCopied;
   await Clipboard.setData(ClipboardData(text: groupLink(ref, token)));
   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+/// Hands [group]'s link to the system share sheet. The web has no sheet that
+/// works everywhere, so there the link is copied instead.
+Future<void> shareGroupLink(BuildContext context, WidgetRef ref, Group group) async {
+  if (kIsWeb) return copyGroupLink(context, ref, group.token);
+  await SharePlus.instance.share(ShareParams(text: groupLink(ref, group.token), subject: group.name));
 }
 
 /// Wraps [child] in a theme seeded from the group's color.
@@ -275,7 +284,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                 IconButton(
                   tooltip: l10n.groupShare,
                   icon: const Icon(Icons.share_outlined),
-                  onPressed: () => copyGroupLink(context, ref, group.token),
+                  onPressed: () => shareGroupLink(context, ref, group),
                 ),
                 IconButton(
                   tooltip: l10n.groupSettings,

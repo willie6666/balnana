@@ -121,7 +121,7 @@ class _StatsBody extends StatelessWidget {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency);
+    String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency, symbol: group.symbol);
 
     final hero = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

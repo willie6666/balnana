@@ -37,6 +37,7 @@ const (
 	maxTitleLen   = 200
 	maxNoteLen    = 2000
 	maxEmojiLen   = 16
+	maxSymbolLen  = 8
 	maxMembers    = 100
 	maxPageSize   = 200
 	defaultPage   = 50
@@ -53,6 +54,7 @@ type group struct {
 	emoji      *string
 	color      *int
 	currency   string
+	symbol     *string
 	digits     int
 	linkAccess bool
 	createdAt  time.Time
@@ -62,11 +64,11 @@ type group struct {
 	owner bool    // ...who owns the group
 }
 
-const groupColumns = `id::text, token, name, emoji, color, currency, minor_digits, link_access, created_at`
+const groupColumns = `id::text, token, name, emoji, color, currency, symbol, minor_digits, link_access, created_at`
 
 func scanGroup(row pgx.Row) (*group, error) {
 	var g group
-	err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.digits, &g.linkAccess, &g.createdAt)
+	err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.symbol, &g.digits, &g.linkAccess, &g.createdAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
@@ -230,6 +232,21 @@ func cleanEmoji(e *string) (*string, error) {
 	return &v, nil
 }
 
+// cleanSymbol checks what a group shows before amounts; empty means none.
+func cleanSymbol(e *string) (*string, error) {
+	if e == nil {
+		return nil, nil
+	}
+	v, ok := cleanText(*e, 0, maxSymbolLen)
+	if !ok || strings.Contains(v, "\n") {
+		return nil, badRequest("invalid_symbol")
+	}
+	if v == "" {
+		return nil, nil
+	}
+	return &v, nil
+}
+
 // member is a row of the members table.
 type member struct {
 	id     string
@@ -321,6 +338,7 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 		Emoji:       g.emoji,
 		Color:       g.color,
 		Currency:    g.currency,
+		Symbol:      g.symbol,
 		MinorDigits: g.digits,
 		CreatedAt:   g.createdAt,
 		Members:     make([]Member, 0, len(members)),
