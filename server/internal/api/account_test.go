@@ -86,6 +86,18 @@ func TestDeleteGroup(t *testing.T) {
 		t.Fatalf("groups = %+v", mine.Groups)
 	}
 
+	// A group no account is in any more may be deleted by anyone the link
+	// opens it for, or no one could.
+	ana.must(201, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana", "Ben"}, LinkAccess: ptr(true)}, &g)
+	cy := ana.another()
+	register(cy, "cy@example.com", "Cy")
+	if code := cy.errorCode(403, "DELETE", "/g/"+g.Token, nil); code != "not_a_member" {
+		t.Fatal(code)
+	}
+	ana.must(204, "POST", "/me/delete", AccountDelete{Password: ptr("correct horse")}, nil)
+	cy.must(204, "DELETE", "/g/"+g.Token, nil, nil)
+	cy.errorCode(404, "GET", "/g/"+g.Token, nil)
+
 	// In link mode the link is enough.
 	c := newClientWith(t, map[string]string{"BALNANA_AUTH_MODE": "link"})
 	lg := createGroup(c, "Ana", "Ben")
@@ -150,6 +162,16 @@ func TestSignupLimit(t *testing.T) {
 	}
 	if code := c.another().errorCode(429, "POST", "/auth/register", RegisterInput{Email: ptr("z@example.com"), Password: "correct horse", Name: "X"}); code != "rate_limited" {
 		t.Fatal(code)
+	}
+}
+
+func TestClosedSignupKeepsAllowance(t *testing.T) {
+	c := accountsClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "closed"})
+	register(c, "first@example.com", "First")
+	for range signupBurst + 1 {
+		if code := c.another().errorCode(403, "POST", "/auth/register", RegisterInput{Email: ptr("x@example.com"), Password: "correct horse", Name: "X"}); code != "signup_closed" {
+			t.Fatal(code)
+		}
 	}
 }
 

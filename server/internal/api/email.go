@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"balnana/internal/mail"
 )
@@ -62,27 +63,37 @@ func newEmailToken(ctx context.Context, q querier, userID, purpose string, lifet
 	if err != nil || recent {
 		return "", err
 	}
+	return replaceEmailToken(ctx, q, userID, purpose, nil, lifetime)
+}
+
+// replaceEmailToken makes a token for userID in place of its older ones for
+// purpose. A verification token with an email confirms that address instead
+// of the account's current one.
+func replaceEmailToken(ctx context.Context, q querier, userID, purpose string, email *string, lifetime time.Duration) (string, error) {
 	if _, err := q.Exec(ctx, `delete from email_tokens where user_id = $1 and purpose = $2`, userID, purpose); err != nil {
 		return "", err
 	}
 	token := secretToken()
-	_, err = q.Exec(ctx, `insert into email_tokens (token_hash, user_id, purpose, expires_at) values ($1, $2, $3, $4)`,
-		hashToken(token), userID, purpose, time.Now().Add(lifetime))
+	_, err := q.Exec(ctx, `
+		insert into email_tokens (token_hash, user_id, purpose, email, expires_at) values ($1, $2, $3, $4, $5)`,
+		hashToken(token), userID, purpose, email, time.Now().Add(lifetime))
 	return token, err
 }
 
-// useEmailToken spends a token and returns its account.
-func useEmailToken(ctx context.Context, q querier, token, purpose string) (string, error) {
+// useEmailToken spends a token and returns its account, and the address it
+// confirms when that is not the account's current one.
+func useEmailToken(ctx context.Context, q querier, token, purpose string) (string, *string, error) {
 	var userID string
+	var email *string
 	var live bool
 	err := q.QueryRow(ctx, `
 		delete from email_tokens where token_hash = $1 and purpose = $2
-		returning user_id::text, expires_at > now()`, hashToken(token), purpose).Scan(&userID, &live)
+		returning user_id::text, email::text, expires_at > now()`, hashToken(token), purpose).Scan(&userID, &email, &live)
 	if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
 		noteMiss(ctx)
-		return "", badRequest("invalid_token")
+		return "", nil, badRequest("invalid_token")
 	}
-	return userID, err
+	return userID, email, err
 }
 
 func (s *Server) SendVerifyEmail(ctx context.Context, _ SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error) {
@@ -93,15 +104,28 @@ func (s *Server) SendVerifyEmail(ctx context.Context, _ SendVerifyEmailRequestOb
 	if err := s.requireEmail(); err != nil {
 		return nil, err
 	}
-	if u.verified || u.email == nil {
-		return SendVerifyEmail204Response{}, nil
+	// A new address waiting to be confirmed comes first.
+	to := u.pending
+	if to == nil {
+		if u.verified || u.email == nil {
+			return SendVerifyEmail204Response{}, nil
+		}
+		to = u.email
 	}
-	token, err := newEmailToken(ctx, s.db, u.id, "verify", verifyLifetime)
+	var token string
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		token, err = newEmailToken(ctx, tx, u.id, "verify", verifyLifetime)
+		if err != nil || token == "" || u.pending == nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `update email_tokens set email = $2 where token_hash = $1`, hashToken(token), *u.pending)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
 	if token != "" {
-		s.sendMail(verifyMail(*u.email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
+		s.sendMail(verifyMail(*to, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
 	}
 	return SendVerifyEmail204Response{}, nil
 }
@@ -111,11 +135,30 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 		return nil, err
 	}
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
+		userID, email, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+		if email == nil {
+			_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+			return err
+		}
+		// A new address takes the old one's place only now, once its owner
+		// has opened the link.
+		tag, err := tx.Exec(ctx, `
+			update users set email = pending_email, email_verified = true, pending_email = null
+			where id = $1 and pending_email = $2`, userID, *email)
+		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return conflict("email_taken")
+		}
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return badRequest("invalid_token")
+		}
+		// Reset links went to the old address.
+		_, err = tx.Exec(ctx, `delete from email_tokens where user_id = $1`, userID)
 		return err
 	})
 	if err != nil {
@@ -163,7 +206,7 @@ func (s *Server) ResetPassword(ctx context.Context, req ResetPasswordRequestObje
 	}
 	hash := hashPassword(in.NewPassword)
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, err := useEmailToken(ctx, tx, in.Token, "reset")
+		userID, _, err := useEmailToken(ctx, tx, in.Token, "reset")
 		if err != nil {
 			return err
 		}

@@ -39,6 +39,7 @@ var (
 type user struct {
 	id          string
 	email       *string
+	pending     *string // a new address waiting to be confirmed
 	username    *string
 	verified    bool
 	hasPassword bool
@@ -51,6 +52,7 @@ func (u *user) api() User {
 	return User{
 		Id:            u.id,
 		Email:         u.email,
+		PendingEmail:  u.pending,
 		Username:      u.username,
 		EmailVerified: u.verified,
 		HasPassword:   u.hasPassword,
@@ -164,11 +166,12 @@ func (s *Server) currentUser(ctx context.Context) (*user, error) {
 	var u user
 	var lastUsed time.Time
 	err := s.db.QueryRow(ctx, `
-		select s.id::text, s.last_used_at, u.id::text, u.email::text, u.username::text, u.email_verified,
-		       u.password_hash is not null, u.display_name, u.locale
+		select s.id::text, s.last_used_at, u.id::text, u.email::text, u.pending_email::text, u.username::text,
+		       u.email_verified, u.password_hash is not null, u.display_name, u.locale
 		from sessions s join users u on u.id = s.user_id
 		where s.token_hash = $1 and s.expires_at > now()`, hashToken(st.token)).
-		Scan(&u.sessionID, &lastUsed, &u.id, &u.email, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
+		Scan(&u.sessionID, &lastUsed, &u.id, &u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name,
+			&u.locale)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		st.loaded = true
@@ -352,6 +355,19 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	if err != nil {
 		return nil, err
 	}
+	// A sign-up the server would refuse anyway does not use up the client's
+	// allowance (checked again below, under the lock). One whose username or
+	// address is taken does, so the 409 is no faster a way to find out who
+	// has an account than the allowance lets it be.
+	invited := false
+	if email != nil {
+		if invited, err = validInvite(ctx, s.db, in.Invite, *email); err != nil {
+			return nil, err
+		}
+	}
+	if err := s.signupAllowed(ctx, s.db, invited); err != nil {
+		return nil, err
+	}
 	if err := s.limitSignups(ctx); err != nil {
 		return nil, err
 	}
@@ -363,7 +379,7 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 			return err
 		}
 		// An invitation link reached this address, which verifies it.
-		invited := false
+		invited = false
 		if email != nil {
 			invited, err = validInvite(ctx, tx, in.Invite, *email)
 			if err != nil {
@@ -407,9 +423,9 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 	var u user
 	var hash *string
 	err := s.db.QueryRow(ctx, `
-		select id::text, email::text, username::text, email_verified, password_hash, display_name, locale
+		select id::text, email::text, pending_email::text, username::text, email_verified, password_hash, display_name, locale
 		from users where email = $1 or username = $1`, strings.TrimSpace(in.Login)).
-		Scan(&u.id, &u.email, &u.username, &u.verified, &hash, &u.name, &u.locale)
+		Scan(&u.id, &u.email, &u.pending, &u.username, &u.verified, &hash, &u.name, &u.locale)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
 	}

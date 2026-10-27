@@ -189,3 +189,71 @@ func TestInvites(t *testing.T) {
 		t.Fatal(code)
 	}
 }
+
+func TestChangeEmailWaitsForConfirmation(t *testing.T) {
+	c, f := mailClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	register(c.another(), "ben@example.com", "Ben")
+	pw := ptr("correct horse")
+
+	if code := c.errorCode(409, "POST", "/me/email", EmailChange{Email: "Ben@example.com", Password: pw}); code != "email_taken" {
+		t.Fatal(code)
+	}
+	var me User
+	c.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.org", Password: pw}, &me)
+	if *me.Email != "ana@example.com" || me.PendingEmail == nil || *me.PendingEmail != "ana@example.org" {
+		t.Fatalf("me = %+v", me)
+	}
+	link := f.next(t, "ana@example.org")
+	// Until the link is opened the old address is the one that signs in.
+	c.another().must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "correct horse"}, nil)
+	c.another().errorCode(401, "POST", "/auth/login", LoginInput{Login: "ana@example.org", Password: "correct horse"})
+	// Asking for a new link sends it to the pending address.
+	c.must(204, "POST", "/me/verify-email", nil, nil)
+	f.none(t) // within a minute of the last one
+
+	c.another().must(204, "POST", "/auth/verify-email", EmailToken{Token: lastPart(link)}, nil)
+	me = User{} // fields left out of the answer stay as they were otherwise
+	c.must(200, "GET", "/me", nil, &me)
+	if *me.Email != "ana@example.org" || !me.EmailVerified || me.PendingEmail != nil {
+		t.Fatalf("me = %+v", me)
+	}
+	c.another().must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.org", Password: "correct horse"}, nil)
+
+	// Going back to the current address drops a pending one, and its link.
+	c.must(200, "POST", "/me/email", EmailChange{Email: "typo@example.con", Password: pw}, &me)
+	link = f.next(t, "typo@example.con")
+	me = User{}
+	c.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.org", Password: pw}, &me)
+	if me.PendingEmail != nil || !me.EmailVerified {
+		t.Fatalf("me = %+v", me)
+	}
+	if code := c.another().errorCode(400, "POST", "/auth/verify-email", EmailToken{Token: lastPart(link)}); code != "invalid_token" {
+		t.Fatal(code)
+	}
+
+	// An address taken while it was pending is not handed over.
+	c.must(200, "POST", "/me/email", EmailChange{Email: "cy@example.com", Password: pw}, nil)
+	link = f.next(t, "cy@example.com")
+	register(c.another(), "cy@example.com", "Cy")
+	if code := c.another().errorCode(409, "POST", "/auth/verify-email", EmailToken{Token: lastPart(link)}); code != "email_taken" {
+		t.Fatal(code)
+	}
+	c.must(200, "GET", "/me", nil, &me)
+	if *me.Email != "ana@example.org" {
+		t.Fatalf("me = %+v", me)
+	}
+}
+
+func TestChangeEmailLimit(t *testing.T) {
+	c, f := mailClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	for i := range emailChangeBurst {
+		c.must(200, "POST", "/me/email", EmailChange{Email: string(rune('a'+i)) + "@example.org", Password: ptr("correct horse")}, nil)
+		f.next(t, string(rune('a'+i))+"@example.org")
+	}
+	if code := c.errorCode(429, "POST", "/me/email", EmailChange{Email: "z@example.org", Password: ptr("correct horse")}); code != "rate_limited" {
+		t.Fatal(code)
+	}
+	f.none(t)
+}

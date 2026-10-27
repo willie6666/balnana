@@ -1804,7 +1804,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountEmailNew => 'Email address';
 
   @override
-  String get accountEmailVerifyNote => 'You\'ll get a link to confirm the new address.';
+  String get accountEmailVerifyNote =>
+      'You\'ll get a link to confirm the new address. Your current address stays until then.';
+
+  @override
+  String get accountEmailPendingTitle => 'Confirm your new email';
+
+  @override
+  String accountEmailPendingHelp(String email) {
+    return '$email takes your current address\'s place once you open the link sent to it. Tap to send it again.';
+  }
 
   @override
   String get accountEmailRemoveNote =>

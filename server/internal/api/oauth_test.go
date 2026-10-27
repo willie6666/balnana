@@ -314,3 +314,34 @@ func TestOAuthAndroid(t *testing.T) {
 	c.must(200, "GET", "/me", nil, nil)
 	c.another().errorCode(400, "POST", "/auth/oauth/exchange", OAuthExchange{Code: code, Verifier: "the app's own verifier"})
 }
+
+func TestOAuthTakeoverDropsMakersSignIns(t *testing.T) {
+	f := newFakeIdP(t)
+	// Without email the maker can put an address on the account at once.
+	mal := accountsClient(t, f.env(map[string]string{}))
+	malClaims := map[string]any{"sub": "m", "name": "Mal"}
+	if e := oauthError(t, f.login(mal, "/groups", malClaims)); e != "" {
+		t.Fatal(e)
+	}
+	var made User
+	mal.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &made)
+
+	ana := mal.another()
+	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	ana.must(200, "GET", "/me", nil, &me)
+	if me.Id != made.Id {
+		t.Fatalf("me = %+v", me)
+	}
+	// The maker's own provider no longer leads back into the account.
+	again := mal.another()
+	if e := oauthError(t, f.login(again, "/groups", malClaims)); e != "" {
+		t.Fatal(e)
+	}
+	again.must(200, "GET", "/me", nil, &me)
+	if me.Id == made.Id {
+		t.Fatal("the maker's identity still reaches the taken-over account")
+	}
+}

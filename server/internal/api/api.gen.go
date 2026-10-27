@@ -740,6 +740,9 @@ type User struct {
 	Locale        *string `json:"locale,omitempty"`
 	Name          string  `json:"name"`
 
+	// PendingEmail A new address waiting for its verification link to be opened; the account keeps `email` until then.
+	PendingEmail *string `json:"pendingEmail,omitempty"`
+
 	// Username Set on accounts made without an email address.
 	Username *string `json:"username,omitempty"`
 }

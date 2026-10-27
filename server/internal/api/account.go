@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -49,34 +50,71 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		return nil, err
 	}
 	if email != nil && u.email != nil && strings.EqualFold(*email, *u.email) {
+		// Back to the current address: a change waiting to be confirmed is dropped.
+		if u.pending != nil {
+			err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+				if _, err := tx.Exec(ctx, `update users set pending_email = null where id = $1`, u.id); err != nil {
+					return err
+				}
+				_, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1 and email is not null`, u.id)
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+			u.pending = nil
+		}
 		return ChangeEmail200JSONResponse(u.api()), nil
 	}
-	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `update users set email = $2, email_verified = false where id = $1`, u.id, email)
-		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return conflict("email_taken")
+	if email == nil || s.mailer() == nil {
+		// Nothing can confirm the address, so it takes the old one's place now.
+		err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			_, err := tx.Exec(ctx, `
+				update users set email = $2, email_verified = false, pending_email = null where id = $1`, u.id, email)
+			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return conflict("email_taken")
+			}
+			if err != nil {
+				return err
+			}
+			// Links sent to the old address must not verify the new one, nor
+			// reset the password from there.
+			_, err = tx.Exec(ctx, `delete from email_tokens where user_id = $1`, u.id)
+			return err
+		})
+		if err != nil {
+			return nil, err
 		}
+		u.email, u.verified, u.pending = email, false, nil
+		return ChangeEmail200JSONResponse(u.api()), nil
+	}
+	// Each change emails the new address, so it is not a way to send spam.
+	if !s.emails.take(u.id, 1, time.Now()) {
+		return nil, errRateLimited
+	}
+	// The new address waits until a link sent to it is opened; until then the
+	// account keeps the old one, so a mistyped address never takes its place.
+	var token string
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		var taken bool
+		err := tx.QueryRow(ctx, `select exists (select 1 from users where email = $2 and id <> $1)`, u.id, *email).Scan(&taken)
 		if err != nil {
 			return err
 		}
-		// Links sent to the old address must not verify the new one, nor
-		// reset the password from there.
-		_, err = tx.Exec(ctx, `delete from email_tokens where user_id = $1`, u.id)
+		if taken {
+			return conflict("email_taken")
+		}
+		if _, err := tx.Exec(ctx, `update users set pending_email = $2 where id = $1`, u.id, *email); err != nil {
+			return err
+		}
+		token, err = replaceEmailToken(ctx, tx, u.id, "verify", email, verifyLifetime)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	u.email, u.verified = email, false
-	if email != nil && s.mailer() != nil {
-		token, err := newEmailToken(ctx, s.db, u.id, "verify", verifyLifetime)
-		if err != nil {
-			return nil, err
-		}
-		if token != "" {
-			s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
-		}
-	}
+	u.pending = email
+	s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
 	return ChangeEmail200JSONResponse(u.api()), nil
 }
 

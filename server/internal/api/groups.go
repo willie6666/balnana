@@ -351,17 +351,20 @@ func (s *Server) DeleteGroup(ctx context.Context, req DeleteGroupRequestObject) 
 			return err
 		}
 		if s.conf().AuthMode == config.AuthModeAccounts && !g.owner {
-			if g.me == nil {
-				return forbidden("not_a_member")
-			}
-			// A group whose owner has gone may be deleted by any member.
-			var owned bool
+			// A group whose owner has gone may be deleted by any member; one
+			// that no account is in any more, by anyone its link opens it for.
+			var owned, claimed bool
 			err := tx.QueryRow(ctx, `
 				select exists (select 1 from members
-				               where group_id = $1 and is_owner and user_id is not null and left_at is null)`,
-				g.id).Scan(&owned)
+				               where group_id = $1 and is_owner and user_id is not null and left_at is null),
+				       exists (select 1 from members
+				               where group_id = $1 and user_id is not null and left_at is null)`,
+				g.id).Scan(&owned, &claimed)
 			if err != nil {
 				return err
+			}
+			if g.me == nil && (!g.open || claimed) {
+				return forbidden("not_a_member")
 			}
 			if owned {
 				return forbidden("owner_only")

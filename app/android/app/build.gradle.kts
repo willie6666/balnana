@@ -21,8 +21,10 @@ val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
 
 gradle.taskGraph.whenReady {
     if (hasReleaseKey) return@whenReady
-    val names = allTasks.map { it.name }
-    if (names.any { it.startsWith("bundle") && it.endsWith("Release") }) {
+    // This app's own tasks: plugin modules run bundleLib*Release tasks for
+    // APKs too.
+    val names = allTasks.filter { it.project == project }.map { it.name }
+    if (names.any { it.startsWith("bundle") && !it.startsWith("bundleLib") && it.endsWith("Release") }) {
         throw GradleException(
             "No release key: create android/key.properties (README.md, \"Android release builds\") " +
                 "before building an app bundle."

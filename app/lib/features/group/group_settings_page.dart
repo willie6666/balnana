@@ -225,11 +225,16 @@ class _Settings extends ConsumerWidget {
       action: l10n.commonRemove,
     );
     if (!ok || !context.mounted) return;
+    _dropLocally(ref);
+    context.go('/groups');
+  }
+
+  /// Takes the group off this device's list and out of what shows it.
+  void _dropLocally(WidgetRef ref) {
     ref.read(knownGroupsProvider.notifier).remove(group.token);
     ref.invalidate(summariesProvider);
     ref.invalidate(activityFeedProvider);
     ref.read(currentGroupProvider.notifier).set(null);
-    context.go('/groups');
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
@@ -243,10 +248,7 @@ class _Settings extends ConsumerWidget {
       _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
       return;
     }
-    ref.read(knownGroupsProvider.notifier).remove(group.token);
-    ref.invalidate(summariesProvider);
-    ref.invalidate(activityFeedProvider);
-    ref.read(currentGroupProvider.notifier).set(null);
+    _dropLocally(ref);
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     context.go('/groups');
@@ -263,9 +265,13 @@ class _Settings extends ConsumerWidget {
     final linkGroups = ref.watch(serverInfoProvider.select((i) => i.value?.linkGroups ?? false));
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     // In accounts mode a group is its members' business, and deleting it its
-    // owner's (anyone's, once no owner is left).
+    // owner's (anyone's, once no owner is left; anyone the link opens it for,
+    // once no account is in it).
     final member = !accounts || me != null;
-    final canDelete = !accounts || (me != null && (me.owner || !group.activeMembers.any((m) => m.owner)));
+    final canDelete =
+        !accounts ||
+        (me != null && (me.owner || !group.activeMembers.any((m) => m.owner))) ||
+        (me == null && group.linkAccess && !group.activeMembers.any((m) => m.claimed));
 
     return BPage(
       title: l10n.groupSettings,
