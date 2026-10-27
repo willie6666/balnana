@@ -403,6 +403,13 @@ class ExpenseTile extends StatelessWidget {
       final from = _name(l10n, e.payers.first.memberId), to = _name(l10n, e.splits.first.memberId);
       title = l10n.paymentTitle(from, to);
       subtitle = '$time · ${money(e.amount)}';
+    } else if (e.isReceived) {
+      title = e.title;
+      final type = e.transactionType == 'income' ? l10n.transactionIncome : l10n.transactionRefund;
+      final receivedBy = e.splits.length == 1
+          ? l10n.expenseReceivedBy(_name(l10n, e.splits.first.memberId), money(e.amount))
+          : l10n.expenseReceivedByMany(e.splits.length, money(e.amount));
+      subtitle = '$time · $type · $receivedBy';
     } else {
       title = e.title;
       final paidBy = e.payers.length == 1
@@ -419,6 +426,10 @@ class ExpenseTile extends StatelessWidget {
       if (e.isPayment) {
         if (paid > BigInt.zero) (effect, effectColor) = (l10n.effectYouPaid(money(paid)), c.owed);
         if (owed > BigInt.zero) (effect, effectColor) = (l10n.effectYouReceived(money(owed)), c.owe);
+      } else if (e.isReceived && net > BigInt.zero) {
+        (effect, effectColor) = (l10n.effectForYou(money(net)), c.owed);
+      } else if (e.isReceived && net < BigInt.zero) {
+        (effect, effectColor) = (l10n.effectYouReceived(money(-net)), c.owe);
       } else if (net > BigInt.zero) {
         (effect, effectColor) = (l10n.effectYouLent(money(net)), c.owed);
       } else if (net < BigInt.zero) {

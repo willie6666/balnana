@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"balnana/internal/config"
 )
 
 func accountsClient(t *testing.T, env map[string]string) *client {
@@ -363,4 +365,33 @@ func TestFirstAccountOnClosedServer(t *testing.T) {
 	if info.FirstAccount {
 		t.Fatal("open server offers a first account")
 	}
+}
+
+// In link mode, members claimed by accounts are anyone's to change, as there
+// are no accounts; back in accounts mode, they are their accounts' again.
+func TestLinkModeClaimedMembers(t *testing.T) {
+	pool := testDB(t)
+	cfg := baseConfig(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
+	srv := NewServer(cfg, pool, slog.New(slog.DiscardHandler), "test")
+	ana := &client{t: t, h: NewHandler(srv, http.NotFoundHandler())}
+	register(ana, "ana@example.com", "Ana")
+	g := createGroup(ana, "Ana", "Ben", "Cleo")
+	path := "/g/" + g.Token
+	ben := ana.another()
+	register(ben, "ben@example.com", "Ben")
+	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+
+	link := *cfg
+	link.AuthMode = config.AuthModeLink
+	srv.apply(&link)
+	anyone := ana.another()
+	anyone.must(200, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Anna"}, nil)
+	anyone.must(204, "DELETE", path+"/members/"+g.Members[2].Id, nil, nil)
+
+	srv.apply(cfg)
+	if code := ben.errorCode(403, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Ana"}); code != "not_allowed" {
+		t.Fatal(code)
+	}
+	ben.must(200, "PATCH", path+"/members/"+g.Members[1].Id, MemberInput{Name: "Benjamin"}, nil)
+	ana.must(200, "PATCH", path+"/members/"+g.Members[1].Id, MemberInput{Name: "Ben"}, nil)
 }

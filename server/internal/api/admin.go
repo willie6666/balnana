@@ -206,14 +206,48 @@ func (s *Server) AdminLogin(ctx context.Context, req AdminLoginRequestObject) (A
 		}
 		return nil, &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
 	}
-	if _, err := s.db.Exec(ctx, `delete from admin_sessions where expires_at < now()`); err != nil {
-		return nil, err
-	}
-	session, err := startAdminSession(ctx, s.db)
+	var session AdminSession
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		if err := lockAdmin(ctx, tx, *hash, nil); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `delete from admin_sessions where expires_at < now()`); err != nil {
+			return err
+		}
+		var err error
+		session, err = startAdminSession(ctx, tx)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
 	return AdminLogin200JSONResponse(session), nil
+}
+
+// lockAdmin locks the administrator's row for a change a password check
+// allowed, and makes sure that password, and the session [token] when there
+// is one, still hold. A reset or password change in between supersedes them.
+func lockAdmin(ctx context.Context, tx pgx.Tx, checked string, token *string) error {
+	var hash *string
+	var live bool
+	var tokenHash []byte
+	if token != nil {
+		tokenHash = hashToken(*token)
+	}
+	err := tx.QueryRow(ctx, `
+		select password_hash,
+		       $1::bytea is null or exists (select 1 from admin_sessions where token_hash = $1 and expires_at > now())
+		from admin for update`, tokenHash).Scan(&hash, &live)
+	if err != nil {
+		return err
+	}
+	if hash == nil || *hash != checked {
+		return &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
+	}
+	if !live {
+		return &apiError{status: http.StatusUnauthorized, code: "admin_required"}
+	}
+	return nil
 }
 
 func startAdminSession(ctx context.Context, q querier) (AdminSession, error) {
@@ -257,11 +291,11 @@ func (s *Server) ChangeAdminPassword(ctx context.Context, req ChangeAdminPasswor
 		return nil, err
 	}
 	in := req.Body
-	var hash string
+	var hash *string
 	if err := s.db.QueryRow(ctx, `select password_hash from admin`).Scan(&hash); err != nil {
 		return nil, err
 	}
-	if in.CurrentPassword == nil || !checkPassword(hash, *in.CurrentPassword) {
+	if hash == nil || in.CurrentPassword == nil || !checkPassword(*hash, *in.CurrentPassword) {
 		for range loginMissWeight {
 			noteMiss(ctx)
 		}
@@ -270,8 +304,12 @@ func (s *Server) ChangeAdminPassword(ctx context.Context, req ChangeAdminPasswor
 	if err := validPassword(in.NewPassword); err != nil {
 		return nil, err
 	}
+	next := hashPassword(in.NewPassword)
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if _, err := tx.Exec(ctx, `update admin set password_hash = $1`, hashPassword(in.NewPassword)); err != nil {
+		if err := lockAdmin(ctx, tx, *hash, token); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `update admin set password_hash = $1`, next); err != nil {
 			return err
 		}
 		_, err := tx.Exec(ctx, `delete from admin_sessions where token_hash <> $1`, hashToken(*token))

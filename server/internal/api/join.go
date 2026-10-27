@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"errors"
+	"net/http"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -49,6 +51,13 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 	in := req.Body
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// The account before the group, in the order its deletion locks them.
+		err := tx.QueryRow(ctx, `select 1 from users where id = $1 for key share`, u.id).Scan(new(int))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
+		} else if err != nil {
+			return err
+		}
 		g, err := s.findGroup(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
@@ -139,6 +148,15 @@ func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) erro
 		if err != nil {
 			return err
 		}
+	}
+	// The only account in a group whose owner is gone, as when the last one
+	// deleted theirs while the group stayed open by link, owns it.
+	_, err = tx.Exec(ctx, `
+		update members set is_owner = true where id = $1 and not exists (
+			select 1 from members where group_id = $2 and id <> $1 and user_id is not null and left_at is null)`,
+		m.id, g.id)
+	if err != nil {
+		return err
 	}
 	if u.email != nil {
 		if _, err := tx.Exec(ctx, `delete from invites where group_id = $1 and email = $2`, g.id, *u.email); err != nil {

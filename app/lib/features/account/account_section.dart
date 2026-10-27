@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -122,6 +123,7 @@ class AccountSection extends ConsumerWidget {
 Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   final account = ref.read(currentAccountProvider).value;
   if (account == null) return;
+  final who = ref.read(identityProvider);
   final deleted = await showDialog<bool>(
     context: context,
     builder: (_) => _DeleteAccountDialog(askPassword: account.hasPassword),
@@ -130,7 +132,7 @@ Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
   final done = context.l10n.accountDeleted;
   // The server ended the session with the account.
-  startSession(ref, null);
+  if (!startSession(ref, null, from: who)) return;
   context.go('/sign-in');
   messenger.showSnackBar(SnackBar(content: Text(done)));
 }

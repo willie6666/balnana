@@ -682,6 +682,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String expenseReceivedBy(String name, String amount) {
+    return '$name received $amount';
+  }
+
+  @override
+  String expenseReceivedByMany(int count, String amount) {
+    return '$count people received $amount';
+  }
+
+  @override
+  String get transactionRefund => 'Refund';
+
+  @override
+  String get transactionIncome => 'Income';
+
+  @override
   String effectYouPaid(String amount) {
     return 'you paid $amount';
   }
@@ -699,6 +715,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String effectYouBorrowed(String amount) {
     return 'you borrowed $amount';
+  }
+
+  @override
+  String effectForYou(String amount) {
+    return '$amount for you';
   }
 
   @override
@@ -767,6 +788,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expensePaidByLabel => 'Paid by';
+
+  @override
+  String get expenseReceivedForLabel => 'Received for';
+
+  @override
+  String get expenseReceivedByLabel => 'Received by';
 
   @override
   String get expenseMultiplePayers => 'Several people';

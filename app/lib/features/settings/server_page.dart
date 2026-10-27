@@ -85,7 +85,8 @@ class _ServerPageState extends ConsumerState<ServerPage> {
     ref.invalidate(serverInfoProvider);
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(SnackBar(content: Text(context.l10n.serverSaved)));
-    context.canPop() ? context.pop() : context.go('/groups');
+    // What was open is of the last server: start over at this one's groups.
+    GoRouter.of(context).go('/groups');
   }
 
   @override

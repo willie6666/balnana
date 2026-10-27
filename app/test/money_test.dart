@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:balnana/core/money.dart';
+import 'package:balnana/data/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// api/testdata/money.json is shared with the Go tests in server/internal/domain.
@@ -143,5 +144,47 @@ void main() {
     expect(formatAmountLocalized(BigInt.parse('99999999999999999'), 2, 'en'), '999,999,999,999,999.99');
     expect(formatAmountLocalized(BigInt.from(-123456), 2, 'en'), '-1,234.56');
     expect(formatAmountLocalized(BigInt.from(5), 0, 'en'), '5');
+  });
+
+  // One transaction holds at most maxMinor, but a balance or a total is a sum
+  // of them and may be larger: the app must still read what the server sends.
+  test('sums beyond one transaction are read, single amounts are not', () {
+    final big = formatAmount(maxMinor + BigInt.from(98), 2);
+    expect(() => parseAmount(big, 2), throwsMoney('amount_too_large'));
+    expect(parseAmount(big, 2, total: true), maxMinor + BigInt.from(98));
+
+    final group = Group.fromJson({
+      'token': 'tok',
+      'name': 'Big',
+      'currency': 'USD',
+      'minorDigits': 2,
+      'createdAt': '2026-01-01T00:00:00Z',
+      'members': [
+        {'id': 'a', 'name': 'Ana', 'balance': big},
+        {'id': 'b', 'name': 'Ben', 'balance': '-$big'},
+      ],
+    });
+    expect(group.members.first.balance, maxMinor + BigInt.from(98));
+    final balances = Balances.fromJson({
+      'balances': [
+        {'memberId': 'a', 'amount': big},
+      ],
+      'transfers': [
+        {'fromMemberId': 'b', 'toMemberId': 'a', 'amount': big},
+      ],
+    }, 2);
+    expect(balances.transfers.single.amount, maxMinor + BigInt.from(98));
+    final stats = GroupStats.fromJson({
+      'total': big,
+      'count': 2,
+      'categories': [],
+      'members': [
+        {'memberId': 'a', 'paid': big, 'share': big},
+      ],
+      'months': [
+        {'month': '2026-01', 'amount': big},
+      ],
+    }, 2);
+    expect(stats.total, maxMinor + BigInt.from(98));
   });
 }

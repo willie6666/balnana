@@ -12,6 +12,7 @@ import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/prefs.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
@@ -67,6 +68,7 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
 
   Future<void> _finish() async {
     if (widget.error case final error?) throw ApiException(error);
+    final who = ref.read(identityProvider);
     String? token;
     if (widget.code case final code?) {
       final prefs = ref.read(prefsProvider);
@@ -76,8 +78,7 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
       (token, _) = await ref.read(balnanaApiProvider)!.exchangeOAuthCode(code: code, verifier: verifier);
     }
     // On the web the server already set the session cookie.
-    startSession(ref, token);
-    if (mounted) context.go(safeNext(widget.next) ?? '/groups');
+    if (startSession(ref, token, from: who) && mounted) context.go(safeNext(widget.next) ?? '/groups');
   }
 
   @override

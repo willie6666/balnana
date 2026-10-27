@@ -115,17 +115,24 @@ class _GroupPageState extends ConsumerState<GroupPage> {
   bool _askedIdentity = false;
   late final AppLifecycleListener _lifecycle;
 
+  /// The server the group is on. Once another is chosen this page is left
+  /// over from before, and the group's token is for this server alone.
+  late final String? _server;
+
+  bool get _here => mounted && ref.read(serverUrlProvider) == _server;
+
   @override
   void initState() {
     super.initState();
+    _server = openGroup(ref, widget.token);
     ref.listenManual(groupProvider(widget.token), (_, next) {
       final group = next.value;
-      if (group != null) {
+      if (group != null && _here) {
         _opened(group);
         _goLive();
         // Home opens this group next time.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) ref.read(currentGroupProvider.notifier).set(widget.token);
+          if (_here) ref.read(currentGroupProvider.notifier).set(widget.token);
         });
       }
     }, fireImmediately: true);
@@ -153,7 +160,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
   /// Follows changes others make to the group while it is open and shown.
   void _goLive() {
     final dio = ref.read(apiProvider);
-    if (_live != null || dio == null || ref.read(groupProvider(widget.token)).value == null) return;
+    if (_live != null || dio == null || !_here || ref.read(groupProvider(widget.token)).value == null) return;
     _live = ref.read(groupEventsProvider)(dio, widget.token).listen(_onLive, onDone: () => _live = null);
   }
 
@@ -180,7 +187,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     // for the account to load before deciding.
     if (group.myMemberId != null) return;
     final account = await ref.read(accountProvider.future).catchError((_) => null);
-    if (!mounted || account != null) return;
+    if (!_here || account != null) return;
     final known = ref.read(knownGroupsProvider.notifier);
     if (known.byToken(group.token) == null) {
       known.add(group.token);

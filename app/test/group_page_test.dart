@@ -317,7 +317,11 @@ class _Taps implements PushService {
 }
 
 /// Starts the app in link mode with this device as Ana in group `tok`.
-Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) async {
+Future<ProviderContainer> _boot(
+  WidgetTester tester,
+  List<Override> overrides, {
+  Balances balances = const Balances(nets: {}, transfers: []),
+}) async {
   SharedPreferences.setMockInitialValues({
     'settings.server': _server,
     'groups.known': '[{"server":"$_server","token":"tok","memberId":"a","addedAt":"2026-01-01T00:00:00Z"}]',
@@ -332,7 +336,7 @@ Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) a
         cacheDbProvider.overrideWithValue(null),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
         summariesProvider.overrideWith((ref) async => const Summaries(groups: [], missing: [])),
-        balancesProvider.overrideWith((ref, token) async => const Balances(nets: {}, transfers: [])),
+        balancesProvider.overrideWith((ref, token) async => balances),
         ...overrides,
       ],
       child: const BalnanaApp(),
@@ -346,6 +350,32 @@ Future<void> _go(WidgetTester tester, ProviderContainer container, String path) 
   container.read(routerProvider).go(path);
   await tester.pumpAndSettle();
 }
+
+/// Lists only [items].
+class _Listed extends ExpensesNotifier {
+  _Listed(super.token, this.items);
+
+  final List<Expense> items;
+
+  @override
+  Future<ExpenseList> build() async => ExpenseList(items, null);
+}
+
+/// 10.00 that came in to Ben, for Ana and Ben: the importer's reversed roles.
+Expense _received(String type) => Expense(
+  id: 'r1',
+  kind: ExpenseKind.expense,
+  transactionType: type,
+  title: 'Deposit back',
+  amount: BigInt.from(1000),
+  occurredAt: DateTime.utc(2026, 1, 2),
+  splitMethod: SplitMethod.exact,
+  payers: [ExpensePart('a', BigInt.from(500)), ExpensePart('b', BigInt.from(500))],
+  splits: [ExpensePart('b', BigInt.from(1000))],
+  createdAt: DateTime.utc(2026, 1, 2),
+  updatedAt: DateTime.utc(2026, 1, 2),
+  version: 1,
+);
 
 void main() {
   testWidgets('a live update keeps an edited draft until asked to reload', (tester) async {
@@ -711,7 +741,7 @@ void main() {
     // neither while the group loads again nor once the server says so.
     final answer = Completer<ResponseBody>();
     server.group = () => answer.future;
-    container.read(sessionProvider.notifier).set('someone-else');
+    container.read(sessionProvider.notifier).set('someone-else', from: container.read(identityProvider));
     await tester.pump();
     await tester.pump();
     expect(find.text('Private'), findsNothing);
@@ -835,5 +865,49 @@ void main() {
     expect(s.categories.single.category, isNull);
     expect(s.members.single.share, BigInt.from(75));
     expect(s.months.single.month, DateTime(2026));
+  });
+
+  // Money that came in is not shown as if its receivers had paid it.
+  for (final (type, label) in [('refund', 'Refund'), ('income', 'Income')]) {
+    testWidgets('$type shows who received it and for whom', (tester) async {
+      final container = await _boot(tester, [
+        groupProvider.overrideWith((ref, token) async => _group('Flat')),
+        expensesProvider.overrideWith2((token) => _Listed(token, [_received(type)])),
+        expenseProvider.overrideWith((ref, key) async => _received(type)),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      ]);
+      await _go(tester, container, '/g/tok');
+      expect(find.textContaining('$label · Ben received \$10.00'), findsOneWidget);
+      expect(find.textContaining('paid'), findsNothing);
+      // Ana's half came back to Ben for her.
+      expect(find.text('\$5.00 for you'), findsOneWidget);
+
+      await tester.tap(find.text('Deposit back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Received for'), findsOneWidget);
+      expect(find.text('Received by'), findsOneWidget);
+      expect(find.text('Paid by'), findsNothing);
+    });
+  }
+
+  testWidgets('a balance beyond one transaction still shows, and pays at most one', (tester) async {
+    final big = maxMinor + BigInt.from(500);
+    final container = await _boot(
+      tester,
+      [
+        groupProvider.overrideWith((ref, token) async => _group('Flat')),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      ],
+      balances: Balances(nets: {'a': big, 'b': -big}, transfers: [Transfer('b', 'a', big)]),
+    );
+    await _go(tester, container, '/g/tok');
+    await tester.tap(find.widgetWithText(TextButton, 'Record').first);
+    await tester.pumpAndSettle();
+    final field = find.descendant(of: find.byType(AlertDialog), matching: find.byType(EditableText));
+    expect(tester.widget<EditableText>(field).controller.text, formatAmount(maxMinor, 2));
+    // What it suggests is accepted as it is.
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byType(FilledButton)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('too large'), findsNothing);
   });
 }

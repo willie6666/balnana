@@ -548,11 +548,17 @@ func (s *Server) ChangePassword(ctx context.Context, req ChangePasswordRequestOb
 	if err := validPassword(in.NewPassword); err != nil {
 		return nil, err
 	}
-	if err := s.confirmPassword(ctx, u, in.CurrentPassword); err != nil {
+	checked, err := s.confirmPassword(ctx, u, in.CurrentPassword)
+	if err != nil {
 		return nil, err
 	}
+	// Hashed before the lock: it is slow on purpose.
+	hash := hashPassword(in.NewPassword)
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if _, err := tx.Exec(ctx, `update users set password_hash = $2 where id = $1`, u.id, hashPassword(in.NewPassword)); err != nil {
+		if err := lockAccount(ctx, tx, u, checked); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `update users set password_hash = $2 where id = $1`, u.id, hash); err != nil {
 			return err
 		}
 		_, err := tx.Exec(ctx, `delete from sessions where user_id = $1 and id <> $2`, u.id, u.sessionID)

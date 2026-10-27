@@ -1345,6 +1345,30 @@ abstract class AppLocalizations {
   /// **'{count} people paid {amount}'**
   String expensePaidByMany(int count, String amount);
 
+  /// No description provided for @expenseReceivedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} received {amount}'**
+  String expenseReceivedBy(String name, String amount);
+
+  /// No description provided for @expenseReceivedByMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people received {amount}'**
+  String expenseReceivedByMany(int count, String amount);
+
+  /// No description provided for @transactionRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get transactionRefund;
+
+  /// No description provided for @transactionIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get transactionIncome;
+
   /// No description provided for @effectYouPaid.
   ///
   /// In en, this message translates to:
@@ -1368,6 +1392,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'you borrowed {amount}'**
   String effectYouBorrowed(String amount);
+
+  /// No description provided for @effectForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} for you'**
+  String effectForYou(String amount);
 
   /// No description provided for @effectEven.
   ///
@@ -1494,6 +1524,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid by'**
   String get expensePaidByLabel;
+
+  /// No description provided for @expenseReceivedForLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Received for'**
+  String get expenseReceivedForLabel;
+
+  /// No description provided for @expenseReceivedByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Received by'**
+  String get expenseReceivedByLabel;
 
   /// No description provided for @expenseMultiplePayers.
   ///

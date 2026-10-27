@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
@@ -76,6 +77,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     if (!_form.currentState!.validate()) return;
     final api = ref.read(balnanaApiProvider);
     if (api == null) return;
+    // The session is for this server, should another be chosen meanwhile.
+    final who = ref.read(identityProvider);
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final emailRequired = ref.read(serverInfoProvider).value?.emailRequired ?? true;
@@ -99,7 +102,10 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       TextInput.finishAutofillContext();
       // Whether a first account may still sign up has changed.
       if (_register) ref.invalidate(serverInfoProvider);
-      startSession(ref, token);
+      if (!startSession(ref, token, from: who)) {
+        setState(() => _busy = false);
+        return;
+      }
       context.go(safeNext(widget.next) ?? '/groups');
     } on ApiException catch (e) {
       if (!mounted) return;

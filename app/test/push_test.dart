@@ -216,7 +216,7 @@ void main() {
   test('signing in during a registration registers again as the account', () async {
     final put = Completer<void>();
     await boot(hold: put.future);
-    container.read(sessionProvider.notifier).set('b');
+    container.read(sessionProvider.notifier).set('b', from: container.read(identityProvider));
     await _settle();
     server.hold = null;
     put.complete();

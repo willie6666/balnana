@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"balnana/internal/config"
 	"github.com/go-jose/go-jose/v4"
 )
 
@@ -388,5 +391,58 @@ func TestPasswordResetReclaimsAccount(t *testing.T) {
 	anaAgain.must(200, "GET", "/me", nil, &me)
 	if me.Id != taken.Id {
 		t.Fatalf("me = %+v", me)
+	}
+}
+
+// A subject is someone only at the issuer that vouched for it: another
+// provider in the same place, with the same subjects, signs in other people.
+func TestOAuthIssuers(t *testing.T) {
+	a, b := newFakeIdP(t), newFakeIdP(t)
+	pool := testDB(t)
+	cfg := baseConfig(t, a.env(map[string]string{"BALNANA_AUTH_MODE": "accounts"}))
+	srv := NewServer(cfg, pool, slog.New(slog.DiscardHandler), "test")
+	c := &client{t: t, h: NewHandler(srv, http.NotFoundHandler())}
+	login := func(f *fakeIdP, sub, email, name string) User {
+		t.Helper()
+		in := c.another()
+		if e := oauthError(t, f.login(in, "/groups", person(sub, email, name))); e != "" {
+			t.Fatal(e)
+		}
+		var me User
+		in.must(200, "GET", "/me", nil, &me)
+		return me
+	}
+	ana := login(a, "1", "ana@example.com", "Ana")
+
+	// Made before issuers were kept, the identity is the configured one's.
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `update oauth_identities set issuer = null`); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.NameIdentityIssuers(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if me := login(a, "1", "ana@example.com", "Ana"); me.Id != ana.Id {
+		t.Fatal("Ana lost her account")
+	}
+	var identities int
+	if err := pool.QueryRow(ctx, `select count(*) from oauth_identities`).Scan(&identities); err != nil {
+		t.Fatal(err)
+	}
+	if identities != 1 {
+		t.Fatalf("%d identities", identities)
+	}
+
+	next := *cfg
+	next.OIDC = &config.OIDC{OAuthClient: cfg.OIDC.OAuthClient, Issuer: b.srv.URL, Name: "New provider"}
+	srv.apply(&next)
+	ben := login(b, "1", "ben@example.com", "Ben")
+	if ben.Id == ana.Id || ben.Email == nil || *ben.Email != "ben@example.com" {
+		t.Fatalf("Ben signed in as %+v", ben)
+	}
+
+	srv.apply(cfg)
+	if me := login(a, "1", "ana@example.com", "Ana"); me.Id != ana.Id {
+		t.Fatal("Ana lost her account")
 	}
 }

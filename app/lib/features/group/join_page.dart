@@ -16,7 +16,7 @@ import '../../ui/widgets/member_avatar.dart';
 import 'identity_sheet.dart';
 
 final _joinInfoProvider = FutureProvider.autoDispose.family<JoinInfo, String>(
-  (ref, token) => ref.watch(balnanaApiProvider)!.group(token).joinInfo(),
+  (ref, token) => groupApi(ref, token).joinInfo(),
 );
 
 /// Joining a group by its link (accounts mode): be one of the people already
@@ -32,6 +32,12 @@ class JoinPage extends ConsumerStatefulWidget {
 
 class _JoinPageState extends ConsumerState<JoinPage> {
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    openGroup(ref, widget.token);
+  }
 
   void _open() => context.go('/g/${widget.token}');
 

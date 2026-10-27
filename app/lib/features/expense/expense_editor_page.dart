@@ -153,6 +153,7 @@ class _EditorState extends ConsumerState<_Editor> {
   bool _tried = false;
 
   Group get _group => widget.group;
+  bool get _received => widget.expense?.isReceived ?? false;
   int get _digits => _group.minorDigits;
 
   /// Current members, plus anyone who left but is part of this expense.
@@ -583,10 +584,11 @@ class _EditorState extends ConsumerState<_Editor> {
                   ],
                 ),
 
-                FormSection(l10n.expensePaidByLabel),
+                // Money that came in keeps its reversed roles: see Expense.isReceived.
+                FormSection(_received ? l10n.expenseReceivedForLabel : l10n.expensePaidByLabel),
                 _PaidBy(state: this, symbol: symbol),
 
-                FormSection(l10n.expenseSplit),
+                FormSection(_received ? l10n.expenseReceivedByLabel : l10n.expenseSplit),
                 SegmentedButton<SplitMethod>(
                   showSelectedIcon: false,
                   // Four segments share a phone's width: tighter padding keeps each label on one line.

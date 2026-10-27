@@ -53,7 +53,10 @@ void _checkDigits(int digits) {
 /// followed by at least one digit. Extra decimal places are accepted only when
 /// they are zeros. Localized input (other separators, grouping) is the
 /// caller's job to normalize first.
-BigInt parseAmount(String s, int digits) {
+///
+/// One transaction holds at most [maxMinor]. Pass [total] for a sum of them,
+/// such as a balance from the server, which has no such limit.
+BigInt parseAmount(String s, int digits, {bool total = false}) {
   _checkDigits(digits);
   final neg = s.startsWith('-');
   if (neg) s = s.substring(1);
@@ -70,7 +73,7 @@ BigInt parseAmount(String s, int digits) {
     frac = frac.substring(0, digits);
   }
   final n = BigInt.parse(whole + frac.padRight(digits, '0'));
-  if (n > maxMinor) throw const MoneyException(MoneyError.amountTooLarge);
+  if (!total && n > maxMinor) throw const MoneyException(MoneyError.amountTooLarge);
   return neg ? -n : n;
 }
 

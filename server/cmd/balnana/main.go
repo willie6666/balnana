@@ -82,6 +82,9 @@ func run() error {
 	if err := srv.PrepareAdmin(ctx); err != nil {
 		return err
 	}
+	if err := srv.NameIdentityIssuers(ctx); err != nil {
+		return err
+	}
 	if cfg.Push {
 		if err := srv.StartPush(ctx); err != nil {
 			return err

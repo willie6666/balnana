@@ -122,7 +122,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(sessionProvider.notifier).set('b');
+    container.read(sessionProvider.notifier).set('b', from: container.read(identityProvider));
     await saved();
     expect(await db.find(_server, cacheAccount('a'), 'GET /me'), isNull);
     expect(await db.find(_server, CacheDb.public, 'GET /server-info'), isNotNull);
@@ -146,7 +146,7 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      final session = container.read(sessionProvider.notifier)..set('a');
+      final session = container.read(sessionProvider.notifier)..set('a', from: container.read(identityProvider));
       Dio client(String? token) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
         ..httpClientAdapter = server
         ..options.headers['Authorization'] = token
@@ -157,7 +157,7 @@ void main() {
       final pending = client('a').get<Object?>('/me');
       await saved();
       for (final token in steps) {
-        session.set(token);
+        session.set(token, from: container.read(identityProvider));
       }
       await saved();
       release.complete();

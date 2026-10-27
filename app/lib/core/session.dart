@@ -59,9 +59,14 @@ class SessionNotifier extends Notifier<SessionKey> {
   }
 
   /// Uses [token] from now on (null to sign out), and reloads everything.
-  void set(String? token) {
+  ///
+  /// [from] is whom the app was when it asked for [token]. A session is for
+  /// the server that gave it, and an answer that comes after another server
+  /// was chosen, or another session started, is not for now: nothing changes
+  /// and false is returned.
+  bool set(String? token, {required Identity from}) {
     final server = _server;
-    if (server == null) return;
+    if (server == null || from.server != server || from.generation != state.generation) return false;
     final tokens = _tokens();
     if (token == null) {
       tokens.remove(server);
@@ -72,5 +77,6 @@ class SessionNotifier extends Notifier<SessionKey> {
     // What the last account saw is not for the next one.
     ref.read(cacheDbProvider)?.switchAccount(server, cacheAccount(token)).ignore();
     state = SessionKey(token, state.generation + 1);
+    return true;
   }
 }

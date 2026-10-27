@@ -8,9 +8,10 @@ import (
 )
 
 // mayChange refuses changes to a member someone has claimed with their
-// account, unless they make them themselves or own the group.
+// account, unless they make them themselves or own the group. In link mode
+// there are no accounts to tell them apart, and anyone with the link may.
 func mayChange(g *group, m *member) error {
-	if m.userID != nil && (g.me == nil || *g.me != m.id) && !g.owner {
+	if g.accounts && m.userID != nil && (g.me == nil || *g.me != m.id) && !g.owner {
 		return forbidden("not_allowed")
 	}
 	return nil

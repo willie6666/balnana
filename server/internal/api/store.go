@@ -59,9 +59,10 @@ type group struct {
 	linkAccess bool
 	createdAt  time.Time
 
-	open  bool    // the link alone opens the group
-	me    *string // accounts mode: the signed-in account's member
-	owner bool    // ...who owns the group
+	open     bool    // the link alone opens the group
+	accounts bool    // accounts mode: members claimed by accounts are theirs
+	me       *string // accounts mode: the signed-in account's member
+	owner    bool    // ...who owns the group
 }
 
 const groupColumns = `id::text, token, name, emoji, color, currency, symbol, minor_digits, link_access, created_at`
@@ -107,7 +108,7 @@ func (s *Server) findGroup(ctx context.Context, q querier, token string, lock bo
 func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
 	accounts := s.conf().AuthMode == config.AuthModeAccounts
 	g.open = !accounts || s.conf().LinkGroups && g.linkAccess
-	g.me, g.owner = nil, false
+	g.accounts, g.me, g.owner = accounts, nil, false
 	if !accounts {
 		return nil
 	}

@@ -338,8 +338,13 @@ class _PaymentDialog extends StatefulWidget {
 }
 
 class _PaymentDialogState extends State<_PaymentDialog> {
+  // One payment holds at most maxMinor; what a larger debt has left is
+  // suggested again once it is recorded.
   late final _amount = TextEditingController(
-    text: formatAmount(widget.transfer.amount, widget.group.minorDigits),
+    text: formatAmount(
+      widget.transfer.amount > maxMinor ? maxMinor : widget.transfer.amount,
+      widget.group.minorDigits,
+    ),
   );
   String? _error;
 

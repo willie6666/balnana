@@ -28,8 +28,10 @@ DateTime _time(Map<String, Object?> json, String key) {
   return t;
 }
 
+/// The server checked what it accepted, and sums of it, such as balances and
+/// totals, may exceed what one transaction holds.
 BigInt _money(Map<String, Object?> json, String key, int digits) =>
-    parseAmount(_req<String>(json, key), digits);
+    parseAmount(_req<String>(json, key), digits, total: true);
 
 @immutable
 class Member {
@@ -213,7 +215,7 @@ class GroupSummary {
       symbol: _opt(json, 'symbol'),
       minorDigits: digits,
       memberCount: _req(json, 'memberCount'),
-      balance: balance == null ? null : parseAmount(balance, digits),
+      balance: balance == null ? null : parseAmount(balance, digits, total: true),
       updatedAt: _time(json, 'updatedAt'),
     );
   }
@@ -326,6 +328,10 @@ class Expense {
   final String transactionType;
 
   bool get isPayment => kind == ExpenseKind.payment;
+
+  /// Money that came in, a refund or income. Its ledger roles are reversed:
+  /// whom it is for "paid" it, and whoever received it owes it to them.
+  bool get isReceived => !isPayment && transactionType != 'expense';
 
   BigInt paidBy(String memberId) =>
       payers.where((p) => p.memberId == memberId).fold(BigInt.zero, (a, p) => a + p.amount);

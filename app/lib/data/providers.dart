@@ -59,9 +59,40 @@ extension WatchCurrent on WidgetRef {
       watch(provider).current(watch(identityProvider));
 }
 
+class _OtherServer implements Exception {
+  const _OtherServer();
+}
+
+/// The server each group was opened on, by token. A group's token is its
+/// secret: it goes to that server alone, whichever server is chosen since.
+final groupServersProvider = Provider<Map<String, String?>>((ref) => {});
+
+/// Opens [token] as a group of the server chosen now, as a page showing it
+/// opens, and returns that server.
+String? openGroup(WidgetRef ref, String token) {
+  final server = ref.read(serverUrlProvider);
+  ref.read(groupServersProvider)[token] = server;
+  return server;
+}
+
+/// Refuses [token] unless its group is on [server]. A group not opened yet is
+/// taken to be on [server].
+void _checkServer(Map<String, String?> servers, String token, String? server) {
+  if (servers.putIfAbsent(token, () => server) != server) throw const _OtherServer();
+}
+
+/// The API for the group of [token], unless it was opened on another server
+/// than the one chosen now.
+GroupApi groupApi(Ref ref, String token) {
+  final api = _api(ref);
+  _checkServer(ref.read(groupServersProvider), token, ref.watch(serverUrlProvider));
+  return api.group(token);
+}
+
 /// The API for one group, acting as this device's member in it.
 GroupApi groupApiOf(WidgetRef ref, String token) {
   final api = ref.read(balnanaApiProvider) ?? (throw const _NoServer());
+  _checkServer(ref.read(groupServersProvider), token, ref.read(serverUrlProvider));
   return api.group(token, memberId: ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId);
 }
 
@@ -86,17 +117,21 @@ final currentAccountProvider = Provider<AsyncValue<User?>>(
 /// Whether an account is signed in, as far as is known yet.
 final signedInProvider = Provider<bool>((ref) => ref.watch(currentAccountProvider.select((a) => a.value != null)));
 
-/// Keeps a new session and reloads everything as that account.
-void startSession(WidgetRef ref, String? token) => ref.read(sessionProvider.notifier).set(token);
+/// Keeps a new session and reloads everything as that account, unless the
+/// app is no longer [from], whom it was when it asked for the session: see
+/// [SessionNotifier.set]. Returns whether it did.
+bool startSession(WidgetRef ref, String? token, {required Identity from}) =>
+    ref.read(sessionProvider.notifier).set(token, from: from);
 
 /// Ends the session here and on the server.
 Future<void> signOut(WidgetRef ref) async {
+  final who = ref.read(identityProvider);
   try {
     await ref.read(balnanaApiProvider)?.logout();
   } on ApiException {
     // Forget the session here all the same.
   }
-  ref.read(sessionProvider.notifier).set(null);
+  ref.read(sessionProvider.notifier).set(null, from: who);
 }
 
 class Summaries {
@@ -126,11 +161,13 @@ final summariesProvider = FutureProvider<Summaries>((ref) async {
   return _mark(who, Summaries(groups: groups, missing: missing));
 });
 
-final groupProvider = FutureProvider.family<Group, String>((ref, token) => _load(ref, (api) => api.group(token).get()));
+final groupProvider = FutureProvider.family<Group, String>(
+  (ref, token) => _load(ref, (_) => groupApi(ref, token).get()),
+);
 
 final balancesProvider = FutureProvider.family<Balances, String>((ref, token) async {
   final group = await ref.watch(groupProvider(token).future);
-  return _load(ref, (api) => api.group(token).balances(group.minorDigits));
+  return _load(ref, (_) => groupApi(ref, token).balances(group.minorDigits));
 });
 
 /// A group's expenses, newest first, loaded a page at a time.
@@ -193,7 +230,7 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     final filter = ref.watch(expenseFilterProvider(token));
     final group = await ref.watch(groupProvider(token).future);
     _digits = group.minorDigits;
-    final page = await _api(ref).group(token).expenses(_digits, filter: filter);
+    final page = await groupApi(ref, token).expenses(_digits, filter: filter);
     return _mark(_who, ExpenseList(page.items, page.nextCursor, filter: filter));
   }
 
@@ -205,7 +242,7 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     final build = _build, filter = current.filter;
     state = AsyncData(_mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true)));
     try {
-      final page = await _api(ref).group(token).expenses(_digits, cursor: current.nextCursor, filter: filter);
+      final page = await groupApi(ref, token).expenses(_digits, cursor: current.nextCursor, filter: filter);
       if (!ref.mounted || build != _build) return;
       state = AsyncData(_mark(_who, ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter)));
     } on Exception catch (e) {
@@ -263,12 +300,12 @@ final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String toke
   key,
 ) async {
   final group = await ref.watch(groupProvider(key.token).future);
-  return _load(ref, (api) => api.group(key.token).expense(key.id, group.minorDigits));
+  return _load(ref, (_) => groupApi(ref, key.token).expense(key.id, group.minorDigits));
 });
 
 /// The photo of an expense's receipt.
 final receiptProvider = FutureProvider.autoDispose.family<Uint8List, ({String token, String id})>(
-  (ref, key) => _load(ref, (api) => api.group(key.token).receipt(key.id)),
+  (ref, key) => _load(ref, (_) => groupApi(ref, key.token).receipt(key.id)),
 );
 
 /// What a group spent in a period, or all time when it is null.
@@ -277,5 +314,5 @@ final statsProvider = FutureProvider.autoDispose.family<GroupStats, ({String tok
   key,
 ) async {
   final group = await ref.watch(groupProvider(key.token).future);
-  return _load(ref, (api) => api.group(key.token).stats(group.minorDigits, period: key.period));
+  return _load(ref, (_) => groupApi(ref, key.token).stats(group.minorDigits, period: key.period));
 });

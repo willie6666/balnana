@@ -282,7 +282,7 @@ func (s *Server) finishOAuth(ctx context.Context, p *oauthProvider, login *oauth
 	if err := id.Claims(&c); err != nil {
 		return err
 	}
-	return s.oauthUser(ctx, p.id, id.Subject, c, issue)
+	return s.oauthUser(ctx, p.id, p.issuer, id.Subject, c, issue)
 }
 
 type idClaims struct {
@@ -322,6 +322,19 @@ func (c idClaims) name() string {
 	return "Balnana user"
 }
 
+// NameIdentityIssuers gives the OpenID Connect identities made before their
+// issuer was kept the configured provider's, as the one they were made with.
+// It runs as the server starts, before an administrator can change it.
+func (s *Server) NameIdentityIssuers(ctx context.Context) error {
+	cfg := s.conf()
+	if cfg.OIDC == nil {
+		return nil
+	}
+	_, err := s.db.Exec(ctx, `update oauth_identities set issuer = $1 where provider = 'oidc' and issuer is null`,
+		cfg.OIDC.Issuer)
+	return err
+}
+
 // errIdentityGone is an identity whose account was taken back, or deleted,
 // between finding it and locking the account.
 var errIdentityGone = errors.New("identity gone")
@@ -329,12 +342,12 @@ var errIdentityGone = errors.New("identity gone")
 // oauthUser finds the account of a provider identity and signs in to it with
 // issue. An account with the address the provider vouches for gets the
 // identity; failing that, a new account is made if sign-up allows it.
-func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
+func (s *Server) oauthUser(ctx context.Context, provider, issuer, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
 	var err error
 	// Gone, the identity is looked for afresh, and is found no more.
 	for range 3 {
 		err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-			return s.oauthUserTx(ctx, tx, provider, subject, c, issue)
+			return s.oauthUserTx(ctx, tx, provider, issuer, subject, c, issue)
 		})
 		if !errors.Is(err, errIdentityGone) {
 			break
@@ -343,10 +356,11 @@ func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idCl
 	return err
 }
 
-func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
+func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, issuer, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
 	var userID string
-	err := tx.QueryRow(ctx, `select user_id::text from oauth_identities where provider = $1 and subject = $2`,
-		provider, subject).Scan(&userID)
+	err := tx.QueryRow(ctx, `
+		select user_id::text from oauth_identities where provider = $1 and issuer = $2 and subject = $3`,
+		provider, issuer, subject).Scan(&userID)
 	if err == nil {
 		// The account is locked, as everything that takes it back locks it,
 		// and the identity looked at again in a statement of its own, which
@@ -356,8 +370,9 @@ func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, subject s
 		}
 		var still bool
 		err := tx.QueryRow(ctx, `
-			select exists (select 1 from oauth_identities where provider = $1 and subject = $2 and user_id = $3)`,
-			provider, subject, userID).Scan(&still)
+			select exists (select 1 from oauth_identities
+			               where provider = $1 and issuer = $2 and subject = $3 and user_id = $4)`,
+			provider, issuer, subject, userID).Scan(&still)
 		if err != nil {
 			return err
 		}
@@ -420,8 +435,8 @@ func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, subject s
 			return err
 		}
 	}
-	_, err = tx.Exec(ctx, `insert into oauth_identities (provider, subject, user_id) values ($1, $2, $3)`,
-		provider, subject, userID)
+	_, err = tx.Exec(ctx, `insert into oauth_identities (provider, issuer, subject, user_id) values ($1, $2, $3, $4)`,
+		provider, issuer, subject, userID)
 	if err != nil {
 		return err
 	}

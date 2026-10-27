@@ -155,3 +155,147 @@ func TestOAuthRacingReclaim(t *testing.T) {
 		t.Fatal("Mallory signed in to the account taken back")
 	}
 }
+
+// A password change checked before the address owner takes the account back
+// changes nothing after it: the session it came on is gone.
+func TestPasswordChangeRacingReclaim(t *testing.T) {
+	f := newFakeIdP(t)
+	var first *client
+	fired := false
+	first, second, _, _ := racing(t, f.env(map[string]string{}), func(sql string) {
+		if fired || !strings.Contains(sql, "exists (select 1 from sessions where id") {
+			return
+		}
+		fired = true
+		owner := first.another()
+		if e := oauthError(t, f.login(owner, "/groups", person("owner", "owner@example.com", "Owner"))); e != "" {
+			t.Fatal(e)
+		}
+	})
+	register(first, "owner@example.com", "Mallory")
+	second.token = first.token
+	code := second.errorCode(401, "POST", "/me/password",
+		PasswordChange{CurrentPassword: ptr("correct horse"), NewPassword: "mallory's new password"})
+	if !fired || code != "sign_in_required" {
+		t.Fatalf("fired=%v code %s", fired, code)
+	}
+	first.another().errorCode(401, "POST", "/auth/login", LoginInput{Login: "owner@example.com", Password: "mallory's new password"})
+}
+
+// The old administrator password starts no session once reset-admin has
+// taken it away, however late in the sign-in the reset comes.
+func TestAdminLoginRacingReset(t *testing.T) {
+	fired := false
+	var reset func()
+	first, second, _, db := racing(t, map[string]string{}, func(sql string) {
+		if !fired && strings.Contains(sql, "from admin for update") {
+			fired = true
+			reset()
+		}
+	})
+	setUp(first)
+	reset = func() {
+		if _, err := ResetAdmin(context.Background(), db); err != nil {
+			t.Fatal(err)
+		}
+	}
+	code := second.errorCode(401, "POST", "/admin/login", AdminLoginInput{Password: adminPassword})
+	if !fired || code != "invalid_credentials" {
+		t.Fatalf("fired=%v code %s", fired, code)
+	}
+}
+
+// Someone joining an open group as its last owner deletes their account
+// waits for the deletion, then owns the group.
+func TestDeleteAccountRacingJoin(t *testing.T) {
+	var ben *client
+	var token string
+	joined := make(chan int, 1)
+	fired := false
+	first, second, _, _ := racing(t, map[string]string{}, func(sql string) {
+		if fired || !strings.Contains(sql, "update members set user_id = null, is_owner = false") {
+			return
+		}
+		fired = true
+		go func() { joined <- ben.call("POST", "/g/"+token+"/join", JoinInput{}, nil) }()
+		// Long enough for the join to reach the group's lock.
+		time.Sleep(200 * time.Millisecond)
+	})
+	register(first, "ana@example.com", "Ana")
+	ben = first.another()
+	register(ben, "ben@example.com", "Ben")
+	var g Group
+	first.must(201, "POST", "/groups", GroupCreate{Name: "Open", Currency: "EUR", Members: []string{"Ana"}, LinkAccess: ptr(true)}, &g)
+	token = g.Token
+	second.token = first.token
+	second.must(204, "POST", "/me/delete", AccountDelete{Password: ptr("correct horse")}, nil)
+	if status := <-joined; !fired || status != http.StatusOK {
+		t.Fatalf("fired=%v join status %d", fired, status)
+	}
+	ben.must(200, "GET", "/g/"+token, nil, &g)
+	owned := false
+	for _, m := range g.Members {
+		owned = owned || m.Owner && m.Claimed && !m.Left
+	}
+	if !owned {
+		t.Fatal("the group has no owner")
+	}
+}
+
+// A join that holds the group as the account deletion reaches it is seen by
+// the deletion, which keeps the group for the one who joined.
+func TestDeleteAccountWaitsForJoin(t *testing.T) {
+	reached := make(chan struct{})
+	fired := false
+	first, second, _, db := racing(t, map[string]string{}, func(sql string) {
+		if !fired && strings.Contains(sql, "order by id for update") {
+			fired = true
+			close(reached)
+		}
+	})
+	register(first, "ana@example.com", "Ana")
+	ben := first.another()
+	bu := register(ben, "ben@example.com", "Ben")
+	var g Group
+	first.must(201, "POST", "/groups", GroupCreate{Name: "Shared", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	ctx := context.Background()
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var id string
+	if err := tx.QueryRow(ctx, `select id::text from groups where token = $1 for update`, g.Token).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	second.token = first.token
+	done := make(chan int, 1)
+	go func() { done <- second.call("POST", "/me/delete", AccountDelete{Password: ptr("correct horse")}, nil) }()
+	<-reached
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(5 * time.Millisecond) {
+		var waiting bool
+		err := db.QueryRow(ctx, `
+			select exists (select 1 from pg_stat_activity where datname = current_database()
+			               and wait_event_type = 'Lock' and query like '%order by id for update%')`).Scan(&waiting)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if waiting {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the deletion did not wait for the group")
+		}
+	}
+	// What JoinGroup does, on the group it holds.
+	if err := join(ctx, tx, &group{id: id}, &user{id: bu.Id, name: "Ben"}, &JoinInput{ClaimMemberId: &g.Members[1].Id}); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if status := <-done; status != http.StatusNoContent {
+		t.Fatalf("delete: status %d", status)
+	}
+	ben.must(200, "GET", "/g/"+g.Token, nil, nil)
+}

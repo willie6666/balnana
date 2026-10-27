@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -12,20 +13,43 @@ import (
 )
 
 // confirmPassword checks the password of an account that has one, before a
-// change that a stolen session alone must not make.
-func (s *Server) confirmPassword(ctx context.Context, u *user, password *string) error {
-	if !u.hasPassword {
-		return nil
-	}
-	var hash string
+// change that a stolen session alone must not make. It returns the hash it
+// checked, nil for an account without a password, for lockAccount.
+func (s *Server) confirmPassword(ctx context.Context, u *user, password *string) (*string, error) {
+	var hash *string
 	if err := s.db.QueryRow(ctx, `select password_hash from users where id = $1`, u.id).Scan(&hash); err != nil {
-		return err
+		return nil, err
 	}
-	if password == nil || !checkPassword(hash, *password) {
+	if hash == nil {
+		return nil, nil
+	}
+	if password == nil || !checkPassword(*hash, *password) {
 		for range loginMissWeight {
 			noteMiss(ctx)
 		}
-		return forbidden("wrong_password")
+		return nil, forbidden("wrong_password")
+	}
+	return hash, nil
+}
+
+// lockAccount locks u's row for a change confirmPassword allowed, and makes
+// sure what allowed it still holds: the session is live and the password is
+// the one checked. A reclaim or reset in between revokes both, and a request
+// that started before it must not undo it.
+func lockAccount(ctx context.Context, tx pgx.Tx, u *user, checked *string) error {
+	var hash *string
+	var live bool
+	err := tx.QueryRow(ctx, `
+		select password_hash,
+		       exists (select 1 from sessions where id = $2 and user_id = $1 and expires_at > now())
+		from users where id = $1 for update`, u.id, u.sessionID).Scan(&hash, &live)
+	if errors.Is(err, pgx.ErrNoRows) {
+		live = false
+	} else if err != nil {
+		return err
+	}
+	if !live || (hash == nil) != (checked == nil) || hash != nil && *hash != *checked {
+		return &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
 	}
 	return nil
 }
@@ -46,7 +70,8 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		// The address is how this account signs in.
 		return nil, badRequest("email_needed")
 	}
-	if err := s.confirmPassword(ctx, u, req.Body.Password); err != nil {
+	checked, err := s.confirmPassword(ctx, u, req.Body.Password)
+	if err != nil {
 		return nil, err
 	}
 	if email != nil && u.email != nil && strings.EqualFold(*email, *u.email) {
@@ -63,6 +88,9 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 	if email == nil || s.mailer() == nil {
 		// Nothing can confirm the address, so it takes the old one's place now.
 		err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			if err := lockAccount(ctx, tx, u, checked); err != nil {
+				return err
+			}
 			_, err := tx.Exec(ctx, `
 				update users set email = $2, email_verified = false, pending_email = null where id = $1`, u.id, email)
 			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -91,6 +119,9 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		// The account's row is locked first, as where tokens are used.
+		if err := lockAccount(ctx, tx, u, checked); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx, `update users set pending_email = $2 where id = $1`, u.id, *email); err != nil {
 			return err
 		}
@@ -122,10 +153,17 @@ func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (Delet
 	if err != nil {
 		return nil, err
 	}
-	if err := s.confirmPassword(ctx, u, req.Body.Password); err != nil {
+	checked, err := s.confirmPassword(ctx, u, req.Body.Password)
+	if err != nil {
 		return nil, err
 	}
-	if err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error { return s.deleteAccount(ctx, tx, u.id) }); err != nil {
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		if err := lockAccount(ctx, tx, u, checked); err != nil {
+			return err
+		}
+		return s.deleteAccount(ctx, tx, u.id)
+	})
+	if err != nil {
 		return nil, err
 	}
 	if st, _ := ctx.Value(authKey{}).(*authState); st != nil && st.fromCookie {
@@ -141,12 +179,22 @@ func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (Delet
 // been in the group longest. A group that no other account could reach
 // afterwards is deleted with it.
 func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) error {
+	// The account's row first: a member it is joining as waits on it, so the
+	// groups found next are all of them.
+	if _, err := tx.Exec(ctx, `select 1 from users where id = $1 for update`, userID); err != nil {
+		return err
+	}
 	rows, err := tx.Query(ctx, `select distinct group_id::text from members where user_id = $1`, userID)
 	if err != nil {
 		return err
 	}
 	groups, err := pgx.CollectRows(rows, pgx.RowTo[string])
 	if err != nil {
+		return err
+	}
+	// Then the groups, as their writes lock them, so a join or leave that is
+	// under way has finished and the statements below see it.
+	if _, err := tx.Exec(ctx, `select 1 from groups where id = any($1::uuid[]) order by id for update`, groups); err != nil {
 		return err
 	}
 	_, err = tx.Exec(ctx, `
