@@ -51,6 +51,7 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 	if email != nil && u.email != nil && strings.EqualFold(*email, *u.email) {
 		return ChangeEmail200JSONResponse(u.api()), nil
 	}
+	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `update users set email = $2, email_verified = false where id = $1`, u.id, email)
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -60,22 +61,23 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 			return err
 		}
 		// Links sent to the old address must not verify the new one, nor
-		// reset the password from there.
-		_, err = tx.Exec(ctx, `delete from email_tokens where user_id = $1`, u.id)
+		// reset the password from there. Each token also carries its
+		// address, so one made at the same moment fails too.
+		if _, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1`, u.id); err != nil {
+			return err
+		}
+		if email == nil || s.mailer() == nil {
+			return nil
+		}
+		token, err = newEmailToken(ctx, tx, u.id, *email, "verify", verifyLifetime)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 	u.email, u.verified = email, false
-	if email != nil && s.mailer() != nil {
-		token, err := newEmailToken(ctx, s.db, u.id, "verify", verifyLifetime)
-		if err != nil {
-			return nil, err
-		}
-		if token != "" {
-			s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
-		}
+	if token != "" {
+		s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
 	}
 	return ChangeEmail200JSONResponse(u.api()), nil
 }

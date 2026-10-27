@@ -337,18 +337,19 @@ func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idCl
 			case err == nil && !verified:
 				// Whoever made that account may not own the address, so the
 				// provider's word wins: the account becomes the address
-				// owner's, and its password and sessions stop working.
-				// Otherwise anyone could take an address first and keep its
-				// owner out. The owner can set a new password afterwards.
+				// owner's, and every other way into it stops working: its
+				// password, sessions, emailed links and other sign-in
+				// identities. Otherwise anyone could take an address first
+				// and keep its owner out, or follow them in. The owner can
+				// set a new password afterwards.
 				_, err := tx.Exec(ctx, `update users set email_verified = true, password_hash = null where id = $1`, userID)
 				if err != nil {
 					return err
 				}
-				if _, err := tx.Exec(ctx, `delete from sessions where user_id = $1`, userID); err != nil {
-					return err
-				}
-				if _, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1`, userID); err != nil {
-					return err
+				for _, table := range []string{"sessions", "email_tokens", "oauth_identities", "oauth_codes"} {
+					if _, err := tx.Exec(ctx, `delete from `+table+` where user_id = $1`, userID); err != nil {
+						return err
+					}
 				}
 			case err != nil && !errors.Is(err, pgx.ErrNoRows):
 				return err

@@ -257,7 +257,11 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 			TTL:     pushTTL,
 		})
 		if errors.Is(err, push.ErrGone) {
-			_, err = s.db.Exec(ctx, `delete from push_devices where token = $1`, d.id)
+			// Only the subscription that is gone: the phone may have
+			// registered a new one while this was on its way.
+			_, err = s.db.Exec(ctx, `
+				delete from push_devices where token = $1 and endpoint = $2 and p256dh = $3 and auth = $4`,
+				d.id, d.sub.Endpoint, d.sub.P256dh, d.sub.Auth)
 		}
 		if err != nil {
 			s.log.Warn("push failed", "group", g.id, "err", err)

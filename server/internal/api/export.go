@@ -97,7 +97,7 @@ func exportCsv(ctx context.Context, q querier, g *group, offset int) (ExportCsv2
 	var amount int64
 	var at time.Time
 	_, err = pgx.ForEachRow(rows, []any{&eid, &kind, &title, &category, &amount, &at, &note}, func() error {
-		record := []string{at.In(zone).Format(time.DateOnly), cellText(title), category, kind,
+		record := []string{at.In(zone).Format(time.DateOnly), cellText(title), cellText(category), kind,
 			domain.FormatAmount(amount, g.digits), g.currency, cellText(note)}
 		for _, m := range members {
 			record = append(record, domain.FormatAmount(nets[eid][m.id], g.digits))

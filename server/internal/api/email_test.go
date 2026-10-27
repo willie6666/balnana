@@ -50,11 +50,17 @@ func (f fakeMail) none(t *testing.T) {
 
 // mailClient is an accounts client whose server sends email to a fakeMail.
 func mailClient(t *testing.T, env map[string]string) (*client, fakeMail) {
+	c, f, _ := mailServer(t, env)
+	return c, f
+}
+
+// mailServer is mailClient that also returns its server.
+func mailServer(t *testing.T, env map[string]string) (*client, fakeMail, *Server) {
 	env["BALNANA_AUTH_MODE"] = "accounts"
 	s := NewServer(baseConfig(t, env), testDB(t), slog.New(slog.DiscardHandler), "test")
 	f := make(fakeMail, 10)
 	s.settings.Load().mail = f
-	return &client{t: t, h: NewHandler(s, http.NotFoundHandler())}, f
+	return &client{t: t, h: NewHandler(s, http.NotFoundHandler())}, f, s
 }
 
 func lastPart(link string) string {
@@ -111,6 +117,41 @@ func TestPasswordReset(t *testing.T) {
 	if !s.User.EmailVerified {
 		t.Fatal("reset did not verify the address")
 	}
+}
+
+// A link works only for the address it was sent to. Changing the address
+// deletes older links, but one made at the same moment could outlive that;
+// here the address changes under a live link instead.
+func TestEmailTokenBoundToAddress(t *testing.T) {
+	c, f, s := mailServer(t, map[string]string{})
+	ana := register(c, "ana@example.com", "Ana")
+	c.must(204, "POST", "/me/verify-email", nil, nil)
+	verify := lastPart(f.next(t, "ana@example.com"))
+	c.another().must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	reset := lastPart(f.next(t, "ana@example.com"))
+
+	ctx := context.Background()
+	if _, err := s.db.Exec(ctx, `update users set email = 'ben@example.com' where id = $1`, ana.Id); err != nil {
+		t.Fatal(err)
+	}
+	if code := c.another().errorCode(400, "POST", "/auth/verify-email", EmailToken{Token: verify}); code != "invalid_token" {
+		t.Fatal(code)
+	}
+	if code := c.another().errorCode(400, "POST", "/auth/password-reset/confirm", PasswordReset{Token: reset, NewPassword: "new password"}); code != "invalid_token" {
+		t.Fatal(code)
+	}
+	var me User
+	c.must(200, "GET", "/me", nil, &me)
+	if me.EmailVerified {
+		t.Fatal("verified an address the link never went to")
+	}
+	c.another().must(200, "POST", "/auth/login", LoginInput{Login: "ben@example.com", Password: "correct horse"}, nil)
+
+	// Back to the address the links went to: they work again.
+	if _, err := s.db.Exec(ctx, `update users set email = 'ana@example.com' where id = $1`, ana.Id); err != nil {
+		t.Fatal(err)
+	}
+	c.another().must(204, "POST", "/auth/verify-email", EmailToken{Token: verify}, nil)
 }
 
 func TestEmailOff(t *testing.T) {

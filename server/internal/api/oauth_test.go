@@ -276,6 +276,43 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 	}
 }
 
+// Someone who signs up with a provider and then puts another person's address
+// on the account must not follow that person in once they sign in with it.
+func TestOAuthTakeoverDropsOldIdentities(t *testing.T) {
+	f := newFakeIdP(t)
+	mallory := accountsClient(t, f.env(map[string]string{}))
+	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
+	f.login(mallory, "/groups", unvouched)
+	var before User
+	mallory.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &before)
+
+	ana := mallory.another()
+	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	ana.must(200, "GET", "/me", nil, &me)
+	if me.Id != before.Id || !me.EmailVerified {
+		t.Fatalf("me = %+v", me)
+	}
+	mallory.errorCode(401, "GET", "/me", nil)
+
+	again := mallory.another()
+	f.login(again, "/groups", unvouched)
+	var hers User
+	again.must(200, "GET", "/me", nil, &hers)
+	if hers.Id == me.Id || hers.Email != nil {
+		t.Fatalf("Mallory signed in to %+v", hers)
+	}
+	// Ana still reaches her account.
+	anaAgain := ana.another()
+	f.login(anaAgain, "/groups", person("a", "ana@example.com", "Ana"))
+	anaAgain.must(200, "GET", "/me", nil, &me)
+	if me.Id != before.Id {
+		t.Fatal("Ana lost her account")
+	}
+}
+
 func TestOAuthAndroid(t *testing.T) {
 	f := newFakeIdP(t)
 	c := accountsClient(t, f.env(map[string]string{}))

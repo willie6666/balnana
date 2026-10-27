@@ -26,6 +26,9 @@ type fakePush struct {
 	mu   sync.Mutex
 	sent []sentPush
 	gone map[string]bool
+	// before, when set, runs first in every send; an error it returns is
+	// the send's.
+	before func(phone string) error
 }
 
 // sentPush is one message, to the phone named by the last part of its
@@ -37,9 +40,14 @@ type sentPush struct {
 }
 
 func (f *fakePush) Send(_ context.Context, m push.Message) error {
+	phone := m.Endpoint[strings.LastIndex(m.Endpoint, "/")+1:]
+	if f.before != nil {
+		if err := f.before(phone); err != nil {
+			return err
+		}
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	phone := m.Endpoint[strings.LastIndex(m.Endpoint, "/")+1:]
 	if f.gone[phone] {
 		return push.ErrGone
 	}
@@ -174,6 +182,46 @@ func TestPushLinkMode(t *testing.T) {
 	c.must(200, "PUT", base+"/expenses/"+e.Id, pizza, nil)
 	if sent := f.take(s); len(sent) != 0 {
 		t.Errorf("sent after removal %+v", sent)
+	}
+}
+
+// A subscription that turns out gone after the phone replaced it takes
+// only itself away, not the phone's new one.
+func TestPushGoneAfterNewSubscription(t *testing.T) {
+	c, f, s := pushClient(t, map[string]string{})
+	g := createGroup(c, "Ana", "Ben")
+	ana, ben := g.Members[0].Id, g.Members[1].Id
+	subscribe(c, "ben-phone", follow(g.Token, ben))
+
+	sending, release := make(chan struct{}), make(chan struct{})
+	f.before = func(phone string) error {
+		if phone != "ben-phone" {
+			return nil
+		}
+		close(sending)
+		<-release
+		return push.ErrGone
+	}
+	c.member = ana
+	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{
+		Title:       "Pizza",
+		Amount:      "10",
+		OccurredAt:  mustTime(t, "2026-10-01T19:00:00Z"),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "10"}},
+		SplitMethod: "equal",
+		Splits:      []Share{{MemberId: ana}, {MemberId: ben}},
+	}, nil)
+	<-sending
+	in := follow(g.Token, ben)
+	in.Endpoint, in.P256dh, in.Auth = "https://push.example.com/up/ben-phone-2", phoneKey(), "MDEyMzQ1Njc4OWFiY2RlZg"
+	c.must(204, "PUT", "/push/devices/"+deviceID("ben-phone"), in, nil)
+	close(release)
+	f.take(s)
+
+	var endpoint string
+	err := s.db.QueryRow(context.Background(), `select endpoint from push_devices where token = $1`, deviceID("ben-phone")).Scan(&endpoint)
+	if err != nil || endpoint != in.Endpoint {
+		t.Fatalf("endpoint %q, %v", endpoint, err)
 	}
 }
 

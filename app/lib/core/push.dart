@@ -199,6 +199,16 @@ PushSubscription? _savedSubscription(SharedPreferences prefs, String instance) {
   };
 }
 
+/// The notification ID for [expense]: the same in every process, and
+/// different for different expenses. Android keys a notification's tap
+/// action by this ID alone, not by its tag, so notifications sharing one
+/// would all open the group of whichever came last.
+@visibleForTesting
+int notificationId(String expense) {
+  final b = sha256.convert(utf8.encode(expense)).bytes;
+  return (b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3]) & 0x7fffffff;
+}
+
 /// Shows one push message from the server (see notify in
 /// server/internal/api/push.go): the group's name over a line in the
 /// phone's language. Tapping it opens the group.
@@ -253,7 +263,7 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message) async {
     if (body == null) return;
     await _notifications.show(
       // One notification per expense: a change replaces the last one.
-      id: 0,
+      id: notificationId(expense),
       title: title,
       body: body,
       payload: group,

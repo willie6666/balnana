@@ -227,4 +227,15 @@ void main() {
     expect(server.requests, hasLength(2));
     expect(server.requests.last, endsWith(' as b'));
   });
+
+  test('each expense has a notification ID of its own', () {
+    const a = '0b9f6c1e-3d2a-4c8e-9a51-6f2d7e4b1c03';
+    const b = '5e7a2d90-81c4-4f3b-b6e2-0c9d1a8f3e57';
+    expect(notificationId(a), notificationId(a));
+    expect(notificationId(a), isNot(notificationId(b)));
+    // Positive and within 32 bits, as Android wants.
+    for (final id in [notificationId(a), notificationId(b), notificationId('')]) {
+      expect(id, inInclusiveRange(0, 0x7fffffff));
+    }
+  });
 }
