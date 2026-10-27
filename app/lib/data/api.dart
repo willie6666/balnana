@@ -234,15 +234,25 @@ class BalnanaApi {
     Group.fromJson,
   );
 
+  /// A large export takes the server a while to read: longer than other
+  /// requests may, and an import given up on too soon would be made again.
+  static final _importTime = Options(receiveTimeout: const Duration(minutes: 5));
+
   /// What importing a Settle Up export would create. Nothing is kept.
-  Future<ImportPreview> previewImport(Uint8List file) =>
-      _send(() => _dio.post<Object?>('/groups/import', data: _import(file, dryRun: true)), ImportPreview.fromJson);
+  Future<ImportPreview> previewImport(Uint8List file) => _send(
+    () => _dio.post<Object?>('/groups/import', data: _import(file, dryRun: true), options: _importTime),
+    ImportPreview.fromJson,
+  );
 
   /// Creates a group from a Settle Up export. [me] is the person in the file
   /// this app is; [untitled] names expenses without a purpose.
   Future<Group> importGroup(Uint8List file, {required String name, required String me, required String untitled}) =>
       _send(
-        () => _dio.post<Object?>('/groups/import', data: _import(file, name: name, me: me, untitled: untitled)),
+        () => _dio.post<Object?>(
+          '/groups/import',
+          data: _import(file, name: name, me: me, untitled: untitled),
+          options: _importTime,
+        ),
         Group.fromJson,
       );
 
@@ -596,7 +606,6 @@ class AdminApi {
   );
 }
 
-/// The API of the chosen server, or null when none is set.
 /// This device's IANA time zone, such as "Europe/Berlin", or null when the
 /// platform does not say. Tests replace it.
 @visibleForTesting
@@ -609,6 +618,7 @@ Future<String?> Function() deviceTimeZone = () async {
   }
 };
 
+/// The API of the chosen server, or null when none is set.
 final balnanaApiProvider = Provider<BalnanaApi?>((ref) {
   final dio = ref.watch(apiProvider);
   return dio == null ? null : BalnanaApi(dio);

@@ -1921,6 +1921,24 @@ abstract class AppLocalizations {
   /// **'Password changed. Other devices are signed out.'**
   String get passwordChanged;
 
+  /// No description provided for @passwordSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password'**
+  String get passwordSet;
+
+  /// No description provided for @passwordSetHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with your email or username and a password too'**
+  String get passwordSetHelp;
+
+  /// No description provided for @passwordSetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Password set. Other devices are signed out.'**
+  String get passwordSetDone;
+
   /// No description provided for @passwordCurrent.
   ///
   /// In en, this message translates to:
@@ -2586,6 +2604,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.'**
   String get oauthEmailTaken;
+
+  /// No description provided for @oauthOtherServer.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in was started on another server than the one chosen now. Sign in again.'**
+  String get oauthOtherServer;
 
   /// No description provided for @oauthBackToSignIn.
   ///

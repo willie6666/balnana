@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,3 +31,17 @@ Stream<LiveEvent> groupEvents(Dio dio, String token, {Duration retry = liveRetry
 final groupEventsProvider = Provider<Stream<LiveEvent> Function(Dio dio, String token)>((ref) => groupEvents);
 
 Duration nextRetry(Duration retry) => retry * 2 > liveRetryMax ? liveRetryMax : retry * 2;
+
+/// The names of the events in a text/event-stream, as they arrive. Comments
+/// (the server's pings) and data lines carry nothing the app needs.
+Stream<String> eventNames(Stream<List<int>> bytes) async* {
+  String? event;
+  await for (final line in const LineSplitter().bind(utf8.decoder.bind(bytes))) {
+    if (line.startsWith('event:')) {
+      event = line.substring(6).trim();
+    } else if (line.isEmpty) {
+      if (event != null) yield event;
+      event = null;
+    }
+  }
+}

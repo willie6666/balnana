@@ -1047,6 +1047,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordChanged => 'Password changed. Other devices are signed out.';
 
   @override
+  String get passwordSet => 'Set a password';
+
+  @override
+  String get passwordSetHelp => 'Sign in with your email or username and a password too';
+
+  @override
+  String get passwordSetDone => 'Password set. Other devices are signed out.';
+
+  @override
   String get passwordCurrent => 'Current password';
 
   @override
@@ -1418,6 +1427,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get oauthEmailTaken =>
       'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.';
+
+  @override
+  String get oauthOtherServer =>
+      'This sign-in was started on another server than the one chosen now. Sign in again.';
 
   @override
   String get oauthBackToSignIn => 'Back to sign in';

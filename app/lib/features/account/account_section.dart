@@ -58,6 +58,7 @@ class AccountSection extends ConsumerWidget {
     final l10n = context.l10n;
     final account = ref.watch(currentAccountProvider).value;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
+    final passwords = ref.watch(serverInfoProvider.select((i) => i.value?.password ?? false));
     if (account == null) {
       return GroupedList(
         title: l10n.settingsAccount,
@@ -100,11 +101,18 @@ class AccountSection extends ConsumerWidget {
           title: account.email == null ? l10n.accountEmailAdd : l10n.accountEmailChange,
           onTap: () => showDialog<void>(context: context, builder: (_) => _EmailDialog(account: account)),
         ),
-        if (account.hasPassword)
+        // An account made with Google or OpenID Connect, or taken back with
+        // one, may add a password, so it can still sign in without them; it
+        // signs in with its address or username.
+        if (account.hasPassword || passwords && (account.email != null || account.username != null))
           GroupedTile(
             icon: Icons.password,
-            title: l10n.passwordChange,
-            onTap: () => showDialog<void>(context: context, builder: (_) => const _PasswordDialog()),
+            title: account.hasPassword ? l10n.passwordChange : l10n.passwordSet,
+            subtitle: account.hasPassword ? null : l10n.passwordSetHelp,
+            onTap: () => showDialog<void>(
+              context: context,
+              builder: (_) => _PasswordDialog(first: !account.hasPassword),
+            ),
           ),
         GroupedTile(icon: Icons.logout, title: l10n.signOut, onTap: () => _signOut(context, ref)),
         GroupedTile(
@@ -356,7 +364,10 @@ class _EmailDialogState extends ConsumerState<_EmailDialog> {
 }
 
 class _PasswordDialog extends ConsumerStatefulWidget {
-  const _PasswordDialog();
+  const _PasswordDialog({this.first = false});
+
+  /// The account has no password yet, so there is none to confirm.
+  final bool first;
 
   @override
   ConsumerState<_PasswordDialog> createState() => _PasswordDialogState();
@@ -384,12 +395,15 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
       _error = null;
     });
     try {
-      await ref.read(balnanaApiProvider)!.changePassword(current: _current.text, next: _next.text);
+      final current = widget.first ? null : _current.text;
+      await ref.read(balnanaApiProvider)!.changePassword(current: current, next: _next.text);
+      // The account has a password now: the next change asks for it.
+      if (widget.first) ref.invalidate(accountProvider);
       if (!mounted) return;
       TextInput.finishAutofillContext();
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      messenger.showSnackBar(SnackBar(content: Text(l10n.passwordChanged)));
+      messenger.showSnackBar(SnackBar(content: Text(widget.first ? l10n.passwordSetDone : l10n.passwordChanged)));
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -403,24 +417,27 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
-      title: Text(l10n.passwordChange),
+      title: Text(widget.first ? l10n.passwordSet : l10n.passwordChange),
       content: AutofillGroup(
         child: Form(
           key: _form,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
-                controller: _current,
-                autofocus: true,
-                obscureText: true,
-                autofillHints: const [AutofillHints.password],
-                decoration: InputDecoration(labelText: l10n.passwordCurrent),
-                validator: (v) => (v ?? '').isEmpty ? l10n.errorRequired : null,
-              ),
-              const SizedBox(height: BSpace.s16),
+              if (!widget.first) ...[
+                TextFormField(
+                  controller: _current,
+                  autofocus: true,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                  decoration: InputDecoration(labelText: l10n.passwordCurrent),
+                  validator: (v) => (v ?? '').isEmpty ? l10n.errorRequired : null,
+                ),
+                const SizedBox(height: BSpace.s16),
+              ],
               TextFormField(
                 controller: _next,
+                autofocus: widget.first,
                 obscureText: true,
                 autofillHints: const [AutofillHints.newPassword],
                 decoration: InputDecoration(

@@ -314,11 +314,14 @@ class _EditorState extends ConsumerState<_Editor> {
   }
 
   Future<void> _pickDate() async {
+    // Wide enough for the date the expense has, which an import or another
+    // app may have set outside the usual range.
+    final first = DateTime(2000), last = DateTime.now().add(const Duration(days: 365 * 5));
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      firstDate: _date.isBefore(first) ? _date : first,
+      lastDate: _date.isAfter(last) ? _date : last,
     );
     if (picked == null) return;
     // Keep the time of day, so expenses on one day stay in the order they were added.

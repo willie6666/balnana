@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
@@ -24,18 +23,12 @@ Stream<LiveEvent> groupEvents(Dio dio, String token, Duration retryAfter) {
       );
       out.add(LiveEvent.connected);
       delay = retryAfter;
-      String? event;
-      await for (final line in const LineSplitter().bind(utf8.decoder.bind(res.data!.stream))) {
-        if (line.startsWith('event:')) {
-          event = line.substring(6).trim();
-        } else if (line.isEmpty) {
-          if (event == 'change') out.add(LiveEvent.change);
-          if (event == 'gone') {
-            stopped = true;
-            out.add(LiveEvent.gone);
-            break;
-          }
-          event = null;
+      await for (final event in eventNames(res.data!.stream)) {
+        if (event == 'change') out.add(LiveEvent.change);
+        if (event == 'gone') {
+          stopped = true;
+          out.add(LiveEvent.gone);
+          break;
         }
       }
     } on DioException catch (e) {
