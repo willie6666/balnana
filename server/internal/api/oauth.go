@@ -217,10 +217,11 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 
 	// The sign-in is made in the same transaction as the account is found
 	// in, so the address owner taking the account back meanwhile ends it.
-	var code string
+	var code, session string
 	issue := func(tx pgx.Tx, userID string) error {
 		if login.app != "android" {
-			_, err := s.startSession(ctx, tx, userID, true)
+			var err error
+			session, err = startSession(ctx, tx, userID)
 			return err
 		}
 		code = secretToken()
@@ -239,6 +240,8 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 		q.Set("error", "oauth_failed")
 	case code != "":
 		q.Set("code", code)
+	case session != "":
+		s.handOut(ctx, session, true)
 	}
 	return redirect(login.app, login.next, q), nil
 }
@@ -471,7 +474,8 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 			return err
 		}
 		out.User = u.api()
-		out.Token, err = s.startSession(ctx, tx, u.id, false)
+		token, err := startSession(ctx, tx, u.id)
+		out.Token = &token
 		return err
 	})
 	if err != nil {

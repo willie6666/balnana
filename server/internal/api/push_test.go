@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
@@ -222,6 +223,41 @@ func TestPushGoneAfterNewSubscription(t *testing.T) {
 	err := s.db.QueryRow(context.Background(), `select endpoint from push_devices where token = $1`, deviceID("ben-phone")).Scan(&endpoint)
 	if err != nil || endpoint != in.Endpoint {
 		t.Fatalf("endpoint %q, %v", endpoint, err)
+	}
+}
+
+// A phone whose push service hangs holds back no other phone's message.
+func TestPushStuckPhone(t *testing.T) {
+	c, f, s := pushClient(t, map[string]string{})
+	g := createGroup(c, "Ana", "Ben", "Cy")
+	ana, ben, cy := g.Members[0].Id, g.Members[1].Id, g.Members[2].Id
+	subscribe(c, "ben-phone", follow(g.Token, ben))
+	subscribe(c, "cy-phone", follow(g.Token, cy))
+
+	release, cyGot := make(chan struct{}), make(chan struct{})
+	f.before = func(phone string) error {
+		if phone == "ben-phone" {
+			<-release
+		} else {
+			close(cyGot)
+		}
+		return nil
+	}
+	defer f.take(s)
+	defer close(release)
+	c.member = ana
+	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{
+		Title:       "Pizza",
+		Amount:      "30",
+		OccurredAt:  mustTime(t, "2026-10-01T19:00:00Z"),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "30"}},
+		SplitMethod: "equal",
+		Splits:      []Share{{MemberId: ana}, {MemberId: ben}, {MemberId: cy}},
+	}, nil)
+	select {
+	case <-cyGot:
+	case <-time.After(10 * time.Second):
+		t.Fatal("cy-phone waited on ben-phone")
 	}
 }
 

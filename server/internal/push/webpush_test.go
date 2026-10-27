@@ -179,6 +179,44 @@ func TestSend(t *testing.T) {
 	}
 }
 
+// A push service's claim is signed once and reused until half its lifetime
+// is over, and the subject changing makes a new one.
+func TestVapidReused(t *testing.T) {
+	key, err := NewKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Unix(1_800_000_000, 0)
+	subject := "https://balnana.example"
+	w := NewWebPush(key, func() string { return subject }, true)
+	w.now = func() time.Time { return now }
+	claim := func(audience string) string {
+		t.Helper()
+		token, err := w.vapid(audience)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return token
+	}
+	first := claim("https://push.example")
+	if claim("https://other.example") == first {
+		t.Fatal("one claim for two push services")
+	}
+	now = now.Add(vapidLifetime/2 - time.Second)
+	if claim("https://push.example") != first {
+		t.Fatal("not reused")
+	}
+	now = now.Add(time.Second)
+	renewed := claim("https://push.example")
+	if renewed == first {
+		t.Fatal("not renewed at half its lifetime")
+	}
+	subject = "mailto:admin@balnana.example"
+	if claim("https://push.example") == renewed {
+		t.Fatal("kept across a new subject")
+	}
+}
+
 // Without allowPrivate, the server reaches nothing on its own network, even
 // through a name that leads there.
 func TestSendPublicOnly(t *testing.T) {

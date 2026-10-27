@@ -113,7 +113,7 @@ class AccountSection extends ConsumerWidget {
 /// Asks to confirm, deletes the signed-in account and goes to the sign-in
 /// page.
 Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
-  final account = ref.read(accountProvider).value;
+  final account = ref.read(currentAccountProvider).value;
   if (account == null) return;
   final deleted = await showDialog<bool>(
     context: context,

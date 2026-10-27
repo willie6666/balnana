@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -36,6 +37,8 @@ const (
 	// maxPushText caps each name and title a message carries, in characters,
 	// so every message fits in one push.
 	maxPushText = 100
+	// maxPushParallel caps the messages one change sends at once.
+	maxPushParallel = 8
 )
 
 // StartPush loads the server's VAPID key, making it the first time, and
@@ -246,28 +249,44 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 	if err != nil {
 		return err
 	}
+	// Each phone's push service is its own server, which may be slow or
+	// unreachable: one that is must not use up the time the others have.
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, maxPushParallel)
 	for _, d := range devices {
-		err := s.push.Send(ctx, push.Message{
-			Subscription: d.sub,
-			Payload:      payload,
-			// A later change to the expense replaces this one if it is
-			// still waiting.
-			Topic:   strings.ReplaceAll(e.Id, "-", ""),
-			Urgency: "normal",
-			TTL:     pushTTL,
-		})
-		if errors.Is(err, push.ErrGone) {
-			// Only the subscription that is gone: the phone may have
-			// registered a new one while this was on its way.
-			_, err = s.db.Exec(ctx, `
-				delete from push_devices where token = $1 and endpoint = $2 and p256dh = $3 and auth = $4`,
-				d.id, d.sub.Endpoint, d.sub.P256dh, d.sub.Auth)
-		}
-		if err != nil {
-			s.log.Warn("push failed", "group", g.id, "err", err)
-		}
+		sem <- struct{}{}
+		wg.Add(1)
+		go func() {
+			defer func() { <-sem; wg.Done() }()
+			s.sendTo(ctx, g, d, payload, e.Id)
+		}()
 	}
+	wg.Wait()
 	return nil
+}
+
+// sendTo sends payload to the phone d, forgetting its subscription if it
+// has ended.
+func (s *Server) sendTo(ctx context.Context, g *group, d pushDevice, payload []byte, expense string) {
+	err := s.push.Send(ctx, push.Message{
+		Subscription: d.sub,
+		Payload:      payload,
+		// A later change to the expense replaces this one if it is still
+		// waiting.
+		Topic:   strings.ReplaceAll(expense, "-", ""),
+		Urgency: "normal",
+		TTL:     pushTTL,
+	})
+	if errors.Is(err, push.ErrGone) {
+		// Only the subscription that is gone: the phone may have registered
+		// a new one while this was on its way.
+		_, err = s.db.Exec(ctx, `
+			delete from push_devices where token = $1 and endpoint = $2 and p256dh = $3 and auth = $4`,
+			d.id, d.sub.Endpoint, d.sub.P256dh, d.sub.Auth)
+	}
+	if err != nil {
+		s.log.Warn("push failed", "group", g.id, "err", err)
+	}
 }
 
 // notification is what a push message carries. The app shows it in the

@@ -28,6 +28,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -118,7 +119,20 @@ type WebPush struct {
 	subject func() string
 	client  *http.Client
 	now     func() time.Time
+
+	mu sync.Mutex
+	// tokens keeps each push service's signed claim for reuse, by audience
+	// and subject, until half its lifetime is over.
+	tokens map[string]vapidToken
 }
+
+type vapidToken struct {
+	token string
+	renew time.Time
+}
+
+// maxVapidTokens bounds tokens; past it, the kept claims are dropped.
+const maxVapidTokens = 1024
 
 // NewWebPush sends messages signed with key. Unless allowPrivate, it only
 // sends to https endpoints on public addresses, so a subscription cannot
@@ -157,7 +171,8 @@ func NewWebPush(key *Key, subject func() string, allowPrivate bool) *WebPush {
 				return http.ErrUseLastResponse
 			},
 		},
-		now: time.Now,
+		now:    time.Now,
+		tokens: map[string]vapidToken{},
 	}
 }
 
@@ -216,12 +231,33 @@ func (w *WebPush) Send(ctx context.Context, m Message) error {
 }
 
 // vapid is the signed claim that the server sends to audience (RFC 8292).
+// One is reused while it has more than half its lifetime left.
 func (w *WebPush) vapid(audience string) (string, error) {
+	subject, now := w.subject(), w.now()
+	cacheKey := audience + "\n" + subject
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if t, ok := w.tokens[cacheKey]; ok && now.Before(t.renew) {
+		return t.token, nil
+	}
+	token, err := w.sign(audience, subject, now)
+	if err != nil {
+		return "", err
+	}
+	if len(w.tokens) >= maxVapidTokens {
+		clear(w.tokens)
+	}
+	w.tokens[cacheKey] = vapidToken{token, now.Add(vapidLifetime / 2)}
+	return token, nil
+}
+
+// sign makes a claim for audience that expires vapidLifetime after now.
+func (w *WebPush) sign(audience, subject string, now time.Time) (string, error) {
 	header := b64.EncodeToString([]byte(`{"typ":"JWT","alg":"ES256"}`))
 	claims, err := json.Marshal(map[string]any{
 		"aud": audience,
-		"exp": w.now().Add(vapidLifetime).Unix(),
-		"sub": w.subject(),
+		"exp": now.Add(vapidLifetime).Unix(),
+		"sub": subject,
 	})
 	if err != nil {
 		return "", err

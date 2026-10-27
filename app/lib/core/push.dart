@@ -97,7 +97,12 @@ class _UnifiedPush implements PushService {
           // A new address the push service handed out on its own.
           final before = _savedSubscription(_prefs, instance);
           unawaited(_saveEndpoint(_prefs, instance, endpoint));
-          if (before?.endpoint != endpoint.url) _changes.add(null);
+          final keys = endpoint.pubKeySet;
+          if (before?.endpoint != endpoint.url ||
+              before?.p256dh != keys?.pubKey ||
+              before?.auth != keys?.auth) {
+            _changes.add(null);
+          }
         }
       },
       onRegistrationFailed: (reason, instance) {

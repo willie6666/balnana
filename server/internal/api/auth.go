@@ -222,20 +222,24 @@ func (s *Server) requirePasswords() error {
 	return nil
 }
 
-// startSession signs userID in. With cookie, the token goes into the session
-// cookie and nil is returned; otherwise the token is returned.
-func (s *Server) startSession(ctx context.Context, q querier, userID string, cookie bool) (*string, error) {
+// startSession signs userID in, returning the session's token. It is handed
+// out by handOut once q has committed.
+func startSession(ctx context.Context, q querier, userID string) (string, error) {
 	token := secretToken()
 	_, err := q.Exec(ctx, `insert into sessions (user_id, token_hash, expires_at) values ($1, $2, $3)`,
 		userID, hashToken(token), time.Now().Add(sessionLifetime))
-	if err != nil {
-		return nil, err
-	}
+	return token, err
+}
+
+// handOut gives a committed session's token to the client. With cookie, it
+// goes into the session cookie and nil is returned; otherwise the token is
+// returned. A cookie set before the commit would outlive a rollback.
+func (s *Server) handOut(ctx context.Context, token string, cookie bool) *string {
 	if st, _ := ctx.Value(authKey{}).(*authState); cookie && st != nil {
 		s.setSessionCookie(st, token)
-		return nil, nil
+		return nil
 	}
-	return &token, nil
+	return &token
 }
 
 // signOut ends every session of userID and the app sign-ins not yet
@@ -374,6 +378,7 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	}
 	hash := hashPassword(in.Password)
 	var out Session
+	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		// One sign-up at a time, so two "first accounts" cannot race.
 		if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
@@ -404,12 +409,13 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 			return err
 		}
 		out.User = u.api()
-		out.Token, err = s.startSession(ctx, tx, u.id, in.Cookie != nil && *in.Cookie)
+		token, err = startSession(ctx, tx, u.id)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+	out.Token = s.handOut(ctx, token, in.Cookie != nil && *in.Cookie)
 	return Register201JSONResponse(out), nil
 }
 
@@ -445,7 +451,7 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 	// account is locked and the hash read again before a session is made: the
 	// address owner may have taken the account back, or the password changed,
 	// meanwhile. Either waits for this session, and then ends it.
-	var token *string
+	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		var now *string
 		err := tx.QueryRow(ctx, `
@@ -458,14 +464,14 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 		if err != nil {
 			return err
 		}
-		token, err = s.startSession(ctx, tx, u.id, in.Cookie != nil && *in.Cookie)
+		token, err = startSession(ctx, tx, u.id)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 	u.hasPassword = true
-	return Login200JSONResponse(Session{Token: token, User: u.api()}), nil
+	return Login200JSONResponse(Session{Token: s.handOut(ctx, token, in.Cookie != nil && *in.Cookie), User: u.api()}), nil
 }
 
 func (s *Server) Logout(ctx context.Context, _ LogoutRequestObject) (LogoutResponseObject, error) {

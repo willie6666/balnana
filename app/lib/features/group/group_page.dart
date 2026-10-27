@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/home_group.dart';
@@ -45,7 +46,8 @@ String? myMemberId(WidgetRef ref, String token) {
 
 /// [myMemberId] for one-off reads outside build.
 String? myMemberIdRead(WidgetRef ref, String token) {
-  final fromAccount = ref.read(groupProvider(token)).value?.myMemberId;
+  final fromAccount =
+      ref.read(groupProvider(token)).current(ref.read(identityProvider)).value?.myMemberId;
   if (fromAccount != null || ref.read(signedInProvider)) return fromAccount;
   return ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId;
 }
