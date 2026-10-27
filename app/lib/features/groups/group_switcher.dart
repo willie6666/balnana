@@ -77,7 +77,7 @@ class _GroupsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final summaries = ref.watch(summariesProvider);
+    final summaries = ref.watchCurrent(summariesProvider);
     final data = summaries.value;
 
     final Widget list;

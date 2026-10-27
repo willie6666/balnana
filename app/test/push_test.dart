@@ -28,7 +28,7 @@ class _FakePush implements PushService {
   Future<void>? hold;
 
   @override
-  Future<PushSubscription?> subscribe(String vapid) async {
+  Future<PushSubscription?> subscribe(String server, String vapid) async {
     keys.add(vapid);
     return switch (address) {
       final a? => (endpoint: a, p256dh: 'pub', auth: 'auth'),
@@ -46,10 +46,10 @@ class _FakePush implements PushService {
   }
 
   @override
-  Future<String?> initialGroup() async => null;
+  Future<PushTarget?> initialGroup() async => null;
 
   @override
-  Stream<String> get openedGroups => const Stream.empty();
+  Stream<PushTarget> get openedGroups => const Stream.empty();
 }
 
 /// Writes down every request and answers 204, after [hold] if set.

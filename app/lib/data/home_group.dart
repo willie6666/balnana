@@ -12,7 +12,7 @@ import 'providers.dart';
 String? _owner(Ref ref) {
   final server = ref.watch(serverUrlProvider);
   if (server == null) return null;
-  return '$server ${ref.watch(accountProvider.select((a) => a.value?.id)) ?? ''}';
+  return '$server ${ref.watch(currentAccountProvider.select((a) => a.value?.id)) ?? ''}';
 }
 
 /// The group shown at home: the one opened last.

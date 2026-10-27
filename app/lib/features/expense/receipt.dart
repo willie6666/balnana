@@ -83,7 +83,7 @@ class ReceiptField extends ConsumerWidget {
     final AsyncValue<Uint8List>? photo = picked != null
         ? AsyncData(picked.bytes)
         : saved && id != null
-        ? ref.watch(receiptProvider((token: token, id: id)))
+        ? ref.watchCurrent(receiptProvider((token: token, id: id)))
         : null;
 
     if (photo == null) {

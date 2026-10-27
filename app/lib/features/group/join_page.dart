@@ -100,7 +100,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
         ),
       );
     } else {
-      final account = ref.watch(accountProvider).value;
+      final account = ref.watch(currentAccountProvider).value;
       // The member an invitation named comes first.
       final open = [
         for (final m in info.members)

@@ -351,3 +351,42 @@ func TestOAuthAndroid(t *testing.T) {
 	c.must(200, "GET", "/me", nil, nil)
 	c.another().errorCode(400, "POST", "/auth/oauth/exchange", OAuthExchange{Code: code, Verifier: "the app's own verifier"})
 }
+
+// The address owner taking an account back with a reset link shuts out its
+// maker as an OAuth sign-in does: their identity no longer reaches it. On an
+// account the owner already had, a reset leaves their identities be.
+func TestPasswordResetReclaimsAccount(t *testing.T) {
+	f := newFakeIdP(t)
+	mallory, mail := mailClient(t, f.env(map[string]string{}))
+	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
+	f.login(mallory, "/groups", unvouched)
+	var taken User
+	mallory.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &taken)
+	mail.next(t, "ana@example.com") // the link to verify it
+
+	ana := mallory.another()
+	ana.must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	ana.must(204, "POST", "/auth/password-reset/confirm",
+		PasswordReset{Token: lastPart(mail.next(t, "ana@example.com")), NewPassword: "new password"}, nil)
+	mallory.errorCode(401, "GET", "/me", nil)
+	again := mallory.another()
+	f.login(again, "/groups", unvouched)
+	var hers User
+	again.must(200, "GET", "/me", nil, &hers)
+	if hers.Id == taken.Id {
+		t.Fatal("Mallory signed back in to the account taken back")
+	}
+
+	// Ana's own identity outlives a reset of her verified account.
+	f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))
+	ana.must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	ana.must(204, "POST", "/auth/password-reset/confirm",
+		PasswordReset{Token: lastPart(mail.next(t, "ana@example.com")), NewPassword: "newer password"}, nil)
+	anaAgain := ana.another()
+	f.login(anaAgain, "/groups", person("a", "ana@example.com", "Ana"))
+	var me User
+	anaAgain.must(200, "GET", "/me", nil, &me)
+	if me.Id != taken.Id {
+		t.Fatalf("me = %+v", me)
+	}
+}

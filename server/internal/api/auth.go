@@ -238,6 +238,23 @@ func (s *Server) startSession(ctx context.Context, q querier, userID string, coo
 	return &token, nil
 }
 
+// signOut ends every session of userID and the app sign-ins not yet
+// finished. With reclaimed, the address owner has just taken the account
+// back from whoever made it with their address, so that person's other ways
+// back in go too: emailed links and OAuth identities.
+func signOut(ctx context.Context, q querier, userID string, reclaimed bool) error {
+	tables := []string{"sessions", "oauth_codes"}
+	if reclaimed {
+		tables = append(tables, "email_tokens", "oauth_identities")
+	}
+	for _, table := range tables {
+		if _, err := q.Exec(ctx, `delete from `+table+` where user_id = $1`, userID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Server) setSessionCookie(st *authState, token string) {
 	http.SetCookie(st.w, &http.Cookie{
 		Name:     sessionCookie,
@@ -396,6 +413,8 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	return Register201JSONResponse(out), nil
 }
 
+var errBadLogin = &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
+
 func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginResponseObject, error) {
 	if err := s.requirePasswords(); err != nil {
 		return nil, err
@@ -420,13 +439,32 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 		for range loginMissWeight {
 			noteMiss(ctx)
 		}
-		return nil, &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
+		return nil, errBadLogin
 	}
-	u.hasPassword = true
-	token, err := s.startSession(ctx, s.db, u.id, in.Cookie != nil && *in.Cookie)
+	// The password was checked outside the lock, as hashing is slow, so the
+	// account is locked and the hash read again before a session is made: the
+	// address owner may have taken the account back, or the password changed,
+	// meanwhile. Either waits for this session, and then ends it.
+	var token *string
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		var now *string
+		err := tx.QueryRow(ctx, `
+			select email::text, username::text, email_verified, password_hash, display_name, locale
+			from users where id = $1 for share`, u.id).
+			Scan(&u.email, &u.username, &u.verified, &now, &u.name, &u.locale)
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && (now == nil || *now != *hash) {
+			return errBadLogin
+		}
+		if err != nil {
+			return err
+		}
+		token, err = s.startSession(ctx, tx, u.id, in.Cookie != nil && *in.Cookie)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
+	u.hasPassword = true
 	return Login200JSONResponse(Session{Token: token, User: u.api()}), nil
 }
 

@@ -22,10 +22,10 @@ import 'settings.dart';
 
 /// What the app needs from the phone's push service.
 abstract interface class PushService {
-  /// Subscribes this device to Web Push messages signed with [vapid], the
-  /// server's public key. Null when the phone has no push service to do it
-  /// (no Google Play services and no UnifiedPush app, say).
-  Future<PushSubscription?> subscribe(String vapid);
+  /// Subscribes this device to Web Push messages from [server], signed with
+  /// [vapid], its public key. Null when the phone has no push service to do
+  /// it (no Google Play services and no UnifiedPush app, say).
+  Future<PushSubscription?> subscribe(String server, String vapid);
 
   /// The subscription changed or ended, so the server needs telling again.
   Stream<void> get changes;
@@ -34,10 +34,37 @@ abstract interface class PushService {
   Future<void> requestPermission();
 
   /// The group of the notification that opened the app, if one did.
-  Future<String?> initialGroup();
+  Future<PushTarget?> initialGroup();
 
   /// The group of each notification tapped while the app runs.
-  Stream<String> get openedGroups;
+  Stream<PushTarget> get openedGroups;
+}
+
+/// A group a notification is about, and the server it came from. The token
+/// is a secret of that server's: it is only ever sent back to that server.
+typedef PushTarget = ({String server, String token});
+
+/// What a notification carries to open [target] when tapped.
+@visibleForTesting
+String notificationPayload(PushTarget target) => jsonEncode({'s': target.server, 'g': target.token});
+
+/// The group a notification's [payload] opens, or null for none. A payload
+/// from before notifications named their server opens nothing: which server
+/// its group is on is not known.
+@visibleForTesting
+PushTarget? notificationTarget(String? payload) {
+  if (payload == null) return null;
+  try {
+    return switch (jsonDecode(payload)) {
+      {'s': final String server, 'g': final String token} when server.isNotEmpty && token.isNotEmpty => (
+        server: server,
+        token: token,
+      ),
+      _ => null,
+    };
+  } on FormatException {
+    return null;
+  }
 }
 
 /// Push through UnifiedPush: a distributor app the user installed, such as
@@ -50,7 +77,7 @@ class _UnifiedPush implements PushService {
   final SharedPreferences _prefs;
   late final Future<void> _ready = _start();
   final _changes = StreamController<void>.broadcast();
-  final _opened = StreamController<String>.broadcast();
+  final _opened = StreamController<PushTarget>.broadcast();
 
   /// Registrations waiting for their endpoint, by instance.
   final _waiting = <String, Completer<PushEndpoint?>>{};
@@ -59,7 +86,7 @@ class _UnifiedPush implements PushService {
     await _notifications.initialize(
       settings: _notificationSettings,
       onDidReceiveNotificationResponse: (response) {
-        if (response.payload case final group? when group.isNotEmpty) _opened.add(group);
+        if (notificationTarget(response.payload) case final target?) _opened.add(target);
       },
     );
     await UnifiedPush.initialize(
@@ -82,16 +109,18 @@ class _UnifiedPush implements PushService {
         unawaited(_prefs.remove(_endpointKey));
         _changes.add(null);
       },
-      onMessage: (message, _) => unawaited(_notify(_prefs, message)),
+      onMessage: (message, instance) => unawaited(_notify(_prefs, message, instance)),
     );
   }
 
   @override
-  Future<PushSubscription?> subscribe(String vapid) async {
+  Future<PushSubscription?> subscribe(String server, String vapid) async {
     await _ready;
     if (!await UnifiedPush.tryUseCurrentOrDefaultDistributor()) return null;
-    // One registration per server key: another server gets its own address.
-    final instance = 'balnana-${sha256.convert(utf8.encode(vapid)).toString().substring(0, 16)}';
+    // One registration per server: another one gets its own address, and
+    // what comes to this one is known to be from this server.
+    final instance = 'balnana-${sha256.convert(utf8.encode('$server\n$vapid')).toString().substring(0, 16)}';
+    await _prefs.setString(_originKey(instance), server);
     final waiter = _waiting[instance] ??= Completer<PushEndpoint?>();
     await UnifiedPush.register(instance: instance, vapid: vapid);
     final endpoint = await waiter.future.timeout(const Duration(seconds: 30), onTimeout: () => null);
@@ -111,7 +140,10 @@ class _UnifiedPush implements PushService {
     final before = _prefs.getString(_instanceKey);
     if (before != instance) {
       await _prefs.setString(_instanceKey, instance);
-      if (before != null) unawaited(UnifiedPush.unregister(before));
+      if (before != null) {
+        unawaited(UnifiedPush.unregister(before));
+        await _prefs.remove(_originKey(before));
+      }
     }
     return sub;
   }
@@ -128,18 +160,15 @@ class _UnifiedPush implements PushService {
   }
 
   @override
-  Future<String?> initialGroup() async {
+  Future<PushTarget?> initialGroup() async {
     await _ready;
     final launch = await _notifications.getNotificationAppLaunchDetails();
     if (launch == null || !launch.didNotificationLaunchApp) return null;
-    return switch (launch.notificationResponse?.payload) {
-      final group? when group.isNotEmpty => group,
-      _ => null,
-    };
+    return notificationTarget(launch.notificationResponse?.payload);
   }
 
   @override
-  Stream<String> get openedGroups {
+  Stream<PushTarget> get openedGroups {
     _ready.ignore();
     return _opened.stream;
   }
@@ -158,7 +187,7 @@ Future<void> receivePushInBackground() async {
     onUnregistered: (instance) {
       if (instance == prefs.getString(_instanceKey)) unawaited(prefs.remove(_endpointKey));
     },
-    onMessage: (message, _) => unawaited(_notify(prefs, message)),
+    onMessage: (message, instance) => unawaited(_notify(prefs, message, instance)),
   );
 }
 
@@ -173,6 +202,9 @@ const _instanceKey = 'push.instance';
 
 /// Its address and keys, as JSON, with the instance they belong to.
 const _endpointKey = 'push.endpoint';
+
+/// The server whose messages come to [instance].
+String _originKey(String instance) => 'push.origin.$instance';
 
 Future<void> _saveEndpoint(SharedPreferences prefs, String instance, PushEndpoint endpoint) async {
   final keys = endpoint.pubKeySet;
@@ -211,10 +243,19 @@ int notificationId(String expense) {
 
 /// Shows one push message from the server (see notify in
 /// server/internal/api/push.go): the group's name over a line in the
-/// phone's language. Tapping it opens the group.
-Future<void> _notify(SharedPreferences prefs, PushMessage message) async {
+/// phone's language. Tapping it opens the group, if the app still talks to
+/// the server it came from.
+Future<void> _notify(SharedPreferences prefs, PushMessage message, String instance) async {
   // Turned off since the server was last told: show nothing.
   if (!message.decrypted || !SettingsNotifier.notificationsOn(prefs)) return;
+  // From a server this device no longer registers with.
+  var server = prefs.getString(_originKey(instance));
+  if (server == null) {
+    // Perhaps registered by the other process since this one read them.
+    await prefs.reload();
+    server = prefs.getString(_originKey(instance));
+    if (server == null) return;
+  }
   final Object? json;
   try {
     json = jsonDecode(utf8.decode(message.content));
@@ -266,7 +307,7 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message) async {
       id: notificationId(expense),
       title: title,
       body: body,
-      payload: group,
+      payload: notificationPayload((server: server, token: group)),
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'expenses',
@@ -407,11 +448,11 @@ class _PushReconciler {
     if (!want.register || _stale(want)) return;
     await want.push.requestPermission();
     if (_stale(want)) return;
-    final sub = await want.push.subscribe(want.vapid!);
+    final sub = await want.push.subscribe(server!, want.vapid!);
     if (sub == null || _stale(want)) return;
     await want.api!.registerPushDevice(device, sub, want.groups.take(maxPushGroups).toList());
     // Saved even when overtaken meanwhile: the next run may need to undo it.
-    await _prefs.setString(_registeredOn, server!);
+    await _prefs.setString(_registeredOn, server);
   }
 }
 

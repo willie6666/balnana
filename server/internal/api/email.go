@@ -73,18 +73,51 @@ func newEmailToken(ctx context.Context, q querier, userID, email, purpose string
 	return token, err
 }
 
-// useEmailToken spends a token and returns its account and the address it
-// was sent to.
-func useEmailToken(ctx context.Context, q querier, token, purpose string) (userID, email string, err error) {
-	var live bool
-	err = q.QueryRow(ctx, `
-		delete from email_tokens where token_hash = $1 and purpose = $2
-		returning user_id::text, email::text, expires_at > now()`, hashToken(token), purpose).Scan(&userID, &email, &live)
-	if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
+// useEmailToken spends a token and returns its account, and whether the
+// account's address was verified before. The account's row is locked before
+// the token's, as it is where tokens are made, so the two never wait on each
+// other in turn. Before the row, the table is locked as the caller's update
+// of it would lock it: an OAuth sign-in holds the table while it waits for a
+// row, so taking them the other way round could wait on it in turn.
+func useEmailToken(ctx context.Context, tx pgx.Tx, token, purpose string) (userID string, verified bool, err error) {
+	hash := hashToken(token)
+	invalid := func() (string, bool, error) {
 		noteMiss(ctx)
-		return "", "", badRequest("invalid_token")
+		return "", false, badRequest("invalid_token")
 	}
-	return userID, email, err
+	err = tx.QueryRow(ctx, `select user_id::text from email_tokens where token_hash = $1 and purpose = $2`,
+		hash, purpose).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return invalid()
+	}
+	if err != nil {
+		return "", false, err
+	}
+	if _, err := tx.Exec(ctx, `lock table users in row exclusive mode`); err != nil {
+		return "", false, err
+	}
+	err = tx.QueryRow(ctx, `select email_verified from users where id = $1 for no key update`, userID).Scan(&verified)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return invalid()
+	}
+	if err != nil {
+		return "", false, err
+	}
+	var live, current bool
+	err = tx.QueryRow(ctx, `
+		delete from email_tokens t where token_hash = $1 and purpose = $2 and user_id = $3
+		returning expires_at > now(), coalesce(t.email = (select email from users where id = $3), false)`,
+		hash, purpose, userID).Scan(&live, &current)
+	if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
+		return invalid()
+	}
+	if err != nil {
+		return "", false, err
+	}
+	if !current {
+		return "", false, errStaleToken
+	}
+	return userID, verified, nil
 }
 
 // errStaleToken is a token sent to an address the account no longer has.
@@ -128,14 +161,11 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 		return nil, err
 	}
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, email, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
+		userID, _, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
 		if err != nil {
 			return err
 		}
-		tag, err := tx.Exec(ctx, `update users set email_verified = true where id = $1 and email = $2`, userID, email)
-		if err == nil && tag.RowsAffected() == 0 {
-			return errStaleToken
-		}
+		_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
 		return err
 	})
 	if err != nil {
@@ -188,21 +218,18 @@ func (s *Server) ResetPassword(ctx context.Context, req ResetPasswordRequestObje
 	}
 	hash := hashPassword(in.NewPassword)
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, email, err := useEmailToken(ctx, tx, in.Token, "reset")
+		userID, verified, err := useEmailToken(ctx, tx, in.Token, "reset")
 		if err != nil {
 			return err
 		}
 		// The email reached its owner, so the address is verified too.
-		tag, err := tx.Exec(ctx, `update users set password_hash = $2, email_verified = true where id = $1 and email = $3`,
-			userID, hash, email)
+		_, err = tx.Exec(ctx, `update users set password_hash = $2, email_verified = true where id = $1`, userID, hash)
 		if err != nil {
 			return err
 		}
-		if tag.RowsAffected() == 0 {
-			return errStaleToken
-		}
-		_, err = tx.Exec(ctx, `delete from sessions where user_id = $1`, userID)
-		return err
+		// Unverified, the account may have been made by someone else with
+		// the owner's address, who is now shut out as by an OAuth sign-in.
+		return signOut(ctx, tx, userID, !verified)
 	})
 	if err != nil {
 		return nil, err

@@ -38,7 +38,7 @@ class GroupsPage extends ConsumerWidget {
     }
 
     final known = ref.watch(knownGroupsProvider);
-    final summaries = ref.watch(summariesProvider);
+    final summaries = ref.watchCurrent(summariesProvider);
     final unreachable = (info.hasError && !info.isLoading) || (summaries.hasError && !summaries.isLoading);
     if (unreachable) {
       return _empty(

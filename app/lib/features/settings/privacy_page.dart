@@ -85,7 +85,7 @@ class DeleteAccountPage extends ConsumerWidget {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final accounts = ref.watch(accountsModeProvider);
-    final account = ref.watch(accountProvider).value;
+    final account = ref.watch(currentAccountProvider).value;
     return BPage(
       title: l10n.accountDelete,
       children: [

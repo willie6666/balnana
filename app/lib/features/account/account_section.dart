@@ -55,7 +55,7 @@ class AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final account = ref.watch(accountProvider).value;
+    final account = ref.watch(currentAccountProvider).value;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     if (account == null) {
       return GroupedList(
