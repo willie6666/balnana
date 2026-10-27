@@ -22,6 +22,16 @@ class SessionKey {
 
 final sessionProvider = NotifierProvider<SessionNotifier, SessionKey>(SessionNotifier.new);
 
+/// Whom the app talks to the server as: the server, and the session on it.
+typedef Identity = ({String? server, String? token, int generation});
+
+/// What was loaded as one [Identity] is never shown as another's: see
+/// `current` in data/providers.dart.
+final identityProvider = Provider<Identity>((ref) {
+  final session = ref.watch(sessionProvider);
+  return (server: ref.watch(serverUrlProvider), token: session.token, generation: session.generation);
+});
+
 class SessionNotifier extends Notifier<SessionKey> {
   static const _key = 'session.tokens';
 

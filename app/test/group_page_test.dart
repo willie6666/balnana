@@ -6,8 +6,11 @@ import 'package:balnana/app.dart';
 import 'package:balnana/core/money.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
+import 'package:balnana/core/push.dart';
 import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/core/session.dart';
+import 'package:balnana/data/api.dart' show PushSubscription;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
@@ -251,6 +254,71 @@ class _Saver extends FilePickerPlatform {
   }
 }
 
+/// Answers group `tok` with [group], and with no expenses.
+class _GroupServer implements HttpClientAdapter {
+  _GroupServer(this.group);
+
+  /// What asking for the group gets next.
+  Future<ResponseBody> Function() group;
+  final asked = <String>[];
+
+  static ResponseBody reply(Object body, int status) => ResponseBody.fromString(
+    jsonEncode(body),
+    status,
+    headers: {
+      'content-type': ['application/json'],
+    },
+  );
+
+  static ResponseBody named(String name) => reply({
+    'token': 'tok',
+    'name': name,
+    'currency': 'USD',
+    'minorDigits': 2,
+    'createdAt': '2026-01-01T00:00:00Z',
+    'members': [
+      {'id': 'a', 'name': 'Ana', 'balance': '0.00'},
+    ],
+  }, 200);
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    asked.add(options.uri.path);
+    return switch (options.uri.path) {
+      '/api/v1/g/tok' => group(),
+      '/api/v1/g/tok/expenses' => reply({'items': [], 'nextCursor': null}, 200),
+      _ => reply({'code': 'not_found', 'message': 'no'}, 404),
+    };
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Delivers each tapped notification of [taps].
+class _Taps implements PushService {
+  final taps = StreamController<PushTarget>.broadcast();
+
+  @override
+  Future<PushSubscription?> subscribe(String server, String vapid) async => null;
+
+  @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
+  Future<void> requestPermission() async {}
+
+  @override
+  Future<PushTarget?> initialGroup() async => null;
+
+  @override
+  Stream<PushTarget> get openedGroups => taps.stream;
+}
+
 /// Starts the app in link mode with this device as Ana in group `tok`.
 Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) async {
   SharedPreferences.setMockInitialValues({
@@ -266,7 +334,7 @@ Future<ProviderContainer> _boot(WidgetTester tester, List<Override> overrides) a
         prefsProvider.overrideWithValue(prefs),
         cacheDbProvider.overrideWithValue(null),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
-        summariesProvider.overrideWith((ref) async => (groups: <GroupSummary>[], missing: <String>[])),
+        summariesProvider.overrideWith((ref) async => const Summaries(groups: [], missing: [])),
         balancesProvider.overrideWith((ref, token) async => const Balances(nets: {}, transfers: [])),
         ...overrides,
       ],
@@ -630,6 +698,96 @@ void main() {
       }
     });
   }
+
+  testWidgets('a group loaded as one session is never shown as the next', (tester) async {
+    final server = _GroupServer(() async => _GroupServer.named('Private'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.text('Private'), findsWidgets);
+
+    // Signed in as someone else: what Private was is not theirs to see,
+    // neither while the group loads again nor once the server says so.
+    final answer = Completer<ResponseBody>();
+    server.group = () => answer.future;
+    container.read(sessionProvider.notifier).set('someone-else');
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Private'), findsNothing);
+
+    answer.complete(_GroupServer.reply({'code': 'not_found', 'message': 'no'}, 404));
+    await tester.pumpAndSettle();
+    expect(find.text('Private'), findsNothing);
+    expect(find.text('Group not found'), findsOneWidget);
+  });
+
+  testWidgets('a refresh keeps the group shown until the server refuses it', (tester) async {
+    final server = _GroupServer(() async => _GroupServer.named('Private'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+
+    var answer = Completer<ResponseBody>();
+    server.group = () => answer.future;
+    container.invalidate(groupProvider('tok'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Private'), findsWidgets);
+    answer.complete(_GroupServer.reply({'code': 'internal', 'message': 'boom'}, 500));
+    await tester.pumpAndSettle();
+    // Still shown: the server only failed to answer.
+    expect(find.text('Private'), findsWidgets);
+
+    answer = Completer<ResponseBody>();
+    container.invalidate(groupProvider('tok'));
+    await tester.pump();
+    answer.complete(_GroupServer.reply({'code': 'forbidden', 'message': 'no'}, 403));
+    await tester.pumpAndSettle();
+    expect(find.text('Private'), findsNothing);
+  });
+
+  testWidgets('a notification opens its group only on the server it came from', (tester) async {
+    final push = _Taps();
+    addTearDown(push.taps.close);
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      pushServiceProvider.overrideWithValue(push),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/settings');
+    server.asked.clear();
+
+    push.taps.add((server: 'https://elsewhere.example.com', token: 'tok'));
+    await tester.pumpAndSettle();
+    expect(container.read(routerProvider).state.matchedLocation, '/settings');
+    expect(server.asked, isEmpty);
+
+    push.taps.add((server: _server, token: 'tok'));
+    await tester.pumpAndSettle();
+    expect(container.read(routerProvider).state.matchedLocation, '/g/tok');
+    expect(find.text('Flat'), findsWidgets);
+  });
+
+  test('a notification names the server of its group', () {
+    const target = (server: _server, token: 'tok');
+    expect(notificationTarget(notificationPayload(target)), target);
+    // From before notifications named their server: which one is not known.
+    expect(notificationTarget('tok'), isNull);
+    expect(notificationTarget('{"g":"tok"}'), isNull);
+    expect(notificationTarget('{"s":"","g":"tok"}'), isNull);
+    expect(notificationTarget(null), isNull);
+  });
 
   test('only JPEG, PNG and WebP pictures are sent', () {
     expect(receiptType(_png), 'image/png');

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'prefs.dart';
 
@@ -62,14 +63,13 @@ class SettingsNotifier extends Notifier<Settings> {
   @override
   Settings build() {
     final prefs = ref.watch(prefsProvider);
-    final localeTag = prefs.getString(_locale);
     return Settings(
       themeMode: ThemeMode.values.asNameMap()[prefs.getString(_theme)] ?? ThemeMode.system,
-      locale: localeTag == null ? null : _parseLocale(localeTag),
+      locale: savedLocale(prefs),
       dynamicColor: prefs.getBool(_dynamicColor) ?? false,
       pureBlack: prefs.getBool(_pureBlack) ?? false,
       serverUrl: prefs.getString(_server),
-      notifications: prefs.getBool(_notifications) ?? true,
+      notifications: notificationsOn(prefs),
     );
   }
 
@@ -105,6 +105,15 @@ class SettingsNotifier extends Notifier<Settings> {
     final prefs = ref.read(prefsProvider);
     url == null ? prefs.remove(_server) : prefs.setString(_server, url);
   }
+
+  /// Whether notifications are on, as [Settings.notifications] says.
+  static bool notificationsOn(SharedPreferences prefs) => prefs.getBool(_notifications) ?? true;
+
+  /// The language picked in settings; null follows the device.
+  static Locale? savedLocale(SharedPreferences prefs) => switch (prefs.getString(_locale)) {
+    final tag? => _parseLocale(tag),
+    null => null,
+  };
 
   static Locale _parseLocale(String tag) {
     // language[-Script][-REGION], e.g. "pt", "pt-BR", "sr-Latn", "sr-Latn-RS".

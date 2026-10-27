@@ -55,7 +55,7 @@ class AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final account = ref.watch(accountProvider).value;
+    final account = ref.watch(currentAccountProvider).value;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     if (account == null) {
       return GroupedList(
@@ -113,7 +113,7 @@ class AccountSection extends ConsumerWidget {
 /// Asks to confirm, deletes the signed-in account and goes to the sign-in
 /// page.
 Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
-  final account = ref.read(accountProvider).value;
+  final account = ref.read(currentAccountProvider).value;
   if (account == null) return;
   final deleted = await showDialog<bool>(
     context: context,

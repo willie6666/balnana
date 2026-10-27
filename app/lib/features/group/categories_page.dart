@@ -26,7 +26,7 @@ class CategoriesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final async = ref.watch(groupProvider(token));
+    final async = ref.watchCurrent(groupProvider(token));
     final group = async.value;
     if (group == null) {
       return BPage(

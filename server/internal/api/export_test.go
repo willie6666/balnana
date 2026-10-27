@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/csv"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -49,6 +50,42 @@ func TestExportCsv(t *testing.T) {
 		t.Fatalf("bad offset: %q", code)
 	}
 	c.errorCode(404, "GET", "/g/not-a-group/export.csv", nil)
+}
+
+// A category's name is typed by the group's members, so it is kept from being
+// read as a formula as the other text is.
+func TestExportCsvCategoryFormula(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana", "Ben")
+	ana, ben := g.Members[0].Id, g.Members[1].Id
+	base := "/g/" + g.Token
+	names := []string{"=1+1", "+1", "-1", "@SUM(A1)"}
+	for i, name := range names {
+		var cat Category
+		c.must(201, "POST", base+"/categories", CategoryInput{Name: name, Emoji: "\U0001F436"}, &cat)
+		c.must(201, "POST", base+"/expenses", ExpenseInput{Title: "Item", CategoryId: &cat.Id, Amount: "1",
+			OccurredAt: mustTime(t, "2026-10-0"+string(rune('1'+i))+"T10:00:00Z"),
+			Payers:     []PayerInput{{MemberId: ana, Amount: "1"}}, SplitMethod: "equal",
+			Splits: []Share{{MemberId: ben}}}, nil)
+	}
+
+	rec := httptest.NewRecorder()
+	c.h.ServeHTTP(rec, httptest.NewRequest("GET", BasePath+base+"/export.csv", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	records, err := csv.NewReader(strings.NewReader(strings.TrimPrefix(rec.Body.String(), "\xef\xbb\xbf"))).ReadAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != len(names)+1 {
+		t.Fatalf("got %d rows: %q", len(records), records)
+	}
+	for i, name := range names {
+		if got := records[i+1][2]; got != "'"+name {
+			t.Errorf("category %q exported as %q", name, got)
+		}
+	}
 }
 
 func TestAttachment(t *testing.T) {
@@ -129,6 +166,55 @@ func TestExportCsvSnapshot(t *testing.T) {
 			current := get(t, writer.h, BasePath+base+"/export.csv", nil).Body.String()
 			if current == baseline || !strings.Contains(current, "New member") || !strings.Contains(current, "Inserted") {
 				t.Fatalf("writer did not commit: %s", current)
+			}
+		})
+	}
+}
+
+// An expense read while someone edits it is one version throughout: its
+// payers and splits never come from a newer one than its amount.
+func TestExpenseReadSnapshot(t *testing.T) {
+	for _, path := range []string{"", "/expenses"} {
+		t.Run("GET"+path, func(t *testing.T) {
+			pool := testDB(t)
+			cfg := baseConfig(t, map[string]string{})
+			log := slog.New(slog.DiscardHandler)
+			writer := &client{t: t, h: NewHandler(NewServer(cfg, pool, log, "test"), http.NotFoundHandler())}
+			g := createGroup(writer, "Ana", "Ben")
+			base := "/g/" + g.Token
+			in := ExpenseInput{Title: "Pizza", Amount: "10", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+				Payers:      []PayerInput{{MemberId: g.Members[0].Id, Amount: "10"}},
+				SplitMethod: "equal", Splits: []Share{{MemberId: g.Members[1].Id}}}
+			var e Expense
+			writer.must(201, "POST", base+"/expenses", in, &e)
+
+			changed := false
+			traced := pool.Config()
+			traced.ConnConfig.Tracer = &exportBarrier{before: func(sql string) {
+				if changed || !strings.Contains(sql, "from expense_payers p") {
+					return
+				}
+				changed = true
+				in.Amount, in.Version, in.Payers[0].Amount = "20", &e.Version, "20"
+				writer.must(200, "PUT", base+"/expenses/"+e.Id, in, nil)
+			}}
+			readerPool, err := pgxpool.NewWithConfig(context.Background(), traced)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer readerPool.Close()
+			reader := &client{t: t, h: NewHandler(NewServer(cfg, readerPool, log, "test"), http.NotFoundHandler())}
+			var got Expense
+			if path == "" {
+				reader.must(200, "GET", base+"/expenses/"+e.Id, nil, &got)
+			} else {
+				var page ExpensePage
+				reader.must(200, "GET", base+"/expenses", nil, &page)
+				got = page.Items[0]
+			}
+			if !changed || got.Amount != "10.00" || got.Version != e.Version ||
+				got.Payers[0].Amount != "10.00" || got.Splits[0].Amount != "10.00" {
+				t.Fatalf("changed=%v, read %+v", changed, got)
 			}
 		})
 	}

@@ -69,6 +69,10 @@ class ExpenseDraft {
   };
 }
 
+/// Where a push service delivers this device's Web Push messages: the
+/// [endpoint] to send to and the keys to encrypt for (RFC 8291), base64url.
+typedef PushSubscription = ({String endpoint, String p256dh, String auth});
+
 /// The Balnana HTTP API. Every call throws [ApiException] on failure.
 class BalnanaApi {
   BalnanaApi(this._dio);
@@ -277,11 +281,19 @@ class BalnanaApi {
   GroupApi group(String token, {String? memberId}) => GroupApi._(this, token, memberId);
 
   /// Asks for notifications about [groups] (and, signed in, the account's
-  /// groups) on the device with Firebase installation ID [device].
-  Future<void> registerPushDevice(String device, List<({String token, String memberId})> groups) => _send(
+  /// groups) on [device], this app's own random ID for the phone, sent to
+  /// the Web Push subscription [sub].
+  Future<void> registerPushDevice(
+    String device,
+    PushSubscription sub,
+    List<({String token, String memberId})> groups,
+  ) => _send(
     () => _dio.put<Object?>(
       '/push/devices/${Uri.encodeComponent(device)}',
       data: {
+        'endpoint': sub.endpoint,
+        'p256dh': sub.p256dh,
+        'auth': sub.auth,
         'groups': [for (final g in groups) {'token': g.token, 'memberId': g.memberId}],
       },
     ),

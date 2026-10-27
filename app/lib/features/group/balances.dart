@@ -83,7 +83,7 @@ class BalanceCard extends ConsumerWidget {
         if (!m.left || m.balance != BigInt.zero) m,
     ];
     final largest = members.fold(BigInt.zero, (a, m) => m.balance.abs() > a ? m.balance.abs() : a);
-    final balances = ref.watch(balancesProvider(group.token)).value;
+    final balances = ref.watchCurrent(balancesProvider(group.token)).value;
     // Suggestions that involve this device's member first.
     final transfers = [
       ...?balances?.transfers.where((t) => t.from == myId || t.to == myId),

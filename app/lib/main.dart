@@ -8,8 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/prefs.dart';
+import 'core/push.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  // Started by a push message while the app is closed: no screen to show.
+  if (args.contains('--unifiedpush-bg')) return receivePushInBackground();
   // Clean URLs (`/g/<token>`), served by the server's single-page fallback.
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();

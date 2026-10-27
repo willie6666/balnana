@@ -350,12 +350,18 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 	}
 	n := len(args)
 	args = append(args, afterAt, afterID, limit+1)
-	list, err := loadExpenses(ctx, s.db, g.digits, fmt.Sprintf(`
-		select `+expenseColumns+` from expenses
-		where %s
-		  and ($%d::timestamptz is null or (occurred_at, id) < ($%d::timestamptz, $%d::uuid))
-		order by occurred_at desc, id desc
-		limit $%d`, where, n+1, n+1, n+2, n+3), args...)
+	// Payers and splits come from separate queries, which must see the
+	// same version of each expense.
+	var list []Expense
+	err = s.snapshot(ctx, func(tx pgx.Tx) (err error) {
+		list, err = loadExpenses(ctx, tx, g.digits, fmt.Sprintf(`
+			select `+expenseColumns+` from expenses
+			where %s
+			  and ($%d::timestamptz is null or (occurred_at, id) < ($%d::timestamptz, $%d::uuid))
+			order by occurred_at desc, id desc
+			limit $%d`, where, n+1, n+1, n+2, n+3), args...)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -449,11 +455,15 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 }
 
 func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (GetExpenseResponseObject, error) {
-	g, err := s.groupByToken(ctx, s.db, req.Token, false)
-	if err != nil {
-		return nil, err
-	}
-	out, err := loadExpense(ctx, s.db, g, req.ExpenseId)
+	var out Expense
+	err := s.snapshot(ctx, func(tx pgx.Tx) error {
+		g, err := s.groupByToken(ctx, tx, req.Token, false)
+		if err != nil {
+			return err
+		}
+		out, err = loadExpense(ctx, tx, g, req.ExpenseId)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

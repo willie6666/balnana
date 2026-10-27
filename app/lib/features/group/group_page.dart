@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/home_group.dart';
@@ -31,7 +32,7 @@ import 'spending_tab.dart';
 /// Who this app acts as in [token]'s group: the signed-in account's member,
 /// or else the member this device picked. Null when neither is known.
 String? myMemberId(WidgetRef ref, String token) {
-  final fromAccount = ref.watch(groupProvider(token).select((g) => g.value?.myMemberId));
+  final fromAccount = ref.watchCurrent(groupProvider(token)).value?.myMemberId;
   if (fromAccount != null || ref.watch(signedInProvider)) return fromAccount;
   return ref.watch(
     knownGroupsProvider.select((list) {
@@ -45,7 +46,8 @@ String? myMemberId(WidgetRef ref, String token) {
 
 /// [myMemberId] for one-off reads outside build.
 String? myMemberIdRead(WidgetRef ref, String token) {
-  final fromAccount = ref.read(groupProvider(token)).value?.myMemberId;
+  final fromAccount =
+      ref.read(groupProvider(token)).current(ref.read(identityProvider)).value?.myMemberId;
   if (fromAccount != null || ref.read(signedInProvider)) return fromAccount;
   return ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId;
 }
@@ -197,7 +199,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final async = ref.watch(groupProvider(widget.token));
+    final async = ref.watchCurrent(groupProvider(widget.token));
     final group = async.value;
 
     if (group != null) _sentToJoin = false;

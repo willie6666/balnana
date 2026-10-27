@@ -31,7 +31,7 @@ class ExpensesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final async = ref.watch(expensesProvider(group.token));
+    final async = ref.watchCurrent(expensesProvider(group.token));
     final filter = ref.watch(expenseFilterProvider(group.token));
     final list = async.value;
     final me = myMemberId(ref, group.token);

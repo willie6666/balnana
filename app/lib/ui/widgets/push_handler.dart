@@ -5,9 +5,11 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/push.dart';
 import '../../core/router.dart';
+import '../../core/server.dart';
 
 /// Keeps push registration current and opens the group of a tapped
-/// notification. Builds [child] unchanged.
+/// notification, when it came from the server the app now talks to. Builds
+/// [child] unchanged.
 class PushHandler extends ConsumerStatefulWidget {
   const PushHandler({super.key, required this.child});
 
@@ -18,7 +20,7 @@ class PushHandler extends ConsumerStatefulWidget {
 }
 
 class _PushHandlerState extends ConsumerState<PushHandler> {
-  StreamSubscription<String>? _opened;
+  StreamSubscription<PushTarget>? _opened;
 
   @override
   void initState() {
@@ -26,13 +28,16 @@ class _PushHandlerState extends ConsumerState<PushHandler> {
     final push = ref.read(pushServiceProvider);
     if (push == null) return;
     _opened = push.openedGroups.listen(_open);
-    push.initialGroup().then((token) {
-      if (token != null) _open(token);
+    push.initialGroup().then((target) {
+      if (target != null) _open(target);
     }, onError: (Object _) {});
   }
 
-  void _open(String token) {
-    if (mounted) ref.read(routerProvider).go('/g/$token');
+  void _open(PushTarget target) {
+    if (!mounted) return;
+    // A group of another server: its token is not this server's to see.
+    if (target.server != ref.read(serverUrlProvider)) return;
+    ref.read(routerProvider).go('/g/${target.token}');
   }
 
   @override

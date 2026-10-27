@@ -47,7 +47,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
       setState(() => _busy = false);
       if (e.code == 'duplicate_name') {
         // Someone in the group already goes by the account's name.
-        final account = ref.read(accountProvider).value;
+        final account = ref.read(currentAccountProvider).value;
         final other = await askForName(
           context,
           title: l10n.joinPickName,
@@ -100,7 +100,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
         ),
       );
     } else {
-      final account = ref.watch(accountProvider).value;
+      final account = ref.watch(currentAccountProvider).value;
       // The member an invitation named comes first.
       final open = [
         for (final m in info.members)

@@ -282,7 +282,7 @@ class InvitePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final async = ref.watch(_inviteProvider(token));
-    final account = ref.watch(accountProvider);
+    final account = ref.watch(currentAccountProvider);
     final invite = async.value;
 
     final Widget child;

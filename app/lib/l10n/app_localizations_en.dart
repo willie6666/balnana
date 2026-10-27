@@ -979,6 +979,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsNotificationsSubtitle => 'When someone adds, changes or deletes an expense you are in';
 
   @override
+  String get pushChannel => 'Expenses';
+
+  @override
+  String get pushChannelDescription => 'When someone adds, changes or deletes an expense you are in';
+
+  @override
+  String pushExpenseAdded(String who, String title, String amount) {
+    return '$who added $title · $amount';
+  }
+
+  @override
+  String pushExpenseEdited(String who, String title, String amount) {
+    return '$who changed $title · $amount';
+  }
+
+  @override
+  String pushExpenseDeleted(String who, String title, String amount) {
+    return '$who deleted $title · $amount';
+  }
+
+  @override
+  String pushExpenseAddedAnon(String title, String amount) {
+    return '$title was added · $amount';
+  }
+
+  @override
+  String pushExpenseEditedAnon(String title, String amount) {
+    return '$title was changed · $amount';
+  }
+
+  @override
+  String pushExpenseDeletedAnon(String title, String amount) {
+    return '$title was deleted · $amount';
+  }
+
+  @override
+  String pushPaymentAdded(String payer, String payee, String amount) {
+    return '$payer paid $payee $amount';
+  }
+
+  @override
   String get settingsConnection => 'Connection';
 
   @override
@@ -1758,7 +1799,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device.';
+      'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.';
 
   @override
   String get privacyUseTitle => 'How it is used';
@@ -1772,7 +1813,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through Firebase Cloud Messaging.';
+      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way.';
 
   @override
   String get privacyDeviceTitle => 'On this device';

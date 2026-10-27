@@ -614,11 +614,13 @@ paths:
       - name: device
         in: path
         required: true
-        description: The device's Firebase installation ID (FID), which FCM sends to.
+        description: >-
+          An ID the app makes up for this install and keeps. Whoever knows it
+          can change what the device hears about, so it is a secret.
         schema:
           type: string
-          minLength: 1
-          maxLength: 4096
+          minLength: 16
+          maxLength: 128
     put:
       operationId: registerPushDevice
       summary: Send this device notifications about the groups it follows
@@ -627,7 +629,9 @@ paths:
         also told about the account's groups, until the session ends. Groups
         the link alone does not open, unknown tokens and members not in the
         group are left out without an error. Only when `push` is on in
-        /server-info; otherwise `push_off`.
+        /server-info; otherwise `push_off`. A subscription the server cannot
+        send to (keys that are not sound, an endpoint that is not an https URL
+        on a public address) is `invalid_subscription`.
       requestBody:
         required: true
         content:
@@ -2088,8 +2092,14 @@ components:
         push:
           type: boolean
           description: >-
-            The server sends push notifications through Firebase Cloud
-            Messaging, to apps built with the same Firebase project.
+            The server sends Web Push notifications (RFC 8030), which the app
+            receives through UnifiedPush.
+        vapidPublicKey:
+          type: string
+          description: >-
+            The server's VAPID public key (RFC 8292), uncompressed and in
+            unpadded base64url, for the app to subscribe with. Only when `push`
+            is on.
         publicUrl:
           type: string
           description: Base URL used for group links.
@@ -2219,8 +2229,23 @@ components:
           description: Accounts matching, of which at most 200 are listed.
     PushDeviceInput:
       type: object
-      required: [groups]
+      required: [endpoint, p256dh, auth, groups]
+      description: >-
+        The device's Web Push subscription, as its UnifiedPush distributor
+        gave it, and the groups it follows.
       properties:
+        endpoint:
+          type: string
+          maxLength: 2048
+          description: Where the server sends the device's messages.
+        p256dh:
+          type: string
+          maxLength: 128
+          description: The device's P-256 public key, uncompressed, in base64url.
+        auth:
+          type: string
+          maxLength: 64
+          description: The device's 16-byte authentication secret, in base64url.
         groups:
           type: array
           maxItems: 200

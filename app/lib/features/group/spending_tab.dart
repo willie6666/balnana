@@ -44,7 +44,7 @@ class _SpendingTabState extends ConsumerState<SpendingTab> {
     final l10n = context.l10n;
     final group = widget.group;
     final side = widget.sidePadding;
-    final async = ref.watch(statsProvider((token: group.token, period: _period)));
+    final async = ref.watchCurrent(statsProvider((token: group.token, period: _period)));
     if (async.value case final stats?) _shown = stats;
     final stats = _shown;
 
