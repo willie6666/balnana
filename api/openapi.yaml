@@ -333,6 +333,9 @@ paths:
     post:
       operationId: verifyEmail
       summary: Confirm an email address with the token from a verification email
+      description: >-
+        A token sent to a pending address makes it the account's address. 409
+        `email_taken` when another account has taken that address meanwhile.
       requestBody:
         required: true
         content:
@@ -546,10 +549,15 @@ paths:
       operationId: changeEmail
       summary: Set, change or remove the account's email address
       description: >-
-        A new address starts unverified; a verification link is emailed when
-        the server can send email. An empty address removes it, only from an
-        account that signs in with a username (400 `email_needed`). 409
-        `email_taken` when another account has it.
+        When the server can send email, a new address is kept as
+        `pendingEmail` and a verification link is emailed to it; it replaces
+        the current address only once that link is opened, so a mistyped
+        address never takes its place. Giving the current address again drops
+        a pending one. Without email, the new address replaces the current one
+        at once, unverified. An empty address removes it, only from an account
+        that signs in with a username (400 `email_needed`). 409 `email_taken`
+        when another account has it; 429 `rate_limited` when the account has
+        changed its address too often.
       requestBody:
         required: true
         content:
@@ -591,6 +599,9 @@ paths:
     post:
       operationId: sendVerifyEmail
       summary: Email a new verification link to the account's address
+      description: >-
+        Sent to the pending address when there is one, else to the current
+        address while it is unverified.
       responses:
         "204":
           description: Sent, or already verified
@@ -690,7 +701,8 @@ paths:
       summary: Delete the group with everything in it, for good
       description: >-
         Accounts mode: the owner only (403 `owner_only`), or any account
-        member when the group has no owner left. Link mode: anyone with the
+        member when the group has no owner left, or anyone the link opens it
+        for when no account is a member any more. Link mode: anyone with the
         link.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
@@ -1916,6 +1928,11 @@ components:
           description: Set on accounts made without an email address.
         emailVerified:
           type: boolean
+        pendingEmail:
+          type: string
+          description: >-
+            A new address waiting for its verification link to be opened; the
+            account keeps `email` until then.
         name:
           type: string
         locale:

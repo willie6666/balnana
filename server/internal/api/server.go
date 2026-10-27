@@ -31,6 +31,7 @@ type Server struct {
 	creates  *buckets // groups created, by client
 	invites  *buckets // invitations sent, by account
 	signups  *buckets // password accounts made, by client
+	emails   *buckets // address changes, by account
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -53,6 +54,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		creates: newBuckets(createPerMinute, createBurst),
 		invites: newBuckets(invitePerMinute, inviteBurst),
 		signups: &buckets{perSecond: signupPerHour / 3600.0, burst: signupBurst, m: map[string]*bucket{}},
+		emails:  &buckets{perSecond: emailChangePerHour / 3600.0, burst: emailChangeBurst, m: map[string]*bucket{}},
 	}
 	s.apply(cfg)
 	return s

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"balnana/internal/mail"
 )
@@ -73,17 +74,19 @@ func newEmailToken(ctx context.Context, q querier, userID, email, purpose string
 	return token, err
 }
 
-// useEmailToken spends a token and returns its account, and whether the
-// account's address was verified before. The account's row is locked before
-// the token's, as it is where tokens are made, so the two never wait on each
-// other in turn. Before the row, the table is locked as the caller's update
-// of it would lock it: an OAuth sign-in holds the table while it waits for a
-// row, so taking them the other way round could wait on it in turn.
-func useEmailToken(ctx context.Context, tx pgx.Tx, token, purpose string) (userID string, verified bool, err error) {
+// useEmailToken spends a token and returns its account, whether the
+// account's address was verified before, and whether the token went to the
+// new address waiting to be confirmed (only a verification token may) rather
+// than the current one. The account's row is locked before the token's, as
+// it is where tokens are made, so the two never wait on each other in turn.
+// Before the row, the table is locked as the caller's update of it would
+// lock it: an OAuth sign-in holds the table while it waits for a row, so
+// taking them the other way round could wait on it in turn.
+func useEmailToken(ctx context.Context, tx pgx.Tx, token, purpose string) (userID string, verified, pending bool, err error) {
 	hash := hashToken(token)
-	invalid := func() (string, bool, error) {
+	invalid := func() (string, bool, bool, error) {
 		noteMiss(ctx)
-		return "", false, badRequest("invalid_token")
+		return "", false, false, badRequest("invalid_token")
 	}
 	err = tx.QueryRow(ctx, `select user_id::text from email_tokens where token_hash = $1 and purpose = $2`,
 		hash, purpose).Scan(&userID)
@@ -91,36 +94,38 @@ func useEmailToken(ctx context.Context, tx pgx.Tx, token, purpose string) (userI
 		return invalid()
 	}
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
 	if _, err := tx.Exec(ctx, `lock table users in row exclusive mode`); err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
 	err = tx.QueryRow(ctx, `select email_verified from users where id = $1 for no key update`, userID).Scan(&verified)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return invalid()
 	}
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
 	var live, current bool
 	err = tx.QueryRow(ctx, `
 		delete from email_tokens t where token_hash = $1 and purpose = $2 and user_id = $3
-		returning expires_at > now(), coalesce(t.email = (select email from users where id = $3), false)`,
-		hash, purpose, userID).Scan(&live, &current)
+		returning expires_at > now(), coalesce(t.email = (select email from users where id = $3), false),
+		          coalesce(purpose = 'verify' and t.email = (select pending_email from users where id = $3), false)`,
+		hash, purpose, userID).Scan(&live, &current, &pending)
 	if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
 		return invalid()
 	}
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
-	if !current {
-		return "", false, errStaleToken
+	if !current && !pending {
+		return "", false, false, errStaleToken
 	}
-	return userID, verified, nil
+	return userID, verified, !current, nil
 }
 
-// errStaleToken is a token sent to an address the account no longer has.
+// errStaleToken is a token sent to an address the account no longer has, or
+// no longer waits to have.
 var errStaleToken = badRequest("invalid_token")
 
 func (s *Server) SendVerifyEmail(ctx context.Context, _ SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error) {
@@ -132,26 +137,25 @@ func (s *Server) SendVerifyEmail(ctx context.Context, _ SendVerifyEmailRequestOb
 		return nil, err
 	}
 	// The address is read again under the account's lock: it may have
-	// changed since this request began.
-	var email, token string
+	// changed since this request began. A new address waiting to be
+	// confirmed comes first.
+	var email *string
+	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		err := tx.QueryRow(ctx, `
-			select email::text from users where id = $1 and email is not null and not email_verified
+			select coalesce(pending_email, case when not email_verified then email end)::text from users where id = $1
 			for update`, u.id).Scan(&email)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
+		if err != nil || email == nil {
 			return err
 		}
-		token, err = newEmailToken(ctx, tx, u.id, email, "verify", verifyLifetime)
+		token, err = newEmailToken(ctx, tx, u.id, *email, "verify", verifyLifetime)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 	if token != "" {
-		s.sendMail(verifyMail(email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
+		s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
 	}
 	return SendVerifyEmail204Response{}, nil
 }
@@ -161,11 +165,21 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 		return nil, err
 	}
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, _, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
+		userID, _, pending, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+		if !pending {
+			_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+			return err
+		}
+		// A new address takes the old one's place only now, once its owner
+		// has opened the link. Links sent to the old one stop working with it.
+		_, err = tx.Exec(ctx, `
+			update users set email = pending_email, email_verified = true, pending_email = null where id = $1`, userID)
+		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return conflict("email_taken")
+		}
 		return err
 	})
 	if err != nil {
@@ -218,12 +232,16 @@ func (s *Server) ResetPassword(ctx context.Context, req ResetPasswordRequestObje
 	}
 	hash := hashPassword(in.NewPassword)
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, verified, err := useEmailToken(ctx, tx, in.Token, "reset")
+		userID, verified, _, err := useEmailToken(ctx, tx, in.Token, "reset")
 		if err != nil {
 			return err
 		}
 		// The email reached its owner, so the address is verified too.
-		_, err = tx.Exec(ctx, `update users set password_hash = $2, email_verified = true where id = $1`, userID, hash)
+		// Taken back, the account's maker no longer changes its address either.
+		_, err = tx.Exec(ctx, `
+			update users set password_hash = $2, email_verified = true,
+			                 pending_email = case when email_verified then pending_email end
+			where id = $1`, userID, hash)
 		if err != nil {
 			return err
 		}

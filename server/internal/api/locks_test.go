@@ -124,7 +124,7 @@ func TestOAuthRacingReclaim(t *testing.T) {
 	f := newFakeIdP(t)
 	var reclaim func()
 	fired := false
-	first, second, mail, _ := racing(t, f.env(map[string]string{}), func(sql string) {
+	first, second, mail, db := racing(t, f.env(map[string]string{}), func(sql string) {
 		if !fired && strings.Contains(sql, "for share") {
 			fired = true
 			reclaim()
@@ -133,8 +133,8 @@ func TestOAuthRacingReclaim(t *testing.T) {
 	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
 	f.login(first, "/groups", unvouched)
 	var taken User
-	first.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &taken)
-	mail.next(t, "ana@example.com") // the link to verify it
+	first.must(200, "GET", "/me", nil, &taken)
+	takeAddress(t, db, taken.Id, "ana@example.com")
 	first.another().must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
 	token := lastPart(mail.next(t, "ana@example.com"))
 	status := 0

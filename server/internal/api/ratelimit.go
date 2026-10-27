@@ -118,6 +118,10 @@ const (
 	// Accounts a client may sign up in a row, and how many an hour after.
 	signupBurst   = 10
 	signupPerHour = 6
+	// Address changes an account may make in a row, and how many an hour
+	// after. Each one emails the new address.
+	emailChangeBurst   = 5
+	emailChangePerHour = 6
 )
 
 var errRateLimited = &apiError{status: http.StatusTooManyRequests, code: "rate_limited"}

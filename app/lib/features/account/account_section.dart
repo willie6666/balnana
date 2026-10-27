@@ -80,7 +80,14 @@ class AccountSection extends ConsumerWidget {
           trailing: const Icon(Icons.edit_outlined),
           onTap: () => _rename(context, ref, account.name),
         ),
-        if (email && !account.emailVerified && account.email != null)
+        if (account.pendingEmail case final pending? when email)
+          GroupedTile(
+            icon: Icons.mark_email_unread_outlined,
+            title: l10n.accountEmailPendingTitle,
+            subtitle: l10n.accountEmailPendingHelp(pending),
+            onTap: () => _sendVerify(context, ref, pending),
+          )
+        else if (email && !account.emailVerified && account.email != null)
           GroupedTile(
             icon: Icons.mark_email_unread_outlined,
             title: l10n.verifyEmailTitle,
@@ -179,7 +186,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
   }
 
   Future<void> _delete() async {
-    if (!_form.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     final l10n = context.l10n;
     setState(() {
       _busy = true;
@@ -263,7 +270,7 @@ class _EmailDialogState extends ConsumerState<_EmailDialog> {
   }
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     final l10n = context.l10n;
     final email = _email.text.trim();
     setState(() {
@@ -271,14 +278,19 @@ class _EmailDialogState extends ConsumerState<_EmailDialog> {
       _error = null;
     });
     try {
-      await ref
+      final me = await ref
           .read(balnanaApiProvider)!
           .changeEmail(email, password: widget.account.hasPassword ? _password.text : null);
       if (!mounted) return;
       ref.invalidate(accountProvider);
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      final done = email.isEmpty ? l10n.accountEmailRemoved : l10n.accountEmailSaved;
+      // A new address waits for its link before it takes the old one's place.
+      final done = switch (me.pendingEmail) {
+        final pending? => l10n.verifyEmailSent(pending),
+        null when email.isEmpty => l10n.accountEmailRemoved,
+        null => l10n.accountEmailSaved,
+      };
       messenger.showSnackBar(SnackBar(content: Text(done)));
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -363,7 +375,7 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
   }
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     final l10n = context.l10n;
     setState(() {
       _busy = true;

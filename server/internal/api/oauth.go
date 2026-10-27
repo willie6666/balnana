@@ -384,7 +384,8 @@ func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, subject s
 			// sessions, emailed links and other sign-in identities. Otherwise
 			// anyone could take an address first and keep its owner out, or
 			// follow them in. The owner can set a new password afterwards.
-			_, err := tx.Exec(ctx, `update users set email_verified = true, password_hash = null where id = $1`, userID)
+			_, err := tx.Exec(ctx, `
+				update users set email_verified = true, password_hash = null, pending_email = null where id = $1`, userID)
 			if err != nil {
 				return err
 			}
@@ -450,9 +451,10 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 		// the account back either ends the session made here, or comes first
 		// and leaves no code to spend.
 		err = tx.QueryRow(ctx, `
-			select email::text, username::text, email_verified, password_hash is not null, display_name, locale
+			select email::text, pending_email::text, username::text, email_verified, password_hash is not null,
+			       display_name, locale
 			from users where id = $1 for share`, u.id).
-			Scan(&u.email, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
+			Scan(&u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
 		if errors.Is(err, pgx.ErrNoRows) {
 			wrong = true
 			return nil

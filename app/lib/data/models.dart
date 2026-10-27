@@ -452,6 +452,7 @@ class User {
     this.email,
     this.username,
     this.emailVerified = false,
+    this.pendingEmail,
     required this.name,
     this.locale,
     required this.hasPassword,
@@ -464,6 +465,7 @@ class User {
       email: _opt(json, 'email'),
       username: _opt(json, 'username'),
       emailVerified: _opt<bool>(json, 'emailVerified') ?? false,
+      pendingEmail: _opt(json, 'pendingEmail'),
       name: _req(json, 'name'),
       locale: _opt(json, 'locale'),
       hasPassword: _opt<bool>(json, 'hasPassword') ?? false,
@@ -476,6 +478,10 @@ class User {
   /// Set on accounts made without an email address.
   final String? username;
   final bool emailVerified;
+
+  /// A new address waiting for its verification link to be opened; [email]
+  /// stays in force until then.
+  final String? pendingEmail;
   final String name;
   final String? locale;
   final bool hasPassword;

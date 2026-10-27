@@ -416,9 +416,12 @@ class _EditorState extends ConsumerState<_Editor> {
     final e = widget.expense!;
     final router = GoRouter.of(context);
     setState(() => _busy = true);
-    if (await deleteExpenseWithUndo(context, ref, _group, e)) {
+    final deleted = await deleteExpenseWithUndo(context, ref, _group, e);
+    // Gone already (the user went back): popping now would close another page.
+    if (!mounted) return;
+    if (deleted) {
       router.pop();
-    } else if (mounted) {
+    } else {
       setState(() => _busy = false);
     }
   }

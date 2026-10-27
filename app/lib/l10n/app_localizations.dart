@@ -3310,8 +3310,20 @@ abstract class AppLocalizations {
   /// No description provided for @accountEmailVerifyNote.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll get a link to confirm the new address.'**
+  /// **'You\'ll get a link to confirm the new address. Your current address stays until then.'**
   String get accountEmailVerifyNote;
+
+  /// No description provided for @accountEmailPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your new email'**
+  String get accountEmailPendingTitle;
+
+  /// No description provided for @accountEmailPendingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'{email} takes your current address\'s place once you open the link sent to it. Tap to send it again.'**
+  String accountEmailPendingHelp(String email);
 
   /// No description provided for @accountEmailRemoveNote.
   ///

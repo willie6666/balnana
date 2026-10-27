@@ -357,12 +357,12 @@ func TestOAuthAndroid(t *testing.T) {
 // account the owner already had, a reset leaves their identities be.
 func TestPasswordResetReclaimsAccount(t *testing.T) {
 	f := newFakeIdP(t)
-	mallory, mail := mailClient(t, f.env(map[string]string{}))
+	mallory, mail, s := mailServer(t, f.env(map[string]string{}))
 	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
 	f.login(mallory, "/groups", unvouched)
 	var taken User
-	mallory.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &taken)
-	mail.next(t, "ana@example.com") // the link to verify it
+	mallory.must(200, "GET", "/me", nil, &taken)
+	takeAddress(t, s.db, taken.Id, "ana@example.com")
 
 	ana := mallory.another()
 	ana.must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)

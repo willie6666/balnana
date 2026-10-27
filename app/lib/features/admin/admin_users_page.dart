@@ -97,7 +97,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
-    await _load();
+    if (mounted) await _load();
   }
 
   @override
@@ -141,10 +141,15 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: BSpace.s12),
-                child: Text(
-                  users.length < _total ? l10n.adminUsersShown(users.length, _total) : l10n.adminUsersCount(_total),
-                  style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                ),
+                // A search that failed says so; the list is from the last one that worked.
+                child: _error != null
+                    ? Text(errorMessage(l10n, _error!), style: text.bodyMedium?.copyWith(color: scheme.error))
+                    : Text(
+                        users.length < _total
+                            ? l10n.adminUsersShown(users.length, _total)
+                            : l10n.adminUsersCount(_total),
+                        style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
               ),
               if (users.isEmpty)
                 Padding(
