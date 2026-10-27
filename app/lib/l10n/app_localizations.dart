@@ -1813,6 +1813,60 @@ abstract class AppLocalizations {
   /// **'When someone adds, changes or deletes an expense you are in'**
   String get settingsNotificationsSubtitle;
 
+  /// No description provided for @pushChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get pushChannel;
+
+  /// No description provided for @pushChannelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When someone adds, changes or deletes an expense you are in'**
+  String get pushChannelDescription;
+
+  /// No description provided for @pushExpenseAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} added {title} · {amount}'**
+  String pushExpenseAdded(String who, String title, String amount);
+
+  /// No description provided for @pushExpenseEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} changed {title} · {amount}'**
+  String pushExpenseEdited(String who, String title, String amount);
+
+  /// No description provided for @pushExpenseDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} deleted {title} · {amount}'**
+  String pushExpenseDeleted(String who, String title, String amount);
+
+  /// No description provided for @pushExpenseAddedAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} was added · {amount}'**
+  String pushExpenseAddedAnon(String title, String amount);
+
+  /// No description provided for @pushExpenseEditedAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} was changed · {amount}'**
+  String pushExpenseEditedAnon(String title, String amount);
+
+  /// No description provided for @pushExpenseDeletedAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} was deleted · {amount}'**
+  String pushExpenseDeletedAnon(String title, String amount);
+
+  /// No description provided for @pushPaymentAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{payer} paid {payee} {amount}'**
+  String pushPaymentAdded(String payer, String payee, String amount);
+
   /// No description provided for @settingsConnection.
   ///
   /// In en, this message translates to:
@@ -3172,7 +3226,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyStoredBody.
   ///
   /// In en, this message translates to:
-  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device.'**
+  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
   String get privacyStoredBody;
 
   /// No description provided for @privacyUseTitle.
@@ -3196,7 +3250,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacySharedBody.
   ///
   /// In en, this message translates to:
-  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through Firebase Cloud Messaging.'**
+  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way.'**
   String get privacySharedBody;
 
   /// No description provided for @privacyDeviceTitle.

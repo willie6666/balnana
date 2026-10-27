@@ -120,39 +120,22 @@ app shows a short built-in description of what the server stores.
 - A web app hosted on another origin needs that origin listed in
   `BALNANA_CORS_ORIGINS`.
 
-### Push notifications (optional)
+### Push notifications
 
-The server can notify phones when someone adds, changes or deletes an expense they
-are in. It needs a Firebase project, and only reaches Android builds made with that
-same project's values (step 3).
+The server notifies phones when someone adds, changes or deletes an expense they are
+in. Nothing to set up: the server makes its own VAPID key the first time it starts
+and keeps it in the database. `BALNANA_PUSH=false` turns notifications off.
 
-1. In the [Firebase console](https://console.firebase.google.com/), create a project
-   and add an Android app with the package name `io.github.willie6666.balnana`.
-2. Under Project settings → Service accounts, generate a private key. Mount the file
-   into the container and point `BALNANA_FCM_CREDENTIALS` at it, for example with a
-   `docker-compose.override.yml`:
+Notifications are standard Web Push messages, encrypted end to end, delivered over
+[UnifiedPush](https://unifiedpush.org/). A phone with a UnifiedPush distributor such
+as [ntfy](https://ntfy.sh/) gets them through it. Otherwise the app uses the
+distributor built in, which goes through Google's Firebase Cloud Messaging on phones
+with Google Play services; the app contains no Firebase SDK and needs no Firebase
+project. Settings → Notifications turns them off and on per device.
 
-   ```yaml
-   services:
-     balnana:
-       environment:
-         BALNANA_FCM_CREDENTIALS: /run/secrets/firebase.json
-       volumes:
-         - ./firebase.json:/run/secrets/firebase.json:ro
-   ```
-
-3. Build the app with the Android app's values from Project settings → General:
-
-   ```bash
-   flutter build apk \
-     --dart-define=BALNANA_FIREBASE_API_KEY=... \
-     --dart-define=BALNANA_FIREBASE_APP_ID=... \
-     --dart-define=BALNANA_FIREBASE_SENDER_ID=... \
-     --dart-define=BALNANA_FIREBASE_PROJECT_ID=...
-   ```
-
-Settings → Notifications then turns them off and on per device. Without these
-values the app never contacts Firebase.
+The server only sends to public https addresses. A distributor on your own network
+(for example a self-hosted ntfy at `http://192.168.1.2`) needs
+`BALNANA_PUSH_PRIVATE_ENDPOINTS=true`.
 
 ### Android release builds
 
@@ -193,10 +176,12 @@ App stores such as Google Play ask for a few things the code cannot supply:
   to build without it. With Play App Signing, add Play's app signing certificate
   fingerprint to `BALNANA_ANDROID_CERT_SHA256` as well, so app links keep working.
 - The store's data safety form: the server stores names, email addresses, the groups'
-  expenses and receipt photos, and (with push notifications) a Firebase device token.
+  expenses and receipt photos, and (with push notifications) the push service address
+  each phone gives it.
 
-Push notifications use Firebase Cloud Messaging, a proprietary Google service; builds
-for F-Droid would need it left out.
+The app contains no proprietary libraries, so it can be built for F-Droid. Its built-in
+push distributor still uses Google's Firebase Cloud Messaging as a network service
+when no other distributor is installed, which F-Droid may label as an anti-feature.
 
 ## Development
 
