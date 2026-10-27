@@ -166,6 +166,13 @@ func TestPushLinkMode(t *testing.T) {
 		sent[0].n.Key != "push_payment_added" || !slices.Equal(sent[0].n.Args, []string{"Cy", "Ana", "5.00 EUR"}) {
 		t.Errorf("payment sent %+v", sent)
 	}
+	// A symbol the group picked stands in for the currency code.
+	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("€")}, nil)
+	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	if sent = f.take(s); len(sent) != 2 || !slices.Equal(sent[0].n.Args, []string{"Cy", "Ana", "€5.00"}) {
+		t.Errorf("payment with symbol sent %+v", sent)
+	}
+	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("")}, nil)
 
 	// Without knowing who did it, everyone involved hears.
 	c.member = ""
