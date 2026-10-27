@@ -55,7 +55,7 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
       final preview = await api.previewImport(bytes);
       if (!mounted) return;
       final name = picked.name.replaceFirst(RegExp(r'\.csv$', caseSensitive: false), '').trim();
-      final account = ref.read(accountProvider).value?.name.toLowerCase();
+      final account = ref.read(currentAccountProvider).value?.name.toLowerCase();
       setState(() {
         _file = bytes;
         _preview = preview;

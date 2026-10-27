@@ -45,8 +45,8 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final token = widget.token, expenseId = widget.expenseId;
-    final group = ref.watch(groupProvider(token));
-    final expense = expenseId == null ? null : ref.watch(expenseProvider((token: token, id: expenseId)));
+    final group = ref.watchCurrent(groupProvider(token));
+    final expense = expenseId == null ? null : ref.watchCurrent(expenseProvider((token: token, id: expenseId)));
     final error = group.error ?? expense?.error;
 
     if (group.value case final g? when expense == null || expense.hasValue) {

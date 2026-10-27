@@ -26,6 +26,7 @@ type Server struct {
 	version  string
 	hub      *hub
 	push     push.Sender // nil when the server sends no push notifications
+	vapid    string      // the public key push messages are signed with
 	pushing  sync.WaitGroup
 	creates  *buckets // groups created, by client
 	invites  *buckets // invitations sent, by account
@@ -56,13 +57,6 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		emails:  &buckets{perSecond: emailChangePerHour / 3600.0, burst: emailChangeBurst, m: map[string]*bucket{}},
 	}
 	s.apply(cfg)
-	if cfg.FCM != nil {
-		if f, err := push.NewFCM(cfg.FCM); err != nil {
-			log.Error("push notifications are off", "err", err)
-		} else {
-			s.push = f
-		}
-	}
 	return s
 }
 
@@ -103,6 +97,9 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		Push:           s.push != nil,
 		PublicUrl:      cfg.PublicURL.String(),
 		SourceUrl:      cfg.SourceURL.String(),
+	}
+	if s.push != nil {
+		info.VapidPublicKey = &s.vapid
 	}
 	if cfg.PrivacyURL != nil {
 		privacy := cfg.PrivacyURL.String()

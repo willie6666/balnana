@@ -82,6 +82,11 @@ func run() error {
 	if err := srv.PrepareAdmin(ctx); err != nil {
 		return err
 	}
+	if cfg.Push {
+		if err := srv.StartPush(ctx); err != nil {
+			return err
+		}
+	}
 	// Stops with ctx, which also ends open event streams so shutdown need
 	// not wait for them.
 	go srv.ListenForChanges(ctx)

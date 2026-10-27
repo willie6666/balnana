@@ -18,6 +18,12 @@ import (
 	"balnana/internal/domain"
 )
 
+// snapshot runs fn in a read-only transaction that sees the database as it
+// was when it began, so the separate queries in it agree with each other.
+func (s *Server) snapshot(ctx context.Context, fn func(pgx.Tx) error) error {
+	return pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly}, fn)
+}
+
 // querier is what both the pool and a transaction offer.
 type querier interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)

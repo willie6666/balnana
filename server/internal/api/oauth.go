@@ -215,8 +215,22 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 		return redirect("web", "/groups", url.Values{"error": {"oauth_failed"}}), nil
 	}
 
+	// The sign-in is made in the same transaction as the account is found
+	// in, so the address owner taking the account back meanwhile ends it.
+	var code, session string
+	issue := func(tx pgx.Tx, userID string) error {
+		if login.app != "android" {
+			var err error
+			session, err = startSession(ctx, tx, userID)
+			return err
+		}
+		code = secretToken()
+		_, err := tx.Exec(ctx, `insert into oauth_codes (code_hash, user_id, challenge, expires_at) values ($1, $2, $3, $4)`,
+			hashToken(code), userID, *login.challenge, time.Now().Add(oauthCodeLifetime))
+		return err
+	}
 	q := url.Values{}
-	userID, err := s.finishOAuth(ctx, p, login, in)
+	err = s.finishOAuth(ctx, p, login, in, issue)
 	var ae *apiError
 	switch {
 	case errors.As(err, &ae):
@@ -224,58 +238,51 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 	case err != nil:
 		s.log.Warn("OAuth sign-in failed", "provider", p.id, "err", err)
 		q.Set("error", "oauth_failed")
-	case login.app == "android":
-		code := secretToken()
-		_, err := s.db.Exec(ctx, `insert into oauth_codes (code_hash, user_id, challenge, expires_at) values ($1, $2, $3, $4)`,
-			hashToken(code), userID, *login.challenge, time.Now().Add(oauthCodeLifetime))
-		if err != nil {
-			return nil, err
-		}
+	case code != "":
 		q.Set("code", code)
-	default:
-		if _, err := s.startSession(ctx, s.db, userID, true); err != nil {
-			return nil, err
-		}
+	case session != "":
+		s.handOut(ctx, session, true)
 	}
 	return redirect(login.app, login.next, q), nil
 }
 
-// finishOAuth trades the provider's code for an ID token and returns the
-// account it signs in to.
-func (s *Server) finishOAuth(ctx context.Context, p *oauthProvider, login *oauthLogin, in OauthCallbackParams) (string, error) {
+// finishOAuth trades the provider's code for an ID token and signs in to its
+// account with issue.
+func (s *Server) finishOAuth(ctx context.Context, p *oauthProvider, login *oauthLogin, in OauthCallbackParams,
+	issue func(pgx.Tx, string) error) error {
 	if in.Error != nil {
 		if *in.Error == "access_denied" {
-			return "", badRequest("oauth_cancelled")
+			return badRequest("oauth_cancelled")
 		}
-		return "", fmt.Errorf("provider error %q", *in.Error)
+		return fmt.Errorf("provider error %q", *in.Error)
 	}
 	if in.Code == nil {
-		return "", errors.New("no code")
+		return errors.New("no code")
 	}
 	prov, err := p.discover()
 	if err != nil {
-		return "", err
+		return err
 	}
 	token, err := s.oauthConfig(p, prov).Exchange(ctx, *in.Code, oauth2.VerifierOption(login.verifier))
 	if err != nil {
-		return "", err
+		return err
 	}
 	raw, _ := token.Extra("id_token").(string)
 	if raw == "" {
-		return "", errors.New("no ID token")
+		return errors.New("no ID token")
 	}
 	id, err := prov.Verifier(&oidc.Config{ClientID: p.client.ClientID}).Verify(ctx, raw)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if id.Nonce != login.nonce {
-		return "", errors.New("wrong nonce")
+		return errors.New("wrong nonce")
 	}
 	var c idClaims
 	if err := id.Claims(&c); err != nil {
-		return "", err
+		return err
 	}
-	return s.oauthUser(ctx, p.id, id.Subject, c)
+	return s.oauthUser(ctx, p.id, id.Subject, c, issue)
 }
 
 type idClaims struct {
@@ -315,78 +322,110 @@ func (c idClaims) name() string {
 	return "Balnana user"
 }
 
-// oauthUser finds the account of a provider identity. An account with the
-// address the provider vouches for gets the identity; failing that, a new
-// account is made if sign-up allows it.
-func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idClaims) (string, error) {
+// errIdentityGone is an identity whose account was taken back, or deleted,
+// between finding it and locking the account.
+var errIdentityGone = errors.New("identity gone")
+
+// oauthUser finds the account of a provider identity and signs in to it with
+// issue. An account with the address the provider vouches for gets the
+// identity; failing that, a new account is made if sign-up allows it.
+func (s *Server) oauthUser(ctx context.Context, provider, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
+	var err error
+	// Gone, the identity is looked for afresh, and is found no more.
+	for range 3 {
+		err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			return s.oauthUserTx(ctx, tx, provider, subject, c, issue)
+		})
+		if !errors.Is(err, errIdentityGone) {
+			break
+		}
+	}
+	return err
+}
+
+func (s *Server) oauthUserTx(ctx context.Context, tx pgx.Tx, provider, subject string, c idClaims, issue func(pgx.Tx, string) error) error {
 	var userID string
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		err := tx.QueryRow(ctx, `select user_id::text from oauth_identities where provider = $1 and subject = $2`,
-			provider, subject).Scan(&userID)
-		if !errors.Is(err, pgx.ErrNoRows) {
+	err := tx.QueryRow(ctx, `select user_id::text from oauth_identities where provider = $1 and subject = $2`,
+		provider, subject).Scan(&userID)
+	if err == nil {
+		// The account is locked, as everything that takes it back locks it,
+		// and the identity looked at again in a statement of its own, which
+		// sees what was done before the lock was granted.
+		if _, err := tx.Exec(ctx, `select from users where id = $1 for share`, userID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
+		var still bool
+		err := tx.QueryRow(ctx, `
+			select exists (select 1 from oauth_identities where provider = $1 and subject = $2 and user_id = $3)`,
+			provider, subject, userID).Scan(&still)
+		if err != nil {
 			return err
 		}
-		email := c.email()
+		if !still {
+			return errIdentityGone
+		}
+		return issue(tx, userID)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
+		return err
+	}
+	email := c.email()
+	if email != nil {
+		var verified bool
+		err := tx.QueryRow(ctx, `select id::text, email_verified from users where email = $1`, *email).Scan(&userID, &verified)
+		switch {
+		case err == nil && !verified:
+			// Whoever made that account may not own the address, so the
+			// provider's word wins: the account becomes the address owner's,
+			// and every other way into it stops working: its password,
+			// sessions, emailed links and other sign-in identities. Otherwise
+			// anyone could take an address first and keep its owner out, or
+			// follow them in. The owner can set a new password afterwards.
+			_, err := tx.Exec(ctx, `
+				update users set email_verified = true, password_hash = null, pending_email = null where id = $1`, userID)
+			if err != nil {
+				return err
+			}
+			if err := signOut(ctx, tx, userID, true); err != nil {
+				return err
+			}
+		case err != nil && !errors.Is(err, pgx.ErrNoRows):
+			return err
+		}
+	}
+	if userID == "" {
+		// An invitation to the address the provider vouches for counts.
+		invited := false
 		if email != nil {
-			var verified bool
-			err := tx.QueryRow(ctx, `select id::text, email_verified from users where email = $1`, *email).Scan(&userID, &verified)
-			switch {
-			case err == nil && !verified:
-				// Whoever made that account may not own the address, so the
-				// provider's word wins: the account becomes the address
-				// owner's, and its password, sessions and other sign-in
-				// methods (including a provider of the maker's own, or a
-				// sign-in already under way) stop working. Otherwise anyone
-				// could take an address first and keep its owner out, or
-				// keep a way back in. The owner can set a new password
-				// afterwards.
-				for _, sql := range []string{
-					`update users set email_verified = true, password_hash = null, pending_email = null where id = $1`,
-					`delete from sessions where user_id = $1`,
-					`delete from email_tokens where user_id = $1`,
-					`delete from oauth_identities where user_id = $1`,
-					`delete from oauth_codes where user_id = $1`,
-				} {
-					if _, err := tx.Exec(ctx, sql, userID); err != nil {
-						return err
-					}
-				}
-			case err != nil && !errors.Is(err, pgx.ErrNoRows):
-				return err
-			}
-		}
-		if userID == "" {
-			// An invitation to the address the provider vouches for counts.
-			invited := false
-			if email != nil {
-				err := tx.QueryRow(ctx, `select exists (select 1 from invites where email = $1 and expires_at > now())`,
-					*email).Scan(&invited)
-				if err != nil {
-					return err
-				}
-			}
-			if err := s.signupAllowed(ctx, tx, invited); err != nil {
-				return err
-			}
-			var avatar *string
-			if strings.HasPrefix(c.Picture, "https://") {
-				avatar = &c.Picture
-			}
-			err := tx.QueryRow(ctx, `
-				insert into users (email, email_verified, display_name, avatar_url)
-				values ($1, $2, $3, $4) returning id::text`, email, email != nil, c.name(), avatar).Scan(&userID)
+			err := tx.QueryRow(ctx, `select exists (select 1 from invites where email = $1 and expires_at > now())`,
+				*email).Scan(&invited)
 			if err != nil {
 				return err
 			}
 		}
-		_, err = tx.Exec(ctx, `insert into oauth_identities (provider, subject, user_id) values ($1, $2, $3)`,
-			provider, subject, userID)
+		if err := s.signupAllowed(ctx, tx, invited); err != nil {
+			return err
+		}
+		var avatar *string
+		if strings.HasPrefix(c.Picture, "https://") {
+			avatar = &c.Picture
+		}
+		err := tx.QueryRow(ctx, `
+			insert into users (email, email_verified, display_name, avatar_url)
+			values ($1, $2, $3, $4) returning id::text`, email, email != nil, c.name(), avatar).Scan(&userID)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = tx.Exec(ctx, `insert into oauth_identities (provider, subject, user_id) values ($1, $2, $3)`,
+		provider, subject, userID)
+	if err != nil {
 		return err
-	})
-	return userID, err
+	}
+	return issue(tx, userID)
 }
 
 func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeRequestObject) (ExchangeOAuthCodeResponseObject, error) {
@@ -395,31 +434,58 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 	}
 	in := req.Body
 	sum := sha256.Sum256([]byte(in.Verifier))
-	// Spent whatever the verifier, so it cannot be guessed at.
+	hash := hashToken(in.Code)
 	var u user
-	var challenge string
-	var live bool
-	err := s.db.QueryRow(ctx, `
-		delete from oauth_codes where code_hash = $1
-		returning user_id::text, challenge, expires_at > now()`, hashToken(in.Code)).Scan(&u.id, &challenge, &live)
-	if errors.Is(err, pgx.ErrNoRows) || err == nil && (!live || challenge != base64.RawURLEncoding.EncodeToString(sum[:])) {
+	var out Session
+	var wrong bool
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		err := tx.QueryRow(ctx, `select user_id::text from oauth_codes where code_hash = $1`, hash).Scan(&u.id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			wrong = true
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		// The account is locked before the code, so the address owner taking
+		// the account back either ends the session made here, or comes first
+		// and leaves no code to spend.
+		err = tx.QueryRow(ctx, `
+			select email::text, pending_email::text, username::text, email_verified, password_hash is not null,
+			       display_name, locale
+			from users where id = $1 for share`, u.id).
+			Scan(&u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
+		if errors.Is(err, pgx.ErrNoRows) {
+			wrong = true
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		// Spent whatever the verifier, so it cannot be guessed at.
+		var challenge string
+		var live bool
+		err = tx.QueryRow(ctx, `
+			delete from oauth_codes where code_hash = $1 and user_id = $2
+			returning challenge, expires_at > now()`, hash, u.id).Scan(&challenge, &live)
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && (!live || challenge != base64.RawURLEncoding.EncodeToString(sum[:])) {
+			wrong = true
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		out.User = u.api()
+		token, err := startSession(ctx, tx, u.id)
+		out.Token = &token
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	if wrong {
 		noteMiss(ctx)
 		return nil, badRequest("invalid_token")
-	}
-	if err != nil {
-		return nil, err
-	}
-	err = s.db.QueryRow(ctx, `
-		select email::text, pending_email::text, username::text, email_verified, password_hash is not null, display_name,
-		       locale
-		from users where id = $1`, u.id).
-		Scan(&u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
-	if err != nil {
-		return nil, err
-	}
-	out := Session{User: u.api()}
-	if out.Token, err = s.startSession(ctx, s.db, u.id, false); err != nil {
-		return nil, err
 	}
 	return ExchangeOAuthCode200JSONResponse(out), nil
 }

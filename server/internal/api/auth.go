@@ -225,20 +225,41 @@ func (s *Server) requirePasswords() error {
 	return nil
 }
 
-// startSession signs userID in. With cookie, the token goes into the session
-// cookie and nil is returned; otherwise the token is returned.
-func (s *Server) startSession(ctx context.Context, q querier, userID string, cookie bool) (*string, error) {
+// startSession signs userID in, returning the session's token. It is handed
+// out by handOut once q has committed.
+func startSession(ctx context.Context, q querier, userID string) (string, error) {
 	token := secretToken()
 	_, err := q.Exec(ctx, `insert into sessions (user_id, token_hash, expires_at) values ($1, $2, $3)`,
 		userID, hashToken(token), time.Now().Add(sessionLifetime))
-	if err != nil {
-		return nil, err
-	}
+	return token, err
+}
+
+// handOut gives a committed session's token to the client. With cookie, it
+// goes into the session cookie and nil is returned; otherwise the token is
+// returned. A cookie set before the commit would outlive a rollback.
+func (s *Server) handOut(ctx context.Context, token string, cookie bool) *string {
 	if st, _ := ctx.Value(authKey{}).(*authState); cookie && st != nil {
 		s.setSessionCookie(st, token)
-		return nil, nil
+		return nil
 	}
-	return &token, nil
+	return &token
+}
+
+// signOut ends every session of userID and the app sign-ins not yet
+// finished. With reclaimed, the address owner has just taken the account
+// back from whoever made it with their address, so that person's other ways
+// back in go too: emailed links and OAuth identities.
+func signOut(ctx context.Context, q querier, userID string, reclaimed bool) error {
+	tables := []string{"sessions", "oauth_codes"}
+	if reclaimed {
+		tables = append(tables, "email_tokens", "oauth_identities")
+	}
+	for _, table := range tables {
+		if _, err := q.Exec(ctx, `delete from `+table+` where user_id = $1`, userID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Server) setSessionCookie(st *authState, token string) {
@@ -373,6 +394,7 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	}
 	hash := hashPassword(in.Password)
 	var out Session
+	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		// One sign-up at a time, so two "first accounts" cannot race.
 		if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
@@ -403,14 +425,17 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 			return err
 		}
 		out.User = u.api()
-		out.Token, err = s.startSession(ctx, tx, u.id, in.Cookie != nil && *in.Cookie)
+		token, err = startSession(ctx, tx, u.id)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+	out.Token = s.handOut(ctx, token, in.Cookie != nil && *in.Cookie)
 	return Register201JSONResponse(out), nil
 }
+
+var errBadLogin = &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
 
 func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginResponseObject, error) {
 	if err := s.requirePasswords(); err != nil {
@@ -436,14 +461,33 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 		for range loginMissWeight {
 			noteMiss(ctx)
 		}
-		return nil, &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
+		return nil, errBadLogin
 	}
-	u.hasPassword = true
-	token, err := s.startSession(ctx, s.db, u.id, in.Cookie != nil && *in.Cookie)
+	// The password was checked outside the lock, as hashing is slow, so the
+	// account is locked and the hash read again before a session is made: the
+	// address owner may have taken the account back, or the password changed,
+	// meanwhile. Either waits for this session, and then ends it.
+	var token string
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		var now *string
+		err := tx.QueryRow(ctx, `
+			select email::text, username::text, email_verified, password_hash, display_name, locale
+			from users where id = $1 for share`, u.id).
+			Scan(&u.email, &u.username, &u.verified, &now, &u.name, &u.locale)
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && (now == nil || *now != *hash) {
+			return errBadLogin
+		}
+		if err != nil {
+			return err
+		}
+		token, err = startSession(ctx, tx, u.id)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	return Login200JSONResponse(Session{Token: token, User: u.api()}), nil
+	u.hasPassword = true
+	return Login200JSONResponse(Session{Token: s.handOut(ctx, token, in.Cookie != nil && *in.Cookie), User: u.api()}), nil
 }
 
 func (s *Server) Logout(ctx context.Context, _ LogoutRequestObject) (LogoutResponseObject, error) {

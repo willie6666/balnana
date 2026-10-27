@@ -35,7 +35,7 @@ String? _redirect(Ref ref, GoRouterState state) {
   final path = state.matchedLocation;
   if (ref.read(setupRequiredProvider)) return path == '/admin' ? null : '/admin';
   if (ref.read(accountsModeProvider)) {
-    final account = ref.read(accountProvider);
+    final account = ref.read(currentAccountProvider);
     if (account.isLoading || account.hasError) return null;
     final signedIn = account.value != null;
     if (path == '/sign-in') return signedIn ? safeNext(state.uri.queryParameters['next']) ?? '/groups' : null;
@@ -68,7 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
   final refresh = ValueNotifier(0);
   void bump(Object? _, Object? _) => refresh.value++;
-  ref.listen(accountProvider, bump);
+  ref.listen(currentAccountProvider, bump);
   ref.listen(accountsModeProvider, bump);
   ref.listen(setupRequiredProvider, bump);
   ref.onDispose(refresh.dispose);

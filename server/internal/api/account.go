@@ -50,16 +50,10 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		return nil, err
 	}
 	if email != nil && u.email != nil && strings.EqualFold(*email, *u.email) {
-		// Back to the current address: a change waiting to be confirmed is dropped.
+		// Back to the current address: a change waiting to be confirmed is
+		// dropped, and the links sent for it stop working with it.
 		if u.pending != nil {
-			err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-				if _, err := tx.Exec(ctx, `update users set pending_email = null where id = $1`, u.id); err != nil {
-					return err
-				}
-				_, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1 and email is not null`, u.id)
-				return err
-			})
-			if err != nil {
+			if _, err := s.db.Exec(ctx, `update users set pending_email = null where id = $1`, u.id); err != nil {
 				return nil, err
 			}
 			u.pending = nil
@@ -96,6 +90,10 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 	// account keeps the old one, so a mistyped address never takes its place.
 	var token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// The account's row is locked first, as where tokens are used.
+		if _, err := tx.Exec(ctx, `update users set pending_email = $2 where id = $1`, u.id, *email); err != nil {
+			return err
+		}
 		var taken bool
 		err := tx.QueryRow(ctx, `select exists (select 1 from users where email = $2 and id <> $1)`, u.id, *email).Scan(&taken)
 		if err != nil {
@@ -104,10 +102,11 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		if taken {
 			return conflict("email_taken")
 		}
-		if _, err := tx.Exec(ctx, `update users set pending_email = $2 where id = $1`, u.id, *email); err != nil {
+		// A link sent a moment ago, to either address, gives way to this one.
+		if _, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1 and purpose = 'verify'`, u.id); err != nil {
 			return err
 		}
-		token, err = replaceEmailToken(ctx, tx, u.id, "verify", email, verifyLifetime)
+		token, err = newEmailToken(ctx, tx, u.id, *email, "verify", verifyLifetime)
 		return err
 	})
 	if err != nil {

@@ -276,6 +276,43 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 	}
 }
 
+// Someone who signs up with a provider and then puts another person's address
+// on the account must not follow that person in once they sign in with it.
+func TestOAuthTakeoverDropsOldIdentities(t *testing.T) {
+	f := newFakeIdP(t)
+	mallory := accountsClient(t, f.env(map[string]string{}))
+	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
+	f.login(mallory, "/groups", unvouched)
+	var before User
+	mallory.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &before)
+
+	ana := mallory.another()
+	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	ana.must(200, "GET", "/me", nil, &me)
+	if me.Id != before.Id || !me.EmailVerified {
+		t.Fatalf("me = %+v", me)
+	}
+	mallory.errorCode(401, "GET", "/me", nil)
+
+	again := mallory.another()
+	f.login(again, "/groups", unvouched)
+	var hers User
+	again.must(200, "GET", "/me", nil, &hers)
+	if hers.Id == me.Id || hers.Email != nil {
+		t.Fatalf("Mallory signed in to %+v", hers)
+	}
+	// Ana still reaches her account.
+	anaAgain := ana.another()
+	f.login(anaAgain, "/groups", person("a", "ana@example.com", "Ana"))
+	anaAgain.must(200, "GET", "/me", nil, &me)
+	if me.Id != before.Id {
+		t.Fatal("Ana lost her account")
+	}
+}
+
 func TestOAuthAndroid(t *testing.T) {
 	f := newFakeIdP(t)
 	c := accountsClient(t, f.env(map[string]string{}))
@@ -315,33 +352,41 @@ func TestOAuthAndroid(t *testing.T) {
 	c.another().errorCode(400, "POST", "/auth/oauth/exchange", OAuthExchange{Code: code, Verifier: "the app's own verifier"})
 }
 
-func TestOAuthTakeoverDropsMakersSignIns(t *testing.T) {
+// The address owner taking an account back with a reset link shuts out its
+// maker as an OAuth sign-in does: their identity no longer reaches it. On an
+// account the owner already had, a reset leaves their identities be.
+func TestPasswordResetReclaimsAccount(t *testing.T) {
 	f := newFakeIdP(t)
-	// Without email the maker can put an address on the account at once.
-	mal := accountsClient(t, f.env(map[string]string{}))
-	malClaims := map[string]any{"sub": "m", "name": "Mal"}
-	if e := oauthError(t, f.login(mal, "/groups", malClaims)); e != "" {
-		t.Fatal(e)
-	}
-	var made User
-	mal.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &made)
+	mallory, mail, s := mailServer(t, f.env(map[string]string{}))
+	unvouched := map[string]any{"sub": "m", "email": "mallory@example.com", "email_verified": false, "name": "Mallory"}
+	f.login(mallory, "/groups", unvouched)
+	var taken User
+	mallory.must(200, "GET", "/me", nil, &taken)
+	takeAddress(t, s.db, taken.Id, "ana@example.com")
 
-	ana := mal.another()
-	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
-		t.Fatal(e)
+	ana := mallory.another()
+	ana.must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	ana.must(204, "POST", "/auth/password-reset/confirm",
+		PasswordReset{Token: lastPart(mail.next(t, "ana@example.com")), NewPassword: "new password"}, nil)
+	mallory.errorCode(401, "GET", "/me", nil)
+	again := mallory.another()
+	f.login(again, "/groups", unvouched)
+	var hers User
+	again.must(200, "GET", "/me", nil, &hers)
+	if hers.Id == taken.Id {
+		t.Fatal("Mallory signed back in to the account taken back")
 	}
+
+	// Ana's own identity outlives a reset of her verified account.
+	f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))
+	ana.must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	ana.must(204, "POST", "/auth/password-reset/confirm",
+		PasswordReset{Token: lastPart(mail.next(t, "ana@example.com")), NewPassword: "newer password"}, nil)
+	anaAgain := ana.another()
+	f.login(anaAgain, "/groups", person("a", "ana@example.com", "Ana"))
 	var me User
-	ana.must(200, "GET", "/me", nil, &me)
-	if me.Id != made.Id {
+	anaAgain.must(200, "GET", "/me", nil, &me)
+	if me.Id != taken.Id {
 		t.Fatalf("me = %+v", me)
-	}
-	// The maker's own provider no longer leads back into the account.
-	again := mal.another()
-	if e := oauthError(t, f.login(again, "/groups", malClaims)); e != "" {
-		t.Fatal(e)
-	}
-	again.must(200, "GET", "/me", nil, &me)
-	if me.Id == made.Id {
-		t.Fatal("the maker's identity still reaches the taken-over account")
 	}
 }

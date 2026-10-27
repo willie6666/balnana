@@ -61,6 +61,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications uses java.time, which older Androids lack.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -114,4 +116,13 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Push notifications without a separate distributor app (UnifiedPush):
+    // phones with Google Play services get them through FCM, with no
+    // Firebase SDK in the app. Phones with a distributor such as ntfy use it
+    // instead.
+    implementation("org.unifiedpush.android:embedded-fcm-distributor:3.1.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

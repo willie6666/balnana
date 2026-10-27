@@ -8,6 +8,7 @@ import 'package:balnana/core/push.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
 import 'package:balnana/core/settings.dart';
+import 'package:balnana/data/api.dart';
 import 'package:balnana/data/known_groups.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,18 +18,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _server = 'https://split.example.com';
 
 class _FakePush implements PushService {
-  var address = 'device-1';
-  final refreshes = StreamController<String>.broadcast();
+  /// Where the push service delivers; null when the phone has none.
+  String? address = 'https://push.example.com/1';
+  final refreshes = StreamController<void>.broadcast();
   var asked = 0;
+  final keys = <String>[];
 
   /// While set, asking for permission waits for it.
   Future<void>? hold;
 
   @override
-  Future<String?> device() async => address;
+  Future<PushSubscription?> subscribe(String server, String vapid) async {
+    keys.add(vapid);
+    return switch (address) {
+      final a? => (endpoint: a, p256dh: 'pub', auth: 'auth'),
+      null => null,
+    };
+  }
 
   @override
-  Stream<String> get deviceChanges => refreshes.stream;
+  Stream<void> get changes => refreshes.stream;
 
   @override
   Future<void> requestPermission() async {
@@ -37,10 +46,10 @@ class _FakePush implements PushService {
   }
 
   @override
-  Future<String?> initialGroup() async => null;
+  Future<PushTarget?> initialGroup() async => null;
 
   @override
-  Stream<String> get openedGroups => const Stream.empty();
+  Stream<PushTarget> get openedGroups => const Stream.empty();
 }
 
 /// Writes down every request and answers 204, after [hold] if set.
@@ -72,18 +81,33 @@ void main() {
   late _Recorder server;
   late ProviderContainer container;
 
-  Future<void> boot({bool serverPush = true, Future<void>? hold, Future<void>? permission}) async {
+  Future<void> boot({
+    bool serverPush = true,
+    Future<void>? hold,
+    Future<void>? permission,
+    String? device = 'device-1',
+    String? address = 'https://push.example.com/1',
+  }) async {
     SharedPreferences.setMockInitialValues({
       'settings.server': _server,
+      'push.device': ?device,
       'groups.known': jsonEncode([
         {'server': _server, 'token': 'tok', 'memberId': 'a', 'addedAt': '2026-01-01T00:00:00Z'},
         {'server': _server, 'token': 'unpicked', 'addedAt': '2026-01-01T00:00:00Z'},
       ]),
     });
     final prefs = await SharedPreferences.getInstance();
-    push = _FakePush()..hold = permission;
+    push = _FakePush()
+      ..hold = permission
+      ..address = address;
     server = _Recorder()..hold = hold;
-    final info = ServerInfo(version: '1.0.0', authMode: AuthMode.link, push: serverPush, publicUrl: _server);
+    final info = ServerInfo(
+      version: '1.0.0',
+      authMode: AuthMode.link,
+      push: serverPush,
+      vapidPublicKey: serverPush ? 'vapid-key' : null,
+      publicUrl: _server,
+    );
     container = ProviderContainer(
       overrides: [
         prefsProvider.overrideWithValue(prefs),
@@ -105,18 +129,45 @@ void main() {
   test('registers the groups with a member picked, once things settle', () async {
     await boot();
     expect(server.requests, [
-      'PUT /api/v1/push/devices/device-1 {"groups":[{"token":"tok","memberId":"a"}]}',
+      'PUT /api/v1/push/devices/device-1 {"endpoint":"https://push.example.com/1","p256dh":"pub","auth":"auth",'
+          '"groups":[{"token":"tok","memberId":"a"}]}',
     ]);
     expect(push.asked, 1);
+    expect(push.keys, ['vapid-key']);
 
     container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
     await _settle();
-    expect(server.requests.last, contains('{"token":"tok","memberId":"a"},{"token":"unpicked","memberId":"b"}'));
+    expect(
+      server.requests.last,
+      contains('{"token":"tok","memberId":"a"},{"token":"unpicked","memberId":"b"}'),
+    );
 
-    push.address = 'device-2';
-    push.refreshes.add('device-2');
+    push.address = 'https://push.example.com/2';
+    push.refreshes.add(null);
     await _settle();
-    expect(server.requests.last, startsWith('PUT /api/v1/push/devices/device-2 '));
+    expect(
+      server.requests.last,
+      startsWith('PUT /api/v1/push/devices/device-1 {"endpoint":"https://push.example.com/2"'),
+    );
+  });
+
+  test('a device makes up its own ID and keeps it', () async {
+    await boot(device: null);
+    final id = container.read(prefsProvider).getString('push.device');
+    expect(id, matches(RegExp(r'^[A-Za-z0-9_-]{43}$')));
+    expect(server.requests, [startsWith('PUT /api/v1/push/devices/$id ')]);
+  });
+
+  test('a phone without a push service registers nothing, and can still be forgotten', () async {
+    await boot(address: null);
+    expect(server.requests, isEmpty);
+    expect(push.keys, ['vapid-key']);
+
+    // Registered before, when the phone had a push service.
+    await container.read(prefsProvider).setString('push.server', _server);
+    container.read(settingsProvider.notifier).setNotifications(false);
+    await _settle();
+    expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
   });
 
   test('turning notifications off tells the server to forget the device', () async {
@@ -136,6 +187,7 @@ void main() {
     await boot(serverPush: false);
     expect(server.requests, isEmpty);
     expect(push.asked, 0);
+    expect(push.keys, isEmpty);
     expect(container.read(pushAvailableProvider), isFalse);
   });
 
@@ -174,5 +226,16 @@ void main() {
     await _settle();
     expect(server.requests, hasLength(2));
     expect(server.requests.last, endsWith(' as b'));
+  });
+
+  test('each expense has a notification ID of its own', () {
+    const a = '0b9f6c1e-3d2a-4c8e-9a51-6f2d7e4b1c03';
+    const b = '5e7a2d90-81c4-4f3b-b6e2-0c9d1a8f3e57';
+    expect(notificationId(a), notificationId(a));
+    expect(notificationId(a), isNot(notificationId(b)));
+    // Positive and within 32 bits, as Android wants.
+    for (final id in [notificationId(a), notificationId(b), notificationId('')]) {
+      expect(id, inInclusiveRange(0, 0x7fffffff));
+    }
   });
 }

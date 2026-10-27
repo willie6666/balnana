@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Balnana yellow, behind the notification icon. -->
-    <color name="notification">#FFE8A800</color>
     <!-- Behind the launcher icon's coin. -->
     <color name="ic_launcher_background">#FFE8A800</color>
     <!-- Behind the splash logo: the app's light surface color. -->

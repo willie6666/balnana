@@ -93,6 +93,7 @@ class ServerInfo {
     this.emailRequired = true,
     this.oauthProviders = const [],
     this.push = false,
+    this.vapidPublicKey,
     required this.publicUrl,
     this.sourceUrl,
     this.privacyUrl,
@@ -129,6 +130,10 @@ class ServerInfo {
             if (p case {'id': final String id, 'name': final String name}) OAuthProvider(id: id, name: name),
       ],
       push: json['push'] == true,
+      vapidPublicKey: switch (json['vapidPublicKey']) {
+        final String key when key.isNotEmpty => key,
+        _ => null,
+      },
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
       privacyUrl: _webUrl(json['privacyUrl']),
@@ -161,9 +166,12 @@ class ServerInfo {
   /// Google or OpenID Connect sign-in, as buttons on the sign-in page.
   final List<OAuthProvider> oauthProviders;
 
-  /// The server sends push notifications, to builds of the app made for its
-  /// Firebase project.
+  /// The server sends push notifications.
   final bool push;
+
+  /// The key the server signs its push messages with (VAPID, RFC 8292),
+  /// which the phone's push service checks them against; set with [push].
+  final String? vapidPublicKey;
   final String publicUrl;
 
   /// Where to get the server's source code, if the operator set it. Only

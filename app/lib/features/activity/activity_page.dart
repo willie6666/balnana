@@ -23,7 +23,7 @@ class ActivityPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final hasServer = ref.watch(serverUrlProvider) != null;
-    final async = hasServer ? ref.watch(activityFeedProvider) : null;
+    final async = hasServer ? ref.watchCurrent(activityFeedProvider) : null;
     final items = async?.value;
 
     if (items == null || items.isEmpty) {
