@@ -3,7 +3,7 @@ info:
   title: Balnana API
   version: 0.1.0
   description: |
-    Group expense splitting. See docs/PLAN.md for the access model.
+    Group expense splitting.
 
     Money is always a decimal string (for example "1234.50"), never a JSON
     number. The number of decimal places is the group's `minorDigits`.

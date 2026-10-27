@@ -1,12 +1,15 @@
-# Editors / OS
+# Editors / OS / agents
+.agents/
+.claude/
 .DS_Store
 *.swp
 .idea/
 *.iml
 .vscode/
 
-# Local dev data
+# Local dev data and notes
 /reference/
+/docs/
 /.pgdata/
 /.pgsocket/
 

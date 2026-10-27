@@ -17,7 +17,7 @@ cannot infer the missing direction from the old balance rows.
 
 > Status: early development, preparing the first release (milestone M6). Groups,
 > expenses, balances, both access modes, live updates, statistics, imports and
-> exports, receipts and push notifications work. See [docs/PLAN.md](docs/PLAN.md).
+> exports, receipts and push notifications work.
 
 ## Self-hosting with Docker
 
@@ -192,11 +192,7 @@ The repository is a monorepo:
 | `server/`  | Go server (stdlib `net/http`, pgx, goose, oapi-codegen)               |
 | `app/`     | Flutter app for Android and the web                                  |
 | `api/`     | `openapi.yaml` (the API contract) and shared test vectors            |
-| `docs/`    | Plan and design notes                                                |
 | `scripts/` | Development helpers                                                  |
-
-See [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the review findings, follow-up
-status, and verification results for the reviewed revision.
 
 ### Setup
 
