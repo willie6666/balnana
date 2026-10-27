@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/currency_field.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/symbol_field.dart';
@@ -154,20 +155,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                 ],
               ),
               const SizedBox(height: BSpace.s16),
-              TextFormField(
-                controller: _currency,
-                textCapitalization: TextCapitalization.characters,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                decoration: InputDecoration(
-                  labelText: l10n.groupCurrency,
-                  helperText: l10n.groupCurrencyHelp,
-                ),
-                validator: (v) =>
-                    RegExp(r'^[A-Za-z]{3}$').hasMatch((v ?? '').trim()) ? null : l10n.errorInvalidCurrency,
-              ),
+              CurrencyField(controller: _currency),
               const SizedBox(height: BSpace.s16),
               ListenableBuilder(
                 listenable: _currency,

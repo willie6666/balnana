@@ -643,6 +643,48 @@ abstract class AppLocalizations {
   /// **'All expenses in this group use this currency. It can\'t be changed later.'**
   String get groupCurrencyHelp;
 
+  /// No description provided for @groupCurrencyHelpNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}. All expenses in this group use this currency. It can\'t be changed later.'**
+  String groupCurrencyHelpNamed(String name);
+
+  /// No description provided for @currencyChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a currency'**
+  String get currencyChoose;
+
+  /// No description provided for @currencySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by code or name'**
+  String get currencySearchHint;
+
+  /// No description provided for @currencySuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested'**
+  String get currencySuggested;
+
+  /// No description provided for @currencyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All currencies'**
+  String get currencyAll;
+
+  /// No description provided for @currencyUseTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {code}'**
+  String currencyUseTyped(String code);
+
+  /// No description provided for @currencyNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No currency matches. Type its three-letter code to use it.'**
+  String get currencyNoMatch;
+
   /// No description provided for @groupSymbol.
   ///
   /// In en, this message translates to:

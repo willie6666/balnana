@@ -296,6 +296,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCurrencyHelp => 'All expenses in this group use this currency. It can\'t be changed later.';
 
   @override
+  String groupCurrencyHelpNamed(String name) {
+    return '$name. All expenses in this group use this currency. It can\'t be changed later.';
+  }
+
+  @override
+  String get currencyChoose => 'Choose a currency';
+
+  @override
+  String get currencySearchHint => 'Search by code or name';
+
+  @override
+  String get currencySuggested => 'Suggested';
+
+  @override
+  String get currencyAll => 'All currencies';
+
+  @override
+  String currencyUseTyped(String code) {
+    return 'Use $code';
+  }
+
+  @override
+  String get currencyNoMatch => 'No currency matches. Type its three-letter code to use it.';
+
+  @override
   String get groupSymbol => 'Symbol';
 
   @override
