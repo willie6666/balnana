@@ -1,12 +1,38 @@
-# Balnana
+<p align="center">
+  <img src="app/web/icons/Icon-192.png" width="88" height="88" alt="Balnana logo">
+</p>
 
-Split group expenses: who paid what, who owes whom.
+<h1 align="center">Balnana</h1>
+
+<p align="center"><strong>Split group expenses. Settle up with fewer payments.</strong></p>
+
+<p align="center">Android &amp; web · Self-hosted · AGPL-3.0</p>
 
 Balnana is a self-hosted group expense splitter for Android and the web. Share a
 private group link with friends, add what everyone paid, and Balnana works out the
 fewest payments that settle everyone up.
 
 > Status: early development, preparing the first release.
+
+## A weekend in Kyoto
+
+Four friends, a weekend in Kyoto, and ¥123,400 in shared expenses. Track every
+purchase, see who owes whom, and understand where the money went.
+
+<table>
+  <tr>
+    <th>Keep track of expenses</th>
+    <th>See how to settle up</th>
+    <th>Explore your spending</th>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/expenses.png" width="260" alt="Kyoto weekend expense list with categorized meals, transport and activities"></td>
+    <td><img src="assets/screenshots/balances.png" width="260" alt="Alex is owed ¥37,430, with balances for four friends and three suggested payments"></td>
+    <td><img src="assets/screenshots/statistics.png" width="260" alt="Statistics for ¥123,400 across 12 expenses, broken down by category and member"></td>
+  </tr>
+</table>
+
+Actual Android emulator screenshots with fictional demo data.
 
 ## Features
 

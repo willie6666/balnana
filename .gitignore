@@ -13,6 +13,7 @@ skills-lock.json
 /docs/
 /.pgdata/
 /.pgsocket/
+/scripts/
 
 # Nix (each developer keeps their own environment)
 *.nix
