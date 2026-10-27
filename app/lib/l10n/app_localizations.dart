@@ -559,6 +559,12 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get groupColor;
 
+  /// No description provided for @colorSwatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Color {number} of {count}'**
+  String colorSwatch(int number, int count);
+
   /// No description provided for @groupPeople.
   ///
   /// In en, this message translates to:

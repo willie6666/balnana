@@ -96,6 +96,8 @@
   "groupCurrency": "Currency",
   "groupCurrencyHelp": "All expenses in this group use this currency. It can't be changed later.",
   "groupColor": "Color",
+  "colorSwatch": "Color {number} of {count}",
+  "@colorSwatch": {"placeholders": {"number": {"type": "int"}, "count": {"type": "int"}}},
   "groupPeople": "People",
   "groupYourName": "Your name",
   "groupPersonName": "Person {number}",

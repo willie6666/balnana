@@ -304,6 +304,7 @@ class _Settings extends ConsumerWidget {
                 tooltip: l10n.groupEdit,
                 onPressed: () => showModalBottomSheet<void>(
                   context: context,
+                  useRootNavigator: true,
                   isScrollControlled: true,
                   showDragHandle: true,
                   builder: (_) => _EditGroupSheet(group: group),

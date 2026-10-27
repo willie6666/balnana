@@ -99,12 +99,15 @@ class GroupedSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GroupedTile(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      onTap: () => onChanged(!value),
-      trailing: Switch(value: value, onChanged: onChanged),
+    // One node for the row and its switch, so a screen reader reads the title with the state.
+    return MergeSemantics(
+      child: GroupedTile(
+        icon: icon,
+        title: title,
+        subtitle: subtitle,
+        onTap: () => onChanged(!value),
+        trailing: Switch(value: value, onChanged: onChanged),
+      ),
     );
   }
 }

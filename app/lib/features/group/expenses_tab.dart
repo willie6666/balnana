@@ -13,6 +13,7 @@ import '../../data/categories.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/colors.dart';
+import '../../ui/layout.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
@@ -471,7 +472,8 @@ class ExpenseTile extends StatelessWidget {
               const SizedBox(width: BSpace.s8),
               if (effect != null)
                 ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 140),
+                  // Narrow on phones, so the effect wraps under its label and leaves the title room.
+                  constraints: BoxConstraints(maxWidth: WindowSize.of(context) == WindowSize.compact ? 112 : 160),
                   child: Text(
                     effect,
                     textAlign: TextAlign.end,
@@ -491,6 +493,7 @@ class ExpenseTile extends StatelessWidget {
 /// Details of a recorded payment, with a way to delete it.
 Future<void> showPaymentSheet(BuildContext context, Group group, Expense payment) => showModalBottomSheet<void>(
   context: context,
+  useRootNavigator: true,
   showDragHandle: true,
   builder: (context) => _PaymentSheet(group: group, payment: payment),
 );
@@ -519,7 +522,7 @@ class _PaymentSheet extends ConsumerWidget {
             Text(l10n.paymentTitle(from, to), style: text.titleLarge, textAlign: TextAlign.center),
             Text(
               formatMoney(context, payment.amount, group.minorDigits, group.currency),
-              style: text.moneyHero.copyWith(fontSize: 36),
+              style: text.moneyLarge,
             ),
             Text(DateFormat.yMMMEd(locale).add_jm().format(payment.occurredAt.toLocal()), style: text.bodyMedium),
             const SizedBox(height: BSpace.s24),

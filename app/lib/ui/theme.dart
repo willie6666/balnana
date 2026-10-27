@@ -142,9 +142,19 @@ extension MoneyTextTheme on TextTheme {
     fontFeatures: const [FontFeature.tabularFigures()],
   );
 
+  /// A single amount that heads a sheet.
+  TextStyle get moneyLarge => displaySmall!.copyWith(
+    fontWeight: FontWeight.w800,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
   /// Amounts in list rows.
   TextStyle get moneyRow =>
       titleMedium!.copyWith(fontWeight: FontWeight.w700, fontFeatures: const [FontFeature.tabularFigures()]);
+
+  /// Amounts in dense rows and supporting lines.
+  TextStyle get moneySmall =>
+      titleSmall!.copyWith(fontWeight: FontWeight.w700, fontFeatures: const [FontFeature.tabularFigures()]);
 }
 
 /// Whether the app wears the wallpaper's colors, which group pages then keep

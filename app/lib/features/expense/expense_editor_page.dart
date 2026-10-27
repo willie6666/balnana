@@ -506,7 +506,7 @@ class _EditorState extends ConsumerState<_Editor> {
                   controller: _amount,
                   autofocus: !editing,
                   textAlign: TextAlign.center,
-                  style: text.moneyHero.copyWith(fontSize: 44),
+                  style: text.moneyHero,
                   keyboardType: TextInputType.numberWithOptions(decimal: _digits > 0),
                   inputFormatters: [AmountFormatter(_digits)],
                   decoration: InputDecoration(
@@ -577,11 +577,21 @@ class _EditorState extends ConsumerState<_Editor> {
                 FormSection(l10n.expenseSplit),
                 SegmentedButton<SplitMethod>(
                   showSelectedIcon: false,
+                  // Four segments share a phone's width: tighter padding keeps each label on one line.
+                  style: const ButtonStyle(
+                    padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: BSpace.s8)),
+                  ),
                   segments: [
-                    ButtonSegment(value: SplitMethod.equal, label: Text(l10n.splitEqual)),
-                    ButtonSegment(value: SplitMethod.exact, label: Text(l10n.splitExact)),
-                    ButtonSegment(value: SplitMethod.percent, label: Text(l10n.splitPercent)),
-                    ButtonSegment(value: SplitMethod.shares, label: Text(l10n.splitShares)),
+                    for (final (method, label) in [
+                      (SplitMethod.equal, l10n.splitEqual),
+                      (SplitMethod.exact, l10n.splitExact),
+                      (SplitMethod.percent, l10n.splitPercent),
+                      (SplitMethod.shares, l10n.splitShares),
+                    ])
+                      ButtonSegment(
+                        value: method,
+                        label: Text(label, maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis),
+                      ),
                   ],
                   selected: {_method},
                   onSelectionChanged: (s) => _setMethod(s.single),
@@ -771,7 +781,7 @@ class _SplitRow extends StatelessWidget {
                 child: Text(
                   included && share != null ? formatMoney(context, share!, s._digits, s._group.currency) : '',
                   textAlign: TextAlign.end,
-                  style: text.moneyRow.copyWith(color: scheme.onSurfaceVariant, fontSize: 14),
+                  style: text.moneySmall.copyWith(color: scheme.onSurfaceVariant),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -368,7 +368,7 @@ class _CategoryRow extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: BSpace.s8),
-                      Text(amount, style: text.moneyRow.copyWith(fontSize: text.titleSmall?.fontSize)),
+                      Text(amount, style: text.moneySmall),
                     ],
                   ),
                   const SizedBox(height: BSpace.s4),
@@ -494,48 +494,50 @@ class _MonthChartState extends State<_MonthChart> {
           selected: m.month == picked.month,
           label: '${name(m.month, long: true)}, ${widget.money(m.amount)}',
           excludeSemantics: true,
-          child: MouseRegion(
-            onEnter: (_) => setState(() => _picked = m.month),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _picked = m.month),
-              child: SizedBox(
-                width: _slot,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: _plotHeight,
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: AnimatedContainer(
-                          duration: BMotion.short,
-                          width: 20,
-                          height: biggest <= BigInt.zero
-                              ? 0
-                              : math.max(2, _plotHeight * (m.amount / biggest).clamp(0, 1).toDouble()),
-                          decoration: BoxDecoration(
-                            color: m.month == picked.month
-                                ? scheme.primary
-                                : scheme.primary.withValues(alpha: 0.4),
-                            borderRadius: const BorderRadius.vertical(top: BShape.rXs),
-                          ),
+          onTap: () => setState(() => _picked = m.month),
+          child: InkWell(
+            // Hovering picks a month too, so a pointer can sweep across the chart.
+            onHover: (hovering) {
+              if (hovering) setState(() => _picked = m.month);
+            },
+            onTap: () => setState(() => _picked = m.month),
+            borderRadius: const BorderRadius.all(BShape.rXs),
+            child: SizedBox(
+              width: _slot,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: _plotHeight,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedContainer(
+                        duration: BMotion.short,
+                        width: 20,
+                        height: biggest <= BigInt.zero
+                            ? 0
+                            : math.max(2, _plotHeight * (m.amount / biggest).clamp(0, 1).toDouble()),
+                        decoration: BoxDecoration(
+                          color: m.month == picked.month
+                              ? scheme.primary
+                              : scheme.primary.withValues(alpha: 0.4),
+                          borderRadius: const BorderRadius.vertical(top: BShape.rXs),
                         ),
                       ),
                     ),
-                    // Room for the baseline, drawn once under every column.
-                    const SizedBox(height: 1),
-                    const SizedBox(height: BSpace.s4),
-                    Text(
-                      name(m.month),
-                      maxLines: 1,
-                      overflow: TextOverflow.visible,
-                      softWrap: false,
-                      style: text.labelSmall?.copyWith(
-                        color: m.month == picked.month ? scheme.onSurface : scheme.onSurfaceVariant,
-                      ),
+                  ),
+                  // Room for the baseline, drawn once under every column.
+                  const SizedBox(height: 1),
+                  const SizedBox(height: BSpace.s4),
+                  Text(
+                    name(m.month),
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
+                    softWrap: false,
+                    style: text.labelSmall?.copyWith(
+                      color: m.month == picked.month ? scheme.onSurface : scheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

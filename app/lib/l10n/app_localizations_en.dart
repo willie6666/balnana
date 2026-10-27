@@ -254,6 +254,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupColor => 'Color';
 
   @override
+  String colorSwatch(int number, int count) {
+    return 'Color $number of $count';
+  }
+
+  @override
   String get groupPeople => 'People';
 
   @override

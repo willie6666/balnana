@@ -200,7 +200,7 @@ class BalanceBeam extends StatelessWidget {
             child: Text(
               amount,
               textAlign: TextAlign.end,
-              style: text.moneyRow.copyWith(color: color, fontSize: 15),
+              style: text.moneySmall.copyWith(color: color),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

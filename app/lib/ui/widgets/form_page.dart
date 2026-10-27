@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/l10n.dart';
 import '../layout.dart';
 import '../tokens.dart';
+import 'member_avatar.dart';
 
 /// A full-screen form: a small app bar with a close button, a centered
 /// scrolling column and an optional primary action pinned to the bottom.
@@ -103,10 +105,11 @@ class ColorPicker extends StatelessWidget {
       spacing: BSpace.s8,
       runSpacing: BSpace.s8,
       children: [
-        for (final color in colors)
+        for (final (i, color) in colors.indexed)
           Semantics(
             selected: color == selected,
             button: true,
+            label: context.l10n.colorSwatch(i + 1, colors.length),
             child: InkResponse(
               onTap: () => onSelected(color),
               radius: 24,
@@ -123,7 +126,7 @@ class ColorPicker extends StatelessWidget {
                     strokeAlign: BorderSide.strokeAlignOutside,
                   ),
                 ),
-                child: color == selected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+                child: color == selected ? Icon(Icons.check, color: onColor(color), size: 20) : null,
               ),
             ),
           ),

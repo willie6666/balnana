@@ -15,6 +15,7 @@ import '../../ui/widgets/member_avatar.dart';
 /// or join as someone new. The choice stays on this device.
 Future<void> showIdentitySheet(BuildContext context, Group group) => showModalBottomSheet<void>(
   context: context,
+  useRootNavigator: true,
   isScrollControlled: true,
   showDragHandle: true,
   builder: (context) => _IdentitySheet(group: group),
