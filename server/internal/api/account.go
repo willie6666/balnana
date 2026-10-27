@@ -10,6 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"balnana/internal/config"
 )
 
 // confirmPassword checks the password of an account that has one, before a
@@ -37,6 +39,9 @@ func (s *Server) confirmPassword(ctx context.Context, u *user, password *string)
 // the one checked. A reclaim or reset in between revokes both, and a request
 // that started before it must not undo it.
 func lockAccount(ctx context.Context, tx pgx.Tx, u *user, checked *string) error {
+	if err := lockUsersTable(ctx, tx); err != nil {
+		return err
+	}
 	var hash *string
 	var live bool
 	err := tx.QueryRow(ctx, `
@@ -52,6 +57,14 @@ func lockAccount(ctx context.Context, tx pgx.Tx, u *user, checked *string) error
 		return &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
 	}
 	return nil
+}
+
+// lockUsersTable takes the table lock an update of users needs, before any
+// row of it: a sign-up or OAuth sign-in holds the whole table while it waits
+// for a row, so a row locked first and the table after could deadlock with it.
+func lockUsersTable(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `lock table users in row exclusive mode`)
+	return err
 }
 
 func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) (ChangeEmailResponseObject, error) {
@@ -177,8 +190,11 @@ func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (Delet
 // so the groups' balances and history still add up; whoever is left in a
 // group can rename or claim them. Ownership passes to the account that has
 // been in the group longest. A group that no other account could reach
-// afterwards is deleted with it.
+// afterwards is deleted with it; one its link still opens stays.
 func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) error {
+	if err := lockUsersTable(ctx, tx); err != nil {
+		return err
+	}
 	// The account's row first: a member it is joining as waits on it, so the
 	// groups found next are all of them.
 	if _, err := tx.Exec(ctx, `select 1 from users where id = $1 for update`, userID); err != nil {
@@ -210,12 +226,14 @@ func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) er
 	if err != nil {
 		return err
 	}
+	// The same rule as resolveAccess: in link mode every link opens its group.
+	cfg := s.conf()
 	_, err = tx.Exec(ctx, `
 		delete from groups g
-		where g.id = any($1::uuid[]) and not ($2 and g.link_access)
+		where g.id = any($1::uuid[]) and not $2 and not ($3 and g.link_access)
 		  and not exists (select 1 from members o
-		                  where o.group_id = g.id and o.user_id is not null and o.user_id <> $3 and o.left_at is null)`,
-		groups, s.conf().LinkGroups, userID)
+		                  where o.group_id = g.id and o.user_id is not null and o.user_id <> $4 and o.left_at is null)`,
+		groups, cfg.AuthMode != config.AuthModeAccounts, cfg.LinkGroups, userID)
 	if err != nil {
 		return err
 	}

@@ -104,6 +104,20 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
     );
   }
 
+  /// Remembers [token] for [server], the one it was created on, even when
+  /// another server has been chosen since: the token goes to its own server
+  /// alone. A link only the answer to a request carried is lost otherwise.
+  ///
+  /// It never goes through [state], which belongs to whichever server is
+  /// chosen when it is next read.
+  void addOn(String server, String token, {String? memberId}) {
+    final all = _all();
+    if (all.any((g) => g.server == server && g.token == token)) return;
+    final entry = KnownGroup(server: server, token: token, memberId: memberId, addedAt: DateTime.now());
+    ref.read(prefsProvider).setString(_key, jsonEncode([entry, ...all].map((g) => g.toJson()).toList()));
+    ref.invalidateSelf();
+  }
+
   void setMember(String token, String? memberId) =>
       _update((mine) => [for (final g in mine) g.token == token ? g.copyWith(memberId: () => memberId) : g]);
 

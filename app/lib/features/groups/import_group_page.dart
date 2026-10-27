@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
 import '../../data/models.dart';
@@ -83,6 +85,12 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
       setState(() => _error = l10n.errorImportMe);
       return;
     }
+    // Taken now: the page may be closed, or another server chosen, before
+    // the answer comes, and the new group's link must not be lost with it.
+    final from = ref.read(identityProvider);
+    final signedIn = ref.read(signedInProvider);
+    final known = ref.read(knownGroupsProvider.notifier);
+    final container = ProviderScope.containerOf(context, listen: false);
     setState(() {
       _busy = true;
       _error = null;
@@ -90,12 +98,12 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
     try {
       final group = await api.importGroup(file, name: _name.text.trim(), me: me, untitled: l10n.importUntitled);
       // A signed-in account keeps its groups on the server instead.
-      if (!ref.read(signedInProvider)) {
+      if (from.server case final server? when !signedIn) {
         final mine = group.members.where((m) => m.name.toLowerCase() == me.toLowerCase()).firstOrNull;
-        ref.read(knownGroupsProvider.notifier).add(group.token, memberId: mine?.id);
+        known.addOn(server, group.token, memberId: mine?.id);
       }
-      ref.invalidate(summariesProvider);
-      if (mounted) context.go('/g/${group.token}');
+      container.invalidate(summariesProvider);
+      if (mounted && ref.read(serverUrlProvider) == from.server) context.go('/g/${group.token}');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {

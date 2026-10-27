@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:balnana/data/live.dart';
 import 'package:dio/dio.dart';
@@ -76,5 +78,12 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     expect(got, [LiveEvent.connected, LiveEvent.change]);
     expect(requests, 1);
+  });
+
+  test('event names come from the stream however it is cut up', () async {
+    const text = 'retry: 3000\n\n: ping\n\nevent: change\ndata: {}\n\nevent: gone\ndata: {}\n\n';
+    final bytes = utf8.encode(text);
+    final chunks = [for (var i = 0; i < bytes.length; i += 7) bytes.sublist(i, min(i + 7, bytes.length))];
+    expect(await eventNames(Stream.fromIterable(chunks)).toList(), ['change', 'gone']);
   });
 }

@@ -38,6 +38,9 @@ type SMTP struct {
 	User     string
 	Password string
 	From     string
+	// AllowPlaintext sends mail without TLS to a server that does not offer
+	// STARTTLS. Off, mail goes unencrypted only to this machine.
+	AllowPlaintext bool
 }
 
 func (s SMTP) Enabled() bool { return s.Host != "" }
@@ -257,6 +260,9 @@ func load(getenv func(string) string) (*Config, error) {
 			User:     e.managed("BALNANA_SMTP_USER"),
 			Password: e.managed("BALNANA_SMTP_PASSWORD"),
 			From:     e.managed("BALNANA_SMTP_FROM"),
+			// Only from the environment: it lowers the protection of the
+			// links in emails, which /admin should not do in passing.
+			AllowPlaintext: e.bool("BALNANA_SMTP_ALLOW_PLAINTEXT", false),
 		},
 	}
 

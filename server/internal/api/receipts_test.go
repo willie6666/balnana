@@ -372,3 +372,61 @@ func TestReceiptPixelBudget(t *testing.T) {
 		}
 	}
 }
+
+// An upload that stops sending gives up its turn after receiptReadTime, so
+// the uploads waiting behind it go ahead.
+func TestReceiptSlowUploadTimesOut(t *testing.T) {
+	old := receiptReadTime
+	receiptReadTime = 300 * time.Millisecond
+	t.Cleanup(func() { receiptReadTime = old })
+	c := newClient(t)
+	g := createGroup(c, "Ana")
+	var e Expense
+	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{
+		Title: "Lunch", Amount: "1", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+		Payers: []PayerInput{{MemberId: g.Members[0].Id, Amount: "1"}}, SplitMethod: "equal",
+		Splits: []Share{{MemberId: g.Members[0].Id}},
+	}, &e)
+	srv := httptest.NewServer(c.h)
+	defer srv.Close()
+	url := srv.URL + BasePath + "/g/" + g.Token + "/expenses/" + e.Id + "/receipt"
+
+	stalled, sender := io.Pipe()
+	defer sender.Close()
+	slow := make(chan int, 1)
+	go func() {
+		req, _ := http.NewRequest("PUT", url, stalled)
+		req.Header.Set("Content-Type", "image/png")
+		req.ContentLength = 1000
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			slow <- 0
+			return
+		}
+		res.Body.Close()
+		slow <- res.StatusCode
+	}()
+	if _, err := sender.Write([]byte("\x89PNG")); err != nil { // then nothing more
+		t.Fatal(err)
+	}
+	for deadline := time.Now().Add(5 * time.Second); len(receiptWorkers) == 0; time.Sleep(5 * time.Millisecond) {
+		if time.Now().After(deadline) {
+			t.Fatal("the stalled upload never took its turn")
+		}
+	}
+
+	start := time.Now()
+	req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte("not a PNG")))
+	req.Header.Set("Content-Type", "image/png")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusUnsupportedMediaType || time.Since(start) > 5*time.Second {
+		t.Fatalf("waiting upload: status %d after %v", res.StatusCode, time.Since(start))
+	}
+	if status := <-slow; status != http.StatusRequestTimeout {
+		t.Fatalf("stalled upload: status %d", status)
+	}
+}

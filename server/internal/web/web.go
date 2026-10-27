@@ -6,12 +6,15 @@
 package web
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"io/fs"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 )
 
 //go:embed all:dist
@@ -20,11 +23,19 @@ var embedded embed.FS
 // Handler serves static files and falls back to index.html for app routes
 // such as /g/<token>, so deep links work on reload.
 func Handler(dir string) http.Handler {
-	var files fs.FS
 	if dir != "" {
-		files = os.DirFS(dir)
-	} else {
-		files, _ = fs.Sub(embedded, "dist")
+		return serve(os.DirFS(dir), false)
+	}
+	files, _ := fs.Sub(embedded, "dist")
+	return serve(files, true)
+}
+
+// serve serves files. With tagged, which files without modification times
+// (embedded ones) need, each carries an ETag of its content.
+func serve(files fs.FS, tagged bool) http.Handler {
+	var etags *sync.Map // name to ETag
+	if tagged {
+		etags = &sync.Map{}
 	}
 	index, err := fs.ReadFile(files, "index.html")
 	if err != nil {
@@ -60,6 +71,13 @@ func Handler(dir string) http.Handler {
 			if name == "flutter_bootstrap.js" || name == "flutter_service_worker.js" || name == "version.json" {
 				w.Header().Set("Cache-Control", "no-cache")
 			}
+			// Embedded files carry no modification time, so without an ETag
+			// browsers download the megabytes of the app again on every visit.
+			if etags != nil {
+				if tag := etag(files, name, etags); tag != "" {
+					w.Header().Set("ETag", tag)
+				}
+			}
 			fileServer.ServeHTTP(w, r)
 			return
 		}
@@ -70,4 +88,20 @@ func Handler(dir string) http.Handler {
 		}
 		serveIndex(w)
 	})
+}
+
+// etag is the ETag of the embedded file name: a hash of its content, worked
+// out once.
+func etag(files fs.FS, name string, cache *sync.Map) string {
+	if tag, ok := cache.Load(name); ok {
+		return tag.(string)
+	}
+	data, err := fs.ReadFile(files, name)
+	if err != nil {
+		return ""
+	}
+	sum := sha256.Sum256(data)
+	tag := `"` + hex.EncodeToString(sum[:16]) + `"`
+	cache.Store(name, tag)
+	return tag
 }

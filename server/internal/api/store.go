@@ -204,9 +204,16 @@ func validUUID(s string) bool {
 	return true
 }
 
-// cleanText trims s and checks its length. Control characters are refused.
+// cleanText trims s and checks its length. Control characters are refused,
+// and the invisible marks that turn text right to left are taken out: in a
+// name they could make an email or notification read as something else.
 func cleanText(s string, min, max int) (string, bool) {
-	s = strings.TrimSpace(s)
+	s = strings.TrimSpace(strings.Map(func(r rune) rune {
+		if unicode.Is(unicode.Bidi_Control, r) {
+			return -1
+		}
+		return r
+	}, s))
 	n := utf8.RuneCountInString(s)
 	if n < min || n > max || !utf8.ValidString(s) {
 		return "", false

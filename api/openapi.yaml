@@ -708,12 +708,14 @@ paths:
           $ref: "#/components/responses/Error"
     delete:
       operationId: deleteGroup
-      summary: Delete the group with everything in it, for good
+      summary: Delete the group with everything in it
       description: >-
         Accounts mode: the owner only (403 `owner_only`), or any account
         member when the group has no owner left, or anyone the link opens it
         for when no account is a member any more. Link mode: anyone with the
-        link.
+        link. The group is gone for everyone at once; the server keeps it
+        archived for 30 days, when the administrator can still restore it,
+        then deletes it for good.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1068,6 +1070,8 @@ paths:
         per side. The server stores it as a JPEG of at
         most 2048 pixels a side, turned upright and without metadata such as
         where it was taken. The expense's version does not change.
+        Uploads are processed one at a time; once its turn comes, the photo
+        must arrive within two minutes, or the answer is 408 `timeout`.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:

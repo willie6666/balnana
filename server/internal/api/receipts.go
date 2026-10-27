@@ -11,7 +11,9 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/image/draw"
@@ -27,6 +29,15 @@ const (
 	maxReceiptDimension = 16_384
 	receiptQuality      = 82
 )
+
+// receiptReadTime is how long an upload may take to send its photo once its
+// turn has come. The server has no overall read timeout, as event streams
+// stay open, and an upload that never finishes would otherwise keep every
+// other one waiting.
+var receiptReadTime = 2 * time.Minute
+
+// receiptConnKey carries the upload's connection, for its read deadline.
+type receiptConnKey struct{}
 
 // One upload at a time bounds compressed input, the decoded frame (up to
 // 8 bytes per pixel), resize buffers and the optional orientation copy across
@@ -83,11 +94,17 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 		return nil, ctx.Err()
 	}
 	defer func() { <-receiptWorkers }()
+	if rc, ok := ctx.Value(receiptConnKey{}).(*http.ResponseController); ok {
+		_ = rc.SetReadDeadline(time.Now().Add(receiptReadTime))
+	}
 	raw, err := io.ReadAll(io.LimitReader(req.Body, maxReceiptBody+1))
 	if err != nil {
 		var tooBig *http.MaxBytesError
 		if errors.As(err, &tooBig) {
 			return nil, &apiError{status: http.StatusRequestEntityTooLarge, code: "too_large"}
+		}
+		if errors.Is(err, os.ErrDeadlineExceeded) {
+			return nil, &apiError{status: http.StatusRequestTimeout, code: "timeout"}
 		}
 		return nil, err
 	}

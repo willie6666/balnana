@@ -31,7 +31,8 @@ func (s *Server) ListAdminUsers(ctx context.Context, req ListAdminUsersRequestOb
 		select u.id::text, u.display_name, u.email::text, u.username::text, u.email_verified,
 		       u.password_hash is not null, u.created_at,
 		       array(select provider from oauth_identities i where i.user_id = u.id order by provider),
-		       (select count(*) from members m where m.user_id = u.id and m.left_at is null)
+		       (select count(*) from members m join groups g on g.id = m.group_id
+		        where m.user_id = u.id and m.left_at is null and g.archived_at is null)
 		from users u where `+match+`
 		order by u.created_at desc limit $2`, q, maxAdminUsers)
 	if err != nil {

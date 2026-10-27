@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
 import '../../data/providers.dart';
@@ -63,6 +65,12 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
     final currency = _currency.text.trim().toUpperCase();
     final symbol = _symbol.text.trim();
     final names = [_me.text.trim(), ..._others.map((c) => c.text.trim()).where((n) => n.isNotEmpty)];
+    // Taken now: the page may be closed, or another server chosen, before
+    // the answer comes, and the new group's link must not be lost with it.
+    final from = ref.read(identityProvider);
+    final signedIn = ref.read(signedInProvider);
+    final known = ref.read(knownGroupsProvider.notifier);
+    final container = ProviderScope.containerOf(context, listen: false);
     setState(() => _busy = true);
     try {
       final group = await api.createGroup(
@@ -76,11 +84,11 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
       );
       // The creator is the first member. A signed-in account keeps its groups
       // on the server instead.
-      if (!ref.read(signedInProvider)) {
-        ref.read(knownGroupsProvider.notifier).add(group.token, memberId: group.members.first.id);
+      if (from.server case final server? when !signedIn) {
+        known.addOn(server, group.token, memberId: group.members.first.id);
       }
-      ref.invalidate(summariesProvider);
-      if (mounted) context.go('/g/${group.token}');
+      container.invalidate(summariesProvider);
+      if (mounted && ref.read(serverUrlProvider) == from.server) context.go('/g/${group.token}');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

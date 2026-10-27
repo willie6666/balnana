@@ -33,7 +33,9 @@ type Sender interface {
 }
 
 // SMTP sends through an SMTP server: implicit TLS on port 465, otherwise
-// STARTTLS whenever the server offers it (and always before logging in).
+// STARTTLS. Emails carry sign-in links, so a server that does not offer
+// STARTTLS is refused (someone in between may have hidden it), unless it is
+// on this machine or plain text is allowed.
 type SMTP struct {
 	cfg  config.SMTP
 	from *mail.Address
@@ -77,6 +79,8 @@ func (s *SMTP) Send(ctx context.Context, m Message) error {
 			if err := c.StartTLS(tlsConfig); err != nil {
 				return err
 			}
+		} else if !plaintextAllowed(s.cfg) {
+			return fmt.Errorf("%s does not offer STARTTLS; set BALNANA_SMTP_ALLOW_PLAINTEXT=true to send without encryption", addr)
 		}
 	}
 	if s.cfg.User != "" {
@@ -123,4 +127,14 @@ func (s *SMTP) compose(m Message) []byte {
 	_, _ = qp.Write([]byte(strings.ReplaceAll(m.Body, "\n", "\r\n")))
 	_ = qp.Close()
 	return b.Bytes()
+}
+
+// plaintextAllowed reports whether mail may go to cfg's server unencrypted:
+// when it runs on this machine, or the operator allowed it.
+func plaintextAllowed(cfg config.SMTP) bool {
+	if cfg.AllowPlaintext || cfg.Host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(cfg.Host)
+	return ip != nil && ip.IsLoopback()
 }
