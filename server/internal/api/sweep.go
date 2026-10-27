@@ -10,6 +10,11 @@ import (
 
 const sweepEvery = time.Hour
 
+// archiveKeep is how long a deleted group is kept before it is gone for
+// good. Until then the administrator can bring it back by clearing its
+// archived_at in the database.
+const archiveKeep = 30 * 24 * time.Hour
+
 // expiringTables have an expires_at column.
 var expiringTables = []string{"sessions", "email_tokens", "invites", "oauth_logins", "oauth_codes", "admin_sessions"}
 
@@ -41,5 +46,9 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 		}
 		total += tag.RowsAffected()
 	}
-	return total, nil
+	tag, err := s.db.Exec(ctx, `delete from groups where archived_at < $1`, time.Now().Add(-archiveKeep))
+	if err != nil {
+		return total, err
+	}
+	return total + tag.RowsAffected(), nil
 }

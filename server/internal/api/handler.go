@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"mime"
@@ -90,6 +91,10 @@ func checkBodies(next http.Handler) http.Handler {
 			return
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		if receipt {
+			// PutReceipt sets a deadline on the photo once its turn comes.
+			r = r.WithContext(context.WithValue(r.Context(), receiptConnKey{}, http.NewResponseController(w)))
+		}
 		next.ServeHTTP(w, r)
 	})
 }

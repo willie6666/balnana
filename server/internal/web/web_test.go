@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/fstest"
 )
 
 func TestSPAFallback(t *testing.T) {
@@ -51,5 +52,27 @@ func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Files without a modification time, as embedded ones are, carry an ETag, so
+// a browser that has them is answered 304 instead of downloading them again.
+func TestEmbeddedETag(t *testing.T) {
+	h := serve(fstest.MapFS{
+		"index.html":   {Data: []byte("<html>app</html>")},
+		"main.dart.js": {Data: []byte("js")},
+	}, true)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/main.dart.js", nil))
+	tag := rec.Header().Get("ETag")
+	if rec.Code != 200 || tag == "" {
+		t.Fatalf("status %d, etag %q", rec.Code, tag)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/main.dart.js", nil)
+	req.Header.Set("If-None-Match", tag)
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotModified {
+		t.Fatalf("revalidation: status %d", rec.Code)
 	}
 }

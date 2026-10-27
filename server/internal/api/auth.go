@@ -521,17 +521,25 @@ func (s *Server) UpdateMe(ctx context.Context, req UpdateMeRequestObject) (Updat
 		return nil, err
 	}
 	in := req.Body
+	var name, locale *string
 	if in.Name != nil {
-		if u.name, err = cleanName(*in.Name); err != nil {
+		n, err := cleanName(*in.Name)
+		if err != nil {
 			return nil, err
 		}
+		name = &n
 	}
 	if in.Locale != nil {
-		if u.locale, err = cleanLocale(in.Locale); err != nil {
+		if locale, err = cleanLocale(in.Locale); err != nil {
 			return nil, err
 		}
 	}
-	if _, err := s.db.Exec(ctx, `update users set display_name = $2, locale = $3 where id = $1`, u.id, u.name, u.locale); err != nil {
+	// Only what was sent changes: another device may be changing the rest.
+	err = s.db.QueryRow(ctx, `
+		update users set display_name = coalesce($2, display_name),
+		                 locale = case when $4 then $3 else locale end
+		where id = $1 returning display_name, locale`, u.id, name, locale, in.Locale != nil).Scan(&u.name, &u.locale)
+	if err != nil {
 		return nil, err
 	}
 	return UpdateMe200JSONResponse(u.api()), nil

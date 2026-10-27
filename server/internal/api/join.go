@@ -119,6 +119,9 @@ func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) erro
 		if err := checkNameFree(members, m.name, m.id); err != nil {
 			return err
 		}
+		if err := checkRoom(members); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(ctx, `update members set left_at = null where id = $1`, m.id); err != nil {
 			return err
 		}
@@ -132,14 +135,8 @@ func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) erro
 		if err := checkNameFree(members, name, ""); err != nil {
 			return err
 		}
-		active := 0
-		for _, m := range members {
-			if !m.left {
-				active++
-			}
-		}
-		if active >= maxMembers {
-			return badRequest("too_many_members")
+		if err := checkRoom(members); err != nil {
+			return err
 		}
 		m = &member{name: name}
 		err := tx.QueryRow(ctx, `

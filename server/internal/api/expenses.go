@@ -33,12 +33,42 @@ type expenseData struct {
 	shares          map[string]string // entered percentage or weight, 4 decimals
 }
 
+// Dates an expense may have: wide enough for any real one, and well inside
+// what JSON and the database can carry.
+const (
+	minExpenseYear = 1900
+	maxExpenseYear = 2999
+)
+
+// maxGroupTotal caps what the live expenses and payments of a group add up
+// to. Every balance and spending total is at most that sum, so it keeps them
+// all far from int64 overflow.
+const maxGroupTotal = 1000 * domain.MaxMinor
+
+// checkGroupTotal refuses add more to the group's live entries when they
+// would pass maxGroupTotal. except leaves out an entry being replaced.
+func checkGroupTotal(ctx context.Context, q querier, groupID string, add int64, except *string) error {
+	var total int64
+	err := q.QueryRow(ctx, `
+		select coalesce(sum(amount), 0)::bigint from expenses
+		where group_id = $1 and deleted_at is null and ($2::uuid is null or id <> $2::uuid)`,
+		groupID, except).Scan(&total)
+	if err != nil {
+		return err
+	}
+	if total > maxGroupTotal-add {
+		return domain.ErrAmountTooLarge
+	}
+	return nil
+}
+
 // validateExpense checks an expense against the group: every member must
 // belong to it, payers must add up to the amount and the split must work.
 // Members who left may only stay in an expense they were already part of
-// (those in already), so no one gains a new balance after leaving.
+// (those in already), so no one gains a new balance after leaving. members
+// is the group's, or nil to load them.
 func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput,
-	already map[string]bool) (*expenseData, error) {
+	already map[string]bool, members []member) (*expenseData, error) {
 	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
 
 	minTitle := 1
@@ -60,7 +90,7 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 			d.note = &note
 		}
 	}
-	if in.OccurredAt.IsZero() {
+	if y := in.OccurredAt.Year(); in.OccurredAt.IsZero() || y < minExpenseYear || y > maxExpenseYear {
 		return nil, badRequest("invalid_date")
 	}
 
@@ -86,9 +116,10 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 	}
 	d.amount = amount
 
-	members, err := groupMembers(ctx, q, g.id)
-	if err != nil {
-		return nil, err
+	if members == nil {
+		if members, err = groupMembers(ctx, q, g.id); err != nil {
+			return nil, err
+		}
 	}
 	known := func(id string) error {
 		m := findMember(members, id)
@@ -390,8 +421,11 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil)
+		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil, nil)
 		if err != nil {
+			return err
+		}
+		if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
 			return err
 		}
 		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
@@ -432,8 +466,11 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 			Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
 			SplitMethod: SplitMethod(domain.SplitExact),
 			Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
-		}, nil)
+		}, nil, nil)
 		if err != nil {
+			return err
+		}
+		if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
 			return err
 		}
 		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
@@ -533,8 +570,11 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kind, *req.Body, before)
+		d, err := validateExpense(ctx, tx, g, kind, *req.Body, before, nil)
 		if err != nil {
+			return err
+		}
+		if err := checkGroupTotal(ctx, tx, g.id, d.amount, &req.ExpenseId); err != nil {
 			return err
 		}
 		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
@@ -612,6 +652,13 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			if !del {
 				// Restoring would give back a balance to whoever left since.
 				if err := noneLeft(ctx, tx, id); err != nil {
+					return err
+				}
+				var amount int64
+				if err := tx.QueryRow(ctx, `select amount from expenses where id = $1`, id).Scan(&amount); err != nil {
+					return err
+				}
+				if err := checkGroupTotal(ctx, tx, g.id, amount, nil); err != nil {
 					return err
 				}
 			}

@@ -123,9 +123,21 @@ func (s *Server) GetGroupSummaries(ctx context.Context, req GetGroupSummariesReq
 	if len(req.Body.Groups) > maxPageSize {
 		return nil, badRequest("too_many_groups")
 	}
-	out := GroupSummaryList{Groups: []GroupSummary{}, Missing: []string{}}
+	// The tokens are the ones this device saved, and a group it had may be
+	// gone or its link reset meanwhile, which the app shows. However many,
+	// they count as one miss, or a phone holding a few would be locked out
+	// of the server by reloading its home page.
+	var misses int
+	defer func() {
+		if misses > 0 {
+			noteMiss(ctx)
+		}
+	}()
+	lookup := context.WithValue(ctx, missesKey{}, &misses)
+	out := GroupSummaryList{Missing: []string{}}
+	var groups []*group
 	for _, item := range req.Body.Groups {
-		g, err := s.groupByToken(ctx, s.db, item.Token, false)
+		g, err := s.groupByToken(lookup, s.db, item.Token, false)
 		var ae *apiError
 		if errors.As(err, &ae) && ae.status >= 400 && ae.status < 500 {
 			out.Missing = append(out.Missing, item.Token)
@@ -134,15 +146,14 @@ func (s *Server) GetGroupSummaries(ctx context.Context, req GetGroupSummariesReq
 		if err != nil {
 			return nil, err
 		}
-		me := g.me
-		if me == nil && item.MemberId != nil && validUUID(*item.MemberId) {
-			me = item.MemberId
+		if g.me == nil && item.MemberId != nil && validUUID(*item.MemberId) {
+			g.me = item.MemberId // only to pick the balance shown
 		}
-		sum, err := summarize(ctx, s.db, g, me)
-		if err != nil {
-			return nil, err
-		}
-		out.Groups = append(out.Groups, sum)
+		groups = append(groups, g)
+	}
+	var err error
+	if out.Groups, err = summarize(ctx, s.db, groups); err != nil {
+		return nil, err
 	}
 	return GetGroupSummaries200JSONResponse(out), nil
 }
@@ -170,13 +181,9 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	if err != nil {
 		return nil, err
 	}
-	out := GroupSummaryList{Groups: []GroupSummary{}, Missing: []string{}}
-	for _, g := range groups {
-		sum, err := summarize(ctx, s.db, g, g.me)
-		if err != nil {
-			return nil, err
-		}
-		out.Groups = append(out.Groups, sum)
+	out := GroupSummaryList{Missing: []string{}}
+	if out.Groups, err = summarize(ctx, s.db, groups); err != nil {
+		return nil, err
 	}
 	slices.SortStableFunc(out.Groups, func(a, b GroupSummary) int { return b.UpdatedAt.Compare(a.UpdatedAt) })
 	return GetMyGroups200JSONResponse(out), nil
@@ -191,45 +198,92 @@ func prefixed(prefix, columns string) string {
 	return strings.Join(cols, ", ")
 }
 
-// summarize builds a group's Home card, with me's balance when me is a member.
-func summarize(ctx context.Context, q querier, g *group, me *string) (GroupSummary, error) {
-	sum := GroupSummary{
-		Token:       g.token,
-		Name:        g.name,
-		Emoji:       g.emoji,
-		Color:       g.color,
-		Currency:    g.currency,
-		Symbol:      g.symbol,
-		MinorDigits: g.digits,
+// summarize builds the Home cards of groups, each with the balance of its
+// me when that is one of its members. However many groups, it takes three
+// queries.
+func summarize(ctx context.Context, q querier, groups []*group) ([]GroupSummary, error) {
+	out := make([]GroupSummary, len(groups))
+	if len(groups) == 0 {
+		return out, nil
 	}
-	var updated *time.Time
-	err := q.QueryRow(ctx, `
-		select (select count(*) from members where group_id = $1 and left_at is null),
-		       (select max(created_at) from activity_log where group_id = $1)`, g.id).
-		Scan(&sum.MemberCount, &updated)
-	if err != nil {
-		return sum, err
-	}
-	sum.UpdatedAt = g.createdAt
-	if updated != nil {
-		sum.UpdatedAt = *updated
-	}
-	if me == nil {
-		return sum, nil
-	}
-	members, err := groupMembers(ctx, q, g.id)
-	if err != nil {
-		return sum, err
-	}
-	if m := findMember(members, *me); m != nil {
-		nets, err := groupNets(ctx, q, g.id)
-		if err != nil {
-			return sum, err
+	ids := make([]string, len(groups))
+	var withMe, mes []string
+	for i, g := range groups {
+		ids[i] = g.id
+		if g.me != nil {
+			withMe, mes = append(withMe, g.id), append(mes, *g.me)
 		}
-		b := domain.FormatAmount(nets[m.id], g.digits)
-		sum.Balance = &b
 	}
-	return sum, nil
+
+	type stats struct {
+		count   int
+		updated *time.Time
+	}
+	byGroup := make(map[string]stats, len(groups))
+	rows, err := q.Query(ctx, `
+		select g.id::text,
+		       (select count(*) from members m where m.group_id = g.id and m.left_at is null),
+		       (select max(created_at) from activity_log a where a.group_id = g.id)
+		from unnest($1::uuid[]) g(id)`, ids)
+	if err != nil {
+		return nil, err
+	}
+	var id string
+	var st stats
+	if _, err := pgx.ForEachRow(rows, []any{&id, &st.count, &st.updated}, func() error {
+		byGroup[id] = st
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// The balance of each group's member, reached through the group's
+	// expenses, which are indexed by group.
+	balances := map[string]int64{}
+	if len(withMe) > 0 {
+		rows, err := q.Query(ctx, `
+			select m.group_id::text,
+			       coalesce((select sum(p.amount) from expenses e join expense_payers p on p.expense_id = e.id
+			                 where e.group_id = m.group_id and e.deleted_at is null and p.member_id = m.id), 0)::bigint
+			     - coalesce((select sum(x.amount) from expenses e join expense_splits x on x.expense_id = e.id
+			                 where e.group_id = m.group_id and e.deleted_at is null and x.member_id = m.id), 0)::bigint
+			from unnest($1::uuid[], $2::uuid[]) t(group_id, member_id)
+			join members m on m.group_id = t.group_id and m.id = t.member_id`, withMe, mes)
+		if err != nil {
+			return nil, err
+		}
+		var net int64
+		if _, err := pgx.ForEachRow(rows, []any{&id, &net}, func() error {
+			balances[id] = net
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i, g := range groups {
+		st := byGroup[g.id]
+		sum := GroupSummary{
+			Token:       g.token,
+			Name:        g.name,
+			Emoji:       g.emoji,
+			Color:       g.color,
+			Currency:    g.currency,
+			Symbol:      g.symbol,
+			MinorDigits: g.digits,
+			MemberCount: st.count,
+			UpdatedAt:   g.createdAt,
+		}
+		if st.updated != nil {
+			sum.UpdatedAt = *st.updated
+		}
+		if net, ok := balances[g.id]; ok {
+			b := domain.FormatAmount(net, g.digits)
+			sum.Balance = &b
+		}
+		out[i] = sum
+	}
+	return out, nil
 }
 
 func (s *Server) GetGroup(ctx context.Context, req GetGroupRequestObject) (GetGroupResponseObject, error) {
@@ -382,7 +436,10 @@ func (s *Server) DeleteGroup(ctx context.Context, req DeleteGroupRequestObject) 
 				return forbidden("owner_only")
 			}
 		}
-		if _, err := tx.Exec(ctx, `delete from groups where id = $1`, g.id); err != nil {
+		// Archived: gone for everyone, but kept for a while (see
+		// archiveKeep) so a mistake, or a link holder's mischief, can be
+		// undone by the administrator.
+		if _, err := tx.Exec(ctx, `update groups set archived_at = now() where id = $1`, g.id); err != nil {
 			return err
 		}
 		// Open apps reload and find it gone.
@@ -392,6 +449,6 @@ func (s *Server) DeleteGroup(ctx context.Context, req DeleteGroupRequestObject) 
 	if err != nil {
 		return nil, err
 	}
-	s.log.Info("group deleted")
+	s.log.Info("group archived")
 	return DeleteGroup204Response{}, nil
 }

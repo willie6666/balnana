@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -163,7 +164,8 @@ func TestPasswordChangeRacingReclaim(t *testing.T) {
 	var first *client
 	fired := false
 	first, second, _, _ := racing(t, f.env(map[string]string{}), func(sql string) {
-		if fired || !strings.Contains(sql, "exists (select 1 from sessions where id") {
+		// Where lockAccount begins, after the password was checked.
+		if fired || !strings.Contains(sql, "lock table users in row exclusive mode") {
 			return
 		}
 		fired = true
@@ -298,4 +300,51 @@ func TestDeleteAccountWaitsForJoin(t *testing.T) {
 		t.Fatalf("delete: status %d", status)
 	}
 	ben.must(200, "GET", "/g/"+g.Token, nil, nil)
+}
+
+// A password change holding the account and an OAuth sign-in reclaiming it
+// take the users table in the same order, so one waits for the other
+// instead of both failing on a deadlock.
+func TestAccountLockOrderWithReclaim(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
+	u := register(c, "ana@example.com", "Ana")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var hash, sessionID string
+	err := pool.QueryRow(ctx, `
+		select u.password_hash, se.id::text from users u join sessions se on se.user_id = u.id where u.id = $1`,
+		u.Id).Scan(&hash, &sessionID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = first.Rollback(context.Background()) }()
+	if err := lockAccount(ctx, first, &user{id: u.Id, sessionID: sessionID}, &hash); err != nil {
+		t.Fatal(err)
+	}
+	reclaimed := make(chan error, 1)
+	go func() {
+		// What oauthUserTx does to reclaim an unverified account.
+		reclaimed <- pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+			if _, err := tx.Exec(ctx, `lock table users in share row exclusive mode`); err != nil {
+				return err
+			}
+			_, err := tx.Exec(ctx, `update users set email_verified = true, password_hash = null where id = $1`, u.Id)
+			return err
+		})
+	}()
+	time.Sleep(200 * time.Millisecond) // let the reclaim reach its lock
+	// What ChangePassword does after lockAccount.
+	if _, err := first.Exec(ctx, `update users set password_hash = $2 where id = $1`, u.Id, hash); err != nil {
+		t.Fatalf("password change: %v", err)
+	}
+	if err := first.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-reclaimed; err != nil {
+		t.Fatalf("reclaim: %v", err)
+	}
 }

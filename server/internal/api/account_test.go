@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"fmt"
 	"testing"
 )
 
@@ -201,4 +203,54 @@ func TestAdminUsers(t *testing.T) {
 	if list.Total != 1 || list.Users[0].Name != "Ben" {
 		t.Fatalf("list = %+v", list)
 	}
+}
+
+// In link mode every group opens by its link, so deleting the account that
+// was its only member keeps it, whatever it was set to in accounts mode.
+func TestDeleteAccountKeepsLinkModeGroups(t *testing.T) {
+	c, s, _ := adminClient(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
+	admin := c.asAdmin(setUp(c))
+	u := register(c, "ana@example.com", "Ana")
+	g := createGroup(c, "Ana", "Ben")
+	t.Setenv("BALNANA_AUTH_MODE", "link")
+	if err := s.LoadSettings(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	c.another().must(200, "GET", "/g/"+g.Token, nil, nil)
+	admin.must(204, "DELETE", "/admin/users/"+u.Id, nil, nil)
+	var after Group
+	c.another().must(200, "GET", "/g/"+g.Token, nil, &after)
+	if after.Members[0].Claimed {
+		t.Fatal("the deleted account still claims its member")
+	}
+}
+
+// Someone coming back to a group takes a place like a newcomer: not past
+// the limit.
+func TestRejoinRespectsMemberLimit(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	b := c.another()
+	register(b, "ben@example.com", "Ben")
+	names := []string{"Ana", "Ben"}
+	for i := 2; i < maxMembers; i++ {
+		names = append(names, fmt.Sprintf("Person %d", i))
+	}
+	g := createGroup(c, names...)
+	base := "/g/" + g.Token
+	ben := g.Members[1].Id
+	b.must(200, "POST", base+"/join", JoinInput{ClaimMemberId: &ben}, nil)
+	b.must(204, "DELETE", base+"/members/"+ben, nil, nil)
+	c.must(201, "POST", base+"/members", MemberInput{Name: "Replacement"}, nil)
+	if code := b.errorCode(400, "POST", base+"/join", JoinInput{}); code != "too_many_members" {
+		t.Fatalf("code %q", code)
+	}
+	var after Group
+	c.must(200, "GET", base, nil, &after)
+	if !after.Members[1].Left {
+		t.Fatal("a refused rejoin brought Ben back")
+	}
+	// Once a place frees up, Ben may come back.
+	c.must(204, "DELETE", base+"/members/"+after.Members[len(after.Members)-1].Id, nil, nil)
+	b.must(200, "POST", base+"/join", JoinInput{}, nil)
 }

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -562,5 +563,124 @@ func TestDepartedMembers(t *testing.T) {
 		if m.MemberId == cy && m.Amount != "0.00" {
 			t.Fatalf("cy's balance %s", m.Amount)
 		}
+	}
+}
+
+// Groups a device saved that are gone count once per request, so loading
+// home with a few of them does not lock the device out.
+func TestSummariesMissesCountOnce(t *testing.T) {
+	c := newClient(t)
+	var groups []struct {
+		MemberId *string `json:"memberId,omitempty"`
+		Token    string  `json:"token"`
+	}
+	for i := range 10 {
+		groups = append(groups, struct {
+			MemberId *string `json:"memberId,omitempty"`
+			Token    string  `json:"token"`
+		}{Token: fmt.Sprintf("AAAAAAAAAAAAAAAAAAAA%02d", i)})
+	}
+	for i := range 100 {
+		var out GroupSummaryList
+		if code := c.call("POST", "/groups/summaries", GroupSummaryRequest{Groups: groups}, &out); code != 200 {
+			t.Fatalf("load %d: status %d", i+1, code)
+		}
+		if len(out.Missing) != 10 {
+			t.Fatalf("missing %v", out.Missing)
+		}
+	}
+}
+
+// A group's live entries add up to at most maxGroupTotal, so its balances
+// and spending totals cannot overflow.
+func TestGroupTotalCap(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	g := createGroup(c, "Ana", "Ben")
+	ana := g.Members[0].Id
+	base := "/g/" + g.Token
+	in := func(amount string) ExpenseInput {
+		return ExpenseInput{Title: "x", Amount: amount, OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+			Payers: []PayerInput{{MemberId: ana, Amount: amount}}, SplitMethod: "equal", Splits: []Share{{MemberId: ana}}}
+	}
+	var e Expense
+	c.must(201, "POST", base+"/expenses", in("0.01"), &e)
+	// Almost all the room taken, without making a thousand requests.
+	_, err := pool.Exec(context.Background(), `update expenses set amount = $2 where id = $1`, e.Id, maxGroupTotal-5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := c.errorCode(400, "POST", base+"/expenses", in("0.06")); code != "amount_too_large" {
+		t.Fatalf("code %q", code)
+	}
+	if code := c.errorCode(400, "POST", base+"/payments", PaymentInput{FromMemberId: ana, ToMemberId: g.Members[1].Id, Amount: "0.06"}); code != "amount_too_large" {
+		t.Fatalf("payment code %q", code)
+	}
+	var small, other Expense
+	c.must(201, "POST", base+"/expenses", in("0.05"), &small) // the group is now full
+	c.must(204, "DELETE", base+"/expenses/"+small.Id, nil, nil)
+	c.must(201, "POST", base+"/expenses", in("0.05"), &other) // full again
+	if code := c.errorCode(400, "POST", base+"/expenses/"+small.Id+"/restore", nil); code != "amount_too_large" {
+		t.Fatalf("restore code %q", code)
+	}
+	// An edit replaces the entry's own amount: the same amount still fits.
+	edit := in("0.05")
+	edit.Version = &other.Version
+	c.must(200, "PUT", base+"/expenses/"+other.Id, edit, &other)
+	edit = in("0.06")
+	edit.Version = &other.Version
+	if code := c.errorCode(400, "PUT", base+"/expenses/"+other.Id, edit); code != "amount_too_large" {
+		t.Fatalf("edit code %q", code)
+	}
+	c.must(200, "GET", base+"/balances", nil, nil)
+}
+
+func TestExpenseDateRange(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana")
+	ana := g.Members[0].Id
+	for _, at := range []string{"1899-12-31T00:00:00Z", "3000-01-01T00:00:00Z"} {
+		in := ExpenseInput{Title: "x", Amount: "1", OccurredAt: mustTime(t, at),
+			Payers: []PayerInput{{MemberId: ana, Amount: "1"}}, SplitMethod: "equal", Splits: []Share{{MemberId: ana}}}
+		if code := c.errorCode(400, "POST", "/g/"+g.Token+"/expenses", in); code != "invalid_date" {
+			t.Fatalf("%s: code %q", at, code)
+		}
+	}
+}
+
+// The marks that turn text right to left are taken out of what people type.
+func TestNamesDropBidiControls(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana‮gnp.exe", "Ben")
+	if g.Members[0].Name != "Anagnp.exe" {
+		t.Fatalf("name %q", g.Members[0].Name)
+	}
+}
+
+// Deleting a group archives it: it is gone at once, and for good after
+// archiveKeep.
+func TestDeleteGroupArchives(t *testing.T) {
+	c, s, pool := adminClient(t, map[string]string{})
+	g := createGroup(c, "Ana")
+	c.must(204, "DELETE", "/g/"+g.Token, nil, nil)
+	c.must(404, "GET", "/g/"+g.Token, nil, nil)
+	ctx := context.Background()
+	var kept int
+	if err := pool.QueryRow(ctx, `select count(*) from groups where token = $1`, g.Token).Scan(&kept); err != nil || kept != 1 {
+		t.Fatalf("kept %d, err %v", kept, err)
+	}
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `select count(*) from groups where token = $1`, g.Token).Scan(&kept); err != nil || kept != 1 {
+		t.Fatalf("swept too early: kept %d, err %v", kept, err)
+	}
+	if _, err := pool.Exec(ctx, `update groups set archived_at = now() - $1::interval`, "31 days"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `select count(*) from groups where token = $1`, g.Token).Scan(&kept); err != nil || kept != 0 {
+		t.Fatalf("kept %d, err %v", kept, err)
 	}
 }

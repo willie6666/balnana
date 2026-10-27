@@ -395,3 +395,22 @@ func TestLinkModeClaimedMembers(t *testing.T) {
 	ben.must(200, "PATCH", path+"/members/"+g.Members[1].Id, MemberInput{Name: "Benjamin"}, nil)
 	ana.must(200, "PATCH", path+"/members/"+g.Members[1].Id, MemberInput{Name: "Ben"}, nil)
 }
+
+// Changing only the name leaves the language another device just set.
+func TestUpdateMeChangesOnlyWhatWasSent(t *testing.T) {
+	c := accountsClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	phone := c.another()
+	phone.token = c.token
+	phone.must(200, "PATCH", "/me", UserUpdate{Locale: ptr("de")}, nil)
+	var me User
+	c.must(200, "PATCH", "/me", UserUpdate{Name: ptr("Ana B")}, &me)
+	if me.Name != "Ana B" || me.Locale == nil || *me.Locale != "de" {
+		t.Fatalf("me %+v", me)
+	}
+	var cleared User
+	c.must(200, "PATCH", "/me", UserUpdate{Locale: ptr("")}, &cleared)
+	if cleared.Name != "Ana B" || cleared.Locale != nil {
+		t.Fatalf("after clearing the language: %+v", cleared)
+	}
+}

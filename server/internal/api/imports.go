@@ -173,7 +173,14 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			return err
 		}
 
+		// Loaded once: validating each row against the database would take
+		// a query per row of a file of up to importer.MaxRows.
+		members, err := groupMembers(ctx, tx, g.id)
+		if err != nil {
+			return err
+		}
 		count := 0
+		var total int64 // what the new group's entries add up to, see maxGroupTotal
 		for _, e := range file.Entries {
 			kind, input, problem := importInput(e, currency, digits, untitled, ids, categories)
 			if problem == "skip" {
@@ -183,7 +190,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			if problem != "" {
 				return importRowError(e.Line, problem)
 			}
-			d, err := validateExpense(ctx, tx, g, kind, input, nil)
+			d, err := validateExpense(ctx, tx, g, kind, input, nil, members)
 			if err != nil {
 				var ae *apiError
 				var dc domain.Code
@@ -195,6 +202,10 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 				}
 				return err
 			}
+			if total > maxGroupTotal-d.amount {
+				return importRowError(e.Line, string(domain.ErrAmountTooLarge))
+			}
+			total += d.amount
 			if kind == kindExpense {
 				if e.Type == "income" {
 					d.transactionType = "income"

@@ -27,6 +27,21 @@ func checkNameFree(members []member, name, except string) error {
 	return nil
 }
 
+// checkRoom refuses one more current member when the group is full: a new
+// member, or one who left coming back.
+func checkRoom(members []member) error {
+	active := 0
+	for _, m := range members {
+		if !m.left {
+			active++
+		}
+	}
+	if active >= maxMembers {
+		return badRequest("too_many_members")
+	}
+	return nil
+}
+
 func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (AddMemberResponseObject, error) {
 	name, err := cleanName(req.Body.Name)
 	if err != nil {
@@ -48,14 +63,8 @@ func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (Add
 		if err := checkNameFree(members, name, ""); err != nil {
 			return err
 		}
-		active := 0
-		for _, m := range members {
-			if !m.left {
-				active++
-			}
-		}
-		if active >= maxMembers {
-			return badRequest("too_many_members")
+		if err := checkRoom(members); err != nil {
+			return err
 		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {

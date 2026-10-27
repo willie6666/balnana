@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -41,6 +42,10 @@ func writeHandlerError(log *slog.Logger, w http.ResponseWriter, r *http.Request,
 		writeJSON(w, ae.status, body)
 	case errors.As(err, &dc):
 		writeError(w, http.StatusBadRequest, string(dc))
+	case errors.Is(err, context.Canceled):
+		// The client went away; nobody reads the answer.
+		log.Debug("request canceled", "method", r.Method, "path", maskPath(r.URL.Path))
+		writeError(w, http.StatusServiceUnavailable, "canceled")
 	default:
 		log.Error("request failed", "method", r.Method, "path", maskPath(r.URL.Path), "err", err)
 		writeError(w, http.StatusInternalServerError, "internal")
