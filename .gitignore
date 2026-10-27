@@ -14,6 +14,14 @@ skills-lock.json
 /.pgdata/
 /.pgsocket/
 
+# Nix (each developer keeps their own environment)
+*.nix
+flake.lock
+.envrc
+.direnv/
+result
+result-*
+
 # Go
 /server/bin/
 .env

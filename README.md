@@ -204,13 +204,13 @@ The repository is a monorepo:
 
 ### Setup
 
-On NixOS or with Nix installed, `nix-shell` provides Go, PostgreSQL, goose,
-oapi-codegen and the JDK, and points Flutter and the Android SDK at local installs
-(edit the paths in [shell.nix](shell.nix) for your machine). Otherwise install
-Go 1.26, PostgreSQL 18 and Flutter 3.47 yourself.
+Install Go 1.26, PostgreSQL 18, Flutter 3.47 and
+[oapi-codegen](https://github.com/oapi-codegen/oapi-codegen). The scripts and tests
+read the local database from these variables:
 
 ```bash
-nix-shell
+export PGDATA="$PWD/.pgdata" PGHOST="$PWD/.pgsocket" PGDATABASE=balnana
+export DATABASE_URL="postgres:///balnana?host=$PGHOST"
 scripts/db.sh start            # local Postgres in .pgdata/, unix socket only
 ```
 
@@ -220,7 +220,7 @@ scripts/db.sh start            # local Postgres in .pgdata/, unix socket only
 cd server
 go generate ./...              # after editing api/openapi.yaml
 go test ./...
-go run ./cmd/balnana           # uses DATABASE_URL from nix-shell; serves on :8080
+go run ./cmd/balnana           # uses DATABASE_URL; serves on :8080
 ```
 
 To serve a local web build too, set `BALNANA_WEB_DIR=../app/build/web`.

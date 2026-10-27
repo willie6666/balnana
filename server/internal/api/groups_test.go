@@ -23,8 +23,8 @@ import (
 	"balnana/internal/domain"
 )
 
-// These tests need PostgreSQL: they run when DATABASE_URL is set (nix-shell
-// sets it) and create a throwaway database for each test.
+// These tests need PostgreSQL: they run when DATABASE_URL is set (see the
+// README) and create a throwaway database for each test.
 func testDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	return testDBConns(t, 0)
