@@ -1,6 +1,7 @@
 # Editors / OS / agents
 .agents/
 .claude/
+skills-lock.json
 .DS_Store
 *.swp
 .idea/
