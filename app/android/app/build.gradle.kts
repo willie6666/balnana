@@ -12,7 +12,7 @@ plugins {
 // keystore. Without it, release APKs are signed with the debug key, with a
 // warning, so `flutter run --release` still works; such builds cannot update
 // an installed release. App bundles are only for the Play Store, so they need
-// the real key. See README.md, "Android release builds".
+// the real key: storeFile, storePassword, keyAlias and keyPassword.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -26,7 +26,7 @@ gradle.taskGraph.whenReady {
     val names = allTasks.filter { it.project == project }.map { it.name }
     if (names.any { it.startsWith("bundle") && !it.startsWith("bundleLib") && it.endsWith("Release") }) {
         throw GradleException(
-            "No release key: create android/key.properties (README.md, \"Android release builds\") " +
+            "No release key: create android/key.properties (storeFile, storePassword, keyAlias, keyPassword) " +
                 "before building an app bundle."
         )
     }
