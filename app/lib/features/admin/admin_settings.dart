@@ -272,6 +272,10 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       _textField('BALNANA_SOURCE_URL', keyboard: TextInputType.url),
       gap,
       _textField('BALNANA_PRIVACY_URL', keyboard: TextInputType.url),
+      gap,
+      _textField('BALNANA_MAP_TILES', keyboard: TextInputType.url),
+      gap,
+      _textField('BALNANA_MAP_ATTRIBUTION'),
       FormSection(l10n.adminSectionAccess),
       _choice('BALNANA_AUTH_MODE', titled: false, {
         'link': (l10n.adminAuthModeLink, l10n.adminAuthModeLinkHelp),
@@ -469,6 +473,8 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrl,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrl,
+  'BALNANA_MAP_TILES' => l10n.adminMapTiles,
+  'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttribution,
   'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
   'BALNANA_AUTH_PASSWORD' => l10n.adminPasswordLogin,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmail,
@@ -491,6 +497,8 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrlHelp,
+  'BALNANA_MAP_TILES' => l10n.adminMapTilesHelp,
+  'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttributionHelp,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmailHelp,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
@@ -512,6 +520,7 @@ String _problem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_OAUTH_OIDC_SECRET' => l10n.adminInvalidRequired,
   'BALNANA_AUTH_MODE' => l10n.adminNeedsSignIn,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminInvalidFingerprint,
+  'BALNANA_MAP_TILES' => l10n.adminInvalidMapTiles,
   _ => l10n.adminInvalidValue,
 };
 

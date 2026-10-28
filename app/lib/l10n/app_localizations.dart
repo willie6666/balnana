@@ -295,6 +295,12 @@ abstract class AppLocalizations {
   /// **'Enter a title of up to 200 characters.'**
   String get errorInvalidTitle;
 
+  /// No description provided for @errorInvalidLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a place name of one line, up to 200 characters.'**
+  String get errorInvalidLocation;
+
   /// No description provided for @errorInvalidSymbol.
   ///
   /// In en, this message translates to:
@@ -1174,7 +1180,7 @@ abstract class AppLocalizations {
   /// No description provided for @expensesSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search titles and notes'**
+  /// **'Search titles, notes and places'**
   String get expensesSearchHint;
 
   /// No description provided for @searchClear.
@@ -1483,6 +1489,90 @@ abstract class AppLocalizations {
   /// **'Optional'**
   String get expenseNoteHint;
 
+  /// No description provided for @expenseLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get expenseLocation;
+
+  /// No description provided for @expenseLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Where was it? (optional)'**
+  String get expenseLocationHint;
+
+  /// No description provided for @locationPickOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick on map'**
+  String get locationPickOnMap;
+
+  /// No description provided for @locationUseCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Use current location'**
+  String get locationUseCurrent;
+
+  /// No description provided for @locationFinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding where you are…'**
+  String get locationFinding;
+
+  /// No description provided for @locationChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change on map'**
+  String get locationChange;
+
+  /// No description provided for @locationRemovePin.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove pin'**
+  String get locationRemovePin;
+
+  /// No description provided for @locationOpenInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in maps'**
+  String get locationOpenInMaps;
+
+  /// No description provided for @locationPickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a location'**
+  String get locationPickTitle;
+
+  /// No description provided for @locationPickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to drop a pin'**
+  String get locationPickHint;
+
+  /// No description provided for @locationPickDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get locationPickDone;
+
+  /// No description provided for @locationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Balnana may not use your location. You can allow it in your device or browser settings.'**
+  String get locationDenied;
+
+  /// No description provided for @locationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off on this device.'**
+  String get locationOff;
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t find where you are. Try again, or drop a pin on the map.'**
+  String get locationUnavailable;
+
   /// No description provided for @expenseReceipt.
   ///
   /// In en, this message translates to:
@@ -1494,6 +1584,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Has a receipt photo'**
   String get expenseHasReceipt;
+
+  /// No description provided for @expenseHasLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Has a location'**
+  String get expenseHasLocation;
 
   /// No description provided for @receiptTakePhoto.
   ///
@@ -3388,7 +3484,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyStoredBody.
   ///
   /// In en, this message translates to:
-  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
+  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
   String get privacyStoredBody;
 
   /// No description provided for @privacyUseTitle.
@@ -3412,7 +3508,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacySharedBody.
   ///
   /// In en, this message translates to:
-  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way.'**
+  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
   String get privacySharedBody;
 
   /// No description provided for @privacyDeviceTitle.
@@ -3648,6 +3744,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.'**
   String get adminPrivacyUrlHelp;
+
+  /// No description provided for @adminMapTiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Map tiles'**
+  String get adminMapTiles;
+
+  /// No description provided for @adminMapTilesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.'**
+  String get adminMapTilesHelp;
+
+  /// No description provided for @adminMapAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Map credit'**
+  String get adminMapAttribution;
+
+  /// No description provided for @adminMapAttributionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on every map, as the tile provider asks.'**
+  String get adminMapAttributionHelp;
+
+  /// No description provided for @adminInvalidMapTiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an http(s) URL template with z, x and y in braces, or \"off\".'**
+  String get adminInvalidMapTiles;
 
   /// No description provided for @adminUsers.
   ///

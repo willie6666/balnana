@@ -27,6 +27,7 @@ type expenseData struct {
 	amount          int64
 	occurredAt      time.Time
 	note            *string
+	location        *Location
 	method          domain.SplitMethod
 	payers          map[string]int64
 	splits          map[string]int64
@@ -89,6 +90,13 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		if note != "" {
 			d.note = &note
 		}
+	}
+	if in.Location != nil {
+		loc, err := cleanLocation(*in.Location)
+		if err != nil {
+			return nil, err
+		}
+		d.location = loc
 	}
 	if y := in.OccurredAt.Year(); in.OccurredAt.IsZero() || y < minExpenseYear || y > maxExpenseYear {
 		return nil, badRequest("invalid_date")
@@ -222,6 +230,44 @@ func (d *expenseData) payload(digits int) map[string]any {
 	return map[string]any{"title": d.title, "amount": domain.FormatAmount(d.amount, digits), "kind": d.kind}
 }
 
+// cleanLocation checks where an expense happened. A location with neither a
+// name nor a point is none.
+func cleanLocation(in Location) (*Location, error) {
+	var out Location
+	if in.Name != nil {
+		name, ok := cleanText(*in.Name, 0, maxTitleLen)
+		if !ok || strings.Contains(name, "\n") {
+			return nil, badRequest("invalid_location")
+		}
+		if name != "" {
+			out.Name = &name
+		}
+	}
+	if p := in.Point; p != nil {
+		// NaN fails both comparisons, so it is refused too.
+		if !(p.Latitude >= -90 && p.Latitude <= 90 && p.Longitude >= -180 && p.Longitude <= 180) {
+			return nil, badRequest("invalid_location")
+		}
+		out.Point = &GeoPoint{Latitude: p.Latitude, Longitude: p.Longitude}
+	}
+	if out.Name == nil && out.Point == nil {
+		return nil, nil
+	}
+	return &out, nil
+}
+
+// locationColumns splits a location into its location_name, latitude and
+// longitude columns.
+func locationColumns(l *Location) (name *string, lat, lng *float64) {
+	if l == nil {
+		return nil, nil, nil
+	}
+	if l.Point != nil {
+		lat, lng = &l.Point.Latitude, &l.Point.Longitude
+	}
+	return l.Name, lat, lng
+}
+
 // insertExpense stores a validated expense and logs it.
 func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData, payload map[string]any) (string, error) {
 	id, err := storeExpense(ctx, tx, g, who, d)
@@ -234,10 +280,13 @@ func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *exp
 // storeExpense stores a validated expense without logging it.
 func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData) (string, error) {
 	var id string
+	place, lat, lng := locationColumns(d.location)
 	err := tx.QueryRow(ctx, `
-		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note, created_by_member, transaction_type)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id::text`,
-		g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who, d.transactionType).Scan(&id)
+		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note,
+			created_by_member, transaction_type, location_name, latitude, longitude)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) returning id::text`,
+		g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who,
+		d.transactionType, place, lat, lng).Scan(&id)
 	if err != nil {
 		return "", err
 	}
@@ -246,7 +295,7 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
 	created_by_member::text, created_at, updated_at, deleted_at, version, transaction_type,
-	exists (select 1 from receipts r where r.expense_id = expenses.id)`
+	exists (select 1 from receipts r where r.expense_id = expenses.id), location_name, latitude, longitude`
 
 // loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
 func loadExpenses(ctx context.Context, q querier, digits int, sql string, args ...any) ([]Expense, error) {
@@ -258,8 +307,17 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		var e Expense
 		var kind, method string
 		var amount int64
+		var place *string
+		var lat, lng *float64
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
-			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt)
+			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt,
+			&place, &lat, &lng)
+		if place != nil || lat != nil {
+			e.Location = &Location{Name: place}
+			if lat != nil && lng != nil {
+				e.Location.Point = &GeoPoint{Latitude: *lat, Longitude: *lng}
+			}
+		}
 		e.Kind = ExpenseKind(kind)
 		e.SplitMethod = SplitMethod(method)
 		e.Amount = domain.FormatAmount(amount, digits)
@@ -581,10 +639,13 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
+		place, lat, lng := locationColumns(d.location)
 		_, err = tx.Exec(ctx, `
 			update expenses set title = $2, category_id = $3, amount = $4, split_method = $5,
-				occurred_at = $6, note = $7, updated_at = now(), version = version + 1
-			where id = $1`, req.ExpenseId, d.title, d.category, d.amount, string(d.method), d.occurredAt, d.note)
+				occurred_at = $6, note = $7, location_name = $8, latitude = $9, longitude = $10,
+				updated_at = now(), version = version + 1
+			where id = $1`, req.ExpenseId, d.title, d.category, d.amount, string(d.method), d.occurredAt, d.note,
+			place, lat, lng)
 		if err != nil {
 			return err
 		}

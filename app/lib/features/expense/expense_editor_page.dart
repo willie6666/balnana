@@ -22,6 +22,7 @@ import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
+import 'location.dart';
 import 'receipt.dart';
 
 /// Adds an expense to a group, or edits one when [expenseId] is set.
@@ -132,6 +133,8 @@ class _EditorState extends ConsumerState<_Editor> {
   final _amount = TextEditingController();
   final _title = TextEditingController();
   final _note = TextEditingController();
+  final _place = TextEditingController();
+  GeoPoint? _point;
   String? _category;
   late DateTime _date;
 
@@ -182,6 +185,8 @@ class _EditorState extends ConsumerState<_Editor> {
       _amount.text = formatAmount(e.amount, _digits);
       _title.text = e.title;
       _note.text = e.note ?? '';
+      _place.text = e.location?.name ?? '';
+      _point = e.location?.point;
       _category = e.categoryId;
       _date = e.occurredAt.toLocal();
       if (e.payers.length == 1) {
@@ -215,6 +220,8 @@ class _EditorState extends ConsumerState<_Editor> {
     _amount.text,
     _title.text,
     _note.text,
+    _place.text,
+    _point,
     _category,
     _date,
     _payer,
@@ -246,11 +253,21 @@ class _EditorState extends ConsumerState<_Editor> {
 
   @override
   void dispose() {
-    for (final c in [_amount, _title, _note, ..._paid.values, ..._values.values]) {
+    for (final c in [_amount, _title, _note, _place, ..._paid.values, ..._values.values]) {
       c.dispose();
     }
     super.dispose();
   }
+
+  /// The pin of the group's latest expense that has one, to start the map at.
+  GeoPoint? get _around => ref
+      .read(expensesProvider(_group.token))
+      .current(ref.read(identityProvider))
+      .value
+      ?.items
+      .map((e) => e.location?.point)
+      .nonNulls
+      .firstOrNull;
 
   BigInt? get _total {
     try {
@@ -353,6 +370,9 @@ class _EditorState extends ConsumerState<_Editor> {
       amount: total,
       occurredAt: _date,
       note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+      location: _place.text.trim().isEmpty && _point == null
+          ? null
+          : ExpenseLocation(name: _place.text.trim().isEmpty ? null : _place.text.trim(), point: _point),
       payers: payers,
       splitMethod: _method,
       splits: _parts,
@@ -618,6 +638,14 @@ class _EditorState extends ConsumerState<_Editor> {
                 for (final m in _people)
                   _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
                 _SplitSummary(state: this, error: preview.error),
+
+                FormSection(l10n.expenseLocation),
+                LocationField(
+                  name: _place,
+                  point: _point,
+                  onPoint: (p) => setState(() => _point = p),
+                  around: _around,
+                ),
 
                 FormSection(l10n.expenseNote),
                 TextFormField(

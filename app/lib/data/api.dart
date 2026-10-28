@@ -34,6 +34,7 @@ class ExpenseDraft {
     required this.amount,
     required this.occurredAt,
     this.note,
+    this.location,
     required this.payers,
     required this.splitMethod,
     required this.splits,
@@ -44,6 +45,7 @@ class ExpenseDraft {
   final BigInt amount;
   final DateTime occurredAt;
   final String? note;
+  final ExpenseLocation? location;
 
   /// Member id to amount paid.
   final Map<String, BigInt> payers;
@@ -58,6 +60,7 @@ class ExpenseDraft {
     'amount': formatAmount(amount, digits),
     'occurredAt': occurredAt.toUtc().toIso8601String(),
     'note': ?note,
+    'location': ?location?.toJson(),
     'payers': [
       for (final MapEntry(:key, :value) in payers.entries)
         {'memberId': key, 'amount': formatAmount(value, digits)},

@@ -59,6 +59,10 @@ type OIDC struct {
 // UpstreamSourceURL is the official Balnana repository, the default source link.
 const UpstreamSourceURL = "https://github.com/willie6666/balnana"
 
+// DefaultMapTiles is OpenStreetMap's own tile server, fine for light use under
+// its tile usage policy.
+const DefaultMapTiles = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
 type Config struct {
 	Listen      string
 	DatabaseURL string
@@ -71,6 +75,11 @@ type Config struct {
 	// PrivacyURL is the server's own privacy policy; nil shows the app's
 	// built-in one.
 	PrivacyURL *url.URL
+	// MapTiles is the template ({z}/{x}/{y}) the app loads map tiles from;
+	// empty turns maps off.
+	MapTiles string
+	// MapAttribution credits the map data, shown on every map.
+	MapAttribution string
 
 	// WebDir serves the Flutter web build from disk instead of the embedded copy.
 	WebDir string
@@ -119,6 +128,8 @@ var Managed = []Setting{
 	{Key: "BALNANA_PUBLIC_URL", Default: "http://localhost:8080"},
 	{Key: "BALNANA_SOURCE_URL", Default: UpstreamSourceURL},
 	{Key: "BALNANA_PRIVACY_URL"},
+	{Key: "BALNANA_MAP_TILES", Default: DefaultMapTiles},
+	{Key: "BALNANA_MAP_ATTRIBUTION", Default: "© OpenStreetMap contributors"},
 	{Key: "BALNANA_AUTH_MODE", Default: string(AuthModeLink)},
 	{Key: "BALNANA_AUTH_PASSWORD", Default: "true"},
 	{Key: "BALNANA_AUTH_REQUIRE_EMAIL", Default: "true"},
@@ -299,6 +310,18 @@ func load(getenv func(string) string) (*Config, error) {
 			e.fail("BALNANA_PRIVACY_URL", "BALNANA_PRIVACY_URL must be an absolute http(s) URL, got %q", privacyURL)
 		} else {
 			c.PrivacyURL = u
+		}
+	}
+
+	if tiles := e.managed("BALNANA_MAP_TILES"); tiles != "" && !strings.EqualFold(tiles, "off") {
+		u, err := url.Parse(strings.NewReplacer("{z}", "0", "{x}", "0", "{y}", "0").Replace(tiles))
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
+			!strings.Contains(tiles, "{z}") || !strings.Contains(tiles, "{x}") || !strings.Contains(tiles, "{y}") {
+			e.fail("BALNANA_MAP_TILES",
+				"BALNANA_MAP_TILES must be an http(s) URL with {z}, {x} and {y}, or off, got %q", tiles)
+		} else {
+			c.MapTiles = tiles
+			c.MapAttribution = e.managed("BALNANA_MAP_ATTRIBUTION")
 		}
 	}
 

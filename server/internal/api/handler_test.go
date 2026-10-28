@@ -78,10 +78,13 @@ func TestServerInfoLinkMode(t *testing.T) {
 	if info.SourceUrl != "https://git.example.com/balnana" {
 		t.Fatalf("source url %q", info.SourceUrl)
 	}
+	if info.MapTiles == nil || !strings.Contains(*info.MapTiles, "{z}") || info.MapAttribution == nil {
+		t.Fatalf("map tiles: %+v", info)
+	}
 	if !info.SetupRequired || info.SetupCode {
 		t.Fatalf("a new server needs setting up, without a code: %+v", info)
 	}
-	if rec.Header().Get("Referrer-Policy") != "no-referrer" {
+	if rec.Header().Get("Referrer-Policy") != "strict-origin" {
 		t.Fatal("missing Referrer-Policy")
 	}
 	if rec.Header().Get("X-Frame-Options") != "DENY" || rec.Header().Get("Content-Security-Policy") != "frame-ancestors 'none'" {

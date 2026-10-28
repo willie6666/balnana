@@ -35,7 +35,8 @@ func (f expenseFilter) where(groupID string) (string, []any, error) {
 	if f.q != nil {
 		if q := strings.TrimSpace(*f.q); q != "" {
 			p := arg("%" + likeEscaper.Replace(q) + "%")
-			conds = append(conds, fmt.Sprintf("(title ilike %s or coalesce(note, '') ilike %s)", p, p))
+			conds = append(conds, fmt.Sprintf(
+				"(title ilike %[1]s or coalesce(note, '') ilike %[1]s or coalesce(location_name, '') ilike %[1]s)", p))
 		}
 	}
 	if f.member != nil && *f.member != "" {

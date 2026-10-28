@@ -45,6 +45,30 @@ func TestSourceURL(t *testing.T) {
 	}
 }
 
+func TestMapTiles(t *testing.T) {
+	c, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.MapTiles != DefaultMapTiles || c.MapAttribution == "" {
+		t.Fatalf("default maps: %q %q", c.MapTiles, c.MapAttribution)
+	}
+	c, err = load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_MAP_TILES": "off"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.MapTiles != "" {
+		t.Fatalf("maps should be off: %q", c.MapTiles)
+	}
+	for _, bad := range []string{"https://tiles.example.com/{z}/{x}.png", "tiles.example.com/{z}/{x}/{y}.png",
+		"ftp://tiles.example.com/{z}/{x}/{y}.png"} {
+		_, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_MAP_TILES": bad}))
+		if err == nil || !strings.Contains(err.Error(), "BALNANA_MAP_TILES") {
+			t.Errorf("%q: want error, got %v", bad, err)
+		}
+	}
+}
+
 func TestDatabaseURLFallback(t *testing.T) {
 	c, err := load(envMap(map[string]string{"DATABASE_URL": "postgres:///y"}))
 	if err != nil {

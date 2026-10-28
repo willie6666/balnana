@@ -102,8 +102,9 @@ func checkBodies(next http.Handler) http.Handler {
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
-		// Group URLs are secrets: never leak them through the Referer header.
-		h.Set("Referrer-Policy", "no-referrer")
+		// Group URLs are secrets: the Referer header carries only the origin,
+		// never the path. Map tile servers ask for that much.
+		h.Set("Referrer-Policy", "strict-origin")
 		h.Set("X-Content-Type-Options", "nosniff")
 		// No other site may show these pages in a frame and trick people
 		// into clicking in them (the administrator's settings, say).

@@ -112,6 +112,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorInvalidTitle => 'Enter a title of up to 200 characters.';
 
   @override
+  String get errorInvalidLocation => 'Enter a place name of one line, up to 200 characters.';
+
+  @override
   String get errorInvalidSymbol => 'Enter a symbol of up to 8 characters.';
 
   @override
@@ -581,7 +584,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesEmptyBody => 'Add the first one, and Balnana will work out who owes whom.';
 
   @override
-  String get expensesSearchHint => 'Search titles and notes';
+  String get expensesSearchHint => 'Search titles, notes and places';
 
   @override
   String get searchClear => 'Clear search';
@@ -767,10 +770,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseNoteHint => 'Optional';
 
   @override
+  String get expenseLocation => 'Location';
+
+  @override
+  String get expenseLocationHint => 'Where was it? (optional)';
+
+  @override
+  String get locationPickOnMap => 'Pick on map';
+
+  @override
+  String get locationUseCurrent => 'Use current location';
+
+  @override
+  String get locationFinding => 'Finding where you are…';
+
+  @override
+  String get locationChange => 'Change on map';
+
+  @override
+  String get locationRemovePin => 'Remove pin';
+
+  @override
+  String get locationOpenInMaps => 'Open in maps';
+
+  @override
+  String get locationPickTitle => 'Pick a location';
+
+  @override
+  String get locationPickHint => 'Tap the map to drop a pin';
+
+  @override
+  String get locationPickDone => 'Done';
+
+  @override
+  String get locationDenied =>
+      'Balnana may not use your location. You can allow it in your device or browser settings.';
+
+  @override
+  String get locationOff => 'Location is turned off on this device.';
+
+  @override
+  String get locationUnavailable => 'Couldn\'t find where you are. Try again, or drop a pin on the map.';
+
+  @override
   String get expenseReceipt => 'Receipt';
 
   @override
   String get expenseHasReceipt => 'Has a receipt photo';
+
+  @override
+  String get expenseHasLocation => 'Has a location';
 
   @override
   String get receiptTakePhoto => 'Take a photo';
@@ -1876,7 +1925,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'The groups you create or join: their names, the members\' names, expenses, payments, notes and any receipt photos. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.';
+      'The groups you create or join: their names, the members\' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.';
 
   @override
   String get privacyUseTitle => 'How it is used';
@@ -1890,7 +1939,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way.';
+      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.';
 
   @override
   String get privacyDeviceTitle => 'On this device';
@@ -2020,6 +2069,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminPrivacyUrlHelp =>
       'Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.';
+
+  @override
+  String get adminMapTiles => 'Map tiles';
+
+  @override
+  String get adminMapTilesHelp =>
+      'Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.';
+
+  @override
+  String get adminMapAttribution => 'Map credit';
+
+  @override
+  String get adminMapAttributionHelp => 'Shown on every map, as the tile provider asks.';
+
+  @override
+  String get adminInvalidMapTiles => 'Enter an http(s) URL template with z, x and y in braces, or \"off\".';
 
   @override
   String get adminUsers => 'Accounts';

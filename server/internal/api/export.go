@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -72,7 +73,8 @@ func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (E
 	var buf bytes.Buffer
 	buf.WriteString("\xef\xbb\xbf") // so spreadsheets read UTF-8
 	w := csv.NewWriter(&buf)
-	header := []string{"Date", "Title", "Category", "Type", "Amount", "Currency", "Note"}
+	header := []string{"Date", "Title", "Category", "Type", "Amount", "Currency", "Note", "Location", "Latitude",
+		"Longitude"}
 	for _, m := range members {
 		header = append(header, cellText(m.name))
 	}
@@ -82,19 +84,28 @@ func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (E
 
 	rows, err = q.Query(ctx, `
 		select e.id::text, case when e.transaction_type = 'expense' then e.kind::text else e.transaction_type end,
-		       e.title, coalesce(c.name, e.category_id, ''), e.amount, e.occurred_at, coalesce(e.note, '')
+		       e.title, coalesce(c.name, e.category_id, ''), e.amount, e.occurred_at, coalesce(e.note, ''),
+		       coalesce(e.location_name, ''), e.latitude, e.longitude
 		from expenses e left join categories c on c.id = e.category_id
 		where e.group_id = $1 and e.deleted_at is null
 		order by e.occurred_at, e.id`, g.id)
 	if err != nil {
 		return ExportCsv200TextcsvResponse{}, err
 	}
-	var kind, title, category, note string
+	var kind, title, category, note, place string
 	var amount int64
 	var at time.Time
-	_, err = pgx.ForEachRow(rows, []any{&eid, &kind, &title, &category, &amount, &at, &note}, func() error {
+	var lat, lng *float64
+	degrees := func(v *float64) string {
+		if v == nil {
+			return ""
+		}
+		return strconv.FormatFloat(*v, 'f', -1, 64)
+	}
+	scan := []any{&eid, &kind, &title, &category, &amount, &at, &note, &place, &lat, &lng}
+	_, err = pgx.ForEachRow(rows, scan, func() error {
 		record := []string{at.In(zone).Format(time.DateOnly), cellText(title), cellText(category), kind,
-			domain.FormatAmount(amount, g.digits), g.currency, cellText(note)}
+			domain.FormatAmount(amount, g.digits), g.currency, cellText(note), cellText(place), degrees(lat), degrees(lng)}
 		for _, m := range members {
 			record = append(record, domain.FormatAmount(nets[eid][m.id], g.digits))
 		}

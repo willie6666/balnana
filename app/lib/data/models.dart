@@ -249,6 +249,53 @@ class ExpensePart {
   final String? share;
 }
 
+/// A point on the map, in degrees (WGS 84).
+@immutable
+class GeoPoint {
+  const GeoPoint(this.latitude, this.longitude);
+
+  final double latitude;
+  final double longitude;
+
+  Map<String, Object?> toJson() => {'latitude': latitude, 'longitude': longitude};
+
+  @override
+  bool operator ==(Object other) =>
+      other is GeoPoint && other.latitude == latitude && other.longitude == longitude;
+
+  @override
+  int get hashCode => Object.hash(latitude, longitude);
+}
+
+/// Where an expense happened: a name people typed, a point on the map, or both.
+@immutable
+class ExpenseLocation {
+  const ExpenseLocation({this.name, this.point});
+
+  /// Null when [json] holds neither a name nor a point.
+  static ExpenseLocation? fromJson(Object? json) {
+    if (json is! Map<String, Object?>) return null;
+    final name = _opt<String>(json, 'name');
+    final point = switch (json['point']) {
+      {'latitude': final num lat, 'longitude': final num lng} => GeoPoint(lat.toDouble(), lng.toDouble()),
+      _ => null,
+    };
+    if ((name == null || name.isEmpty) && point == null) return null;
+    return ExpenseLocation(name: name, point: point);
+  }
+
+  final String? name;
+  final GeoPoint? point;
+
+  Map<String, Object?> toJson() => {'name': ?name, 'point': ?point?.toJson()};
+
+  @override
+  bool operator ==(Object other) => other is ExpenseLocation && other.name == name && other.point == point;
+
+  @override
+  int get hashCode => Object.hash(name, point);
+}
+
 @immutable
 class Expense {
   const Expense({
@@ -259,6 +306,7 @@ class Expense {
     required this.amount,
     required this.occurredAt,
     this.note,
+    this.location,
     required this.splitMethod,
     required this.payers,
     required this.splits,
@@ -285,6 +333,7 @@ class Expense {
       amount: _money(json, 'amount', digits),
       occurredAt: _time(json, 'occurredAt'),
       note: _opt(json, 'note'),
+      location: ExpenseLocation.fromJson(json['location']),
       splitMethod: method,
       payers: [
         for (final p in _objects(json, 'payers'))
@@ -312,6 +361,7 @@ class Expense {
   final BigInt amount;
   final DateTime occurredAt;
   final String? note;
+  final ExpenseLocation? location;
   final SplitMethod splitMethod;
   final List<ExpensePart> payers;
   final List<ExpensePart> splits;
@@ -591,7 +641,7 @@ typedef Period = ({DateTime from, DateTime to});
 class ExpenseFilter {
   const ExpenseFilter({this.text = '', this.member, this.category, this.payments = false, this.period});
 
-  /// Words to find in the title or note.
+  /// Words to find in the title, note or location.
   final String text;
 
   /// Only expenses this member paid for or had a share in.

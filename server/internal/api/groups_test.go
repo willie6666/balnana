@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"slices"
 	"strings"
@@ -404,6 +405,66 @@ func TestExpenseValidation(t *testing.T) {
 		mutate(&in)
 		if code := c.errorCode(400, "POST", "/g/"+g.Token+"/expenses", in); code != want {
 			t.Errorf("%s: got %q", want, code)
+		}
+	}
+}
+
+func TestExpenseLocation(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana", "Ben")
+	ana, ben := g.Members[0].Id, g.Members[1].Id
+	base := "/g/" + g.Token
+	in := ExpenseInput{
+		Title:       "Coffee",
+		Amount:      "4.00",
+		OccurredAt:  mustTime(t, "2026-10-01T10:00:00Z"),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "4.00"}},
+		SplitMethod: "equal",
+		Splits:      []Share{{MemberId: ana}, {MemberId: ben}},
+		Location:    &Location{Name: ptr("  Blue Bottle  "), Point: &GeoPoint{Latitude: 35.0116, Longitude: 135.7681}},
+	}
+	var e Expense
+	c.must(201, "POST", base+"/expenses", in, &e)
+	if e.Location == nil || e.Location.Name == nil || *e.Location.Name != "Blue Bottle" || e.Location.Point == nil ||
+		e.Location.Point.Latitude != 35.0116 || e.Location.Point.Longitude != 135.7681 {
+		t.Fatalf("location: %+v", e.Location)
+	}
+	if got := titles(c, base+"/expenses", url.Values{"q": {"bottle"}}); !slices.Equal(got, []string{"Coffee"}) {
+		t.Fatalf("search by place: %v", got)
+	}
+
+	// A name alone, then nothing: leaving the location out clears it.
+	in.Version = ptr(1)
+	in.Location = &Location{Name: ptr("Kyoto Station")}
+	e = Expense{Id: e.Id}
+	c.must(200, "PUT", base+"/expenses/"+e.Id, in, &e)
+	if e.Location == nil || e.Location.Point != nil || *e.Location.Name != "Kyoto Station" {
+		t.Fatalf("named location: %+v", e.Location)
+	}
+	in.Version = ptr(2)
+	in.Location = nil
+	e = Expense{Id: e.Id}
+	c.must(200, "PUT", base+"/expenses/"+e.Id, in, &e)
+	if e.Location != nil {
+		t.Fatalf("location should be cleared: %+v", e.Location)
+	}
+	in.Version = ptr(3)
+	in.Location = &Location{Name: ptr(" ")}
+	e = Expense{Id: e.Id}
+	c.must(200, "PUT", base+"/expenses/"+e.Id, in, &e)
+	if e.Location != nil {
+		t.Fatalf("a blank location is none: %+v", e.Location)
+	}
+
+	for _, bad := range []Location{
+		{Point: &GeoPoint{Latitude: 91, Longitude: 0}},
+		{Point: &GeoPoint{Latitude: 0, Longitude: -180.5}},
+		{Name: ptr("Two\nlines")},
+		{Name: ptr(strings.Repeat("x", 201))},
+	} {
+		in.Location = &bad
+		if code := c.errorCode(400, "POST", base+"/expenses", in); code != "invalid_location" {
+			t.Errorf("%+v: got %q", bad, code)
 		}
 	}
 }

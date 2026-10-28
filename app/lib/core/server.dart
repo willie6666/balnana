@@ -103,6 +103,8 @@ class ServerInfo {
     required this.publicUrl,
     this.sourceUrl,
     this.privacyUrl,
+    this.mapTiles,
+    this.mapAttribution = '',
     this.setupRequired = false,
     this.setupCode = false,
   });
@@ -143,6 +145,14 @@ class ServerInfo {
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
       privacyUrl: _webUrl(json['privacyUrl']),
+      mapTiles: switch (json['mapTiles']) {
+        final String t when t.startsWith('https://') || t.startsWith('http://') => t,
+        _ => null,
+      },
+      mapAttribution: switch (json['mapAttribution']) {
+        final String a => a,
+        _ => '',
+      },
       setupRequired: json['setupRequired'] == true,
       setupCode: json['setupCode'] == true,
     );
@@ -186,6 +196,13 @@ class ServerInfo {
 
   /// The operator's privacy policy, if they set one; else the app shows its own.
   final Uri? privacyUrl;
+
+  /// Where maps load their tiles from, a URL template with {z}, {x} and {y};
+  /// null when the server turned maps off.
+  final String? mapTiles;
+
+  /// The credit the tile provider asks every map to show.
+  final String mapAttribution;
 
   /// No administrator password is set yet: the server is new, and the app
   /// sends people to /admin to set one.

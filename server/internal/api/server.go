@@ -105,6 +105,10 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		privacy := cfg.PrivacyURL.String()
 		info.PrivacyUrl = &privacy
 	}
+	if cfg.MapTiles != "" {
+		info.MapTiles = &cfg.MapTiles
+		info.MapAttribution = &cfg.MapAttribution
+	}
 	err := s.db.QueryRow(ctx, `select password_hash is null, setup_code is not null from admin`).
 		Scan(&info.SetupRequired, &info.SetupCode)
 	if err != nil {

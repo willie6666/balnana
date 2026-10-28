@@ -252,9 +252,12 @@ type Expense struct {
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 
 	// HasReceipt Whether a photo of the receipt is attached (`/receipt`).
-	HasReceipt  bool        `json:"hasReceipt"`
-	Id          string      `json:"id"`
-	Kind        ExpenseKind `json:"kind"`
+	HasReceipt bool        `json:"hasReceipt"`
+	Id         string      `json:"id"`
+	Kind       ExpenseKind `json:"kind"`
+
+	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+	Location    *Location   `json:"location,omitempty"`
 	Note        *string     `json:"note,omitempty"`
 	OccurredAt  time.Time   `json:"occurredAt"`
 	Payers      []Payer     `json:"payers"`
@@ -281,8 +284,11 @@ type ExpenseTransactionType string
 // ExpenseInput defines model for ExpenseInput.
 type ExpenseInput struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
-	Amount     Money     `json:"amount"`
-	CategoryId *string   `json:"categoryId,omitempty"`
+	Amount     Money   `json:"amount"`
+	CategoryId *string `json:"categoryId,omitempty"`
+
+	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+	Location   *Location `json:"location,omitempty"`
 	Note       *string   `json:"note,omitempty"`
 	OccurredAt time.Time `json:"occurredAt"`
 
@@ -300,6 +306,15 @@ type ExpenseInput struct {
 type ExpensePage struct {
 	Items      []Expense `json:"items"`
 	NextCursor *string   `json:"nextCursor,omitempty"`
+}
+
+// GeoPoint defines model for GeoPoint.
+type GeoPoint struct {
+	// Latitude Degrees north, -90 to 90 (WGS 84).
+	Latitude float64 `json:"latitude"`
+
+	// Longitude Degrees east, -180 to 180 (WGS 84).
+	Longitude float64 `json:"longitude"`
 }
 
 // Group defines model for Group.
@@ -513,6 +528,12 @@ type JoinMember struct {
 	Name    string `json:"name"`
 }
 
+// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+type Location struct {
+	Name  *string   `json:"name,omitempty"`
+	Point *GeoPoint `json:"point,omitempty"`
+}
+
 // LoginInput defines model for LoginInput.
 type LoginInput struct {
 	// Cookie The web app served by this server: keep the session in a cookie instead of returning a token. A web app on another origin cannot (the answer is bad_origin) and keeps the token.
@@ -681,6 +702,12 @@ type ServerInfo struct {
 
 	// LinkGroups Groups may be opened by link alone. Always true in link mode.
 	LinkGroups bool `json:"linkGroups"`
+
+	// MapAttribution Credit the tiles' provider asks to be shown on the map.
+	MapAttribution *string `json:"mapAttribution,omitempty"`
+
+	// MapTiles Map tile URL template with `{z}`, `{x}` and `{y}` (BALNANA_MAP_TILES). Absent when maps are off; the app then still keeps names and points, without showing a map.
+	MapTiles *string `json:"mapTiles,omitempty"`
 
 	// Name Always "balnana"; lets the app recognise a Balnana server.
 	Name           string          `json:"name"`
@@ -912,7 +939,7 @@ type UpdateCategoryParams struct {
 type ListExpensesParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 
-	// Q Text to find in the title or note, ignoring case.
+	// Q Text to find in the title, note or location, ignoring case.
 	Q *string `form:"q,omitempty" json:"q,omitempty"`
 
 	// Member Only what this member paid or has a share in.
@@ -1163,7 +1190,7 @@ type ServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(w http.ResponseWriter, r *http.Request)
-	// Delete the group with everything in it, for good
+	// Delete the group with everything in it
 	// (DELETE /g/{token})
 	DeleteGroup(w http.ResponseWriter, r *http.Request, token Token, params DeleteGroupParams)
 	// The group, its members and their balances
@@ -5859,7 +5886,7 @@ type StrictServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(ctx context.Context, request VerifyEmailRequestObject) (VerifyEmailResponseObject, error)
-	// Delete the group with everything in it, for good
+	// Delete the group with everything in it
 	// (DELETE /g/{token})
 	DeleteGroup(ctx context.Context, request DeleteGroupRequestObject) (DeleteGroupResponseObject, error)
 	// The group, its members and their balances

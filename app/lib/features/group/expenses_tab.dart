@@ -415,7 +415,8 @@ class ExpenseTile extends StatelessWidget {
       final paidBy = e.payers.length == 1
           ? l10n.expensePaidBy(_name(l10n, e.payers.first.memberId), money(e.amount))
           : l10n.expensePaidByMany(e.payers.length, money(e.amount));
-      subtitle = '$time · $paidBy';
+      final place = e.location?.name;
+      subtitle = place == null ? '$time · $paidBy' : '$time · $paidBy · $place';
     }
 
     // What it means for this device's member.
@@ -467,6 +468,15 @@ class ExpenseTile extends StatelessWidget {
                             size: 16,
                             color: scheme.onSurfaceVariant,
                             semanticLabel: l10n.expenseHasReceipt,
+                          ),
+                        ],
+                        if (e.location != null) ...[
+                          const SizedBox(width: BSpace.s4),
+                          Icon(
+                            Icons.place_outlined,
+                            size: 16,
+                            color: scheme.onSurfaceVariant,
+                            semanticLabel: l10n.expenseHasLocation,
                           ),
                         ],
                       ],

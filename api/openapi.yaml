@@ -936,7 +936,7 @@ paths:
             type: string
         - name: q
           in: query
-          description: Text to find in the title or note, ignoring case.
+          description: Text to find in the title, note or location, ignoring case.
           schema:
             type: string
             maxLength: 100
@@ -1680,6 +1680,8 @@ components:
           format: date-time
         note:
           type: string
+        location:
+          $ref: "#/components/schemas/Location"
         payers:
           type: array
           description: Who paid; the amounts add up to `amount`.
@@ -1694,6 +1696,29 @@ components:
         version:
           type: integer
           description: Required when updating.
+    Location:
+      type: object
+      description: >-
+        Where an expense happened: a name, a point on the map, or both. Error
+        `invalid_location` for a name over 200 characters or on several lines,
+        or a point off the globe.
+      properties:
+        name:
+          type: string
+        point:
+          $ref: "#/components/schemas/GeoPoint"
+    GeoPoint:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          format: double
+          description: Degrees north, -90 to 90 (WGS 84).
+        longitude:
+          type: number
+          format: double
+          description: Degrees east, -180 to 180 (WGS 84).
     PaymentInput:
       type: object
       required: [fromMemberId, toMemberId, amount]
@@ -1738,6 +1763,8 @@ components:
           format: date-time
         note:
           type: string
+        location:
+          $ref: "#/components/schemas/Location"
         splitMethod:
           $ref: "#/components/schemas/SplitMethod"
         payers:
@@ -2201,6 +2228,17 @@ components:
           description: >-
             The server's own privacy policy (BALNANA_PRIVACY_URL). Without it
             the app shows its built-in one.
+        mapTiles:
+          type: string
+          description: >-
+            Map tile URL template with `{z}`, `{x}` and `{y}`
+            (BALNANA_MAP_TILES). Absent when maps are off; the app then still
+            keeps names and points, without showing a map.
+          example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+        mapAttribution:
+          type: string
+          description: Credit the tiles' provider asks to be shown on the map.
+          example: © OpenStreetMap contributors
     AdminSetupInput:
       type: object
       required: [password]
