@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -17,7 +18,13 @@ import 'admin_page.dart';
 import 'admin_users_page.dart';
 
 /// Settings that are on or off; the server reads them as "true" or "false".
-const _toggles = {'BALNANA_AUTH_PASSWORD', 'BALNANA_AUTH_REQUIRE_EMAIL', 'BALNANA_LINK_GROUPS'};
+const _toggles = {
+  'BALNANA_AUTH_PASSWORD',
+  'BALNANA_AUTH_REQUIRE_EMAIL',
+  'BALNANA_AUTH_REQUIRE_VERIFIED',
+  'BALNANA_LINK_GROUPS',
+  'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL',
+};
 
 /// Settings picked from a few values.
 const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP'};
@@ -26,7 +33,55 @@ const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP'};
 /// section when it is set. Its switch shows the rest of the section.
 const _smtp = 'BALNANA_SMTP_HOST';
 const _google = 'BALNANA_OAUTH_GOOGLE_CLIENT_ID';
-const _oidc = 'BALNANA_OAUTH_OIDC_ISSUER';
+
+/// The OpenID Connect providers, by id; each has the settings in
+/// [_oidcFields] under [_oidcKey].
+const _oidcProviders = 'BALNANA_OAUTH_OIDC_PROVIDERS';
+const _oidcFields = ['NAME', 'ISSUER', 'CLIENT_ID', 'SECRET'];
+const _oidcTrust = 'TRUST_EMAIL';
+final _oidcId = RegExp(r'^[a-z0-9][a-z0-9-]{0,31}$');
+
+String _oidcKey(String id, String field) =>
+    'BALNANA_OAUTH_OIDC_${id.replaceAll('-', '_').toUpperCase()}_$field';
+
+List<String> _splitList(String value) => [
+  for (final part in value.split(','))
+    if (part.trim() case final id when id.isNotEmpty) id,
+];
+
+/// An OpenID Connect provider in the form. Its id is fixed once saved, as
+/// it is part of the redirect URI and of its settings' names.
+class _Oidc {
+  _Oidc(this.saved, Map<String, AdminSetting> settings) {
+    if (saved case final id?) {
+      this.id.text = id;
+      for (final MapEntry(key: field, value: c) in fields.entries) {
+        final s = settings[_oidcKey(id, field)];
+        c.text = s == null || s.secret ? '' : s.value ?? '';
+      }
+    }
+  }
+
+  /// The id it has on the server; null while new.
+  final String? saved;
+  final id = TextEditingController();
+  final fields = {for (final f in _oidcFields) f: TextEditingController()};
+
+  /// Whether to trust its addresses, when changed here.
+  bool? trust;
+
+  /// Names its id field in [_AdminSettingsPageState._invalid].
+  late final idKey = 'oidc-id-${identityHashCode(this)}';
+
+  String get current => id.text.trim();
+
+  void dispose() {
+    id.dispose();
+    for (final c in fields.values) {
+      c.dispose();
+    }
+  }
+}
 
 /// The server's settings, as the administrator sees them. Only what changed
 /// is sent, and the server takes all of it or nothing.
@@ -53,6 +108,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
   /// Whether each optional section is on, by the setting that turns it on.
   final _on = <String, bool>{};
 
+  /// The OpenID Connect providers, in order.
+  final _oidc = <_Oidc>[];
+
   /// Settings the server refused at the last save.
   var _invalid = <String>{};
   bool _busy = false;
@@ -67,6 +125,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
   void dispose() {
     for (final c in _text.values) {
       c.dispose();
+    }
+    for (final o in _oidc) {
+      o.dispose();
     }
     super.dispose();
   }
@@ -93,16 +154,22 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
   void _show(List<AdminSetting> settings) {
     if (!mounted) return;
     setState(() {
-      _settings = {for (final s in settings) s.key: s};
+      final byKey = _settings = {for (final s in settings) s.key: s};
       for (final s in settings) {
-        if (_toggles.contains(s.key) || _choices.contains(s.key)) continue;
+        if (_toggles.contains(s.key) || _choices.contains(s.key) || _isOidc(s.key)) continue;
         (_text[s.key] ??= TextEditingController()).text = s.secret ? '' : s.value ?? '';
       }
       _picked.clear();
       _removed.clear();
-      for (final key in [_smtp, _google, _oidc]) {
+      for (final key in [_smtp, _google]) {
         _on[key] = settings.any((s) => s.key == key && s.effective.isNotEmpty);
       }
+      for (final o in _oidc) {
+        o.dispose();
+      }
+      _oidc
+        ..clear()
+        ..addAll([for (final id in _savedOidc(byKey)) _Oidc(id, byKey)]);
       _invalid = {};
     });
   }
@@ -135,7 +202,63 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     if (_passwordForced && !_current('BALNANA_AUTH_PASSWORD', settings).isTrue) {
       out['BALNANA_AUTH_PASSWORD'] = 'true';
     }
+    // Confirming addresses takes email.
+    const verified = 'BALNANA_AUTH_REQUIRE_VERIFIED';
+    if (_on[_smtp] == false && _current(verified, settings).isTrue && !(settings[verified]?.locked ?? true)) {
+      out[verified] = 'false';
+    }
+    if (!(settings[_oidcProviders]?.locked ?? true)) _oidcChanges(settings, out);
     return out;
+  }
+
+  static bool _isOidc(String key) => key.startsWith('BALNANA_OAUTH_OIDC_');
+
+  static List<String> _savedOidc(Map<String, AdminSetting> settings) =>
+      _splitList(settings[_oidcProviders]?.effective ?? '');
+
+  bool get _oidcLocked => _settings?[_oidcProviders]?.locked ?? true;
+
+  /// Adds what the OpenID Connect providers change to [out]: their list, the
+  /// settings of each, and empty values clearing the settings of those
+  /// removed.
+  void _oidcChanges(Map<String, AdminSetting> settings, Map<String, String> out) {
+    final saved = _savedOidc(settings);
+    final ids = [for (final o in _oidc) o.current];
+    if (!listEquals(ids, saved)) out[_oidcProviders] = ids.join(',');
+    for (final id in saved) {
+      if (_oidc.any((o) => o.saved == id)) continue;
+      for (final field in [..._oidcFields, _oidcTrust]) {
+        final s = settings[_oidcKey(id, field)];
+        if (s != null && s.set && !s.locked) out[s.key] = '';
+      }
+    }
+    for (final o in _oidc) {
+      final id = o.current;
+      if (id.isEmpty) continue;
+      for (final MapEntry(key: field, value: c) in o.fields.entries) {
+        final key = _oidcKey(id, field);
+        final s = o.saved == null ? null : settings[key];
+        if (s?.locked ?? false) continue;
+        final v = c.text.trim();
+        if (field == 'SECRET' ? v.isNotEmpty : v != (s?.value ?? '')) out[key] = v;
+      }
+      final key = _oidcKey(id, _oidcTrust);
+      final s = o.saved == null ? null : settings[key];
+      final trust = o.trust;
+      if (trust != null && !(s?.locked ?? false) && trust != (s?.effective ?? 'false').isTrue) {
+        out[key] = '$trust';
+      }
+    }
+  }
+
+  /// What is wrong with an OpenID Connect provider's id, if anything.
+  String? _oidcIdProblem(AppLocalizations l10n, _Oidc o) {
+    if (o.saved != null) return null;
+    final id = o.current;
+    if (id.isEmpty) return l10n.errorRequired;
+    if (!_oidcId.hasMatch(id) || id == 'google') return l10n.adminOidcIdInvalid;
+    if (_oidc.where((other) => other.current == id).length > 1) return l10n.adminOidcIdTaken;
+    return null;
   }
 
   String _current(String key, Map<String, AdminSetting> settings) =>
@@ -148,15 +271,31 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     return _current('BALNANA_AUTH_MODE', settings) == 'accounts' &&
         !(settings['BALNANA_AUTH_PASSWORD']?.locked ?? false) &&
         _on[_google] != true &&
-        _on[_oidc] != true;
+        _oidc.isEmpty;
   }
 
-  /// Switched-on sections whose setting that turns them on is empty.
-  Set<String> get _missing => {
-    for (final key in [_smtp, _google, _oidc])
-      if (_on[key] == true && !(_settings?[key]?.locked ?? false) && (_text[key]?.text.trim() ?? '').isEmpty)
-        key,
-  };
+  /// Switched-on sections whose setting that turns them on is empty, and
+  /// what OpenID Connect providers are missing.
+  Set<String> get _missing {
+    final settings = _settings ?? const {};
+    return {
+      for (final key in [_smtp, _google])
+        if (_on[key] == true && !(settings[key]?.locked ?? false) && (_text[key]?.text.trim() ?? '').isEmpty)
+          key,
+      if (!_oidcLocked)
+        for (final o in _oidc) ...[
+          if (_oidcIdProblem(context.l10n, o) != null)
+            o.idKey
+          else
+            for (final field in ['ISSUER', 'CLIENT_ID', 'SECRET'])
+              if (_oidcKey(o.current, field) case final key
+                  when o.fields[field]!.text.trim().isEmpty &&
+                      !(field == 'SECRET' && o.saved != null && (settings[key]?.set ?? false)) &&
+                      !(settings[key]?.locked ?? false))
+                key,
+        ],
+    };
+  }
 
   Future<void> _save() async {
     final changes = _changes;
@@ -338,6 +477,12 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
           enabled: passwords,
           help: passwords ? null : l10n.adminRequireEmailUnused,
         ),
+        _toggle(
+          'BALNANA_AUTH_REQUIRE_VERIFIED',
+          enabled: _on[_smtp]!,
+          off: !_on[_smtp]!,
+          help: _on[_smtp]! ? null : l10n.adminRequireVerifiedUnused,
+        ),
         _toggle('BALNANA_LINK_GROUPS'),
         gap,
         _choice('BALNANA_AUTH_SIGNUP', {
@@ -365,24 +510,155 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
           _textField(_google),
           gap,
           _textField('BALNANA_OAUTH_GOOGLE_SECRET'),
+          _toggle('BALNANA_OAUTH_GOOGLE_TRUST_EMAIL'),
         ],
         FormSection(l10n.adminSectionOidc),
-        _section(_oidc, l10n.adminOidcOn, l10n.adminOidcOnHelp),
-        if (_on[_oidc]!) ...[
-          _note(l10n.adminSectionOidcBody(callback('oidc'))),
-          _textField(_oidc, keyboard: TextInputType.url),
-          gap,
-          _textField('BALNANA_OAUTH_OIDC_CLIENT_ID'),
-          gap,
-          _textField('BALNANA_OAUTH_OIDC_SECRET'),
-          gap,
-          _textField('BALNANA_OAUTH_OIDC_NAME'),
-        ],
+        _note(
+          _oidcLocked && settings.containsKey(_oidcProviders)
+              ? '${l10n.adminOidcHelp}\n${l10n.adminLocked(_oidcProviders)}'
+              : l10n.adminOidcHelp,
+        ),
+        for (final o in _oidc) ...[_oidcCard(o, callback), gap],
+        if (!_oidcLocked)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: OutlinedButton.icon(
+              onPressed: _busy ? null : () => setState(() => _oidc.add(_Oidc(null, settings))),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.adminOidcAdd),
+            ),
+          ),
       ],
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
     ];
+  }
+
+  /// An OpenID Connect provider's settings.
+  Widget _oidcCard(_Oidc o, String Function(String) callback) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final settings = _settings!;
+    final id = o.current;
+    final idProblem = _oidcIdProblem(l10n, o);
+    final name = o.fields['NAME']!.text.trim();
+    final trustKey = _oidcKey(id, _oidcTrust);
+    final trustSetting = o.saved == null ? null : settings[trustKey];
+    const gap = SizedBox(height: BSpace.s16);
+
+    Widget field(String field, {TextInputType? keyboard}) {
+      final key = _oidcKey(id, field);
+      final s = o.saved == null ? null : settings[key];
+      final c = o.fields[field]!;
+      final secret = field == 'SECRET';
+      final locked = _oidcLocked || (s?.locked ?? false);
+      return TextField(
+        controller: c,
+        enabled: !_busy && !locked,
+        obscureText: secret,
+        autocorrect: false,
+        enableSuggestions: false,
+        keyboardType: keyboard,
+        onChanged: (_) => setState(() => _invalid.remove(key)),
+        decoration: InputDecoration(
+          labelText: _label(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+          hintText: field == 'NAME' && id.isNotEmpty ? l10n.adminDefault(id) : null,
+          floatingLabelBehavior: field == 'NAME' && id.isNotEmpty ? FloatingLabelBehavior.always : null,
+          helperText: s?.locked ?? false
+              ? l10n.adminLocked(key)
+              : secret && (s?.set ?? false) && c.text.isEmpty
+              ? l10n.adminSecretSaved
+              : _help(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+          helperMaxLines: 4,
+          errorText: !_invalid.contains(key)
+              ? null
+              : c.text.trim().isEmpty
+              ? l10n.errorRequired
+              : _problem(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+          errorMaxLines: 4,
+        ),
+      );
+    }
+
+    return Card.outlined(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(BSpace.s16, BSpace.s8, BSpace.s8, BSpace.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name.isNotEmpty
+                        ? name
+                        : id.isNotEmpty
+                        ? id
+                        : l10n.adminOidcNew,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                if (!_oidcLocked)
+                  IconButton(
+                    tooltip: l10n.adminOidcRemove,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() {
+                            _oidc.remove(o);
+                            o.dispose();
+                          }),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: BSpace.s8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  gap,
+                  TextField(
+                    controller: o.id,
+                    enabled: !_busy && o.saved == null,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    onChanged: (_) => setState(() => _invalid.remove(o.idKey)),
+                    decoration: InputDecoration(
+                      labelText: l10n.adminOidcId,
+                      helperText: o.saved == null ? l10n.adminOidcIdHelp : null,
+                      helperMaxLines: 4,
+                      errorText: _invalid.contains(o.idKey) ? idProblem : null,
+                      errorMaxLines: 4,
+                    ),
+                  ),
+                  if (idProblem == null) ...[gap, _note(l10n.adminSectionOidcBody(callback(id)))] else gap,
+                  field('NAME'),
+                  gap,
+                  field('ISSUER', keyboard: TextInputType.url),
+                  gap,
+                  field('CLIENT_ID'),
+                  gap,
+                  field('SECRET'),
+                ],
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: const EdgeInsets.only(left: BSpace.s4, right: BSpace.s8),
+              title: Text(l10n.adminTrustEmail),
+              subtitle: Text(
+                trustSetting?.locked ?? false ? l10n.adminLocked(trustKey) : l10n.adminOidcTrustEmailHelp,
+              ),
+              value: o.trust ?? (trustSetting?.effective ?? 'false').isTrue,
+              onChanged: _busy || _oidcLocked || (trustSetting?.locked ?? false)
+                  ? null
+                  : (v) => setState(() => o.trust = v),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _note(String text) {
@@ -450,13 +726,14 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     );
   }
 
-  /// An on or off setting. [forced] holds it on; [enabled] false dims it, as
-  /// it does nothing then. [help] replaces its usual help.
-  Widget _toggle(String key, {bool forced = false, bool enabled = true, String? help}) {
+  /// An on or off setting. [forced] holds it on, [off] holds it off;
+  /// [enabled] false dims it, as it does nothing then. [help] replaces its
+  /// usual help.
+  Widget _toggle(String key, {bool forced = false, bool off = false, bool enabled = true, String? help}) {
     final l10n = context.l10n;
     final s = _settings![key];
     if (s == null) return const SizedBox.shrink();
-    final value = forced || (_picked[key] ?? s.effective).isTrue;
+    final value = !off && (forced || (_picked[key] ?? s.effective).isTrue);
     final scheme = Theme.of(context).colorScheme;
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
@@ -567,6 +844,8 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
   'BALNANA_AUTH_PASSWORD' => l10n.adminPasswordLogin,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmail,
+  'BALNANA_AUTH_REQUIRE_VERIFIED' => l10n.adminRequireVerified,
+  'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL' => l10n.adminTrustEmail,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignup,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroups,
   'BALNANA_SMTP_HOST' => l10n.adminSmtpHost,
@@ -590,6 +869,8 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttributionHelp,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
   'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmailHelp,
+  'BALNANA_AUTH_REQUIRE_VERIFIED' => l10n.adminRequireVerifiedHelp,
+  'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL' => l10n.adminGoogleTrustEmailHelp,
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
   'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcNameHelp,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprintsHelp,

@@ -335,3 +335,85 @@ class InvitePage extends ConsumerWidget {
     return _LinkScaffold(child: _centered(child));
   }
 }
+
+/// Where an account waits while the server needs its address confirmed:
+/// everything but its settings stays closed until then.
+class ConfirmEmailPage extends ConsumerStatefulWidget {
+  const ConfirmEmailPage({super.key, this.next});
+
+  final String? next;
+
+  @override
+  ConsumerState<ConfirmEmailPage> createState() => _ConfirmEmailPageState();
+}
+
+class _ConfirmEmailPageState extends ConsumerState<ConfirmEmailPage> {
+  bool _busy = false;
+
+  void _snack(String message) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+  Future<void> _send(String email) async {
+    final l10n = context.l10n;
+    setState(() => _busy = true);
+    try {
+      await ref.read(balnanaApiProvider)!.sendVerifyEmail();
+      if (mounted) _snack(l10n.verifyEmailSent(email));
+    } on ApiException catch (e) {
+      if (mounted) _snack(errorMessage(l10n, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Looks again; the router moves on once the address is confirmed.
+  Future<void> _check() async {
+    final l10n = context.l10n;
+    setState(() => _busy = true);
+    ref.invalidate(accountProvider);
+    try {
+      final account = await ref.read(accountProvider.future);
+      if (mounted && account?.emailVerified != true) _snack(l10n.confirmEmailNotYet);
+    } on ApiException catch (e) {
+      if (mounted) _snack(errorMessage(l10n, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final email = ref.watch(currentAccountProvider).value?.email ?? '';
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(BSpace.s16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: formMaxWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  EmptyState(
+                    icon: Icons.mark_email_unread_outlined,
+                    title: l10n.confirmEmailTitle,
+                    body: l10n.confirmEmailBody(email),
+                  ),
+                  const SizedBox(height: BSpace.s24),
+                  FilledButton(onPressed: _busy ? null : _check, child: Text(l10n.confirmEmailDone)),
+                  const SizedBox(height: BSpace.s8),
+                  OutlinedButton(
+                    onPressed: _busy || email.isEmpty ? null : () => _send(email),
+                    child: Text(l10n.confirmEmailResend),
+                  ),
+                  const SizedBox(height: BSpace.s8),
+                  TextButton(onPressed: () => context.go('/settings'), child: Text(l10n.navSettings)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

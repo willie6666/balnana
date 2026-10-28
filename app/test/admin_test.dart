@@ -281,4 +281,108 @@ void main() {
       },
     });
   });
+
+  testWidgets('OpenID Connect providers are added, removed and trusted one by one', (tester) async {
+    final seen = <RequestOptions>[];
+    final api = _api(
+      seen,
+      (r) => switch ((r.method, r.path)) {
+        ('POST', '/admin/login') => (200, {'token': 'admin-token', 'expiresAt': '2026-10-27T00:00:00Z'}),
+        ('GET', '/admin/settings') => (
+          200,
+          {
+            'settings': [
+              _setting('BALNANA_PUBLIC_URL', value: _server, locked: true),
+              _setting('BALNANA_AUTH_MODE', value: 'accounts'),
+              _setting('BALNANA_AUTH_PASSWORD', def: 'true'),
+              _setting('BALNANA_AUTH_REQUIRE_VERIFIED', def: 'false'),
+              _setting('BALNANA_SMTP_HOST', value: 'smtp.example.com'),
+              _setting('BALNANA_OAUTH_OIDC_PROVIDERS', value: 'authentik'),
+              _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_ISSUER', value: 'https://auth.example.com'),
+              _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_CLIENT_ID', value: 'balnana'),
+              _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_SECRET', secret: true),
+              _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_NAME', value: 'Authentik'),
+              _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_TRUST_EMAIL', def: 'false'),
+            ],
+          },
+        ),
+        ('PUT', '/admin/settings') => (
+          400,
+          {
+            'code': 'invalid_settings',
+            'params': {'keys': <String>[]},
+          },
+        ),
+        _ => (404, {'code': 'not_found'}),
+      },
+    );
+    await _boot(
+      tester,
+      info: const ServerInfo(version: '1', authMode: AuthMode.accounts, publicUrl: _server),
+      api: api,
+    );
+    final router = tester.widget<MaterialApp>(find.byType(MaterialApp)).routerConfig! as GoRouter;
+    router.go('/admin');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'the admin password');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    Future<void> tap(Finder finder) async {
+      await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> enter(String label, String text) async {
+      final finder = find.widgetWithText(TextField, label).last;
+      await tester.ensureVisible(finder);
+      await tester.enterText(finder, text);
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('Authentik'), findsWidgets);
+    expect(
+      find.text('Register $_server/api/v1/auth/oauth/authentik/callback as the redirect URI with the provider.'),
+      findsOneWidget,
+    );
+    await tap(find.text('Add provider'));
+    expect(find.text('New provider'), findsOneWidget);
+    await enter('ID', 'Bad ID');
+    await enter('Button name', 'Keycloak');
+    await enter('Issuer URL', 'https://sso.example.com/realms/main');
+    await enter('Client ID', 'balnana');
+    await enter('Client secret', 'kc-secret');
+    await tap(find.widgetWithText(FilledButton, 'Save'));
+    expect(seen.where((r) => r.method == 'PUT'), isEmpty);
+    expect(find.textContaining('Use lowercase letters, digits and dashes'), findsOneWidget);
+
+    await enter('ID', 'keycloak');
+    expect(
+      find.text('Register $_server/api/v1/auth/oauth/keycloak/callback as the redirect URI with the provider.'),
+      findsOneWidget,
+    );
+    await tap(find.widgetWithText(SwitchListTile, 'Trust its email').last);
+    await tap(find.byTooltip('Remove provider').first);
+    expect(find.text('Authentik'), findsNothing);
+    await tap(find.text('Require a confirmed email'));
+    await tap(find.widgetWithText(FilledButton, 'Save'));
+
+    expect(seen.lastWhere((r) => r.method == 'PUT').data, {
+      'values': {
+        'BALNANA_AUTH_REQUIRE_VERIFIED': 'true',
+        'BALNANA_OAUTH_OIDC_PROVIDERS': 'keycloak',
+        'BALNANA_OAUTH_OIDC_AUTHENTIK_ISSUER': '',
+        'BALNANA_OAUTH_OIDC_AUTHENTIK_CLIENT_ID': '',
+        'BALNANA_OAUTH_OIDC_AUTHENTIK_SECRET': '',
+        'BALNANA_OAUTH_OIDC_AUTHENTIK_NAME': '',
+        'BALNANA_OAUTH_OIDC_KEYCLOAK_NAME': 'Keycloak',
+        'BALNANA_OAUTH_OIDC_KEYCLOAK_ISSUER': 'https://sso.example.com/realms/main',
+        'BALNANA_OAUTH_OIDC_KEYCLOAK_CLIENT_ID': 'balnana',
+        'BALNANA_OAUTH_OIDC_KEYCLOAK_SECRET': 'kc-secret',
+        'BALNANA_OAUTH_OIDC_KEYCLOAK_TRUST_EMAIL': 'true',
+      },
+    });
+  });
 }

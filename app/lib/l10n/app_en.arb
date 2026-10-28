@@ -1690,6 +1690,100 @@
   "@signOut": {
     "description": "Label or control text for sign out in the application interface."
   },
+  "accountOAuthLinked": "Signs in to this account. Tap to remove.",
+  "@accountOAuthLinked": {
+    "description": "Subtitle of a sign-in provider tile in account settings when the account uses it."
+  },
+  "accountOAuthAdd": "Add as a way to sign in",
+  "@accountOAuthAdd": {
+    "description": "Subtitle of a sign-in provider tile in account settings when the account doesn't use it yet."
+  },
+  "accountOAuthAddTitle": "Add {name}",
+  "@accountOAuthAddTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Google",
+        "description": "The name value named by this message."
+      }
+    },
+    "description": "Title of the dialog asking for the password before adding a sign-in provider."
+  },
+  "accountOAuthAdded": "You can now sign in with {name}.",
+  "@accountOAuthAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Google",
+        "description": "The name value named by this message."
+      }
+    },
+    "description": "Snack bar after adding a sign-in provider to the account."
+  },
+  "accountOAuthRemoveTitle": "Remove {name}?",
+  "@accountOAuthRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Google",
+        "description": "The name value named by this message."
+      }
+    },
+    "description": "Title of the dialog confirming removing a sign-in provider."
+  },
+  "accountOAuthRemoveBody": "You won't be able to sign in with {name} until you add it again.",
+  "@accountOAuthRemoveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Google",
+        "description": "The name value named by this message."
+      }
+    },
+    "description": "Body of the dialog confirming removing a sign-in provider."
+  },
+  "accountOAuthRemove": "Remove",
+  "@accountOAuthRemove": {
+    "description": "Button that removes a sign-in provider from the account."
+  },
+  "accountOAuthRemoved": "{name} removed.",
+  "@accountOAuthRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Google",
+        "description": "The name value named by this message."
+      }
+    },
+    "description": "Snack bar after removing a sign-in provider."
+  },
+  "confirmEmailTitle": "Confirm your email",
+  "@confirmEmailTitle": {
+    "description": "Heading of the page shown until the account's email is confirmed."
+  },
+  "confirmEmailBody": "This server needs a confirmed email. Open the link we sent to {email}.",
+  "@confirmEmailBody": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "sam@example.com",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Body of the page shown until the account's email is confirmed."
+  },
+  "confirmEmailDone": "I've confirmed it",
+  "@confirmEmailDone": {
+    "description": "Button that checks whether the email has been confirmed."
+  },
+  "confirmEmailResend": "Send the link again",
+  "@confirmEmailResend": {
+    "description": "Button that sends the confirmation email again."
+  },
+  "confirmEmailNotYet": "Not confirmed yet. Open the link in the email.",
+  "@confirmEmailNotYet": {
+    "description": "Snack bar when the email still isn't confirmed."
+  },
   "settingsTheme": "Theme",
   "@settingsTheme": {
     "description": "Label or control text for settings theme in application settings."
@@ -2294,9 +2388,64 @@
   "@oauthFailedTitle": {
     "description": "Heading for oauth failed title in the OAuth sign-in return page."
   },
-  "oauthEmailTaken": "There's already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.",
-  "@oauthEmailTaken": {
-    "description": "Legacy fallback explaining an OAuth email collision. Verified provider emails normally reclaim an unverified account."
+  "oauthPendingTitle": "This email already has an account",
+  "@oauthPendingTitle": {
+    "description": "Heading of the page asking what to do when a provider sign-in matches an existing account's unconfirmed email."
+  },
+  "oauthPendingBody": "{provider} says {email} is yours, but an account with that email hasn't confirmed it. What should happen?",
+  "@oauthPendingBody": {
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Google",
+        "description": "The provider value named by this message."
+      },
+      "email": {
+        "type": "String",
+        "example": "sam@example.com",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Body of the choice page after a provider sign-in matches an unconfirmed account."
+  },
+  "oauthPendingLink": "Add to that account",
+  "@oauthPendingLink": {
+    "description": "Choice that adds the provider sign-in to the existing account."
+  },
+  "oauthPendingLinkHelp": "Enter that account's password. Its password keeps working.",
+  "@oauthPendingLinkHelp": {
+    "description": "Help text for adding the provider sign-in to the existing account."
+  },
+  "oauthPendingTakeOver": "Take over that account",
+  "@oauthPendingTakeOver": {
+    "description": "Choice that makes the existing account the person's, removing its other ways to sign in."
+  },
+  "oauthPendingTakeOverHelp": "Its password and other ways to sign in are removed, and anyone signed in to it is signed out.",
+  "@oauthPendingTakeOverHelp": {
+    "description": "Help text for taking over the existing account."
+  },
+  "oauthPendingNew": "Start a new account",
+  "@oauthPendingNew": {
+    "description": "Choice that creates a new account instead of using the existing one."
+  },
+  "oauthPendingNewHelp": "The other account keeps its groups but no longer has {email}.",
+  "@oauthPendingNewHelp": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "sam@example.com",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Help text for starting a new account."
+  },
+  "oauthPendingPassword": "Password of that account",
+  "@oauthPendingPassword": {
+    "description": "Label of the password field on the choice page."
+  },
+  "oauthPendingWrongPassword": "That password isn't right.",
+  "@oauthPendingWrongPassword": {
+    "description": "Error shown when the password for adding to the existing account is wrong."
   },
   "oauthOtherServer": "This sign-in was started on another server than the one chosen now. Sign in again.",
   "@oauthOtherServer": {
@@ -2309,6 +2458,22 @@
   "errorOAuthFailed": "Signing in didn't work. Try again.",
   "@errorOAuthFailed": {
     "description": "Message for error o auth failed in API error feedback."
+  },
+  "errorEmailHasAccount": "There's already an account with this email. Sign in to it, then add this way of signing in from Settings.",
+  "@errorEmailHasAccount": {
+    "description": "Error shown when a sign-in provider's email belongs to an account and the server doesn't take that provider's word for the email."
+  },
+  "errorIdentityTaken": "This sign-in already belongs to another account.",
+  "@errorIdentityTaken": {
+    "description": "Error shown when adding a sign-in provider identity that another account already uses."
+  },
+  "errorLastSignInMethod": "This is your only way to sign in. Set a password or add another way first.",
+  "@errorLastSignInMethod": {
+    "description": "Error shown when removing an account's last way to sign in."
+  },
+  "errorEmailUnverified": "Confirm your email first.",
+  "@errorEmailUnverified": {
+    "description": "Error shown when the server requires a confirmed email before using the app."
   },
   "errorOAuthCancelled": "Signing in was cancelled.",
   "@errorOAuthCancelled": {
@@ -2688,13 +2853,61 @@
     },
     "description": "Explanatory text for admin section oidc body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
-  "adminOidcOn": "Offer OpenID Connect sign-in",
-  "@adminOidcOn": {
-    "description": "Label or control text for admin oidc on in the server administrator interface."
+  "adminOidcHelp": "Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Add as many as you like.",
+  "@adminOidcHelp": {
+    "description": "Help text above the list of OpenID Connect providers in the server administrator interface."
   },
-  "adminOidcOnHelp": "Any OpenID Connect provider, such as Authentik, Keycloak or Dex.",
-  "@adminOidcOnHelp": {
-    "description": "Help text for admin oidc on help in the server administrator interface."
+  "adminOidcAdd": "Add provider",
+  "@adminOidcAdd": {
+    "description": "Button adding an OpenID Connect provider in the server administrator interface."
+  },
+  "adminOidcRemove": "Remove provider",
+  "@adminOidcRemove": {
+    "description": "Tooltip of the button removing an OpenID Connect provider."
+  },
+  "adminOidcNew": "New provider",
+  "@adminOidcNew": {
+    "description": "Title of an OpenID Connect provider card before it has a name."
+  },
+  "adminOidcId": "ID",
+  "@adminOidcId": {
+    "description": "Label of an OpenID Connect provider's ID field."
+  },
+  "adminOidcIdHelp": "Lowercase letters, digits and dashes. It's part of the redirect URI and can't change later.",
+  "@adminOidcIdHelp": {
+    "description": "Help text of an OpenID Connect provider's ID field."
+  },
+  "adminOidcIdInvalid": "Use lowercase letters, digits and dashes, starting with a letter or digit, up to 32.",
+  "@adminOidcIdInvalid": {
+    "description": "Error for an invalid OpenID Connect provider ID."
+  },
+  "adminOidcIdTaken": "Another provider has this ID.",
+  "@adminOidcIdTaken": {
+    "description": "Error for a duplicate OpenID Connect provider ID."
+  },
+  "adminTrustEmail": "Trust its email",
+  "@adminTrustEmail": {
+    "description": "Label of the switch that lets a sign-in provider's verified email find or take over an account."
+  },
+  "adminGoogleTrustEmailHelp": "A Google sign-in with an email that has an account signs in to it. Off: they sign in with their password and add Google in Settings.",
+  "@adminGoogleTrustEmailHelp": {
+    "description": "Help text of the Google trust email switch."
+  },
+  "adminOidcTrustEmailHelp": "Only for a provider you run or trust to check emails. Off: people with an account sign in with their password and add it in Settings.",
+  "@adminOidcTrustEmailHelp": {
+    "description": "Help text of an OpenID Connect provider's trust email switch."
+  },
+  "adminRequireVerified": "Require a confirmed email",
+  "@adminRequireVerified": {
+    "description": "Label of the switch that keeps accounts out until they confirm their email."
+  },
+  "adminRequireVerifiedHelp": "Accounts can't use the app until they confirm their email, and a trusted sign-in with the same email takes over an unconfirmed account. Off: people choose what happens.",
+  "@adminRequireVerifiedHelp": {
+    "description": "Help text of the require confirmed email switch."
+  },
+  "adminRequireVerifiedUnused": "Needs email sending.",
+  "@adminRequireVerifiedUnused": {
+    "description": "Help text of the require confirmed email switch when email sending is off."
   },
   "adminSectionAndroid": "Android app links",
   "@adminSectionAndroid": {

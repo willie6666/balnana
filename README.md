@@ -44,8 +44,8 @@ Screenshots from the Android emulator, with made-up demo data.
 - **Exact money.** Amounts are kept in the currency's smallest unit, such as
   cents, never as floating point, so totals always add up.
 - **Links or accounts.** In link mode, a group's private link is all anyone
-  needs. In accounts mode, people sign in with a password, Google or any OpenID
-  Connect provider.
+  needs. In accounts mode, people sign in with a password, Google or any number
+  of OpenID Connect providers, and can add or remove them in Settings.
 - **Live updates.** Open groups refresh as others add expenses, and phones get
   push notifications over UnifiedPush, with no Firebase SDK in the app.
 - **Statistics, receipts and export.** See spending by category, member and

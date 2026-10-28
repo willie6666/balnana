@@ -395,16 +395,20 @@ func invalidSettings(keys []string) error {
 	return &apiError{status: http.StatusBadRequest, code: "invalid_settings", params: map[string]any{"keys": keys}}
 }
 
-// adminSettings describes every Managed setting: what is in force (secrets
-// left out), whether the environment sets it, and its default.
+// adminSettings describes every Managed setting, with those of each listed
+// OpenID Connect provider: what is in force (secrets left out), whether the
+// environment sets it, and its default.
 func adminSettings(stored map[string]string) AdminSettings {
 	out := AdminSettings{Settings: []AdminSetting{}}
-	for _, m := range config.Managed {
-		v := stored[m.Key]
-		locked := config.Environment(m.Key)
-		if locked {
-			v = strings.TrimSpace(os.Getenv(m.Key))
+	lookup := func(key string) string {
+		if config.Environment(key) {
+			return strings.TrimSpace(os.Getenv(key))
 		}
+		return stored[key]
+	}
+	for _, m := range config.ManagedFor(lookup) {
+		v := lookup(m.Key)
+		locked := config.Environment(m.Key)
 		item := AdminSetting{Key: m.Key, Default: m.Default, Locked: locked, Secret: m.Secret, Set: v != ""}
 		if v != "" && !m.Secret {
 			item.Value = &v

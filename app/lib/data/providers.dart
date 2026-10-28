@@ -116,6 +116,9 @@ final accountProvider = FutureProvider<User?>((ref) async {
   }
 });
 
+/// Ids of the providers the signed-in account signs in with.
+final myOAuthProvider = FutureProvider<List<String>>((ref) => _load(ref, (api) => api.myOAuth()));
+
 /// [accountProvider], without an account signed in before the session changed.
 final currentAccountProvider = Provider<AsyncValue<User?>>(
   (ref) => ref.watch(accountProvider).current(ref.watch(identityProvider)),

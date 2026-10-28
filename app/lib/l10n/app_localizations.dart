@@ -2011,6 +2011,84 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get signOut;
 
+  /// Subtitle of a sign-in provider tile in account settings when the account uses it.
+  ///
+  /// In en, this message translates to:
+  /// **'Signs in to this account. Tap to remove.'**
+  String get accountOAuthLinked;
+
+  /// Subtitle of a sign-in provider tile in account settings when the account doesn't use it yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as a way to sign in'**
+  String get accountOAuthAdd;
+
+  /// Title of the dialog asking for the password before adding a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {name}'**
+  String accountOAuthAddTitle(String name);
+
+  /// Snack bar after adding a sign-in provider to the account.
+  ///
+  /// In en, this message translates to:
+  /// **'You can now sign in with {name}.'**
+  String accountOAuthAdded(String name);
+
+  /// Title of the dialog confirming removing a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String accountOAuthRemoveTitle(String name);
+
+  /// Body of the dialog confirming removing a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t be able to sign in with {name} until you add it again.'**
+  String accountOAuthRemoveBody(String name);
+
+  /// Button that removes a sign-in provider from the account.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get accountOAuthRemove;
+
+  /// Snack bar after removing a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed.'**
+  String accountOAuthRemoved(String name);
+
+  /// Heading of the page shown until the account's email is confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your email'**
+  String get confirmEmailTitle;
+
+  /// Body of the page shown until the account's email is confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'This server needs a confirmed email. Open the link we sent to {email}.'**
+  String confirmEmailBody(String email);
+
+  /// Button that checks whether the email has been confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve confirmed it'**
+  String get confirmEmailDone;
+
+  /// Button that sends the confirmation email again.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the link again'**
+  String get confirmEmailResend;
+
+  /// Snack bar when the email still isn't confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed yet. Open the link in the email.'**
+  String get confirmEmailNotYet;
+
   /// Label or control text for settings theme in application settings.
   ///
   /// In en, this message translates to:
@@ -2671,11 +2749,65 @@ abstract class AppLocalizations {
   /// **'Couldn\'t sign you in'**
   String get oauthFailedTitle;
 
-  /// Legacy fallback explaining an OAuth email collision. Verified provider emails normally reclaim an unverified account.
+  /// Heading of the page asking what to do when a provider sign-in matches an existing account's unconfirmed email.
   ///
   /// In en, this message translates to:
-  /// **'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.'**
-  String get oauthEmailTaken;
+  /// **'This email already has an account'**
+  String get oauthPendingTitle;
+
+  /// Body of the choice page after a provider sign-in matches an unconfirmed account.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} says {email} is yours, but an account with that email hasn\'t confirmed it. What should happen?'**
+  String oauthPendingBody(String provider, String email);
+
+  /// Choice that adds the provider sign-in to the existing account.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to that account'**
+  String get oauthPendingLink;
+
+  /// Help text for adding the provider sign-in to the existing account.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter that account\'s password. Its password keeps working.'**
+  String get oauthPendingLinkHelp;
+
+  /// Choice that makes the existing account the person's, removing its other ways to sign in.
+  ///
+  /// In en, this message translates to:
+  /// **'Take over that account'**
+  String get oauthPendingTakeOver;
+
+  /// Help text for taking over the existing account.
+  ///
+  /// In en, this message translates to:
+  /// **'Its password and other ways to sign in are removed, and anyone signed in to it is signed out.'**
+  String get oauthPendingTakeOverHelp;
+
+  /// Choice that creates a new account instead of using the existing one.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new account'**
+  String get oauthPendingNew;
+
+  /// Help text for starting a new account.
+  ///
+  /// In en, this message translates to:
+  /// **'The other account keeps its groups but no longer has {email}.'**
+  String oauthPendingNewHelp(String email);
+
+  /// Label of the password field on the choice page.
+  ///
+  /// In en, this message translates to:
+  /// **'Password of that account'**
+  String get oauthPendingPassword;
+
+  /// Error shown when the password for adding to the existing account is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That password isn\'t right.'**
+  String get oauthPendingWrongPassword;
 
   /// Label or control text for oauth other server in the OAuth sign-in return page.
   ///
@@ -2694,6 +2826,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signing in didn\'t work. Try again.'**
   String get errorOAuthFailed;
+
+  /// Error shown when a sign-in provider's email belongs to an account and the server doesn't take that provider's word for the email.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s already an account with this email. Sign in to it, then add this way of signing in from Settings.'**
+  String get errorEmailHasAccount;
+
+  /// Error shown when adding a sign-in provider identity that another account already uses.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in already belongs to another account.'**
+  String get errorIdentityTaken;
+
+  /// Error shown when removing an account's last way to sign in.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your only way to sign in. Set a password or add another way first.'**
+  String get errorLastSignInMethod;
+
+  /// Error shown when the server requires a confirmed email before using the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your email first.'**
+  String get errorEmailUnverified;
 
   /// Message for error o auth cancelled in API error feedback.
   ///
@@ -3157,17 +3313,89 @@ abstract class AppLocalizations {
   /// **'Register {url} as the redirect URI with the provider.'**
   String adminSectionOidcBody(String url);
 
-  /// Label or control text for admin oidc on in the server administrator interface.
+  /// Help text above the list of OpenID Connect providers in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Offer OpenID Connect sign-in'**
-  String get adminOidcOn;
+  /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Add as many as you like.'**
+  String get adminOidcHelp;
 
-  /// Help text for admin oidc on help in the server administrator interface.
+  /// Button adding an OpenID Connect provider in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex.'**
-  String get adminOidcOnHelp;
+  /// **'Add provider'**
+  String get adminOidcAdd;
+
+  /// Tooltip of the button removing an OpenID Connect provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove provider'**
+  String get adminOidcRemove;
+
+  /// Title of an OpenID Connect provider card before it has a name.
+  ///
+  /// In en, this message translates to:
+  /// **'New provider'**
+  String get adminOidcNew;
+
+  /// Label of an OpenID Connect provider's ID field.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get adminOidcId;
+
+  /// Help text of an OpenID Connect provider's ID field.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase letters, digits and dashes. It\'s part of the redirect URI and can\'t change later.'**
+  String get adminOidcIdHelp;
+
+  /// Error for an invalid OpenID Connect provider ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Use lowercase letters, digits and dashes, starting with a letter or digit, up to 32.'**
+  String get adminOidcIdInvalid;
+
+  /// Error for a duplicate OpenID Connect provider ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Another provider has this ID.'**
+  String get adminOidcIdTaken;
+
+  /// Label of the switch that lets a sign-in provider's verified email find or take over an account.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust its email'**
+  String get adminTrustEmail;
+
+  /// Help text of the Google trust email switch.
+  ///
+  /// In en, this message translates to:
+  /// **'A Google sign-in with an email that has an account signs in to it. Off: they sign in with their password and add Google in Settings.'**
+  String get adminGoogleTrustEmailHelp;
+
+  /// Help text of an OpenID Connect provider's trust email switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for a provider you run or trust to check emails. Off: people with an account sign in with their password and add it in Settings.'**
+  String get adminOidcTrustEmailHelp;
+
+  /// Label of the switch that keeps accounts out until they confirm their email.
+  ///
+  /// In en, this message translates to:
+  /// **'Require a confirmed email'**
+  String get adminRequireVerified;
+
+  /// Help text of the require confirmed email switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts can\'t use the app until they confirm their email, and a trusted sign-in with the same email takes over an unconfirmed account. Off: people choose what happens.'**
+  String get adminRequireVerifiedHelp;
+
+  /// Help text of the require confirmed email switch when email sending is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs email sending.'**
+  String get adminRequireVerifiedUnused;
 
   /// Label or control text for admin section android in the server administrator interface.
   ///

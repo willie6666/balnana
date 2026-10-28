@@ -1085,6 +1085,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
+  String get accountOAuthLinked => 'Signs in to this account. Tap to remove.';
+
+  @override
+  String get accountOAuthAdd => 'Add as a way to sign in';
+
+  @override
+  String accountOAuthAddTitle(String name) {
+    return 'Add $name';
+  }
+
+  @override
+  String accountOAuthAdded(String name) {
+    return 'You can now sign in with $name.';
+  }
+
+  @override
+  String accountOAuthRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String accountOAuthRemoveBody(String name) {
+    return 'You won\'t be able to sign in with $name until you add it again.';
+  }
+
+  @override
+  String get accountOAuthRemove => 'Remove';
+
+  @override
+  String accountOAuthRemoved(String name) {
+    return '$name removed.';
+  }
+
+  @override
+  String get confirmEmailTitle => 'Confirm your email';
+
+  @override
+  String confirmEmailBody(String email) {
+    return 'This server needs a confirmed email. Open the link we sent to $email.';
+  }
+
+  @override
+  String get confirmEmailDone => 'I\'ve confirmed it';
+
+  @override
+  String get confirmEmailResend => 'Send the link again';
+
+  @override
+  String get confirmEmailNotYet => 'Not confirmed yet. Open the link in the email.';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override
@@ -1456,8 +1507,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oauthFailedTitle => 'Couldn\'t sign you in';
 
   @override
-  String get oauthEmailTaken =>
-      'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.';
+  String get oauthPendingTitle => 'This email already has an account';
+
+  @override
+  String oauthPendingBody(String provider, String email) {
+    return '$provider says $email is yours, but an account with that email hasn\'t confirmed it. What should happen?';
+  }
+
+  @override
+  String get oauthPendingLink => 'Add to that account';
+
+  @override
+  String get oauthPendingLinkHelp => 'Enter that account\'s password. Its password keeps working.';
+
+  @override
+  String get oauthPendingTakeOver => 'Take over that account';
+
+  @override
+  String get oauthPendingTakeOverHelp =>
+      'Its password and other ways to sign in are removed, and anyone signed in to it is signed out.';
+
+  @override
+  String get oauthPendingNew => 'Start a new account';
+
+  @override
+  String oauthPendingNewHelp(String email) {
+    return 'The other account keeps its groups but no longer has $email.';
+  }
+
+  @override
+  String get oauthPendingPassword => 'Password of that account';
+
+  @override
+  String get oauthPendingWrongPassword => 'That password isn\'t right.';
 
   @override
   String get oauthOtherServer =>
@@ -1468,6 +1550,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorOAuthFailed => 'Signing in didn\'t work. Try again.';
+
+  @override
+  String get errorEmailHasAccount =>
+      'There\'s already an account with this email. Sign in to it, then add this way of signing in from Settings.';
+
+  @override
+  String get errorIdentityTaken => 'This sign-in already belongs to another account.';
+
+  @override
+  String get errorLastSignInMethod =>
+      'This is your only way to sign in. Set a password or add another way first.';
+
+  @override
+  String get errorEmailUnverified => 'Confirm your email first.';
 
   @override
   String get errorOAuthCancelled => 'Signing in was cancelled.';
@@ -1744,10 +1840,52 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get adminOidcOn => 'Offer OpenID Connect sign-in';
+  String get adminOidcHelp =>
+      'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Add as many as you like.';
 
   @override
-  String get adminOidcOnHelp => 'Any OpenID Connect provider, such as Authentik, Keycloak or Dex.';
+  String get adminOidcAdd => 'Add provider';
+
+  @override
+  String get adminOidcRemove => 'Remove provider';
+
+  @override
+  String get adminOidcNew => 'New provider';
+
+  @override
+  String get adminOidcId => 'ID';
+
+  @override
+  String get adminOidcIdHelp =>
+      'Lowercase letters, digits and dashes. It\'s part of the redirect URI and can\'t change later.';
+
+  @override
+  String get adminOidcIdInvalid =>
+      'Use lowercase letters, digits and dashes, starting with a letter or digit, up to 32.';
+
+  @override
+  String get adminOidcIdTaken => 'Another provider has this ID.';
+
+  @override
+  String get adminTrustEmail => 'Trust its email';
+
+  @override
+  String get adminGoogleTrustEmailHelp =>
+      'A Google sign-in with an email that has an account signs in to it. Off: they sign in with their password and add Google in Settings.';
+
+  @override
+  String get adminOidcTrustEmailHelp =>
+      'Only for a provider you run or trust to check emails. Off: people with an account sign in with their password and add it in Settings.';
+
+  @override
+  String get adminRequireVerified => 'Require a confirmed email';
+
+  @override
+  String get adminRequireVerifiedHelp =>
+      'Accounts can\'t use the app until they confirm their email, and a trusted sign-in with the same email takes over an unconfirmed account. Off: people choose what happens.';
+
+  @override
+  String get adminRequireVerifiedUnused => 'Needs email sending.';
 
   @override
   String get adminSectionAndroid => 'Android app links';

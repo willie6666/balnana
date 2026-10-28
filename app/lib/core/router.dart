@@ -45,6 +45,20 @@ String? _redirect(Ref ref, GoRouterState state) {
         (path.startsWith('/g/') && !path.endsWith('/join')) ||
         _publicLinks.any(path.startsWith);
     if (!signedIn && !public) return signInPath(state.uri.toString());
+    // The server keeps an account that hasn't confirmed its address to its
+    // settings until it does.
+    final user = account.value;
+    final restricted =
+        user != null &&
+        user.email != null &&
+        !user.emailVerified &&
+        (ref.read(serverInfoProvider).value?.verifiedRequired ?? false);
+    if (path == '/confirm-email') {
+      return restricted ? null : safeNext(state.uri.queryParameters['next']) ?? '/groups';
+    }
+    if (restricted && !path.startsWith('/settings') && !_publicLinks.any(path.startsWith)) {
+      return Uri(path: '/confirm-email', queryParameters: {'next': state.uri.toString()}).toString();
+    }
   }
   if (path == '/groups') {
     final home = homeGroup(ref);
@@ -93,6 +107,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token'] ?? ''),
       ),
       GoRoute(
+        path: '/confirm-email',
+        builder: (context, state) => ConfirmEmailPage(next: state.uri.queryParameters['next']),
+      ),
+      GoRoute(
         path: '/reset-password',
         builder: (context, state) => ResetPasswordPage(token: state.uri.queryParameters['token'] ?? ''),
       ),
@@ -100,6 +118,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/oauth-done',
         builder: (context, state) => OAuthDonePage(
           code: state.uri.queryParameters['code'],
+          pending: state.uri.queryParameters['pending'],
+          linked: state.uri.queryParameters['linked'],
           error: state.uri.queryParameters['error'],
           next: state.uri.queryParameters['next'],
         ),

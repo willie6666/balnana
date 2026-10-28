@@ -85,18 +85,19 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 	cfg := st.cfg
 	accounts := cfg.AuthMode == config.AuthModeAccounts
 	info := ServerInfo{
-		Name:           "balnana",
-		Version:        s.version,
-		AuthMode:       ServerInfoAuthMode(cfg.AuthMode),
-		Password:       accounts && cfg.Password,
-		Signup:         ServerInfoSignup(cfg.Signup),
-		Email:          st.mail != nil,
-		EmailRequired:  cfg.RequireEmail,
-		OauthProviders: []OAuthProvider{},
-		LinkGroups:     !accounts || cfg.LinkGroups,
-		Push:           s.push != nil,
-		PublicUrl:      cfg.PublicURL.String(),
-		SourceUrl:      cfg.SourceURL.String(),
+		Name:             "balnana",
+		Version:          s.version,
+		AuthMode:         ServerInfoAuthMode(cfg.AuthMode),
+		Password:         accounts && cfg.Password,
+		Signup:           ServerInfoSignup(cfg.Signup),
+		Email:            st.mail != nil,
+		EmailRequired:    cfg.RequireEmail,
+		VerifiedRequired: accounts && cfg.RequireVerified,
+		OauthProviders:   []OAuthProvider{},
+		LinkGroups:       !accounts || cfg.LinkGroups,
+		Push:             s.push != nil,
+		PublicUrl:        cfg.PublicURL.String(),
+		SourceUrl:        cfg.SourceURL.String(),
 	}
 	if s.push != nil {
 		info.VapidPublicKey = &s.vapid

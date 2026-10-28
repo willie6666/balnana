@@ -394,8 +394,10 @@ paths:
         The app opens this in the browser rather than calling it. It comes
         back through the callback to `/oauth-done` in the web app (on `origin`
         when given), or to `balnana://app/oauth-done` in the Android app, with
-        `next` and either `code` (Android, or a web app on another origin:
-        trade it with /auth/oauth/exchange) or `error`.
+        `next` and one of `code` (Android, or a web app on another origin:
+        trade it with /auth/oauth/exchange), `pending` (ask whether an
+        unverified account is theirs: /auth/oauth/pending), `linked` (with
+        `link`: the identity was added) or `error`.
       parameters:
         - name: app
           in: query
@@ -424,6 +426,14 @@ paths:
             `invalid_origin`. The sign-in comes back to it as a code.
           schema:
             type: string
+        - name: link
+          in: query
+          description: >-
+            A ticket from POST /me/oauth/{provider}: the identity is added to
+            that account instead of signing in. 400 `invalid_token` when it is
+            spent or old.
+          schema:
+            type: string
       responses:
         "302":
           description: To the provider
@@ -440,14 +450,20 @@ paths:
       operationId: oauthCallback
       summary: Where the provider sends the browser back
       description: >-
-        Signs in to the account with this provider identity. Otherwise an
-        account with the same address, when the provider has verified it,
-        gets the identity added. If that account never verified the address,
-        its owner reclaims it: its password, previous sessions, emailed tokens
-        and other OAuth identities are removed. Failing a match, a new account
-        is made when sign-up allows it. Identities are scoped to provider,
-        issuer and subject. Errors include `oauth_failed`, `oauth_cancelled`
-        and `signup_closed`.
+        Signs in to the account with this provider identity. Otherwise, when
+        the provider's address is trusted (its TRUST_EMAIL setting) and
+        verified, an account with that address that verified it gets the
+        identity added. One that never verified it is reclaimed by the
+        address owner when BALNANA_AUTH_REQUIRE_VERIFIED is on: its password,
+        previous sessions, emailed tokens and other OAuth identities are
+        removed. When it is off, the person is asked instead (`pending`). An
+        address the provider is not trusted with that belongs to an account
+        is `email_has_account`: sign in to it and link the provider there.
+        Failing a match, a new account is made when sign-up allows it, with
+        an untrusted address unverified. Identities are scoped to provider,
+        issuer and subject. Errors include `oauth_failed`, `oauth_cancelled`,
+        `signup_closed`, `email_has_account`, and when linking
+        `identity_taken` and `invalid_token`.
       parameters:
         - name: code
           in: query
@@ -484,6 +500,62 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OAuthExchange"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/oauth/pending:
+    post:
+      operationId: getOAuthPending
+      summary: The sign-in waiting for its person to say whose account it is
+      description: >-
+        400 `invalid_token` when the token is spent or old: sign in again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthPendingToken"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthPending"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/oauth/pending/finish:
+    post:
+      operationId: finishOAuthPending
+      summary: Answer whose the unverified account is, and sign in
+      description: >-
+        `link`: it is theirs, proven by its password (403 `wrong_password`);
+        the identity is added, the password kept and the address verified.
+        `take_over`: it is theirs, password forgotten; everything else that
+        signs in to it is removed, as when an address owner reclaims an
+        account. `new_account`: it is not theirs; a new account gets the
+        address, and the old one keeps going without it (`signup_closed`
+        when sign-up does not allow it). A sign-in started with a challenge
+        sends its verifier; one without is answered from the browser that
+        started it. 400 `invalid_token` when the token is spent or old, or
+        the account changed meanwhile.
+      parameters:
+        - name: balnana_oauth
+          in: cookie
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthPendingFinish"
       responses:
         "200":
           description: Signed in
@@ -619,6 +691,54 @@ paths:
       responses:
         "204":
           description: Sent, or already verified
+        default:
+          $ref: "#/components/responses/Error"
+  /me/oauth:
+    get:
+      operationId: getMyOAuth
+      summary: The providers the account signs in with
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthLinks"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/oauth/{provider}:
+    parameters:
+      - $ref: "#/components/parameters/OAuthProviderId"
+    post:
+      operationId: linkOAuth
+      summary: Start adding a provider to the account
+      description: >-
+        Returns a ticket for /auth/oauth/{provider}/start's `link`, good for a
+        few minutes. 403 `wrong_password` when the account has a password and
+        it is not given.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthLinkInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthLinkTicket"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: unlinkOAuth
+      summary: Stop signing in with a provider
+      description: >-
+        409 `last_sign_in_method` when the account would have no way in left.
+      responses:
+        "204":
+          description: Removed
         default:
           $ref: "#/components/responses/Error"
   /me/groups:
@@ -2066,6 +2186,67 @@ components:
         password:
           type: string
           description: Required when the account has a password.
+    OAuthPendingToken:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: The `pending` the sign-in came back with.
+    OAuthPending:
+      type: object
+      required: [email, provider, hasPassword, signup]
+      properties:
+        email:
+          type: string
+        provider:
+          type: string
+          description: The provider's id.
+        hasPassword:
+          type: boolean
+          description: The account has a password, so `link` can prove it is theirs.
+        signup:
+          type: boolean
+          description: A new account may be made (`new_account`).
+    OAuthPendingFinish:
+      type: object
+      required: [token, choice]
+      properties:
+        token:
+          type: string
+        choice:
+          type: string
+          enum: [link, take_over, new_account]
+        password:
+          type: string
+          description: The account's password, for `link`.
+        verifier:
+          type: string
+          description: The PKCE verifier, when the sign-in started with a challenge.
+        cookie:
+          type: boolean
+          description: Hand the session out as a cookie, as login does.
+    OAuthLinks:
+      type: object
+      required: [providers]
+      properties:
+        providers:
+          type: array
+          description: Ids of the providers the account signs in with.
+          items:
+            type: string
+    OAuthLinkInput:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Required when the account has a password (403 `wrong_password`).
+    OAuthLinkTicket:
+      type: object
+      required: [ticket]
+      properties:
+        ticket:
+          type: string
     OAuthExchange:
       type: object
       required: [code, verifier]
@@ -2162,7 +2343,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, firstAccount, email, emailRequired, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
+      required: [name, version, authMode, password, signup, firstAccount, email, emailRequired, verifiedRequired, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
       properties:
         name:
           type: string
@@ -2193,6 +2374,11 @@ components:
           description: >-
             Password accounts sign up with an email address. When false they
             sign up with a username instead, and the address is optional.
+        verifiedRequired:
+          type: boolean
+          description: >-
+            An account with an unconfirmed address can do nothing but confirm
+            it, change it, or sign out (403 `email_unverified`).
         oauthProviders:
           type: array
           items:

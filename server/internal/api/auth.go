@@ -197,8 +197,19 @@ func (s *Server) currentUser(ctx context.Context) (*user, error) {
 	return &u, nil
 }
 
-// requireUser is currentUser for endpoints that need someone signed in.
+// requireUser is currentUser for endpoints that need someone signed in, with
+// a confirmed address when the server requires one.
 func (s *Server) requireUser(ctx context.Context) (*user, error) {
+	u, err := s.requireAccount(ctx)
+	if err == nil && s.restricted(u) {
+		return nil, forbidden("email_unverified")
+	}
+	return u, err
+}
+
+// requireAccount is requireUser for what an account may do before its
+// address is confirmed: look after the account itself.
+func (s *Server) requireAccount(ctx context.Context) (*user, error) {
 	if err := s.requireAccounts(); err != nil {
 		return nil, err
 	}
@@ -207,6 +218,13 @@ func (s *Server) requireUser(ctx context.Context) (*user, error) {
 		err = &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
 	}
 	return u, err
+}
+
+// restricted reports whether u waits to confirm its address before doing
+// anything else (BALNANA_AUTH_REQUIRE_VERIFIED). Nothing it holds can then
+// be taken from the address owner, who may take the account over.
+func (s *Server) restricted(u *user) bool {
+	return u != nil && s.conf().RequireVerified && u.email != nil && !u.verified
 }
 
 func (s *Server) requireAccounts() error {
@@ -251,7 +269,7 @@ func (s *Server) handOut(ctx context.Context, token string, cookie bool) *string
 // back from whoever made it with their address, so that person's other ways
 // back in go too: emailed links and OAuth identities.
 func signOut(ctx context.Context, q querier, userID string, reclaimed bool) error {
-	tables := []string{"sessions", "oauth_codes"}
+	tables := []string{"sessions", "oauth_codes", "oauth_link_tickets", "oauth_logins"}
 	if reclaimed {
 		tables = append(tables, "email_tokens", "oauth_identities")
 	}
@@ -508,7 +526,7 @@ func (s *Server) Logout(ctx context.Context, _ LogoutRequestObject) (LogoutRespo
 }
 
 func (s *Server) GetMe(ctx context.Context, _ GetMeRequestObject) (GetMeResponseObject, error) {
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -516,7 +534,7 @@ func (s *Server) GetMe(ctx context.Context, _ GetMeRequestObject) (GetMeResponse
 }
 
 func (s *Server) UpdateMe(ctx context.Context, req UpdateMeRequestObject) (UpdateMeResponseObject, error) {
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +567,7 @@ func (s *Server) ChangePassword(ctx context.Context, req ChangePasswordRequestOb
 	if err := s.requirePasswords(); err != nil {
 		return nil, err
 	}
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -553,6 +553,39 @@ class User {
   final bool hasPassword;
 }
 
+/// A provider sign-in that matched an account by an address the account
+/// never confirmed, waiting for the person to say what it is to them.
+@immutable
+class OAuthPending {
+  const OAuthPending({
+    required this.email,
+    required this.provider,
+    required this.hasPassword,
+    required this.signup,
+  });
+
+  factory OAuthPending.fromJson(Object? data) {
+    final json = _object(data);
+    return OAuthPending(
+      email: _req(json, 'email'),
+      provider: _req(json, 'provider'),
+      hasPassword: _req(json, 'hasPassword'),
+      signup: _req(json, 'signup'),
+    );
+  }
+
+  final String email;
+
+  /// The provider's id.
+  final String provider;
+
+  /// The account has a password, so linking can prove it is theirs.
+  final bool hasPassword;
+
+  /// A new account may be made instead.
+  final bool signup;
+}
+
 /// An invitation to a group, sent by email (accounts mode).
 @immutable
 class InviteInfo {

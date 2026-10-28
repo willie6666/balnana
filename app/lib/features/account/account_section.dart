@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../group/identity_sheet.dart';
+import 'oauth.dart';
 
 /// The signed-in account in Settings (accounts mode).
 class AccountSection extends ConsumerWidget {
@@ -48,6 +49,51 @@ class AccountSection extends ConsumerWidget {
     }
   }
 
+  /// Adds [provider] to the account: proves it is theirs with its password,
+  /// if it has one, then leaves for the provider's sign-in.
+  Future<void> _link(BuildContext context, WidgetRef ref, OAuthProvider provider, User account) async {
+    final l10n = context.l10n;
+    final String? ticket;
+    if (account.hasPassword) {
+      ticket = await showDialog<String>(
+        context: context,
+        builder: (_) => _LinkDialog(provider: provider),
+      );
+    } else {
+      try {
+        ticket = await ref.read(balnanaApiProvider)!.linkOAuth(provider.id);
+      } on ApiException catch (e) {
+        if (context.mounted) _snack(context, errorMessage(l10n, e));
+        return;
+      }
+    }
+    if (ticket == null) return;
+    await startOAuth(ref, provider, '/settings', link: ticket);
+  }
+
+  Future<void> _unlink(BuildContext context, WidgetRef ref, OAuthProvider provider) async {
+    final l10n = context.l10n;
+    final remove = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.accountOAuthRemoveTitle(provider.name)),
+        content: Text(l10n.accountOAuthRemoveBody(provider.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.commonCancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.accountOAuthRemove)),
+        ],
+      ),
+    );
+    if (remove != true || !context.mounted) return;
+    try {
+      await ref.read(balnanaApiProvider)!.unlinkOAuth(provider.id);
+      ref.invalidate(myOAuthProvider);
+      if (context.mounted) _snack(context, l10n.accountOAuthRemoved(provider.name));
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     await signOut(ref);
     if (context.mounted) context.go('/sign-in');
@@ -59,6 +105,7 @@ class AccountSection extends ConsumerWidget {
     final account = ref.watch(currentAccountProvider).value;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     final passwords = ref.watch(serverInfoProvider.select((i) => i.value?.password ?? false));
+    final providers = ref.watch(serverInfoProvider.select((i) => i.value?.oauthProviders ?? const []));
     if (account == null) {
       return GroupedList(
         title: l10n.settingsAccount,
@@ -114,6 +161,26 @@ class AccountSection extends ConsumerWidget {
               builder: (_) => _PasswordDialog(first: !account.hasPassword),
             ),
           ),
+        // Ways to sign in besides the password, which the account adds and
+        // removes itself.
+        if (providers.isNotEmpty)
+          for (final provider in providers)
+            if (ref.watch(myOAuthProvider).value case final linked?)
+              linked.contains(provider.id)
+                  ? GroupedTile(
+                      icon: Icons.link,
+                      title: provider.name,
+                      subtitle: l10n.accountOAuthLinked,
+                      trailing: const Icon(Icons.link_off),
+                      onTap: () => _unlink(context, ref, provider),
+                    )
+                  : GroupedTile(
+                      icon: Icons.add_link,
+                      title: provider.name,
+                      subtitle: l10n.accountOAuthAdd,
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _link(context, ref, provider, account),
+                    ),
         GroupedTile(icon: Icons.logout, title: l10n.signOut, onTap: () => _signOut(context, ref)),
         GroupedTile(
           icon: Icons.delete_forever_outlined,
@@ -143,6 +210,67 @@ Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   if (!startSession(ref, null, from: who)) return;
   context.go('/sign-in');
   messenger.showSnackBar(SnackBar(content: Text(done)));
+}
+
+/// Asks for the account's password and returns a ticket for adding
+/// [provider] to it.
+class _LinkDialog extends ConsumerStatefulWidget {
+  const _LinkDialog({required this.provider});
+
+  final OAuthProvider provider;
+
+  @override
+  ConsumerState<_LinkDialog> createState() => _LinkDialogState();
+}
+
+class _LinkDialogState extends ConsumerState<_LinkDialog> {
+  final _form = GlobalKey<FormState>();
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_busy || !_form.currentState!.validate()) return;
+    final l10n = context.l10n;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final ticket = await ref
+          .read(balnanaApiProvider)!
+          .linkOAuth(widget.provider.id, password: _password.text);
+      if (mounted) Navigator.pop(context, ticket);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = errorMessage(l10n, e);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.accountOAuthAddTitle(widget.provider.name)),
+      content: Form(
+        key: _form,
+        child: _ConfirmPassword(controller: _password, error: _error, onSubmitted: _submit, autofocus: true),
+      ),
+      actions: [
+        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.commonCancel)),
+        TextButton(onPressed: _busy ? null : _submit, child: Text(l10n.commonContinue)),
+      ],
+    );
+  }
 }
 
 /// The password field of a dialog that confirms a change with it.

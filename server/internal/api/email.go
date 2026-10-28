@@ -129,7 +129,7 @@ func useEmailToken(ctx context.Context, tx pgx.Tx, token, purpose string) (userI
 var errStaleToken = badRequest("invalid_token")
 
 func (s *Server) SendVerifyEmail(ctx context.Context, _ SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error) {
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}

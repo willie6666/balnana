@@ -96,9 +96,14 @@ func (f *fakeIdP) sign(claims map[string]any) string {
 
 // env configures a server to use this provider.
 func (f *fakeIdP) env(env map[string]string) map[string]string {
-	env["BALNANA_OAUTH_OIDC_ISSUER"] = f.srv.URL
-	env["BALNANA_OAUTH_OIDC_CLIENT_ID"] = "balnana"
-	env["BALNANA_OAUTH_OIDC_SECRET"] = "s3cret"
+	env["BALNANA_OAUTH_OIDC_PROVIDERS"] = "oidc"
+	env["BALNANA_OAUTH_OIDC_OIDC_ISSUER"] = f.srv.URL
+	env["BALNANA_OAUTH_OIDC_OIDC_CLIENT_ID"] = "balnana"
+	env["BALNANA_OAUTH_OIDC_OIDC_SECRET"] = "s3cret"
+	env["BALNANA_OAUTH_OIDC_OIDC_NAME"] = "OpenID Connect"
+	if _, set := env["BALNANA_OAUTH_OIDC_OIDC_TRUST_EMAIL"]; !set {
+		env["BALNANA_OAUTH_OIDC_OIDC_TRUST_EMAIL"] = "true"
+	}
 	return env
 }
 
@@ -106,12 +111,18 @@ func (f *fakeIdP) env(env map[string]string) map[string]string {
 // sent to, and returns the callback path (below BasePath) that follows.
 func (f *fakeIdP) approve(c *client, claims map[string]any) string {
 	c.t.Helper()
+	return f.approveAt(c, "oidc", claims)
+}
+
+// approveAt is approve for the provider configured as id.
+func (f *fakeIdP) approveAt(c *client, id string, claims map[string]any) string {
+	c.t.Helper()
 	u, err := url.Parse(c.location)
 	if err != nil || !strings.HasPrefix(c.location, f.srv.URL+"/authorize?") {
 		c.t.Fatalf("start went to %q", c.location)
 	}
 	q := u.Query()
-	if q.Get("redirect_uri") != "http://localhost:8080/api/v1/auth/oauth/oidc/callback" || q.Get("code_challenge_method") != "S256" {
+	if q.Get("redirect_uri") != "http://localhost:8080/api/v1/auth/oauth/"+id+"/callback" || q.Get("code_challenge_method") != "S256" {
 		c.t.Fatalf("authorization URL %s", c.location)
 	}
 	full := map[string]any{
@@ -128,7 +139,7 @@ func (f *fakeIdP) approve(c *client, claims map[string]any) string {
 	f.mu.Lock()
 	f.grants[code] = fakeGrant{claims: full, challenge: q.Get("code_challenge")}
 	f.mu.Unlock()
-	return "/auth/oauth/oidc/callback?" + url.Values{"code": {code}, "state": {q.Get("state")}}.Encode()
+	return "/auth/oauth/" + id + "/callback?" + url.Values{"code": {code}, "state": {q.Get("state")}}.Encode()
 }
 
 // login signs c in on the web through the provider and returns where the
@@ -182,12 +193,13 @@ func TestOAuthWeb(t *testing.T) {
 		t.Fatal("second sign-in made another account")
 	}
 
-	// A provider that does not vouch for the address: no address on the account.
+	// A provider that does not vouch for the address: the address is not
+	// confirmed.
 	eve := c.another()
 	f.login(eve, "/groups", map[string]any{"sub": "2", "email": "eve@example.com", "email_verified": "false", "preferred_username": "eve"})
 	var eveUser User
 	eve.must(200, "GET", "/me", nil, &eveUser)
-	if eveUser.Name != "eve" || eveUser.Email != nil || eveUser.EmailVerified {
+	if eveUser.Name != "eve" || eveUser.Email == nil || *eveUser.Email != "eve@example.com" || eveUser.EmailVerified {
 		t.Fatalf("me = %+v", eveUser)
 	}
 
@@ -247,12 +259,20 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 		t.Fatalf("invitedMemberId = %v", info.InvitedMemberId)
 	}
 
-	// An account with the address that never confirmed it goes to the person
-	// the provider vouches for: its password and sessions stop working.
+	// An account with the address that never confirmed it waits for the
+	// person signing in to say whether it is theirs.
 	other := ana.another()
-	if e := oauthError(t, f.login(other, "/groups", person("a", "ana@example.com", "Ana G"))); e != "" {
-		t.Fatal(e)
+	pending := pendingToken(t, f.login(other, "/groups", person("a", "ana@example.com", "Ana G")))
+	var p OAuthPending
+	other.must(200, "POST", "/auth/oauth/pending", OAuthPendingToken{Token: pending}, &p)
+	if p.Email != "ana@example.com" || p.Provider != "oidc" || !p.HasPassword || p.Signup {
+		t.Fatalf("pending = %+v", p)
 	}
+	// Forgot the password: the account becomes theirs, and its password and
+	// sessions stop working.
+	var s Session
+	other.must(200, "POST", "/auth/oauth/pending/finish",
+		OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceTakeOver, Cookie: ptr(true)}, &s)
 	var me User
 	other.must(200, "GET", "/me", nil, &me)
 	if me.Id != anaUser.Id || me.HasPassword || !me.EmailVerified {
@@ -265,6 +285,9 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 	if code := ana.another().errorCode(401, "POST", "/auth/login", login); code != "invalid_credentials" {
 		t.Fatal(code)
 	}
+	// The answer is spent.
+	other.errorCode(400, "POST", "/auth/oauth/pending/finish",
+		OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceTakeOver, Cookie: ptr(true)})
 
 	// The owner sets a password again; another identity with the confirmed
 	// address reaches the same account and leaves it be.
@@ -279,6 +302,230 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 	}
 }
 
+// pendingToken is the answer the sign-in that went to location waits for.
+func pendingToken(t *testing.T, location string) string {
+	t.Helper()
+	u, err := url.Parse(location)
+	if err != nil || u.Query().Get("pending") == "" || u.Query().Get("error") != "" {
+		t.Fatalf("sign-in went to %s", location)
+	}
+	return u.Query().Get("pending")
+}
+
+// verifiedOnly holds back accounts whose address is not confirmed, which
+// takes email.
+func verifiedOnly(env map[string]string) map[string]string {
+	env["BALNANA_AUTH_REQUIRE_VERIFIED"] = "true"
+	env["BALNANA_SMTP_HOST"] = "smtp.example.com"
+	env["BALNANA_SMTP_FROM"] = "Balnana <balnana@example.com>"
+	return env
+}
+
+// The answers to "is this account yours?": linking keeps the password and
+// takes it, and a new account leaves the old one without the address.
+func TestOAuthPendingChoices(t *testing.T) {
+	f := newFakeIdP(t)
+	c := accountsClient(t, f.env(map[string]string{}))
+	ana := register(c, "ana@example.com", "Ana")
+
+	// Only the browser that signed in may answer.
+	browser := c.another()
+	pending := pendingToken(t, f.login(browser, "/groups", person("a", "ana@example.com", "Ana G")))
+	stranger := c.another()
+	link := OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceLink, Password: ptr("correct horse"), Cookie: ptr(true)}
+	if code := stranger.errorCode(400, "POST", "/auth/oauth/pending/finish", link); code != "invalid_token" {
+		t.Fatal(code)
+	}
+	wrong := link
+	wrong.Password = ptr("a guess")
+	if code := browser.errorCode(403, "POST", "/auth/oauth/pending/finish", wrong); code != "wrong_password" {
+		t.Fatal(code)
+	}
+	var s Session
+	browser.must(200, "POST", "/auth/oauth/pending/finish", link, &s)
+	if s.User.Id != ana.Id || !s.User.EmailVerified || !s.User.HasPassword {
+		t.Fatalf("session = %+v", s)
+	}
+	c.must(200, "GET", "/me", nil, nil)
+	again := c.another()
+	if e := oauthError(t, f.login(again, "/groups", person("a", "ana@example.com", "Ana G"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	again.must(200, "GET", "/me", nil, &me)
+	if me.Id != ana.Id {
+		t.Fatal("the linked identity reached another account")
+	}
+
+	// Not theirs: a new account gets the address, confirmed.
+	mallory := c.another()
+	taken := register(mallory, "ben@example.com", "Mallory")
+	ben := c.another()
+	pending = pendingToken(t, f.login(ben, "/groups", person("b", "ben@example.com", "Ben")))
+	ben.must(200, "POST", "/auth/oauth/pending/finish",
+		OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceNewAccount, Cookie: ptr(true)}, &s)
+	if s.User.Id == taken.Id || s.User.Email == nil || *s.User.Email != "ben@example.com" || !s.User.EmailVerified {
+		t.Fatalf("session = %+v", s)
+	}
+	var hers User
+	mallory.must(200, "GET", "/me", nil, &hers)
+	if hers.Email != nil || hers.EmailVerified {
+		t.Fatalf("Mallory kept %+v", hers)
+	}
+}
+
+// With confirmed addresses required, the provider's word takes the account
+// at once; until then an account that never confirmed its address may sign
+// in but do nothing else.
+func TestOAuthRequireVerified(t *testing.T) {
+	f := newFakeIdP(t)
+	c := accountsClient(t, verifiedOnly(f.env(map[string]string{})))
+	var info ServerInfo
+	c.must(200, "GET", "/server-info", nil, &info)
+	if !info.VerifiedRequired {
+		t.Fatal("verifiedRequired is off")
+	}
+	mallory := register(c, "ana@example.com", "Mallory")
+	c.must(200, "GET", "/me", nil, nil)
+	if code := c.errorCode(403, "GET", "/me/groups", nil); code != "email_unverified" {
+		t.Fatal(code)
+	}
+	if code := c.errorCode(403, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Mallory"}}); code != "email_unverified" {
+		t.Fatal(code)
+	}
+
+	ana := c.another()
+	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	ana.must(200, "GET", "/me", nil, &me)
+	if me.Id != mallory.Id || me.HasPassword || !me.EmailVerified {
+		t.Fatalf("me = %+v", me)
+	}
+	c.errorCode(401, "GET", "/me", nil)
+	ana.must(200, "GET", "/me/groups", nil, nil)
+}
+
+// A provider whose word on addresses is not trusted signs nobody in to an
+// account by its address: its person signs in their own way and links it.
+func TestOAuthUntrustedProviderAndLinking(t *testing.T) {
+	f := newFakeIdP(t)
+	c := accountsClient(t, f.env(map[string]string{"BALNANA_OAUTH_OIDC_OIDC_TRUST_EMAIL": "false"}))
+	ana := register(c, "ana@example.com", "Ana")
+	if e := oauthError(t, f.login(c.another(), "/groups", person("a", "ana@example.com", "Ana"))); e != "email_has_account" {
+		t.Fatal(e)
+	}
+
+	var links OAuthLinks
+	c.must(200, "GET", "/me/oauth", nil, &links)
+	if len(links.Providers) != 0 {
+		t.Fatalf("links = %+v", links)
+	}
+	if code := c.errorCode(403, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("a guess")}); code != "wrong_password" {
+		t.Fatal(code)
+	}
+	c.errorCode(404, "POST", "/me/oauth/google", OAuthLinkInput{Password: ptr("correct horse")})
+	var ticket OAuthLinkTicket
+	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
+
+	// The browser has no session; the ticket names the account, once.
+	browser := c.another()
+	start := "/auth/oauth/oidc/start?" + url.Values{"app": {"web"}, "link": {ticket.Ticket}, "next": {"/account"}}.Encode()
+	browser.must(302, "GET", start, nil, nil)
+	browser.must(302, "GET", f.approve(browser, person("a", "ana@example.com", "Ana")), nil, nil)
+	if u, _ := url.Parse(browser.location); u.Query().Get("linked") != "oidc" {
+		t.Fatal(browser.location)
+	}
+	browser.errorCode(401, "GET", "/me", nil)
+	reused := c.another()
+	reused.must(302, "GET", start, nil, nil)
+	if e := oauthError(t, reused.location); e != "invalid_token" {
+		t.Fatal(reused.location)
+	}
+
+	in := c.another()
+	if e := oauthError(t, f.login(in, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
+		t.Fatal(e)
+	}
+	var me User
+	in.must(200, "GET", "/me", nil, &me)
+	if me.Id != ana.Id {
+		t.Fatal("the linked identity reached another account")
+	}
+	c.must(200, "GET", "/me/oauth", nil, &links)
+	if len(links.Providers) != 1 || links.Providers[0] != "oidc" {
+		t.Fatalf("links = %+v", links)
+	}
+
+	// Someone else's identity cannot be linked.
+	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
+	ben := c.another()
+	register(ben, "ben@example.com", "Ben")
+	var benTicket OAuthLinkTicket
+	ben.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &benTicket)
+	b := c.another()
+	b.must(302, "GET", "/auth/oauth/oidc/start?"+url.Values{"app": {"web"}, "link": {benTicket.Ticket}}.Encode(), nil, nil)
+	b.must(302, "GET", f.approve(b, person("a", "ana@example.com", "Ana")), nil, nil)
+	if e := oauthError(t, b.location); e != "identity_taken" {
+		t.Fatal(b.location)
+	}
+
+	// Unlinking keeps a way in: the password.
+	c.must(204, "DELETE", "/me/oauth/oidc", nil, nil)
+	c.errorCode(404, "DELETE", "/me/oauth/oidc", nil)
+	if e := oauthError(t, f.login(c.another(), "/groups", person("a", "ana@example.com", "Ana"))); e != "email_has_account" {
+		t.Fatal(e)
+	}
+
+	// An account with only the provider keeps it.
+	solo := c.another()
+	f.login(solo, "/groups", person("s", "solo@example.com", "Solo"))
+	if code := solo.errorCode(409, "DELETE", "/me/oauth/oidc", nil); code != "last_sign_in_method" {
+		t.Fatal(code)
+	}
+}
+
+// Several OpenID Connect providers each have their own button, redirect URI
+// and identities.
+func TestOAuthSeveralProviders(t *testing.T) {
+	a, b := newFakeIdP(t), newFakeIdP(t)
+	env := a.env(map[string]string{
+		"BALNANA_OAUTH_OIDC_WORK_ISSUER":      b.srv.URL,
+		"BALNANA_OAUTH_OIDC_WORK_CLIENT_ID":   "balnana",
+		"BALNANA_OAUTH_OIDC_WORK_SECRET":      "s3cret",
+		"BALNANA_OAUTH_OIDC_WORK_NAME":        "Work",
+		"BALNANA_OAUTH_OIDC_WORK_TRUST_EMAIL": "true",
+	})
+	env["BALNANA_OAUTH_OIDC_PROVIDERS"] = "oidc,work" // after a.env
+	c := accountsClient(t, env)
+	var info ServerInfo
+	c.must(200, "GET", "/server-info", nil, &info)
+	if len(info.OauthProviders) != 2 || info.OauthProviders[1].Id != "work" || info.OauthProviders[1].Name != "Work" {
+		t.Fatalf("providers = %+v", info.OauthProviders)
+	}
+	first := c.another()
+	a.login(first, "/groups", person("1", "ana@example.com", "Ana"))
+	var ana User
+	first.must(200, "GET", "/me", nil, &ana)
+
+	// The same subject at the other provider is the same person only by
+	// the address it vouches for.
+	work := c.another()
+	work.must(302, "GET", "/auth/oauth/work/start?app=web", nil, nil)
+	u, _ := url.Parse(work.location)
+	if !strings.HasPrefix(work.location, b.srv.URL+"/authorize?") ||
+		u.Query().Get("redirect_uri") != "http://localhost:8080/api/v1/auth/oauth/work/callback" {
+		t.Fatal(work.location)
+	}
+	work.must(302, "GET", b.approveAt(work, "work", person("1", "ben@example.com", "Ben")), nil, nil)
+	var ben User
+	work.must(200, "GET", "/me", nil, &ben)
+	if ben.Id == ana.Id {
+		t.Fatal("another provider's subject signed in to Ana's account")
+	}
+}
+
 // Someone who signs up with a provider and then puts another person's address
 // on the account must not follow that person in once they sign in with it.
 func TestOAuthTakeoverDropsOldIdentities(t *testing.T) {
@@ -290,9 +537,9 @@ func TestOAuthTakeoverDropsOldIdentities(t *testing.T) {
 	mallory.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.com"}, &before)
 
 	ana := mallory.another()
-	if e := oauthError(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana"))); e != "" {
-		t.Fatal(e)
-	}
+	pending := pendingToken(t, f.login(ana, "/groups", person("a", "ana@example.com", "Ana")))
+	ana.must(200, "POST", "/auth/oauth/pending/finish",
+		OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceTakeOver, Cookie: ptr(true)}, nil)
 	var me User
 	ana.must(200, "GET", "/me", nil, &me)
 	if me.Id != before.Id || !me.EmailVerified {
@@ -304,7 +551,7 @@ func TestOAuthTakeoverDropsOldIdentities(t *testing.T) {
 	f.login(again, "/groups", unvouched)
 	var hers User
 	again.must(200, "GET", "/me", nil, &hers)
-	if hers.Id == me.Id || hers.Email != nil {
+	if hers.Id == me.Id {
 		t.Fatalf("Mallory signed in to %+v", hers)
 	}
 	// Ana still reaches her account.
@@ -434,7 +681,7 @@ func TestOAuthIssuers(t *testing.T) {
 	}
 
 	next := *cfg
-	next.OIDC = &config.OIDC{OAuthClient: cfg.OIDC.OAuthClient, Issuer: b.srv.URL, Name: "New provider"}
+	next.OIDC = []config.OIDC{{OAuthClient: cfg.OIDC[0].OAuthClient, ID: "oidc", Issuer: b.srv.URL, Name: "New provider"}}
 	srv.apply(&next)
 	ben := login(b, "1", "ben@example.com", "Ben")
 	if ben.Id == ana.Id || ben.Email == nil || *ben.Email != "ben@example.com" {
@@ -530,9 +777,16 @@ func TestCrossOriginWebApp(t *testing.T) {
 		t.Fatal(b.location)
 	}
 	b.errorCode(401, "GET", "/me", nil)
+	// The account's address was never confirmed, so the app asks whether
+	// it is theirs, with its verifier.
 	var viaProvider Session
-	exchange := OAuthExchange{Code: u.Query().Get("code"), Verifier: "the web app's verifier"}
-	c.must(200, "POST", "/auth/oauth/exchange", exchange, &viaProvider)
+	finish := OAuthPendingFinish{Token: u.Query().Get("pending"), Choice: OAuthPendingFinishChoiceLink,
+		Password: ptr("correct horse"), Cookie: ptr(false)}
+	if code := c.errorCode(400, "POST", "/auth/oauth/pending/finish", finish); code != "invalid_token" {
+		t.Fatal(code)
+	}
+	finish.Verifier = ptr("the web app's verifier")
+	c.must(200, "POST", "/auth/oauth/pending/finish", finish, &viaProvider)
 	if viaProvider.Token == nil || viaProvider.User.Id != me.Id {
 		t.Fatalf("session = %+v", viaProvider)
 	}

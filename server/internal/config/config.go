@@ -12,6 +12,7 @@ import (
 	"net/mail"
 	"net/url"
 	"os"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -48,12 +49,38 @@ func (s SMTP) Enabled() bool { return s.Host != "" }
 type OAuthClient struct {
 	ClientID     string
 	ClientSecret string
+	// TrustEmail lets the provider's word that someone owns an address
+	// stand for proof: their sign-in joins the account with that address.
+	// Off, an address with an account must be linked from that account.
+	TrustEmail bool
 }
 
+// OIDC is an OpenID Connect provider, one of BALNANA_OAUTH_OIDC_PROVIDERS.
 type OIDC struct {
 	OAuthClient
+	// ID names the provider in its settings and its redirect URI.
+	ID     string
 	Issuer string
 	Name   string // shown on the sign-in button
+}
+
+// oidcID is an OpenID Connect provider's ID. It has no underscores, so each
+// one has settings of its own (see OIDCKey).
+var oidcID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
+
+// The settings of each OpenID Connect provider, as OIDCKey names them.
+var oidcFields = []Setting{
+	{Key: "ISSUER"},
+	{Key: "CLIENT_ID"},
+	{Key: "SECRET", Secret: true},
+	{Key: "NAME"},
+	{Key: "TRUST_EMAIL", Default: "false"},
+}
+
+// OIDCKey is the setting field (ISSUER, CLIENT_ID, ...) of the OpenID
+// Connect provider id: BALNANA_OAUTH_OIDC_<ID>_<FIELD>.
+func OIDCKey(id, field string) string {
+	return "BALNANA_OAUTH_OIDC_" + strings.ToUpper(strings.ReplaceAll(id, "-", "_")) + "_" + field
 }
 
 // UpstreamSourceURL is the official Balnana repository, the default source link.
@@ -96,11 +123,15 @@ type Config struct {
 	// RequireEmail false lets password accounts sign up with a username and
 	// no email address.
 	RequireEmail bool
-	Signup       Signup
-	LinkGroups   bool
-	SMTP         SMTP
-	Google       *OAuthClient
-	OIDC         *OIDC
+	// RequireVerified keeps an account whose address is not confirmed from
+	// everything but confirming it, so it never holds anything a provider
+	// sign-in with that address would take over.
+	RequireVerified bool
+	Signup          Signup
+	LinkGroups      bool
+	SMTP            SMTP
+	Google          *OAuthClient
+	OIDC            []OIDC
 
 	// Push sends Web Push notifications to the app through UnifiedPush.
 	Push bool
@@ -133,6 +164,7 @@ var Managed = []Setting{
 	{Key: "BALNANA_AUTH_MODE", Default: string(AuthModeLink)},
 	{Key: "BALNANA_AUTH_PASSWORD", Default: "true"},
 	{Key: "BALNANA_AUTH_REQUIRE_EMAIL", Default: "true"},
+	{Key: "BALNANA_AUTH_REQUIRE_VERIFIED", Default: "false"},
 	{Key: "BALNANA_AUTH_SIGNUP", Default: string(SignupOpen)},
 	{Key: "BALNANA_LINK_GROUPS", Default: "true"},
 	{Key: "BALNANA_SMTP_HOST"},
@@ -142,21 +174,49 @@ var Managed = []Setting{
 	{Key: "BALNANA_SMTP_FROM"},
 	{Key: "BALNANA_OAUTH_GOOGLE_CLIENT_ID"},
 	{Key: "BALNANA_OAUTH_GOOGLE_SECRET", Secret: true},
-	{Key: "BALNANA_OAUTH_OIDC_ISSUER"},
-	{Key: "BALNANA_OAUTH_OIDC_CLIENT_ID"},
-	{Key: "BALNANA_OAUTH_OIDC_SECRET", Secret: true},
-	{Key: "BALNANA_OAUTH_OIDC_NAME", Default: "OpenID Connect"},
+	{Key: "BALNANA_OAUTH_GOOGLE_TRUST_EMAIL", Default: "true"},
+	// Each provider listed has the settings in oidcFields; see OIDCKey.
+	{Key: "BALNANA_OAUTH_OIDC_PROVIDERS"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
-// ManagedSetting finds key in Managed.
+// ManagedSetting finds key in Managed, or among the settings any OpenID
+// Connect provider would have.
 func ManagedSetting(key string) (Setting, bool) {
 	for _, m := range Managed {
 		if m.Key == key {
 			return m, true
 		}
 	}
+	if rest, ok := strings.CutPrefix(key, "BALNANA_OAUTH_OIDC_"); ok {
+		for _, f := range oidcFields {
+			id, ok := strings.CutSuffix(rest, "_"+f.Key)
+			if ok && oidcID.MatchString(strings.ToLower(strings.ReplaceAll(id, "_", "-"))) {
+				return Setting{Key: key, Default: f.Default, Secret: f.Secret}, true
+			}
+		}
+	}
 	return Setting{}, false
+}
+
+// ManagedFor is Managed with the settings of each OpenID Connect provider
+// that lookup (the environment, then what was saved) lists, after the list.
+func ManagedFor(lookup func(string) string) []Setting {
+	var out []Setting
+	for _, m := range Managed {
+		out = append(out, m)
+		if m.Key == "BALNANA_OAUTH_OIDC_PROVIDERS" {
+			for _, id := range splitList(lookup(m.Key)) {
+				if !oidcID.MatchString(id) {
+					continue
+				}
+				for _, f := range oidcFields {
+					out = append(out, Setting{Key: OIDCKey(id, f.Key), Default: f.Default, Secret: f.Secret})
+				}
+			}
+		}
+	}
+	return out
 }
 
 // FieldError is a problem with one setting.
@@ -253,18 +313,19 @@ func unwrapAll(err error) []error {
 func load(getenv func(string) string) (*Config, error) {
 	e := env{get: getenv}
 	c := &Config{
-		Listen:       e.str("BALNANA_LISTEN", ":8080"),
-		DatabaseURL:  e.str("BALNANA_DATABASE_URL", getenv("DATABASE_URL")),
-		WebDir:       e.str("BALNANA_WEB_DIR", ""),
-		CORSOrigins:  e.list("BALNANA_CORS_ORIGINS"),
-		RateLimit:    e.int("BALNANA_RATE_LIMIT", 600),
-		TrustProxy:   e.bool("BALNANA_TRUST_PROXY", false),
-		Push:         e.bool("BALNANA_PUSH", true),
-		AuthMode:     AuthMode(e.managed("BALNANA_AUTH_MODE")),
-		Password:     e.managedBool("BALNANA_AUTH_PASSWORD"),
-		RequireEmail: e.managedBool("BALNANA_AUTH_REQUIRE_EMAIL"),
-		Signup:       Signup(e.managed("BALNANA_AUTH_SIGNUP")),
-		LinkGroups:   e.managedBool("BALNANA_LINK_GROUPS"),
+		Listen:          e.str("BALNANA_LISTEN", ":8080"),
+		DatabaseURL:     e.str("BALNANA_DATABASE_URL", getenv("DATABASE_URL")),
+		WebDir:          e.str("BALNANA_WEB_DIR", ""),
+		CORSOrigins:     e.list("BALNANA_CORS_ORIGINS"),
+		RateLimit:       e.int("BALNANA_RATE_LIMIT", 600),
+		TrustProxy:      e.bool("BALNANA_TRUST_PROXY", false),
+		Push:            e.bool("BALNANA_PUSH", true),
+		AuthMode:        AuthMode(e.managed("BALNANA_AUTH_MODE")),
+		Password:        e.managedBool("BALNANA_AUTH_PASSWORD"),
+		RequireEmail:    e.managedBool("BALNANA_AUTH_REQUIRE_EMAIL"),
+		RequireVerified: e.managedBool("BALNANA_AUTH_REQUIRE_VERIFIED"),
+		Signup:          Signup(e.managed("BALNANA_AUTH_SIGNUP")),
+		LinkGroups:      e.managedBool("BALNANA_LINK_GROUPS"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.int("BALNANA_SMTP_PORT", 587),
@@ -363,34 +424,56 @@ func load(getenv func(string) string) (*Config, error) {
 	}
 
 	if id := e.managed("BALNANA_OAUTH_GOOGLE_CLIENT_ID"); id != "" {
-		c.Google = &OAuthClient{ClientID: id, ClientSecret: e.managed("BALNANA_OAUTH_GOOGLE_SECRET")}
+		c.Google = &OAuthClient{
+			ClientID:     id,
+			ClientSecret: e.managed("BALNANA_OAUTH_GOOGLE_SECRET"),
+			TrustEmail:   e.managedBool("BALNANA_OAUTH_GOOGLE_TRUST_EMAIL"),
+		}
 		if c.Google.ClientSecret == "" {
 			e.fail("BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_GOOGLE_SECRET is required when BALNANA_OAUTH_GOOGLE_CLIENT_ID is set")
 		}
 	}
-	if issuer := e.managed("BALNANA_OAUTH_OIDC_ISSUER"); issuer != "" {
-		c.OIDC = &OIDC{
+	for _, id := range e.list("BALNANA_OAUTH_OIDC_PROVIDERS") {
+		if !oidcID.MatchString(id) || id == "google" {
+			e.fail("BALNANA_OAUTH_OIDC_PROVIDERS", "BALNANA_OAUTH_OIDC_PROVIDERS must list IDs of lower case letters, digits and dashes, other than google, got %q", id)
+			continue
+		}
+		if slices.ContainsFunc(c.OIDC, func(o OIDC) bool { return o.ID == id }) {
+			e.fail("BALNANA_OAUTH_OIDC_PROVIDERS", "BALNANA_OAUTH_OIDC_PROVIDERS lists %q twice", id)
+			continue
+		}
+		key := func(field string) string { return OIDCKey(id, field) }
+		o := OIDC{
 			OAuthClient: OAuthClient{
-				ClientID:     e.managed("BALNANA_OAUTH_OIDC_CLIENT_ID"),
-				ClientSecret: e.managed("BALNANA_OAUTH_OIDC_SECRET"),
+				ClientID:     e.managed(key("CLIENT_ID")),
+				ClientSecret: e.managed(key("SECRET")),
+				TrustEmail:   e.managedBool(key("TRUST_EMAIL")),
 			},
-			Issuer: issuer,
-			Name:   e.managed("BALNANA_OAUTH_OIDC_NAME"),
+			ID:     id,
+			Issuer: e.managed(key("ISSUER")),
+			Name:   e.str(key("NAME"), id),
 		}
-		if u, err := url.Parse(issuer); err != nil || u.Scheme != "https" && u.Scheme != "http" || u.Host == "" {
-			e.fail("BALNANA_OAUTH_OIDC_ISSUER", "BALNANA_OAUTH_OIDC_ISSUER must be an absolute http(s) URL, got %q", issuer)
+		if u, err := url.Parse(o.Issuer); err != nil || u.Scheme != "https" && u.Scheme != "http" || u.Host == "" {
+			e.fail(key("ISSUER"), "%s must be an absolute http(s) URL, got %q", key("ISSUER"), o.Issuer)
 		}
-		if c.OIDC.ClientID == "" {
-			e.fail("BALNANA_OAUTH_OIDC_CLIENT_ID", "BALNANA_OAUTH_OIDC_CLIENT_ID is required when BALNANA_OAUTH_OIDC_ISSUER is set")
+		if o.ClientID == "" {
+			e.fail(key("CLIENT_ID"), "%s is required when BALNANA_OAUTH_OIDC_PROVIDERS lists %s", key("CLIENT_ID"), id)
 		}
-		if c.OIDC.ClientSecret == "" {
-			e.fail("BALNANA_OAUTH_OIDC_SECRET", "BALNANA_OAUTH_OIDC_SECRET is required when BALNANA_OAUTH_OIDC_ISSUER is set")
+		if o.ClientSecret == "" {
+			e.fail(key("SECRET"), "%s is required when BALNANA_OAUTH_OIDC_PROVIDERS lists %s", key("SECRET"), id)
 		}
+		c.OIDC = append(c.OIDC, o)
+	}
+
+	// Confirming an address takes an email. An account without an address
+	// has nothing to confirm and is not held back.
+	if c.RequireVerified && c.AuthMode == AuthModeAccounts && !c.SMTP.Enabled() {
+		e.fail("BALNANA_AUTH_REQUIRE_VERIFIED", "BALNANA_AUTH_REQUIRE_VERIFIED needs email: set BALNANA_SMTP_HOST")
 	}
 
 	c.PushPrivateEndpoints = e.bool("BALNANA_PUSH_PRIVATE_ENDPOINTS", false)
 
-	if c.AuthMode == AuthModeAccounts && !c.Password && c.Google == nil && c.OIDC == nil {
+	if c.AuthMode == AuthModeAccounts && !c.Password && c.Google == nil && len(c.OIDC) == 0 {
 		e.fail("BALNANA_AUTH_MODE", "accounts mode needs at least one sign-in method: BALNANA_AUTH_PASSWORD=true or an OAuth provider")
 	}
 
@@ -435,8 +518,8 @@ func (c *Config) OAuthProviders() []OAuthProvider {
 	if c.Google != nil {
 		ps = append(ps, OAuthProvider{ID: "google", Name: "Google"})
 	}
-	if c.OIDC != nil {
-		ps = append(ps, OAuthProvider{ID: "oidc", Name: c.OIDC.Name})
+	for _, o := range c.OIDC {
+		ps = append(ps, OAuthProvider{ID: o.ID, Name: o.Name})
 	}
 	return ps
 }
@@ -496,8 +579,12 @@ func (e *env) int(key string, def int) int {
 }
 
 func (e *env) list(key string) []string {
+	return splitList(e.str(key, ""))
+}
+
+func splitList(s string) []string {
 	var out []string
-	for _, part := range strings.Split(e.str(key, ""), ",") {
+	for _, part := range strings.Split(s, ",") {
 		if part = strings.TrimSpace(part); part != "" {
 			out = append(out, strings.TrimSuffix(part, "/"))
 		}

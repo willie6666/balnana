@@ -117,17 +117,32 @@ func TestAccountsModeNeedsSignInMethod(t *testing.T) {
 	if _, err := load(envMap(base)); err == nil {
 		t.Fatal("expected error without any sign-in method")
 	}
-	base["BALNANA_OAUTH_OIDC_ISSUER"] = "https://id.example.com"
-	base["BALNANA_OAUTH_OIDC_CLIENT_ID"] = "id"
-	base["BALNANA_OAUTH_OIDC_SECRET"] = "secret"
-	base["BALNANA_OAUTH_OIDC_NAME"] = "Authentik"
+	base["BALNANA_OAUTH_OIDC_PROVIDERS"] = "authentik, keycloak"
+	base["BALNANA_OAUTH_OIDC_AUTHENTIK_ISSUER"] = "https://id.example.com"
+	base["BALNANA_OAUTH_OIDC_AUTHENTIK_CLIENT_ID"] = "id"
+	base["BALNANA_OAUTH_OIDC_AUTHENTIK_SECRET"] = "secret"
+	base["BALNANA_OAUTH_OIDC_AUTHENTIK_NAME"] = "Authentik"
+	base["BALNANA_OAUTH_OIDC_AUTHENTIK_TRUST_EMAIL"] = "true"
+	base["BALNANA_OAUTH_OIDC_KEYCLOAK_ISSUER"] = "https://sso.example.com/realms/home"
+	base["BALNANA_OAUTH_OIDC_KEYCLOAK_CLIENT_ID"] = "id"
+	base["BALNANA_OAUTH_OIDC_KEYCLOAK_SECRET"] = "secret"
 	c, err := load(envMap(base))
 	if err != nil {
 		t.Fatal(err)
 	}
 	ps := c.OAuthProviders()
-	if len(ps) != 1 || ps[0].ID != "oidc" || ps[0].Name != "Authentik" {
+	if len(ps) != 2 || ps[0].ID != "authentik" || ps[0].Name != "Authentik" || ps[1].ID != "keycloak" || ps[1].Name != "keycloak" {
 		t.Fatalf("providers = %+v", ps)
+	}
+	if !c.OIDC[0].TrustEmail || c.OIDC[1].TrustEmail {
+		t.Fatalf("trust = %v, %v", c.OIDC[0].TrustEmail, c.OIDC[1].TrustEmail)
+	}
+
+	for _, ids := range []string{"google", "Bad_ID", "authentik,authentik"} {
+		base["BALNANA_OAUTH_OIDC_PROVIDERS"] = ids
+		if _, err := load(envMap(base)); err == nil {
+			t.Errorf("BALNANA_OAUTH_OIDC_PROVIDERS=%s: expected error", ids)
+		}
 	}
 }
 
@@ -197,20 +212,22 @@ func TestStoredSettings(t *testing.T) {
 func TestErrorKeys(t *testing.T) {
 	t.Setenv("BALNANA_DATABASE_URL", "postgres:///x")
 	_, err := LoadWith(map[string]string{
-		"BALNANA_SMTP_HOST":              "smtp.example.com",
-		"BALNANA_SMTP_PORT":              "70000",
-		"BALNANA_OAUTH_GOOGLE_CLIENT_ID": "id",
-		"BALNANA_ANDROID_CERT_SHA256":    "nope",
-		"BALNANA_AUTH_MODE":              "accounts",
-		"BALNANA_AUTH_PASSWORD":          "false",
-		"BALNANA_OAUTH_OIDC_ISSUER":      "issuer",
-		"BALNANA_OAUTH_OIDC_CLIENT_ID":   "id",
-		"BALNANA_OAUTH_OIDC_SECRET":      "secret",
+		"BALNANA_SMTP_HOST":                "smtp.example.com",
+		"BALNANA_SMTP_PORT":                "70000",
+		"BALNANA_OAUTH_GOOGLE_CLIENT_ID":   "id",
+		"BALNANA_ANDROID_CERT_SHA256":      "nope",
+		"BALNANA_AUTH_MODE":                "accounts",
+		"BALNANA_AUTH_PASSWORD":            "false",
+		"BALNANA_OAUTH_OIDC_PROVIDERS":     "sso",
+		"BALNANA_OAUTH_OIDC_SSO_ISSUER":    "issuer",
+		"BALNANA_OAUTH_OIDC_SSO_CLIENT_ID": "id",
+		"BALNANA_OAUTH_OIDC_SSO_SECRET":    "secret",
+		"BALNANA_AUTH_REQUIRE_VERIFIED":    "true",
 	})
 	keys := ErrorKeys(err)
 	slices.Sort(keys)
 	want := []string{
-		"BALNANA_ANDROID_CERT_SHA256", "BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_OIDC_ISSUER",
+		"BALNANA_ANDROID_CERT_SHA256", "BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_OIDC_SSO_ISSUER",
 		"BALNANA_SMTP_FROM", "BALNANA_SMTP_PORT",
 	}
 	if !slices.Equal(keys, want) {
@@ -246,5 +263,27 @@ func TestAndroidFingerprints(t *testing.T) {
 	}
 	if !slices.Equal(c.AndroidCertSHA256, []string{colons, colons}) {
 		t.Fatalf("got %v", c.AndroidCertSHA256)
+	}
+}
+
+func TestManagedForListsEachProvider(t *testing.T) {
+	stored := map[string]string{"BALNANA_OAUTH_OIDC_PROVIDERS": "home, work"}
+	var keys []string
+	for _, s := range ManagedFor(func(key string) string { return stored[key] }) {
+		keys = append(keys, s.Key)
+	}
+	for _, want := range []string{
+		"BALNANA_AUTH_REQUIRE_VERIFIED", "BALNANA_OAUTH_GOOGLE_TRUST_EMAIL",
+		"BALNANA_OAUTH_OIDC_HOME_ISSUER", "BALNANA_OAUTH_OIDC_WORK_SECRET", "BALNANA_OAUTH_OIDC_WORK_TRUST_EMAIL",
+	} {
+		if !slices.Contains(keys, want) {
+			t.Errorf("%s missing from %v", want, keys)
+		}
+	}
+	if m, ok := ManagedSetting("BALNANA_OAUTH_OIDC_WORK_SECRET"); !ok || !m.Secret {
+		t.Fatalf("WORK_SECRET = %+v, %v", m, ok)
+	}
+	if _, ok := ManagedSetting("BALNANA_OAUTH_OIDC_WORK_COLOR"); ok {
+		t.Fatal("an unknown provider field is managed")
 	}
 }

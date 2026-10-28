@@ -157,6 +157,54 @@ class BalnanaApi {
     _session,
   );
 
+  /// What a sign-in that stopped to ask is about: the address of the
+  /// account it matched, which has not confirmed it.
+  Future<OAuthPending> oauthPending(String token) =>
+      _send(() => _dio.post<Object?>('/auth/oauth/pending', data: {'token': token}), OAuthPending.fromJson);
+
+  /// Ends a sign-in that stopped to ask: [choice] is `link` (with the
+  /// account's [password]), `take_over` or `new_account`. [verifier] is the
+  /// one the sign-in started with, if it did.
+  Future<(String?, User)> finishOAuthPending({
+    required String token,
+    required String choice,
+    String? password,
+    String? verifier,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/auth/oauth/pending/finish',
+      data: {
+        'token': token,
+        'choice': choice,
+        'password': ?password,
+        'verifier': ?verifier,
+        'cookie': _cookie,
+      },
+    ),
+    _session,
+  );
+
+  /// Ids of the providers the signed-in account signs in with.
+  Future<List<String>> myOAuth() => _send(() => _dio.get<Object?>('/me/oauth'), (data) {
+    if (data is! Map<String, Object?> || data['providers'] is! List<Object?>) {
+      throw const FormatException('bad providers');
+    }
+    return [...(data['providers'] as List<Object?>).whereType<String>()];
+  });
+
+  /// A ticket for adding [provider] to the signed-in account: the sign-in
+  /// started with it adds the identity instead of signing in.
+  Future<String> linkOAuth(String provider, {String? password}) => _send(
+    () => _dio.post<Object?>('/me/oauth/${Uri.encodeComponent(provider)}', data: {'password': ?password}),
+    (data) => switch (data) {
+      {'ticket': final String ticket} => ticket,
+      _ => throw const FormatException('bad ticket'),
+    },
+  );
+
+  Future<void> unlinkOAuth(String provider) =>
+      _send(() => _dio.delete<Object?>('/me/oauth/${Uri.encodeComponent(provider)}'), (_) {});
+
   static (String?, User) _session(Object? data) {
     if (data is! Map<String, Object?>) throw const FormatException('expected an object');
     final token = data['token'];

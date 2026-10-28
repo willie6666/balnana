@@ -45,7 +45,7 @@ func TestLoginRacingTakeover(t *testing.T) {
 			var first *client
 			takeover := make(chan string, 1)
 			fired := false
-			first, second, _, _ := racing(t, f.env(map[string]string{}), func(sql string) {
+			first, second, _, _ := racing(t, verifiedOnly(f.env(map[string]string{})), func(sql string) {
 				if fired || !strings.Contains(sql, boundary) {
 					return
 				}
@@ -163,7 +163,7 @@ func TestPasswordChangeRacingReclaim(t *testing.T) {
 	f := newFakeIdP(t)
 	var first *client
 	fired := false
-	first, second, _, _ := racing(t, f.env(map[string]string{}), func(sql string) {
+	first, second, _, _ := racing(t, verifiedOnly(f.env(map[string]string{})), func(sql string) {
 		// Where lockAccount begins, after the password was checked.
 		if fired || !strings.Contains(sql, "lock table users in row exclusive mode") {
 			return

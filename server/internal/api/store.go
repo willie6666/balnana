@@ -112,8 +112,9 @@ func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
 	if !accounts {
 		return nil
 	}
+	// An account waiting to confirm its address is treated as no account.
 	u, err := s.currentUser(ctx)
-	if err != nil || u == nil {
+	if err != nil || u == nil || s.restricted(u) {
 		return err
 	}
 	var id string
@@ -145,6 +146,8 @@ func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock
 		return nil, err
 	} else if u == nil {
 		return nil, &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
+	} else if s.restricted(u) {
+		return nil, forbidden("email_unverified")
 	}
 	return nil, forbidden("not_a_member")
 }

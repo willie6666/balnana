@@ -1,6 +1,7 @@
 import 'package:balnana/app.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/groups/open_link.dart';
 import 'package:dio/dio.dart';
@@ -181,6 +182,37 @@ void main() {
         ],
       );
       expect(find.text('Create an account'), first ? findsOneWidget : findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
+  testWidgets('a server that requires confirmed emails keeps others at its settings', (tester) async {
+    for (final (required, verified) in [(true, false), (false, false), (true, true)]) {
+      final info = ServerInfo(
+        version: '1.0.0',
+        authMode: AuthMode.accounts,
+        password: true,
+        verifiedRequired: required,
+        publicUrl: 'https://split.example.com',
+      );
+      await _boot(
+        tester,
+        await _prefs({'settings.server': 'https://split.example.com'}),
+        overrides: [
+          serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
+          accountProvider.overrideWithValue(
+            AsyncValue.data(
+              User(id: 'ana', name: 'Ana', email: 'ana@example.com', emailVerified: verified, hasPassword: true),
+            ),
+          ),
+        ],
+      );
+      expect(find.text('Confirm your email'), required && !verified ? findsOneWidget : findsNothing);
+      if (required && !verified) {
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm your email'), findsNothing);
+      }
       await tester.pumpWidget(const SizedBox());
     }
   });

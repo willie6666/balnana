@@ -68,7 +68,7 @@ func lockUsersTable(ctx context.Context, tx pgx.Tx) error {
 }
 
 func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) (ChangeEmailResponseObject, error) {
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 }
 
 func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (DeleteMeResponseObject, error) {
-	u, err := s.requireUser(ctx)
+	u, err := s.requireAccount(ctx)
 	if err != nil {
 		return nil, err
 	}
