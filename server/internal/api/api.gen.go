@@ -80,7 +80,7 @@ type AccountDelete struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed. Payments use the expense actions with `kind: payment` in the payload.
+	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed. Payments use the expense actions with `kind: payment` in the payload.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -1168,7 +1168,7 @@ type ServerInterface interface {
 	// End this session
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
-	// Trade the code the Android app got back for a session
+	// Trade an Android or cross-origin web sign-in code for a session
 	// (POST /auth/oauth/exchange)
 	ExchangeOAuthCode(w http.ResponseWriter, r *http.Request)
 	// Where the provider sends the browser back
@@ -5864,7 +5864,7 @@ type StrictServerInterface interface {
 	// End this session
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
-	// Trade the code the Android app got back for a session
+	// Trade an Android or cross-origin web sign-in code for a session
 	// (POST /auth/oauth/exchange)
 	ExchangeOAuthCode(ctx context.Context, request ExchangeOAuthCodeRequestObject) (ExchangeOAuthCodeResponseObject, error)
 	// Where the provider sends the browser back
