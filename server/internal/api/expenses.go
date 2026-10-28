@@ -295,7 +295,8 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
 	created_by_member::text, created_at, updated_at, deleted_at, version, transaction_type,
-	exists (select 1 from receipts r where r.expense_id = expenses.id), location_name, latitude, longitude`
+	exists (select 1 from receipts r where r.expense_id = expenses.id), location_name, latitude, longitude,
+	recurring_id::text`
 
 // loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
 func loadExpenses(ctx context.Context, q querier, digits int, sql string, args ...any) ([]Expense, error) {
@@ -311,7 +312,7 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		var lat, lng *float64
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
 			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt,
-			&place, &lat, &lng)
+			&place, &lat, &lng, &e.RecurringId)
 		if place != nil || lat != nil {
 			e.Location = &Location{Name: place}
 			if lat != nil && lng != nil {

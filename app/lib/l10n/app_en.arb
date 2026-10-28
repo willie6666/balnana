@@ -3607,5 +3607,347 @@
         "description": "Number of group links, not members or expenses."
       }
     }
+  },
+  "repeatSection": "Repeat",
+  "@repeatSection": {
+    "description": "Section heading in the expense editor for making an expense repeat."
+  },
+  "repeatNever": "Doesn't repeat",
+  "@repeatNever": {
+    "description": "Choice in the expense editor: the expense is added once."
+  },
+  "repeatDaily": "Daily",
+  "@repeatDaily": {
+    "description": "Choice in the expense editor: the expense repeats every day or every few days."
+  },
+  "repeatWeekly": "Weekly",
+  "@repeatWeekly": {
+    "description": "Choice in the expense editor: the expense repeats every week or every few weeks."
+  },
+  "repeatMonthly": "Monthly",
+  "@repeatMonthly": {
+    "description": "Choice in the expense editor: the expense repeats every month or every few months."
+  },
+  "repeatYearly": "Yearly",
+  "@repeatYearly": {
+    "description": "Choice in the expense editor: the expense repeats every year or every few years."
+  },
+  "repeatEvery": "Every",
+  "@repeatEvery": {
+    "description": "Label before the number field that sets how many days, weeks, months or years apart a recurring expense comes back."
+  },
+  "repeatUnitDay": "{count, plural, =1{day} other{days}}",
+  "@repeatUnitDay": {
+    "description": "Unit after the repeat number field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatUnitWeek": "{count, plural, =1{week} other{weeks}}",
+  "@repeatUnitWeek": {
+    "description": "Unit after the repeat number field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatUnitMonth": "{count, plural, =1{month} other{months}}",
+  "@repeatUnitMonth": {
+    "description": "Unit after the repeat number field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatUnitYear": "{count, plural, =1{year} other{years}}",
+  "@repeatUnitYear": {
+    "description": "Unit after the repeat number field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatIntervalDay": "{count, plural, =1{Every day} other{Every {count} days}}",
+  "@repeatIntervalDay": {
+    "description": "How often a recurring expense comes back.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatIntervalWeek": "{count, plural, =1{Every week} other{Every {count} weeks}}",
+  "@repeatIntervalWeek": {
+    "description": "How often a recurring expense comes back.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatIntervalMonth": "{count, plural, =1{Every month} other{Every {count} months}}",
+  "@repeatIntervalMonth": {
+    "description": "How often a recurring expense comes back.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatIntervalYear": "{count, plural, =1{Every year} other{Every {count} years}}",
+  "@repeatIntervalYear": {
+    "description": "How often a recurring expense comes back.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "How many units apart occurrences are."
+      }
+    }
+  },
+  "repeatEndNone": "No end date",
+  "@repeatEndNone": {
+    "description": "Button in the expense editor: the recurring expense repeats until stopped. Tapping it picks an end date."
+  },
+  "repeatEndOn": "Until {date}",
+  "@repeatEndOn": {
+    "description": "Button in the expense editor showing the last day a recurring expense may be added.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "description": "The end date, already formatted."
+      }
+    }
+  },
+  "repeatEndClear": "Remove the end date",
+  "@repeatEndClear": {
+    "description": "Tooltip of the button that makes a recurring expense repeat until stopped."
+  },
+  "repeatHelp": "Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.",
+  "@repeatHelp": {
+    "description": "Help text under the repeat settings in the expense editor."
+  },
+  "recurringTitle": "Recurring expenses",
+  "@recurringTitle": {
+    "description": "Title of the page listing a group's recurring expenses, and of its entry in group settings."
+  },
+  "recurringHelp": "Expenses that add themselves on a schedule",
+  "@recurringHelp": {
+    "description": "Subtitle of the recurring expenses entry in group settings."
+  },
+  "recurringEmptyTitle": "No recurring expenses",
+  "@recurringEmptyTitle": {
+    "description": "Empty state title on the recurring expenses page."
+  },
+  "recurringEmptyBody": "Rent, subscriptions and other costs that come back can be added for you on every date.",
+  "@recurringEmptyBody": {
+    "description": "Empty state body on the recurring expenses page."
+  },
+  "recurringAdd": "Add recurring expense",
+  "@recurringAdd": {
+    "description": "Button that opens the expense editor set to repeat."
+  },
+  "recurringEdit": "Edit recurring expense",
+  "@recurringEdit": {
+    "description": "Title of the expense editor when it changes a recurring expense."
+  },
+  "recurringNext": "Next on {date}",
+  "@recurringNext": {
+    "description": "When a recurring expense is added next.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "description": "The date, already formatted."
+      }
+    }
+  },
+  "recurringPaused": "Paused",
+  "@recurringPaused": {
+    "description": "Status of a recurring expense that is not being added for now."
+  },
+  "recurringEnded": "Ended",
+  "@recurringEnded": {
+    "description": "Status of a recurring expense past its end date."
+  },
+  "recurringPause": "Pause",
+  "@recurringPause": {
+    "description": "Menu action that stops a recurring expense from being added for now."
+  },
+  "recurringResume": "Resume",
+  "@recurringResume": {
+    "description": "Menu action that lets a paused recurring expense be added again; dates missed while paused are skipped."
+  },
+  "recurringActive": "Repeating",
+  "@recurringActive": {
+    "description": "Label of the switch that pauses or resumes a recurring expense."
+  },
+  "recurringDelete": "Delete",
+  "@recurringDelete": {
+    "description": "Menu action and button that deletes a recurring expense."
+  },
+  "recurringDeleteTitle": "Stop repeating?",
+  "@recurringDeleteTitle": {
+    "description": "Title of the dialog confirming that a recurring expense is deleted."
+  },
+  "recurringDeleteBody": "“{title}” won't be added again. Expenses it already added stay.",
+  "@recurringDeleteBody": {
+    "description": "Body of the dialog confirming that a recurring expense is deleted.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "recurringDeleted": "Recurring expense deleted",
+  "@recurringDeleted": {
+    "description": "Snackbar after a recurring expense is deleted."
+  },
+  "recurringFromSchedule": "Added by a recurring expense",
+  "@recurringFromSchedule": {
+    "description": "Shown in the editor of an expense that a recurring expense added."
+  },
+  "recurringOpen": "Change the schedule",
+  "@recurringOpen": {
+    "description": "Subtitle of the tile that opens the recurring expense that added this expense."
+  },
+  "recurringMissing": "The recurring expense was deleted or is no longer available.",
+  "@recurringMissing": {
+    "description": "Shown when the recurring expense being edited cannot be found."
+  },
+  "errorTooManyDue": "That start date is too long ago: more than 100 expenses would be added at once.",
+  "@errorTooManyDue": {
+    "description": "Error when a recurring expense would add too many past occurrences."
+  },
+  "errorInvalidEnd": "The end date cannot be before the start date.",
+  "@errorInvalidEnd": {
+    "description": "Error for an invalid end date of a recurring expense."
+  },
+  "errorInvalidRepeat": "Repeat every 1 to 999 days, weeks, months or years.",
+  "@errorInvalidRepeat": {
+    "description": "Error for an invalid repeat interval."
+  },
+  "errorRecurringConflict": "Someone else changed this recurring expense while you were editing it. Reload to see their changes.",
+  "@errorRecurringConflict": {
+    "description": "Error when a recurring expense was changed by someone else."
+  },
+  "activityRecurringCreated": "{who} set “{title}” to repeat",
+  "@activityRecurringCreated": {
+    "description": "Activity entry.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringUpdated": "{who} changed the recurring expense “{title}”",
+  "@activityRecurringUpdated": {
+    "description": "Activity entry.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringPaused": "{who} paused the recurring expense “{title}”",
+  "@activityRecurringPaused": {
+    "description": "Activity entry.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringPausedMemberLeft": "The recurring expense “{title}” was paused because someone in it left the group",
+  "@activityRecurringPausedMemberLeft": {
+    "description": "Activity entry when the server paused a recurring expense.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringPausedFailed": "The recurring expense “{title}” was paused because it could not be added",
+  "@activityRecurringPausedFailed": {
+    "description": "Activity entry when the server paused a recurring expense for another reason.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringResumed": "{who} resumed the recurring expense “{title}”",
+  "@activityRecurringResumed": {
+    "description": "Activity entry.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringDeleted": "{who} stopped the recurring expense “{title}”",
+  "@activityRecurringDeleted": {
+    "description": "Activity entry.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      }
+    }
+  },
+  "activityRecurringAdded": "“{title}” ({amount}) was added automatically",
+  "@activityRecurringAdded": {
+    "description": "Activity entry for an expense a recurring expense added.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Title of the recurring expense."
+      },
+      "amount": {
+        "type": "String",
+        "description": "The amount, already formatted with its currency."
+      }
+    }
+  },
+  "expenseRecurring": "Added by a recurring expense",
+  "@expenseRecurring": {
+    "description": "Accessibility label of the icon on expenses that a recurring expense added."
   }
 }

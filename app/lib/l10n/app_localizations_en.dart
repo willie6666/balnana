@@ -2422,4 +2422,227 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get repeatSection => 'Repeat';
+
+  @override
+  String get repeatNever => 'Doesn\'t repeat';
+
+  @override
+  String get repeatDaily => 'Daily';
+
+  @override
+  String get repeatWeekly => 'Weekly';
+
+  @override
+  String get repeatMonthly => 'Monthly';
+
+  @override
+  String get repeatYearly => 'Yearly';
+
+  @override
+  String get repeatEvery => 'Every';
+
+  @override
+  String repeatUnitDay(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'days', one: 'day');
+    return '$_temp0';
+  }
+
+  @override
+  String repeatUnitWeek(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'weeks', one: 'week');
+    return '$_temp0';
+  }
+
+  @override
+  String repeatUnitMonth(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'months', one: 'month');
+    return '$_temp0';
+  }
+
+  @override
+  String repeatUnitYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'years', one: 'year');
+    return '$_temp0';
+  }
+
+  @override
+  String repeatIntervalDay(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count days',
+      one: 'Every day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repeatIntervalWeek(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count weeks',
+      one: 'Every week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repeatIntervalMonth(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count months',
+      one: 'Every month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repeatIntervalYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count years',
+      one: 'Every year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeatEndNone => 'No end date';
+
+  @override
+  String repeatEndOn(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String get repeatEndClear => 'Remove the end date';
+
+  @override
+  String get repeatHelp =>
+      'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.';
+
+  @override
+  String get recurringTitle => 'Recurring expenses';
+
+  @override
+  String get recurringHelp => 'Expenses that add themselves on a schedule';
+
+  @override
+  String get recurringEmptyTitle => 'No recurring expenses';
+
+  @override
+  String get recurringEmptyBody =>
+      'Rent, subscriptions and other costs that come back can be added for you on every date.';
+
+  @override
+  String get recurringAdd => 'Add recurring expense';
+
+  @override
+  String get recurringEdit => 'Edit recurring expense';
+
+  @override
+  String recurringNext(String date) {
+    return 'Next on $date';
+  }
+
+  @override
+  String get recurringPaused => 'Paused';
+
+  @override
+  String get recurringEnded => 'Ended';
+
+  @override
+  String get recurringPause => 'Pause';
+
+  @override
+  String get recurringResume => 'Resume';
+
+  @override
+  String get recurringActive => 'Repeating';
+
+  @override
+  String get recurringDelete => 'Delete';
+
+  @override
+  String get recurringDeleteTitle => 'Stop repeating?';
+
+  @override
+  String recurringDeleteBody(String title) {
+    return '“$title” won\'t be added again. Expenses it already added stay.';
+  }
+
+  @override
+  String get recurringDeleted => 'Recurring expense deleted';
+
+  @override
+  String get recurringFromSchedule => 'Added by a recurring expense';
+
+  @override
+  String get recurringOpen => 'Change the schedule';
+
+  @override
+  String get recurringMissing => 'The recurring expense was deleted or is no longer available.';
+
+  @override
+  String get errorTooManyDue =>
+      'That start date is too long ago: more than 100 expenses would be added at once.';
+
+  @override
+  String get errorInvalidEnd => 'The end date cannot be before the start date.';
+
+  @override
+  String get errorInvalidRepeat => 'Repeat every 1 to 999 days, weeks, months or years.';
+
+  @override
+  String get errorRecurringConflict =>
+      'Someone else changed this recurring expense while you were editing it. Reload to see their changes.';
+
+  @override
+  String activityRecurringCreated(String who, String title) {
+    return '$who set “$title” to repeat';
+  }
+
+  @override
+  String activityRecurringUpdated(String who, String title) {
+    return '$who changed the recurring expense “$title”';
+  }
+
+  @override
+  String activityRecurringPaused(String who, String title) {
+    return '$who paused the recurring expense “$title”';
+  }
+
+  @override
+  String activityRecurringPausedMemberLeft(String title) {
+    return 'The recurring expense “$title” was paused because someone in it left the group';
+  }
+
+  @override
+  String activityRecurringPausedFailed(String title) {
+    return 'The recurring expense “$title” was paused because it could not be added';
+  }
+
+  @override
+  String activityRecurringResumed(String who, String title) {
+    return '$who resumed the recurring expense “$title”';
+  }
+
+  @override
+  String activityRecurringDeleted(String who, String title) {
+    return '$who stopped the recurring expense “$title”';
+  }
+
+  @override
+  String activityRecurringAdded(String title, String amount) {
+    return '“$title” ($amount) was added automatically';
+  }
+
+  @override
+  String get expenseRecurring => 'Added by a recurring expense';
 }

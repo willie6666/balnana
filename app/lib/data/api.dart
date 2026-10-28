@@ -73,6 +73,36 @@ class ExpenseDraft {
   };
 }
 
+/// How a new or changed recurring expense repeats.
+class RecurringDraft {
+  const RecurringDraft({required this.expense, required this.repeat, this.endsOn, this.timeZone});
+
+  /// What every occurrence adds; its [ExpenseDraft.occurredAt] is the first.
+  final ExpenseDraft expense;
+  final Repeat repeat;
+
+  /// The last day an occurrence may fall on.
+  final DateTime? endsOn;
+
+  /// The IANA time zone whose calendar the schedule follows; UTC when null.
+  final String? timeZone;
+
+  Map<String, Object?> toJson(int digits, {int? version}) {
+    final json = expense.toJson(digits, version: version);
+    final startsAt = json.remove('occurredAt');
+    final end = endsOn;
+    return {
+      ...json,
+      'startsAt': startsAt,
+      'repeat': {'unit': repeat.unit.name, 'every': repeat.every},
+      if (end != null)
+        'endsOn':
+            '${end.year.toString().padLeft(4, '0')}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}',
+      'timeZone': ?timeZone,
+    };
+  }
+}
+
 /// Where a push service delivers this device's Web Push messages: the
 /// [endpoint] to send to and the keys to encrypt for (RFC 8291), base64url.
 typedef PushSubscription = ({String endpoint, String p256dh, String auth});
@@ -528,6 +558,63 @@ class GroupApi {
     ),
     (data) => Expense.fromJson(data, digits),
   );
+
+  Future<List<RecurringExpense>> recurringExpenses(int digits) => _send(
+    () => _dio.get<Object?>('$_base/recurring'),
+    (data) => [
+      for (final r in data is List<Object?> ? data : throw const FormatException('bad list'))
+        RecurringExpense.fromJson(r, digits),
+    ],
+  );
+
+  Future<RecurringExpense> recurringExpense(String id, int digits) =>
+      _send(() => _dio.get<Object?>('$_base/recurring/$id'), (data) => RecurringExpense.fromJson(data, digits));
+
+  /// Occurrences already due are added at once. Without a time zone, the
+  /// schedule follows this device's.
+  Future<RecurringExpense> createRecurring(RecurringDraft draft, int digits) => _inZone(
+    draft,
+    (json) => _send(
+      () => _dio.post<Object?>('$_base/recurring', data: json(digits), options: _as),
+      (data) => RecurringExpense.fromJson(data, digits),
+    ),
+  );
+
+  /// Fails with `recurring_version_conflict` when someone else changed it since [version].
+  Future<RecurringExpense> updateRecurring(String id, RecurringDraft draft, int digits, {required int version}) =>
+      _inZone(
+        draft,
+        (json) => _send(
+          () => _dio.put<Object?>('$_base/recurring/$id', data: json(digits, version: version), options: _as),
+          (data) => RecurringExpense.fromJson(data, digits),
+        ),
+      );
+
+  /// Sends [draft] in this device's time zone when it names none, or in UTC
+  /// when the server does not know this device's.
+  Future<T> _inZone<T>(
+    RecurringDraft draft,
+    Future<T> Function(Map<String, Object?> Function(int digits, {int? version}) json) send,
+  ) async {
+    final zone = draft.timeZone == null ? await deviceTimeZone() : null;
+    if (zone == null) return send(draft.toJson);
+    try {
+      return await send((digits, {version}) => {...draft.toJson(digits, version: version), 'timeZone': zone});
+    } on ApiException catch (e) {
+      if (e.code != 'invalid_time_zone') rethrow;
+      return send(draft.toJson);
+    }
+  }
+
+  /// Resuming skips the occurrences that fell while it was paused.
+  Future<RecurringExpense> pauseRecurring(String id, {required bool paused, required int digits}) => _send(
+    () => _dio.patch<Object?>('$_base/recurring/$id', data: {'paused': paused}, options: _as),
+    (data) => RecurringExpense.fromJson(data, digits),
+  );
+
+  /// The expenses it added stay.
+  Future<void> deleteRecurring(String id) =>
+      _send(() => _dio.delete<Object?>('$_base/recurring/$id', options: _as), (_) {});
 
   Future<Balances> balances(int digits) =>
       _send(() => _dio.get<Object?>('$_base/balances'), (data) => Balances.fromJson(data, digits));

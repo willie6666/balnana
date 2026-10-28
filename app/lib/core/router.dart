@@ -14,6 +14,7 @@ import '../features/group/categories_page.dart';
 import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
+import '../features/group/recurring_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
@@ -170,7 +171,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _root,
                     pageBuilder: (context, state) => MaterialPage(
                       fullscreenDialog: true,
-                      child: ExpenseEditorPage(token: state.pathParameters['token']!),
+                      child: ExpenseEditorPage(
+                        token: state.pathParameters['token']!,
+                        repeat: state.uri.queryParameters['repeat'] == '1',
+                      ),
                     ),
                   ),
                   GoRoute(
@@ -185,12 +189,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                   GoRoute(
+                    path: 'recurring/:id',
+                    parentNavigatorKey: _root,
+                    pageBuilder: (context, state) => MaterialPage(
+                      fullscreenDialog: true,
+                      child: ExpenseEditorPage(
+                        token: state.pathParameters['token']!,
+                        recurringId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
                     path: 'settings',
                     builder: (context, state) => GroupSettingsPage(token: state.pathParameters['token']!),
                     routes: [
                       GoRoute(
                         path: 'categories',
                         builder: (context, state) => CategoriesPage(token: state.pathParameters['token']!),
+                      ),
+                      GoRoute(
+                        path: 'recurring',
+                        builder: (context, state) => RecurringPage(token: state.pathParameters['token']!),
                       ),
                     ],
                   ),

@@ -96,6 +96,7 @@ func run() error {
 	// not wait for them.
 	go srv.ListenForChanges(ctx)
 	go srv.SweepExpired(ctx)
+	go srv.RunRecurring(ctx)
 	httpServer := &http.Server{
 		Addr:              cfg.Listen,
 		Handler:           api.NewHandler(srv, web.Handler(cfg.WebDir)),

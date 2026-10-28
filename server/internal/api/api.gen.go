@@ -47,6 +47,14 @@ const (
 	OAuthPendingFinishChoiceTakeOver   OAuthPendingFinishChoice = "take_over"
 )
 
+// Defines values for RepeatUnit.
+const (
+	Day   RepeatUnit = "day"
+	Month RepeatUnit = "month"
+	Week  RepeatUnit = "week"
+	Year  RepeatUnit = "year"
+)
+
 // Defines values for ServerInfoAuthMode.
 const (
 	ServerInfoAuthModeAccounts ServerInfoAuthMode = "accounts"
@@ -87,7 +95,7 @@ type AccountDelete struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed. Payments use the expense actions with `kind: payment` in the payload.
+	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -263,10 +271,13 @@ type Expense struct {
 	Kind       ExpenseKind `json:"kind"`
 
 	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
-	Location    *Location   `json:"location,omitempty"`
-	Note        *string     `json:"note,omitempty"`
-	OccurredAt  time.Time   `json:"occurredAt"`
-	Payers      []Payer     `json:"payers"`
+	Location   *Location `json:"location,omitempty"`
+	Note       *string   `json:"note,omitempty"`
+	OccurredAt time.Time `json:"occurredAt"`
+	Payers     []Payer   `json:"payers"`
+
+	// RecurringId The recurring expense that added it, while that still exists.
+	RecurringId *string     `json:"recurringId,omitempty"`
 	SplitMethod SplitMethod `json:"splitMethod"`
 	Splits      []SplitPart `json:"splits"`
 	Title       string      `json:"title"`
@@ -728,6 +739,74 @@ type PushDeviceInput struct {
 	P256dh string `json:"p256dh"`
 }
 
+// RecurringExpense defines model for RecurringExpense.
+type RecurringExpense struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount     Money     `json:"amount"`
+	CategoryId *string   `json:"categoryId,omitempty"`
+	CreatedAt  time.Time `json:"createdAt"`
+
+	// CreatedBy Member id of whoever set it up; its expenses are added as theirs.
+	CreatedBy *string `json:"createdBy,omitempty"`
+
+	// EndsOn YYYY-MM-DD.
+	EndsOn *string `json:"endsOn,omitempty"`
+	Id     string  `json:"id"`
+
+	// LastAt The latest occurrence added.
+	LastAt *time.Time `json:"lastAt,omitempty"`
+
+	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+	Location *Location `json:"location,omitempty"`
+
+	// NextAt When the next occurrence is added; none once it has ended.
+	NextAt      *time.Time  `json:"nextAt,omitempty"`
+	Note        *string     `json:"note,omitempty"`
+	Paused      bool        `json:"paused"`
+	Payers      []Payer     `json:"payers"`
+	Repeat      Repeat      `json:"repeat"`
+	SplitMethod SplitMethod `json:"splitMethod"`
+	Splits      []SplitPart `json:"splits"`
+	StartsAt    time.Time   `json:"startsAt"`
+	TimeZone    string      `json:"timeZone"`
+	Title       string      `json:"title"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	Version     int         `json:"version"`
+}
+
+// RecurringExpenseInput defines model for RecurringExpenseInput.
+type RecurringExpenseInput struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount     Money   `json:"amount"`
+	CategoryId *string `json:"categoryId,omitempty"`
+
+	// EndsOn The last day an occurrence may fall on, as YYYY-MM-DD in `timeZone`; none to repeat until stopped. 400 `invalid_end` when malformed or before `startsAt`.
+	EndsOn *string `json:"endsOn,omitempty"`
+
+	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+	Location    *Location    `json:"location,omitempty"`
+	Note        *string      `json:"note,omitempty"`
+	Payers      []PayerInput `json:"payers"`
+	Repeat      Repeat       `json:"repeat"`
+	SplitMethod SplitMethod  `json:"splitMethod"`
+	Splits      []Share      `json:"splits"`
+
+	// StartsAt The first occurrence.
+	StartsAt time.Time `json:"startsAt"`
+
+	// TimeZone The IANA time zone whose calendar the schedule follows, such as `Europe/Berlin`; UTC when left out. 400 `invalid_time_zone` for a name the server does not know.
+	TimeZone *string `json:"timeZone,omitempty"`
+	Title    string  `json:"title"`
+
+	// Version Required when updating.
+	Version *int `json:"version,omitempty"`
+}
+
+// RecurringPause defines model for RecurringPause.
+type RecurringPause struct {
+	Paused bool `json:"paused"`
+}
+
 // RegisterInput defines model for RegisterInput.
 type RegisterInput struct {
 	// Cookie The web app served by this server: keep the session in a cookie instead of returning a token. A web app on another origin cannot (the answer is bad_origin) and keeps the token.
@@ -747,6 +826,16 @@ type RegisterInput struct {
 	// Username Required when the server's emailRequired is false, and ignored otherwise. 3 to 32 of a-z, 0-9, ".", "_" and "-", starting with a letter or digit; stored in lower case.
 	Username *string `json:"username,omitempty"`
 }
+
+// Repeat defines model for Repeat.
+type Repeat struct {
+	// Every How many units apart occurrences are. A month or year from the 31st falls on the last day of shorter months.
+	Every int        `json:"every"`
+	Unit  RepeatUnit `json:"unit"`
+}
+
+// RepeatUnit defines model for Repeat.Unit.
+type RepeatUnit string
 
 // ServerInfo defines model for ServerInfo.
 type ServerInfo struct {
@@ -892,6 +981,9 @@ type MemberId = string
 
 // OAuthProviderId defines model for OAuthProviderId.
 type OAuthProviderId = string
+
+// RecurringId defines model for RecurringId.
+type RecurringId = string
 
 // TimeZone defines model for TimeZone.
 type TimeZone = string
@@ -1104,6 +1196,30 @@ type CreatePaymentParams struct {
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
+// CreateRecurringExpenseParams defines parameters for CreateRecurringExpense.
+type CreateRecurringExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// DeleteRecurringExpenseParams defines parameters for DeleteRecurringExpense.
+type DeleteRecurringExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// PauseRecurringExpenseParams defines parameters for PauseRecurringExpense.
+type PauseRecurringExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateRecurringExpenseParams defines parameters for UpdateRecurringExpense.
+type UpdateRecurringExpenseParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
 // ResetGroupLinkParams defines parameters for ResetGroupLink.
 type ResetGroupLinkParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
@@ -1190,6 +1306,15 @@ type UpdateMemberJSONRequestBody = MemberInput
 
 // CreatePaymentJSONRequestBody defines body for CreatePayment for application/json ContentType.
 type CreatePaymentJSONRequestBody = PaymentInput
+
+// CreateRecurringExpenseJSONRequestBody defines body for CreateRecurringExpense for application/json ContentType.
+type CreateRecurringExpenseJSONRequestBody = RecurringExpenseInput
+
+// PauseRecurringExpenseJSONRequestBody defines body for PauseRecurringExpense for application/json ContentType.
+type PauseRecurringExpenseJSONRequestBody = RecurringPause
+
+// UpdateRecurringExpenseJSONRequestBody defines body for UpdateRecurringExpense for application/json ContentType.
+type UpdateRecurringExpenseJSONRequestBody = RecurringExpenseInput
 
 // CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
 type CreateGroupJSONRequestBody = GroupCreate
@@ -1358,6 +1483,24 @@ type ServerInterface interface {
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams)
+	// The group's recurring expenses, soonest first
+	// (GET /g/{token}/recurring)
+	ListRecurringExpenses(w http.ResponseWriter, r *http.Request, token Token)
+	// Make an expense repeat
+	// (POST /g/{token}/recurring)
+	CreateRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, params CreateRecurringExpenseParams)
+	// Stop repeating
+	// (DELETE /g/{token}/recurring/{recurringId})
+	DeleteRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params DeleteRecurringExpenseParams)
+
+	// (GET /g/{token}/recurring/{recurringId})
+	GetRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId)
+	// Pause or resume
+	// (PATCH /g/{token}/recurring/{recurringId})
+	PauseRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params PauseRecurringExpenseParams)
+
+	// (PUT /g/{token}/recurring/{recurringId})
+	UpdateRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params UpdateRecurringExpenseParams)
 	// Replace the token; the old link stops working
 	// (POST /g/{token}/reset-link)
 	ResetGroupLink(w http.ResponseWriter, r *http.Request, token Token, params ResetGroupLinkParams)
@@ -3603,6 +3746,336 @@ func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListRecurringExpenses operation middleware
+func (siw *ServerInterfaceWrapper) ListRecurringExpenses(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRecurringExpenses(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRecurringExpense operation middleware
+func (siw *ServerInterfaceWrapper) CreateRecurringExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateRecurringExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRecurringExpense(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRecurringExpense operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRecurringExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "recurringId" -------------
+	var recurringId RecurringId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recurringId", r.PathValue("recurringId"), &recurringId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "recurringId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteRecurringExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRecurringExpense(w, r, token, recurringId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRecurringExpense operation middleware
+func (siw *ServerInterfaceWrapper) GetRecurringExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "recurringId" -------------
+	var recurringId RecurringId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recurringId", r.PathValue("recurringId"), &recurringId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "recurringId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRecurringExpense(w, r, token, recurringId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PauseRecurringExpense operation middleware
+func (siw *ServerInterfaceWrapper) PauseRecurringExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "recurringId" -------------
+	var recurringId RecurringId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recurringId", r.PathValue("recurringId"), &recurringId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "recurringId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PauseRecurringExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PauseRecurringExpense(w, r, token, recurringId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRecurringExpense operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRecurringExpense(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "recurringId" -------------
+	var recurringId RecurringId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recurringId", r.PathValue("recurringId"), &recurringId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "recurringId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateRecurringExpenseParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRecurringExpense(w, r, token, recurringId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ResetGroupLink operation middleware
 func (siw *ServerInterfaceWrapper) ResetGroupLink(w http.ResponseWriter, r *http.Request) {
 
@@ -4290,6 +4763,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.RemoveMember)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/recurring", wrapper.ListRecurringExpenses)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/recurring", wrapper.CreateRecurringExpense)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/recurring/{recurringId}", wrapper.DeleteRecurringExpense)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/recurring/{recurringId}", wrapper.GetRecurringExpense)
+	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/recurring/{recurringId}", wrapper.PauseRecurringExpense)
+	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/recurring/{recurringId}", wrapper.UpdateRecurringExpense)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/reset-link", wrapper.ResetGroupLink)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/stats", wrapper.GetStats)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
@@ -5727,6 +6206,190 @@ func (response CreatePaymentdefaultJSONResponse) VisitCreatePaymentResponse(w ht
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type ListRecurringExpensesRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type ListRecurringExpensesResponseObject interface {
+	VisitListRecurringExpensesResponse(w http.ResponseWriter) error
+}
+
+type ListRecurringExpenses200JSONResponse []RecurringExpense
+
+func (response ListRecurringExpenses200JSONResponse) VisitListRecurringExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListRecurringExpensesdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ListRecurringExpensesdefaultJSONResponse) VisitListRecurringExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type CreateRecurringExpenseRequestObject struct {
+	Token  Token `json:"token"`
+	Params CreateRecurringExpenseParams
+	Body   *CreateRecurringExpenseJSONRequestBody
+}
+
+type CreateRecurringExpenseResponseObject interface {
+	VisitCreateRecurringExpenseResponse(w http.ResponseWriter) error
+}
+
+type CreateRecurringExpense201JSONResponse RecurringExpense
+
+func (response CreateRecurringExpense201JSONResponse) VisitCreateRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateRecurringExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response CreateRecurringExpensedefaultJSONResponse) VisitCreateRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type DeleteRecurringExpenseRequestObject struct {
+	Token       Token       `json:"token"`
+	RecurringId RecurringId `json:"recurringId"`
+	Params      DeleteRecurringExpenseParams
+}
+
+type DeleteRecurringExpenseResponseObject interface {
+	VisitDeleteRecurringExpenseResponse(w http.ResponseWriter) error
+}
+
+type DeleteRecurringExpense204Response struct {
+}
+
+func (response DeleteRecurringExpense204Response) VisitDeleteRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRecurringExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteRecurringExpensedefaultJSONResponse) VisitDeleteRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetRecurringExpenseRequestObject struct {
+	Token       Token       `json:"token"`
+	RecurringId RecurringId `json:"recurringId"`
+}
+
+type GetRecurringExpenseResponseObject interface {
+	VisitGetRecurringExpenseResponse(w http.ResponseWriter) error
+}
+
+type GetRecurringExpense200JSONResponse RecurringExpense
+
+func (response GetRecurringExpense200JSONResponse) VisitGetRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRecurringExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetRecurringExpensedefaultJSONResponse) VisitGetRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type PauseRecurringExpenseRequestObject struct {
+	Token       Token       `json:"token"`
+	RecurringId RecurringId `json:"recurringId"`
+	Params      PauseRecurringExpenseParams
+	Body        *PauseRecurringExpenseJSONRequestBody
+}
+
+type PauseRecurringExpenseResponseObject interface {
+	VisitPauseRecurringExpenseResponse(w http.ResponseWriter) error
+}
+
+type PauseRecurringExpense200JSONResponse RecurringExpense
+
+func (response PauseRecurringExpense200JSONResponse) VisitPauseRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PauseRecurringExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response PauseRecurringExpensedefaultJSONResponse) VisitPauseRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateRecurringExpenseRequestObject struct {
+	Token       Token       `json:"token"`
+	RecurringId RecurringId `json:"recurringId"`
+	Params      UpdateRecurringExpenseParams
+	Body        *UpdateRecurringExpenseJSONRequestBody
+}
+
+type UpdateRecurringExpenseResponseObject interface {
+	VisitUpdateRecurringExpenseResponse(w http.ResponseWriter) error
+}
+
+type UpdateRecurringExpense200JSONResponse RecurringExpense
+
+func (response UpdateRecurringExpense200JSONResponse) VisitUpdateRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateRecurringExpensedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateRecurringExpensedefaultJSONResponse) VisitUpdateRecurringExpenseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type ResetGroupLinkRequestObject struct {
 	Token  Token `json:"token"`
 	Params ResetGroupLinkParams
@@ -6379,6 +7042,24 @@ type StrictServerInterface interface {
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(ctx context.Context, request CreatePaymentRequestObject) (CreatePaymentResponseObject, error)
+	// The group's recurring expenses, soonest first
+	// (GET /g/{token}/recurring)
+	ListRecurringExpenses(ctx context.Context, request ListRecurringExpensesRequestObject) (ListRecurringExpensesResponseObject, error)
+	// Make an expense repeat
+	// (POST /g/{token}/recurring)
+	CreateRecurringExpense(ctx context.Context, request CreateRecurringExpenseRequestObject) (CreateRecurringExpenseResponseObject, error)
+	// Stop repeating
+	// (DELETE /g/{token}/recurring/{recurringId})
+	DeleteRecurringExpense(ctx context.Context, request DeleteRecurringExpenseRequestObject) (DeleteRecurringExpenseResponseObject, error)
+
+	// (GET /g/{token}/recurring/{recurringId})
+	GetRecurringExpense(ctx context.Context, request GetRecurringExpenseRequestObject) (GetRecurringExpenseResponseObject, error)
+	// Pause or resume
+	// (PATCH /g/{token}/recurring/{recurringId})
+	PauseRecurringExpense(ctx context.Context, request PauseRecurringExpenseRequestObject) (PauseRecurringExpenseResponseObject, error)
+
+	// (PUT /g/{token}/recurring/{recurringId})
+	UpdateRecurringExpense(ctx context.Context, request UpdateRecurringExpenseRequestObject) (UpdateRecurringExpenseResponseObject, error)
 	// Replace the token; the old link stops working
 	// (POST /g/{token}/reset-link)
 	ResetGroupLink(ctx context.Context, request ResetGroupLinkRequestObject) (ResetGroupLinkResponseObject, error)
@@ -7822,6 +8503,191 @@ func (sh *strictHandler) CreatePayment(w http.ResponseWriter, r *http.Request, t
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreatePaymentResponseObject); ok {
 		if err := validResponse.VisitCreatePaymentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRecurringExpenses operation middleware
+func (sh *strictHandler) ListRecurringExpenses(w http.ResponseWriter, r *http.Request, token Token) {
+	var request ListRecurringExpensesRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRecurringExpenses(ctx, request.(ListRecurringExpensesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRecurringExpenses")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRecurringExpensesResponseObject); ok {
+		if err := validResponse.VisitListRecurringExpensesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateRecurringExpense operation middleware
+func (sh *strictHandler) CreateRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, params CreateRecurringExpenseParams) {
+	var request CreateRecurringExpenseRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body CreateRecurringExpenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateRecurringExpense(ctx, request.(CreateRecurringExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRecurringExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateRecurringExpenseResponseObject); ok {
+		if err := validResponse.VisitCreateRecurringExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRecurringExpense operation middleware
+func (sh *strictHandler) DeleteRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params DeleteRecurringExpenseParams) {
+	var request DeleteRecurringExpenseRequestObject
+
+	request.Token = token
+	request.RecurringId = recurringId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRecurringExpense(ctx, request.(DeleteRecurringExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRecurringExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRecurringExpenseResponseObject); ok {
+		if err := validResponse.VisitDeleteRecurringExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRecurringExpense operation middleware
+func (sh *strictHandler) GetRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId) {
+	var request GetRecurringExpenseRequestObject
+
+	request.Token = token
+	request.RecurringId = recurringId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRecurringExpense(ctx, request.(GetRecurringExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRecurringExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRecurringExpenseResponseObject); ok {
+		if err := validResponse.VisitGetRecurringExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PauseRecurringExpense operation middleware
+func (sh *strictHandler) PauseRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params PauseRecurringExpenseParams) {
+	var request PauseRecurringExpenseRequestObject
+
+	request.Token = token
+	request.RecurringId = recurringId
+	request.Params = params
+
+	var body PauseRecurringExpenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PauseRecurringExpense(ctx, request.(PauseRecurringExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PauseRecurringExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PauseRecurringExpenseResponseObject); ok {
+		if err := validResponse.VisitPauseRecurringExpenseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateRecurringExpense operation middleware
+func (sh *strictHandler) UpdateRecurringExpense(w http.ResponseWriter, r *http.Request, token Token, recurringId RecurringId, params UpdateRecurringExpenseParams) {
+	var request UpdateRecurringExpenseRequestObject
+
+	request.Token = token
+	request.RecurringId = recurringId
+	request.Params = params
+
+	var body UpdateRecurringExpenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateRecurringExpense(ctx, request.(UpdateRecurringExpenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRecurringExpense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateRecurringExpenseResponseObject); ok {
+		if err := validResponse.VisitUpdateRecurringExpenseResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

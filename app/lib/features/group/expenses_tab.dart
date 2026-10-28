@@ -483,6 +483,15 @@ class ExpenseTile extends ConsumerWidget {
                         Flexible(
                           child: Text(title, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
+                        if (e.recurringId != null) ...[
+                          const SizedBox(width: BSpace.s4),
+                          Icon(
+                            Icons.repeat,
+                            size: 16,
+                            color: scheme.onSurfaceVariant,
+                            semanticLabel: l10n.expenseRecurring,
+                          ),
+                        ],
                         if (e.hasReceipt) ...[
                           const SizedBox(width: BSpace.s4),
                           Icon(

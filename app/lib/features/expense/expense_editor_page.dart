@@ -23,15 +23,21 @@ import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
+import '../group/recurring_page.dart';
 import 'location.dart';
 import 'receipt.dart';
 
-/// Adds an expense to a group, or edits one when [expenseId] is set.
+/// Adds an expense to a group, or edits one when [expenseId] is set, or
+/// edits a recurring expense when [recurringId] is.
 class ExpenseEditorPage extends ConsumerStatefulWidget {
-  const ExpenseEditorPage({super.key, required this.token, this.expenseId});
+  const ExpenseEditorPage({super.key, required this.token, this.expenseId, this.recurringId, this.repeat = false});
 
   final String token;
   final String? expenseId;
+  final String? recurringId;
+
+  /// Starts a new expense repeating every month.
+  final bool repeat;
 
   @override
   ConsumerState<ExpenseEditorPage> createState() => _ExpenseEditorPageState();
@@ -44,10 +50,13 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
 
   void _adopt(Expense expense) => setState(() => _base = expense);
 
+  /// The recurring expense the form started from.
+  RecurringExpense? _recurringBase;
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final token = widget.token, expenseId = widget.expenseId;
+    if (widget.recurringId case final id?) return _buildRecurring(id);
     final group = ref.watchCurrent(groupProvider(token));
     final expense = expenseId == null ? null : ref.watchCurrent(expenseProvider((token: token, id: expenseId)));
     final error = group.error ?? expense?.error;
@@ -75,9 +84,44 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
           hasReceipt: latest?.hasReceipt ?? false,
           newer: latest != null && latest.version != base?.version ? latest : null,
           onReload: _adopt,
+          repeat: widget.repeat,
         ),
       );
     }
+    return _waiting(error, () {
+      ref.invalidate(groupProvider(token));
+      if (expenseId != null) ref.invalidate(expenseProvider((token: token, id: expenseId)));
+    });
+  }
+
+  Widget _buildRecurring(String id) {
+    final token = widget.token;
+    final group = ref.watchCurrent(groupProvider(token));
+    final recurring = ref.watchCurrent(recurringOneProvider((token: token, id: id)));
+    if (group.value case final g? when recurring.hasValue) {
+      final base = _recurringBase ??= recurring.requireValue;
+      return GroupTheme(
+        group: g,
+        child: _Editor(
+          key: ValueKey(('recurring', base.version)),
+          group: g,
+          expense: base.asExpense,
+          recurring: base,
+          hasReceipt: false,
+          onReload: (_) {},
+          onReloadRecurring: (r) => setState(() => _recurringBase = r),
+        ),
+      );
+    }
+    return _waiting(group.error ?? recurring.error, () {
+      ref.invalidate(groupProvider(token));
+      ref.invalidate(recurringOneProvider((token: token, id: id)));
+    });
+  }
+
+  /// A spinner while loading, or what went wrong.
+  Widget _waiting(Object? error, VoidCallback retry) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(leading: const CloseButton()),
       body: Center(
@@ -88,14 +132,10 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
                 child: EmptyState(
                   icon: Icons.cloud_off_outlined,
                   title: l10n.groupsUnreachableTitle,
-                  body: errorMessage(l10n, error),
-                  action: FilledButton.tonal(
-                    onPressed: () {
-                      ref.invalidate(groupProvider(token));
-                      if (expenseId != null) ref.invalidate(expenseProvider((token: token, id: expenseId)));
-                    },
-                    child: Text(l10n.commonRetry),
-                  ),
+                  body: error is ApiException && error.isNotFound && widget.recurringId != null
+                      ? l10n.recurringMissing
+                      : errorMessage(l10n, error),
+                  action: FilledButton.tonal(onPressed: retry, child: Text(l10n.commonRetry)),
                 ),
               ),
       ),
@@ -111,9 +151,14 @@ class _Editor extends ConsumerStatefulWidget {
     required this.hasReceipt,
     this.newer,
     required this.onReload,
+    this.recurring,
+    this.onReloadRecurring,
+    this.repeat = false,
   });
 
   final Group group;
+
+  /// The expense being edited; for a recurring one, what it adds.
   final Expense? expense;
 
   /// Live receipt metadata, independent of the financial draft version.
@@ -124,6 +169,13 @@ class _Editor extends ConsumerStatefulWidget {
 
   /// Starts the form over from another version.
   final ValueChanged<Expense> onReload;
+
+  /// The recurring expense being edited.
+  final RecurringExpense? recurring;
+  final ValueChanged<RecurringExpense>? onReloadRecurring;
+
+  /// Starts a new expense repeating every month.
+  final bool repeat;
 
   @override
   ConsumerState<_Editor> createState() => _EditorState();
@@ -160,6 +212,11 @@ class _EditorState extends ConsumerState<_Editor> {
   /// wait for the expense to be saved.
   PickedReceipt? _receipt;
   bool _dropReceipt = false;
+
+  /// How often the expense comes back, or null when it is added once.
+  RepeatUnit? _unit;
+  final _every = TextEditingController(text: '1');
+  DateTime? _endsOn;
 
   bool _busy = false;
   bool _tried = false;
@@ -223,7 +280,14 @@ class _EditorState extends ConsumerState<_Editor> {
         };
       }
     }
-    for (final c in [_amount, ..._values.values]) {
+    if (widget.recurring case final r?) {
+      _unit = r.repeat.unit;
+      _every.text = '${r.repeat.every}';
+      _endsOn = r.endsOn;
+    } else if (widget.repeat) {
+      _unit = RepeatUnit.month;
+    }
+    for (final c in [_amount, _every, ..._values.values]) {
       c.addListener(_changed);
     }
     for (final c in _paid.values) {
@@ -262,6 +326,9 @@ class _EditorState extends ConsumerState<_Editor> {
     _payer,
     _multiPay,
     _method,
+    _unit,
+    _every.text,
+    _endsOn,
     for (final m in _people) ...[_included.contains(m.id), _paid[m.id]!.text, _values[m.id]!.text],
   ];
 
@@ -288,7 +355,7 @@ class _EditorState extends ConsumerState<_Editor> {
 
   @override
   void dispose() {
-    for (final c in [_amount, _title, _note, _place, _splitQuery, ..._paid.values, ..._values.values]) {
+    for (final c in [_amount, _title, _note, _place, _splitQuery, _every, ..._paid.values, ..._values.values]) {
       c.dispose();
     }
     super.dispose();
@@ -461,6 +528,27 @@ class _EditorState extends ConsumerState<_Editor> {
     setState(() => _date = DateTime(_date.year, _date.month, _date.day, picked.hour, picked.minute));
   }
 
+  /// A new expense can be made to repeat, and a recurring one changed; an
+  /// expense already added stays as it is.
+  bool get _canRepeat => widget.expense == null || widget.recurring != null;
+
+  int? get _everyValue => switch (int.tryParse(_every.text)) {
+    final n? when n >= 1 && n <= 999 => n,
+    _ => null,
+  };
+
+  Future<void> _pickEnd() async {
+    final start = DateUtils.dateOnly(_date);
+    final end = _endsOn;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: end != null && !end.isBefore(start) ? end : start,
+      firstDate: start,
+      lastDate: DateTime(2999, 12, 31),
+    );
+    if (picked != null) setState(() => _endsOn = picked);
+  }
+
   Future<void> _save() async {
     setState(() => _tried = true);
     final l10n = context.l10n;
@@ -485,9 +573,30 @@ class _EditorState extends ConsumerState<_Editor> {
       splitMethod: _method,
       splits: _parts,
     );
+    if (_endsOn case final end? when _unit != null && end.isBefore(DateUtils.dateOnly(_date))) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorInvalidEnd)));
+      return;
+    }
     setState(() => _busy = true);
     final api = groupApiOf(ref, _group.token);
     try {
+      if (_unit case final unit?) {
+        final recurring = RecurringDraft(
+          expense: draft,
+          repeat: (unit: unit, every: _everyValue!),
+          endsOn: _endsOn,
+          timeZone: widget.recurring?.timeZone,
+        );
+        if (widget.recurring case final r?) {
+          await api.updateRecurring(r.id, recurring, _digits, version: r.version);
+          ref.invalidate(recurringOneProvider((token: _group.token, id: r.id)));
+        } else {
+          await api.createRecurring(recurring, _digits);
+        }
+        refreshGroup(ref, _group.token);
+        if (mounted) context.pop();
+        return;
+      }
       final String id;
       if (widget.expense case final e?) {
         id = e.id;
@@ -503,8 +612,8 @@ class _EditorState extends ConsumerState<_Editor> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      if (e.code == 'expense_version_conflict') {
-        await _conflict();
+      if (e.code == 'expense_version_conflict' || e.code == 'recurring_version_conflict') {
+        await _conflict(errorMessage(l10n, e));
       } else {
         messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
       }
@@ -528,13 +637,13 @@ class _EditorState extends ConsumerState<_Editor> {
   }
 
   /// Someone else changed the expense while it was open here.
-  Future<void> _conflict() async {
+  Future<void> _conflict(String message) async {
     final l10n = context.l10n;
     final reload = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.conflictTitle),
-        content: Text(l10n.errorVersionConflict),
+        content: Text(message),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
           FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.conflictReload)),
@@ -549,6 +658,11 @@ class _EditorState extends ConsumerState<_Editor> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     try {
+      if (widget.recurring case final r?) {
+        final latest = await ref.refresh(recurringOneProvider((token: _group.token, id: r.id)).future);
+        if (mounted) widget.onReloadRecurring?.call(latest);
+        return;
+      }
       final latest = await ref.refresh(expenseProvider((token: _group.token, id: widget.expense!.id)).future);
       if (mounted) widget.onReload(latest);
     } on ApiException catch (e) {
@@ -562,6 +676,18 @@ class _EditorState extends ConsumerState<_Editor> {
     setState(() => _busy = true);
     final deleted = await deleteExpenseWithUndo(context, ref, _group, e);
     // Gone already (the user went back): popping now would close another page.
+    if (!mounted) return;
+    if (deleted) {
+      router.pop();
+    } else {
+      setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _deleteRecurring() async {
+    final router = GoRouter.of(context);
+    setState(() => _busy = true);
+    final deleted = await deleteRecurring(context, ref, _group, widget.recurring!);
     if (!mounted) return;
     if (deleted) {
       router.pop();
@@ -604,7 +730,11 @@ class _EditorState extends ConsumerState<_Editor> {
         if (!didPop) _leave();
       },
       child: FormPage(
-        title: editing ? l10n.expenseEdit : l10n.expenseNew,
+        title: widget.recurring != null
+            ? l10n.recurringEdit
+            : editing
+            ? l10n.expenseEdit
+            : l10n.expenseNew,
         submitLabel: l10n.commonSave,
         busy: _busy,
         onSubmit: _save,
@@ -613,7 +743,11 @@ class _EditorState extends ConsumerState<_Editor> {
             IconButton(
               tooltip: l10n.expenseDelete,
               icon: const Icon(Icons.delete_outline),
-              onPressed: _busy ? null : _delete,
+              onPressed: _busy
+                  ? null
+                  : widget.recurring != null
+                  ? _deleteRecurring
+                  : _delete,
             ),
         ],
         children: [
@@ -718,6 +852,21 @@ class _EditorState extends ConsumerState<_Editor> {
                   ],
                 ),
 
+                if (_canRepeat) ...[
+                  FormSection(l10n.repeatSection),
+                  _RepeatField(state: this, locale: locale),
+                ] else if (widget.expense?.recurringId case final id?) ...[
+                  FormSection(l10n.repeatSection),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.repeat),
+                    title: Text(l10n.recurringFromSchedule),
+                    subtitle: Text(l10n.recurringOpen),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/g/${_group.token}/recurring/$id'),
+                  ),
+                ],
+
                 // Money that came in keeps its reversed roles: see Expense.isReceived.
                 FormSection(_received ? l10n.expenseReceivedForLabel : l10n.expensePaidByLabel),
                 _PaidBy(state: this, symbol: symbol),
@@ -766,18 +915,21 @@ class _EditorState extends ConsumerState<_Editor> {
                   decoration: InputDecoration(hintText: l10n.expenseNoteHint),
                 ),
 
-                FormSection(l10n.expenseReceipt),
-                ReceiptField(
-                  token: _group.token,
-                  expenseId: widget.expense?.id,
-                  saved: widget.hasReceipt && !_dropReceipt,
-                  picked: _receipt,
-                  onPicked: (r) => setState(() => _receipt = r),
-                  onRemoved: () => setState(() {
-                    _receipt = null;
-                    _dropReceipt = widget.hasReceipt;
-                  }),
-                ),
+                // Each occurrence is its own expense, with its own receipt.
+                if (_unit == null) ...[
+                  FormSection(l10n.expenseReceipt),
+                  ReceiptField(
+                    token: _group.token,
+                    expenseId: widget.expense?.id,
+                    saved: widget.hasReceipt && !_dropReceipt,
+                    picked: _receipt,
+                    onPicked: (r) => setState(() => _receipt = r),
+                    onRemoved: () => setState(() {
+                      _receipt = null;
+                      _dropReceipt = widget.hasReceipt;
+                    }),
+                  ),
+                ],
               ],
             ),
           ),
@@ -878,6 +1030,98 @@ class _PaidBy extends StatelessWidget {
                 label: Text(l10n.crowdChoosePayers),
               ),
             ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Whether and how often the expense comes back, and until when.
+class _RepeatField extends StatelessWidget {
+  const _RepeatField({required this.state, required this.locale});
+
+  final _EditorState state;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final s = state;
+    final unit = s._unit, end = s._endsOn;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: BSpace.s8,
+          runSpacing: BSpace.s8,
+          children: [
+            // A recurring expense is stopped from its page instead.
+            if (s.widget.recurring == null)
+              ChoiceChip(
+                label: Text(l10n.repeatNever),
+                showCheckmark: false,
+                selected: unit == null,
+                onSelected: (_) => s._update(() => s._unit = null),
+              ),
+            for (final (u, label) in [
+              (RepeatUnit.day, l10n.repeatDaily),
+              (RepeatUnit.week, l10n.repeatWeekly),
+              (RepeatUnit.month, l10n.repeatMonthly),
+              (RepeatUnit.year, l10n.repeatYearly),
+            ])
+              ChoiceChip(
+                label: Text(label),
+                showCheckmark: false,
+                selected: unit == u,
+                onSelected: (_) => s._update(() => s._unit = u),
+              ),
+          ],
+        ),
+        if (unit != null) ...[
+          const SizedBox(height: BSpace.s12),
+          Row(
+            children: [
+              Text(l10n.repeatEvery, style: text.bodyLarge),
+              const SizedBox(width: BSpace.s12),
+              SizedBox(
+                width: 72,
+                child: TextFormField(
+                  controller: s._every,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
+                  decoration: const InputDecoration(isDense: true),
+                  validator: (_) => s._everyValue == null ? l10n.errorInvalidRepeat : null,
+                ),
+              ),
+              const SizedBox(width: BSpace.s12),
+              Expanded(child: Text(repeatUnitLabel(l10n, unit, s._everyValue ?? 1), style: text.bodyLarge)),
+            ],
+          ),
+          const SizedBox(height: BSpace.s12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: s._pickEnd,
+                  icon: const Icon(Icons.event_available_outlined),
+                  label: Text(end == null ? l10n.repeatEndNone : l10n.repeatEndOn(DateFormat.yMMMEd(locale).format(end))),
+                ),
+              ),
+              if (end != null)
+                IconButton(
+                  tooltip: l10n.repeatEndClear,
+                  icon: const Icon(Icons.close),
+                  onPressed: () => s._update(() => s._endsOn = null),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(BSpace.s4, BSpace.s8, BSpace.s4, 0),
+            child: Text(l10n.repeatHelp, style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+          ),
         ],
       ],
     );

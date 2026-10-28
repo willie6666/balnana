@@ -311,6 +311,7 @@ void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
   invalidate(summariesProvider);
   invalidate(activityFeedProvider);
   invalidate(receiptProvider);
+  invalidate(recurringProvider(token));
 }
 
 /// One expense, for the editor.
@@ -320,6 +321,21 @@ final expenseProvider = FutureProvider.autoDispose.family<Expense, ({String toke
 ) async {
   final group = await ref.watch(groupProvider(key.token).future);
   return _load(ref, (_) => groupApi(ref, key.token).expense(key.id, group.minorDigits));
+});
+
+/// A group's recurring expenses, the next one due first.
+final recurringProvider = FutureProvider.family<List<RecurringExpense>, String>((ref, token) async {
+  final group = await ref.watch(groupProvider(token).future);
+  return _load(ref, (_) => groupApi(ref, token).recurringExpenses(group.minorDigits));
+});
+
+/// One recurring expense, for the editor.
+final recurringOneProvider = FutureProvider.autoDispose.family<RecurringExpense, ({String token, String id})>((
+  ref,
+  key,
+) async {
+  final group = await ref.watch(groupProvider(key.token).future);
+  return _load(ref, (_) => groupApi(ref, key.token).recurringExpense(key.id, group.minorDigits));
 });
 
 /// The photo of an expense's receipt.

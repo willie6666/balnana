@@ -398,6 +398,12 @@ class _Settings extends ConsumerWidget {
               onTap: () => context.go('/g/${group.token}/settings/categories'),
             ),
             GroupedTile(
+              icon: Icons.repeat,
+              title: l10n.recurringTitle,
+              subtitle: l10n.recurringHelp,
+              onTap: () => context.go('/g/${group.token}/settings/recurring'),
+            ),
+            GroupedTile(
               icon: Icons.download_outlined,
               title: l10n.exportCsv,
               subtitle: l10n.exportCsvHelp,

@@ -317,6 +317,7 @@ class Expense {
     required this.version,
     this.hasReceipt = false,
     this.transactionType = 'expense',
+    this.recurringId,
   });
 
   factory Expense.fromJson(Object? data, int digits) {
@@ -351,6 +352,7 @@ class Expense {
       // Answers cached before receipts existed do not say.
       hasReceipt: _opt<bool>(json, 'hasReceipt') ?? false,
       transactionType: _opt<String>(json, 'transactionType') ?? 'expense',
+      recurringId: _opt(json, 'recurringId'),
     );
   }
 
@@ -377,6 +379,9 @@ class Expense {
   /// Imported direction, preserved independently of the balance ledger.
   final String transactionType;
 
+  /// The recurring expense that added it.
+  final String? recurringId;
+
   bool get isPayment => kind == ExpenseKind.payment;
 
   /// Money that came in, a refund or income. Its ledger roles are reversed:
@@ -391,6 +396,129 @@ class Expense {
 
   /// What this expense did to [memberId]'s balance: positive means they lent.
   BigInt effectOn(String memberId) => paidBy(memberId) - owedBy(memberId);
+}
+
+enum RepeatUnit { day, week, month, year }
+
+/// How often a recurring expense comes back: every [every] [unit]s.
+typedef Repeat = ({RepeatUnit unit, int every});
+
+/// An expense the server adds again at every occurrence of its schedule.
+@immutable
+class RecurringExpense {
+  const RecurringExpense({
+    required this.id,
+    required this.title,
+    this.categoryId,
+    required this.amount,
+    this.note,
+    this.location,
+    required this.splitMethod,
+    required this.payers,
+    required this.splits,
+    required this.repeat,
+    required this.startsAt,
+    this.endsOn,
+    required this.timeZone,
+    this.nextAt,
+    this.lastAt,
+    this.paused = false,
+    this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.version,
+  });
+
+  factory RecurringExpense.fromJson(Object? data, int digits) {
+    final json = _object(data);
+    final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')];
+    final repeat = _object(json['repeat']);
+    final unit = RepeatUnit.values.asNameMap()[_req<String>(repeat, 'unit')];
+    if (method == null || unit == null) throw const FormatException('unknown split method or repeat');
+    final endsOn = _opt<String>(json, 'endsOn');
+    return RecurringExpense(
+      id: _req(json, 'id'),
+      title: _req(json, 'title'),
+      categoryId: _opt(json, 'categoryId'),
+      amount: _money(json, 'amount', digits),
+      note: _opt(json, 'note'),
+      location: ExpenseLocation.fromJson(json['location']),
+      splitMethod: method,
+      payers: [
+        for (final p in _objects(json, 'payers'))
+          ExpensePart(_req(p, 'memberId'), _money(p, 'amount', digits)),
+      ],
+      splits: [
+        for (final s in _objects(json, 'splits'))
+          ExpensePart(_req(s, 'memberId'), _money(s, 'amount', digits), _opt(s, 'share')),
+      ],
+      repeat: (unit: unit, every: _req<int>(repeat, 'every')),
+      startsAt: _time(json, 'startsAt'),
+      endsOn: endsOn == null ? null : DateTime.tryParse(endsOn),
+      timeZone: _req(json, 'timeZone'),
+      nextAt: json['nextAt'] == null ? null : _time(json, 'nextAt'),
+      lastAt: json['lastAt'] == null ? null : _time(json, 'lastAt'),
+      paused: _opt<bool>(json, 'paused') ?? false,
+      createdBy: _opt(json, 'createdBy'),
+      createdAt: _time(json, 'createdAt'),
+      updatedAt: _time(json, 'updatedAt'),
+      version: _req(json, 'version'),
+    );
+  }
+
+  final String id;
+  final String title;
+  final String? categoryId;
+  final BigInt amount;
+  final String? note;
+  final ExpenseLocation? location;
+  final SplitMethod splitMethod;
+  final List<ExpensePart> payers;
+  final List<ExpensePart> splits;
+  final Repeat repeat;
+
+  /// The first occurrence.
+  final DateTime startsAt;
+
+  /// The last day an occurrence may fall on, a date without a time.
+  final DateTime? endsOn;
+
+  /// The IANA time zone whose calendar the schedule follows.
+  final String timeZone;
+
+  /// When the next occurrence is added; null once it has ended.
+  final DateTime? nextAt;
+
+  /// The latest occurrence added.
+  final DateTime? lastAt;
+  final bool paused;
+
+  /// Whoever set it up; its expenses are added as theirs.
+  final String? createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final int version;
+
+  bool get ended => nextAt == null;
+
+  /// What the editor starts from: the expense its first occurrence adds.
+  Expense get asExpense => Expense(
+    id: id,
+    kind: ExpenseKind.expense,
+    title: title,
+    categoryId: categoryId,
+    amount: amount,
+    occurredAt: startsAt,
+    note: note,
+    location: location,
+    splitMethod: splitMethod,
+    payers: payers,
+    splits: splits,
+    createdBy: createdBy,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    version: version,
+  );
 }
 
 @immutable

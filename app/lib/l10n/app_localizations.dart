@@ -4320,6 +4320,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{These groups are already saved.} =1{Imported 1 new group link.} other{Imported {count} new group links.}}'**
   String myGroupsImported(int count);
+
+  /// Section heading in the expense editor for making an expense repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatSection;
+
+  /// Choice in the expense editor: the expense is added once.
+  ///
+  /// In en, this message translates to:
+  /// **'Doesn\'t repeat'**
+  String get repeatNever;
+
+  /// Choice in the expense editor: the expense repeats every day or every few days.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get repeatDaily;
+
+  /// Choice in the expense editor: the expense repeats every week or every few weeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get repeatWeekly;
+
+  /// Choice in the expense editor: the expense repeats every month or every few months.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get repeatMonthly;
+
+  /// Choice in the expense editor: the expense repeats every year or every few years.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get repeatYearly;
+
+  /// Label before the number field that sets how many days, weeks, months or years apart a recurring expense comes back.
+  ///
+  /// In en, this message translates to:
+  /// **'Every'**
+  String get repeatEvery;
+
+  /// Unit after the repeat number field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String repeatUnitDay(int count);
+
+  /// Unit after the repeat number field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{week} other{weeks}}'**
+  String repeatUnitWeek(int count);
+
+  /// Unit after the repeat number field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{month} other{months}}'**
+  String repeatUnitMonth(int count);
+
+  /// Unit after the repeat number field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{year} other{years}}'**
+  String repeatUnitYear(int count);
+
+  /// How often a recurring expense comes back.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every day} other{Every {count} days}}'**
+  String repeatIntervalDay(int count);
+
+  /// How often a recurring expense comes back.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every week} other{Every {count} weeks}}'**
+  String repeatIntervalWeek(int count);
+
+  /// How often a recurring expense comes back.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every month} other{Every {count} months}}'**
+  String repeatIntervalMonth(int count);
+
+  /// How often a recurring expense comes back.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every year} other{Every {count} years}}'**
+  String repeatIntervalYear(int count);
+
+  /// Button in the expense editor: the recurring expense repeats until stopped. Tapping it picks an end date.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get repeatEndNone;
+
+  /// Button in the expense editor showing the last day a recurring expense may be added.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String repeatEndOn(String date);
+
+  /// Tooltip of the button that makes a recurring expense repeat until stopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the end date'**
+  String get repeatEndClear;
+
+  /// Help text under the repeat settings in the expense editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.'**
+  String get repeatHelp;
+
+  /// Title of the page listing a group's recurring expenses, and of its entry in group settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expenses'**
+  String get recurringTitle;
+
+  /// Subtitle of the recurring expenses entry in group settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses that add themselves on a schedule'**
+  String get recurringHelp;
+
+  /// Empty state title on the recurring expenses page.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring expenses'**
+  String get recurringEmptyTitle;
+
+  /// Empty state body on the recurring expenses page.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent, subscriptions and other costs that come back can be added for you on every date.'**
+  String get recurringEmptyBody;
+
+  /// Button that opens the expense editor set to repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Add recurring expense'**
+  String get recurringAdd;
+
+  /// Title of the expense editor when it changes a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recurring expense'**
+  String get recurringEdit;
+
+  /// When a recurring expense is added next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next on {date}'**
+  String recurringNext(String date);
+
+  /// Status of a recurring expense that is not being added for now.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get recurringPaused;
+
+  /// Status of a recurring expense past its end date.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get recurringEnded;
+
+  /// Menu action that stops a recurring expense from being added for now.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get recurringPause;
+
+  /// Menu action that lets a paused recurring expense be added again; dates missed while paused are skipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get recurringResume;
+
+  /// Label of the switch that pauses or resumes a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeating'**
+  String get recurringActive;
+
+  /// Menu action and button that deletes a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get recurringDelete;
+
+  /// Title of the dialog confirming that a recurring expense is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop repeating?'**
+  String get recurringDeleteTitle;
+
+  /// Body of the dialog confirming that a recurring expense is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” won\'t be added again. Expenses it already added stay.'**
+  String recurringDeleteBody(String title);
+
+  /// Snackbar after a recurring expense is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expense deleted'**
+  String get recurringDeleted;
+
+  /// Shown in the editor of an expense that a recurring expense added.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by a recurring expense'**
+  String get recurringFromSchedule;
+
+  /// Subtitle of the tile that opens the recurring expense that added this expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the schedule'**
+  String get recurringOpen;
+
+  /// Shown when the recurring expense being edited cannot be found.
+  ///
+  /// In en, this message translates to:
+  /// **'The recurring expense was deleted or is no longer available.'**
+  String get recurringMissing;
+
+  /// Error when a recurring expense would add too many past occurrences.
+  ///
+  /// In en, this message translates to:
+  /// **'That start date is too long ago: more than 100 expenses would be added at once.'**
+  String get errorTooManyDue;
+
+  /// Error for an invalid end date of a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date cannot be before the start date.'**
+  String get errorInvalidEnd;
+
+  /// Error for an invalid repeat interval.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat every 1 to 999 days, weeks, months or years.'**
+  String get errorInvalidRepeat;
+
+  /// Error when a recurring expense was changed by someone else.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else changed this recurring expense while you were editing it. Reload to see their changes.'**
+  String get errorRecurringConflict;
+
+  /// Activity entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} set “{title}” to repeat'**
+  String activityRecurringCreated(String who, String title);
+
+  /// Activity entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} changed the recurring expense “{title}”'**
+  String activityRecurringUpdated(String who, String title);
+
+  /// Activity entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} paused the recurring expense “{title}”'**
+  String activityRecurringPaused(String who, String title);
+
+  /// Activity entry when the server paused a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'The recurring expense “{title}” was paused because someone in it left the group'**
+  String activityRecurringPausedMemberLeft(String title);
+
+  /// Activity entry when the server paused a recurring expense for another reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The recurring expense “{title}” was paused because it could not be added'**
+  String activityRecurringPausedFailed(String title);
+
+  /// Activity entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} resumed the recurring expense “{title}”'**
+  String activityRecurringResumed(String who, String title);
+
+  /// Activity entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} stopped the recurring expense “{title}”'**
+  String activityRecurringDeleted(String who, String title);
+
+  /// Activity entry for an expense a recurring expense added.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” ({amount}) was added automatically'**
+  String activityRecurringAdded(String title, String amount);
+
+  /// Accessibility label of the icon on expenses that a recurring expense added.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by a recurring expense'**
+  String get expenseRecurring;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

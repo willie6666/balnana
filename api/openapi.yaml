@@ -1271,6 +1271,124 @@ paths:
                 $ref: "#/components/schemas/Expense"
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/recurring:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: listRecurringExpenses
+      summary: The group's recurring expenses, soonest first
+      description: Ended ones, with no `nextAt`, come last.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpense"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createRecurringExpense
+      summary: Make an expense repeat
+      description: >-
+        The server adds the expense at every occurrence, as made by whoever
+        set it up. Occurrences already due, from `startsAt` on, are added
+        straight away; 400 `too_many_due` when that would be more than 100.
+        Every payer and split member must be in the group and not have left
+        it (400 `unknown_member` or `member_left`).
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringExpenseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringExpense"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/recurring/{recurringId}:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/RecurringId"
+    get:
+      operationId: getRecurringExpense
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringExpense"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateRecurringExpense
+      description: >-
+        Changes what later occurrences add; expenses already added stay as
+        they are. The next occurrence is the first of the new schedule after
+        the latest one added. `version` must be the version that was read;
+        otherwise the answer is 409 `recurring_version_conflict`.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringExpenseInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringExpense"
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: pauseRecurringExpense
+      summary: Pause or resume
+      description: >-
+        Resuming skips the occurrences missed while paused. The server pauses
+        a recurring expense itself when an occurrence cannot be added, such
+        as when someone in it has left the group.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringPause"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringExpense"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteRecurringExpense
+      summary: Stop repeating
+      description: The expenses already added stay.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Deleted
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/balances:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -1433,6 +1551,12 @@ components:
         type: string
     ExpenseId:
       name: expenseId
+      in: path
+      required: true
+      schema:
+        type: string
+    RecurringId:
+      name: recurringId
       in: path
       required: true
       schema:
@@ -1919,6 +2043,132 @@ components:
         hasReceipt:
           type: boolean
           description: Whether a photo of the receipt is attached (`/receipt`).
+        recurringId:
+          type: string
+          description: The recurring expense that added it, while that still exists.
+    Repeat:
+      type: object
+      required: [unit, every]
+      properties:
+        unit:
+          type: string
+          enum: [day, week, month, year]
+        every:
+          type: integer
+          minimum: 1
+          maximum: 999
+          description: >-
+            How many units apart occurrences are. A month or year from the
+            31st falls on the last day of shorter months.
+    RecurringExpenseInput:
+      type: object
+      required: [title, amount, payers, splitMethod, splits, repeat, startsAt]
+      properties:
+        title:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        note:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+        payers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PayerInput"
+        splitMethod:
+          $ref: "#/components/schemas/SplitMethod"
+        splits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Share"
+        repeat:
+          $ref: "#/components/schemas/Repeat"
+        startsAt:
+          type: string
+          format: date-time
+          description: The first occurrence.
+        endsOn:
+          type: string
+          description: >-
+            The last day an occurrence may fall on, as YYYY-MM-DD in
+            `timeZone`; none to repeat until stopped. 400 `invalid_end`
+            when malformed or before `startsAt`.
+        timeZone:
+          type: string
+          maxLength: 64
+          description: >-
+            The IANA time zone whose calendar the schedule follows, such as
+            `Europe/Berlin`; UTC when left out. 400 `invalid_time_zone` for a
+            name the server does not know.
+        version:
+          type: integer
+          description: Required when updating.
+    RecurringPause:
+      type: object
+      required: [paused]
+      properties:
+        paused:
+          type: boolean
+    RecurringExpense:
+      type: object
+      required: [id, title, amount, splitMethod, payers, splits, repeat, startsAt, timeZone, paused, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        note:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+        splitMethod:
+          $ref: "#/components/schemas/SplitMethod"
+        payers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payer"
+        splits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SplitPart"
+        repeat:
+          $ref: "#/components/schemas/Repeat"
+        startsAt:
+          type: string
+          format: date-time
+        endsOn:
+          type: string
+          description: YYYY-MM-DD.
+        timeZone:
+          type: string
+        nextAt:
+          type: string
+          format: date-time
+          description: When the next occurrence is added; none once it has ended.
+        lastAt:
+          type: string
+          format: date-time
+          description: The latest occurrence added.
+        paused:
+          type: boolean
+        createdBy:
+          type: string
+          description: Member id of whoever set it up; its expenses are added as theirs.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
     Payer:
       type: object
       required: [memberId, amount]
@@ -2061,8 +2311,13 @@ components:
             member.added, member.updated, member.removed, member.joined,
             category.added, category.updated, category.deleted,
             expense.created, expense.updated, expense.deleted,
-            expense.restored, receipt.added, receipt.removed. Payments use
-            the expense actions with `kind: payment` in the payload.
+            expense.restored, receipt.added, receipt.removed,
+            recurring.created, recurring.updated, recurring.paused,
+            recurring.resumed, recurring.deleted. Payments use the expense
+            actions with `kind: payment` in the payload. An expense a
+            recurring expense added has `recurring: true` in its payload; a
+            recurring expense the server paused has no actor and the error
+            code as `reason`.
         actorMemberId:
           type: string
         subjectId:
