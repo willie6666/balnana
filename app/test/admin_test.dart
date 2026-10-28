@@ -186,6 +186,9 @@ void main() {
       find.descendant(of: find.byType(SegmentedButton<String>).first, matching: find.text('Accounts')),
     );
     await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Mail server'), findsNothing);
+    await tester.tap(find.text('Send email'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'Mail server'), 'smtp.example.com');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
@@ -199,5 +202,83 @@ void main() {
       find.text('Accounts need a way to sign in: turn on email and password, or set up a provider.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('sign-in switches keep a way in and show only what is on', (tester) async {
+    final seen = <RequestOptions>[];
+    final api = _api(
+      seen,
+      (r) => switch ((r.method, r.path)) {
+        ('POST', '/admin/login') => (200, {'token': 'admin-token', 'expiresAt': '2026-10-27T00:00:00Z'}),
+        ('GET', '/admin/settings') => (
+          200,
+          {
+            'settings': [
+              _setting('BALNANA_PUBLIC_URL', value: _server, locked: true),
+              _setting('BALNANA_AUTH_MODE', value: 'accounts'),
+              _setting('BALNANA_AUTH_PASSWORD', value: 'false'),
+              _setting('BALNANA_AUTH_REQUIRE_EMAIL', def: 'true'),
+              _setting('BALNANA_AUTH_SIGNUP', value: 'invite_only'),
+              _setting('BALNANA_SMTP_HOST', value: 'smtp.example.com'),
+              _setting('BALNANA_SMTP_FROM', value: 'Balnana <balnana@example.com>'),
+              _setting('BALNANA_OAUTH_GOOGLE_CLIENT_ID', value: 'google-id'),
+              _setting('BALNANA_OAUTH_GOOGLE_SECRET', secret: true),
+            ],
+          },
+        ),
+        ('PUT', '/admin/settings') => (
+          400,
+          {
+            'code': 'invalid_settings',
+            'params': {'keys': <String>[]},
+          },
+        ),
+        _ => (404, {'code': 'not_found'}),
+      },
+    );
+    await _boot(
+      tester,
+      info: const ServerInfo(version: '1', authMode: AuthMode.accounts, publicUrl: _server),
+      api: api,
+    );
+    final router = tester.widget<MaterialApp>(find.byType(MaterialApp)).routerConfig! as GoRouter;
+    router.go('/admin');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'the admin password');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    SwitchListTile tile(String title) => tester.widget(find.widgetWithText(SwitchListTile, title));
+    // Google signs people in, so email and password may stay off, and the
+    // email requirement, which only it uses, is dimmed.
+    expect(tile('Email and password sign-in').value, isFalse);
+    expect(tile('Email and password sign-in').onChanged, isNotNull);
+    expect(tile('Require an email address').onChanged, isNull);
+    expect(find.text('Only applies to email and password sign-in, which is off.'), findsOneWidget);
+    expect(find.textContaining('Only people invited to a group by email may sign up'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Mail server'), findsOneWidget);
+
+    // Without Google there would be no way in: email and password turns on
+    // and stays on.
+    await tester.tap(find.text('Offer Google sign-in'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Client ID'), findsNothing);
+    expect(tile('Email and password sign-in').value, isTrue);
+    expect(tile('Email and password sign-in').onChanged, isNull);
+    expect(tile('Require an email address').onChanged, isNotNull);
+
+    // Switching email off clears its mail server alone.
+    await tester.tap(find.text('Send email'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Mail server'), findsNothing);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(seen.lastWhere((r) => r.method == 'PUT').data, {
+      'values': {
+        'BALNANA_AUTH_PASSWORD': 'true',
+        'BALNANA_SMTP_HOST': '',
+        'BALNANA_OAUTH_GOOGLE_CLIENT_ID': '',
+      },
+    });
   });
 }

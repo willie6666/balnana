@@ -1647,6 +1647,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'When off, people sign up with a username and may leave the email address out. They sign in with either.';
 
   @override
+  String get adminRequireEmailUnused => 'Only applies to email and password sign-in, which is off.';
+
+  @override
   String get accountUsername => 'Username';
 
   @override
@@ -1713,24 +1716,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSectionEmail => 'Email (SMTP)';
 
   @override
-  String get adminSectionEmailBody =>
-      'Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.';
+  String get adminSectionEmailBody => 'Address verification, password resets and invitations.';
+
+  @override
+  String get adminSmtpOn => 'Send email';
 
   @override
   String get adminSectionGoogle => 'Sign in with Google';
 
   @override
   String adminSectionGoogleBody(String url) {
-    return 'Register $url as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.';
+    return 'Register $url as the redirect URI in the Google Cloud console.';
   }
+
+  @override
+  String get adminGoogleOn => 'Offer Google sign-in';
+
+  @override
+  String get adminGoogleOnHelp => 'People sign in with their Google account.';
 
   @override
   String get adminSectionOidc => 'Sign in with OpenID Connect';
 
   @override
   String adminSectionOidcBody(String url) {
-    return 'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register $url as the redirect URI. Leave the issuer empty to turn it off.';
+    return 'Register $url as the redirect URI with the provider.';
   }
+
+  @override
+  String get adminOidcOn => 'Offer OpenID Connect sign-in';
+
+  @override
+  String get adminOidcOnHelp => 'Any OpenID Connect provider, such as Authentik, Keycloak or Dex.';
 
   @override
   String get adminSectionAndroid => 'Android app links';
@@ -1776,16 +1793,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPasswordLogin => 'Email and password sign-in';
 
   @override
+  String get adminPasswordForced =>
+      'Stays on until Google or OpenID Connect sign-in is on, so there is always a way to sign in.';
+
+  @override
   String get adminSignup => 'Who may create an account';
 
   @override
   String get adminSignupOpen => 'Anyone';
 
   @override
+  String get adminSignupOpenHelp => 'Anyone who can reach this server may sign up.';
+
+  @override
   String get adminSignupInvite => 'Invited people';
 
   @override
+  String get adminSignupInviteHelp =>
+      'Only people invited to a group by email may sign up, and only with the address the invitation went to. Group links alone don\'t let anyone in. Invitations need email to be on.';
+
+  @override
   String get adminSignupClosed => 'Nobody';
+
+  @override
+  String get adminSignupClosedHelp => 'No one may sign up. Existing accounts keep working.';
 
   @override
   String get adminSignupHelp => 'The first account can always be created.';

@@ -2544,6 +2544,10 @@
   "@adminRequireEmailHelp": {
     "description": "Help text for admin require email help in the server administrator interface."
   },
+  "adminRequireEmailUnused": "Only applies to email and password sign-in, which is off.",
+  "@adminRequireEmailUnused": {
+    "description": "Help text for admin require email unused in the server administrator interface."
+  },
   "accountUsername": "Username",
   "@accountUsername": {
     "description": "Label or control text for account username in account profile and credentials."
@@ -2638,15 +2642,19 @@
   "@adminSectionEmail": {
     "description": "Label or control text for admin section email in the server administrator interface."
   },
-  "adminSectionEmailBody": "Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.",
+  "adminSectionEmailBody": "Address verification, password resets and invitations.",
   "@adminSectionEmailBody": {
     "description": "Explanatory text for admin section email body in the server administrator interface."
+  },
+  "adminSmtpOn": "Send email",
+  "@adminSmtpOn": {
+    "description": "Label or control text for admin smtp on in the server administrator interface."
   },
   "adminSectionGoogle": "Sign in with Google",
   "@adminSectionGoogle": {
     "description": "Label or control text for admin section google in the server administrator interface."
   },
-  "adminSectionGoogleBody": "Register {url} as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.",
+  "adminSectionGoogleBody": "Register {url} as the redirect URI in the Google Cloud console.",
   "@adminSectionGoogleBody": {
     "placeholders": {
       "url": {
@@ -2657,11 +2665,19 @@
     },
     "description": "Explanatory text for admin section google body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
+  "adminGoogleOn": "Offer Google sign-in",
+  "@adminGoogleOn": {
+    "description": "Label or control text for admin google on in the server administrator interface."
+  },
+  "adminGoogleOnHelp": "People sign in with their Google account.",
+  "@adminGoogleOnHelp": {
+    "description": "Help text for admin google on help in the server administrator interface."
+  },
   "adminSectionOidc": "Sign in with OpenID Connect",
   "@adminSectionOidc": {
     "description": "Label or control text for admin section oidc in the server administrator interface."
   },
-  "adminSectionOidcBody": "Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register {url} as the redirect URI. Leave the issuer empty to turn it off.",
+  "adminSectionOidcBody": "Register {url} as the redirect URI with the provider.",
   "@adminSectionOidcBody": {
     "placeholders": {
       "url": {
@@ -2671,6 +2687,14 @@
       }
     },
     "description": "Explanatory text for admin section oidc body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "adminOidcOn": "Offer OpenID Connect sign-in",
+  "@adminOidcOn": {
+    "description": "Label or control text for admin oidc on in the server administrator interface."
+  },
+  "adminOidcOnHelp": "Any OpenID Connect provider, such as Authentik, Keycloak or Dex.",
+  "@adminOidcOnHelp": {
+    "description": "Help text for admin oidc on help in the server administrator interface."
   },
   "adminSectionAndroid": "Android app links",
   "@adminSectionAndroid": {
@@ -2724,6 +2748,10 @@
   "@adminPasswordLogin": {
     "description": "Label or control text for admin password login in the server administrator interface."
   },
+  "adminPasswordForced": "Stays on until Google or OpenID Connect sign-in is on, so there is always a way to sign in.",
+  "@adminPasswordForced": {
+    "description": "Help text for admin password forced in the server administrator interface."
+  },
   "adminSignup": "Who may create an account",
   "@adminSignup": {
     "description": "Label or control text for admin signup in the server administrator interface."
@@ -2732,13 +2760,25 @@
   "@adminSignupOpen": {
     "description": "Label or control text for admin signup open in the server administrator interface."
   },
+  "adminSignupOpenHelp": "Anyone who can reach this server may sign up.",
+  "@adminSignupOpenHelp": {
+    "description": "Help text for admin signup open help in the server administrator interface."
+  },
   "adminSignupInvite": "Invited people",
   "@adminSignupInvite": {
     "description": "Label or control text for admin signup invite in the server administrator interface."
   },
+  "adminSignupInviteHelp": "Only people invited to a group by email may sign up, and only with the address the invitation went to. Group links alone don't let anyone in. Invitations need email to be on.",
+  "@adminSignupInviteHelp": {
+    "description": "Help text for admin signup invite help in the server administrator interface."
+  },
   "adminSignupClosed": "Nobody",
   "@adminSignupClosed": {
     "description": "Label or control text for admin signup closed in the server administrator interface."
+  },
+  "adminSignupClosedHelp": "No one may sign up. Existing accounts keep working.",
+  "@adminSignupClosedHelp": {
+    "description": "Help text for admin signup closed help in the server administrator interface."
   },
   "adminSignupHelp": "The first account can always be created.",
   "@adminSignupHelp": {

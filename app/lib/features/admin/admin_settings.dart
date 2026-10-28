@@ -22,6 +22,12 @@ const _toggles = {'BALNANA_AUTH_PASSWORD', 'BALNANA_AUTH_REQUIRE_EMAIL', 'BALNAN
 /// Settings picked from a few values.
 const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP'};
 
+/// The setting that turns each optional section on: the server uses the
+/// section when it is set. Its switch shows the rest of the section.
+const _smtp = 'BALNANA_SMTP_HOST';
+const _google = 'BALNANA_OAUTH_GOOGLE_CLIENT_ID';
+const _oidc = 'BALNANA_OAUTH_OIDC_ISSUER';
+
 /// The server's settings, as the administrator sees them. Only what changed
 /// is sent, and the server takes all of it or nothing.
 class AdminSettingsPage extends ConsumerStatefulWidget {
@@ -43,6 +49,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
 
   /// Saved secrets to remove on saving.
   final _removed = <String>{};
+
+  /// Whether each optional section is on, by the setting that turns it on.
+  final _on = <String, bool>{};
 
   /// Settings the server refused at the last save.
   var _invalid = <String>{};
@@ -91,6 +100,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       }
       _picked.clear();
       _removed.clear();
+      for (final key in [_smtp, _google, _oidc]) {
+        _on[key] = settings.any((s) => s.key == key && s.effective.isNotEmpty);
+      }
       _invalid = {};
     });
   }
@@ -103,6 +115,12 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     for (final MapEntry(:key, value: c) in _text.entries) {
       final s = settings[key];
       if (s == null || s.locked) continue;
+      // A section switched off is turned off on the server by clearing the
+      // setting that turns it on; its other settings stay for next time.
+      if (_on[key] == false) {
+        if (s.effective.isNotEmpty) out[key] = '';
+        continue;
+      }
       final v = c.text.trim();
       if (s.secret) {
         if (v.isNotEmpty) {
@@ -114,12 +132,39 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
         out[key] = v;
       }
     }
+    if (_passwordForced && !_current('BALNANA_AUTH_PASSWORD', settings).isTrue) {
+      out['BALNANA_AUTH_PASSWORD'] = 'true';
+    }
     return out;
   }
+
+  String _current(String key, Map<String, AdminSetting> settings) =>
+      _picked[key] ?? settings[key]?.effective ?? '';
+
+  /// Accounts need a way to sign in, so email and password stays on while
+  /// no provider is.
+  bool get _passwordForced {
+    final settings = _settings ?? const {};
+    return _current('BALNANA_AUTH_MODE', settings) == 'accounts' &&
+        !(settings['BALNANA_AUTH_PASSWORD']?.locked ?? false) &&
+        _on[_google] != true &&
+        _on[_oidc] != true;
+  }
+
+  /// Switched-on sections whose setting that turns them on is empty.
+  Set<String> get _missing => {
+    for (final key in [_smtp, _google, _oidc])
+      if (_on[key] == true && !(_settings?[key]?.locked ?? false) && (_text[key]?.text.trim() ?? '').isEmpty)
+        key,
+  };
 
   Future<void> _save() async {
     final changes = _changes;
     if (changes.isEmpty) return;
+    if (_missing.isNotEmpty) {
+      setState(() => _invalid = {..._invalid, ..._missing});
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final l10n = context.l10n;
     setState(() => _busy = true);
@@ -211,9 +256,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
             IconButton(
               tooltip: l10n.adminUsers,
               icon: const Icon(Icons.people_outline),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => AdminUsersPage(token: widget.token)),
-              ),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => AdminUsersPage(token: widget.token))),
             ),
             IconButton(
               tooltip: l10n.adminChangePassword,
@@ -262,9 +307,8 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     String callback(String provider) => '$publicUrl$apiBasePath/auth/oauth/$provider/callback';
     const gap = SizedBox(height: BSpace.s16);
     // Only what the picked mode uses; hidden settings keep their values.
-    String current(String key) => _picked[key] ?? settings[key]?.effective ?? '';
-    final accounts = current('BALNANA_AUTH_MODE') == 'accounts';
-    final passwords = current('BALNANA_AUTH_PASSWORD') == 'true';
+    final accounts = _current('BALNANA_AUTH_MODE', settings) == 'accounts';
+    final passwords = _passwordForced || _current('BALNANA_AUTH_PASSWORD', settings).isTrue;
     return [
       FormSection(l10n.adminSectionGeneral),
       _textField('BALNANA_PUBLIC_URL', keyboard: TextInputType.url),
@@ -284,40 +328,56 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       if (accounts) ...[
         FormSection(l10n.adminSectionAccounts),
         _note(l10n.adminSectionAccountsBody),
-        _toggle('BALNANA_AUTH_PASSWORD'),
-        if (passwords) _toggle('BALNANA_AUTH_REQUIRE_EMAIL'),
+        _toggle(
+          'BALNANA_AUTH_PASSWORD',
+          forced: _passwordForced,
+          help: _passwordForced ? l10n.adminPasswordForced : null,
+        ),
+        _toggle(
+          'BALNANA_AUTH_REQUIRE_EMAIL',
+          enabled: passwords,
+          help: passwords ? null : l10n.adminRequireEmailUnused,
+        ),
         _toggle('BALNANA_LINK_GROUPS'),
         gap,
         _choice('BALNANA_AUTH_SIGNUP', {
-          'open': (l10n.adminSignupOpen, null),
-          'invite_only': (l10n.adminSignupInvite, null),
-          'closed': (l10n.adminSignupClosed, null),
+          'open': (l10n.adminSignupOpen, l10n.adminSignupOpenHelp),
+          'invite_only': (l10n.adminSignupInvite, l10n.adminSignupInviteHelp),
+          'closed': (l10n.adminSignupClosed, l10n.adminSignupClosedHelp),
         }),
         FormSection(l10n.adminSectionEmail),
-        _note(l10n.adminSectionEmailBody),
-        _textField('BALNANA_SMTP_HOST', keyboard: TextInputType.url),
-        gap,
-        _textField('BALNANA_SMTP_PORT', keyboard: TextInputType.number),
-        gap,
-        _textField('BALNANA_SMTP_USER'),
-        gap,
-        _textField('BALNANA_SMTP_PASSWORD'),
-        gap,
-        _textField('BALNANA_SMTP_FROM', hint: l10n.adminSmtpFromHint),
+        _section(_smtp, l10n.adminSmtpOn, l10n.adminSectionEmailBody),
+        if (_on[_smtp]!) ...[
+          _textField(_smtp, keyboard: TextInputType.url),
+          gap,
+          _textField('BALNANA_SMTP_PORT', keyboard: TextInputType.number),
+          gap,
+          _textField('BALNANA_SMTP_USER'),
+          gap,
+          _textField('BALNANA_SMTP_PASSWORD'),
+          gap,
+          _textField('BALNANA_SMTP_FROM', hint: l10n.adminSmtpFromHint),
+        ],
         FormSection(l10n.adminSectionGoogle),
-        _note(l10n.adminSectionGoogleBody(callback('google'))),
-        _textField('BALNANA_OAUTH_GOOGLE_CLIENT_ID'),
-        gap,
-        _textField('BALNANA_OAUTH_GOOGLE_SECRET'),
+        _section(_google, l10n.adminGoogleOn, l10n.adminGoogleOnHelp),
+        if (_on[_google]!) ...[
+          _note(l10n.adminSectionGoogleBody(callback('google'))),
+          _textField(_google),
+          gap,
+          _textField('BALNANA_OAUTH_GOOGLE_SECRET'),
+        ],
         FormSection(l10n.adminSectionOidc),
-        _note(l10n.adminSectionOidcBody(callback('oidc'))),
-        _textField('BALNANA_OAUTH_OIDC_ISSUER', keyboard: TextInputType.url),
-        gap,
-        _textField('BALNANA_OAUTH_OIDC_CLIENT_ID'),
-        gap,
-        _textField('BALNANA_OAUTH_OIDC_SECRET'),
-        gap,
-        _textField('BALNANA_OAUTH_OIDC_NAME'),
+        _section(_oidc, l10n.adminOidcOn, l10n.adminOidcOnHelp),
+        if (_on[_oidc]!) ...[
+          _note(l10n.adminSectionOidcBody(callback('oidc'))),
+          _textField(_oidc, keyboard: TextInputType.url),
+          gap,
+          _textField('BALNANA_OAUTH_OIDC_CLIENT_ID'),
+          gap,
+          _textField('BALNANA_OAUTH_OIDC_SECRET'),
+          gap,
+          _textField('BALNANA_OAUTH_OIDC_NAME'),
+        ],
       ],
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
@@ -366,7 +426,11 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
             : null,
         helperText: helper,
         helperMaxLines: 4,
-        errorText: _invalid.contains(key) ? _problem(l10n, key) : null,
+        errorText: !_invalid.contains(key)
+            ? null
+            : _on.containsKey(key) && controller.text.trim().isEmpty
+            ? l10n.errorRequired
+            : _problem(l10n, key),
         errorMaxLines: 4,
         suffixIcon: s.secret && s.set && !s.locked
             ? IconButton(
@@ -386,11 +450,13 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     );
   }
 
-  Widget _toggle(String key) {
+  /// An on or off setting. [forced] holds it on; [enabled] false dims it, as
+  /// it does nothing then. [help] replaces its usual help.
+  Widget _toggle(String key, {bool forced = false, bool enabled = true, String? help}) {
     final l10n = context.l10n;
     final s = _settings![key];
     if (s == null) return const SizedBox.shrink();
-    final value = (_picked[key] ?? s.effective) == 'true';
+    final value = forced || (_picked[key] ?? s.effective).isTrue;
     final scheme = Theme.of(context).colorScheme;
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
@@ -400,11 +466,30 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
             ? _problem(l10n, key)
             : s.locked
             ? l10n.adminLocked(key)
-            : _help(l10n, key) ?? '',
+            : help ?? _help(l10n, key) ?? '',
         style: _invalid.contains(key) ? TextStyle(color: scheme.error) : null,
       ),
       value: value,
-      onChanged: _busy || s.locked ? null : (v) => _pick(key, '$v'),
+      onChanged: _busy || s.locked || forced || !enabled ? null : (v) => _pick(key, '$v'),
+    );
+  }
+
+  /// The switch of an optional section, turned on by [key].
+  Widget _section(String key, String title, String help) {
+    final l10n = context.l10n;
+    final s = _settings![key];
+    if (s == null) return const SizedBox.shrink();
+    return SwitchListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
+      title: Text(title),
+      subtitle: Text(s.locked ? l10n.adminLocked(key) : help),
+      value: _on[key]!,
+      onChanged: _busy || s.locked
+          ? null
+          : (v) => setState(() {
+              _on[key] = v;
+              _invalid.remove(key);
+            }),
     );
   }
 
@@ -467,6 +552,10 @@ Future<bool> _confirmDiscard(BuildContext context) async {
     ),
   );
   return discard ?? false;
+}
+
+extension on String {
+  bool get isTrue => this == 'true';
 }
 
 String _label(AppLocalizations l10n, String key) => switch (key) {

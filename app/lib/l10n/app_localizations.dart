@@ -2983,6 +2983,12 @@ abstract class AppLocalizations {
   /// **'When off, people sign up with a username and may leave the email address out. They sign in with either.'**
   String get adminRequireEmailHelp;
 
+  /// Help text for admin require email unused in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Only applies to email and password sign-in, which is off.'**
+  String get adminRequireEmailUnused;
+
   /// Label or control text for account username in account profile and credentials.
   ///
   /// In en, this message translates to:
@@ -3106,8 +3112,14 @@ abstract class AppLocalizations {
   /// Explanatory text for admin section email body in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.'**
+  /// **'Address verification, password resets and invitations.'**
   String get adminSectionEmailBody;
+
+  /// Label or control text for admin smtp on in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Send email'**
+  String get adminSmtpOn;
 
   /// Label or control text for admin section google in the server administrator interface.
   ///
@@ -3118,8 +3130,20 @@ abstract class AppLocalizations {
   /// Explanatory text for admin section google body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
-  /// **'Register {url} as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.'**
+  /// **'Register {url} as the redirect URI in the Google Cloud console.'**
   String adminSectionGoogleBody(String url);
+
+  /// Label or control text for admin google on in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer Google sign-in'**
+  String get adminGoogleOn;
+
+  /// Help text for admin google on help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'People sign in with their Google account.'**
+  String get adminGoogleOnHelp;
 
   /// Label or control text for admin section oidc in the server administrator interface.
   ///
@@ -3130,8 +3154,20 @@ abstract class AppLocalizations {
   /// Explanatory text for admin section oidc body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
-  /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register {url} as the redirect URI. Leave the issuer empty to turn it off.'**
+  /// **'Register {url} as the redirect URI with the provider.'**
   String adminSectionOidcBody(String url);
+
+  /// Label or control text for admin oidc on in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer OpenID Connect sign-in'**
+  String get adminOidcOn;
+
+  /// Help text for admin oidc on help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex.'**
+  String get adminOidcOnHelp;
 
   /// Label or control text for admin section android in the server administrator interface.
   ///
@@ -3211,6 +3247,12 @@ abstract class AppLocalizations {
   /// **'Email and password sign-in'**
   String get adminPasswordLogin;
 
+  /// Help text for admin password forced in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Stays on until Google or OpenID Connect sign-in is on, so there is always a way to sign in.'**
+  String get adminPasswordForced;
+
   /// Label or control text for admin signup in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -3223,17 +3265,35 @@ abstract class AppLocalizations {
   /// **'Anyone'**
   String get adminSignupOpen;
 
+  /// Help text for admin signup open help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone who can reach this server may sign up.'**
+  String get adminSignupOpenHelp;
+
   /// Label or control text for admin signup invite in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Invited people'**
   String get adminSignupInvite;
 
+  /// Help text for admin signup invite help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Only people invited to a group by email may sign up, and only with the address the invitation went to. Group links alone don\'t let anyone in. Invitations need email to be on.'**
+  String get adminSignupInviteHelp;
+
   /// Label or control text for admin signup closed in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Nobody'**
   String get adminSignupClosed;
+
+  /// Help text for admin signup closed help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'No one may sign up. Existing accounts keep working.'**
+  String get adminSignupClosedHelp;
 
   /// Help text for admin signup help in the server administrator interface.
   ///
