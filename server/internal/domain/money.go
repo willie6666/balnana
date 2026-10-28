@@ -31,7 +31,6 @@ const (
 	ErrDuplicateMember Code = "duplicate_member"
 	ErrInvalidShare    Code = "invalid_share"
 	ErrExactTotal      Code = "exact_total"
-	ErrPercentTotal    Code = "percent_total"
 	ErrNoShares        Code = "no_shares"
 	ErrUnbalanced      Code = "unbalanced"
 )

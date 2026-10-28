@@ -86,7 +86,7 @@ insert into categories (id, emoji, color) values
   ('other',         '📦', x'5D6B82'::int);
 
 create type expense_kind as enum ('expense', 'payment');
-create type split_method as enum ('equal', 'exact', 'percent', 'shares');
+create type split_method as enum ('equal', 'exact', 'shares');
 
 create table expenses (
   id                uuid primary key default gen_random_uuid(),
@@ -119,7 +119,7 @@ create table expense_splits (
   expense_id uuid references expenses(id) on delete cascade,
   member_id  uuid references members(id),
   amount     bigint not null check (amount >= 0),   -- final computed amount
-  share      numeric(12,4),                          -- raw input: percent or shares (for display)
+  share      numeric(12,4),                          -- raw input: shares (for display)
   primary key (expense_id, member_id)
 );
 

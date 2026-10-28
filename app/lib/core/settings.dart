@@ -19,6 +19,7 @@ class Settings {
     this.pureBlack = false,
     this.serverUrl,
     this.notifications = true,
+    this.myShare = false,
   });
 
   final ThemeMode themeMode;
@@ -40,6 +41,10 @@ class Settings {
   /// Push notifications, where the build and the server have them.
   final bool notifications;
 
+  /// Expense rows show what this device's member lent or borrowed instead of
+  /// the expense's total.
+  final bool myShare;
+
   Settings copyWith({
     ThemeMode? themeMode,
     Locale? Function()? locale,
@@ -48,6 +53,7 @@ class Settings {
     bool? pureBlack,
     String? Function()? serverUrl,
     bool? notifications,
+    bool? myShare,
   }) {
     return Settings(
       themeMode: themeMode ?? this.themeMode,
@@ -57,6 +63,7 @@ class Settings {
       pureBlack: pureBlack ?? this.pureBlack,
       serverUrl: serverUrl != null ? serverUrl() : this.serverUrl,
       notifications: notifications ?? this.notifications,
+      myShare: myShare ?? this.myShare,
     );
   }
 }
@@ -71,6 +78,7 @@ class SettingsNotifier extends Notifier<Settings> {
   static const _pureBlack = 'settings.pureBlack';
   static const _server = 'settings.server';
   static const _notifications = 'settings.notifications';
+  static const _myShare = 'settings.myShare';
 
   @override
   Settings build() {
@@ -83,6 +91,7 @@ class SettingsNotifier extends Notifier<Settings> {
       pureBlack: prefs.getBool(_pureBlack) ?? false,
       serverUrl: prefs.getString(_server),
       notifications: notificationsOn(prefs),
+      myShare: prefs.getBool(_myShare) ?? false,
     );
   }
 
@@ -116,6 +125,11 @@ class SettingsNotifier extends Notifier<Settings> {
   void setNotifications(bool on) {
     state = state.copyWith(notifications: on);
     ref.read(prefsProvider).setBool(_notifications, on);
+  }
+
+  void setMyShare(bool on) {
+    state = state.copyWith(myShare: on);
+    ref.read(prefsProvider).setBool(_myShare, on);
   }
 
   /// [url] must already be normalized; null returns to the default server.

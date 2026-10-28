@@ -213,25 +213,42 @@ class _EditorState extends ConsumerState<_Editor> {
           _payersShown.add(p.memberId);
         }
       }
-      // Percentages are no longer offered: an old split by percent opens
-      // as the amounts it came to.
-      _method = e.splitMethod == SplitMethod.percent ? SplitMethod.exact : e.splitMethod;
+      _method = e.splitMethod;
       for (final s in e.splits) {
         _included.add(s.memberId);
         _values[s.memberId]?.text = switch (_method) {
           SplitMethod.equal => '',
-          SplitMethod.exact || SplitMethod.percent => formatAmount(s.amount, _digits),
+          SplitMethod.exact => formatAmount(s.amount, _digits),
           SplitMethod.shares => s.share ?? '',
         };
       }
     }
-    for (final c in [_amount, ..._paid.values, ..._values.values]) {
+    for (final c in [_amount, ..._values.values]) {
       c.addListener(_changed);
+    }
+    for (final c in _paid.values) {
+      c.addListener(_paidChanged);
     }
     _initial = _snapshot();
   }
 
   void _changed() => setState(() {});
+
+  /// With several payers, the amount is what they paid together.
+  void _paidChanged() {
+    if (!_multiPay) return;
+    var sum = BigInt.zero;
+    for (final c in _paid.values) {
+      try {
+        sum += parseInput(c.text, _digits) ?? BigInt.zero;
+      } on MoneyException {
+        // Shown by the field.
+      }
+    }
+    final text = sum == BigInt.zero ? '' : formatAmount(sum, _digits);
+    if (_amount.text != text) _amount.text = text;
+    setState(() {});
+  }
 
   /// Everything the form holds, to tell whether it was changed.
   List<Object?> _snapshot() => [
@@ -326,6 +343,7 @@ class _EditorState extends ConsumerState<_Editor> {
         return null;
       }
     }
+    // The amount is their sum, unless a part cannot be read.
     return out.values.fold(BigInt.zero, (a, b) => a + b) == total ? out : null;
   }
 
@@ -347,6 +365,7 @@ class _EditorState extends ConsumerState<_Editor> {
       }
       if (multi && _payer != null) _payersShown.add(_payer!);
     });
+    _paidChanged();
   }
 
   /// How many likely payers a large group offers before "Someone else".
@@ -630,6 +649,8 @@ class _EditorState extends ConsumerState<_Editor> {
                 TextFormField(
                   controller: _amount,
                   autofocus: !editing,
+                  // Several payers' parts add up to it instead.
+                  readOnly: _multiPay,
                   textAlign: TextAlign.center,
                   style: text.moneyHero,
                   keyboardType: TextInputType.numberWithOptions(decimal: _digits > 0),
@@ -638,6 +659,7 @@ class _EditorState extends ConsumerState<_Editor> {
                     border: InputBorder.none,
                     filled: false,
                     hintText: formatAmount(BigInt.zero, _digits),
+                    helperText: _multiPay ? l10n.expenseAmountFromPayers : null,
                     prefixIcon: FieldAffix(symbol, style: text.headlineMedium),
                     prefixIconConstraints: const BoxConstraints(),
                   ),
@@ -856,19 +878,6 @@ class _PaidBy extends StatelessWidget {
                 label: Text(l10n.crowdChoosePayers),
               ),
             ),
-          _Remaining(
-            total: s._total,
-            sum: s._paid.values.fold(BigInt.zero, (a, c) {
-              try {
-                return a + (parseInput(c.text, s._digits) ?? BigInt.zero);
-              } on MoneyException {
-                return a;
-              }
-            }),
-            digits: s._digits,
-            currency: s._group.currency,
-            symbol: s._group.symbol,
-          ),
         ],
       ],
     );
@@ -997,17 +1006,29 @@ class _CrowdSplit extends StatelessWidget {
       for (final m in people)
         if (nameMatches(m.name, s._splitQuery.text)) m,
     ];
-    void sort() => s._update(() {
-      BigInt share(Member m) => s._included.contains(m.id) ? (shares?[m.id] ?? BigInt.zero) : BigInt.from(-1);
-      final at = {for (final (i, m) in s._people.indexed) m.id: i};
-      s._splitOrder = [
-        for (final m in [...s._people]..sort((a, b) {
-          final bySize = share(b).compareTo(share(a));
-          return bySize != 0 ? bySize : at[a.id]!.compareTo(at[b.id]!);
-        }))
-          m.id,
-      ];
-    });
+    // Who is in first, then by what was typed for them: computed shares
+    // differ by a cent between equals, which would shuffle them. Equals keep
+    // the group's order.
+    BigInt typed(Member m) {
+      if (!s._included.contains(m.id)) return BigInt.from(-1);
+      if (s._method == SplitMethod.equal) return BigInt.zero;
+      try {
+        return parseInput(s._values[m.id]!.text, s._method == SplitMethod.shares ? 4 : s._digits) ?? BigInt.zero;
+      } on MoneyException {
+        return BigInt.zero;
+      }
+    }
+    final at = {for (final (i, m) in s._people.indexed) m.id: i};
+    final sorted = [
+      for (final m in [...s._people]..sort((a, b) {
+        final bySize = typed(b).compareTo(typed(a));
+        return bySize != 0 ? bySize : at[a.id]!.compareTo(at[b.id]!);
+      }))
+        m.id,
+    ];
+    // Lit once ticks or shares have put the list out of order.
+    final stale = !listEquals(sorted, [for (final m in people) m.id]);
+    void sort() => s._update(() => s._splitOrder = sorted);
     // Both act on the people the search shows; people who left can only be taken out.
     void tickAll(bool on) => s._update(() {
       for (final m in matching) {
@@ -1026,11 +1047,10 @@ class _CrowdSplit extends StatelessWidget {
         const SizedBox(height: BSpace.s8),
         Row(
           children: [
-            TextButton.icon(
-              onPressed: sort,
-              icon: const Icon(Icons.sort),
-              label: Text(l10n.crowdSort),
-            ),
+            if (stale)
+              FilledButton.tonalIcon(onPressed: sort, icon: const Icon(Icons.sort), label: Text(l10n.crowdSort))
+            else
+              TextButton.icon(onPressed: null, icon: const Icon(Icons.sort), label: Text(l10n.crowdSort)),
             const Spacer(),
             TextButton(onPressed: () => tickAll(true), child: Text(l10n.crowdAll)),
             TextButton(onPressed: () => tickAll(false), child: Text(l10n.crowdNone)),
@@ -1084,7 +1104,6 @@ class _SplitSummary extends StatelessWidget {
           symbol: s._group.symbol,
         );
       case SplitMethod.equal:
-      case SplitMethod.percent:
       case SplitMethod.shares:
         if (error == null) return const SizedBox.shrink();
         return _Note(text: moneyErrorMessage(l10n, error!), error: true);

@@ -245,7 +245,7 @@ class ExpensePart {
   final String memberId;
   final BigInt amount;
 
-  /// The percentage or weight entered, for percent and shares splits.
+  /// The weight entered, for shares splits.
   final String? share;
 }
 

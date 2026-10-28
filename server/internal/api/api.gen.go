@@ -55,10 +55,9 @@ const (
 
 // Defines values for SplitMethod.
 const (
-	Equal   SplitMethod = "equal"
-	Exact   SplitMethod = "exact"
-	Percent SplitMethod = "percent"
-	Shares  SplitMethod = "shares"
+	Equal  SplitMethod = "equal"
+	Exact  SplitMethod = "exact"
+	Shares SplitMethod = "shares"
 )
 
 // Defines values for StartOAuthParamsApp.
@@ -757,7 +756,7 @@ type Session struct {
 type Share struct {
 	MemberId string `json:"memberId"`
 
-	// Value Ignored for `equal`; an amount for `exact`; a percentage for `percent`; a weight for `shares` (up to 4 decimals).
+	// Value Ignored for `equal`; an amount for `exact`; a weight for `shares` (up to 4 decimals).
 	Value *string `json:"value,omitempty"`
 }
 
@@ -770,7 +769,7 @@ type SplitPart struct {
 	Amount   Money  `json:"amount"`
 	MemberId string `json:"memberId"`
 
-	// Share The percentage or weight entered, for `percent` and `shares`.
+	// Share The weight entered, for `shares`.
 	Share *string `json:"share,omitempty"`
 }
 

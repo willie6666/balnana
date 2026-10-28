@@ -288,15 +288,20 @@ func TestExpensesAndBalances(t *testing.T) {
 		t.Fatalf("self payment: %q", code)
 	}
 
-	// Percent split with shares remembered.
-	pct := dinner
-	pct.Title = "Tickets"
-	pct.SplitMethod = "percent"
-	pct.Splits = []Share{{MemberId: ana, Value: ptr("50")}, {MemberId: ben, Value: ptr("25")}, {MemberId: cleo, Value: ptr("25")}}
+	// Split by shares, with the shares remembered.
+	weighted := dinner
+	weighted.Title = "Tickets"
+	weighted.SplitMethod = "shares"
+	weighted.Splits = []Share{{MemberId: ana, Value: ptr("2")}, {MemberId: ben, Value: ptr("1")}, {MemberId: cleo, Value: ptr("1")}}
 	var tickets Expense
-	c.must(201, "POST", base+"/expenses", pct, &tickets)
-	if tickets.Splits[0].Share == nil || *tickets.Splits[0].Share != "50" || tickets.Splits[0].Amount != "50.00" {
-		t.Fatalf("percent split: %+v", tickets.Splits)
+	c.must(201, "POST", base+"/expenses", weighted, &tickets)
+	if tickets.Splits[0].Share == nil || *tickets.Splits[0].Share != "2" || tickets.Splits[0].Amount != "50.00" {
+		t.Fatalf("shares split: %+v", tickets.Splits)
+	}
+	// Percentages are not a way to split.
+	weighted.SplitMethod = "percent"
+	if code := c.errorCode(400, "POST", base+"/expenses", weighted); code != "invalid_share" {
+		t.Fatalf("percent split: %q", code)
 	}
 
 	// Editing needs the current version.
@@ -390,14 +395,10 @@ func TestExpenseValidation(t *testing.T) {
 		"unknown_member":    func(e *ExpenseInput) { e.Splits = []Share{{MemberId: other.Members[0].Id}} },
 		"duplicate_member":  func(e *ExpenseInput) { e.Splits = []Share{{MemberId: ana}, {MemberId: ana}} },
 		"exact_total":       func(e *ExpenseInput) { e.SplitMethod = "exact"; e.Splits = []Share{{MemberId: ana, Value: ptr("3")}} },
-		"percent_total": func(e *ExpenseInput) {
-			e.SplitMethod = "percent"
-			e.Splits = []Share{{MemberId: ana, Value: ptr("99")}}
-		},
-		"invalid_category": func(e *ExpenseInput) { e.CategoryId = ptr("nope") },
-		"no_members":       func(e *ExpenseInput) { e.Splits = nil },
-		"invalid_share":    func(e *ExpenseInput) { e.SplitMethod = "shares"; e.Splits = []Share{{MemberId: ana, Value: ptr("x")}} },
-		"amount_too_large": func(e *ExpenseInput) { e.Amount = "99999999999999999" },
+		"invalid_category":  func(e *ExpenseInput) { e.CategoryId = ptr("nope") },
+		"no_members":        func(e *ExpenseInput) { e.Splits = nil },
+		"invalid_share":     func(e *ExpenseInput) { e.SplitMethod = "shares"; e.Splits = []Share{{MemberId: ana, Value: ptr("x")}} },
+		"amount_too_large":  func(e *ExpenseInput) { e.Amount = "99999999999999999" },
 	}
 	for want, mutate := range cases {
 		in := ok

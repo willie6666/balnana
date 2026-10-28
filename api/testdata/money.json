@@ -106,38 +106,26 @@
       "error": "invalid_share"
     },
     {
-      "name": "percent thirds: leftover goes to the largest remainder",
-      "amount": "100.00", "digits": 2, "method": "percent",
+      "name": "shares in thirds: leftover goes to the largest remainder",
+      "amount": "100.00", "digits": 2, "method": "shares",
       "parts": [{ "member": "a", "value": "33.3333" }, { "member": "b", "value": "33.3333" }, { "member": "c", "value": "33.3334" }],
       "expect": { "a": "33.33", "b": "33.33", "c": "33.34" }
     },
     {
-      "name": "percent half and half",
-      "amount": "10.00", "digits": 2, "method": "percent",
-      "parts": [{ "member": "a", "value": "50" }, { "member": "b", "value": "50.0" }],
-      "expect": { "a": "5.00", "b": "5.00" }
-    },
-    {
-      "name": "percent on the largest amount needs more than 64 bits in between",
-      "amount": "9999999999999.99", "digits": 2, "method": "percent",
+      "name": "shares on the largest amount need more than 64 bits in between",
+      "amount": "9999999999999.99", "digits": 2, "method": "shares",
       "parts": [{ "member": "a", "value": "33.3333" }, { "member": "b", "value": "33.3333" }, { "member": "c", "value": "33.3334" }],
       "expect": { "a": "3333330000000.00", "b": "3333330000000.00", "c": "3333339999999.99" }
     },
     {
-      "name": "percent does not add up to 100",
-      "amount": "100.00", "digits": 2, "method": "percent",
-      "parts": [{ "member": "a", "value": "50" }, { "member": "b", "value": "49.99" }],
-      "error": "percent_total"
-    },
-    {
-      "name": "percent with more than 4 decimals",
-      "amount": "100.00", "digits": 2, "method": "percent",
+      "name": "shares with more than 4 decimals",
+      "amount": "100.00", "digits": 2, "method": "shares",
       "parts": [{ "member": "a", "value": "33.33333" }, { "member": "b", "value": "66.66667" }],
       "error": "invalid_share"
     },
     {
-      "name": "percent negative",
-      "amount": "100.00", "digits": 2, "method": "percent",
+      "name": "shares negative",
+      "amount": "100.00", "digits": 2, "method": "shares",
       "parts": [{ "member": "a", "value": "110" }, { "member": "b", "value": "-10" }],
       "error": "invalid_share"
     },

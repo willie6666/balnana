@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/categories.dart';
 import '../../data/models.dart';
@@ -392,7 +393,7 @@ class CategoryIcon extends StatelessWidget {
   }
 }
 
-class ExpenseTile extends StatelessWidget {
+class ExpenseTile extends ConsumerWidget {
   const ExpenseTile({super.key, required this.expense, required this.group, required this.me, this.onTap});
 
   final Expense expense;
@@ -403,8 +404,9 @@ class ExpenseTile extends StatelessWidget {
   String _name(AppLocalizations l10n, String id) => group.member(id)?.name ?? l10n.someone;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final myShare = ref.watch(settingsProvider.select((s) => s.myShare));
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final c = context.bColors;
@@ -433,27 +435,31 @@ class ExpenseTile extends StatelessWidget {
       subtitle = place == null ? '$time · $paidBy' : '$time · $paidBy · $place';
     }
 
-    // What it means for this device's member: in words, or as who lent to
-    // whom and how much.
+    // Payments and money received say in words what they mean for this
+    // device's member. An expense shows who lent to whom, with its total or,
+    // as settings choose, this member's part of it: green when they lent,
+    // red when they borrowed, gray when they are even or not in it.
     String? effect;
     Color? effectColor;
     _Lending? lending;
-    if (me != null) {
-      final paid = e.paidBy(me!), owed = e.owedBy(me!), net = paid - owed;
-      if (e.isPayment) {
-        if (paid > BigInt.zero) (effect, effectColor) = (l10n.effectYouPaid(money(paid)), c.owed);
-        if (owed > BigInt.zero) (effect, effectColor) = (l10n.effectYouReceived(money(owed)), c.owe);
-      } else if (e.isReceived && net > BigInt.zero) {
-        (effect, effectColor) = (l10n.effectForYou(money(net)), c.owed);
-      } else if (e.isReceived && net < BigInt.zero) {
-        (effect, effectColor) = (l10n.effectYouReceived(money(-net)), c.owe);
-      } else if (net > BigInt.zero) {
-        lending = _Lending(group, e, money(net), c.owed);
-      } else if (net < BigInt.zero) {
-        lending = _Lending(group, e, money(-net), c.owe);
-      } else {
-        (effect, effectColor) = (paid > BigInt.zero ? l10n.effectEven : l10n.effectNotInvolved, c.settled);
-      }
+    final paid = me == null ? BigInt.zero : e.paidBy(me!), owed = me == null ? BigInt.zero : e.owedBy(me!);
+    final net = paid - owed;
+    if (e.isPayment) {
+      if (paid > BigInt.zero) (effect, effectColor) = (l10n.effectYouPaid(money(paid)), c.owed);
+      if (owed > BigInt.zero) (effect, effectColor) = (l10n.effectYouReceived(money(owed)), c.owe);
+    } else if (e.isReceived && net > BigInt.zero) {
+      (effect, effectColor) = (l10n.effectForYou(money(net)), c.owed);
+    } else if (e.isReceived && net < BigInt.zero) {
+      (effect, effectColor) = (l10n.effectYouReceived(money(-net)), c.owe);
+    } else if (!e.isReceived) {
+      final color = me == null
+          ? scheme.onSurface
+          : net > BigInt.zero
+          ? c.owed
+          : net < BigInt.zero
+          ? c.owe
+          : c.settled;
+      lending = _Lending(group, e, money(myShare && net != BigInt.zero ? net.abs() : e.amount), color);
     }
 
     return Material(
@@ -529,8 +535,8 @@ class ExpenseTile extends StatelessWidget {
   }
 }
 
-/// An expense's amount for this device's member between who lent it, at the
-/// start, and who borrowed it, at the end.
+/// An expense's amount between who lent it, at the start, and who borrowed
+/// it, at the end.
 class _Lending extends StatelessWidget {
   const _Lending(this.group, this.expense, this.amount, this.color);
 

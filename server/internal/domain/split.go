@@ -8,24 +8,21 @@ import (
 type SplitMethod string
 
 const (
-	SplitEqual   SplitMethod = "equal"
-	SplitExact   SplitMethod = "exact"
-	SplitPercent SplitMethod = "percent"
-	SplitShares  SplitMethod = "shares"
+	SplitEqual  SplitMethod = "equal"
+	SplitExact  SplitMethod = "exact"
+	SplitShares SplitMethod = "shares"
 )
 
 // Part is one participant of a split. Value is ignored for equal splits;
-// otherwise it is a decimal string: an amount (exact), a percentage (percent)
-// or a weight (shares). Percentages and weights allow up to 4 decimal places.
+// otherwise it is a decimal string: an amount (exact) or a weight (shares).
+// Weights allow up to 4 decimal places.
 type Part struct {
 	Member string
 	Value  string
 }
 
-// shareDigits is the precision of percent and share inputs.
+// shareDigits is the precision of share inputs.
 const shareDigits = 4
-
-const hundredPercent int64 = 100 * 10_000
 
 // Split divides total (minor units, > 0) between the parts. The results always
 // add up to total exactly.
@@ -73,7 +70,7 @@ func Split(total int64, digits int, method SplitMethod, parts []Part) (map[strin
 		}
 		return out, nil
 
-	case SplitPercent, SplitShares:
+	case SplitShares:
 		weights := make([]int64, len(parts))
 		var sum int64
 		for i, p := range parts {
@@ -83,9 +80,6 @@ func Split(total int64, digits int, method SplitMethod, parts []Part) (map[strin
 			}
 			weights[i] = w
 			sum += w
-		}
-		if method == SplitPercent && sum != hundredPercent {
-			return nil, ErrPercentTotal
 		}
 		if sum == 0 {
 			return nil, ErrNoShares

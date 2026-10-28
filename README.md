@@ -41,7 +41,7 @@ Actual Android emulator screenshots with fictional demo data.
 - **Private group links.** In link mode a group's link is all anyone needs. In
   accounts mode people sign in with a password, Google or any OpenID Connect
   provider.
-- **Flexible splits.** Split equally, by exact amounts, by percentages or by shares,
+- **Flexible splits.** Split equally, by exact amounts or by shares,
   with several payers per expense.
 - **Simplified debts.** Balances turn into the fewest payments that settle the
   group.

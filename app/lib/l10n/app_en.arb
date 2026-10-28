@@ -70,7 +70,6 @@
   "errorNoShares": "Pick at least one person to share the cost.",
   "errorInvalidShare": "Each share must be a number.",
   "errorExactTotal": "The amounts must add up to the total.",
-  "errorPercentTotal": "The percentages must add up to 100%.",
   "errorPayersTotal": "What everyone paid must add up to the total.",
 
   "categoryFood": "Food & drink",
@@ -265,8 +264,6 @@
   "@effectYouReceived": {"placeholders": {"amount": {"type": "String"}}},
   "effectForYou": "{amount} for you",
   "@effectForYou": {"placeholders": {"amount": {"type": "String"}}},
-  "effectEven": "even",
-  "effectNotInvolved": "not involved",
   "paymentDelete": "Delete payment",
   "paymentDeleted": "Payment deleted",
   "expenseDeleted": "Deleted “{title}”",
@@ -278,6 +275,7 @@
   "expenseAmount": "Amount",
   "expenseTitle": "What was it for?",
   "expenseTitleHint": "Dinner, tickets, taxi…",
+  "expenseAmountFromPayers": "What everyone paid, added up",
   "expenseNote": "Note",
   "expenseNoteHint": "Optional",
   "expenseLocation": "Location",
@@ -418,6 +416,8 @@
   "settingsWallpaperGroupsSubtitle": "Groups use your device colors too, instead of their own",
   "settingsPureBlack": "Pure black",
   "settingsPureBlackSubtitle": "A darker dark theme for OLED screens",
+  "settingsMyShare": "Show my share",
+  "settingsMyShareSubtitle": "Expenses show what you lent or borrowed instead of the total",
 
   "settingsLanguage": "Language",
   "languageSystem": "System default",

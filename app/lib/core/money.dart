@@ -25,7 +25,6 @@ enum MoneyError {
   duplicateMember('duplicate_member'),
   invalidShare('invalid_share'),
   exactTotal('exact_total'),
-  percentTotal('percent_total'),
   noShares('no_shares'),
   unbalanced('unbalanced');
 
@@ -106,11 +105,11 @@ String formatAmountLocalized(BigInt minor, int digits, String locale) {
   return '${minor.isNegative ? symbols.MINUS_SIGN : ''}$grouped$frac';
 }
 
-enum SplitMethod { equal, exact, percent, shares }
+enum SplitMethod { equal, exact, shares }
 
 /// One participant of a split. [value] is ignored for equal splits; otherwise
-/// it is a decimal string: an amount (exact), a percentage (percent) or a
-/// weight (shares). Percentages and weights allow up to 4 decimal places.
+/// it is a decimal string: an amount (exact) or a weight (shares). Weights
+/// allow up to 4 decimal places.
 class SplitPart {
   const SplitPart(this.member, [this.value = '']);
   final String member;
@@ -118,7 +117,6 @@ class SplitPart {
 }
 
 const _shareDigits = 4;
-final _hundredPercent = BigInt.from(100 * 10000);
 
 /// Divides [total] (minor units, > 0) between [parts]. The results always add
 /// up to [total] exactly.
@@ -155,13 +153,9 @@ Map<String, BigInt> split(BigInt total, int digits, SplitMethod method, List<Spl
       }
       return out;
 
-    case SplitMethod.percent:
     case SplitMethod.shares:
       final weights = [for (final p in parts) value(p, _shareDigits)];
       final sum = weights.fold(BigInt.zero, (a, b) => a + b);
-      if (method == SplitMethod.percent && sum != _hundredPercent) {
-        throw const MoneyException(MoneyError.percentTotal);
-      }
       if (sum == BigInt.zero) throw const MoneyException(MoneyError.noShares);
       return _weighted(total, parts, weights);
   }

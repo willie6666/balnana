@@ -68,7 +68,6 @@ String moneyErrorMessage(AppLocalizations l10n, MoneyError error) => switch (err
   MoneyError.duplicateMember || MoneyError.unbalanced => l10n.errorGeneric,
   MoneyError.invalidShare => l10n.errorInvalidShare,
   MoneyError.exactTotal => l10n.errorExactTotal,
-  MoneyError.percentTotal => l10n.errorPercentTotal,
 };
 
 /// Why one row of an imported file was refused.

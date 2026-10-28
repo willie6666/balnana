@@ -10,6 +10,7 @@ import 'package:balnana/core/push.dart';
 import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
+import 'package:balnana/core/settings.dart';
 import 'package:balnana/data/api.dart' show PushSubscription, deviceTimeZone;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
@@ -17,6 +18,7 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/expense/expense_editor_page.dart';
 import 'package:balnana/features/expense/receipt.dart';
 import 'package:balnana/features/group/group_settings_page.dart';
+import 'package:balnana/ui/colors.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -990,9 +992,12 @@ void main() {
       expect(named('Person 30'), findsOneWidget);
       expect(named('Person 6'), findsNothing);
 
-      // Sorting brings who is included to the top.
+      // Sorting brings who is included to the top. In order already, there
+      // is nothing to sort; ticks put it out of order and light it up.
       await tester.enterText(search, '');
       await tester.pumpAndSettle();
+      final sortIdle = find.widgetWithText(TextButton, 'Sort'), sortLit = find.widgetWithText(FilledButton, 'Sort');
+      expect(tester.widget<TextButton>(sortIdle).onPressed, isNull);
       await tester.tap(find.text('None'));
       await tester.enterText(search, 'person 2');
       await tester.pumpAndSettle();
@@ -1000,26 +1005,103 @@ void main() {
       await tester.enterText(search, '');
       await tester.pumpAndSettle();
       expect(named('Person 20'), findsNothing);
-      await tester.tap(find.text('Sort'));
+      expect(sortLit, findsOneWidget);
+      await tester.tap(sortLit);
       await tester.pumpAndSettle();
+      // In the group's order among equals.
       expect(named('Person 20'), findsOneWidget);
       expect(named('Person 25'), findsOneWidget);
+      expect(named('Person 26'), findsNothing);
       expect(named('Person 3'), findsNothing);
+      expect(sortLit, findsNothing);
     });
   }
 
-  testWidgets('an expense shows who lent to whom, not in words', (tester) async {
+  testWidgets('an expense shows who lent to whom, with its total or my share', (tester) async {
     final container = await _boot(tester, [
       groupProvider.overrideWith((ref, token) async => _group('Flat')),
       expensesProvider.overrideWith2((token) => _Listed(token, [_expense(1, 'Lunch')])),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
     await _go(tester, container, '/g/tok');
-    expect(find.text('\$5.00'), findsOneWidget);
+    expect(find.text('\$10.00'), findsOneWidget);
     expect(
       find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ana → Ben'),
       findsOneWidget,
     );
     expect(find.textContaining('lent'), findsNothing);
+
+    container.read(settingsProvider.notifier).setMyShare(true);
+    await tester.pumpAndSettle();
+    expect(find.text('\$5.00'), findsOneWidget);
+    expect(find.text('\$10.00'), findsNothing);
+  });
+
+  testWidgets('an expense I am not in still shows who and how much, in gray', (tester) async {
+    final group = _group('Flat');
+    final trio = Group(
+      token: group.token,
+      name: group.name,
+      currency: group.currency,
+      minorDigits: group.minorDigits,
+      createdAt: group.createdAt,
+      members: [...group.members, Member(id: 'c', name: 'Cleo', balance: BigInt.zero)],
+    );
+    final taxi = Expense(
+      id: 'e1',
+      kind: ExpenseKind.expense,
+      title: 'Taxi',
+      amount: BigInt.from(1000),
+      occurredAt: DateTime.utc(2026, 1, 2),
+      splitMethod: SplitMethod.equal,
+      payers: [ExpensePart('b', BigInt.from(1000))],
+      splits: [ExpensePart('b', BigInt.from(500)), ExpensePart('c', BigInt.from(500))],
+      createdAt: DateTime.utc(2026, 1, 2),
+      updatedAt: DateTime.utc(2026, 1, 2),
+      version: 1,
+    );
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async => trio),
+      expensesProvider.overrideWith2((token) => _Listed(token, [taxi])),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.text('not involved'), findsNothing);
+    expect(
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ben → Cleo'),
+      findsOneWidget,
+    );
+    final amount = tester.widget<Text>(find.text('\$10.00'));
+    expect(amount.style?.color, tester.element(find.text('\$10.00')).bColors.settled);
+
+    // Even with my share asked for, there is none, so the total stays.
+    container.read(settingsProvider.notifier).setMyShare(true);
+    await tester.pumpAndSettle();
+    expect(find.text('\$10.00'), findsOneWidget);
+  });
+
+  testWidgets('several payers add up to the amount', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await tester.tap(find.text('Several people'));
+    await tester.pumpAndSettle();
+    final parts = find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0');
+    expect(parts, findsNWidgets(2));
+    await tester.enterText(parts.at(0), '4');
+    await tester.enterText(parts.at(1), '6.5');
+    await tester.pumpAndSettle();
+    final amount = tester.widget<TextField>(
+      find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'),
+    );
+    expect(amount.controller?.text, '10.50');
+    expect(amount.readOnly, isTrue);
+    expect(find.textContaining('left'), findsNothing);
   });
 }

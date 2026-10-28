@@ -445,12 +445,6 @@ abstract class AppLocalizations {
   /// **'The amounts must add up to the total.'**
   String get errorExactTotal;
 
-  /// No description provided for @errorPercentTotal.
-  ///
-  /// In en, this message translates to:
-  /// **'The percentages must add up to 100%.'**
-  String get errorPercentTotal;
-
   /// No description provided for @errorPayersTotal.
   ///
   /// In en, this message translates to:
@@ -1399,18 +1393,6 @@ abstract class AppLocalizations {
   /// **'{amount} for you'**
   String effectForYou(String amount);
 
-  /// No description provided for @effectEven.
-  ///
-  /// In en, this message translates to:
-  /// **'even'**
-  String get effectEven;
-
-  /// No description provided for @effectNotInvolved.
-  ///
-  /// In en, this message translates to:
-  /// **'not involved'**
-  String get effectNotInvolved;
-
   /// No description provided for @paymentDelete.
   ///
   /// In en, this message translates to:
@@ -1464,6 +1446,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dinner, tickets, taxi…'**
   String get expenseTitleHint;
+
+  /// No description provided for @expenseAmountFromPayers.
+  ///
+  /// In en, this message translates to:
+  /// **'What everyone paid, added up'**
+  String get expenseAmountFromPayers;
 
   /// No description provided for @expenseNote.
   ///
@@ -2082,6 +2070,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A darker dark theme for OLED screens'**
   String get settingsPureBlackSubtitle;
+
+  /// No description provided for @settingsMyShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my share'**
+  String get settingsMyShare;
+
+  /// No description provided for @settingsMyShareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses show what you lent or borrowed instead of the total'**
+  String get settingsMyShareSubtitle;
 
   /// No description provided for @settingsLanguage.
   ///

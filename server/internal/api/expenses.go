@@ -31,7 +31,7 @@ type expenseData struct {
 	method          domain.SplitMethod
 	payers          map[string]int64
 	splits          map[string]int64
-	shares          map[string]string // entered percentage or weight, 4 decimals
+	shares          map[string]string // entered weight, 4 decimals
 }
 
 // Dates an expense may have: wide enough for any real one, and well inside
@@ -179,7 +179,7 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		if sp.Value != nil {
 			value = strings.TrimSpace(*sp.Value)
 		}
-		if d.method == domain.SplitPercent || d.method == domain.SplitShares {
+		if d.method == domain.SplitShares {
 			w, err := domain.ParseAmount(value, 4)
 			if err != nil || w < 0 || w > maxShareValue {
 				return nil, domain.ErrInvalidShare

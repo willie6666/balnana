@@ -85,6 +85,13 @@ class SettingsPage extends ConsumerWidget {
                 value: settings.pureBlack,
                 onChanged: notifier.setPureBlack,
               ),
+            GroupedSwitchTile(
+              icon: Icons.person_outline,
+              title: l10n.settingsMyShare,
+              subtitle: l10n.settingsMyShareSubtitle,
+              value: settings.myShare,
+              onChanged: notifier.setMyShare,
+            ),
           ],
         ),
         GroupedList(

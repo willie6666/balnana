@@ -188,9 +188,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorExactTotal => 'The amounts must add up to the total.';
 
   @override
-  String get errorPercentTotal => 'The percentages must add up to 100%.';
-
-  @override
   String get errorPayersTotal => 'What everyone paid must add up to the total.';
 
   @override
@@ -719,12 +716,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get effectEven => 'even';
-
-  @override
-  String get effectNotInvolved => 'not involved';
-
-  @override
   String get paymentDelete => 'Delete payment';
 
   @override
@@ -752,6 +743,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseTitleHint => 'Dinner, tickets, taxi…';
+
+  @override
+  String get expenseAmountFromPayers => 'What everyone paid, added up';
 
   @override
   String get expenseNote => 'Note';
@@ -1119,6 +1113,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPureBlackSubtitle => 'A darker dark theme for OLED screens';
+
+  @override
+  String get settingsMyShare => 'Show my share';
+
+  @override
+  String get settingsMyShareSubtitle => 'Expenses show what you lent or borrowed instead of the total';
 
   @override
   String get settingsLanguage => 'Language';

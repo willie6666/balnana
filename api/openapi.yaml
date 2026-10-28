@@ -1655,8 +1655,8 @@ components:
         value:
           type: string
           description: >-
-            Ignored for `equal`; an amount for `exact`; a percentage for
-            `percent`; a weight for `shares` (up to 4 decimals).
+            Ignored for `equal`; an amount for `exact`; a weight for
+            `shares` (up to 4 decimals).
     PayerInput:
       type: object
       required: [memberId, amount]
@@ -1735,7 +1735,7 @@ components:
           description: Defaults to now.
     SplitMethod:
       type: string
-      enum: [equal, exact, percent, shares]
+      enum: [equal, exact, shares]
     Expense:
       type: object
       required: [id, kind, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, version, hasReceipt, transactionType]
@@ -1810,7 +1810,7 @@ components:
           $ref: "#/components/schemas/Money"
         share:
           type: string
-          description: The percentage or weight entered, for `percent` and `shares`.
+          description: The weight entered, for `shares`.
     ExpensePage:
       type: object
       required: [items]
