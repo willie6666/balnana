@@ -151,9 +151,10 @@ class _EditorState extends ConsumerState<_Editor> {
   final _included = <String>{};
   final _values = <String, TextEditingController>{};
 
-  /// In a large group, what narrows the split's list.
+  /// In a large group, what narrows the split's list, and the order it was
+  /// last sorted in.
   final _splitQuery = TextEditingController();
-  bool _onlyIncluded = false;
+  List<String>? _splitOrder;
 
   /// A new photo of the receipt, and whether the saved one is to go; both
   /// wait for the expense to be saved.
@@ -176,8 +177,11 @@ class _EditorState extends ConsumerState<_Editor> {
         m,
   ];
 
-  /// Whether the group is too large to list everyone at once.
+  /// Whether the group is too large to list every payer at once.
   bool get _crowd => isCrowd(_people.length);
+
+  /// Whether the group is too large to list the whole split at once.
+  bool get _crowdSplit => isCrowd(_people.length, _splitLimit);
 
   @override
   void initState() {
@@ -209,13 +213,15 @@ class _EditorState extends ConsumerState<_Editor> {
           _payersShown.add(p.memberId);
         }
       }
-      _method = e.splitMethod;
+      // Percentages are no longer offered: an old split by percent opens
+      // as the amounts it came to.
+      _method = e.splitMethod == SplitMethod.percent ? SplitMethod.exact : e.splitMethod;
       for (final s in e.splits) {
         _included.add(s.memberId);
         _values[s.memberId]?.text = switch (_method) {
           SplitMethod.equal => '',
-          SplitMethod.exact => formatAmount(s.amount, _digits),
-          SplitMethod.percent || SplitMethod.shares => s.share ?? '',
+          SplitMethod.exact || SplitMethod.percent => formatAmount(s.amount, _digits),
+          SplitMethod.shares => s.share ?? '',
         };
       }
     }
@@ -697,15 +703,10 @@ class _EditorState extends ConsumerState<_Editor> {
                 FormSection(_received ? l10n.expenseReceivedByLabel : l10n.expenseSplit),
                 SegmentedButton<SplitMethod>(
                   showSelectedIcon: false,
-                  // Four segments share a phone's width: tighter padding keeps each label on one line.
-                  style: const ButtonStyle(
-                    padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: BSpace.s8)),
-                  ),
                   segments: [
                     for (final (method, label) in [
                       (SplitMethod.equal, l10n.splitEqual),
                       (SplitMethod.exact, l10n.splitExact),
-                      (SplitMethod.percent, l10n.splitPercent),
                       (SplitMethod.shares, l10n.splitShares),
                     ])
                       ButtonSegment(
@@ -718,7 +719,7 @@ class _EditorState extends ConsumerState<_Editor> {
                 ),
                 const SizedBox(height: BSpace.s12),
                 if (preview.shares case final shares?) SplitBar(people: _people, shares: shares),
-                if (_crowd)
+                if (_crowdSplit)
                   _CrowdSplit(state: this, shares: preview.shares, symbol: symbol)
                 else
                   for (final m in _people)
@@ -959,11 +960,7 @@ class _SplitRow extends StatelessWidget {
                     hintText: '0',
                     prefixIcon: method == SplitMethod.exact ? FieldAffix(symbol) : null,
                     prefixIconConstraints: const BoxConstraints(),
-                    suffixIcon: switch (method) {
-                      SplitMethod.percent => const FieldAffix('%', end: true),
-                      SplitMethod.shares => const FieldAffix('×', end: true),
-                      _ => null,
-                    },
+                    suffixIcon: method == SplitMethod.shares ? const FieldAffix('×', end: true) : null,
                     suffixIconConstraints: const BoxConstraints(),
                   ),
                 ),
@@ -976,8 +973,12 @@ class _SplitRow extends StatelessWidget {
   }
 }
 
-/// The split's people in a large group: a search, how many are included
-/// with All and None, and the rows that match.
+/// How many of the split's people a large group lists before "Show more".
+const _splitLimit = 6;
+
+/// The split's people in a large group: a search, a sort that brings who is
+/// included and the largest shares to the top, All and None, and the rows
+/// that match.
 class _CrowdSplit extends StatelessWidget {
   const _CrowdSplit({required this.state, required this.shares, required this.symbol});
 
@@ -989,15 +990,24 @@ class _CrowdSplit extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final s = state;
+    // Sorted only when asked, so a row does not move away as it is ticked.
+    final order = s._splitOrder;
+    final people = order == null ? s._people : [for (final id in order) ?s._group.member(id)];
     final matching = [
-      for (final m in s._people)
+      for (final m in people)
         if (nameMatches(m.name, s._splitQuery.text)) m,
     ];
-    final shown = [
-      for (final m in matching)
-        if (!s._onlyIncluded || s._included.contains(m.id)) m,
-    ];
-    final included = s._people.where((m) => s._included.contains(m.id)).length;
+    void sort() => s._update(() {
+      BigInt share(Member m) => s._included.contains(m.id) ? (shares?[m.id] ?? BigInt.zero) : BigInt.from(-1);
+      final at = {for (final (i, m) in s._people.indexed) m.id: i};
+      s._splitOrder = [
+        for (final m in [...s._people]..sort((a, b) {
+          final bySize = share(b).compareTo(share(a));
+          return bySize != 0 ? bySize : at[a.id]!.compareTo(at[b.id]!);
+        }))
+          m.id,
+      ];
+    });
     // Both act on the people the search shows; people who left can only be taken out.
     void tickAll(bool on) => s._update(() {
       for (final m in matching) {
@@ -1016,28 +1026,26 @@ class _CrowdSplit extends StatelessWidget {
         const SizedBox(height: BSpace.s8),
         Row(
           children: [
-            Flexible(
-              child: FilterChip(
-                label: Text(l10n.crowdIncluded(included, s._people.length), overflow: TextOverflow.ellipsis),
-                tooltip: l10n.crowdOnlyIncluded,
-                selected: s._onlyIncluded,
-                onSelected: (on) => s._update(() => s._onlyIncluded = on),
-              ),
+            TextButton.icon(
+              onPressed: sort,
+              icon: const Icon(Icons.sort),
+              label: Text(l10n.crowdSort),
             ),
             const Spacer(),
             TextButton(onPressed: () => tickAll(true), child: Text(l10n.crowdAll)),
             TextButton(onPressed: () => tickAll(false), child: Text(l10n.crowdNone)),
           ],
         ),
-        if (shown.isEmpty)
+        if (matching.isEmpty)
           Padding(
             padding: const EdgeInsets.all(BSpace.s24),
             child: Text(l10n.crowdNoMatch, textAlign: TextAlign.center),
           )
         else
           ShowMore(
+            limit: _splitLimit,
             children: [
-              for (final m in shown)
+              for (final m in matching)
                 _SplitRow(key: ValueKey(m.id), state: s, member: m, share: shares?[m.id], symbol: symbol),
             ],
           ),
@@ -1075,24 +1083,8 @@ class _SplitSummary extends StatelessWidget {
           currency: s._group.currency,
           symbol: s._group.symbol,
         );
-      case SplitMethod.percent:
-        var sum = BigInt.zero;
-        for (final id in s._included) {
-          try {
-            sum += parseInput(s._values[id]!.text, 4) ?? BigInt.zero;
-          } on MoneyException {
-            // Too large to be a percentage; the total below says so.
-            sum += maxMinor;
-          }
-        }
-        final left = BigInt.from(1000000) - sum;
-        if (left == BigInt.zero) return const SizedBox.shrink();
-        final pct = formatAmount(left.abs(), 4).replaceFirst(RegExp(r'\.?0+$'), '');
-        return _Note(
-          text: left.isNegative ? l10n.splitPercentOver(pct) : l10n.splitPercentLeft(pct),
-          error: true,
-        );
       case SplitMethod.equal:
+      case SplitMethod.percent:
       case SplitMethod.shares:
         if (error == null) return const SizedBox.shrink();
         return _Note(text: moneyErrorMessage(l10n, error!), error: true);

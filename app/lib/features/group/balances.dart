@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -88,12 +86,7 @@ class BalanceCard extends ConsumerWidget {
     final largest = members.fold(BigInt.zero, (a, m) => m.balance.abs() > a ? m.balance.abs() : a);
     final balances = ref.watchCurrent(balancesProvider(group.token)).value;
     // Suggestions that involve this device's member first.
-    final transfers = [
-      ...?balances?.transfers.where((t) => t.from == myId || t.to == myId),
-      ...?balances?.transfers.where((t) => t.from != myId && t.to != myId),
-    ];
-    final mine = balances?.transfers.where((t) => t.from == myId || t.to == myId).length ?? 0;
-    final crowd = isCrowd(members.length);
+    final transfers = _mineFirst(balances?.transfers ?? const [], myId);
 
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(BShape.xl)),
@@ -111,15 +104,11 @@ class BalanceCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (crowd) ...[
+                  if (isCrowd(members.length, _balanceLimit)) ...[
                     for (final m in _condensed(members, myId)) _beam(context, group, m, myId, largest),
-                    Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: TextButton.icon(
-                        onPressed: () => _showAllBalances(context, group, members, myId, largest),
-                        icon: const Icon(Icons.expand_more),
-                        label: Text(l10n.crowdShowAll(members.length)),
-                      ),
+                    _ShowAll(
+                      count: members.length,
+                      onPressed: () => _showAllBalances(context, group, members, myId, largest),
                     ),
                   ] else
                     for (final m in members) _beam(context, group, m, myId, largest),
@@ -128,14 +117,10 @@ class BalanceCard extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(BSpace.s4, BSpace.s12, BSpace.s4, BSpace.s8),
                       child: Text(l10n.suggestedPayments, style: text.labelLarge?.copyWith(color: scheme.primary)),
                     ),
-                    if (crowd)
-                      // Payments that involve this device's member, or the first few.
-                      ShowMore(
-                        limit: math.max(mine, 3),
-                        children: [for (final t in transfers) _TransferTile(group: group, transfer: t, me: myId)],
-                      )
-                    else
-                      for (final t in transfers) _TransferTile(group: group, transfer: t, me: myId),
+                    for (final t in transfers.take(_transferLimit))
+                      _TransferTile(group: group, transfer: t, me: myId),
+                    if (transfers.length > _transferLimit)
+                      _ShowAll(count: transfers.length, onPressed: () => _showAllTransfers(context, group)),
                   ],
                 ],
               ),
@@ -155,8 +140,35 @@ Widget _beam(BuildContext context, Group group, Member m, String? myId, BigInt l
   amount: formatMoney(context, m.balance, group.minorDigits, group.currency, signed: true, symbol: group.symbol),
 );
 
-/// How many balances a large group shows before "Show all".
-const _condensedBalances = 6;
+/// How many balances show before "Show all".
+const _balanceLimit = 6;
+
+/// How many suggested payments show before "Show all".
+const _transferLimit = 3;
+
+/// Suggestions that involve this device's member first.
+List<Transfer> _mineFirst(List<Transfer> transfers, String? myId) => [
+  ...transfers.where((t) => t.from == myId || t.to == myId),
+  ...transfers.where((t) => t.from != myId && t.to != myId),
+];
+
+/// Opens the whole of a list cut short.
+class _ShowAll extends StatelessWidget {
+  const _ShowAll({required this.count, required this.onPressed});
+
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: TextButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.expand_more),
+      label: Text(context.l10n.crowdShowAll(count)),
+    ),
+  );
+}
 
 /// This device's member, then whoever is furthest from settled.
 List<Member> _condensed(List<Member> members, String? myId) {
@@ -166,7 +178,7 @@ List<Member> _condensed(List<Member> members, String? myId) {
   ]..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
   return [
     ...members.where((m) => m.id == myId),
-    ...others.take(_condensedBalances - (members.any((m) => m.id == myId) ? 1 : 0)),
+    ...others.take(_balanceLimit - (members.any((m) => m.id == myId) ? 1 : 0)),
   ];
 }
 
@@ -177,28 +189,55 @@ Future<void> _showAllBalances(
   List<Member> members,
   String? myId,
   BigInt largest,
+) => _showSearchSheet(
+  context,
+  context.l10n.crowdBalances,
+  (context, ref, query) => [
+    for (final m in members)
+      if (nameMatches(m.name, query)) _beam(context, group, m, myId, largest),
+  ],
+);
+
+/// Every suggested payment in a searchable sheet, kept current as payments
+/// are recorded from it.
+Future<void> _showAllTransfers(BuildContext context, Group group) => _showSearchSheet(
+  context,
+  context.l10n.suggestedPayments,
+  (context, ref, query) {
+    final myId = myMemberId(ref, group.token);
+    final transfers = ref.watchCurrent(balancesProvider(group.token)).value?.transfers ?? const [];
+    bool matches(String id) => nameMatches(group.member(id)?.name ?? '', query);
+    return [
+      for (final t in _mineFirst(transfers, myId))
+        if (matches(t.from) || matches(t.to)) _TransferTile(group: group, transfer: t, me: myId),
+    ];
+  },
+);
+
+Future<void> _showSearchSheet(
+  BuildContext context,
+  String title,
+  List<Widget> Function(BuildContext context, WidgetRef ref, String query) items,
 ) => showModalBottomSheet<void>(
   context: context,
   useRootNavigator: true,
   isScrollControlled: true,
   useSafeArea: true,
   showDragHandle: true,
-  builder: (context) => _AllBalances(group: group, members: members, myId: myId, largest: largest),
+  builder: (context) => _SearchSheet(title: title, items: items),
 );
 
-class _AllBalances extends StatefulWidget {
-  const _AllBalances({required this.group, required this.members, required this.myId, required this.largest});
+class _SearchSheet extends ConsumerStatefulWidget {
+  const _SearchSheet({required this.title, required this.items});
 
-  final Group group;
-  final List<Member> members;
-  final String? myId;
-  final BigInt largest;
+  final String title;
+  final List<Widget> Function(BuildContext context, WidgetRef ref, String query) items;
 
   @override
-  State<_AllBalances> createState() => _AllBalancesState();
+  ConsumerState<_SearchSheet> createState() => _SearchSheetState();
 }
 
-class _AllBalancesState extends State<_AllBalances> {
+class _SearchSheetState extends ConsumerState<_SearchSheet> {
   final _query = TextEditingController();
 
   @override
@@ -211,10 +250,7 @@ class _AllBalancesState extends State<_AllBalances> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final shown = [
-      for (final m in widget.members)
-        if (nameMatches(m.name, _query.text)) m,
-    ];
+    final shown = widget.items(context, ref, _query.text);
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.85,
       child: Padding(
@@ -224,7 +260,7 @@ class _AllBalancesState extends State<_AllBalances> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
-              child: Text(l10n.crowdBalances, style: text.titleLarge),
+              child: Text(widget.title, style: text.titleLarge),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(BSpace.s16, BSpace.s12, BSpace.s16, BSpace.s8),
@@ -239,7 +275,7 @@ class _AllBalancesState extends State<_AllBalances> {
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(BSpace.s16, 0, BSpace.s16, BSpace.s16),
                       itemCount: shown.length,
-                      itemBuilder: (context, i) => _beam(context, widget.group, shown[i], widget.myId, widget.largest),
+                      itemBuilder: (context, i) => shown[i],
                     ),
             ),
           ],

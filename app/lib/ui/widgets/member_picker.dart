@@ -5,12 +5,12 @@ import '../../data/models.dart';
 import '../tokens.dart';
 import 'member_avatar.dart';
 
-/// Up to this many people, every list shows everyone at once. Larger groups
-/// get search, pickers and "Show all" in their place.
+/// Up to this many people, a list shows everyone at once. Larger groups get
+/// search, pickers and "Show all" in its place. Some lists set their own.
 const crowdSize = 12;
 
-/// Whether [count] people are too many to show all at once.
-bool isCrowd(int count) => count > crowdSize;
+/// Whether [count] people are more than a list shows at once.
+bool isCrowd(int count, [int limit = crowdSize]) => count > limit;
 
 /// Whether [name] holds what was typed in a search, ignoring case.
 bool nameMatches(String name, String query) {

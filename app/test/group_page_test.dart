@@ -14,6 +14,7 @@ import 'package:balnana/data/api.dart' show PushSubscription, deviceTimeZone;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
+import 'package:balnana/features/expense/expense_editor_page.dart';
 import 'package:balnana/features/expense/receipt.dart';
 import 'package:balnana/features/group/group_settings_page.dart';
 import 'package:dio/dio.dart';
@@ -936,6 +937,10 @@ void main() {
   for (final count in [2, 30]) {
     testWidgets('$count people get the ${count > 2 ? 'condensed' : 'whole'} lists', (tester) async {
       final crowd = count > 2;
+      // Tall enough for the suggested payments below the balances.
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       final container = await _boot(
         tester,
         [
@@ -945,24 +950,76 @@ void main() {
         ],
         balances: Balances(
           nets: {'a': BigInt.from(-100), 'b': BigInt.from(100)},
-          transfers: [Transfer('a', 'b', BigInt.from(100))],
+          transfers: [
+            Transfer('a', 'b', BigInt.from(100)),
+            if (crowd)
+              for (var i = 3; i <= 6; i++) Transfer('p$i', 'b', BigInt.from(100)),
+          ],
         ),
       );
       await _go(tester, container, '/g/tok');
       expect(find.text('Show all $count'), crowd ? findsOneWidget : findsNothing);
+      if (crowd) {
+        // Three suggestions, then all of them in a sheet that can be searched.
+        expect(find.text('Record'), findsNWidgets(3));
+        await tester.tap(find.text('Show all 5'));
+        await tester.pumpAndSettle();
+        final sheet = find.byType(BottomSheet);
+        expect(find.descendant(of: sheet, matching: find.text('Record')), findsNWidgets(5));
+        await tester.enterText(find.descendant(of: sheet, matching: find.byType(EditableText)), 'person 6');
+        await tester.pumpAndSettle();
+        expect(find.descendant(of: sheet, matching: find.text('Record')), findsOneWidget);
+        Navigator.of(tester.element(sheet)).pop();
+        await tester.pumpAndSettle();
+      }
 
       await _go(tester, container, '/g/tok/expenses/new');
-      expect(find.text('Someone else'), crowd ? findsOneWidget : findsNothing);
-      expect(find.text('Search people'), crowd ? findsOneWidget : findsNothing);
-      expect(find.text('Person 30', skipOffstage: false), findsNothing);
+      final editor = find.byType(ExpenseEditorPage);
+      Finder named(String name) => find.descendant(of: editor, matching: find.text(name), skipOffstage: false);
+      expect(named('Someone else'), crowd ? findsOneWidget : findsNothing);
+      expect(named('Search people'), crowd ? findsOneWidget : findsNothing);
+      expect(named('Percent'), findsNothing);
       if (!crowd) return;
 
-      // The split lists a dozen until asked, and the search finds the rest.
-      expect(find.text('Person 12', skipOffstage: false), findsOneWidget);
-      await tester.enterText(find.widgetWithText(SearchBar, 'Search people'), 'person 30');
+      // The split lists six until asked, and the search finds the rest.
+      expect(named('Person 6'), findsOneWidget);
+      expect(named('Person 7'), findsNothing);
+      final search = find.descendant(of: editor, matching: find.widgetWithText(SearchBar, 'Search people'));
+      await tester.enterText(search, 'person 30');
       await tester.pumpAndSettle();
-      expect(find.text('Person 30', skipOffstage: false), findsOneWidget);
-      expect(find.text('Person 12', skipOffstage: false), findsNothing);
+      expect(named('Person 30'), findsOneWidget);
+      expect(named('Person 6'), findsNothing);
+
+      // Sorting brings who is included to the top.
+      await tester.enterText(search, '');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('None'));
+      await tester.enterText(search, 'person 2');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('All'));
+      await tester.enterText(search, '');
+      await tester.pumpAndSettle();
+      expect(named('Person 20'), findsNothing);
+      await tester.tap(find.text('Sort'));
+      await tester.pumpAndSettle();
+      expect(named('Person 20'), findsOneWidget);
+      expect(named('Person 25'), findsOneWidget);
+      expect(named('Person 3'), findsNothing);
     });
   }
+
+  testWidgets('an expense shows who lent to whom, not in words', (tester) async {
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expensesProvider.overrideWith2((token) => _Listed(token, [_expense(1, 'Lunch')])),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.text('\$5.00'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ana → Ben'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('lent'), findsNothing);
+  });
 }

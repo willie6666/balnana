@@ -714,16 +714,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String effectYouLent(String amount) {
-    return 'you lent $amount';
-  }
-
-  @override
-  String effectYouBorrowed(String amount) {
-    return 'you borrowed $amount';
-  }
-
-  @override
   String effectForYou(String amount) {
     return '$amount for you';
   }
@@ -860,9 +850,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitExact => 'Amounts';
 
   @override
-  String get splitPercent => 'Percent';
-
-  @override
   String get splitShares => 'Shares';
 
   @override
@@ -873,16 +860,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String splitOver(String amount) {
     return '$amount too much';
-  }
-
-  @override
-  String splitPercentLeft(String percent) {
-    return '$percent% left to assign';
-  }
-
-  @override
-  String splitPercentOver(String percent) {
-    return '$percent% too much';
   }
 
   @override
@@ -2164,14 +2141,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String crowdIncluded(int count, int total) {
-    return '$count of $total included';
-  }
-
-  @override
-  String get crowdOnlyIncluded => 'Only those included';
-
-  @override
   String crowdShowMore(int count) {
     String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count more', one: '1 more');
     return '$_temp0';
@@ -2179,6 +2148,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crowdShowFewer => 'Show fewer';
+
+  @override
+  String get crowdSort => 'Sort';
 
   @override
   String crowdShowAll(int count) {

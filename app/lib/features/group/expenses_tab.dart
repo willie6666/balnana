@@ -433,9 +433,11 @@ class ExpenseTile extends StatelessWidget {
       subtitle = place == null ? '$time · $paidBy' : '$time · $paidBy · $place';
     }
 
-    // What it means for this device's member.
+    // What it means for this device's member: in words, or as who lent to
+    // whom and how much.
     String? effect;
     Color? effectColor;
+    _Lending? lending;
     if (me != null) {
       final paid = e.paidBy(me!), owed = e.owedBy(me!), net = paid - owed;
       if (e.isPayment) {
@@ -446,9 +448,9 @@ class ExpenseTile extends StatelessWidget {
       } else if (e.isReceived && net < BigInt.zero) {
         (effect, effectColor) = (l10n.effectYouReceived(money(-net)), c.owe);
       } else if (net > BigInt.zero) {
-        (effect, effectColor) = (l10n.effectYouLent(money(net)), c.owed);
+        lending = _Lending(group, e, money(net), c.owed);
       } else if (net < BigInt.zero) {
-        (effect, effectColor) = (l10n.effectYouBorrowed(money(-net)), c.owe);
+        lending = _Lending(group, e, money(-net), c.owe);
       } else {
         (effect, effectColor) = (paid > BigInt.zero ? l10n.effectEven : l10n.effectNotInvolved, c.settled);
       }
@@ -505,7 +507,9 @@ class ExpenseTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: BSpace.s8),
-              if (effect != null)
+              if (lending != null)
+                lending
+              else if (effect != null)
                 ConstrainedBox(
                   // Narrow on phones, so the effect wraps under its label and leaves the title room.
                   constraints: BoxConstraints(maxWidth: WindowSize.of(context) == WindowSize.compact ? 112 : 160),
@@ -520,6 +524,89 @@ class ExpenseTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// An expense's amount for this device's member between who lent it, at the
+/// start, and who borrowed it, at the end.
+class _Lending extends StatelessWidget {
+  const _Lending(this.group, this.expense, this.amount, this.color);
+
+  final Group group;
+  final Expense expense;
+  final String amount;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = expense;
+    final net = {for (final m in {...e.payers, ...e.splits}.map((p) => p.memberId)) m: e.paidBy(m) - e.owedBy(m)};
+    List<Member> where(bool Function(BigInt net) test) => [
+      for (final MapEntry(:key, :value) in net.entries)
+        if (test(value)) ?group.member(key),
+    ];
+    final lenders = where((v) => v > BigInt.zero), borrowers = where((v) => v < BigInt.zero);
+    return Semantics(
+      label: '${lenders.map((m) => m.name).join(', ')} → ${borrowers.map((m) => m.name).join(', ')}',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(child: _Faces(lenders)),
+          const SizedBox(width: BSpace.s8),
+          Text(amount, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
+          const SizedBox(width: BSpace.s8),
+          ExcludeSemantics(child: _Faces(borrowers)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Up to three people's avatars overlapping, the last one counting the rest.
+class _Faces extends StatelessWidget {
+  const _Faces(this.members);
+
+  final List<Member> members;
+
+  static const _size = 24.0, _step = 16.0, _most = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final shown = members.length > _most ? _most - 1 : members.length;
+    final rest = members.length - shown;
+    final count = shown + (rest > 0 ? 1 : 0);
+    Widget ring(Widget child) => Container(
+      padding: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(color: scheme.surface, shape: BoxShape.circle),
+      child: child,
+    );
+    return SizedBox(
+      width: count == 0 ? 0 : _size + 3 + (count - 1) * _step,
+      height: _size + 3,
+      child: Stack(
+        children: [
+          for (var i = 0; i < shown; i++)
+            PositionedDirectional(start: i * _step, child: ring(MemberAvatar(member: members[i], size: _size))),
+          if (rest > 0)
+            PositionedDirectional(
+              start: shown * _step,
+              child: ring(
+                Container(
+                  width: _size,
+                  height: _size,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: scheme.secondaryContainer, shape: BoxShape.circle),
+                  child: Text(
+                    '+$rest',
+                    style: TextStyle(color: scheme.onSecondaryContainer, fontSize: 10, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

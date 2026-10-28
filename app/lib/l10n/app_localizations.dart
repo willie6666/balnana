@@ -1393,18 +1393,6 @@ abstract class AppLocalizations {
   /// **'you received {amount}'**
   String effectYouReceived(String amount);
 
-  /// No description provided for @effectYouLent.
-  ///
-  /// In en, this message translates to:
-  /// **'you lent {amount}'**
-  String effectYouLent(String amount);
-
-  /// No description provided for @effectYouBorrowed.
-  ///
-  /// In en, this message translates to:
-  /// **'you borrowed {amount}'**
-  String effectYouBorrowed(String amount);
-
   /// No description provided for @effectForYou.
   ///
   /// In en, this message translates to:
@@ -1663,12 +1651,6 @@ abstract class AppLocalizations {
   /// **'Amounts'**
   String get splitExact;
 
-  /// No description provided for @splitPercent.
-  ///
-  /// In en, this message translates to:
-  /// **'Percent'**
-  String get splitPercent;
-
   /// No description provided for @splitShares.
   ///
   /// In en, this message translates to:
@@ -1686,18 +1668,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{amount} too much'**
   String splitOver(String amount);
-
-  /// No description provided for @splitPercentLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% left to assign'**
-  String splitPercentLeft(String percent);
-
-  /// No description provided for @splitPercentOver.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% too much'**
-  String splitPercentOver(String percent);
 
   /// No description provided for @conflictTitle.
   ///
@@ -3877,18 +3847,6 @@ abstract class AppLocalizations {
   /// **'{count} of {total} chosen'**
   String crowdChosen(int count, int total);
 
-  /// No description provided for @crowdIncluded.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} of {total} included'**
-  String crowdIncluded(int count, int total);
-
-  /// No description provided for @crowdOnlyIncluded.
-  ///
-  /// In en, this message translates to:
-  /// **'Only those included'**
-  String get crowdOnlyIncluded;
-
   /// No description provided for @crowdShowMore.
   ///
   /// In en, this message translates to:
@@ -3900,6 +3858,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show fewer'**
   String get crowdShowFewer;
+
+  /// No description provided for @crowdSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get crowdSort;
 
   /// No description provided for @crowdShowAll.
   ///
