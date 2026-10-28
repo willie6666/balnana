@@ -8,16 +8,16 @@
 
 <p align="center">Android &amp; web · Self-hosted · AGPL-3.0</p>
 
-Balnana is a self-hosted group expense splitter for Android and the web. Share a
-private group link with friends, add what everyone paid, and Balnana works out the
-fewest payments that settle everyone up.
+Balnana splits shared costs for trips, flatmates and nights out. Share a private
+link with your group, record who paid for what, and Balnana works out who owes
+whom and the payments that settle everyone up. You run it on your own server.
 
 > Status: early development, preparing the first release.
 
 ## A weekend in Kyoto
 
-Four friends, a weekend in Kyoto, and ¥123,400 in shared expenses. Track every
-purchase, see who owes whom, and understand where the money went.
+Four friends, one weekend and ¥123,400 in shared costs. Every purchase is
+tracked, every balance is clear, and the statistics show where the money went.
 
 <table>
   <tr>
@@ -32,27 +32,28 @@ purchase, see who owes whom, and understand where the money went.
   </tr>
 </table>
 
-Actual Android emulator screenshots with fictional demo data.
+Screenshots from the Android emulator, with made-up demo data.
 
 ## Features
 
-- **Exact money.** Amounts are stored and computed as whole minor units (cents),
-  never as floating point.
-- **Private group links.** In link mode a group's link is all anyone needs. In
-  accounts mode people sign in with a password, Google or any OpenID Connect
-  provider.
-- **Flexible splits.** Split equally, by exact amounts or by shares,
-  with several payers per expense.
-- **Simplified debts.** Balances turn into the fewest payments that settle the
-  group.
-- **Live updates.** Open groups update as others add expenses, and phones get push
-  notifications over UnifiedPush, with no Firebase SDK in the app.
-- **Statistics, receipts and exports.** Spending by category, member and month, receipt
-  photos, and CSV export.
-- **Import from Settle Up.** Bring a group over from its CSV export, balances
-  intact.
-- **Yours to run.** One Docker Compose file, a PostgreSQL database and a web page to
-  administer the server.
+- **Flexible splits.** Split equally, by exact amounts or by shares, with
+  several payers per expense. Record refunds and income as well as spending.
+- **Simple settling up.** Balnana suggests at most one payment fewer than the
+  number of people who owe or are owed, and the same balances always give the
+  same suggestions.
+- **Exact money.** Amounts are kept in the currency's smallest unit, such as
+  cents, never as floating point, so totals always add up.
+- **Links or accounts.** In link mode, a group's private link is all anyone
+  needs. In accounts mode, people sign in with a password, Google or any OpenID
+  Connect provider.
+- **Live updates.** Open groups refresh as others add expenses, and phones get
+  push notifications over UnifiedPush, with no Firebase SDK in the app.
+- **Statistics, receipts and export.** See spending by category, member and
+  month, attach receipt photos, and export to CSV.
+- **Import from Settle Up.** Bring a group over from its CSV export with the
+  balances intact.
+- **Yours to run.** One Docker Compose file, a PostgreSQL database and a web
+  page for administering the server.
 
 ## Quick start
 
@@ -64,19 +65,20 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://localhost:8080`. The first visit asks you to choose the administrator
-password, so do that right away. [.env.example](.env.example) lists every setting.
+Open `http://localhost:8080`. The first visit asks you to choose the
+administrator password, so do that right away. Every setting is listed in
+[.env.example](.env.example).
 
 ## Built with
 
-A Go server (`server/`) with PostgreSQL, and a Flutter app (`app/`) for Android and
-the web. `api/openapi.yaml` is the contract between them.
+A Go server (`server/`) backed by PostgreSQL, and a Flutter app (`app/`) for
+Android and the web. The API contract between them is `api/openapi.yaml`.
 
 ## License
 
 Balnana is free software, licensed under the
 [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
 
-You may run, study, change and share it. If you run a modified version as a service
-that other people use over a network, you must offer those users the source code of
-your version under the same license.
+You may run, study, change and share it. If you run a modified version as a
+service that others use over a network, you must offer those users the source
+code of your version under the same license.

@@ -85,17 +85,35 @@ void main() {
   });
 
   test('keeps reading POSTs by body, and nothing else that writes', () async {
-    await dio.post<Object?>('/groups/summaries', data: {'tokens': ['a']});
+    await dio.post<Object?>(
+      '/groups/summaries',
+      data: {
+        'tokens': ['a'],
+      },
+    );
     await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
     await saved();
     server.down = true;
-    final summaries = await dio.post<Object?>('/groups/summaries', data: {'tokens': ['a']});
+    final summaries = await dio.post<Object?>(
+      '/groups/summaries',
+      data: {
+        'tokens': ['a'],
+      },
+    );
     expect((summaries.data as Map)['path'], '/api/v1/groups/summaries');
     await expectLater(
-      dio.post<Object?>('/groups/summaries', data: {'tokens': ['b']}),
+      dio.post<Object?>(
+        '/groups/summaries',
+        data: {
+          'tokens': ['b'],
+        },
+      ),
       throwsA(isA<DioException>()),
     );
-    await expectLater(dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'}), throwsA(isA<DioException>()));
+    await expectLater(
+      dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'}),
+      throwsA(isA<DioException>()),
+    );
   });
 
   test('an error from the server is not covered up', () async {
@@ -107,6 +125,24 @@ void main() {
       throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 404)),
     );
     expect(offline, everyElement(isFalse));
+  });
+
+  test('an answer expires while the database stays open', () async {
+    await dio.get<Object?>('/g/tok');
+    await saved();
+    // Opening already ran its cleanup. Age the response without reopening.
+    await db.customStatement('update cached_responses set saved_at = ?', [
+      DateTime.now().subtract(CacheDb.keep + const Duration(seconds: 1)).millisecondsSinceEpoch ~/ 1000,
+    ]);
+    server.down = true;
+    await expectLater(dio.get<Object?>('/g/tok'), throwsA(isA<DioException>()));
+    expect(offline, everyElement(isFalse));
+    // A new network answer can refresh the same key normally.
+    server.down = false;
+    await dio.get<Object?>('/g/tok');
+    await saved();
+    server.down = true;
+    expect((await dio.get<Object?>('/g/tok')).extra['savedAt'], isA<DateTime>());
   });
 
   test('signing in or out forgets what the last account saw', () async {
@@ -146,7 +182,8 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      final session = container.read(sessionProvider.notifier)..set('a', from: container.read(identityProvider));
+      final session = container.read(sessionProvider.notifier)
+        ..set('a', from: container.read(identityProvider));
       Dio client(String? token) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
         ..httpClientAdapter = server
         ..options.headers['Authorization'] = token
@@ -188,7 +225,9 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           builder: (context, child) => OfflineBar(child: child!),
-          home: Consumer(builder: (context, ref, _) => Text('${ref.watch(serverInfoProvider).value?.version}')),
+          home: Consumer(
+            builder: (context, ref, _) => Text('${ref.watch(serverInfoProvider).value?.version}'),
+          ),
         ),
       ),
     );

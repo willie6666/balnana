@@ -15,8 +15,10 @@ info:
     exist.
 
     Accounts mode (BALNANA_AUTH_MODE=accounts): sign in with /auth/login or
-    /auth/register. The web app asks for a session cookie (`cookie: true`);
-    other clients get a token to send as `Authorization: Bearer <token>`.
+    /auth/register. The same-origin web app asks for a session cookie
+    (`cookie: true`); Android and cross-origin web apps get a token to send as
+    `Authorization: Bearer <token>`. Sessions last 90 days and extend on use,
+    at most once per hour; there is no separate refresh endpoint.
     Group endpoints then need a session and membership in the group, unless
     the group has link access, in which case its link alone is enough, as in
     link mode. Without a session they answer 401 `sign_in_required`; for a
@@ -440,10 +442,12 @@ paths:
       description: >-
         Signs in to the account with this provider identity. Otherwise an
         account with the same address, when the provider has verified it,
-        gets the identity added; failing both, a new account is made when
-        sign-up allows it. Errors: `oauth_failed`, `oauth_cancelled`,
-        `email_taken` (an account has the address but has not confirmed it),
-        `signup_closed`.
+        gets the identity added. If that account never verified the address,
+        its owner reclaims it: its password, previous sessions, emailed tokens
+        and other OAuth identities are removed. Failing a match, a new account
+        is made when sign-up allows it. Identities are scoped to provider,
+        issuer and subject. Errors include `oauth_failed`, `oauth_cancelled`
+        and `signup_closed`.
       parameters:
         - name: code
           in: query
@@ -473,7 +477,7 @@ paths:
   /auth/oauth/exchange:
     post:
       operationId: exchangeOAuthCode
-      summary: Trade the code the Android app got back for a session
+      summary: Trade an Android or cross-origin web sign-in code for a session
       requestBody:
         required: true
         content:
@@ -714,7 +718,8 @@ paths:
         member when the group has no owner left, or anyone the link opens it
         for when no account is a member any more. Link mode: anyone with the
         link. The group is gone for everyone at once; the server keeps it
-        archived for 30 days, when the administrator can still restore it,
+        archived for 30 days, when an operator with database access can still
+        restore it by clearing archived_at (there is no restore API or UI),
         then deletes it for good.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
@@ -911,8 +916,9 @@ paths:
       operationId: deleteCategory
       summary: Delete one of the group's own categories
       description: >-
-        Its expenses are left without a category. Built-in categories are
-        hidden instead; error `builtin_category`.
+        Its expenses are left without a category. Deleting a built-in category
+        returns 400 `builtin_category` without changing it; use PATCH with
+        `hidden: true` to hide it instead.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1197,8 +1203,9 @@ paths:
       operationId: exportCsv
       summary: Every expense and payment of the group as a spreadsheet
       description: >-
-        UTF-8 CSV with a byte order mark, oldest first. Columns: date, title,
-        category, type (`expense` or `payment`), amount, currency, note, then
+        UTF-8 CSV with a byte order mark, oldest first. Fixed columns, in order:
+        Date, Title, Category, Type (`expense`, `payment`, `refund` or `income`),
+        Amount, Currency, Note, Location, Latitude, Longitude, then
         one per member with what the entry did to their balance (paid minus
         share), so each member column adds up to their balance.
       parameters:
@@ -1932,6 +1939,7 @@ components:
           description: >-
             group.created, group.imported, group.updated, group.link_reset,
             member.added, member.updated, member.removed, member.joined,
+            category.added, category.updated, category.deleted,
             expense.created, expense.updated, expense.deleted,
             expense.restored, receipt.added, receipt.removed. Payments use
             the expense actions with `kind: payment` in the payload.

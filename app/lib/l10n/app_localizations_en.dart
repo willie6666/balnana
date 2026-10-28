@@ -2168,4 +2168,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crowdFilterTitle => 'Whose expenses?';
+
+  @override
+  String get myGroupsTitle => 'My group links';
+
+  @override
+  String get myGroupsExport => 'Export my groups';
+
+  @override
+  String get myGroupsExportHelp => 'Copy your group links to keep a backup or move to another device.';
+
+  @override
+  String get myGroupsPrivate => 'Keep these links private. Anyone with a link can open its group.';
+
+  @override
+  String get myGroupsCopy => 'Copy links';
+
+  @override
+  String get myGroupsImport => 'Import groups';
+
+  @override
+  String get myGroupsImportHelp =>
+      'Paste group links from this server, one per line. Existing groups keep their place and identity.';
+
+  @override
+  String get myGroupsLinks => 'Group links';
+
+  @override
+  String get myGroupsImportAction => 'Import links';
+
+  @override
+  String get myGroupsInvalid => 'Enter valid group links, one per line. Nothing was imported.';
+
+  @override
+  String get myGroupsServerChanged =>
+      'The selected server changed. Close this dialog and import the links on their own server.';
+
+  @override
+  String myGroupsLimit(int count) {
+    return 'Keep at most $count group links per server. Nothing was imported.';
+  }
+
+  @override
+  String myGroupsImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Imported $count new group links.',
+      one: 'Imported 1 new group link.',
+      zero: 'These groups are already saved.',
+    );
+    return '$_temp0';
+  }
 }

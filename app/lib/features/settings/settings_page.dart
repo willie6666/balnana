@@ -5,13 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/push.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../core/settings.dart';
+import '../../data/api.dart';
+import '../../data/providers.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
+import 'my_groups.dart';
 import 'privacy_page.dart';
 
 /// Set with `--dart-define=BALNANA_VERSION=...` by release builds.
@@ -131,6 +136,8 @@ class SettingsPage extends ConsumerWidget {
               ),
             ],
           ),
+        if (server != null && ref.watch(serverInfoProvider).value?.authMode == AuthMode.link)
+          const MyGroupsSection(),
         GroupedList(
           title: l10n.settingsAbout,
           children: [
@@ -207,8 +214,19 @@ class SettingsPage extends ConsumerWidget {
           locale: lookupAppLocalizations(locale).languageEndonym,
       },
     );
-    if (picked != null) {
-      ref.read(settingsProvider.notifier).setLocale(picked == system ? null : picked);
+    if (picked == null || !context.mounted) return;
+    final locale = picked == system ? null : picked;
+    final who = ref.read(identityProvider);
+    try {
+      if (ref.read(signedInProvider)) {
+        await ref.read(balnanaApiProvider)!.updateMe(locale: locale?.toLanguageTag() ?? '');
+      }
+      if (!context.mounted || ref.read(identityProvider) != who) return;
+      ref.read(settingsProvider.notifier).setLocale(locale);
+      if (ref.read(signedInProvider)) ref.invalidate(accountProvider);
+    } on ApiException catch (e) {
+      if (!context.mounted || ref.read(identityProvider) != who) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
   }
 

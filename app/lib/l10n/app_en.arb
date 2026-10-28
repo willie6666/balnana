@@ -1,787 +1,3318 @@
 {
   "@@locale": "en",
-
   "languageEndonym": "English",
   "@languageEndonym": {
     "description": "The name of this language, written in this language. Shown in the language picker."
   },
-
   "appTitle": "Balnana",
   "@appTitle": {
     "description": "The app name. Usually not translated."
   },
-
   "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Label or control text for common cancel in shared buttons and controls."
+  },
   "commonRetry": "Retry",
+  "@commonRetry": {
+    "description": "Label or control text for common retry in shared buttons and controls."
+  },
   "offlineBar": "Offline. Showing what this device saved; changes wait until you reconnect.",
+  "@offlineBar": {
+    "description": "Label or control text for offline bar in the offline cache banner."
+  },
   "commonSave": "Save",
+  "@commonSave": {
+    "description": "Label or control text for common save in shared buttons and controls."
+  },
   "commonClear": "Clear",
+  "@commonClear": {
+    "description": "Label or control text for common clear in shared buttons and controls."
+  },
   "iconChoose": "Choose an icon",
+  "@iconChoose": {
+    "description": "Label or control text for icon choose in the icon and emoji chooser."
+  },
   "iconNone": "No icon",
+  "@iconNone": {
+    "description": "Label or control text for icon none in the icon and emoji chooser."
+  },
   "iconSearchHint": "Search, or type any emoji",
+  "@iconSearchHint": {
+    "description": "Input hint for icon search hint in the icon and emoji chooser."
+  },
   "iconUseTyped": "Use this emoji",
+  "@iconUseTyped": {
+    "description": "Label or control text for icon use typed in the icon and emoji chooser."
+  },
   "iconNoMatch": "No icons match. Type an emoji to use it.",
+  "@iconNoMatch": {
+    "description": "Label or control text for icon no match in the icon and emoji chooser."
+  },
   "iconSectionTravel": "Travel & places",
+  "@iconSectionTravel": {
+    "description": "Label or control text for icon section travel in the icon and emoji chooser."
+  },
   "iconSectionFood": "Food & drink",
+  "@iconSectionFood": {
+    "description": "Label or control text for icon section food in the icon and emoji chooser."
+  },
   "iconSectionActivities": "Activities",
+  "@iconSectionActivities": {
+    "description": "Label or control text for icon section activities in the icon and emoji chooser."
+  },
   "iconSectionHome": "Home & bills",
+  "@iconSectionHome": {
+    "description": "Label or control text for icon section home in the icon and emoji chooser."
+  },
   "iconSectionPeople": "People",
+  "@iconSectionPeople": {
+    "description": "Label or control text for icon section people in the icon and emoji chooser."
+  },
   "iconSectionNature": "Animals & nature",
+  "@iconSectionNature": {
+    "description": "Label or control text for icon section nature in the icon and emoji chooser."
+  },
   "iconSectionObjects": "Money & things",
+  "@iconSectionObjects": {
+    "description": "Label or control text for icon section objects in the icon and emoji chooser."
+  },
   "iconSectionSymbols": "Symbols",
+  "@iconSectionSymbols": {
+    "description": "Label or control text for icon section symbols in the icon and emoji chooser."
+  },
   "commonRemove": "Remove",
+  "@commonRemove": {
+    "description": "Label or control text for common remove in shared buttons and controls."
+  },
   "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "Label or control text for common undo in shared buttons and controls."
+  },
   "someone": "Someone",
-  "@someone": {"description": "Stands in for a person whose name is unknown."},
-
+  "@someone": {
+    "description": "Stands in for a person whose name is unknown."
+  },
   "errorGeneric": "Something went wrong. Please try again.",
+  "@errorGeneric": {
+    "description": "Message for error generic in API error feedback."
+  },
   "errorNetwork": "Can't reach the server. Check your connection.",
+  "@errorNetwork": {
+    "description": "Message for error network in API error feedback."
+  },
   "errorNotFound": "This no longer exists.",
+  "@errorNotFound": {
+    "description": "Message for error not found in API error feedback."
+  },
   "errorRequired": "Required",
+  "@errorRequired": {
+    "description": "Message for error required in API error feedback."
+  },
   "errorInvalidName": "Enter a name of up to 100 characters.",
+  "@errorInvalidName": {
+    "description": "Message for error invalid name in API error feedback."
+  },
   "errorDuplicateName": "Someone in this group already has that name.",
+  "@errorDuplicateName": {
+    "description": "Message for error duplicate name in API error feedback."
+  },
   "errorTooManyMembers": "This group has as many people as it can hold.",
+  "@errorTooManyMembers": {
+    "description": "Message for error too many members in API error feedback."
+  },
   "errorTooManyCategories": "This group has as many categories as it can hold.",
+  "@errorTooManyCategories": {
+    "description": "Message for error too many categories in API error feedback."
+  },
   "errorDuplicateCategory": "This group already has a category with that name.",
+  "@errorDuplicateCategory": {
+    "description": "Message for error duplicate category in API error feedback."
+  },
   "errorInvalidCurrency": "Enter a three-letter currency code, such as USD.",
+  "@errorInvalidCurrency": {
+    "description": "Message for error invalid currency in API error feedback."
+  },
   "errorInvalidTitle": "Enter a title of up to 200 characters.",
+  "@errorInvalidTitle": {
+    "description": "Heading for error invalid title in API error feedback."
+  },
   "errorInvalidLocation": "Enter a place name of one line, up to 200 characters.",
+  "@errorInvalidLocation": {
+    "description": "Message for error invalid location in API error feedback."
+  },
   "errorInvalidSymbol": "Enter a symbol of up to 8 characters.",
+  "@errorInvalidSymbol": {
+    "description": "Message for error invalid symbol in API error feedback."
+  },
   "errorInvalidEmoji": "Pick a single emoji as the icon.",
+  "@errorInvalidEmoji": {
+    "description": "Message for error invalid emoji in API error feedback."
+  },
   "errorMemberHasBalance": "Settle this person's balance before removing them.",
+  "@errorMemberHasBalance": {
+    "description": "Message for error member has balance in API error feedback."
+  },
   "errorVersionConflict": "Someone else changed this expense while you were editing it. Reload to see their changes.",
+  "@errorVersionConflict": {
+    "description": "Message for error version conflict in API error feedback."
+  },
   "errorSignInRequired": "Sign in to do this.",
+  "@errorSignInRequired": {
+    "description": "Message for error sign in required in API error feedback."
+  },
   "errorRateLimited": "Too many requests. Wait a minute and try again.",
+  "@errorRateLimited": {
+    "description": "Message for error rate limited in API error feedback."
+  },
   "errorNotAMember": "You're not in this group yet.",
+  "@errorNotAMember": {
+    "description": "Message for error not a member in API error feedback."
+  },
   "errorNotAllowed": "Only that person or the group's owner can do this.",
+  "@errorNotAllowed": {
+    "description": "Message for error not allowed in API error feedback."
+  },
   "errorLinkGroupsOff": "This server doesn't allow opening groups by link alone.",
+  "@errorLinkGroupsOff": {
+    "description": "Message for error link groups off in API error feedback."
+  },
   "errorMemberClaimed": "Someone has already joined as that person.",
+  "@errorMemberClaimed": {
+    "description": "Message for error member claimed in API error feedback."
+  },
   "errorMemberLeft": "Someone in this has left the group.",
+  "@errorMemberLeft": {
+    "description": "Message for error member left in API error feedback."
+  },
   "errorInvalidEmail": "Enter an email address.",
+  "@errorInvalidEmail": {
+    "description": "Message for error invalid email in API error feedback."
+  },
   "errorInvalidPassword": "Use 8 to 200 characters.",
+  "@errorInvalidPassword": {
+    "description": "Message for error invalid password in API error feedback."
+  },
   "errorEmailTaken": "There's already an account with that email. Sign in instead.",
+  "@errorEmailTaken": {
+    "description": "Message for error email taken in API error feedback."
+  },
   "errorSignupClosed": "This server isn't taking new accounts.",
+  "@errorSignupClosed": {
+    "description": "Message for error signup closed in API error feedback."
+  },
   "errorInvalidCredentials": "That email and password don't match.",
+  "@errorInvalidCredentials": {
+    "description": "Message for error invalid credentials in API error feedback."
+  },
   "errorWrongPassword": "Your current password isn't right.",
+  "@errorWrongPassword": {
+    "description": "Message for error wrong password in API error feedback."
+  },
   "errorAccountsOff": "This server doesn't use accounts.",
+  "@errorAccountsOff": {
+    "description": "Message for error accounts off in API error feedback."
+  },
   "errorInvalidAmount": "Enter an amount greater than zero.",
+  "@errorInvalidAmount": {
+    "description": "Message for error invalid amount in API error feedback."
+  },
   "errorTooManyDecimals": "Too many decimal places for this currency.",
+  "@errorTooManyDecimals": {
+    "description": "Message for error too many decimals in API error feedback."
+  },
   "errorAmountTooLarge": "That amount is too large.",
+  "@errorAmountTooLarge": {
+    "description": "Message for error amount too large in API error feedback."
+  },
   "errorNoShares": "Pick at least one person to share the cost.",
+  "@errorNoShares": {
+    "description": "Message for error no shares in API error feedback."
+  },
   "errorInvalidShare": "Each share must be a number.",
+  "@errorInvalidShare": {
+    "description": "Message for error invalid share in API error feedback."
+  },
   "errorExactTotal": "The amounts must add up to the total.",
+  "@errorExactTotal": {
+    "description": "Message for error exact total in API error feedback."
+  },
   "errorPayersTotal": "What everyone paid must add up to the total.",
-
+  "@errorPayersTotal": {
+    "description": "Message for error payers total in API error feedback."
+  },
   "categoryFood": "Food & drink",
+  "@categoryFood": {
+    "description": "Label or control text for category food in built-in category names or category management."
+  },
   "categoryGroceries": "Groceries",
+  "@categoryGroceries": {
+    "description": "Label or control text for category groceries in built-in category names or category management."
+  },
   "categoryTransport": "Transport",
+  "@categoryTransport": {
+    "description": "Label or control text for category transport in built-in category names or category management."
+  },
   "categoryTravel": "Travel",
+  "@categoryTravel": {
+    "description": "Label or control text for category travel in built-in category names or category management."
+  },
   "categoryLodging": "Lodging",
+  "@categoryLodging": {
+    "description": "Label or control text for category lodging in built-in category names or category management."
+  },
   "categoryRent": "Rent",
+  "@categoryRent": {
+    "description": "Label or control text for category rent in built-in category names or category management."
+  },
   "categoryUtilities": "Utilities",
+  "@categoryUtilities": {
+    "description": "Label or control text for category utilities in built-in category names or category management."
+  },
   "categoryEntertainment": "Entertainment",
+  "@categoryEntertainment": {
+    "description": "Label or control text for category entertainment in built-in category names or category management."
+  },
   "categoryShopping": "Shopping",
+  "@categoryShopping": {
+    "description": "Label or control text for category shopping in built-in category names or category management."
+  },
   "categoryHealth": "Health",
+  "@categoryHealth": {
+    "description": "Label or control text for category health in built-in category names or category management."
+  },
   "categoryGifts": "Gifts",
+  "@categoryGifts": {
+    "description": "Label or control text for category gifts in built-in category names or category management."
+  },
   "categoryOther": "Other",
-
+  "@categoryOther": {
+    "description": "Label or control text for category other in built-in category names or category management."
+  },
   "groupNew": "New group",
+  "@groupNew": {
+    "description": "Label or control text for group new in group creation, settings, or switching."
+  },
   "groupSwitch": "Switch group",
-  "@groupSwitch": {"description": "Tooltip on the group name at the top of a group page, which lists the groups."},
+  "@groupSwitch": {
+    "description": "Tooltip on the group name at the top of a group page, which lists the groups."
+  },
   "groupReorder": "Drag to reorder",
+  "@groupReorder": {
+    "description": "Label or control text for group reorder in group creation, settings, or switching."
+  },
   "groupCreate": "Create group",
+  "@groupCreate": {
+    "description": "Label or control text for group create in group creation, settings, or switching."
+  },
   "groupMemberCount": "{count, plural, =1{1 person} other{{count} people}}",
-  "@groupMemberCount": {"placeholders": {"count": {"type": "int"}}},
+  "@groupMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for group member count in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pillOwed": "You're owed {amount}",
-  "@pillOwed": {"placeholders": {"amount": {"type": "String"}}},
+  "@pillOwed": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for pill owed in the application interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pillOwe": "You owe {amount}",
-  "@pillOwe": {"placeholders": {"amount": {"type": "String"}}},
+  "@pillOwe": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for pill owe in the application interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pillSettled": "Settled up",
+  "@pillSettled": {
+    "description": "Label or control text for pill settled in the application interface."
+  },
   "groupMissingTitle": "Group not found",
+  "@groupMissingTitle": {
+    "description": "Heading for group missing title in group creation, settings, or switching."
+  },
   "groupMissingBody": "This group was deleted, or its link was reset. Ask someone in the group for the new link.",
+  "@groupMissingBody": {
+    "description": "Explanatory text for group missing body in group creation, settings, or switching."
+  },
   "groupForget": "Remove from this device",
+  "@groupForget": {
+    "description": "Label or control text for group forget in group creation, settings, or switching."
+  },
   "groupLinkOtherServer": "This link belongs to another server. Connect to that server to open it.",
+  "@groupLinkOtherServer": {
+    "description": "Label or control text for group link other server in group creation, settings, or switching."
+  },
   "openLinkTitle": "Open a group link",
+  "@openLinkTitle": {
+    "description": "Heading for open link title in opening one saved group URL."
+  },
   "openLinkBody": "Paste a link someone shared with you to join their group.",
+  "@openLinkBody": {
+    "description": "Explanatory text for open link body in opening one saved group URL."
+  },
   "openLinkLabel": "Group link",
+  "@openLinkLabel": {
+    "description": "Field label for open link label in opening one saved group URL."
+  },
   "openLinkAction": "Open",
+  "@openLinkAction": {
+    "description": "Action button for open link action in opening one saved group URL."
+  },
   "openLinkInvalid": "That doesn't look like a Balnana group link.",
+  "@openLinkInvalid": {
+    "description": "Label or control text for open link invalid in opening one saved group URL."
+  },
   "groupName": "Group name",
+  "@groupName": {
+    "description": "Label or control text for group name in group creation, settings, or switching."
+  },
   "groupNameHint": "Trip to Lisbon",
+  "@groupNameHint": {
+    "description": "Input hint for group name hint in group creation, settings, or switching."
+  },
   "groupCurrency": "Currency",
+  "@groupCurrency": {
+    "description": "Label or control text for group currency in group creation, settings, or switching."
+  },
   "groupCurrencyHelp": "All expenses in this group use this currency. It can't be changed later.",
+  "@groupCurrencyHelp": {
+    "description": "Help text for group currency help in group creation, settings, or switching."
+  },
   "groupCurrencyHelpNamed": "{name}. All expenses in this group use this currency. It can't be changed later.",
-  "@groupCurrencyHelpNamed": {"placeholders": {"name": {"type": "String"}}},
+  "@groupCurrencyHelpNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for group currency help named in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "currencyChoose": "Choose a currency",
+  "@currencyChoose": {
+    "description": "Label or control text for currency choose in the currency chooser."
+  },
   "currencySearchHint": "Search by code or name",
+  "@currencySearchHint": {
+    "description": "Input hint for currency search hint in the currency chooser."
+  },
   "currencySuggested": "Suggested",
+  "@currencySuggested": {
+    "description": "Label or control text for currency suggested in the currency chooser."
+  },
   "currencyAll": "All currencies",
+  "@currencyAll": {
+    "description": "Label or control text for currency all in the currency chooser."
+  },
   "currencyUseTyped": "Use {code}",
-  "@currencyUseTyped": {"placeholders": {"code": {"type": "String"}}},
+  "@currencyUseTyped": {
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "description": "The code value named by this message."
+      }
+    },
+    "description": "Label or control text for currency use typed in the currency chooser. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "currencyNoMatch": "No currency matches. Type its three-letter code to use it.",
+  "@currencyNoMatch": {
+    "description": "Label or control text for currency no match in the currency chooser."
+  },
   "groupSymbol": "Symbol",
+  "@groupSymbol": {
+    "description": "Label or control text for group symbol in group creation, settings, or switching."
+  },
   "groupSymbolChoose": "Choose a symbol",
+  "@groupSymbolChoose": {
+    "description": "Label or control text for group symbol choose in group creation, settings, or switching."
+  },
   "groupSymbolExample": "Amounts look like {example}",
   "@groupSymbolExample": {
     "placeholders": {
-      "example": {"type": "String"}
-    }
+      "example": {
+        "type": "String",
+        "description": "The example value named by this message."
+      }
+    },
+    "description": "Label or control text for group symbol example in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
   "groupColor": "Color",
+  "@groupColor": {
+    "description": "Label or control text for group color in group creation, settings, or switching."
+  },
   "colorSwatch": "Color {number} of {count}",
-  "@colorSwatch": {"placeholders": {"number": {"type": "int"}, "count": {"type": "int"}}},
+  "@colorSwatch": {
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "description": "The number value named by this message."
+      },
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for color swatch in group or member color selection. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "groupPeople": "People",
+  "@groupPeople": {
+    "description": "Label or control text for group people in group creation, settings, or switching."
+  },
   "groupYourName": "Your name",
+  "@groupYourName": {
+    "description": "Label or control text for group your name in group creation, settings, or switching."
+  },
   "groupPersonName": "Person {number}",
-  "@groupPersonName": {"placeholders": {"number": {"type": "int"}}},
+  "@groupPersonName": {
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "description": "The number value named by this message."
+      }
+    },
+    "description": "Label or control text for group person name in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "groupAddPerson": "Add person",
+  "@groupAddPerson": {
+    "description": "Label or control text for group add person in group creation, settings, or switching."
+  },
   "groupPeopleHelp": "You can add more people later, or they can join with the link.",
-
+  "@groupPeopleHelp": {
+    "description": "Help text for group people help in group creation, settings, or switching."
+  },
   "identityTitle": "Who are you?",
+  "@identityTitle": {
+    "description": "Heading for identity title in link-mode member identity selection."
+  },
   "identityBody": "Pick your name so Balnana can show what you owe. Only this device remembers it.",
+  "@identityBody": {
+    "description": "Explanatory text for identity body in link-mode member identity selection."
+  },
   "identityNew": "I'm someone new",
+  "@identityNew": {
+    "description": "Label or control text for identity new in link-mode member identity selection."
+  },
   "identityNewTitle": "Join this group",
+  "@identityNewTitle": {
+    "description": "Heading for identity new title in link-mode member identity selection."
+  },
   "identityJoin": "Join",
+  "@identityJoin": {
+    "description": "Label or control text for identity join in link-mode member identity selection."
+  },
   "identityChange": "Who you are",
+  "@identityChange": {
+    "description": "Label or control text for identity change in link-mode member identity selection."
+  },
   "identityNone": "Not chosen yet",
+  "@identityNone": {
+    "description": "Label or control text for identity none in link-mode member identity selection."
+  },
   "memberName": "Name",
+  "@memberName": {
+    "description": "Label or control text for member name in group member management."
+  },
   "memberYou": "{name} (you)",
-  "@memberYou": {"placeholders": {"name": {"type": "String"}}},
+  "@memberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for member you in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "memberAdd": "Add person",
+  "@memberAdd": {
+    "description": "Label or control text for member add in group member management."
+  },
   "memberAddTitle": "Add someone",
+  "@memberAddTitle": {
+    "description": "Heading for member add title in group member management."
+  },
   "memberRename": "Rename",
+  "@memberRename": {
+    "description": "Label or control text for member rename in group member management."
+  },
   "memberRenameTitle": "Rename",
+  "@memberRenameTitle": {
+    "description": "Heading for member rename title in group member management."
+  },
   "memberRemoveTitle": "Remove {name}?",
-  "@memberRemoveTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@memberRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Heading for member remove title in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "memberRemoveBody": "They'll stay on past expenses but can't be added to new ones.",
-
+  "@memberRemoveBody": {
+    "description": "Explanatory text for member remove body in group member management."
+  },
   "groupLinkCopied": "Link copied. Anyone with it can open this group.",
+  "@groupLinkCopied": {
+    "description": "Label or control text for group link copied in group creation, settings, or switching."
+  },
   "groupShare": "Share link",
+  "@groupShare": {
+    "description": "Label or control text for group share in group creation, settings, or switching."
+  },
   "groupSettings": "Group settings",
+  "@groupSettings": {
+    "description": "Label or control text for group settings in group creation, settings, or switching."
+  },
   "groupEdit": "Edit group",
+  "@groupEdit": {
+    "description": "Label or control text for group edit in group creation, settings, or switching."
+  },
   "groupSharing": "Sharing",
+  "@groupSharing": {
+    "description": "Label or control text for group sharing in group creation, settings, or switching."
+  },
   "groupCopyLink": "Copy link",
+  "@groupCopyLink": {
+    "description": "Label or control text for group copy link in group creation, settings, or switching."
+  },
   "groupCopyLinkHelp": "Anyone with the link can see and edit this group.",
+  "@groupCopyLinkHelp": {
+    "description": "Help text for group copy link help in group creation, settings, or switching."
+  },
   "groupCopyLinkHelpAccounts": "People with the link can ask to join after signing in.",
+  "@groupCopyLinkHelpAccounts": {
+    "description": "Label or control text for group copy link help accounts in group creation, settings, or switching."
+  },
   "linkAccessTitle": "Open to anyone with the link",
+  "@linkAccessTitle": {
+    "description": "Heading for link access title in group link-access permissions."
+  },
   "linkAccessHelp": "Let people see and edit without an account",
+  "@linkAccessHelp": {
+    "description": "Help text for link access help in group link-access permissions."
+  },
   "resetLinkTitle": "Reset link",
+  "@resetLinkTitle": {
+    "description": "Heading for reset link title in group-link rotation."
+  },
   "resetLinkHelp": "Make a new link; the old one stops working",
+  "@resetLinkHelp": {
+    "description": "Help text for reset link help in group-link rotation."
+  },
   "resetLinkBody": "The current link will stop working, for everyone. Share the new link with people who should keep access.",
+  "@resetLinkBody": {
+    "description": "Explanatory text for reset link body in group-link rotation."
+  },
   "resetLinkAction": "Reset",
+  "@resetLinkAction": {
+    "description": "Action button for reset link action in group-link rotation."
+  },
   "resetLinkDone": "Link reset. Share the new one.",
+  "@resetLinkDone": {
+    "description": "Label or control text for reset link done in group-link rotation."
+  },
   "groupThisDevice": "This device",
+  "@groupThisDevice": {
+    "description": "Label or control text for group this device in group creation, settings, or switching."
+  },
   "groupData": "Data",
+  "@groupData": {
+    "description": "Label or control text for group data in group creation, settings, or switching."
+  },
   "categoriesTitle": "Categories",
+  "@categoriesTitle": {
+    "description": "Heading for categories title in group category settings."
+  },
   "categoriesHelp": "Add your own, or hide the ones you don't use",
+  "@categoriesHelp": {
+    "description": "Help text for categories help in group category settings."
+  },
   "categoriesOwn": "This group's",
+  "@categoriesOwn": {
+    "description": "Label or control text for categories own in group category settings."
+  },
   "categoriesOwnEmpty": "No categories of the group's own yet.",
+  "@categoriesOwnEmpty": {
+    "description": "Label or control text for categories own empty in group category settings."
+  },
   "categoriesBuiltIn": "Built-in",
+  "@categoriesBuiltIn": {
+    "description": "Label or control text for categories built in in group category settings."
+  },
   "categoriesBuiltInHelp": "Hidden categories are not offered for new expenses. Expenses that have one keep it.",
+  "@categoriesBuiltInHelp": {
+    "description": "Help text for categories built in help in group category settings."
+  },
   "categoryAdd": "Add category",
+  "@categoryAdd": {
+    "description": "Label or control text for category add in built-in category names or category management."
+  },
   "categoryEdit": "Edit category",
+  "@categoryEdit": {
+    "description": "Label or control text for category edit in built-in category names or category management."
+  },
   "categoryName": "Name",
+  "@categoryName": {
+    "description": "Label or control text for category name in built-in category names or category management."
+  },
   "categoryDelete": "Delete category",
+  "@categoryDelete": {
+    "description": "Label or control text for category delete in built-in category names or category management."
+  },
   "categoryDeleteTitle": "Delete {name}?",
-  "@categoryDeleteTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@categoryDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Heading for category delete title in built-in category names or category management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "categoryDeleteBody": "Expenses in this category will have none.",
+  "@categoryDeleteBody": {
+    "description": "Explanatory text for category delete body in built-in category names or category management."
+  },
   "categoryDeleteAction": "Delete",
+  "@categoryDeleteAction": {
+    "description": "Action button for category delete action in built-in category names or category management."
+  },
   "exportCsv": "Export as CSV",
+  "@exportCsv": {
+    "description": "Label or control text for export csv in the ledger CSV download."
+  },
   "exportCsvHelp": "Every expense and payment, for a spreadsheet",
+  "@exportCsvHelp": {
+    "description": "Help text for export csv help in the ledger CSV download."
+  },
   "exportCsvDone": "Exported",
+  "@exportCsvDone": {
+    "description": "Label or control text for export csv done in the ledger CSV download."
+  },
   "forgetTitle": "Remove from this device",
+  "@forgetTitle": {
+    "description": "Heading for forget title in removing a group link from this device."
+  },
   "forgetHelp": "The group stays on the server for everyone else",
+  "@forgetHelp": {
+    "description": "Help text for forget help in removing a group link from this device."
+  },
   "forgetBody": "You can open it again with the link.",
+  "@forgetBody": {
+    "description": "Explanatory text for forget body in removing a group link from this device."
+  },
   "groupYou": "You",
+  "@groupYou": {
+    "description": "Label or control text for group you in group creation, settings, or switching."
+  },
   "leaveTitle": "Leave group",
+  "@leaveTitle": {
+    "description": "Heading for leave title in leaving a group."
+  },
   "leaveHelp": "Your expenses stay; you can join again with the link",
+  "@leaveHelp": {
+    "description": "Help text for leave help in leaving a group."
+  },
   "leaveBody": "The group disappears from your list. Your expenses and balance stay in the group.",
+  "@leaveBody": {
+    "description": "Explanatory text for leave body in leaving a group."
+  },
   "leaveAction": "Leave",
-
+  "@leaveAction": {
+    "description": "Action button for leave action in leaving a group."
+  },
   "tabExpenses": "Expenses",
+  "@tabExpenses": {
+    "description": "Label or control text for tab expenses in the application interface."
+  },
   "heroWhoTitle": "Who are you in this group?",
+  "@heroWhoTitle": {
+    "description": "Heading for hero who title in the group balance card."
+  },
   "heroWhoBody": "Pick your name to see what you owe and are owed.",
+  "@heroWhoBody": {
+    "description": "Explanatory text for hero who body in the group balance card."
+  },
   "heroWhoAction": "Choose",
+  "@heroWhoAction": {
+    "description": "Action button for hero who action in the group balance card."
+  },
   "heroJoinTitle": "You're viewing this group",
+  "@heroJoinTitle": {
+    "description": "Heading for hero join title in the group balance card."
+  },
   "heroJoinBody": "Join to add expenses and see what you owe.",
+  "@heroJoinBody": {
+    "description": "Explanatory text for hero join body in the group balance card."
+  },
   "joinAction": "Join",
+  "@joinAction": {
+    "description": "Action button for join action in joining or claiming a group member."
+  },
   "heroOwed": "You're owed",
+  "@heroOwed": {
+    "description": "Positive balance label: other members owe this device's selected member money."
+  },
   "heroOwe": "You owe",
+  "@heroOwe": {
+    "description": "Negative balance label: this device's selected member owes other members money."
+  },
   "heroSettled": "You're settled up",
+  "@heroSettled": {
+    "description": "Zero balance label: the selected member neither owes nor is owed money."
+  },
   "heroYouAre": "You are {name}",
-  "@heroYouAre": {"placeholders": {"name": {"type": "String"}}},
-
+  "@heroYouAre": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for hero you are in the group balance card. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expenseAdd": "Add expense",
+  "@expenseAdd": {
+    "description": "Label or control text for expense add in the expense editor or expense list."
+  },
   "expensesEmptyTitle": "No expenses yet",
+  "@expensesEmptyTitle": {
+    "description": "Heading for expenses empty title in expense search and empty states."
+  },
   "expensesEmptyBody": "Add the first one, and Balnana will work out who owes whom.",
+  "@expensesEmptyBody": {
+    "description": "Explanatory text for expenses empty body in expense search and empty states."
+  },
   "expensesSearchHint": "Search titles, notes and places",
+  "@expensesSearchHint": {
+    "description": "Input hint for expenses search hint in expense search and empty states."
+  },
   "searchClear": "Clear search",
+  "@searchClear": {
+    "description": "Label or control text for search clear in the application interface."
+  },
   "expensesNoMatchTitle": "Nothing matches",
+  "@expensesNoMatchTitle": {
+    "description": "Heading for expenses no match title in expense search and empty states."
+  },
   "expensesNoMatchBody": "Try other words, or fewer filters.",
+  "@expensesNoMatchBody": {
+    "description": "Explanatory text for expenses no match body in expense search and empty states."
+  },
   "filterAnyone": "Anyone",
-  "@filterAnyone": {"description": "Filter chip: expenses of every member, not just one."},
+  "@filterAnyone": {
+    "description": "Filter chip: expenses of every member, not just one."
+  },
   "filterAnyCategory": "Any category",
+  "@filterAnyCategory": {
+    "description": "Label or control text for filter any category in expense filters."
+  },
   "filterPayments": "Payments",
-  "@filterPayments": {"description": "Filter choice: only payments between members, not expenses."},
+  "@filterPayments": {
+    "description": "Filter choice: only payments between members, not expenses."
+  },
   "filterClear": "Clear filters",
+  "@filterClear": {
+    "description": "Label or control text for filter clear in expense filters."
+  },
   "periodAll": "All time",
+  "@periodAll": {
+    "description": "Label or control text for period all in the expense and statistics date range filter."
+  },
   "periodThisMonth": "This month",
+  "@periodThisMonth": {
+    "description": "Label or control text for period this month in the expense and statistics date range filter."
+  },
   "periodLastMonth": "Last month",
+  "@periodLastMonth": {
+    "description": "Label or control text for period last month in the expense and statistics date range filter."
+  },
   "periodThisYear": "This year",
+  "@periodThisYear": {
+    "description": "Label or control text for period this year in the expense and statistics date range filter."
+  },
   "periodPickDays": "Pick dates…",
+  "@periodPickDays": {
+    "description": "Label or control text for period pick days in the expense and statistics date range filter."
+  },
   "statsTitle": "Spending",
-  "@statsTitle": {"description": "Title of the page with charts of what a group spent."},
+  "@statsTitle": {
+    "description": "Title of the page with charts of what a group spent."
+  },
   "statsTotal": "Total spent",
+  "@statsTotal": {
+    "description": "Label or control text for stats total in spending statistics."
+  },
   "statsCount": "{count, plural, =1{1 expense} other{{count} expenses}}",
-  "@statsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@statsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for stats count in spending statistics. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "statsByCategory": "By category",
+  "@statsByCategory": {
+    "description": "Label or control text for stats by category in spending statistics."
+  },
   "statsByMember": "Paid and share per person",
-  "@statsByMember": {"description": "Chart heading: what each person paid, next to their share of the costs."},
+  "@statsByMember": {
+    "description": "Chart heading: what each person paid, next to their share of the costs."
+  },
   "statsPaid": "Paid",
+  "@statsPaid": {
+    "description": "Legend for outgoing spending paid by a member, net of refunds and excluding income and settlement payments."
+  },
   "statsShare": "Share",
+  "@statsShare": {
+    "description": "Legend for a member's allocated share of spending, net of refunds and excluding income and settlement payments."
+  },
   "statsByMonth": "By month",
+  "@statsByMonth": {
+    "description": "Label or control text for stats by month in spending statistics."
+  },
   "statsNoCategory": "No category",
+  "@statsNoCategory": {
+    "description": "Label or control text for stats no category in spending statistics."
+  },
   "statsEmptyTitle": "Nothing spent",
+  "@statsEmptyTitle": {
+    "description": "Heading for stats empty title in spending statistics."
+  },
   "statsEmptyBody": "There are no expenses in this period.",
+  "@statsEmptyBody": {
+    "description": "Explanatory text for stats empty body in spending statistics."
+  },
   "statsShowExpenses": "Show these expenses",
+  "@statsShowExpenses": {
+    "description": "Label or control text for stats show expenses in spending statistics."
+  },
   "dateToday": "Today",
+  "@dateToday": {
+    "description": "Label or control text for date today in expense date headings."
+  },
   "dateYesterday": "Yesterday",
+  "@dateYesterday": {
+    "description": "Label or control text for date yesterday in expense date headings."
+  },
   "paymentTitle": "{from} paid {to}",
-  "@paymentTitle": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
+  "@paymentTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "description": "Display name of the person paying, or the source named by the message."
+      },
+      "to": {
+        "type": "String",
+        "description": "Display name of the recipient, or the end named by the message."
+      }
+    },
+    "description": "Heading for payment title in recorded member-to-member payments. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expensePaidBy": "{name} paid {amount}",
-  "@expensePaidBy": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "@expensePaidBy": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Caption naming who originally paid an outgoing expense, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expensePaidByMany": "{count} people paid {amount}",
-  "@expensePaidByMany": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "@expensePaidByMany": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Caption for an outgoing expense paid by several people, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expenseReceivedBy": "{name} received {amount}",
-  "@expenseReceivedBy": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "@expenseReceivedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Caption naming the original receiver of an imported refund or income. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expenseReceivedByMany": "{count} people received {amount}",
-  "@expenseReceivedByMany": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "@expenseReceivedByMany": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Caption naming several original receivers of a refund or income. Do not describe them as expense payers. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "transactionRefund": "Refund",
+  "@transactionRefund": {
+    "description": "Label or control text for transaction refund in imported transaction direction."
+  },
   "transactionIncome": "Income",
+  "@transactionIncome": {
+    "description": "Label or control text for transaction income in imported transaction direction."
+  },
   "effectYouPaid": "you paid {amount}",
-  "@effectYouPaid": {"placeholders": {"amount": {"type": "String"}}},
+  "@effectYouPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for effect you paid in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "effectYouReceived": "you received {amount}",
-  "@effectYouReceived": {"placeholders": {"amount": {"type": "String"}}},
+  "@effectYouReceived": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for effect you received in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "effectForYou": "{amount} for you",
-  "@effectForYou": {"placeholders": {"amount": {"type": "String"}}},
+  "@effectForYou": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for effect for you in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "paymentDelete": "Delete payment",
+  "@paymentDelete": {
+    "description": "Label or control text for payment delete in recorded member-to-member payments."
+  },
   "paymentDeleted": "Payment deleted",
+  "@paymentDeleted": {
+    "description": "Label or control text for payment deleted in recorded member-to-member payments."
+  },
   "expenseDeleted": "Deleted “{title}”",
-  "@expenseDeleted": {"placeholders": {"title": {"type": "String"}}},
-
+  "@expenseDeleted": {
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      }
+    },
+    "description": "Label or control text for expense deleted in the expense editor or expense list. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expenseNew": "New expense",
+  "@expenseNew": {
+    "description": "Label or control text for expense new in the expense editor or expense list."
+  },
   "expenseEdit": "Edit expense",
+  "@expenseEdit": {
+    "description": "Label or control text for expense edit in the expense editor or expense list."
+  },
   "expenseDelete": "Delete",
+  "@expenseDelete": {
+    "description": "Label or control text for expense delete in the expense editor or expense list."
+  },
   "expenseAmount": "Amount",
+  "@expenseAmount": {
+    "description": "Label or control text for expense amount in the expense editor or expense list."
+  },
   "expenseTitle": "What was it for?",
+  "@expenseTitle": {
+    "description": "Heading for expense title in the expense editor or expense list."
+  },
   "expenseTitleHint": "Dinner, tickets, taxi…",
+  "@expenseTitleHint": {
+    "description": "Input hint for expense title hint in the expense editor or expense list."
+  },
   "expenseAmountFromPayers": "What everyone paid, added up",
+  "@expenseAmountFromPayers": {
+    "description": "Label or control text for expense amount from payers in the expense editor or expense list."
+  },
   "expenseNote": "Note",
+  "@expenseNote": {
+    "description": "Label or control text for expense note in the expense editor or expense list."
+  },
   "expenseNoteHint": "Optional",
+  "@expenseNoteHint": {
+    "description": "Input hint for expense note hint in the expense editor or expense list."
+  },
   "expenseLocation": "Location",
+  "@expenseLocation": {
+    "description": "Label or control text for expense location in the expense editor or expense list."
+  },
   "expenseLocationHint": "Where was it? (optional)",
+  "@expenseLocationHint": {
+    "description": "Input hint for expense location hint in the expense editor or expense list."
+  },
   "locationPickOnMap": "Pick on map",
+  "@locationPickOnMap": {
+    "description": "Label or control text for location pick on map in the expense location picker."
+  },
   "locationUseCurrent": "Use current location",
+  "@locationUseCurrent": {
+    "description": "Label or control text for location use current in the expense location picker."
+  },
   "locationFinding": "Finding where you are…",
+  "@locationFinding": {
+    "description": "Label or control text for location finding in the expense location picker."
+  },
   "locationChange": "Change on map",
+  "@locationChange": {
+    "description": "Label or control text for location change in the expense location picker."
+  },
   "locationRemovePin": "Remove pin",
+  "@locationRemovePin": {
+    "description": "Label or control text for location remove pin in the expense location picker."
+  },
   "locationOpenInMaps": "Open in maps",
+  "@locationOpenInMaps": {
+    "description": "Label or control text for location open in maps in the expense location picker."
+  },
   "locationPickTitle": "Pick a location",
+  "@locationPickTitle": {
+    "description": "Heading for location pick title in the expense location picker."
+  },
   "locationPickHint": "Tap the map to drop a pin",
+  "@locationPickHint": {
+    "description": "Input hint for location pick hint in the expense location picker."
+  },
   "locationPickDone": "Done",
+  "@locationPickDone": {
+    "description": "Label or control text for location pick done in the expense location picker."
+  },
   "locationDenied": "Balnana may not use your location. You can allow it in your device or browser settings.",
+  "@locationDenied": {
+    "description": "Label or control text for location denied in the expense location picker."
+  },
   "locationOff": "Location is turned off on this device.",
+  "@locationOff": {
+    "description": "Label or control text for location off in the expense location picker."
+  },
   "locationUnavailable": "Couldn't find where you are. Try again, or drop a pin on the map.",
+  "@locationUnavailable": {
+    "description": "Label or control text for location unavailable in the expense location picker."
+  },
   "expenseReceipt": "Receipt",
+  "@expenseReceipt": {
+    "description": "Label or control text for expense receipt in the expense editor or expense list."
+  },
   "expenseHasReceipt": "Has a receipt photo",
+  "@expenseHasReceipt": {
+    "description": "Label or control text for expense has receipt in the expense editor or expense list."
+  },
   "expenseHasLocation": "Has a location",
+  "@expenseHasLocation": {
+    "description": "Label or control text for expense has location in the expense editor or expense list."
+  },
   "receiptTakePhoto": "Take a photo",
+  "@receiptTakePhoto": {
+    "description": "Label or control text for receipt take photo in receipt photo controls."
+  },
   "receiptChoose": "Choose a picture",
+  "@receiptChoose": {
+    "description": "Label or control text for receipt choose in receipt photo controls."
+  },
   "receiptRemove": "Remove",
+  "@receiptRemove": {
+    "description": "Label or control text for receipt remove in receipt photo controls."
+  },
   "receiptView": "Receipt photo",
+  "@receiptView": {
+    "description": "Label or control text for receipt view in receipt photo controls."
+  },
   "receiptNotSaved": "The expense was saved, but not its receipt photo. {reason}",
-  "@receiptNotSaved": {"placeholders": {"reason": {"type": "String"}}},
+  "@receiptNotSaved": {
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "description": "The reason value named by this message."
+      }
+    },
+    "description": "Label or control text for receipt not saved in receipt photo controls. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "expensePaidByLabel": "Paid by",
+  "@expensePaidByLabel": {
+    "description": "Field label for expense paid by label in the expense editor or expense list."
+  },
   "expenseReceivedForLabel": "Received for",
+  "@expenseReceivedForLabel": {
+    "description": "Field heading for the people whose spending was refunded or who benefited from received money; maps to reversed ledger payers."
+  },
   "expenseReceivedByLabel": "Received by",
+  "@expenseReceivedByLabel": {
+    "description": "Field heading for the people who received refund or income money; maps to reversed ledger splits."
+  },
   "expenseMultiplePayers": "Several people",
+  "@expenseMultiplePayers": {
+    "description": "Label or control text for expense multiple payers in the expense editor or expense list."
+  },
   "expenseSplit": "Split",
+  "@expenseSplit": {
+    "description": "Label or control text for expense split in the expense editor or expense list."
+  },
   "splitEqual": "Equally",
+  "@splitEqual": {
+    "description": "Label or control text for split equal in expense split entry."
+  },
   "splitExact": "Amounts",
+  "@splitExact": {
+    "description": "Label or control text for split exact in expense split entry."
+  },
   "splitShares": "Shares",
+  "@splitShares": {
+    "description": "Label or control text for split shares in expense split entry."
+  },
   "splitLeft": "{amount} left to assign",
-  "@splitLeft": {"placeholders": {"amount": {"type": "String"}}},
+  "@splitLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for split left in expense split entry. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "splitOver": "{amount} too much",
-  "@splitOver": {"placeholders": {"amount": {"type": "String"}}},
+  "@splitOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Label or control text for split over in expense split entry. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "conflictTitle": "Changed elsewhere",
+  "@conflictTitle": {
+    "description": "Heading for conflict title in concurrent expense edit resolution."
+  },
   "conflictReload": "Reload",
+  "@conflictReload": {
+    "description": "Label or control text for conflict reload in concurrent expense edit resolution."
+  },
   "expenseChangedElsewhere": "Someone else changed this expense. Reloading shows their version and drops your changes here.",
-
+  "@expenseChangedElsewhere": {
+    "description": "Label or control text for expense changed elsewhere in the expense editor or expense list."
+  },
   "suggestedPayments": "Suggested payments",
+  "@suggestedPayments": {
+    "description": "Label or control text for suggested payments in the application interface."
+  },
   "allSettled": "Everyone is settled up.",
+  "@allSettled": {
+    "description": "Label or control text for all settled in the application interface."
+  },
   "transferYouPay": "You pay {name}",
-  "@transferYouPay": {"placeholders": {"name": {"type": "String"}}},
+  "@transferYouPay": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for transfer you pay in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "transferPaysYou": "{name} pays you",
-  "@transferPaysYou": {"placeholders": {"name": {"type": "String"}}},
+  "@transferPaysYou": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for transfer pays you in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "transferPays": "{from} pays {to}",
-  "@transferPays": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
+  "@transferPays": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "description": "Display name of the person paying, or the source named by the message."
+      },
+      "to": {
+        "type": "String",
+        "description": "Display name of the recipient, or the end named by the message."
+      }
+    },
+    "description": "Label or control text for transfer pays in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "recordPayment": "Record",
+  "@recordPayment": {
+    "description": "Label or control text for record payment in the settlement dialog."
+  },
   "recordPaymentTitle": "Record a payment",
+  "@recordPaymentTitle": {
+    "description": "Heading for record payment title in the settlement dialog."
+  },
   "recordPaymentHelp": "Only record money that was actually paid, outside Balnana.",
+  "@recordPaymentHelp": {
+    "description": "Help text for record payment help in the settlement dialog."
+  },
   "paymentRecorded": "Payment recorded",
-
+  "@paymentRecorded": {
+    "description": "Label or control text for payment recorded in recorded member-to-member payments."
+  },
   "activityGroupCreated": "{who} created {group}",
-  "@activityGroupCreated": {"placeholders": {"who": {"type": "String"}, "group": {"type": "String"}}},
+  "@activityGroupCreated": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "group": {
+        "type": "String",
+        "description": "The group value named by this message."
+      }
+    },
+    "description": "Message for activity group created in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityGroupUpdated": "{who} changed the group details",
-  "@activityGroupUpdated": {"placeholders": {"who": {"type": "String"}}},
+  "@activityGroupUpdated": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity group updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityLinkReset": "{who} reset the group link",
-  "@activityLinkReset": {"placeholders": {"who": {"type": "String"}}},
+  "@activityLinkReset": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity link reset in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityMemberAdded": "{who} added {name}",
-  "@activityMemberAdded": {"placeholders": {"who": {"type": "String"}, "name": {"type": "String"}}},
+  "@activityMemberAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity member added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityMemberRenamed": "{who} renamed {oldName} to {name}",
-  "@activityMemberRenamed": {"placeholders": {"who": {"type": "String"}, "oldName": {"type": "String"}, "name": {"type": "String"}}},
+  "@activityMemberRenamed": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "oldName": {
+        "type": "String",
+        "description": "The oldName value named by this message."
+      },
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity member renamed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityMemberRemoved": "{who} removed {name}",
-  "@activityMemberRemoved": {"placeholders": {"who": {"type": "String"}, "name": {"type": "String"}}},
+  "@activityMemberRemoved": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity member removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityCategoryAdded": "{who} added the category {name}",
-  "@activityCategoryAdded": {"placeholders": {"who": {"type": "String"}, "name": {"type": "String"}}},
+  "@activityCategoryAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity category added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityCategoryUpdated": "{who} changed the categories",
-  "@activityCategoryUpdated": {"placeholders": {"who": {"type": "String"}}},
+  "@activityCategoryUpdated": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity category updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityCategoryDeleted": "{who} deleted the category {name}",
-  "@activityCategoryDeleted": {"placeholders": {"who": {"type": "String"}, "name": {"type": "String"}}},
+  "@activityCategoryDeleted": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity category deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityMemberJoined": "{name} joined",
-  "@activityMemberJoined": {"placeholders": {"name": {"type": "String"}}},
+  "@activityMemberJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Message for activity member joined in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityExpenseAdded": "{who} added “{title}” ({amount})",
-  "@activityExpenseAdded": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@activityExpenseAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for activity expense added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityExpenseUpdated": "{who} edited “{title}” ({amount})",
-  "@activityExpenseUpdated": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@activityExpenseUpdated": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for activity expense updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityExpenseDeleted": "{who} deleted “{title}”",
-  "@activityExpenseDeleted": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}}},
+  "@activityExpenseDeleted": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      }
+    },
+    "description": "Message for activity expense deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityExpenseRestored": "{who} restored “{title}”",
-  "@activityExpenseRestored": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}}},
+  "@activityExpenseRestored": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      }
+    },
+    "description": "Message for activity expense restored in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityPaymentAdded": "{who} recorded that {from} paid {to} {amount}",
-  "@activityPaymentAdded": {"placeholders": {"who": {"type": "String"}, "from": {"type": "String"}, "to": {"type": "String"}, "amount": {"type": "String"}}},
+  "@activityPaymentAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "from": {
+        "type": "String",
+        "description": "Display name of the person paying, or the source named by the message."
+      },
+      "to": {
+        "type": "String",
+        "description": "Display name of the recipient, or the end named by the message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for activity payment added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityPaymentDeleted": "{who} deleted a payment of {amount}",
-  "@activityPaymentDeleted": {"placeholders": {"who": {"type": "String"}, "amount": {"type": "String"}}},
+  "@activityPaymentDeleted": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for activity payment deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityPaymentRestored": "{who} restored a payment of {amount}",
-  "@activityPaymentRestored": {"placeholders": {"who": {"type": "String"}, "amount": {"type": "String"}}},
+  "@activityPaymentRestored": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for activity payment restored in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityGroupImported": "{who} imported {count, plural, =1{1 entry} other{{count} entries}} from {source}",
-  "@activityGroupImported": {"placeholders": {"who": {"type": "String"}, "count": {"type": "int"}, "source": {"type": "String"}}},
+  "@activityGroupImported": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      },
+      "source": {
+        "type": "String",
+        "description": "The source value named by this message."
+      }
+    },
+    "description": "Message for activity group imported in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityReceiptAdded": "{who} added a receipt photo to “{title}”",
-  "@activityReceiptAdded": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}}},
+  "@activityReceiptAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      }
+    },
+    "description": "Message for activity receipt added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityReceiptRemoved": "{who} removed the receipt photo from “{title}”",
-  "@activityReceiptRemoved": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}}},
+  "@activityReceiptRemoved": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      }
+    },
+    "description": "Message for activity receipt removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "activityOther": "{who} made a change",
-  "@activityOther": {"placeholders": {"who": {"type": "String"}}},
-
+  "@activityOther": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity other in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "navGroups": "Groups",
-  "@navGroups": { "description": "Navigation destination: the list of groups." },
+  "@navGroups": {
+    "description": "Navigation destination: the list of groups."
+  },
   "navActivity": "Activity",
-  "@navActivity": { "description": "Navigation destination: recent changes across groups." },
+  "@navActivity": {
+    "description": "Navigation destination: recent changes across groups."
+  },
   "navSettings": "Settings",
-  "@navSettings": { "description": "Navigation destination: app settings." },
-
+  "@navSettings": {
+    "description": "Navigation destination: app settings."
+  },
   "groupsEmptyTitle": "No groups yet",
+  "@groupsEmptyTitle": {
+    "description": "Heading for groups empty title in the groups home page."
+  },
   "groupsEmptyBody": "Groups you create or open from a link will show up here.",
+  "@groupsEmptyBody": {
+    "description": "Explanatory text for groups empty body in the groups home page."
+  },
   "groupsNoServerTitle": "Connect to a server",
+  "@groupsNoServerTitle": {
+    "description": "Heading for groups no server title in the groups home page."
+  },
   "groupsNoServerBody": "Balnana keeps your groups on a server you choose, such as one you host yourself.",
+  "@groupsNoServerBody": {
+    "description": "Explanatory text for groups no server body in the groups home page."
+  },
   "groupsNoServerAction": "Choose server",
+  "@groupsNoServerAction": {
+    "description": "Action button for groups no server action in the groups home page."
+  },
   "groupsUnreachableTitle": "Can't reach the server",
+  "@groupsUnreachableTitle": {
+    "description": "Heading for groups unreachable title in the groups home page."
+  },
   "groupsUnreachableBody": "Check your connection, or the server address in Settings.",
-
+  "@groupsUnreachableBody": {
+    "description": "Explanatory text for groups unreachable body in the groups home page."
+  },
   "activityEmptyTitle": "Nothing here yet",
+  "@activityEmptyTitle": {
+    "description": "Heading for activity empty title in the cross-group activity timeline."
+  },
   "activityEmptyBody": "New expenses and payments in your groups will appear here.",
-
+  "@activityEmptyBody": {
+    "description": "Explanatory text for activity empty body in the cross-group activity timeline."
+  },
   "notFoundTitle": "Page not found",
+  "@notFoundTitle": {
+    "description": "Heading for not found title in the missing route page."
+  },
   "notFoundBody": "This address doesn't lead anywhere in Balnana.",
+  "@notFoundBody": {
+    "description": "Explanatory text for not found body in the missing route page."
+  },
   "notFoundAction": "Go to groups",
-
+  "@notFoundAction": {
+    "description": "Action button for not found action in the missing route page."
+  },
   "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Label or control text for settings appearance in application settings."
+  },
   "settingsAccount": "Account",
+  "@settingsAccount": {
+    "description": "Label or control text for settings account in application settings."
+  },
   "accountRename": "Change name",
+  "@accountRename": {
+    "description": "Label or control text for account rename in account profile and credentials."
+  },
   "passwordChange": "Change password",
+  "@passwordChange": {
+    "description": "Label or control text for password change in password setup or change."
+  },
   "passwordChanged": "Password changed. Other devices are signed out.",
+  "@passwordChanged": {
+    "description": "Label or control text for password changed in password setup or change."
+  },
   "passwordSet": "Set a password",
+  "@passwordSet": {
+    "description": "Label or control text for password set in password setup or change."
+  },
   "passwordSetHelp": "Sign in with your email or username and a password too",
+  "@passwordSetHelp": {
+    "description": "Help text for password set help in password setup or change."
+  },
   "passwordSetDone": "Password set. Other devices are signed out.",
+  "@passwordSetDone": {
+    "description": "Label or control text for password set done in password setup or change."
+  },
   "passwordCurrent": "Current password",
+  "@passwordCurrent": {
+    "description": "Label or control text for password current in password setup or change."
+  },
   "passwordNew": "New password",
+  "@passwordNew": {
+    "description": "Label or control text for password new in password setup or change."
+  },
   "signOut": "Sign out",
+  "@signOut": {
+    "description": "Label or control text for sign out in the application interface."
+  },
   "settingsTheme": "Theme",
+  "@settingsTheme": {
+    "description": "Label or control text for settings theme in application settings."
+  },
   "themeSystem": "System default",
+  "@themeSystem": {
+    "description": "Label or control text for theme system in appearance settings."
+  },
   "themeLight": "Light",
+  "@themeLight": {
+    "description": "Label or control text for theme light in appearance settings."
+  },
   "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Label or control text for theme dark in appearance settings."
+  },
   "settingsDynamicColor": "Wallpaper colors",
+  "@settingsDynamicColor": {
+    "description": "Label or control text for settings dynamic color in application settings."
+  },
   "settingsDynamicColorSubtitle": "Use colors from your device instead of Balnana yellow",
+  "@settingsDynamicColorSubtitle": {
+    "description": "Supporting text for settings dynamic color subtitle in application settings."
+  },
   "settingsWallpaperGroups": "Wallpaper colors in groups",
+  "@settingsWallpaperGroups": {
+    "description": "Label or control text for settings wallpaper groups in application settings."
+  },
   "settingsWallpaperGroupsSubtitle": "Groups use your device colors too, instead of their own",
+  "@settingsWallpaperGroupsSubtitle": {
+    "description": "Supporting text for settings wallpaper groups subtitle in application settings."
+  },
   "settingsPureBlack": "Pure black",
+  "@settingsPureBlack": {
+    "description": "Label or control text for settings pure black in application settings."
+  },
   "settingsPureBlackSubtitle": "A darker dark theme for OLED screens",
+  "@settingsPureBlackSubtitle": {
+    "description": "Supporting text for settings pure black subtitle in application settings."
+  },
   "settingsMyShare": "Show my share",
+  "@settingsMyShare": {
+    "description": "Label or control text for settings my share in application settings."
+  },
   "settingsMyShareSubtitle": "Expenses show what you lent or borrowed instead of the total",
-
+  "@settingsMyShareSubtitle": {
+    "description": "Explains the optional expense-list setting that replaces each transaction's total with this member's lent or borrowed amount."
+  },
   "settingsLanguage": "Language",
+  "@settingsLanguage": {
+    "description": "Label or control text for settings language in application settings."
+  },
   "languageSystem": "System default",
-
+  "@languageSystem": {
+    "description": "Language option that follows the device and clears the signed-in account's language override."
+  },
   "settingsNotifications": "Notifications",
+  "@settingsNotifications": {
+    "description": "Label or control text for settings notifications in application settings."
+  },
   "settingsNotificationsSubtitle": "When someone adds, changes or deletes an expense you are in",
+  "@settingsNotificationsSubtitle": {
+    "description": "Supporting text for settings notifications subtitle in application settings."
+  },
   "pushChannel": "Expenses",
+  "@pushChannel": {
+    "description": "Message for push channel in Android notification content."
+  },
   "pushChannelDescription": "When someone adds, changes or deletes an expense you are in",
+  "@pushChannelDescription": {
+    "description": "Message for push channel description in Android notification content."
+  },
   "pushExpenseAdded": "{who} added {title} · {amount}",
-  "@pushExpenseAdded": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseAdded": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense added in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushExpenseEdited": "{who} changed {title} · {amount}",
-  "@pushExpenseEdited": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseEdited": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense edited in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushExpenseDeleted": "{who} deleted {title} · {amount}",
-  "@pushExpenseDeleted": {"placeholders": {"who": {"type": "String"}, "title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseDeleted": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      },
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense deleted in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushExpenseAddedAnon": "{title} was added · {amount}",
-  "@pushExpenseAddedAnon": {"placeholders": {"title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseAddedAnon": {
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense added anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushExpenseEditedAnon": "{title} was changed · {amount}",
-  "@pushExpenseEditedAnon": {"placeholders": {"title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseEditedAnon": {
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense edited anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushExpenseDeletedAnon": "{title} was deleted · {amount}",
-  "@pushExpenseDeletedAnon": {"placeholders": {"title": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushExpenseDeletedAnon": {
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "The title value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push expense deleted anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "pushPaymentAdded": "{payer} paid {payee} {amount}",
-  "@pushPaymentAdded": {"placeholders": {"payer": {"type": "String"}, "payee": {"type": "String"}, "amount": {"type": "String"}}},
+  "@pushPaymentAdded": {
+    "placeholders": {
+      "payer": {
+        "type": "String",
+        "description": "The payer value named by this message."
+      },
+      "payee": {
+        "type": "String",
+        "description": "The payee value named by this message."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    },
+    "description": "Message for push payment added in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "settingsConnection": "Connection",
+  "@settingsConnection": {
+    "description": "Label or control text for settings connection in application settings."
+  },
   "settingsServer": "Server",
+  "@settingsServer": {
+    "description": "Label or control text for settings server in application settings."
+  },
   "serverNotSet": "Not set",
-
+  "@serverNotSet": {
+    "description": "Label or control text for server not set in the server address and connection settings."
+  },
   "settingsAbout": "About",
+  "@settingsAbout": {
+    "description": "Label or control text for settings about in application settings."
+  },
   "aboutVersion": "Version",
+  "@aboutVersion": {
+    "description": "Label or control text for about version in the About settings section."
+  },
   "aboutLicenses": "Open source licenses",
+  "@aboutLicenses": {
+    "description": "Label or control text for about licenses in the About settings section."
+  },
   "aboutSource": "Source code",
-  "@aboutSource": { "description": "Opens where to get the source code of the server this app is connected to." },
+  "@aboutSource": {
+    "description": "Opens where to get the source code of the server this app is connected to."
+  },
   "aboutSourceCopied": "Couldn't open a browser, so the link was copied",
-
+  "@aboutSourceCopied": {
+    "description": "Label or control text for about source copied in the About settings section."
+  },
   "serverTitle": "Server",
+  "@serverTitle": {
+    "description": "Heading for server title in the server address and connection settings."
+  },
   "serverIntro": "Enter the address of a Balnana server. Anyone can host one; the address is usually where its web app opens.",
+  "@serverIntro": {
+    "description": "Label or control text for server intro in the server address and connection settings."
+  },
   "serverUrlLabel": "Server address",
+  "@serverUrlLabel": {
+    "description": "Field label for server url label in the server address and connection settings."
+  },
   "serverUrlHint": "https://balnana.example.com",
+  "@serverUrlHint": {
+    "description": "Input hint for server url hint in the server address and connection settings."
+  },
   "serverTest": "Test connection",
+  "@serverTest": {
+    "description": "Label or control text for server test in the server address and connection settings."
+  },
   "serverSaveAnyway": "Save anyway",
+  "@serverSaveAnyway": {
+    "description": "Label or control text for server save anyway in the server address and connection settings."
+  },
   "serverReset": "Use default",
+  "@serverReset": {
+    "description": "Label or control text for server reset in the server address and connection settings."
+  },
   "serverDefault": "Default: {url}",
   "@serverDefault": {
     "description": "Shows the server address this app uses when none is chosen.",
-    "placeholders": { "url": { "type": "String", "example": "https://balnana.example.com" } }
+    "placeholders": {
+      "url": {
+        "type": "String",
+        "example": "https://balnana.example.com",
+        "description": "The url value named by this message."
+      }
+    }
   },
   "serverConnected": "Connected to Balnana {version}",
   "@serverConnected": {
     "description": "Shown after a successful connection test.",
-    "placeholders": { "version": { "type": "String", "example": "1.0.0" } }
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.0",
+        "description": "The version value named by this message."
+      }
+    }
   },
   "serverModeLink": "Groups are shared by private link. No account needed.",
+  "@serverModeLink": {
+    "description": "Label or control text for server mode link in the server address and connection settings."
+  },
   "serverModeAccounts": "People sign in with an account.",
+  "@serverModeAccounts": {
+    "description": "Label or control text for server mode accounts in the server address and connection settings."
+  },
   "serverInsecure": "This address is not encrypted (http). Anyone on the network could read your data. Use https for servers outside your home network.",
+  "@serverInsecure": {
+    "description": "Label or control text for server insecure in the server address and connection settings."
+  },
   "serverErrorInvalid": "Enter a web address, like balnana.example.com",
+  "@serverErrorInvalid": {
+    "description": "Label or control text for server error invalid in the server address and connection settings."
+  },
   "serverErrorUnreachable": "Couldn't connect. Check the address and that the server is running.",
+  "@serverErrorUnreachable": {
+    "description": "Label or control text for server error unreachable in the server address and connection settings."
+  },
   "serverErrorNotBalnana": "Something answered, but it isn't a Balnana server.",
+  "@serverErrorNotBalnana": {
+    "description": "Label or control text for server error not balnana in the server address and connection settings."
+  },
   "serverSaved": "Server saved",
-
+  "@serverSaved": {
+    "description": "Label or control text for server saved in the server address and connection settings."
+  },
   "signIn": "Sign in",
+  "@signIn": {
+    "description": "Label or control text for sign in in account sign-in."
+  },
   "groupSignInTitle": "Sign in to open this group",
+  "@groupSignInTitle": {
+    "description": "Heading for group sign in title in group creation, settings, or switching."
+  },
   "groupSignInBody": "This group is only for its members. Sign in to see it or to join.",
+  "@groupSignInBody": {
+    "description": "Explanatory text for group sign in body in group creation, settings, or switching."
+  },
   "signInTitle": "Welcome back",
+  "@signInTitle": {
+    "description": "Heading for sign in title in account sign-in."
+  },
   "signInBody": "Sign in to see your groups.",
+  "@signInBody": {
+    "description": "Explanatory text for sign in body in account sign-in."
+  },
   "signInNoPassword": "This server signs people in another way. Ask whoever runs it.",
+  "@signInNoPassword": {
+    "description": "Label or control text for sign in no password in account sign-in."
+  },
   "registerTitle": "Create your account",
+  "@registerTitle": {
+    "description": "Heading for register title in account registration."
+  },
   "registerBody": "Keep your groups on every device.",
+  "@registerBody": {
+    "description": "Explanatory text for register body in account registration."
+  },
   "registerAction": "Create account",
+  "@registerAction": {
+    "description": "Action button for register action in account registration."
+  },
   "registerHaveAccount": "I already have an account",
+  "@registerHaveAccount": {
+    "description": "Label or control text for register have account in account registration."
+  },
   "signInNoAccount": "Create an account",
+  "@signInNoAccount": {
+    "description": "Label or control text for sign in no account in account sign-in."
+  },
   "accountName": "Your name",
+  "@accountName": {
+    "description": "Label or control text for account name in account profile and credentials."
+  },
   "accountNameHelp": "What people in your groups will see",
+  "@accountNameHelp": {
+    "description": "Help text for account name help in account profile and credentials."
+  },
   "accountEmail": "Email",
+  "@accountEmail": {
+    "description": "Label or control text for account email in account profile and credentials."
+  },
   "accountPassword": "Password",
+  "@accountPassword": {
+    "description": "Label or control text for account password in account profile and credentials."
+  },
   "accountPasswordHelp": "At least 8 characters",
+  "@accountPasswordHelp": {
+    "description": "Help text for account password help in account profile and credentials."
+  },
   "passwordShow": "Show password",
+  "@passwordShow": {
+    "description": "Label or control text for password show in password setup or change."
+  },
   "passwordHide": "Hide password",
+  "@passwordHide": {
+    "description": "Label or control text for password hide in password setup or change."
+  },
   "joinPickName": "Pick another name",
+  "@joinPickName": {
+    "description": "Label or control text for join pick name in joining or claiming a group member."
+  },
   "joinTitle": "Join {name}",
-  "@joinTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@joinTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Heading for join title in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "joinBody": "Are you one of these people? Pick yourself to take over their expenses.",
+  "@joinBody": {
+    "description": "Explanatory text for join body in joining or claiming a group member."
+  },
   "joinBodyNew": "Join to add expenses and see your balance.",
+  "@joinBodyNew": {
+    "description": "Label or control text for join body new in joining or claiming a group member."
+  },
   "joinAsNew": "I'm someone new",
+  "@joinAsNew": {
+    "description": "Label or control text for join as new in joining or claiming a group member."
+  },
   "joinAsName": "Join as {name}",
-  "@joinAsName": {"placeholders": {"name": {"type": "String"}}},
+  "@joinAsName": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Label or control text for join as name in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "joinTaken": "Already joined: {names}",
-  "@joinTaken": {"placeholders": {"names": {"type": "String"}}},
+  "@joinTaken": {
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "description": "The names value named by this message."
+      }
+    },
+    "description": "Label or control text for join taken in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "joinTakenCount": "{count} people have already joined.",
-  "@joinTakenCount": {"placeholders": {"count": {"type": "int"}}},
+  "@joinTakenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for join taken count in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "commonContinue": "Continue",
+  "@commonContinue": {
+    "description": "Label or control text for common continue in shared buttons and controls."
+  },
   "errorEmailOff": "This server doesn't send email.",
+  "@errorEmailOff": {
+    "description": "Message for error email off in API error feedback."
+  },
   "errorInvalidToken": "This link has expired or was already used.",
+  "@errorInvalidToken": {
+    "description": "Message for error invalid token in API error feedback."
+  },
   "forgotPasswordTitle": "Forgot password?",
+  "@forgotPasswordTitle": {
+    "description": "Heading for forgot password title in the password-reset email request."
+  },
   "forgotPasswordBody": "We'll email you a link to choose a new password.",
+  "@forgotPasswordBody": {
+    "description": "Explanatory text for forgot password body in the password-reset email request."
+  },
   "forgotPasswordAction": "Send link",
+  "@forgotPasswordAction": {
+    "description": "Action button for forgot password action in the password-reset email request."
+  },
   "forgotPasswordSent": "If there's an account for that address, a link is on its way.",
+  "@forgotPasswordSent": {
+    "description": "Label or control text for forgot password sent in the password-reset email request."
+  },
   "resetPasswordTitle": "Choose a new password",
+  "@resetPasswordTitle": {
+    "description": "Heading for reset password title in password reset through an emailed link."
+  },
   "resetPasswordBody": "You'll be signed out everywhere, then you can sign in with the new password.",
+  "@resetPasswordBody": {
+    "description": "Explanatory text for reset password body in password reset through an emailed link."
+  },
   "resetPasswordAction": "Save password",
+  "@resetPasswordAction": {
+    "description": "Action button for reset password action in password reset through an emailed link."
+  },
   "resetPasswordDone": "Password changed. Sign in with your new password.",
+  "@resetPasswordDone": {
+    "description": "Label or control text for reset password done in password reset through an emailed link."
+  },
   "verifyEmailTitle": "Confirm your email",
+  "@verifyEmailTitle": {
+    "description": "Heading for verify email title in email verification."
+  },
   "verifyEmailHelp": "So you can reset your password if you forget it",
+  "@verifyEmailHelp": {
+    "description": "Help text for verify email help in email verification."
+  },
   "verifyEmailSent": "Check {email} for a link.",
-  "@verifyEmailSent": {"placeholders": {"email": {"type": "String"}}},
+  "@verifyEmailSent": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Label or control text for verify email sent in email verification. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "verifyEmailDone": "Email confirmed",
+  "@verifyEmailDone": {
+    "description": "Label or control text for verify email done in email verification."
+  },
   "verifyEmailDoneBody": "Thanks! Your address is confirmed.",
+  "@verifyEmailDoneBody": {
+    "description": "Explanatory text for verify email done body in email verification."
+  },
   "verifyEmailFailed": "Couldn't confirm your email",
+  "@verifyEmailFailed": {
+    "description": "Label or control text for verify email failed in email verification."
+  },
   "inviteByEmail": "Invite by email",
+  "@inviteByEmail": {
+    "description": "Label or control text for invite by email in email group invitations."
+  },
   "inviteByEmailHelp": "Send someone a link to join",
+  "@inviteByEmailHelp": {
+    "description": "Help text for invite by email help in email group invitations."
+  },
   "inviteAs": "Join as",
+  "@inviteAs": {
+    "description": "Label or control text for invite as in email group invitations."
+  },
   "inviteAsHelp": "They can take over this person's expenses",
+  "@inviteAsHelp": {
+    "description": "Help text for invite as help in email group invitations."
+  },
   "inviteAsAnyone": "Someone new",
+  "@inviteAsAnyone": {
+    "description": "Label or control text for invite as anyone in email group invitations."
+  },
   "inviteSend": "Send invite",
+  "@inviteSend": {
+    "description": "Label or control text for invite send in email group invitations."
+  },
   "inviteSent": "Invite sent to {email}.",
-  "@inviteSent": {"placeholders": {"email": {"type": "String"}}},
+  "@inviteSent": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Label or control text for invite sent in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "inviteTitle": "{name} invited you to {group}",
-  "@inviteTitle": {"placeholders": {"name": {"type": "String"}, "group": {"type": "String"}}},
+  "@inviteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      },
+      "group": {
+        "type": "String",
+        "description": "The group value named by this message."
+      }
+    },
+    "description": "Heading for invite title in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "inviteTitleAnonymous": "You're invited to {group}",
-  "@inviteTitleAnonymous": {"placeholders": {"group": {"type": "String"}}},
+  "@inviteTitleAnonymous": {
+    "placeholders": {
+      "group": {
+        "type": "String",
+        "description": "The group value named by this message."
+      }
+    },
+    "description": "Label or control text for invite title anonymous in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "inviteBody": "Create an account with {email} to join, or sign in if you have one.",
-  "@inviteBody": {"placeholders": {"email": {"type": "String"}}},
+  "@inviteBody": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Explanatory text for invite body in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "inviteBodySignedIn": "Join to add expenses and see your balance.",
+  "@inviteBodySignedIn": {
+    "description": "Label or control text for invite body signed in in email group invitations."
+  },
   "inviteAction": "Open invitation",
+  "@inviteAction": {
+    "description": "Action button for invite action in email group invitations."
+  },
   "inviteMissingTitle": "This invitation doesn't work",
+  "@inviteMissingTitle": {
+    "description": "Heading for invite missing title in email group invitations."
+  },
   "inviteMissingBody": "It may have expired or been used. Ask for a new one.",
+  "@inviteMissingBody": {
+    "description": "Explanatory text for invite missing body in email group invitations."
+  },
   "joinInvitedAs": "You were invited as this person",
+  "@joinInvitedAs": {
+    "description": "Label or control text for join invited as in joining or claiming a group member."
+  },
   "signInWith": "Continue with {provider}",
-  "@signInWith": {"placeholders": {"provider": {"type": "String"}}},
+  "@signInWith": {
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "description": "The provider value named by this message."
+      }
+    },
+    "description": "Label or control text for sign in with in account sign-in. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "signInOr": "or",
+  "@signInOr": {
+    "description": "Label or control text for sign in or in account sign-in."
+  },
   "oauthFailedTitle": "Couldn't sign you in",
+  "@oauthFailedTitle": {
+    "description": "Heading for oauth failed title in the OAuth sign-in return page."
+  },
   "oauthEmailTaken": "There's already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.",
+  "@oauthEmailTaken": {
+    "description": "Legacy fallback explaining an OAuth email collision. Verified provider emails normally reclaim an unverified account."
+  },
   "oauthOtherServer": "This sign-in was started on another server than the one chosen now. Sign in again.",
+  "@oauthOtherServer": {
+    "description": "Label or control text for oauth other server in the OAuth sign-in return page."
+  },
   "oauthBackToSignIn": "Back to sign in",
+  "@oauthBackToSignIn": {
+    "description": "Label or control text for oauth back to sign in in the OAuth sign-in return page."
+  },
   "errorOAuthFailed": "Signing in didn't work. Try again.",
+  "@errorOAuthFailed": {
+    "description": "Message for error o auth failed in API error feedback."
+  },
   "errorOAuthCancelled": "Signing in was cancelled.",
+  "@errorOAuthCancelled": {
+    "description": "Message for error o auth cancelled in API error feedback."
+  },
   "importTitle": "Import from Settle Up",
+  "@importTitle": {
+    "description": "Heading for import title in Settle Up CSV import."
+  },
   "importAction": "Import",
+  "@importAction": {
+    "description": "Action button for import action in Settle Up CSV import."
+  },
   "importIntro": "In Settle Up, export the group as a CSV file, then choose the file here. Expenses, payments and everyone in the group come along, and balances stay the same.",
+  "@importIntro": {
+    "description": "Label or control text for import intro in Settle Up CSV import."
+  },
   "importChooseFile": "Choose CSV file",
+  "@importChooseFile": {
+    "description": "Label or control text for import choose file in Settle Up CSV import."
+  },
   "importChooseOther": "Choose another file",
+  "@importChooseOther": {
+    "description": "Label or control text for import choose other in Settle Up CSV import."
+  },
   "importReading": "Reading the file…",
+  "@importReading": {
+    "description": "Label or control text for import reading in Settle Up CSV import."
+  },
   "importSummary": "{expenses, plural, =1{1 expense} other{{expenses} expenses}}, {payments, plural, =1{1 payment} other{{payments} payments}}",
-  "@importSummary": {"placeholders": {"expenses": {"type": "int"}, "payments": {"type": "int"}}},
+  "@importSummary": {
+    "placeholders": {
+      "expenses": {
+        "type": "int",
+        "description": "The expenses value named by this message."
+      },
+      "payments": {
+        "type": "int",
+        "description": "The payments value named by this message."
+      }
+    },
+    "description": "Label or control text for import summary in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "importDates": "{from} to {to}",
-  "@importDates": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
+  "@importDates": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "description": "Display name of the person paying, or the source named by the message."
+      },
+      "to": {
+        "type": "String",
+        "description": "Display name of the recipient, or the end named by the message."
+      }
+    },
+    "description": "Label or control text for import dates in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "importCurrency": "Currency: {currency}. Entries in other currencies use the amounts Settle Up converted.",
-  "@importCurrency": {"placeholders": {"currency": {"type": "String"}}},
+  "@importCurrency": {
+    "placeholders": {
+      "currency": {
+        "type": "String",
+        "description": "The currency value named by this message."
+      }
+    },
+    "description": "Label or control text for import currency in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "importSkipped": "{count, plural, =1{1 entry of zero is left out.} other{{count} entries of zero are left out.}}",
-  "@importSkipped": {"placeholders": {"count": {"type": "int"}}},
+  "@importSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for import skipped in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "importWhoAreYou": "Which one are you?",
+  "@importWhoAreYou": {
+    "description": "Label or control text for import who are you in Settle Up CSV import."
+  },
   "importUntitled": "Untitled",
+  "@importUntitled": {
+    "description": "Label or control text for import untitled in Settle Up CSV import."
+  },
   "errorImportFile": "This doesn't look like a Settle Up CSV export.",
+  "@errorImportFile": {
+    "description": "Message for error import file in API error feedback."
+  },
   "errorImportCurrency": "The file has no entries without an exchange rate, so the group's currency is unclear.",
+  "@errorImportCurrency": {
+    "description": "Message for error import currency in API error feedback."
+  },
   "errorImportTooBig": "This file is too big to import.",
+  "@errorImportTooBig": {
+    "description": "Message for error import too big in API error feedback."
+  },
   "errorBadImage": "That picture can't be used. Choose a JPEG, PNG or WebP image.",
+  "@errorBadImage": {
+    "description": "Message for error bad image in API error feedback."
+  },
   "errorReceiptTooBig": "That picture is too big. Choose one under 10 MB.",
+  "@errorReceiptTooBig": {
+    "description": "Message for error receipt too big in API error feedback."
+  },
   "errorImportMe": "Choose which person you are.",
+  "@errorImportMe": {
+    "description": "Message for error import me in API error feedback."
+  },
   "errorImportRow": "Line {line} of the file can't be imported: {reason}",
-  "@errorImportRow": {"placeholders": {"line": {"type": "int"}, "reason": {"type": "String"}}},
+  "@errorImportRow": {
+    "placeholders": {
+      "line": {
+        "type": "int",
+        "description": "The line value named by this message."
+      },
+      "reason": {
+        "type": "String",
+        "description": "The reason value named by this message."
+      }
+    },
+    "description": "Message for error import row in API error feedback. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "errorImportAmount": "an amount can't be read.",
+  "@errorImportAmount": {
+    "description": "Message for error import amount in API error feedback."
+  },
   "errorImportCounts": "the names and amounts don't match up.",
+  "@errorImportCounts": {
+    "description": "Message for error import counts in API error feedback."
+  },
   "errorImportDate": "the date can't be read.",
+  "@errorImportDate": {
+    "description": "Message for error import date in API error feedback."
+  },
   "errorImportType": "the type isn't expense, transfer or income.",
+  "@errorImportType": {
+    "description": "Message for error import type in API error feedback."
+  },
   "errorImportTransfer": "a transfer needs one person paying someone else.",
+  "@errorImportTransfer": {
+    "description": "Message for error import transfer in API error feedback."
+  },
   "errorImportRowCurrency": "it's in another currency without an exchange rate.",
-
+  "@errorImportRowCurrency": {
+    "description": "Message for error import row currency in API error feedback."
+  },
   "adminSetupTitle": "Set up this server",
+  "@adminSetupTitle": {
+    "description": "Heading for admin setup title in the server administrator interface."
+  },
   "adminSetupBody": "Choose a password for the administrator. It guards this page, where the server's settings live. There is no username: whoever knows the password can change the settings.",
+  "@adminSetupBody": {
+    "description": "Explanatory text for admin setup body in the server administrator interface."
+  },
   "adminSetupCode": "Setup code",
+  "@adminSetupCode": {
+    "description": "Label or control text for admin setup code in the server administrator interface."
+  },
   "adminSetupCodeHelp": "This server already holds data, so it printed a setup code in its log when it started. With Docker: docker compose logs balnana",
+  "@adminSetupCodeHelp": {
+    "description": "Help text for admin setup code help in the server administrator interface."
+  },
   "adminSetupAction": "Set password",
+  "@adminSetupAction": {
+    "description": "Action button for admin setup action in the server administrator interface."
+  },
   "adminPassword": "Administrator password",
+  "@adminPassword": {
+    "description": "Label or control text for admin password in the server administrator interface."
+  },
   "adminPasswordRepeat": "Repeat the password",
+  "@adminPasswordRepeat": {
+    "description": "Label or control text for admin password repeat in the server administrator interface."
+  },
   "adminPasswordMismatch": "The passwords don't match.",
+  "@adminPasswordMismatch": {
+    "description": "Label or control text for admin password mismatch in the server administrator interface."
+  },
   "adminLoginTitle": "Administration",
+  "@adminLoginTitle": {
+    "description": "Heading for admin login title in the server administrator interface."
+  },
   "adminLoginBody": "Enter the administrator password to change this server's settings.",
+  "@adminLoginBody": {
+    "description": "Explanatory text for admin login body in the server administrator interface."
+  },
   "adminLoginAction": "Sign in",
+  "@adminLoginAction": {
+    "description": "Action button for admin login action in the server administrator interface."
+  },
   "adminSettingsTitle": "Server settings",
+  "@adminSettingsTitle": {
+    "description": "Heading for admin settings title in the server administrator interface."
+  },
   "adminSaved": "Settings saved. They apply right away.",
+  "@adminSaved": {
+    "description": "Label or control text for admin saved in the server administrator interface."
+  },
   "adminSaveFailed": "Nothing was saved. Check the highlighted settings.",
+  "@adminSaveFailed": {
+    "description": "Label or control text for admin save failed in the server administrator interface."
+  },
   "adminChangePassword": "Change administrator password",
+  "@adminChangePassword": {
+    "description": "Label or control text for admin change password in the server administrator interface."
+  },
   "adminPasswordCurrent": "Current password",
+  "@adminPasswordCurrent": {
+    "description": "Label or control text for admin password current in the server administrator interface."
+  },
   "adminPasswordNew": "New password",
+  "@adminPasswordNew": {
+    "description": "Label or control text for admin password new in the server administrator interface."
+  },
   "adminPasswordChanged": "Password changed. Other administrator sessions are signed out.",
+  "@adminPasswordChanged": {
+    "description": "Label or control text for admin password changed in the server administrator interface."
+  },
   "adminSignOut": "Sign out of administration",
+  "@adminSignOut": {
+    "description": "Label or control text for admin sign out in the server administrator interface."
+  },
   "adminBackHome": "Back to Balnana",
+  "@adminBackHome": {
+    "description": "Label or control text for admin back home in the server administrator interface."
+  },
   "adminRequireEmail": "Require an email address",
+  "@adminRequireEmail": {
+    "description": "Label or control text for admin require email in the server administrator interface."
+  },
   "adminRequireEmailHelp": "When off, people sign up with a username and may leave the email address out. They sign in with either.",
+  "@adminRequireEmailHelp": {
+    "description": "Help text for admin require email help in the server administrator interface."
+  },
   "accountUsername": "Username",
+  "@accountUsername": {
+    "description": "Label or control text for account username in account profile and credentials."
+  },
   "accountUsernameHelp": "3 to 32 letters, digits, dots, dashes or underscores. You sign in with it.",
+  "@accountUsernameHelp": {
+    "description": "Help text for account username help in account profile and credentials."
+  },
   "accountEmailOptional": "Email (optional)",
+  "@accountEmailOptional": {
+    "description": "Label or control text for account email optional in account profile and credentials."
+  },
   "accountEmailOptionalHelp": "Lets you get group invitations and reset a forgotten password.",
+  "@accountEmailOptionalHelp": {
+    "description": "Help text for account email optional help in account profile and credentials."
+  },
   "accountLogin": "Email or username",
+  "@accountLogin": {
+    "description": "Label or control text for account login in account profile and credentials."
+  },
   "errorInvalidUsername": "Use 3 to 32 letters, digits, dots, dashes or underscores, starting with a letter or digit.",
+  "@errorInvalidUsername": {
+    "description": "Message for error invalid username in API error feedback."
+  },
   "errorUsernameTaken": "Someone already has that username.",
+  "@errorUsernameTaken": {
+    "description": "Message for error username taken in API error feedback."
+  },
   "adminDiscardTitle": "Discard changes?",
+  "@adminDiscardTitle": {
+    "description": "Heading for admin discard title in the server administrator interface."
+  },
   "adminDiscardBody": "Your changes to the settings haven't been saved.",
+  "@adminDiscardBody": {
+    "description": "Explanatory text for admin discard body in the server administrator interface."
+  },
   "adminDiscard": "Discard",
+  "@adminDiscard": {
+    "description": "Label or control text for admin discard in the server administrator interface."
+  },
   "adminLocked": "Set on the server by {key}",
   "@adminLocked": {
     "description": "Helper text of a setting an environment variable fixes, so it can't be changed here.",
-    "placeholders": { "key": { "type": "String", "example": "BALNANA_SMTP_HOST" } }
+    "placeholders": {
+      "key": {
+        "type": "String",
+        "example": "BALNANA_SMTP_HOST",
+        "description": "The key value named by this message."
+      }
+    }
   },
   "adminDefault": "Default: {value}",
   "@adminDefault": {
     "description": "Hint showing a setting's value when nothing sets it.",
-    "placeholders": { "value": { "type": "String", "example": "587" } }
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "587",
+        "description": "The value value named by this message."
+      }
+    }
   },
   "adminSecretSaved": "Saved. Type a new one to replace it.",
+  "@adminSecretSaved": {
+    "description": "Label or control text for admin secret saved in the server administrator interface."
+  },
   "adminSecretRemoved": "Will be removed when you save.",
+  "@adminSecretRemoved": {
+    "description": "Label or control text for admin secret removed in the server administrator interface."
+  },
   "adminSecretRemove": "Remove saved value",
+  "@adminSecretRemove": {
+    "description": "Label or control text for admin secret remove in the server administrator interface."
+  },
   "adminSectionGeneral": "General",
+  "@adminSectionGeneral": {
+    "description": "Label or control text for admin section general in the server administrator interface."
+  },
   "adminSectionAccess": "Access",
+  "@adminSectionAccess": {
+    "description": "Label or control text for admin section access in the server administrator interface."
+  },
   "adminSectionAccounts": "Accounts",
+  "@adminSectionAccounts": {
+    "description": "Label or control text for admin section accounts in the server administrator interface."
+  },
   "adminSectionAccountsBody": "These apply when access is set to accounts.",
+  "@adminSectionAccountsBody": {
+    "description": "Explanatory text for admin section accounts body in the server administrator interface."
+  },
   "adminSectionEmail": "Email (SMTP)",
+  "@adminSectionEmail": {
+    "description": "Label or control text for admin section email in the server administrator interface."
+  },
   "adminSectionEmailBody": "Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.",
+  "@adminSectionEmailBody": {
+    "description": "Explanatory text for admin section email body in the server administrator interface."
+  },
   "adminSectionGoogle": "Sign in with Google",
+  "@adminSectionGoogle": {
+    "description": "Label or control text for admin section google in the server administrator interface."
+  },
   "adminSectionGoogleBody": "Register {url} as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.",
-  "@adminSectionGoogleBody": {"placeholders": {"url": {"type": "String", "example": "https://balnana.example.com/api/v1/auth/oauth/google/callback"}}},
+  "@adminSectionGoogleBody": {
+    "placeholders": {
+      "url": {
+        "type": "String",
+        "example": "https://balnana.example.com/api/v1/auth/oauth/google/callback",
+        "description": "The url value named by this message."
+      }
+    },
+    "description": "Explanatory text for admin section google body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminSectionOidc": "Sign in with OpenID Connect",
+  "@adminSectionOidc": {
+    "description": "Label or control text for admin section oidc in the server administrator interface."
+  },
   "adminSectionOidcBody": "Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register {url} as the redirect URI. Leave the issuer empty to turn it off.",
-  "@adminSectionOidcBody": {"placeholders": {"url": {"type": "String", "example": "https://balnana.example.com/api/v1/auth/oauth/oidc/callback"}}},
+  "@adminSectionOidcBody": {
+    "placeholders": {
+      "url": {
+        "type": "String",
+        "example": "https://balnana.example.com/api/v1/auth/oauth/oidc/callback",
+        "description": "The url value named by this message."
+      }
+    },
+    "description": "Explanatory text for admin section oidc body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminSectionAndroid": "Android app links",
+  "@adminSectionAndroid": {
+    "description": "Label or control text for admin section android in the server administrator interface."
+  },
   "adminSectionAndroidBody": "Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.",
+  "@adminSectionAndroidBody": {
+    "description": "Explanatory text for admin section android body in the server administrator interface."
+  },
   "adminSectionAdmin": "Administrator",
+  "@adminSectionAdmin": {
+    "description": "Label or control text for admin section admin in the server administrator interface."
+  },
   "adminPublicUrl": "Public address",
+  "@adminPublicUrl": {
+    "description": "Label or control text for admin public url in the server administrator interface."
+  },
   "adminPublicUrlHelp": "The address people use to reach this server. Group links and email links are built from it.",
+  "@adminPublicUrlHelp": {
+    "description": "Help text for admin public url help in the server administrator interface."
+  },
   "adminSourceUrl": "Source code link",
+  "@adminSourceUrl": {
+    "description": "Label or control text for admin source url in the server administrator interface."
+  },
   "adminSourceUrlHelp": "Where people can get this server's source code, as its license (AGPL-3.0) asks when you run a changed version.",
+  "@adminSourceUrlHelp": {
+    "description": "Help text for admin source url help in the server administrator interface."
+  },
   "adminAuthMode": "Access",
+  "@adminAuthMode": {
+    "description": "Label or control text for admin auth mode in the server administrator interface."
+  },
   "adminAuthModeLink": "Group links",
+  "@adminAuthModeLink": {
+    "description": "Label or control text for admin auth mode link in the server administrator interface."
+  },
   "adminAuthModeLinkHelp": "No sign-in: a group's private link is all anyone needs.",
+  "@adminAuthModeLinkHelp": {
+    "description": "Help text for admin auth mode link help in the server administrator interface."
+  },
   "adminAuthModeAccounts": "Accounts",
+  "@adminAuthModeAccounts": {
+    "description": "Label or control text for admin auth mode accounts in the server administrator interface."
+  },
   "adminAuthModeAccountsHelp": "People sign in, and a link only lets signed-in people join a group.",
+  "@adminAuthModeAccountsHelp": {
+    "description": "Help text for admin auth mode accounts help in the server administrator interface."
+  },
   "adminPasswordLogin": "Email and password sign-in",
+  "@adminPasswordLogin": {
+    "description": "Label or control text for admin password login in the server administrator interface."
+  },
   "adminSignup": "Who may create an account",
+  "@adminSignup": {
+    "description": "Label or control text for admin signup in the server administrator interface."
+  },
   "adminSignupOpen": "Anyone",
+  "@adminSignupOpen": {
+    "description": "Label or control text for admin signup open in the server administrator interface."
+  },
   "adminSignupInvite": "Invited people",
+  "@adminSignupInvite": {
+    "description": "Label or control text for admin signup invite in the server administrator interface."
+  },
   "adminSignupClosed": "Nobody",
+  "@adminSignupClosed": {
+    "description": "Label or control text for admin signup closed in the server administrator interface."
+  },
   "adminSignupHelp": "The first account can always be created.",
+  "@adminSignupHelp": {
+    "description": "Help text for admin signup help in the server administrator interface."
+  },
   "adminLinkGroups": "Groups may be opened by link",
+  "@adminLinkGroups": {
+    "description": "Label or control text for admin link groups in the server administrator interface."
+  },
   "adminLinkGroupsHelp": "Group owners may let anyone with the link in, without signing in.",
+  "@adminLinkGroupsHelp": {
+    "description": "Help text for admin link groups help in the server administrator interface."
+  },
   "adminSmtpHost": "Mail server",
+  "@adminSmtpHost": {
+    "description": "Label or control text for admin smtp host in the server administrator interface."
+  },
   "adminSmtpPort": "Port",
+  "@adminSmtpPort": {
+    "description": "Label or control text for admin smtp port in the server administrator interface."
+  },
   "adminSmtpUser": "User name",
+  "@adminSmtpUser": {
+    "description": "Label or control text for admin smtp user in the server administrator interface."
+  },
   "adminSmtpPassword": "Password",
+  "@adminSmtpPassword": {
+    "description": "Label or control text for admin smtp password in the server administrator interface."
+  },
   "adminSmtpFrom": "Sender",
+  "@adminSmtpFrom": {
+    "description": "Label or control text for admin smtp from in the server administrator interface."
+  },
   "adminSmtpFromHint": "Balnana <balnana@example.com>",
+  "@adminSmtpFromHint": {
+    "description": "Input hint for admin smtp from hint in the server administrator interface."
+  },
   "adminClientId": "Client ID",
+  "@adminClientId": {
+    "description": "Label or control text for admin client id in the server administrator interface."
+  },
   "adminClientSecret": "Client secret",
+  "@adminClientSecret": {
+    "description": "Label or control text for admin client secret in the server administrator interface."
+  },
   "adminOidcIssuer": "Issuer URL",
+  "@adminOidcIssuer": {
+    "description": "Label or control text for admin oidc issuer in the server administrator interface."
+  },
   "adminOidcName": "Button name",
+  "@adminOidcName": {
+    "description": "Label or control text for admin oidc name in the server administrator interface."
+  },
   "adminOidcNameHelp": "Shown as \"Continue with …\" on the sign-in page.",
+  "@adminOidcNameHelp": {
+    "description": "Help text for admin oidc name help in the server administrator interface."
+  },
   "adminFingerprints": "Certificate fingerprints",
+  "@adminFingerprints": {
+    "description": "Label or control text for admin fingerprints in the server administrator interface."
+  },
   "adminFingerprintsHelp": "SHA-256, separated by commas. keytool -list -v and apksigner verify --print-certs show them.",
+  "@adminFingerprintsHelp": {
+    "description": "Help text for admin fingerprints help in the server administrator interface."
+  },
   "adminInvalidValue": "This value isn't valid.",
+  "@adminInvalidValue": {
+    "description": "Label or control text for admin invalid value in the server administrator interface."
+  },
   "adminInvalidUrl": "Enter a full address starting with https:// or http://.",
+  "@adminInvalidUrl": {
+    "description": "Label or control text for admin invalid url in the server administrator interface."
+  },
   "adminInvalidFrom": "Enter a sender such as Balnana <balnana@example.com>; email needs one.",
+  "@adminInvalidFrom": {
+    "description": "Label or control text for admin invalid from in the server administrator interface."
+  },
   "adminInvalidPort": "Enter a port number from 1 to 65535.",
+  "@adminInvalidPort": {
+    "description": "Label or control text for admin invalid port in the server administrator interface."
+  },
   "adminInvalidRequired": "This sign-in provider needs it.",
+  "@adminInvalidRequired": {
+    "description": "Label or control text for admin invalid required in the server administrator interface."
+  },
   "adminInvalidFingerprint": "Enter SHA-256 fingerprints: 64 hexadecimal digits each, colons allowed.",
+  "@adminInvalidFingerprint": {
+    "description": "Label or control text for admin invalid fingerprint in the server administrator interface."
+  },
   "adminNeedsSignIn": "Accounts need a way to sign in: turn on email and password, or set up a provider.",
+  "@adminNeedsSignIn": {
+    "description": "Label or control text for admin needs sign in in the server administrator interface."
+  },
   "adminLockedChange": "This is set on the server and can't be changed here.",
+  "@adminLockedChange": {
+    "description": "Label or control text for admin locked change in the server administrator interface."
+  },
   "errorAdminRequired": "Your administrator session has ended. Sign in again.",
+  "@errorAdminRequired": {
+    "description": "Message for error admin required in API error feedback."
+  },
   "errorAdminWrongPassword": "That password isn't right.",
+  "@errorAdminWrongPassword": {
+    "description": "Message for error admin wrong password in API error feedback."
+  },
   "errorInvalidSetupCode": "That setup code isn't right. Look for it in the server's log.",
+  "@errorInvalidSetupCode": {
+    "description": "Message for error invalid setup code in API error feedback."
+  },
   "errorAlreadySetUp": "This server has been set up already. Sign in with its administrator password.",
-
+  "@errorAlreadySetUp": {
+    "description": "Message for error already set up in API error feedback."
+  },
   "linkOpening": "Opening link…",
+  "@linkOpening": {
+    "description": "Label or control text for link opening in opening an app or group link."
+  },
   "linkForeignTitle": "This link is for another server",
+  "@linkForeignTitle": {
+    "description": "Heading for link foreign title in opening an app or group link."
+  },
   "linkForeignBody": "This app is connected to {server}, and the link belongs to a different server. Change the server in Settings to open it.",
-  "@linkForeignBody": {"placeholders": {"server": {"type": "String", "example": "https://balnana.example.com"}}},
+  "@linkForeignBody": {
+    "placeholders": {
+      "server": {
+        "type": "String",
+        "example": "https://balnana.example.com",
+        "description": "The server value named by this message."
+      }
+    },
+    "description": "Explanatory text for link foreign body in opening an app or group link. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "linkInvalidTitle": "This link can't be opened",
+  "@linkInvalidTitle": {
+    "description": "Heading for link invalid title in opening an app or group link."
+  },
   "linkInvalidBody": "It isn't a Balnana link this app knows.",
+  "@linkInvalidBody": {
+    "description": "Explanatory text for link invalid body in opening an app or group link."
+  },
   "linkGoHome": "Go to groups",
-
+  "@linkGoHome": {
+    "description": "Label or control text for link go home in opening an app or group link."
+  },
   "privacyTitle": "Privacy policy",
+  "@privacyTitle": {
+    "description": "Heading for privacy title in the built-in privacy notice."
+  },
   "privacyIntro": "Balnana is open-source software. Whoever runs the server this app is connected to (its operator) decides where your data is kept and is responsible for it. This page describes what the software itself stores and does.",
+  "@privacyIntro": {
+    "description": "Label or control text for privacy intro in the built-in privacy notice."
+  },
   "privacyStoredTitle": "What is stored",
+  "@privacyStoredTitle": {
+    "description": "Heading for privacy stored title in the built-in privacy notice."
+  },
   "privacyStoredBody": "The groups you create or join: their names, the members' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.",
+  "@privacyStoredBody": {
+    "description": "Explanatory text for privacy stored body in the built-in privacy notice."
+  },
   "privacyUseTitle": "How it is used",
+  "@privacyUseTitle": {
+    "description": "Heading for privacy use title in the built-in privacy notice."
+  },
   "privacyUseBody": "Only to run the app: to show each group to its members, work out balances, and send the emails and notifications the app needs, such as address verification, password resets and invitations. The app has no ads and no analytics, and nothing is sold.",
+  "@privacyUseBody": {
+    "description": "Explanatory text for privacy use body in the built-in privacy notice."
+  },
   "privacySharedTitle": "Who can see it",
+  "@privacySharedTitle": {
+    "description": "Heading for privacy shared title in the built-in privacy notice."
+  },
   "privacySharedBody": "Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google's Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification's content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.",
+  "@privacySharedBody": {
+    "description": "Explanatory text for privacy shared body in the built-in privacy notice."
+  },
   "privacyDeviceTitle": "On this device",
+  "@privacyDeviceTitle": {
+    "description": "Heading for privacy device title in the built-in privacy notice."
+  },
   "privacyDeviceBody": "The app keeps the server's address, your settings and a copy of your groups for when you're offline. Uninstalling the app removes them.",
+  "@privacyDeviceBody": {
+    "description": "Explanatory text for privacy device body in the built-in privacy notice."
+  },
   "privacyDeleteTitle": "Deleting your data",
+  "@privacyDeleteTitle": {
+    "description": "Heading for privacy delete title in the built-in privacy notice."
+  },
   "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. For anything else, contact the server's operator.",
+  "@privacyDeleteBody": {
+    "description": "Explanatory text for privacy delete body in the built-in privacy notice."
+  },
   "privacyOperatorPolicy": "The operator's privacy policy",
+  "@privacyOperatorPolicy": {
+    "description": "Label or control text for privacy operator policy in the built-in privacy notice."
+  },
   "privacyLink": "Privacy",
-  "@privacyLink": { "description": "Short link to the privacy policy, under the sign-in form." },
-
+  "@privacyLink": {
+    "description": "Short link to the privacy policy, under the sign-in form."
+  },
   "accountEmailAdd": "Add email address",
+  "@accountEmailAdd": {
+    "description": "Label or control text for account email add in account profile and credentials."
+  },
   "accountEmailChange": "Change email address",
+  "@accountEmailChange": {
+    "description": "Label or control text for account email change in account profile and credentials."
+  },
   "accountEmailNew": "Email address",
+  "@accountEmailNew": {
+    "description": "Label or control text for account email new in account profile and credentials."
+  },
   "accountEmailVerifyNote": "You'll get a link to confirm the new address. Your current address stays until then.",
+  "@accountEmailVerifyNote": {
+    "description": "Label or control text for account email verify note in account profile and credentials."
+  },
   "accountEmailPendingTitle": "Confirm your new email",
+  "@accountEmailPendingTitle": {
+    "description": "Heading for account email pending title in account profile and credentials."
+  },
   "accountEmailPendingHelp": "{email} takes your current address's place once you open the link sent to it. Tap to send it again.",
-  "@accountEmailPendingHelp": {"placeholders": {"email": {"type": "String"}}},
+  "@accountEmailPendingHelp": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "description": "The email value named by this message."
+      }
+    },
+    "description": "Help text for account email pending help in account profile and credentials. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "accountEmailRemoveNote": "Leave it empty to remove your address. You keep signing in with your username.",
+  "@accountEmailRemoveNote": {
+    "description": "Label or control text for account email remove note in account profile and credentials."
+  },
   "accountEmailSaved": "Email address saved",
+  "@accountEmailSaved": {
+    "description": "Label or control text for account email saved in account profile and credentials."
+  },
   "accountEmailRemoved": "Email address removed",
+  "@accountEmailRemoved": {
+    "description": "Label or control text for account email removed in account profile and credentials."
+  },
   "accountConfirmPassword": "Your password",
+  "@accountConfirmPassword": {
+    "description": "Label or control text for account confirm password in account profile and credentials."
+  },
   "accountConfirmPasswordHelp": "To confirm it's you.",
+  "@accountConfirmPasswordHelp": {
+    "description": "Help text for account confirm password help in account profile and credentials."
+  },
   "errorEmailNeeded": "You sign in with your email address, so it can't be removed.",
+  "@errorEmailNeeded": {
+    "description": "Message for error email needed in API error feedback."
+  },
   "accountDelete": "Delete account",
+  "@accountDelete": {
+    "description": "Label or control text for account delete in account profile and credentials."
+  },
   "accountDeleteHelp": "Remove your account from this server",
+  "@accountDeleteHelp": {
+    "description": "Help text for account delete help in account profile and credentials."
+  },
   "accountDeleteTitle": "Delete your account?",
+  "@accountDeleteTitle": {
+    "description": "Heading for account delete title in account profile and credentials."
+  },
   "accountDeleteBody": "Your account is deleted for good, and you're signed out. In your groups your name stays as a member nobody has claimed, so balances still add up. Groups nobody else is in are deleted.",
+  "@accountDeleteBody": {
+    "description": "Explanatory text for account delete body in account profile and credentials."
+  },
   "accountDeleteAction": "Delete for good",
+  "@accountDeleteAction": {
+    "description": "Action button for account delete action in account profile and credentials."
+  },
   "accountDeleted": "Your account has been deleted.",
+  "@accountDeleted": {
+    "description": "Label or control text for account deleted in account profile and credentials."
+  },
   "accountDeletePageSignedOut": "Sign in to delete your account on this server.",
+  "@accountDeletePageSignedOut": {
+    "description": "Label or control text for account delete page signed out in account profile and credentials."
+  },
   "accountDeletePageLinkMode": "This server has no accounts: a group's link is all anyone needs. To delete a group with everything in it, open the group's settings and choose Delete group.",
-
+  "@accountDeletePageLinkMode": {
+    "description": "Label or control text for account delete page link mode in account profile and credentials."
+  },
   "groupDelete": "Delete group",
+  "@groupDelete": {
+    "description": "Label or control text for group delete in group creation, settings, or switching."
+  },
   "groupDeleteHelp": "Delete it with all its expenses, for everyone",
+  "@groupDeleteHelp": {
+    "description": "Help text for group delete help in group creation, settings, or switching."
+  },
   "groupDeleteTitle": "Delete {name}?",
-  "@groupDeleteTitle": {"placeholders": {"name": {"type": "String", "example": "Flat"}}},
+  "@groupDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Flat",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Heading for group delete title in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "groupDeleteBody": "The group and all its expenses, payments and history are deleted for everyone. This can't be undone. Type the group's name to confirm.",
+  "@groupDeleteBody": {
+    "description": "Explanatory text for group delete body in group creation, settings, or switching."
+  },
   "groupDeleteName": "Group name",
+  "@groupDeleteName": {
+    "description": "Label or control text for group delete name in group creation, settings, or switching."
+  },
   "groupDeleteAction": "Delete for good",
+  "@groupDeleteAction": {
+    "description": "Action button for group delete action in group creation, settings, or switching."
+  },
   "groupDeleted": "Group deleted",
+  "@groupDeleted": {
+    "description": "Label or control text for group deleted in group creation, settings, or switching."
+  },
   "groupDeleteOwnerOnly": "Only the group's owner can delete it.",
-
+  "@groupDeleteOwnerOnly": {
+    "description": "Label or control text for group delete owner only in group creation, settings, or switching."
+  },
   "expenseDiscardTitle": "Discard changes?",
+  "@expenseDiscardTitle": {
+    "description": "Heading for expense discard title in the expense editor or expense list."
+  },
   "expenseDiscardBody": "Your changes to this expense haven't been saved.",
+  "@expenseDiscardBody": {
+    "description": "Explanatory text for expense discard body in the expense editor or expense list."
+  },
   "expenseDiscard": "Discard",
-
+  "@expenseDiscard": {
+    "description": "Label or control text for expense discard in the expense editor or expense list."
+  },
   "adminPrivacyUrl": "Privacy policy link",
+  "@adminPrivacyUrl": {
+    "description": "Label or control text for admin privacy url in the server administrator interface."
+  },
   "adminPrivacyUrlHelp": "Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.",
+  "@adminPrivacyUrlHelp": {
+    "description": "Help text for admin privacy url help in the server administrator interface."
+  },
   "adminMapTiles": "Map tiles",
+  "@adminMapTiles": {
+    "description": "Label or control text for admin map tiles in the server administrator interface."
+  },
   "adminMapTilesHelp": "Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap's own servers are only for light use; a busy server should use a tile provider.",
+  "@adminMapTilesHelp": {
+    "description": "Help text for admin map tiles help in the server administrator interface."
+  },
   "adminMapAttribution": "Map credit",
+  "@adminMapAttribution": {
+    "description": "Label or control text for admin map attribution in the server administrator interface."
+  },
   "adminMapAttributionHelp": "Shown on every map, as the tile provider asks.",
+  "@adminMapAttributionHelp": {
+    "description": "Help text for admin map attribution help in the server administrator interface."
+  },
   "adminInvalidMapTiles": "Enter an http(s) URL template with z, x and y in braces, or \"off\".",
+  "@adminInvalidMapTiles": {
+    "description": "Label or control text for admin invalid map tiles in the server administrator interface."
+  },
   "adminUsers": "Accounts",
+  "@adminUsers": {
+    "description": "Label or control text for admin users in the server administrator interface."
+  },
   "adminUsersSearch": "Search by name, email or username",
+  "@adminUsersSearch": {
+    "description": "Label or control text for admin users search in the server administrator interface."
+  },
   "adminUsersShown": "{shown} of {total} accounts",
-  "@adminUsersShown": {"placeholders": {"shown": {"type": "int"}, "total": {"type": "int"}}},
+  "@adminUsersShown": {
+    "placeholders": {
+      "shown": {
+        "type": "int",
+        "description": "The shown value named by this message."
+      },
+      "total": {
+        "type": "int",
+        "description": "The total value named by this message."
+      }
+    },
+    "description": "Label or control text for admin users shown in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminUsersCount": "{count, plural, =1{1 account} other{{count} accounts}}",
-  "@adminUsersCount": {"placeholders": {"count": {"type": "int"}}},
+  "@adminUsersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for admin users count in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminUsersEmpty": "No accounts match.",
+  "@adminUsersEmpty": {
+    "description": "Label or control text for admin users empty in the server administrator interface."
+  },
   "adminUserGroups": "{count, plural, =0{No groups} =1{1 group} other{{count} groups}}",
-  "@adminUserGroups": {"placeholders": {"count": {"type": "int"}}},
+  "@adminUserGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for admin user groups in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminUserUnverified": "not verified",
+  "@adminUserUnverified": {
+    "description": "Label or control text for admin user unverified in the server administrator interface."
+  },
   "adminUserDeleteTitle": "Delete {name}'s account?",
-  "@adminUserDeleteTitle": {"placeholders": {"name": {"type": "String", "example": "Ana"}}},
+  "@adminUserDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ana",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Heading for admin user delete title in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "adminUserDeleteBody": "The account is deleted for good and signed out everywhere. Its name stays in its groups as a member nobody has claimed; groups nobody else is in are deleted.",
+  "@adminUserDeleteBody": {
+    "description": "Explanatory text for admin user delete body in the server administrator interface."
+  },
   "adminUserDeleted": "Account deleted",
+  "@adminUserDeleted": {
+    "description": "Label or control text for admin user deleted in the server administrator interface."
+  },
   "commonDone": "Done",
+  "@commonDone": {
+    "description": "Label or control text for common done in shared buttons and controls."
+  },
   "crowdSearch": "Search people",
+  "@crowdSearch": {
+    "description": "Label or control text for crowd search in searchable and condensed member lists."
+  },
   "crowdNoMatch": "No one matches.",
+  "@crowdNoMatch": {
+    "description": "Label or control text for crowd no match in searchable and condensed member lists."
+  },
   "crowdAll": "All",
+  "@crowdAll": {
+    "description": "Label or control text for crowd all in searchable and condensed member lists."
+  },
   "crowdNone": "None",
+  "@crowdNone": {
+    "description": "Label or control text for crowd none in searchable and condensed member lists."
+  },
   "crowdChosen": "{count} of {total} chosen",
-  "@crowdChosen": {"placeholders": {"count": {"type": "int"}, "total": {"type": "int"}}},
+  "@crowdChosen": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      },
+      "total": {
+        "type": "int",
+        "description": "The total value named by this message."
+      }
+    },
+    "description": "Label or control text for crowd chosen in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "crowdShowMore": "{count, plural, =1{1 more} other{{count} more}}",
-  "@crowdShowMore": {"placeholders": {"count": {"type": "int"}}},
+  "@crowdShowMore": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for crowd show more in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "crowdShowFewer": "Show fewer",
+  "@crowdShowFewer": {
+    "description": "Label or control text for crowd show fewer in searchable and condensed member lists."
+  },
   "crowdSort": "Sort",
+  "@crowdSort": {
+    "description": "Label or control text for crowd sort in searchable and condensed member lists."
+  },
   "crowdShowAll": "Show all {count}",
-  "@crowdShowAll": {"placeholders": {"count": {"type": "int"}}},
+  "@crowdShowAll": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Label or control text for crowd show all in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
   "crowdBalances": "Everyone's balance",
+  "@crowdBalances": {
+    "description": "Label or control text for crowd balances in searchable and condensed member lists."
+  },
   "crowdSomeoneElse": "Someone else",
+  "@crowdSomeoneElse": {
+    "description": "Label or control text for crowd someone else in searchable and condensed member lists."
+  },
   "crowdChoosePayers": "Choose payers",
-  "crowdFilterTitle": "Whose expenses?"
+  "@crowdChoosePayers": {
+    "description": "Label or control text for crowd choose payers in searchable and condensed member lists."
+  },
+  "crowdFilterTitle": "Whose expenses?",
+  "@crowdFilterTitle": {
+    "description": "Heading for crowd filter title in searchable and condensed member lists."
+  },
+  "myGroupsTitle": "My group links",
+  "@myGroupsTitle": {
+    "description": "Settings section for backing up link-mode access links on the selected server."
+  },
+  "myGroupsExport": "Export my groups",
+  "@myGroupsExport": {
+    "description": "Action showing all saved group links for the current server."
+  },
+  "myGroupsExportHelp": "Copy your group links to keep a backup or move to another device.",
+  "@myGroupsExportHelp": {
+    "description": "Supporting text for the link-mode group-link export action."
+  },
+  "myGroupsPrivate": "Keep these links private. Anyone with a link can open its group.",
+  "@myGroupsPrivate": {
+    "description": "Explains that exported link-mode URLs grant access to the group."
+  },
+  "myGroupsCopy": "Copy links",
+  "@myGroupsCopy": {
+    "description": "Button copying the displayed group-link backup to the clipboard."
+  },
+  "myGroupsImport": "Import groups",
+  "@myGroupsImport": {
+    "description": "Title and action for importing saved access links, distinct from importing a Settle Up CSV."
+  },
+  "myGroupsImportHelp": "Paste group links from this server, one per line. Existing groups keep their place and identity.",
+  "@myGroupsImportHelp": {
+    "description": "Instructions for importing a link-mode group catalog. Foreign-server links are rejected together."
+  },
+  "myGroupsLinks": "Group links",
+  "@myGroupsLinks": {
+    "description": "Multiline field for group URLs or bare tokens from the selected server."
+  },
+  "myGroupsImportAction": "Import links",
+  "@myGroupsImportAction": {
+    "description": "Button validating all pasted links before saving any of them."
+  },
+  "myGroupsInvalid": "Enter valid group links, one per line. Nothing was imported.",
+  "@myGroupsInvalid": {
+    "description": "Error for an empty or malformed group-link list; import is atomic."
+  },
+  "myGroupsServerChanged": "The selected server changed. Close this dialog and import the links on their own server.",
+  "@myGroupsServerChanged": {
+    "description": "Error when server selection changes while the import dialog is open; prevents capability disclosure."
+  },
+  "myGroupsLimit": "Keep at most {count} group links per server. Nothing was imported.",
+  "@myGroupsLimit": {
+    "description": "Error when importing links would exceed the per-server catalog limit.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of group links, not members or expenses."
+      }
+    }
+  },
+  "myGroupsImported": "{count, plural, =0{These groups are already saved.} =1{Imported 1 new group link.} other{Imported {count} new group links.}}",
+  "@myGroupsImported": {
+    "description": "Success message counting only newly saved links; repeated and existing links are ignored.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of group links, not members or expenses."
+      }
+    }
+  }
 }

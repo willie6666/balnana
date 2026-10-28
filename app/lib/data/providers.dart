@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable, ProviderOrF
 
 import '../core/server.dart';
 import '../core/session.dart';
+import '../core/settings.dart';
 import 'api.dart';
 import 'home_group.dart';
 import 'known_groups.dart';
@@ -20,7 +21,8 @@ BalnanaApi _api(Ref ref) => ref.watch(balnanaApiProvider) ?? (throw const _NoSer
 final _loadedAs = Expando<Identity>('loadedAs');
 
 /// Whether [value] can be marked in [_loadedAs].
-bool _markable(Object? value) => value != null && value is! Record && value is! String && value is! num && value is! bool;
+bool _markable(Object? value) =>
+    value != null && value is! Record && value is! String && value is! num && value is! bool;
 
 /// Runs [load] with the server's API and marks what it gives as loaded as
 /// whom the app is now.
@@ -99,10 +101,15 @@ GroupApi groupApiOf(WidgetRef ref, String token) {
 /// The signed-in account, or null when signed out or the server has no
 /// accounts.
 final accountProvider = FutureProvider<User?>((ref) async {
+  final who = ref.watch(identityProvider);
   final info = await ref.watch(serverInfoProvider.future);
   if (info.authMode != AuthMode.accounts) return null;
   try {
-    return await _load(ref, (api) => api.me());
+    final user = await _load(ref, (api) => api.me());
+    if (ref.mounted && ref.read(identityProvider) == who) {
+      ref.read(settingsProvider.notifier).applyAccountLocale(user.locale);
+    }
+    return user;
   } on ApiException catch (e) {
     if (e.status == 401) return null;
     rethrow;
@@ -115,7 +122,9 @@ final currentAccountProvider = Provider<AsyncValue<User?>>(
 );
 
 /// Whether an account is signed in, as far as is known yet.
-final signedInProvider = Provider<bool>((ref) => ref.watch(currentAccountProvider.select((a) => a.value != null)));
+final signedInProvider = Provider<bool>(
+  (ref) => ref.watch(currentAccountProvider.select((a) => a.value != null)),
+);
 
 /// Keeps a new session and reloads everything as that account, unless the
 /// app is no longer [from], whom it was when it asked for the session: see
@@ -240,14 +249,20 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     if (current == null || !current.hasMore || current.loadingMore) return;
     if (current.moreError != null && !retry) return;
     final build = _build, filter = current.filter;
-    state = AsyncData(_mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true)));
+    state = AsyncData(
+      _mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true)),
+    );
     try {
       final page = await groupApi(ref, token).expenses(_digits, cursor: current.nextCursor, filter: filter);
       if (!ref.mounted || build != _build) return;
-      state = AsyncData(_mark(_who, ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter)));
+      state = AsyncData(
+        _mark(_who, ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter)),
+      );
     } on Exception catch (e) {
       if (!ref.mounted || build != _build) return;
-      state = AsyncData(_mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e)));
+      state = AsyncData(
+        _mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e)),
+      );
     }
   }
 }
@@ -274,7 +289,8 @@ final activityFeedProvider = FutureProvider<List<FeedItem>>((ref) async {
   );
   return _mark(
     who,
-    perGroup.expand((items) => items).toList()..sort((a, b) => b.activity.createdAt.compareTo(a.activity.createdAt)),
+    perGroup.expand((items) => items).toList()
+      ..sort((a, b) => b.activity.createdAt.compareTo(a.activity.createdAt)),
   );
 });
 

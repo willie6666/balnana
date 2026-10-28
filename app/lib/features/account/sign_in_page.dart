@@ -9,6 +9,7 @@ import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../core/session.dart';
+import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/providers.dart';
 import '../../ui/layout.dart';
@@ -23,7 +24,9 @@ String signInPath(String next) => Uri(path: '/sign-in', queryParameters: {'next'
 /// [next] when it is a path inside this app, else null; a link must not be
 /// able to send someone elsewhere after signing in.
 String? safeNext(String? next) {
-  if (next == null || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/sign-in')) return null;
+  if (next == null || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/sign-in')) {
+    return null;
+  }
   return next;
 }
 
@@ -80,7 +83,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     // The session is for this server, should another be chosen meanwhile.
     final who = ref.read(identityProvider);
     final l10n = context.l10n;
-    final locale = Localizations.localeOf(context).toLanguageTag();
+    final locale = ref.read(settingsProvider).locale?.toLanguageTag();
     final emailRequired = ref.read(serverInfoProvider).value?.emailRequired ?? true;
     final email = _email.text.trim();
     setState(() {
@@ -124,7 +127,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final info = ref.watch(serverInfoProvider).value;
     final passwords = info?.password ?? true;
     final canRegister =
-        info?.signup != SignupPolicy.closed || (info?.firstAccount ?? false) || widget.prefill?.invite != null;
+        info?.signup != SignupPolicy.closed ||
+        (info?.firstAccount ?? false) ||
+        widget.prefill?.invite != null;
     final canReset = info?.email ?? false;
     // Without required addresses, new accounts pick a username and the
     // sign-in field takes either.
@@ -148,7 +153,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               const SizedBox(height: BSpace.s24),
               for (final provider in providers) ...[
                 OutlinedButton.icon(
-                  onPressed: _busy ? null : () => startOAuth(ref, provider, safeNext(widget.next) ?? '/groups'),
+                  onPressed: _busy
+                      ? null
+                      : () => startOAuth(ref, provider, safeNext(widget.next) ?? '/groups'),
                   icon: const Icon(Icons.login),
                   label: Text(l10n.signInWith(provider.name)),
                 ),
@@ -161,7 +168,10 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
-                      child: Text(l10n.signInOr, style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                      child: Text(
+                        l10n.signInOr,
+                        style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
                     ),
                     const Expanded(child: Divider()),
                   ],
@@ -233,7 +243,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                           ),
                           validator: (v) {
                             final value = (v ?? '').trim();
-                            if (!emailRequired && !_register) return value.isEmpty ? l10n.errorRequired : null;
+                            if (!emailRequired && !_register) {
+                              return value.isEmpty ? l10n.errorRequired : null;
+                            }
                             if (!emailRequired && value.isEmpty) return null;
                             return value.contains('@') ? null : l10n.errorInvalidEmail;
                           },

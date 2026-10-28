@@ -49,7 +49,6 @@ class MainActivity : FlutterActivity() {
             splashScreen.setSplashScreenTheme(theme)
             result.success(null)
         }
-        }
         // The device's position, read once when the person taps "Use current
         // location". LocationManager rather than Play Services keeps the app
         // free of proprietary libraries.

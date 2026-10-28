@@ -79,8 +79,15 @@ class CacheDb extends _$CacheDb {
   }
 
   Future<CachedResponse?> find(String server, String account, String request) {
+    final cutoff = DateTime.now().subtract(keep);
     final query = select(cachedResponses)
-      ..where((r) => r.server.equals(server) & r.account.equals(account) & r.request.equals(request));
+      ..where(
+        (r) =>
+            r.server.equals(server) &
+            r.account.equals(account) &
+            r.request.equals(request) &
+            r.savedAt.isBiggerOrEqualValue(cutoff),
+      );
     return query.getSingleOrNull();
   }
 
@@ -142,7 +149,9 @@ class OfflineCache extends Interceptor {
     final query = options.uri.query;
     final request = '${options.method} $path${query.isEmpty ? '' : '?$query'}';
     if (options.method == 'GET') return request;
-    if (options.method == 'POST' && _readingPosts.contains(path)) return '$request ${jsonEncode(options.data)}';
+    if (options.method == 'POST' && _readingPosts.contains(path)) {
+      return '$request ${jsonEncode(options.data)}';
+    }
     return null;
   }
 

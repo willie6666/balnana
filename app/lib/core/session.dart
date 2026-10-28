@@ -10,8 +10,9 @@ import 'server.dart';
 /// How this app is signed in to the current server.
 ///
 /// On Android the server hands out a bearer token, kept on the device per
-/// server. On the web the session is an HttpOnly cookie the app never sees,
-/// so [token] stays null there and [generation] alone marks a change.
+/// server, in shared preferences. The same-origin web app uses an HttpOnly
+/// cookie and [token] stays null; a cross-origin web app keeps a bearer token.
+/// [generation] marks a sign-in or sign-out even when the cookie is unseen.
 @immutable
 class SessionKey {
   const SessionKey(this.token, this.generation);

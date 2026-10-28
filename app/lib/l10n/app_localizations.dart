@@ -103,121 +103,121 @@ abstract class AppLocalizations {
   /// **'Balnana'**
   String get appTitle;
 
-  /// No description provided for @commonCancel.
+  /// Label or control text for common cancel in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get commonCancel;
 
-  /// No description provided for @commonRetry.
+  /// Label or control text for common retry in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Retry'**
   String get commonRetry;
 
-  /// No description provided for @offlineBar.
+  /// Label or control text for offline bar in the offline cache banner.
   ///
   /// In en, this message translates to:
   /// **'Offline. Showing what this device saved; changes wait until you reconnect.'**
   String get offlineBar;
 
-  /// No description provided for @commonSave.
+  /// Label or control text for common save in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Save'**
   String get commonSave;
 
-  /// No description provided for @commonClear.
+  /// Label or control text for common clear in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Clear'**
   String get commonClear;
 
-  /// No description provided for @iconChoose.
+  /// Label or control text for icon choose in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Choose an icon'**
   String get iconChoose;
 
-  /// No description provided for @iconNone.
+  /// Label or control text for icon none in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'No icon'**
   String get iconNone;
 
-  /// No description provided for @iconSearchHint.
+  /// Input hint for icon search hint in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Search, or type any emoji'**
   String get iconSearchHint;
 
-  /// No description provided for @iconUseTyped.
+  /// Label or control text for icon use typed in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Use this emoji'**
   String get iconUseTyped;
 
-  /// No description provided for @iconNoMatch.
+  /// Label or control text for icon no match in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'No icons match. Type an emoji to use it.'**
   String get iconNoMatch;
 
-  /// No description provided for @iconSectionTravel.
+  /// Label or control text for icon section travel in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Travel & places'**
   String get iconSectionTravel;
 
-  /// No description provided for @iconSectionFood.
+  /// Label or control text for icon section food in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Food & drink'**
   String get iconSectionFood;
 
-  /// No description provided for @iconSectionActivities.
+  /// Label or control text for icon section activities in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Activities'**
   String get iconSectionActivities;
 
-  /// No description provided for @iconSectionHome.
+  /// Label or control text for icon section home in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Home & bills'**
   String get iconSectionHome;
 
-  /// No description provided for @iconSectionPeople.
+  /// Label or control text for icon section people in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'People'**
   String get iconSectionPeople;
 
-  /// No description provided for @iconSectionNature.
+  /// Label or control text for icon section nature in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Animals & nature'**
   String get iconSectionNature;
 
-  /// No description provided for @iconSectionObjects.
+  /// Label or control text for icon section objects in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Money & things'**
   String get iconSectionObjects;
 
-  /// No description provided for @iconSectionSymbols.
+  /// Label or control text for icon section symbols in the icon and emoji chooser.
   ///
   /// In en, this message translates to:
   /// **'Symbols'**
   String get iconSectionSymbols;
 
-  /// No description provided for @commonRemove.
+  /// Label or control text for common remove in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Remove'**
   String get commonRemove;
 
-  /// No description provided for @commonUndo.
+  /// Label or control text for common undo in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Undo'**
@@ -229,301 +229,301 @@ abstract class AppLocalizations {
   /// **'Someone'**
   String get someone;
 
-  /// No description provided for @errorGeneric.
+  /// Message for error generic in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get errorGeneric;
 
-  /// No description provided for @errorNetwork.
+  /// Message for error network in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Can\'t reach the server. Check your connection.'**
   String get errorNetwork;
 
-  /// No description provided for @errorNotFound.
+  /// Message for error not found in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This no longer exists.'**
   String get errorNotFound;
 
-  /// No description provided for @errorRequired.
+  /// Message for error required in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Required'**
   String get errorRequired;
 
-  /// No description provided for @errorInvalidName.
+  /// Message for error invalid name in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter a name of up to 100 characters.'**
   String get errorInvalidName;
 
-  /// No description provided for @errorDuplicateName.
+  /// Message for error duplicate name in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Someone in this group already has that name.'**
   String get errorDuplicateName;
 
-  /// No description provided for @errorTooManyMembers.
+  /// Message for error too many members in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This group has as many people as it can hold.'**
   String get errorTooManyMembers;
 
-  /// No description provided for @errorTooManyCategories.
+  /// Message for error too many categories in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This group has as many categories as it can hold.'**
   String get errorTooManyCategories;
 
-  /// No description provided for @errorDuplicateCategory.
+  /// Message for error duplicate category in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This group already has a category with that name.'**
   String get errorDuplicateCategory;
 
-  /// No description provided for @errorInvalidCurrency.
+  /// Message for error invalid currency in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter a three-letter currency code, such as USD.'**
   String get errorInvalidCurrency;
 
-  /// No description provided for @errorInvalidTitle.
+  /// Heading for error invalid title in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter a title of up to 200 characters.'**
   String get errorInvalidTitle;
 
-  /// No description provided for @errorInvalidLocation.
+  /// Message for error invalid location in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter a place name of one line, up to 200 characters.'**
   String get errorInvalidLocation;
 
-  /// No description provided for @errorInvalidSymbol.
+  /// Message for error invalid symbol in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter a symbol of up to 8 characters.'**
   String get errorInvalidSymbol;
 
-  /// No description provided for @errorInvalidEmoji.
+  /// Message for error invalid emoji in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Pick a single emoji as the icon.'**
   String get errorInvalidEmoji;
 
-  /// No description provided for @errorMemberHasBalance.
+  /// Message for error member has balance in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Settle this person\'s balance before removing them.'**
   String get errorMemberHasBalance;
 
-  /// No description provided for @errorVersionConflict.
+  /// Message for error version conflict in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Someone else changed this expense while you were editing it. Reload to see their changes.'**
   String get errorVersionConflict;
 
-  /// No description provided for @errorSignInRequired.
+  /// Message for error sign in required in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Sign in to do this.'**
   String get errorSignInRequired;
 
-  /// No description provided for @errorRateLimited.
+  /// Message for error rate limited in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Too many requests. Wait a minute and try again.'**
   String get errorRateLimited;
 
-  /// No description provided for @errorNotAMember.
+  /// Message for error not a member in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'You\'re not in this group yet.'**
   String get errorNotAMember;
 
-  /// No description provided for @errorNotAllowed.
+  /// Message for error not allowed in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Only that person or the group\'s owner can do this.'**
   String get errorNotAllowed;
 
-  /// No description provided for @errorLinkGroupsOff.
+  /// Message for error link groups off in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This server doesn\'t allow opening groups by link alone.'**
   String get errorLinkGroupsOff;
 
-  /// No description provided for @errorMemberClaimed.
+  /// Message for error member claimed in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Someone has already joined as that person.'**
   String get errorMemberClaimed;
 
-  /// No description provided for @errorMemberLeft.
+  /// Message for error member left in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Someone in this has left the group.'**
   String get errorMemberLeft;
 
-  /// No description provided for @errorInvalidEmail.
+  /// Message for error invalid email in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter an email address.'**
   String get errorInvalidEmail;
 
-  /// No description provided for @errorInvalidPassword.
+  /// Message for error invalid password in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Use 8 to 200 characters.'**
   String get errorInvalidPassword;
 
-  /// No description provided for @errorEmailTaken.
+  /// Message for error email taken in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'There\'s already an account with that email. Sign in instead.'**
   String get errorEmailTaken;
 
-  /// No description provided for @errorSignupClosed.
+  /// Message for error signup closed in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This server isn\'t taking new accounts.'**
   String get errorSignupClosed;
 
-  /// No description provided for @errorInvalidCredentials.
+  /// Message for error invalid credentials in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That email and password don\'t match.'**
   String get errorInvalidCredentials;
 
-  /// No description provided for @errorWrongPassword.
+  /// Message for error wrong password in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Your current password isn\'t right.'**
   String get errorWrongPassword;
 
-  /// No description provided for @errorAccountsOff.
+  /// Message for error accounts off in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This server doesn\'t use accounts.'**
   String get errorAccountsOff;
 
-  /// No description provided for @errorInvalidAmount.
+  /// Message for error invalid amount in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Enter an amount greater than zero.'**
   String get errorInvalidAmount;
 
-  /// No description provided for @errorTooManyDecimals.
+  /// Message for error too many decimals in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Too many decimal places for this currency.'**
   String get errorTooManyDecimals;
 
-  /// No description provided for @errorAmountTooLarge.
+  /// Message for error amount too large in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That amount is too large.'**
   String get errorAmountTooLarge;
 
-  /// No description provided for @errorNoShares.
+  /// Message for error no shares in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Pick at least one person to share the cost.'**
   String get errorNoShares;
 
-  /// No description provided for @errorInvalidShare.
+  /// Message for error invalid share in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Each share must be a number.'**
   String get errorInvalidShare;
 
-  /// No description provided for @errorExactTotal.
+  /// Message for error exact total in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'The amounts must add up to the total.'**
   String get errorExactTotal;
 
-  /// No description provided for @errorPayersTotal.
+  /// Message for error payers total in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'What everyone paid must add up to the total.'**
   String get errorPayersTotal;
 
-  /// No description provided for @categoryFood.
+  /// Label or control text for category food in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Food & drink'**
   String get categoryFood;
 
-  /// No description provided for @categoryGroceries.
+  /// Label or control text for category groceries in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Groceries'**
   String get categoryGroceries;
 
-  /// No description provided for @categoryTransport.
+  /// Label or control text for category transport in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Transport'**
   String get categoryTransport;
 
-  /// No description provided for @categoryTravel.
+  /// Label or control text for category travel in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Travel'**
   String get categoryTravel;
 
-  /// No description provided for @categoryLodging.
+  /// Label or control text for category lodging in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Lodging'**
   String get categoryLodging;
 
-  /// No description provided for @categoryRent.
+  /// Label or control text for category rent in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Rent'**
   String get categoryRent;
 
-  /// No description provided for @categoryUtilities.
+  /// Label or control text for category utilities in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Utilities'**
   String get categoryUtilities;
 
-  /// No description provided for @categoryEntertainment.
+  /// Label or control text for category entertainment in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Entertainment'**
   String get categoryEntertainment;
 
-  /// No description provided for @categoryShopping.
+  /// Label or control text for category shopping in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Shopping'**
   String get categoryShopping;
 
-  /// No description provided for @categoryHealth.
+  /// Label or control text for category health in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Health'**
   String get categoryHealth;
 
-  /// No description provided for @categoryGifts.
+  /// Label or control text for category gifts in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Gifts'**
   String get categoryGifts;
 
-  /// No description provided for @categoryOther.
+  /// Label or control text for category other in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Other'**
   String get categoryOther;
 
-  /// No description provided for @groupNew.
+  /// Label or control text for group new in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'New group'**
@@ -535,661 +535,661 @@ abstract class AppLocalizations {
   /// **'Switch group'**
   String get groupSwitch;
 
-  /// No description provided for @groupReorder.
+  /// Label or control text for group reorder in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Drag to reorder'**
   String get groupReorder;
 
-  /// No description provided for @groupCreate.
+  /// Label or control text for group create in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Create group'**
   String get groupCreate;
 
-  /// No description provided for @groupMemberCount.
+  /// Label or control text for group member count in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 person} other{{count} people}}'**
   String groupMemberCount(int count);
 
-  /// No description provided for @pillOwed.
+  /// Label or control text for pill owed in the application interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'You\'re owed {amount}'**
   String pillOwed(String amount);
 
-  /// No description provided for @pillOwe.
+  /// Label or control text for pill owe in the application interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'You owe {amount}'**
   String pillOwe(String amount);
 
-  /// No description provided for @pillSettled.
+  /// Label or control text for pill settled in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Settled up'**
   String get pillSettled;
 
-  /// No description provided for @groupMissingTitle.
+  /// Heading for group missing title in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Group not found'**
   String get groupMissingTitle;
 
-  /// No description provided for @groupMissingBody.
+  /// Explanatory text for group missing body in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'This group was deleted, or its link was reset. Ask someone in the group for the new link.'**
   String get groupMissingBody;
 
-  /// No description provided for @groupForget.
+  /// Label or control text for group forget in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Remove from this device'**
   String get groupForget;
 
-  /// No description provided for @groupLinkOtherServer.
+  /// Label or control text for group link other server in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'This link belongs to another server. Connect to that server to open it.'**
   String get groupLinkOtherServer;
 
-  /// No description provided for @openLinkTitle.
+  /// Heading for open link title in opening one saved group URL.
   ///
   /// In en, this message translates to:
   /// **'Open a group link'**
   String get openLinkTitle;
 
-  /// No description provided for @openLinkBody.
+  /// Explanatory text for open link body in opening one saved group URL.
   ///
   /// In en, this message translates to:
   /// **'Paste a link someone shared with you to join their group.'**
   String get openLinkBody;
 
-  /// No description provided for @openLinkLabel.
+  /// Field label for open link label in opening one saved group URL.
   ///
   /// In en, this message translates to:
   /// **'Group link'**
   String get openLinkLabel;
 
-  /// No description provided for @openLinkAction.
+  /// Action button for open link action in opening one saved group URL.
   ///
   /// In en, this message translates to:
   /// **'Open'**
   String get openLinkAction;
 
-  /// No description provided for @openLinkInvalid.
+  /// Label or control text for open link invalid in opening one saved group URL.
   ///
   /// In en, this message translates to:
   /// **'That doesn\'t look like a Balnana group link.'**
   String get openLinkInvalid;
 
-  /// No description provided for @groupName.
+  /// Label or control text for group name in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Group name'**
   String get groupName;
 
-  /// No description provided for @groupNameHint.
+  /// Input hint for group name hint in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Trip to Lisbon'**
   String get groupNameHint;
 
-  /// No description provided for @groupCurrency.
+  /// Label or control text for group currency in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Currency'**
   String get groupCurrency;
 
-  /// No description provided for @groupCurrencyHelp.
+  /// Help text for group currency help in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'All expenses in this group use this currency. It can\'t be changed later.'**
   String get groupCurrencyHelp;
 
-  /// No description provided for @groupCurrencyHelpNamed.
+  /// Label or control text for group currency help named in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name}. All expenses in this group use this currency. It can\'t be changed later.'**
   String groupCurrencyHelpNamed(String name);
 
-  /// No description provided for @currencyChoose.
+  /// Label or control text for currency choose in the currency chooser.
   ///
   /// In en, this message translates to:
   /// **'Choose a currency'**
   String get currencyChoose;
 
-  /// No description provided for @currencySearchHint.
+  /// Input hint for currency search hint in the currency chooser.
   ///
   /// In en, this message translates to:
   /// **'Search by code or name'**
   String get currencySearchHint;
 
-  /// No description provided for @currencySuggested.
+  /// Label or control text for currency suggested in the currency chooser.
   ///
   /// In en, this message translates to:
   /// **'Suggested'**
   String get currencySuggested;
 
-  /// No description provided for @currencyAll.
+  /// Label or control text for currency all in the currency chooser.
   ///
   /// In en, this message translates to:
   /// **'All currencies'**
   String get currencyAll;
 
-  /// No description provided for @currencyUseTyped.
+  /// Label or control text for currency use typed in the currency chooser. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Use {code}'**
   String currencyUseTyped(String code);
 
-  /// No description provided for @currencyNoMatch.
+  /// Label or control text for currency no match in the currency chooser.
   ///
   /// In en, this message translates to:
   /// **'No currency matches. Type its three-letter code to use it.'**
   String get currencyNoMatch;
 
-  /// No description provided for @groupSymbol.
+  /// Label or control text for group symbol in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Symbol'**
   String get groupSymbol;
 
-  /// No description provided for @groupSymbolChoose.
+  /// Label or control text for group symbol choose in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Choose a symbol'**
   String get groupSymbolChoose;
 
-  /// No description provided for @groupSymbolExample.
+  /// Label or control text for group symbol example in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Amounts look like {example}'**
   String groupSymbolExample(String example);
 
-  /// No description provided for @groupColor.
+  /// Label or control text for group color in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Color'**
   String get groupColor;
 
-  /// No description provided for @colorSwatch.
+  /// Label or control text for color swatch in group or member color selection. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Color {number} of {count}'**
   String colorSwatch(int number, int count);
 
-  /// No description provided for @groupPeople.
+  /// Label or control text for group people in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'People'**
   String get groupPeople;
 
-  /// No description provided for @groupYourName.
+  /// Label or control text for group your name in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Your name'**
   String get groupYourName;
 
-  /// No description provided for @groupPersonName.
+  /// Label or control text for group person name in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Person {number}'**
   String groupPersonName(int number);
 
-  /// No description provided for @groupAddPerson.
+  /// Label or control text for group add person in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Add person'**
   String get groupAddPerson;
 
-  /// No description provided for @groupPeopleHelp.
+  /// Help text for group people help in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'You can add more people later, or they can join with the link.'**
   String get groupPeopleHelp;
 
-  /// No description provided for @identityTitle.
+  /// Heading for identity title in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Who are you?'**
   String get identityTitle;
 
-  /// No description provided for @identityBody.
+  /// Explanatory text for identity body in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Pick your name so Balnana can show what you owe. Only this device remembers it.'**
   String get identityBody;
 
-  /// No description provided for @identityNew.
+  /// Label or control text for identity new in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'I\'m someone new'**
   String get identityNew;
 
-  /// No description provided for @identityNewTitle.
+  /// Heading for identity new title in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Join this group'**
   String get identityNewTitle;
 
-  /// No description provided for @identityJoin.
+  /// Label or control text for identity join in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Join'**
   String get identityJoin;
 
-  /// No description provided for @identityChange.
+  /// Label or control text for identity change in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Who you are'**
   String get identityChange;
 
-  /// No description provided for @identityNone.
+  /// Label or control text for identity none in link-mode member identity selection.
   ///
   /// In en, this message translates to:
   /// **'Not chosen yet'**
   String get identityNone;
 
-  /// No description provided for @memberName.
+  /// Label or control text for member name in group member management.
   ///
   /// In en, this message translates to:
   /// **'Name'**
   String get memberName;
 
-  /// No description provided for @memberYou.
+  /// Label or control text for member you in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} (you)'**
   String memberYou(String name);
 
-  /// No description provided for @memberAdd.
+  /// Label or control text for member add in group member management.
   ///
   /// In en, this message translates to:
   /// **'Add person'**
   String get memberAdd;
 
-  /// No description provided for @memberAddTitle.
+  /// Heading for member add title in group member management.
   ///
   /// In en, this message translates to:
   /// **'Add someone'**
   String get memberAddTitle;
 
-  /// No description provided for @memberRename.
+  /// Label or control text for member rename in group member management.
   ///
   /// In en, this message translates to:
   /// **'Rename'**
   String get memberRename;
 
-  /// No description provided for @memberRenameTitle.
+  /// Heading for member rename title in group member management.
   ///
   /// In en, this message translates to:
   /// **'Rename'**
   String get memberRenameTitle;
 
-  /// No description provided for @memberRemoveTitle.
+  /// Heading for member remove title in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Remove {name}?'**
   String memberRemoveTitle(String name);
 
-  /// No description provided for @memberRemoveBody.
+  /// Explanatory text for member remove body in group member management.
   ///
   /// In en, this message translates to:
   /// **'They\'ll stay on past expenses but can\'t be added to new ones.'**
   String get memberRemoveBody;
 
-  /// No description provided for @groupLinkCopied.
+  /// Label or control text for group link copied in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Link copied. Anyone with it can open this group.'**
   String get groupLinkCopied;
 
-  /// No description provided for @groupShare.
+  /// Label or control text for group share in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Share link'**
   String get groupShare;
 
-  /// No description provided for @groupSettings.
+  /// Label or control text for group settings in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Group settings'**
   String get groupSettings;
 
-  /// No description provided for @groupEdit.
+  /// Label or control text for group edit in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Edit group'**
   String get groupEdit;
 
-  /// No description provided for @groupSharing.
+  /// Label or control text for group sharing in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Sharing'**
   String get groupSharing;
 
-  /// No description provided for @groupCopyLink.
+  /// Label or control text for group copy link in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Copy link'**
   String get groupCopyLink;
 
-  /// No description provided for @groupCopyLinkHelp.
+  /// Help text for group copy link help in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Anyone with the link can see and edit this group.'**
   String get groupCopyLinkHelp;
 
-  /// No description provided for @groupCopyLinkHelpAccounts.
+  /// Label or control text for group copy link help accounts in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'People with the link can ask to join after signing in.'**
   String get groupCopyLinkHelpAccounts;
 
-  /// No description provided for @linkAccessTitle.
+  /// Heading for link access title in group link-access permissions.
   ///
   /// In en, this message translates to:
   /// **'Open to anyone with the link'**
   String get linkAccessTitle;
 
-  /// No description provided for @linkAccessHelp.
+  /// Help text for link access help in group link-access permissions.
   ///
   /// In en, this message translates to:
   /// **'Let people see and edit without an account'**
   String get linkAccessHelp;
 
-  /// No description provided for @resetLinkTitle.
+  /// Heading for reset link title in group-link rotation.
   ///
   /// In en, this message translates to:
   /// **'Reset link'**
   String get resetLinkTitle;
 
-  /// No description provided for @resetLinkHelp.
+  /// Help text for reset link help in group-link rotation.
   ///
   /// In en, this message translates to:
   /// **'Make a new link; the old one stops working'**
   String get resetLinkHelp;
 
-  /// No description provided for @resetLinkBody.
+  /// Explanatory text for reset link body in group-link rotation.
   ///
   /// In en, this message translates to:
   /// **'The current link will stop working, for everyone. Share the new link with people who should keep access.'**
   String get resetLinkBody;
 
-  /// No description provided for @resetLinkAction.
+  /// Action button for reset link action in group-link rotation.
   ///
   /// In en, this message translates to:
   /// **'Reset'**
   String get resetLinkAction;
 
-  /// No description provided for @resetLinkDone.
+  /// Label or control text for reset link done in group-link rotation.
   ///
   /// In en, this message translates to:
   /// **'Link reset. Share the new one.'**
   String get resetLinkDone;
 
-  /// No description provided for @groupThisDevice.
+  /// Label or control text for group this device in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'This device'**
   String get groupThisDevice;
 
-  /// No description provided for @groupData.
+  /// Label or control text for group data in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Data'**
   String get groupData;
 
-  /// No description provided for @categoriesTitle.
+  /// Heading for categories title in group category settings.
   ///
   /// In en, this message translates to:
   /// **'Categories'**
   String get categoriesTitle;
 
-  /// No description provided for @categoriesHelp.
+  /// Help text for categories help in group category settings.
   ///
   /// In en, this message translates to:
   /// **'Add your own, or hide the ones you don\'t use'**
   String get categoriesHelp;
 
-  /// No description provided for @categoriesOwn.
+  /// Label or control text for categories own in group category settings.
   ///
   /// In en, this message translates to:
   /// **'This group\'s'**
   String get categoriesOwn;
 
-  /// No description provided for @categoriesOwnEmpty.
+  /// Label or control text for categories own empty in group category settings.
   ///
   /// In en, this message translates to:
   /// **'No categories of the group\'s own yet.'**
   String get categoriesOwnEmpty;
 
-  /// No description provided for @categoriesBuiltIn.
+  /// Label or control text for categories built in in group category settings.
   ///
   /// In en, this message translates to:
   /// **'Built-in'**
   String get categoriesBuiltIn;
 
-  /// No description provided for @categoriesBuiltInHelp.
+  /// Help text for categories built in help in group category settings.
   ///
   /// In en, this message translates to:
   /// **'Hidden categories are not offered for new expenses. Expenses that have one keep it.'**
   String get categoriesBuiltInHelp;
 
-  /// No description provided for @categoryAdd.
+  /// Label or control text for category add in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Add category'**
   String get categoryAdd;
 
-  /// No description provided for @categoryEdit.
+  /// Label or control text for category edit in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Edit category'**
   String get categoryEdit;
 
-  /// No description provided for @categoryName.
+  /// Label or control text for category name in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Name'**
   String get categoryName;
 
-  /// No description provided for @categoryDelete.
+  /// Label or control text for category delete in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Delete category'**
   String get categoryDelete;
 
-  /// No description provided for @categoryDeleteTitle.
+  /// Heading for category delete title in built-in category names or category management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Delete {name}?'**
   String categoryDeleteTitle(String name);
 
-  /// No description provided for @categoryDeleteBody.
+  /// Explanatory text for category delete body in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Expenses in this category will have none.'**
   String get categoryDeleteBody;
 
-  /// No description provided for @categoryDeleteAction.
+  /// Action button for category delete action in built-in category names or category management.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get categoryDeleteAction;
 
-  /// No description provided for @exportCsv.
+  /// Label or control text for export csv in the ledger CSV download.
   ///
   /// In en, this message translates to:
   /// **'Export as CSV'**
   String get exportCsv;
 
-  /// No description provided for @exportCsvHelp.
+  /// Help text for export csv help in the ledger CSV download.
   ///
   /// In en, this message translates to:
   /// **'Every expense and payment, for a spreadsheet'**
   String get exportCsvHelp;
 
-  /// No description provided for @exportCsvDone.
+  /// Label or control text for export csv done in the ledger CSV download.
   ///
   /// In en, this message translates to:
   /// **'Exported'**
   String get exportCsvDone;
 
-  /// No description provided for @forgetTitle.
+  /// Heading for forget title in removing a group link from this device.
   ///
   /// In en, this message translates to:
   /// **'Remove from this device'**
   String get forgetTitle;
 
-  /// No description provided for @forgetHelp.
+  /// Help text for forget help in removing a group link from this device.
   ///
   /// In en, this message translates to:
   /// **'The group stays on the server for everyone else'**
   String get forgetHelp;
 
-  /// No description provided for @forgetBody.
+  /// Explanatory text for forget body in removing a group link from this device.
   ///
   /// In en, this message translates to:
   /// **'You can open it again with the link.'**
   String get forgetBody;
 
-  /// No description provided for @groupYou.
+  /// Label or control text for group you in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'You'**
   String get groupYou;
 
-  /// No description provided for @leaveTitle.
+  /// Heading for leave title in leaving a group.
   ///
   /// In en, this message translates to:
   /// **'Leave group'**
   String get leaveTitle;
 
-  /// No description provided for @leaveHelp.
+  /// Help text for leave help in leaving a group.
   ///
   /// In en, this message translates to:
   /// **'Your expenses stay; you can join again with the link'**
   String get leaveHelp;
 
-  /// No description provided for @leaveBody.
+  /// Explanatory text for leave body in leaving a group.
   ///
   /// In en, this message translates to:
   /// **'The group disappears from your list. Your expenses and balance stay in the group.'**
   String get leaveBody;
 
-  /// No description provided for @leaveAction.
+  /// Action button for leave action in leaving a group.
   ///
   /// In en, this message translates to:
   /// **'Leave'**
   String get leaveAction;
 
-  /// No description provided for @tabExpenses.
+  /// Label or control text for tab expenses in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Expenses'**
   String get tabExpenses;
 
-  /// No description provided for @heroWhoTitle.
+  /// Heading for hero who title in the group balance card.
   ///
   /// In en, this message translates to:
   /// **'Who are you in this group?'**
   String get heroWhoTitle;
 
-  /// No description provided for @heroWhoBody.
+  /// Explanatory text for hero who body in the group balance card.
   ///
   /// In en, this message translates to:
   /// **'Pick your name to see what you owe and are owed.'**
   String get heroWhoBody;
 
-  /// No description provided for @heroWhoAction.
+  /// Action button for hero who action in the group balance card.
   ///
   /// In en, this message translates to:
   /// **'Choose'**
   String get heroWhoAction;
 
-  /// No description provided for @heroJoinTitle.
+  /// Heading for hero join title in the group balance card.
   ///
   /// In en, this message translates to:
   /// **'You\'re viewing this group'**
   String get heroJoinTitle;
 
-  /// No description provided for @heroJoinBody.
+  /// Explanatory text for hero join body in the group balance card.
   ///
   /// In en, this message translates to:
   /// **'Join to add expenses and see what you owe.'**
   String get heroJoinBody;
 
-  /// No description provided for @joinAction.
+  /// Action button for join action in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'Join'**
   String get joinAction;
 
-  /// No description provided for @heroOwed.
+  /// Positive balance label: other members owe this device's selected member money.
   ///
   /// In en, this message translates to:
   /// **'You\'re owed'**
   String get heroOwed;
 
-  /// No description provided for @heroOwe.
+  /// Negative balance label: this device's selected member owes other members money.
   ///
   /// In en, this message translates to:
   /// **'You owe'**
   String get heroOwe;
 
-  /// No description provided for @heroSettled.
+  /// Zero balance label: the selected member neither owes nor is owed money.
   ///
   /// In en, this message translates to:
   /// **'You\'re settled up'**
   String get heroSettled;
 
-  /// No description provided for @heroYouAre.
+  /// Label or control text for hero you are in the group balance card. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'You are {name}'**
   String heroYouAre(String name);
 
-  /// No description provided for @expenseAdd.
+  /// Label or control text for expense add in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Add expense'**
   String get expenseAdd;
 
-  /// No description provided for @expensesEmptyTitle.
+  /// Heading for expenses empty title in expense search and empty states.
   ///
   /// In en, this message translates to:
   /// **'No expenses yet'**
   String get expensesEmptyTitle;
 
-  /// No description provided for @expensesEmptyBody.
+  /// Explanatory text for expenses empty body in expense search and empty states.
   ///
   /// In en, this message translates to:
   /// **'Add the first one, and Balnana will work out who owes whom.'**
   String get expensesEmptyBody;
 
-  /// No description provided for @expensesSearchHint.
+  /// Input hint for expenses search hint in expense search and empty states.
   ///
   /// In en, this message translates to:
   /// **'Search titles, notes and places'**
   String get expensesSearchHint;
 
-  /// No description provided for @searchClear.
+  /// Label or control text for search clear in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Clear search'**
   String get searchClear;
 
-  /// No description provided for @expensesNoMatchTitle.
+  /// Heading for expenses no match title in expense search and empty states.
   ///
   /// In en, this message translates to:
   /// **'Nothing matches'**
   String get expensesNoMatchTitle;
 
-  /// No description provided for @expensesNoMatchBody.
+  /// Explanatory text for expenses no match body in expense search and empty states.
   ///
   /// In en, this message translates to:
   /// **'Try other words, or fewer filters.'**
@@ -1201,7 +1201,7 @@ abstract class AppLocalizations {
   /// **'Anyone'**
   String get filterAnyone;
 
-  /// No description provided for @filterAnyCategory.
+  /// Label or control text for filter any category in expense filters.
   ///
   /// In en, this message translates to:
   /// **'Any category'**
@@ -1213,37 +1213,37 @@ abstract class AppLocalizations {
   /// **'Payments'**
   String get filterPayments;
 
-  /// No description provided for @filterClear.
+  /// Label or control text for filter clear in expense filters.
   ///
   /// In en, this message translates to:
   /// **'Clear filters'**
   String get filterClear;
 
-  /// No description provided for @periodAll.
+  /// Label or control text for period all in the expense and statistics date range filter.
   ///
   /// In en, this message translates to:
   /// **'All time'**
   String get periodAll;
 
-  /// No description provided for @periodThisMonth.
+  /// Label or control text for period this month in the expense and statistics date range filter.
   ///
   /// In en, this message translates to:
   /// **'This month'**
   String get periodThisMonth;
 
-  /// No description provided for @periodLastMonth.
+  /// Label or control text for period last month in the expense and statistics date range filter.
   ///
   /// In en, this message translates to:
   /// **'Last month'**
   String get periodLastMonth;
 
-  /// No description provided for @periodThisYear.
+  /// Label or control text for period this year in the expense and statistics date range filter.
   ///
   /// In en, this message translates to:
   /// **'This year'**
   String get periodThisYear;
 
-  /// No description provided for @periodPickDays.
+  /// Label or control text for period pick days in the expense and statistics date range filter.
   ///
   /// In en, this message translates to:
   /// **'Pick dates…'**
@@ -1255,19 +1255,19 @@ abstract class AppLocalizations {
   /// **'Spending'**
   String get statsTitle;
 
-  /// No description provided for @statsTotal.
+  /// Label or control text for stats total in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'Total spent'**
   String get statsTotal;
 
-  /// No description provided for @statsCount.
+  /// Label or control text for stats count in spending statistics. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 expense} other{{count} expenses}}'**
   String statsCount(int count);
 
-  /// No description provided for @statsByCategory.
+  /// Label or control text for stats by category in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'By category'**
@@ -1279,577 +1279,577 @@ abstract class AppLocalizations {
   /// **'Paid and share per person'**
   String get statsByMember;
 
-  /// No description provided for @statsPaid.
+  /// Legend for outgoing spending paid by a member, net of refunds and excluding income and settlement payments.
   ///
   /// In en, this message translates to:
   /// **'Paid'**
   String get statsPaid;
 
-  /// No description provided for @statsShare.
+  /// Legend for a member's allocated share of spending, net of refunds and excluding income and settlement payments.
   ///
   /// In en, this message translates to:
   /// **'Share'**
   String get statsShare;
 
-  /// No description provided for @statsByMonth.
+  /// Label or control text for stats by month in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'By month'**
   String get statsByMonth;
 
-  /// No description provided for @statsNoCategory.
+  /// Label or control text for stats no category in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'No category'**
   String get statsNoCategory;
 
-  /// No description provided for @statsEmptyTitle.
+  /// Heading for stats empty title in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'Nothing spent'**
   String get statsEmptyTitle;
 
-  /// No description provided for @statsEmptyBody.
+  /// Explanatory text for stats empty body in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'There are no expenses in this period.'**
   String get statsEmptyBody;
 
-  /// No description provided for @statsShowExpenses.
+  /// Label or control text for stats show expenses in spending statistics.
   ///
   /// In en, this message translates to:
   /// **'Show these expenses'**
   String get statsShowExpenses;
 
-  /// No description provided for @dateToday.
+  /// Label or control text for date today in expense date headings.
   ///
   /// In en, this message translates to:
   /// **'Today'**
   String get dateToday;
 
-  /// No description provided for @dateYesterday.
+  /// Label or control text for date yesterday in expense date headings.
   ///
   /// In en, this message translates to:
   /// **'Yesterday'**
   String get dateYesterday;
 
-  /// No description provided for @paymentTitle.
+  /// Heading for payment title in recorded member-to-member payments. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{from} paid {to}'**
   String paymentTitle(String from, String to);
 
-  /// No description provided for @expensePaidBy.
+  /// Caption naming who originally paid an outgoing expense, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} paid {amount}'**
   String expensePaidBy(String name, String amount);
 
-  /// No description provided for @expensePaidByMany.
+  /// Caption for an outgoing expense paid by several people, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count} people paid {amount}'**
   String expensePaidByMany(int count, String amount);
 
-  /// No description provided for @expenseReceivedBy.
+  /// Caption naming the original receiver of an imported refund or income. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} received {amount}'**
   String expenseReceivedBy(String name, String amount);
 
-  /// No description provided for @expenseReceivedByMany.
+  /// Caption naming several original receivers of a refund or income. Do not describe them as expense payers. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count} people received {amount}'**
   String expenseReceivedByMany(int count, String amount);
 
-  /// No description provided for @transactionRefund.
+  /// Label or control text for transaction refund in imported transaction direction.
   ///
   /// In en, this message translates to:
   /// **'Refund'**
   String get transactionRefund;
 
-  /// No description provided for @transactionIncome.
+  /// Label or control text for transaction income in imported transaction direction.
   ///
   /// In en, this message translates to:
   /// **'Income'**
   String get transactionIncome;
 
-  /// No description provided for @effectYouPaid.
+  /// Label or control text for effect you paid in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'you paid {amount}'**
   String effectYouPaid(String amount);
 
-  /// No description provided for @effectYouReceived.
+  /// Label or control text for effect you received in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'you received {amount}'**
   String effectYouReceived(String amount);
 
-  /// No description provided for @effectForYou.
+  /// Label or control text for effect for you in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{amount} for you'**
   String effectForYou(String amount);
 
-  /// No description provided for @paymentDelete.
+  /// Label or control text for payment delete in recorded member-to-member payments.
   ///
   /// In en, this message translates to:
   /// **'Delete payment'**
   String get paymentDelete;
 
-  /// No description provided for @paymentDeleted.
+  /// Label or control text for payment deleted in recorded member-to-member payments.
   ///
   /// In en, this message translates to:
   /// **'Payment deleted'**
   String get paymentDeleted;
 
-  /// No description provided for @expenseDeleted.
+  /// Label or control text for expense deleted in the expense editor or expense list. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Deleted “{title}”'**
   String expenseDeleted(String title);
 
-  /// No description provided for @expenseNew.
+  /// Label or control text for expense new in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'New expense'**
   String get expenseNew;
 
-  /// No description provided for @expenseEdit.
+  /// Label or control text for expense edit in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Edit expense'**
   String get expenseEdit;
 
-  /// No description provided for @expenseDelete.
+  /// Label or control text for expense delete in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get expenseDelete;
 
-  /// No description provided for @expenseAmount.
+  /// Label or control text for expense amount in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Amount'**
   String get expenseAmount;
 
-  /// No description provided for @expenseTitle.
+  /// Heading for expense title in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'What was it for?'**
   String get expenseTitle;
 
-  /// No description provided for @expenseTitleHint.
+  /// Input hint for expense title hint in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Dinner, tickets, taxi…'**
   String get expenseTitleHint;
 
-  /// No description provided for @expenseAmountFromPayers.
+  /// Label or control text for expense amount from payers in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'What everyone paid, added up'**
   String get expenseAmountFromPayers;
 
-  /// No description provided for @expenseNote.
+  /// Label or control text for expense note in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Note'**
   String get expenseNote;
 
-  /// No description provided for @expenseNoteHint.
+  /// Input hint for expense note hint in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Optional'**
   String get expenseNoteHint;
 
-  /// No description provided for @expenseLocation.
+  /// Label or control text for expense location in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Location'**
   String get expenseLocation;
 
-  /// No description provided for @expenseLocationHint.
+  /// Input hint for expense location hint in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Where was it? (optional)'**
   String get expenseLocationHint;
 
-  /// No description provided for @locationPickOnMap.
+  /// Label or control text for location pick on map in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Pick on map'**
   String get locationPickOnMap;
 
-  /// No description provided for @locationUseCurrent.
+  /// Label or control text for location use current in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Use current location'**
   String get locationUseCurrent;
 
-  /// No description provided for @locationFinding.
+  /// Label or control text for location finding in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Finding where you are…'**
   String get locationFinding;
 
-  /// No description provided for @locationChange.
+  /// Label or control text for location change in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Change on map'**
   String get locationChange;
 
-  /// No description provided for @locationRemovePin.
+  /// Label or control text for location remove pin in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Remove pin'**
   String get locationRemovePin;
 
-  /// No description provided for @locationOpenInMaps.
+  /// Label or control text for location open in maps in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Open in maps'**
   String get locationOpenInMaps;
 
-  /// No description provided for @locationPickTitle.
+  /// Heading for location pick title in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Pick a location'**
   String get locationPickTitle;
 
-  /// No description provided for @locationPickHint.
+  /// Input hint for location pick hint in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Tap the map to drop a pin'**
   String get locationPickHint;
 
-  /// No description provided for @locationPickDone.
+  /// Label or control text for location pick done in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get locationPickDone;
 
-  /// No description provided for @locationDenied.
+  /// Label or control text for location denied in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Balnana may not use your location. You can allow it in your device or browser settings.'**
   String get locationDenied;
 
-  /// No description provided for @locationOff.
+  /// Label or control text for location off in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Location is turned off on this device.'**
   String get locationOff;
 
-  /// No description provided for @locationUnavailable.
+  /// Label or control text for location unavailable in the expense location picker.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t find where you are. Try again, or drop a pin on the map.'**
   String get locationUnavailable;
 
-  /// No description provided for @expenseReceipt.
+  /// Label or control text for expense receipt in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Receipt'**
   String get expenseReceipt;
 
-  /// No description provided for @expenseHasReceipt.
+  /// Label or control text for expense has receipt in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Has a receipt photo'**
   String get expenseHasReceipt;
 
-  /// No description provided for @expenseHasLocation.
+  /// Label or control text for expense has location in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Has a location'**
   String get expenseHasLocation;
 
-  /// No description provided for @receiptTakePhoto.
+  /// Label or control text for receipt take photo in receipt photo controls.
   ///
   /// In en, this message translates to:
   /// **'Take a photo'**
   String get receiptTakePhoto;
 
-  /// No description provided for @receiptChoose.
+  /// Label or control text for receipt choose in receipt photo controls.
   ///
   /// In en, this message translates to:
   /// **'Choose a picture'**
   String get receiptChoose;
 
-  /// No description provided for @receiptRemove.
+  /// Label or control text for receipt remove in receipt photo controls.
   ///
   /// In en, this message translates to:
   /// **'Remove'**
   String get receiptRemove;
 
-  /// No description provided for @receiptView.
+  /// Label or control text for receipt view in receipt photo controls.
   ///
   /// In en, this message translates to:
   /// **'Receipt photo'**
   String get receiptView;
 
-  /// No description provided for @receiptNotSaved.
+  /// Label or control text for receipt not saved in receipt photo controls. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'The expense was saved, but not its receipt photo. {reason}'**
   String receiptNotSaved(String reason);
 
-  /// No description provided for @expensePaidByLabel.
+  /// Field label for expense paid by label in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Paid by'**
   String get expensePaidByLabel;
 
-  /// No description provided for @expenseReceivedForLabel.
+  /// Field heading for the people whose spending was refunded or who benefited from received money; maps to reversed ledger payers.
   ///
   /// In en, this message translates to:
   /// **'Received for'**
   String get expenseReceivedForLabel;
 
-  /// No description provided for @expenseReceivedByLabel.
+  /// Field heading for the people who received refund or income money; maps to reversed ledger splits.
   ///
   /// In en, this message translates to:
   /// **'Received by'**
   String get expenseReceivedByLabel;
 
-  /// No description provided for @expenseMultiplePayers.
+  /// Label or control text for expense multiple payers in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Several people'**
   String get expenseMultiplePayers;
 
-  /// No description provided for @expenseSplit.
+  /// Label or control text for expense split in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Split'**
   String get expenseSplit;
 
-  /// No description provided for @splitEqual.
+  /// Label or control text for split equal in expense split entry.
   ///
   /// In en, this message translates to:
   /// **'Equally'**
   String get splitEqual;
 
-  /// No description provided for @splitExact.
+  /// Label or control text for split exact in expense split entry.
   ///
   /// In en, this message translates to:
   /// **'Amounts'**
   String get splitExact;
 
-  /// No description provided for @splitShares.
+  /// Label or control text for split shares in expense split entry.
   ///
   /// In en, this message translates to:
   /// **'Shares'**
   String get splitShares;
 
-  /// No description provided for @splitLeft.
+  /// Label or control text for split left in expense split entry. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{amount} left to assign'**
   String splitLeft(String amount);
 
-  /// No description provided for @splitOver.
+  /// Label or control text for split over in expense split entry. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{amount} too much'**
   String splitOver(String amount);
 
-  /// No description provided for @conflictTitle.
+  /// Heading for conflict title in concurrent expense edit resolution.
   ///
   /// In en, this message translates to:
   /// **'Changed elsewhere'**
   String get conflictTitle;
 
-  /// No description provided for @conflictReload.
+  /// Label or control text for conflict reload in concurrent expense edit resolution.
   ///
   /// In en, this message translates to:
   /// **'Reload'**
   String get conflictReload;
 
-  /// No description provided for @expenseChangedElsewhere.
+  /// Label or control text for expense changed elsewhere in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Someone else changed this expense. Reloading shows their version and drops your changes here.'**
   String get expenseChangedElsewhere;
 
-  /// No description provided for @suggestedPayments.
+  /// Label or control text for suggested payments in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Suggested payments'**
   String get suggestedPayments;
 
-  /// No description provided for @allSettled.
+  /// Label or control text for all settled in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Everyone is settled up.'**
   String get allSettled;
 
-  /// No description provided for @transferYouPay.
+  /// Label or control text for transfer you pay in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'You pay {name}'**
   String transferYouPay(String name);
 
-  /// No description provided for @transferPaysYou.
+  /// Label or control text for transfer pays you in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} pays you'**
   String transferPaysYou(String name);
 
-  /// No description provided for @transferPays.
+  /// Label or control text for transfer pays in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{from} pays {to}'**
   String transferPays(String from, String to);
 
-  /// No description provided for @recordPayment.
+  /// Label or control text for record payment in the settlement dialog.
   ///
   /// In en, this message translates to:
   /// **'Record'**
   String get recordPayment;
 
-  /// No description provided for @recordPaymentTitle.
+  /// Heading for record payment title in the settlement dialog.
   ///
   /// In en, this message translates to:
   /// **'Record a payment'**
   String get recordPaymentTitle;
 
-  /// No description provided for @recordPaymentHelp.
+  /// Help text for record payment help in the settlement dialog.
   ///
   /// In en, this message translates to:
   /// **'Only record money that was actually paid, outside Balnana.'**
   String get recordPaymentHelp;
 
-  /// No description provided for @paymentRecorded.
+  /// Label or control text for payment recorded in recorded member-to-member payments.
   ///
   /// In en, this message translates to:
   /// **'Payment recorded'**
   String get paymentRecorded;
 
-  /// No description provided for @activityGroupCreated.
+  /// Message for activity group created in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} created {group}'**
   String activityGroupCreated(String who, String group);
 
-  /// No description provided for @activityGroupUpdated.
+  /// Message for activity group updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} changed the group details'**
   String activityGroupUpdated(String who);
 
-  /// No description provided for @activityLinkReset.
+  /// Message for activity link reset in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} reset the group link'**
   String activityLinkReset(String who);
 
-  /// No description provided for @activityMemberAdded.
+  /// Message for activity member added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} added {name}'**
   String activityMemberAdded(String who, String name);
 
-  /// No description provided for @activityMemberRenamed.
+  /// Message for activity member renamed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} renamed {oldName} to {name}'**
   String activityMemberRenamed(String who, String oldName, String name);
 
-  /// No description provided for @activityMemberRemoved.
+  /// Message for activity member removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} removed {name}'**
   String activityMemberRemoved(String who, String name);
 
-  /// No description provided for @activityCategoryAdded.
+  /// Message for activity category added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} added the category {name}'**
   String activityCategoryAdded(String who, String name);
 
-  /// No description provided for @activityCategoryUpdated.
+  /// Message for activity category updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} changed the categories'**
   String activityCategoryUpdated(String who);
 
-  /// No description provided for @activityCategoryDeleted.
+  /// Message for activity category deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} deleted the category {name}'**
   String activityCategoryDeleted(String who, String name);
 
-  /// No description provided for @activityMemberJoined.
+  /// Message for activity member joined in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} joined'**
   String activityMemberJoined(String name);
 
-  /// No description provided for @activityExpenseAdded.
+  /// Message for activity expense added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} added “{title}” ({amount})'**
   String activityExpenseAdded(String who, String title, String amount);
 
-  /// No description provided for @activityExpenseUpdated.
+  /// Message for activity expense updated in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} edited “{title}” ({amount})'**
   String activityExpenseUpdated(String who, String title, String amount);
 
-  /// No description provided for @activityExpenseDeleted.
+  /// Message for activity expense deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} deleted “{title}”'**
   String activityExpenseDeleted(String who, String title);
 
-  /// No description provided for @activityExpenseRestored.
+  /// Message for activity expense restored in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} restored “{title}”'**
   String activityExpenseRestored(String who, String title);
 
-  /// No description provided for @activityPaymentAdded.
+  /// Message for activity payment added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} recorded that {from} paid {to} {amount}'**
   String activityPaymentAdded(String who, String from, String to, String amount);
 
-  /// No description provided for @activityPaymentDeleted.
+  /// Message for activity payment deleted in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} deleted a payment of {amount}'**
   String activityPaymentDeleted(String who, String amount);
 
-  /// No description provided for @activityPaymentRestored.
+  /// Message for activity payment restored in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} restored a payment of {amount}'**
   String activityPaymentRestored(String who, String amount);
 
-  /// No description provided for @activityGroupImported.
+  /// Message for activity group imported in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} imported {count, plural, =1{1 entry} other{{count} entries}} from {source}'**
   String activityGroupImported(String who, int count, String source);
 
-  /// No description provided for @activityReceiptAdded.
+  /// Message for activity receipt added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} added a receipt photo to “{title}”'**
   String activityReceiptAdded(String who, String title);
 
-  /// No description provided for @activityReceiptRemoved.
+  /// Message for activity receipt removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} removed the receipt photo from “{title}”'**
   String activityReceiptRemoved(String who, String title);
 
-  /// No description provided for @activityOther.
+  /// Message for activity other in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} made a change'**
@@ -1873,325 +1873,325 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// No description provided for @groupsEmptyTitle.
+  /// Heading for groups empty title in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'No groups yet'**
   String get groupsEmptyTitle;
 
-  /// No description provided for @groupsEmptyBody.
+  /// Explanatory text for groups empty body in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Groups you create or open from a link will show up here.'**
   String get groupsEmptyBody;
 
-  /// No description provided for @groupsNoServerTitle.
+  /// Heading for groups no server title in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Connect to a server'**
   String get groupsNoServerTitle;
 
-  /// No description provided for @groupsNoServerBody.
+  /// Explanatory text for groups no server body in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Balnana keeps your groups on a server you choose, such as one you host yourself.'**
   String get groupsNoServerBody;
 
-  /// No description provided for @groupsNoServerAction.
+  /// Action button for groups no server action in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Choose server'**
   String get groupsNoServerAction;
 
-  /// No description provided for @groupsUnreachableTitle.
+  /// Heading for groups unreachable title in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Can\'t reach the server'**
   String get groupsUnreachableTitle;
 
-  /// No description provided for @groupsUnreachableBody.
+  /// Explanatory text for groups unreachable body in the groups home page.
   ///
   /// In en, this message translates to:
   /// **'Check your connection, or the server address in Settings.'**
   String get groupsUnreachableBody;
 
-  /// No description provided for @activityEmptyTitle.
+  /// Heading for activity empty title in the cross-group activity timeline.
   ///
   /// In en, this message translates to:
   /// **'Nothing here yet'**
   String get activityEmptyTitle;
 
-  /// No description provided for @activityEmptyBody.
+  /// Explanatory text for activity empty body in the cross-group activity timeline.
   ///
   /// In en, this message translates to:
   /// **'New expenses and payments in your groups will appear here.'**
   String get activityEmptyBody;
 
-  /// No description provided for @notFoundTitle.
+  /// Heading for not found title in the missing route page.
   ///
   /// In en, this message translates to:
   /// **'Page not found'**
   String get notFoundTitle;
 
-  /// No description provided for @notFoundBody.
+  /// Explanatory text for not found body in the missing route page.
   ///
   /// In en, this message translates to:
   /// **'This address doesn\'t lead anywhere in Balnana.'**
   String get notFoundBody;
 
-  /// No description provided for @notFoundAction.
+  /// Action button for not found action in the missing route page.
   ///
   /// In en, this message translates to:
   /// **'Go to groups'**
   String get notFoundAction;
 
-  /// No description provided for @settingsAppearance.
+  /// Label or control text for settings appearance in application settings.
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
   String get settingsAppearance;
 
-  /// No description provided for @settingsAccount.
+  /// Label or control text for settings account in application settings.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get settingsAccount;
 
-  /// No description provided for @accountRename.
+  /// Label or control text for account rename in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Change name'**
   String get accountRename;
 
-  /// No description provided for @passwordChange.
+  /// Label or control text for password change in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Change password'**
   String get passwordChange;
 
-  /// No description provided for @passwordChanged.
+  /// Label or control text for password changed in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Password changed. Other devices are signed out.'**
   String get passwordChanged;
 
-  /// No description provided for @passwordSet.
+  /// Label or control text for password set in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Set a password'**
   String get passwordSet;
 
-  /// No description provided for @passwordSetHelp.
+  /// Help text for password set help in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Sign in with your email or username and a password too'**
   String get passwordSetHelp;
 
-  /// No description provided for @passwordSetDone.
+  /// Label or control text for password set done in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Password set. Other devices are signed out.'**
   String get passwordSetDone;
 
-  /// No description provided for @passwordCurrent.
+  /// Label or control text for password current in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Current password'**
   String get passwordCurrent;
 
-  /// No description provided for @passwordNew.
+  /// Label or control text for password new in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'New password'**
   String get passwordNew;
 
-  /// No description provided for @signOut.
+  /// Label or control text for sign out in the application interface.
   ///
   /// In en, this message translates to:
   /// **'Sign out'**
   String get signOut;
 
-  /// No description provided for @settingsTheme.
+  /// Label or control text for settings theme in application settings.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get settingsTheme;
 
-  /// No description provided for @themeSystem.
+  /// Label or control text for theme system in appearance settings.
   ///
   /// In en, this message translates to:
   /// **'System default'**
   String get themeSystem;
 
-  /// No description provided for @themeLight.
+  /// Label or control text for theme light in appearance settings.
   ///
   /// In en, this message translates to:
   /// **'Light'**
   String get themeLight;
 
-  /// No description provided for @themeDark.
+  /// Label or control text for theme dark in appearance settings.
   ///
   /// In en, this message translates to:
   /// **'Dark'**
   String get themeDark;
 
-  /// No description provided for @settingsDynamicColor.
+  /// Label or control text for settings dynamic color in application settings.
   ///
   /// In en, this message translates to:
   /// **'Wallpaper colors'**
   String get settingsDynamicColor;
 
-  /// No description provided for @settingsDynamicColorSubtitle.
+  /// Supporting text for settings dynamic color subtitle in application settings.
   ///
   /// In en, this message translates to:
   /// **'Use colors from your device instead of Balnana yellow'**
   String get settingsDynamicColorSubtitle;
 
-  /// No description provided for @settingsWallpaperGroups.
+  /// Label or control text for settings wallpaper groups in application settings.
   ///
   /// In en, this message translates to:
   /// **'Wallpaper colors in groups'**
   String get settingsWallpaperGroups;
 
-  /// No description provided for @settingsWallpaperGroupsSubtitle.
+  /// Supporting text for settings wallpaper groups subtitle in application settings.
   ///
   /// In en, this message translates to:
   /// **'Groups use your device colors too, instead of their own'**
   String get settingsWallpaperGroupsSubtitle;
 
-  /// No description provided for @settingsPureBlack.
+  /// Label or control text for settings pure black in application settings.
   ///
   /// In en, this message translates to:
   /// **'Pure black'**
   String get settingsPureBlack;
 
-  /// No description provided for @settingsPureBlackSubtitle.
+  /// Supporting text for settings pure black subtitle in application settings.
   ///
   /// In en, this message translates to:
   /// **'A darker dark theme for OLED screens'**
   String get settingsPureBlackSubtitle;
 
-  /// No description provided for @settingsMyShare.
+  /// Label or control text for settings my share in application settings.
   ///
   /// In en, this message translates to:
   /// **'Show my share'**
   String get settingsMyShare;
 
-  /// No description provided for @settingsMyShareSubtitle.
+  /// Explains the optional expense-list setting that replaces each transaction's total with this member's lent or borrowed amount.
   ///
   /// In en, this message translates to:
   /// **'Expenses show what you lent or borrowed instead of the total'**
   String get settingsMyShareSubtitle;
 
-  /// No description provided for @settingsLanguage.
+  /// Label or control text for settings language in application settings.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get settingsLanguage;
 
-  /// No description provided for @languageSystem.
+  /// Language option that follows the device and clears the signed-in account's language override.
   ///
   /// In en, this message translates to:
   /// **'System default'**
   String get languageSystem;
 
-  /// No description provided for @settingsNotifications.
+  /// Label or control text for settings notifications in application settings.
   ///
   /// In en, this message translates to:
   /// **'Notifications'**
   String get settingsNotifications;
 
-  /// No description provided for @settingsNotificationsSubtitle.
+  /// Supporting text for settings notifications subtitle in application settings.
   ///
   /// In en, this message translates to:
   /// **'When someone adds, changes or deletes an expense you are in'**
   String get settingsNotificationsSubtitle;
 
-  /// No description provided for @pushChannel.
+  /// Message for push channel in Android notification content.
   ///
   /// In en, this message translates to:
   /// **'Expenses'**
   String get pushChannel;
 
-  /// No description provided for @pushChannelDescription.
+  /// Message for push channel description in Android notification content.
   ///
   /// In en, this message translates to:
   /// **'When someone adds, changes or deletes an expense you are in'**
   String get pushChannelDescription;
 
-  /// No description provided for @pushExpenseAdded.
+  /// Message for push expense added in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} added {title} · {amount}'**
   String pushExpenseAdded(String who, String title, String amount);
 
-  /// No description provided for @pushExpenseEdited.
+  /// Message for push expense edited in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} changed {title} · {amount}'**
   String pushExpenseEdited(String who, String title, String amount);
 
-  /// No description provided for @pushExpenseDeleted.
+  /// Message for push expense deleted in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{who} deleted {title} · {amount}'**
   String pushExpenseDeleted(String who, String title, String amount);
 
-  /// No description provided for @pushExpenseAddedAnon.
+  /// Message for push expense added anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{title} was added · {amount}'**
   String pushExpenseAddedAnon(String title, String amount);
 
-  /// No description provided for @pushExpenseEditedAnon.
+  /// Message for push expense edited anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{title} was changed · {amount}'**
   String pushExpenseEditedAnon(String title, String amount);
 
-  /// No description provided for @pushExpenseDeletedAnon.
+  /// Message for push expense deleted anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{title} was deleted · {amount}'**
   String pushExpenseDeletedAnon(String title, String amount);
 
-  /// No description provided for @pushPaymentAdded.
+  /// Message for push payment added in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{payer} paid {payee} {amount}'**
   String pushPaymentAdded(String payer, String payee, String amount);
 
-  /// No description provided for @settingsConnection.
+  /// Label or control text for settings connection in application settings.
   ///
   /// In en, this message translates to:
   /// **'Connection'**
   String get settingsConnection;
 
-  /// No description provided for @settingsServer.
+  /// Label or control text for settings server in application settings.
   ///
   /// In en, this message translates to:
   /// **'Server'**
   String get settingsServer;
 
-  /// No description provided for @serverNotSet.
+  /// Label or control text for server not set in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Not set'**
   String get serverNotSet;
 
-  /// No description provided for @settingsAbout.
+  /// Label or control text for settings about in application settings.
   ///
   /// In en, this message translates to:
   /// **'About'**
   String get settingsAbout;
 
-  /// No description provided for @aboutVersion.
+  /// Label or control text for about version in the About settings section.
   ///
   /// In en, this message translates to:
   /// **'Version'**
   String get aboutVersion;
 
-  /// No description provided for @aboutLicenses.
+  /// Label or control text for about licenses in the About settings section.
   ///
   /// In en, this message translates to:
   /// **'Open source licenses'**
@@ -2203,49 +2203,49 @@ abstract class AppLocalizations {
   /// **'Source code'**
   String get aboutSource;
 
-  /// No description provided for @aboutSourceCopied.
+  /// Label or control text for about source copied in the About settings section.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t open a browser, so the link was copied'**
   String get aboutSourceCopied;
 
-  /// No description provided for @serverTitle.
+  /// Heading for server title in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Server'**
   String get serverTitle;
 
-  /// No description provided for @serverIntro.
+  /// Label or control text for server intro in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Enter the address of a Balnana server. Anyone can host one; the address is usually where its web app opens.'**
   String get serverIntro;
 
-  /// No description provided for @serverUrlLabel.
+  /// Field label for server url label in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Server address'**
   String get serverUrlLabel;
 
-  /// No description provided for @serverUrlHint.
+  /// Input hint for server url hint in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'https://balnana.example.com'**
   String get serverUrlHint;
 
-  /// No description provided for @serverTest.
+  /// Label or control text for server test in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Test connection'**
   String get serverTest;
 
-  /// No description provided for @serverSaveAnyway.
+  /// Label or control text for server save anyway in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Save anyway'**
   String get serverSaveAnyway;
 
-  /// No description provided for @serverReset.
+  /// Label or control text for server reset in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Use default'**
@@ -2263,781 +2263,781 @@ abstract class AppLocalizations {
   /// **'Connected to Balnana {version}'**
   String serverConnected(String version);
 
-  /// No description provided for @serverModeLink.
+  /// Label or control text for server mode link in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Groups are shared by private link. No account needed.'**
   String get serverModeLink;
 
-  /// No description provided for @serverModeAccounts.
+  /// Label or control text for server mode accounts in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'People sign in with an account.'**
   String get serverModeAccounts;
 
-  /// No description provided for @serverInsecure.
+  /// Label or control text for server insecure in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'This address is not encrypted (http). Anyone on the network could read your data. Use https for servers outside your home network.'**
   String get serverInsecure;
 
-  /// No description provided for @serverErrorInvalid.
+  /// Label or control text for server error invalid in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Enter a web address, like balnana.example.com'**
   String get serverErrorInvalid;
 
-  /// No description provided for @serverErrorUnreachable.
+  /// Label or control text for server error unreachable in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t connect. Check the address and that the server is running.'**
   String get serverErrorUnreachable;
 
-  /// No description provided for @serverErrorNotBalnana.
+  /// Label or control text for server error not balnana in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Something answered, but it isn\'t a Balnana server.'**
   String get serverErrorNotBalnana;
 
-  /// No description provided for @serverSaved.
+  /// Label or control text for server saved in the server address and connection settings.
   ///
   /// In en, this message translates to:
   /// **'Server saved'**
   String get serverSaved;
 
-  /// No description provided for @signIn.
+  /// Label or control text for sign in in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
   String get signIn;
 
-  /// No description provided for @groupSignInTitle.
+  /// Heading for group sign in title in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Sign in to open this group'**
   String get groupSignInTitle;
 
-  /// No description provided for @groupSignInBody.
+  /// Explanatory text for group sign in body in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'This group is only for its members. Sign in to see it or to join.'**
   String get groupSignInBody;
 
-  /// No description provided for @signInTitle.
+  /// Heading for sign in title in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'Welcome back'**
   String get signInTitle;
 
-  /// No description provided for @signInBody.
+  /// Explanatory text for sign in body in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'Sign in to see your groups.'**
   String get signInBody;
 
-  /// No description provided for @signInNoPassword.
+  /// Label or control text for sign in no password in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'This server signs people in another way. Ask whoever runs it.'**
   String get signInNoPassword;
 
-  /// No description provided for @registerTitle.
+  /// Heading for register title in account registration.
   ///
   /// In en, this message translates to:
   /// **'Create your account'**
   String get registerTitle;
 
-  /// No description provided for @registerBody.
+  /// Explanatory text for register body in account registration.
   ///
   /// In en, this message translates to:
   /// **'Keep your groups on every device.'**
   String get registerBody;
 
-  /// No description provided for @registerAction.
+  /// Action button for register action in account registration.
   ///
   /// In en, this message translates to:
   /// **'Create account'**
   String get registerAction;
 
-  /// No description provided for @registerHaveAccount.
+  /// Label or control text for register have account in account registration.
   ///
   /// In en, this message translates to:
   /// **'I already have an account'**
   String get registerHaveAccount;
 
-  /// No description provided for @signInNoAccount.
+  /// Label or control text for sign in no account in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'Create an account'**
   String get signInNoAccount;
 
-  /// No description provided for @accountName.
+  /// Label or control text for account name in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Your name'**
   String get accountName;
 
-  /// No description provided for @accountNameHelp.
+  /// Help text for account name help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'What people in your groups will see'**
   String get accountNameHelp;
 
-  /// No description provided for @accountEmail.
+  /// Label or control text for account email in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email'**
   String get accountEmail;
 
-  /// No description provided for @accountPassword.
+  /// Label or control text for account password in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Password'**
   String get accountPassword;
 
-  /// No description provided for @accountPasswordHelp.
+  /// Help text for account password help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'At least 8 characters'**
   String get accountPasswordHelp;
 
-  /// No description provided for @passwordShow.
+  /// Label or control text for password show in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Show password'**
   String get passwordShow;
 
-  /// No description provided for @passwordHide.
+  /// Label or control text for password hide in password setup or change.
   ///
   /// In en, this message translates to:
   /// **'Hide password'**
   String get passwordHide;
 
-  /// No description provided for @joinPickName.
+  /// Label or control text for join pick name in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'Pick another name'**
   String get joinPickName;
 
-  /// No description provided for @joinTitle.
+  /// Heading for join title in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Join {name}'**
   String joinTitle(String name);
 
-  /// No description provided for @joinBody.
+  /// Explanatory text for join body in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'Are you one of these people? Pick yourself to take over their expenses.'**
   String get joinBody;
 
-  /// No description provided for @joinBodyNew.
+  /// Label or control text for join body new in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'Join to add expenses and see your balance.'**
   String get joinBodyNew;
 
-  /// No description provided for @joinAsNew.
+  /// Label or control text for join as new in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'I\'m someone new'**
   String get joinAsNew;
 
-  /// No description provided for @joinAsName.
+  /// Label or control text for join as name in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Join as {name}'**
   String joinAsName(String name);
 
-  /// No description provided for @joinTaken.
+  /// Label or control text for join taken in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Already joined: {names}'**
   String joinTaken(String names);
 
-  /// No description provided for @joinTakenCount.
+  /// Label or control text for join taken count in joining or claiming a group member. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count} people have already joined.'**
   String joinTakenCount(int count);
 
-  /// No description provided for @commonContinue.
+  /// Label or control text for common continue in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Continue'**
   String get commonContinue;
 
-  /// No description provided for @errorEmailOff.
+  /// Message for error email off in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This server doesn\'t send email.'**
   String get errorEmailOff;
 
-  /// No description provided for @errorInvalidToken.
+  /// Message for error invalid token in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This link has expired or was already used.'**
   String get errorInvalidToken;
 
-  /// No description provided for @forgotPasswordTitle.
+  /// Heading for forgot password title in the password-reset email request.
   ///
   /// In en, this message translates to:
   /// **'Forgot password?'**
   String get forgotPasswordTitle;
 
-  /// No description provided for @forgotPasswordBody.
+  /// Explanatory text for forgot password body in the password-reset email request.
   ///
   /// In en, this message translates to:
   /// **'We\'ll email you a link to choose a new password.'**
   String get forgotPasswordBody;
 
-  /// No description provided for @forgotPasswordAction.
+  /// Action button for forgot password action in the password-reset email request.
   ///
   /// In en, this message translates to:
   /// **'Send link'**
   String get forgotPasswordAction;
 
-  /// No description provided for @forgotPasswordSent.
+  /// Label or control text for forgot password sent in the password-reset email request.
   ///
   /// In en, this message translates to:
   /// **'If there\'s an account for that address, a link is on its way.'**
   String get forgotPasswordSent;
 
-  /// No description provided for @resetPasswordTitle.
+  /// Heading for reset password title in password reset through an emailed link.
   ///
   /// In en, this message translates to:
   /// **'Choose a new password'**
   String get resetPasswordTitle;
 
-  /// No description provided for @resetPasswordBody.
+  /// Explanatory text for reset password body in password reset through an emailed link.
   ///
   /// In en, this message translates to:
   /// **'You\'ll be signed out everywhere, then you can sign in with the new password.'**
   String get resetPasswordBody;
 
-  /// No description provided for @resetPasswordAction.
+  /// Action button for reset password action in password reset through an emailed link.
   ///
   /// In en, this message translates to:
   /// **'Save password'**
   String get resetPasswordAction;
 
-  /// No description provided for @resetPasswordDone.
+  /// Label or control text for reset password done in password reset through an emailed link.
   ///
   /// In en, this message translates to:
   /// **'Password changed. Sign in with your new password.'**
   String get resetPasswordDone;
 
-  /// No description provided for @verifyEmailTitle.
+  /// Heading for verify email title in email verification.
   ///
   /// In en, this message translates to:
   /// **'Confirm your email'**
   String get verifyEmailTitle;
 
-  /// No description provided for @verifyEmailHelp.
+  /// Help text for verify email help in email verification.
   ///
   /// In en, this message translates to:
   /// **'So you can reset your password if you forget it'**
   String get verifyEmailHelp;
 
-  /// No description provided for @verifyEmailSent.
+  /// Label or control text for verify email sent in email verification. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Check {email} for a link.'**
   String verifyEmailSent(String email);
 
-  /// No description provided for @verifyEmailDone.
+  /// Label or control text for verify email done in email verification.
   ///
   /// In en, this message translates to:
   /// **'Email confirmed'**
   String get verifyEmailDone;
 
-  /// No description provided for @verifyEmailDoneBody.
+  /// Explanatory text for verify email done body in email verification.
   ///
   /// In en, this message translates to:
   /// **'Thanks! Your address is confirmed.'**
   String get verifyEmailDoneBody;
 
-  /// No description provided for @verifyEmailFailed.
+  /// Label or control text for verify email failed in email verification.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t confirm your email'**
   String get verifyEmailFailed;
 
-  /// No description provided for @inviteByEmail.
+  /// Label or control text for invite by email in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Invite by email'**
   String get inviteByEmail;
 
-  /// No description provided for @inviteByEmailHelp.
+  /// Help text for invite by email help in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Send someone a link to join'**
   String get inviteByEmailHelp;
 
-  /// No description provided for @inviteAs.
+  /// Label or control text for invite as in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Join as'**
   String get inviteAs;
 
-  /// No description provided for @inviteAsHelp.
+  /// Help text for invite as help in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'They can take over this person\'s expenses'**
   String get inviteAsHelp;
 
-  /// No description provided for @inviteAsAnyone.
+  /// Label or control text for invite as anyone in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Someone new'**
   String get inviteAsAnyone;
 
-  /// No description provided for @inviteSend.
+  /// Label or control text for invite send in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Send invite'**
   String get inviteSend;
 
-  /// No description provided for @inviteSent.
+  /// Label or control text for invite sent in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Invite sent to {email}.'**
   String inviteSent(String email);
 
-  /// No description provided for @inviteTitle.
+  /// Heading for invite title in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{name} invited you to {group}'**
   String inviteTitle(String name, String group);
 
-  /// No description provided for @inviteTitleAnonymous.
+  /// Label or control text for invite title anonymous in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'You\'re invited to {group}'**
   String inviteTitleAnonymous(String group);
 
-  /// No description provided for @inviteBody.
+  /// Explanatory text for invite body in email group invitations. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Create an account with {email} to join, or sign in if you have one.'**
   String inviteBody(String email);
 
-  /// No description provided for @inviteBodySignedIn.
+  /// Label or control text for invite body signed in in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Join to add expenses and see your balance.'**
   String get inviteBodySignedIn;
 
-  /// No description provided for @inviteAction.
+  /// Action button for invite action in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'Open invitation'**
   String get inviteAction;
 
-  /// No description provided for @inviteMissingTitle.
+  /// Heading for invite missing title in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'This invitation doesn\'t work'**
   String get inviteMissingTitle;
 
-  /// No description provided for @inviteMissingBody.
+  /// Explanatory text for invite missing body in email group invitations.
   ///
   /// In en, this message translates to:
   /// **'It may have expired or been used. Ask for a new one.'**
   String get inviteMissingBody;
 
-  /// No description provided for @joinInvitedAs.
+  /// Label or control text for join invited as in joining or claiming a group member.
   ///
   /// In en, this message translates to:
   /// **'You were invited as this person'**
   String get joinInvitedAs;
 
-  /// No description provided for @signInWith.
+  /// Label or control text for sign in with in account sign-in. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Continue with {provider}'**
   String signInWith(String provider);
 
-  /// No description provided for @signInOr.
+  /// Label or control text for sign in or in account sign-in.
   ///
   /// In en, this message translates to:
   /// **'or'**
   String get signInOr;
 
-  /// No description provided for @oauthFailedTitle.
+  /// Heading for oauth failed title in the OAuth sign-in return page.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t sign you in'**
   String get oauthFailedTitle;
 
-  /// No description provided for @oauthEmailTaken.
+  /// Legacy fallback explaining an OAuth email collision. Verified provider emails normally reclaim an unverified account.
   ///
   /// In en, this message translates to:
   /// **'There\'s already an account with this email. Sign in with your password and confirm your email in Settings, then this way of signing in works too.'**
   String get oauthEmailTaken;
 
-  /// No description provided for @oauthOtherServer.
+  /// Label or control text for oauth other server in the OAuth sign-in return page.
   ///
   /// In en, this message translates to:
   /// **'This sign-in was started on another server than the one chosen now. Sign in again.'**
   String get oauthOtherServer;
 
-  /// No description provided for @oauthBackToSignIn.
+  /// Label or control text for oauth back to sign in in the OAuth sign-in return page.
   ///
   /// In en, this message translates to:
   /// **'Back to sign in'**
   String get oauthBackToSignIn;
 
-  /// No description provided for @errorOAuthFailed.
+  /// Message for error o auth failed in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Signing in didn\'t work. Try again.'**
   String get errorOAuthFailed;
 
-  /// No description provided for @errorOAuthCancelled.
+  /// Message for error o auth cancelled in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Signing in was cancelled.'**
   String get errorOAuthCancelled;
 
-  /// No description provided for @importTitle.
+  /// Heading for import title in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Import from Settle Up'**
   String get importTitle;
 
-  /// No description provided for @importAction.
+  /// Action button for import action in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Import'**
   String get importAction;
 
-  /// No description provided for @importIntro.
+  /// Label or control text for import intro in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'In Settle Up, export the group as a CSV file, then choose the file here. Expenses, payments and everyone in the group come along, and balances stay the same.'**
   String get importIntro;
 
-  /// No description provided for @importChooseFile.
+  /// Label or control text for import choose file in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Choose CSV file'**
   String get importChooseFile;
 
-  /// No description provided for @importChooseOther.
+  /// Label or control text for import choose other in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Choose another file'**
   String get importChooseOther;
 
-  /// No description provided for @importReading.
+  /// Label or control text for import reading in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Reading the file…'**
   String get importReading;
 
-  /// No description provided for @importSummary.
+  /// Label or control text for import summary in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{expenses, plural, =1{1 expense} other{{expenses} expenses}}, {payments, plural, =1{1 payment} other{{payments} payments}}'**
   String importSummary(int expenses, int payments);
 
-  /// No description provided for @importDates.
+  /// Label or control text for import dates in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{from} to {to}'**
   String importDates(String from, String to);
 
-  /// No description provided for @importCurrency.
+  /// Label or control text for import currency in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Currency: {currency}. Entries in other currencies use the amounts Settle Up converted.'**
   String importCurrency(String currency);
 
-  /// No description provided for @importSkipped.
+  /// Label or control text for import skipped in Settle Up CSV import. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 entry of zero is left out.} other{{count} entries of zero are left out.}}'**
   String importSkipped(int count);
 
-  /// No description provided for @importWhoAreYou.
+  /// Label or control text for import who are you in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Which one are you?'**
   String get importWhoAreYou;
 
-  /// No description provided for @importUntitled.
+  /// Label or control text for import untitled in Settle Up CSV import.
   ///
   /// In en, this message translates to:
   /// **'Untitled'**
   String get importUntitled;
 
-  /// No description provided for @errorImportFile.
+  /// Message for error import file in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This doesn\'t look like a Settle Up CSV export.'**
   String get errorImportFile;
 
-  /// No description provided for @errorImportCurrency.
+  /// Message for error import currency in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'The file has no entries without an exchange rate, so the group\'s currency is unclear.'**
   String get errorImportCurrency;
 
-  /// No description provided for @errorImportTooBig.
+  /// Message for error import too big in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This file is too big to import.'**
   String get errorImportTooBig;
 
-  /// No description provided for @errorBadImage.
+  /// Message for error bad image in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That picture can\'t be used. Choose a JPEG, PNG or WebP image.'**
   String get errorBadImage;
 
-  /// No description provided for @errorReceiptTooBig.
+  /// Message for error receipt too big in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That picture is too big. Choose one under 10 MB.'**
   String get errorReceiptTooBig;
 
-  /// No description provided for @errorImportMe.
+  /// Message for error import me in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Choose which person you are.'**
   String get errorImportMe;
 
-  /// No description provided for @errorImportRow.
+  /// Message for error import row in API error feedback. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Line {line} of the file can\'t be imported: {reason}'**
   String errorImportRow(int line, String reason);
 
-  /// No description provided for @errorImportAmount.
+  /// Message for error import amount in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'an amount can\'t be read.'**
   String get errorImportAmount;
 
-  /// No description provided for @errorImportCounts.
+  /// Message for error import counts in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'the names and amounts don\'t match up.'**
   String get errorImportCounts;
 
-  /// No description provided for @errorImportDate.
+  /// Message for error import date in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'the date can\'t be read.'**
   String get errorImportDate;
 
-  /// No description provided for @errorImportType.
+  /// Message for error import type in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'the type isn\'t expense, transfer or income.'**
   String get errorImportType;
 
-  /// No description provided for @errorImportTransfer.
+  /// Message for error import transfer in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'a transfer needs one person paying someone else.'**
   String get errorImportTransfer;
 
-  /// No description provided for @errorImportRowCurrency.
+  /// Message for error import row currency in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'it\'s in another currency without an exchange rate.'**
   String get errorImportRowCurrency;
 
-  /// No description provided for @adminSetupTitle.
+  /// Heading for admin setup title in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Set up this server'**
   String get adminSetupTitle;
 
-  /// No description provided for @adminSetupBody.
+  /// Explanatory text for admin setup body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Choose a password for the administrator. It guards this page, where the server\'s settings live. There is no username: whoever knows the password can change the settings.'**
   String get adminSetupBody;
 
-  /// No description provided for @adminSetupCode.
+  /// Label or control text for admin setup code in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Setup code'**
   String get adminSetupCode;
 
-  /// No description provided for @adminSetupCodeHelp.
+  /// Help text for admin setup code help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'This server already holds data, so it printed a setup code in its log when it started. With Docker: docker compose logs balnana'**
   String get adminSetupCodeHelp;
 
-  /// No description provided for @adminSetupAction.
+  /// Action button for admin setup action in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Set password'**
   String get adminSetupAction;
 
-  /// No description provided for @adminPassword.
+  /// Label or control text for admin password in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Administrator password'**
   String get adminPassword;
 
-  /// No description provided for @adminPasswordRepeat.
+  /// Label or control text for admin password repeat in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Repeat the password'**
   String get adminPasswordRepeat;
 
-  /// No description provided for @adminPasswordMismatch.
+  /// Label or control text for admin password mismatch in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'The passwords don\'t match.'**
   String get adminPasswordMismatch;
 
-  /// No description provided for @adminLoginTitle.
+  /// Heading for admin login title in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Administration'**
   String get adminLoginTitle;
 
-  /// No description provided for @adminLoginBody.
+  /// Explanatory text for admin login body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter the administrator password to change this server\'s settings.'**
   String get adminLoginBody;
 
-  /// No description provided for @adminLoginAction.
+  /// Action button for admin login action in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
   String get adminLoginAction;
 
-  /// No description provided for @adminSettingsTitle.
+  /// Heading for admin settings title in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Server settings'**
   String get adminSettingsTitle;
 
-  /// No description provided for @adminSaved.
+  /// Label or control text for admin saved in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Settings saved. They apply right away.'**
   String get adminSaved;
 
-  /// No description provided for @adminSaveFailed.
+  /// Label or control text for admin save failed in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Nothing was saved. Check the highlighted settings.'**
   String get adminSaveFailed;
 
-  /// No description provided for @adminChangePassword.
+  /// Label or control text for admin change password in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Change administrator password'**
   String get adminChangePassword;
 
-  /// No description provided for @adminPasswordCurrent.
+  /// Label or control text for admin password current in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Current password'**
   String get adminPasswordCurrent;
 
-  /// No description provided for @adminPasswordNew.
+  /// Label or control text for admin password new in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'New password'**
   String get adminPasswordNew;
 
-  /// No description provided for @adminPasswordChanged.
+  /// Label or control text for admin password changed in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Password changed. Other administrator sessions are signed out.'**
   String get adminPasswordChanged;
 
-  /// No description provided for @adminSignOut.
+  /// Label or control text for admin sign out in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Sign out of administration'**
   String get adminSignOut;
 
-  /// No description provided for @adminBackHome.
+  /// Label or control text for admin back home in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Back to Balnana'**
   String get adminBackHome;
 
-  /// No description provided for @adminRequireEmail.
+  /// Label or control text for admin require email in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Require an email address'**
   String get adminRequireEmail;
 
-  /// No description provided for @adminRequireEmailHelp.
+  /// Help text for admin require email help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'When off, people sign up with a username and may leave the email address out. They sign in with either.'**
   String get adminRequireEmailHelp;
 
-  /// No description provided for @accountUsername.
+  /// Label or control text for account username in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Username'**
   String get accountUsername;
 
-  /// No description provided for @accountUsernameHelp.
+  /// Help text for account username help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'3 to 32 letters, digits, dots, dashes or underscores. You sign in with it.'**
   String get accountUsernameHelp;
 
-  /// No description provided for @accountEmailOptional.
+  /// Label or control text for account email optional in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email (optional)'**
   String get accountEmailOptional;
 
-  /// No description provided for @accountEmailOptionalHelp.
+  /// Help text for account email optional help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Lets you get group invitations and reset a forgotten password.'**
   String get accountEmailOptionalHelp;
 
-  /// No description provided for @accountLogin.
+  /// Label or control text for account login in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email or username'**
   String get accountLogin;
 
-  /// No description provided for @errorInvalidUsername.
+  /// Message for error invalid username in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Use 3 to 32 letters, digits, dots, dashes or underscores, starting with a letter or digit.'**
   String get errorInvalidUsername;
 
-  /// No description provided for @errorUsernameTaken.
+  /// Message for error username taken in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Someone already has that username.'**
   String get errorUsernameTaken;
 
-  /// No description provided for @adminDiscardTitle.
+  /// Heading for admin discard title in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Discard changes?'**
   String get adminDiscardTitle;
 
-  /// No description provided for @adminDiscardBody.
+  /// Explanatory text for admin discard body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Your changes to the settings haven\'t been saved.'**
   String get adminDiscardBody;
 
-  /// No description provided for @adminDiscard.
+  /// Label or control text for admin discard in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
@@ -3055,463 +3055,463 @@ abstract class AppLocalizations {
   /// **'Default: {value}'**
   String adminDefault(String value);
 
-  /// No description provided for @adminSecretSaved.
+  /// Label or control text for admin secret saved in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Saved. Type a new one to replace it.'**
   String get adminSecretSaved;
 
-  /// No description provided for @adminSecretRemoved.
+  /// Label or control text for admin secret removed in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Will be removed when you save.'**
   String get adminSecretRemoved;
 
-  /// No description provided for @adminSecretRemove.
+  /// Label or control text for admin secret remove in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Remove saved value'**
   String get adminSecretRemove;
 
-  /// No description provided for @adminSectionGeneral.
+  /// Label or control text for admin section general in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'General'**
   String get adminSectionGeneral;
 
-  /// No description provided for @adminSectionAccess.
+  /// Label or control text for admin section access in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Access'**
   String get adminSectionAccess;
 
-  /// No description provided for @adminSectionAccounts.
+  /// Label or control text for admin section accounts in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Accounts'**
   String get adminSectionAccounts;
 
-  /// No description provided for @adminSectionAccountsBody.
+  /// Explanatory text for admin section accounts body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'These apply when access is set to accounts.'**
   String get adminSectionAccountsBody;
 
-  /// No description provided for @adminSectionEmail.
+  /// Label or control text for admin section email in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Email (SMTP)'**
   String get adminSectionEmail;
 
-  /// No description provided for @adminSectionEmailBody.
+  /// Explanatory text for admin section email body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Lets the server send email: address verification, password resets and invitations. Leave the mail server empty to turn email off.'**
   String get adminSectionEmailBody;
 
-  /// No description provided for @adminSectionGoogle.
+  /// Label or control text for admin section google in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Sign in with Google'**
   String get adminSectionGoogle;
 
-  /// No description provided for @adminSectionGoogleBody.
+  /// Explanatory text for admin section google body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Register {url} as the redirect URI in the Google Cloud console. Leave the client ID empty to turn it off.'**
   String adminSectionGoogleBody(String url);
 
-  /// No description provided for @adminSectionOidc.
+  /// Label or control text for admin section oidc in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Sign in with OpenID Connect'**
   String get adminSectionOidc;
 
-  /// No description provided for @adminSectionOidcBody.
+  /// Explanatory text for admin section oidc body in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Any OpenID Connect provider, such as Authentik, Keycloak or Dex. Register {url} as the redirect URI. Leave the issuer empty to turn it off.'**
   String adminSectionOidcBody(String url);
 
-  /// No description provided for @adminSectionAndroid.
+  /// Label or control text for admin section android in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Android app links'**
   String get adminSectionAndroid;
 
-  /// No description provided for @adminSectionAndroidBody.
+  /// Explanatory text for admin section android body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.'**
   String get adminSectionAndroidBody;
 
-  /// No description provided for @adminSectionAdmin.
+  /// Label or control text for admin section admin in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Administrator'**
   String get adminSectionAdmin;
 
-  /// No description provided for @adminPublicUrl.
+  /// Label or control text for admin public url in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Public address'**
   String get adminPublicUrl;
 
-  /// No description provided for @adminPublicUrlHelp.
+  /// Help text for admin public url help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'The address people use to reach this server. Group links and email links are built from it.'**
   String get adminPublicUrlHelp;
 
-  /// No description provided for @adminSourceUrl.
+  /// Label or control text for admin source url in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Source code link'**
   String get adminSourceUrl;
 
-  /// No description provided for @adminSourceUrlHelp.
+  /// Help text for admin source url help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Where people can get this server\'s source code, as its license (AGPL-3.0) asks when you run a changed version.'**
   String get adminSourceUrlHelp;
 
-  /// No description provided for @adminAuthMode.
+  /// Label or control text for admin auth mode in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Access'**
   String get adminAuthMode;
 
-  /// No description provided for @adminAuthModeLink.
+  /// Label or control text for admin auth mode link in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Group links'**
   String get adminAuthModeLink;
 
-  /// No description provided for @adminAuthModeLinkHelp.
+  /// Help text for admin auth mode link help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'No sign-in: a group\'s private link is all anyone needs.'**
   String get adminAuthModeLinkHelp;
 
-  /// No description provided for @adminAuthModeAccounts.
+  /// Label or control text for admin auth mode accounts in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Accounts'**
   String get adminAuthModeAccounts;
 
-  /// No description provided for @adminAuthModeAccountsHelp.
+  /// Help text for admin auth mode accounts help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'People sign in, and a link only lets signed-in people join a group.'**
   String get adminAuthModeAccountsHelp;
 
-  /// No description provided for @adminPasswordLogin.
+  /// Label or control text for admin password login in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Email and password sign-in'**
   String get adminPasswordLogin;
 
-  /// No description provided for @adminSignup.
+  /// Label or control text for admin signup in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Who may create an account'**
   String get adminSignup;
 
-  /// No description provided for @adminSignupOpen.
+  /// Label or control text for admin signup open in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Anyone'**
   String get adminSignupOpen;
 
-  /// No description provided for @adminSignupInvite.
+  /// Label or control text for admin signup invite in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Invited people'**
   String get adminSignupInvite;
 
-  /// No description provided for @adminSignupClosed.
+  /// Label or control text for admin signup closed in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Nobody'**
   String get adminSignupClosed;
 
-  /// No description provided for @adminSignupHelp.
+  /// Help text for admin signup help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'The first account can always be created.'**
   String get adminSignupHelp;
 
-  /// No description provided for @adminLinkGroups.
+  /// Label or control text for admin link groups in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Groups may be opened by link'**
   String get adminLinkGroups;
 
-  /// No description provided for @adminLinkGroupsHelp.
+  /// Help text for admin link groups help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Group owners may let anyone with the link in, without signing in.'**
   String get adminLinkGroupsHelp;
 
-  /// No description provided for @adminSmtpHost.
+  /// Label or control text for admin smtp host in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Mail server'**
   String get adminSmtpHost;
 
-  /// No description provided for @adminSmtpPort.
+  /// Label or control text for admin smtp port in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Port'**
   String get adminSmtpPort;
 
-  /// No description provided for @adminSmtpUser.
+  /// Label or control text for admin smtp user in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'User name'**
   String get adminSmtpUser;
 
-  /// No description provided for @adminSmtpPassword.
+  /// Label or control text for admin smtp password in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Password'**
   String get adminSmtpPassword;
 
-  /// No description provided for @adminSmtpFrom.
+  /// Label or control text for admin smtp from in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Sender'**
   String get adminSmtpFrom;
 
-  /// No description provided for @adminSmtpFromHint.
+  /// Input hint for admin smtp from hint in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Balnana <balnana@example.com>'**
   String get adminSmtpFromHint;
 
-  /// No description provided for @adminClientId.
+  /// Label or control text for admin client id in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Client ID'**
   String get adminClientId;
 
-  /// No description provided for @adminClientSecret.
+  /// Label or control text for admin client secret in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Client secret'**
   String get adminClientSecret;
 
-  /// No description provided for @adminOidcIssuer.
+  /// Label or control text for admin oidc issuer in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Issuer URL'**
   String get adminOidcIssuer;
 
-  /// No description provided for @adminOidcName.
+  /// Label or control text for admin oidc name in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Button name'**
   String get adminOidcName;
 
-  /// No description provided for @adminOidcNameHelp.
+  /// Help text for admin oidc name help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Shown as \"Continue with …\" on the sign-in page.'**
   String get adminOidcNameHelp;
 
-  /// No description provided for @adminFingerprints.
+  /// Label or control text for admin fingerprints in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Certificate fingerprints'**
   String get adminFingerprints;
 
-  /// No description provided for @adminFingerprintsHelp.
+  /// Help text for admin fingerprints help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'SHA-256, separated by commas. keytool -list -v and apksigner verify --print-certs show them.'**
   String get adminFingerprintsHelp;
 
-  /// No description provided for @adminInvalidValue.
+  /// Label or control text for admin invalid value in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'This value isn\'t valid.'**
   String get adminInvalidValue;
 
-  /// No description provided for @adminInvalidUrl.
+  /// Label or control text for admin invalid url in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter a full address starting with https:// or http://.'**
   String get adminInvalidUrl;
 
-  /// No description provided for @adminInvalidFrom.
+  /// Label or control text for admin invalid from in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter a sender such as Balnana <balnana@example.com>; email needs one.'**
   String get adminInvalidFrom;
 
-  /// No description provided for @adminInvalidPort.
+  /// Label or control text for admin invalid port in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter a port number from 1 to 65535.'**
   String get adminInvalidPort;
 
-  /// No description provided for @adminInvalidRequired.
+  /// Label or control text for admin invalid required in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'This sign-in provider needs it.'**
   String get adminInvalidRequired;
 
-  /// No description provided for @adminInvalidFingerprint.
+  /// Label or control text for admin invalid fingerprint in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter SHA-256 fingerprints: 64 hexadecimal digits each, colons allowed.'**
   String get adminInvalidFingerprint;
 
-  /// No description provided for @adminNeedsSignIn.
+  /// Label or control text for admin needs sign in in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Accounts need a way to sign in: turn on email and password, or set up a provider.'**
   String get adminNeedsSignIn;
 
-  /// No description provided for @adminLockedChange.
+  /// Label or control text for admin locked change in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'This is set on the server and can\'t be changed here.'**
   String get adminLockedChange;
 
-  /// No description provided for @errorAdminRequired.
+  /// Message for error admin required in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'Your administrator session has ended. Sign in again.'**
   String get errorAdminRequired;
 
-  /// No description provided for @errorAdminWrongPassword.
+  /// Message for error admin wrong password in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That password isn\'t right.'**
   String get errorAdminWrongPassword;
 
-  /// No description provided for @errorInvalidSetupCode.
+  /// Message for error invalid setup code in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'That setup code isn\'t right. Look for it in the server\'s log.'**
   String get errorInvalidSetupCode;
 
-  /// No description provided for @errorAlreadySetUp.
+  /// Message for error already set up in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'This server has been set up already. Sign in with its administrator password.'**
   String get errorAlreadySetUp;
 
-  /// No description provided for @linkOpening.
+  /// Label or control text for link opening in opening an app or group link.
   ///
   /// In en, this message translates to:
   /// **'Opening link…'**
   String get linkOpening;
 
-  /// No description provided for @linkForeignTitle.
+  /// Heading for link foreign title in opening an app or group link.
   ///
   /// In en, this message translates to:
   /// **'This link is for another server'**
   String get linkForeignTitle;
 
-  /// No description provided for @linkForeignBody.
+  /// Explanatory text for link foreign body in opening an app or group link. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'This app is connected to {server}, and the link belongs to a different server. Change the server in Settings to open it.'**
   String linkForeignBody(String server);
 
-  /// No description provided for @linkInvalidTitle.
+  /// Heading for link invalid title in opening an app or group link.
   ///
   /// In en, this message translates to:
   /// **'This link can\'t be opened'**
   String get linkInvalidTitle;
 
-  /// No description provided for @linkInvalidBody.
+  /// Explanatory text for link invalid body in opening an app or group link.
   ///
   /// In en, this message translates to:
   /// **'It isn\'t a Balnana link this app knows.'**
   String get linkInvalidBody;
 
-  /// No description provided for @linkGoHome.
+  /// Label or control text for link go home in opening an app or group link.
   ///
   /// In en, this message translates to:
   /// **'Go to groups'**
   String get linkGoHome;
 
-  /// No description provided for @privacyTitle.
+  /// Heading for privacy title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Privacy policy'**
   String get privacyTitle;
 
-  /// No description provided for @privacyIntro.
+  /// Label or control text for privacy intro in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Balnana is open-source software. Whoever runs the server this app is connected to (its operator) decides where your data is kept and is responsible for it. This page describes what the software itself stores and does.'**
   String get privacyIntro;
 
-  /// No description provided for @privacyStoredTitle.
+  /// Heading for privacy stored title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'What is stored'**
   String get privacyStoredTitle;
 
-  /// No description provided for @privacyStoredBody.
+  /// Explanatory text for privacy stored body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
   String get privacyStoredBody;
 
-  /// No description provided for @privacyUseTitle.
+  /// Heading for privacy use title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'How it is used'**
   String get privacyUseTitle;
 
-  /// No description provided for @privacyUseBody.
+  /// Explanatory text for privacy use body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Only to run the app: to show each group to its members, work out balances, and send the emails and notifications the app needs, such as address verification, password resets and invitations. The app has no ads and no analytics, and nothing is sold.'**
   String get privacyUseBody;
 
-  /// No description provided for @privacySharedTitle.
+  /// Heading for privacy shared title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Who can see it'**
   String get privacySharedTitle;
 
-  /// No description provided for @privacySharedBody.
+  /// Explanatory text for privacy shared body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
   String get privacySharedBody;
 
-  /// No description provided for @privacyDeviceTitle.
+  /// Heading for privacy device title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'On this device'**
   String get privacyDeviceTitle;
 
-  /// No description provided for @privacyDeviceBody.
+  /// Explanatory text for privacy device body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them.'**
   String get privacyDeviceBody;
 
-  /// No description provided for @privacyDeleteTitle.
+  /// Heading for privacy delete title in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'Deleting your data'**
   String get privacyDeleteTitle;
 
-  /// No description provided for @privacyDeleteBody.
+  /// Explanatory text for privacy delete body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.'**
   String get privacyDeleteBody;
 
-  /// No description provided for @privacyOperatorPolicy.
+  /// Label or control text for privacy operator policy in the built-in privacy notice.
   ///
   /// In en, this message translates to:
   /// **'The operator\'s privacy policy'**
@@ -3523,377 +3523,455 @@ abstract class AppLocalizations {
   /// **'Privacy'**
   String get privacyLink;
 
-  /// No description provided for @accountEmailAdd.
+  /// Label or control text for account email add in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Add email address'**
   String get accountEmailAdd;
 
-  /// No description provided for @accountEmailChange.
+  /// Label or control text for account email change in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Change email address'**
   String get accountEmailChange;
 
-  /// No description provided for @accountEmailNew.
+  /// Label or control text for account email new in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email address'**
   String get accountEmailNew;
 
-  /// No description provided for @accountEmailVerifyNote.
+  /// Label or control text for account email verify note in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'You\'ll get a link to confirm the new address. Your current address stays until then.'**
   String get accountEmailVerifyNote;
 
-  /// No description provided for @accountEmailPendingTitle.
+  /// Heading for account email pending title in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Confirm your new email'**
   String get accountEmailPendingTitle;
 
-  /// No description provided for @accountEmailPendingHelp.
+  /// Help text for account email pending help in account profile and credentials. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{email} takes your current address\'s place once you open the link sent to it. Tap to send it again.'**
   String accountEmailPendingHelp(String email);
 
-  /// No description provided for @accountEmailRemoveNote.
+  /// Label or control text for account email remove note in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Leave it empty to remove your address. You keep signing in with your username.'**
   String get accountEmailRemoveNote;
 
-  /// No description provided for @accountEmailSaved.
+  /// Label or control text for account email saved in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email address saved'**
   String get accountEmailSaved;
 
-  /// No description provided for @accountEmailRemoved.
+  /// Label or control text for account email removed in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Email address removed'**
   String get accountEmailRemoved;
 
-  /// No description provided for @accountConfirmPassword.
+  /// Label or control text for account confirm password in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Your password'**
   String get accountConfirmPassword;
 
-  /// No description provided for @accountConfirmPasswordHelp.
+  /// Help text for account confirm password help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'To confirm it\'s you.'**
   String get accountConfirmPasswordHelp;
 
-  /// No description provided for @errorEmailNeeded.
+  /// Message for error email needed in API error feedback.
   ///
   /// In en, this message translates to:
   /// **'You sign in with your email address, so it can\'t be removed.'**
   String get errorEmailNeeded;
 
-  /// No description provided for @accountDelete.
+  /// Label or control text for account delete in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Delete account'**
   String get accountDelete;
 
-  /// No description provided for @accountDeleteHelp.
+  /// Help text for account delete help in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Remove your account from this server'**
   String get accountDeleteHelp;
 
-  /// No description provided for @accountDeleteTitle.
+  /// Heading for account delete title in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Delete your account?'**
   String get accountDeleteTitle;
 
-  /// No description provided for @accountDeleteBody.
+  /// Explanatory text for account delete body in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Your account is deleted for good, and you\'re signed out. In your groups your name stays as a member nobody has claimed, so balances still add up. Groups nobody else is in are deleted.'**
   String get accountDeleteBody;
 
-  /// No description provided for @accountDeleteAction.
+  /// Action button for account delete action in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Delete for good'**
   String get accountDeleteAction;
 
-  /// No description provided for @accountDeleted.
+  /// Label or control text for account deleted in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Your account has been deleted.'**
   String get accountDeleted;
 
-  /// No description provided for @accountDeletePageSignedOut.
+  /// Label or control text for account delete page signed out in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'Sign in to delete your account on this server.'**
   String get accountDeletePageSignedOut;
 
-  /// No description provided for @accountDeletePageLinkMode.
+  /// Label or control text for account delete page link mode in account profile and credentials.
   ///
   /// In en, this message translates to:
   /// **'This server has no accounts: a group\'s link is all anyone needs. To delete a group with everything in it, open the group\'s settings and choose Delete group.'**
   String get accountDeletePageLinkMode;
 
-  /// No description provided for @groupDelete.
+  /// Label or control text for group delete in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Delete group'**
   String get groupDelete;
 
-  /// No description provided for @groupDeleteHelp.
+  /// Help text for group delete help in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Delete it with all its expenses, for everyone'**
   String get groupDeleteHelp;
 
-  /// No description provided for @groupDeleteTitle.
+  /// Heading for group delete title in group creation, settings, or switching. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Delete {name}?'**
   String groupDeleteTitle(String name);
 
-  /// No description provided for @groupDeleteBody.
+  /// Explanatory text for group delete body in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'The group and all its expenses, payments and history are deleted for everyone. This can\'t be undone. Type the group\'s name to confirm.'**
   String get groupDeleteBody;
 
-  /// No description provided for @groupDeleteName.
+  /// Label or control text for group delete name in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Group name'**
   String get groupDeleteName;
 
-  /// No description provided for @groupDeleteAction.
+  /// Action button for group delete action in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Delete for good'**
   String get groupDeleteAction;
 
-  /// No description provided for @groupDeleted.
+  /// Label or control text for group deleted in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Group deleted'**
   String get groupDeleted;
 
-  /// No description provided for @groupDeleteOwnerOnly.
+  /// Label or control text for group delete owner only in group creation, settings, or switching.
   ///
   /// In en, this message translates to:
   /// **'Only the group\'s owner can delete it.'**
   String get groupDeleteOwnerOnly;
 
-  /// No description provided for @expenseDiscardTitle.
+  /// Heading for expense discard title in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Discard changes?'**
   String get expenseDiscardTitle;
 
-  /// No description provided for @expenseDiscardBody.
+  /// Explanatory text for expense discard body in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Your changes to this expense haven\'t been saved.'**
   String get expenseDiscardBody;
 
-  /// No description provided for @expenseDiscard.
+  /// Label or control text for expense discard in the expense editor or expense list.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
   String get expenseDiscard;
 
-  /// No description provided for @adminPrivacyUrl.
+  /// Label or control text for admin privacy url in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Privacy policy link'**
   String get adminPrivacyUrl;
 
-  /// No description provided for @adminPrivacyUrlHelp.
+  /// Help text for admin privacy url help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Your privacy policy, which app stores ask for. When empty, the app shows a general one about what Balnana stores.'**
   String get adminPrivacyUrlHelp;
 
-  /// No description provided for @adminMapTiles.
+  /// Label or control text for admin map tiles in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Map tiles'**
   String get adminMapTiles;
 
-  /// No description provided for @adminMapTilesHelp.
+  /// Help text for admin map tiles help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.'**
   String get adminMapTilesHelp;
 
-  /// No description provided for @adminMapAttribution.
+  /// Label or control text for admin map attribution in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Map credit'**
   String get adminMapAttribution;
 
-  /// No description provided for @adminMapAttributionHelp.
+  /// Help text for admin map attribution help in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Shown on every map, as the tile provider asks.'**
   String get adminMapAttributionHelp;
 
-  /// No description provided for @adminInvalidMapTiles.
+  /// Label or control text for admin invalid map tiles in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Enter an http(s) URL template with z, x and y in braces, or \"off\".'**
   String get adminInvalidMapTiles;
 
-  /// No description provided for @adminUsers.
+  /// Label or control text for admin users in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Accounts'**
   String get adminUsers;
 
-  /// No description provided for @adminUsersSearch.
+  /// Label or control text for admin users search in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Search by name, email or username'**
   String get adminUsersSearch;
 
-  /// No description provided for @adminUsersShown.
+  /// Label or control text for admin users shown in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{shown} of {total} accounts'**
   String adminUsersShown(int shown, int total);
 
-  /// No description provided for @adminUsersCount.
+  /// Label or control text for admin users count in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
   String adminUsersCount(int count);
 
-  /// No description provided for @adminUsersEmpty.
+  /// Label or control text for admin users empty in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'No accounts match.'**
   String get adminUsersEmpty;
 
-  /// No description provided for @adminUserGroups.
+  /// Label or control text for admin user groups in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =0{No groups} =1{1 group} other{{count} groups}}'**
   String adminUserGroups(int count);
 
-  /// No description provided for @adminUserUnverified.
+  /// Label or control text for admin user unverified in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'not verified'**
   String get adminUserUnverified;
 
-  /// No description provided for @adminUserDeleteTitle.
+  /// Heading for admin user delete title in the server administrator interface. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Delete {name}\'s account?'**
   String adminUserDeleteTitle(String name);
 
-  /// No description provided for @adminUserDeleteBody.
+  /// Explanatory text for admin user delete body in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'The account is deleted for good and signed out everywhere. Its name stays in its groups as a member nobody has claimed; groups nobody else is in are deleted.'**
   String get adminUserDeleteBody;
 
-  /// No description provided for @adminUserDeleted.
+  /// Label or control text for admin user deleted in the server administrator interface.
   ///
   /// In en, this message translates to:
   /// **'Account deleted'**
   String get adminUserDeleted;
 
-  /// No description provided for @commonDone.
+  /// Label or control text for common done in shared buttons and controls.
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get commonDone;
 
-  /// No description provided for @crowdSearch.
+  /// Label or control text for crowd search in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Search people'**
   String get crowdSearch;
 
-  /// No description provided for @crowdNoMatch.
+  /// Label or control text for crowd no match in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'No one matches.'**
   String get crowdNoMatch;
 
-  /// No description provided for @crowdAll.
+  /// Label or control text for crowd all in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'All'**
   String get crowdAll;
 
-  /// No description provided for @crowdNone.
+  /// Label or control text for crowd none in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get crowdNone;
 
-  /// No description provided for @crowdChosen.
+  /// Label or control text for crowd chosen in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count} of {total} chosen'**
   String crowdChosen(int count, int total);
 
-  /// No description provided for @crowdShowMore.
+  /// Label or control text for crowd show more in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 more} other{{count} more}}'**
   String crowdShowMore(int count);
 
-  /// No description provided for @crowdShowFewer.
+  /// Label or control text for crowd show fewer in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Show fewer'**
   String get crowdShowFewer;
 
-  /// No description provided for @crowdSort.
+  /// Label or control text for crowd sort in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Sort'**
   String get crowdSort;
 
-  /// No description provided for @crowdShowAll.
+  /// Label or control text for crowd show all in searchable and condensed member lists. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
   /// **'Show all {count}'**
   String crowdShowAll(int count);
 
-  /// No description provided for @crowdBalances.
+  /// Label or control text for crowd balances in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Everyone\'s balance'**
   String get crowdBalances;
 
-  /// No description provided for @crowdSomeoneElse.
+  /// Label or control text for crowd someone else in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Someone else'**
   String get crowdSomeoneElse;
 
-  /// No description provided for @crowdChoosePayers.
+  /// Label or control text for crowd choose payers in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Choose payers'**
   String get crowdChoosePayers;
 
-  /// No description provided for @crowdFilterTitle.
+  /// Heading for crowd filter title in searchable and condensed member lists.
   ///
   /// In en, this message translates to:
   /// **'Whose expenses?'**
   String get crowdFilterTitle;
+
+  /// Settings section for backing up link-mode access links on the selected server.
+  ///
+  /// In en, this message translates to:
+  /// **'My group links'**
+  String get myGroupsTitle;
+
+  /// Action showing all saved group links for the current server.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my groups'**
+  String get myGroupsExport;
+
+  /// Supporting text for the link-mode group-link export action.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy your group links to keep a backup or move to another device.'**
+  String get myGroupsExportHelp;
+
+  /// Explains that exported link-mode URLs grant access to the group.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep these links private. Anyone with a link can open its group.'**
+  String get myGroupsPrivate;
+
+  /// Button copying the displayed group-link backup to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy links'**
+  String get myGroupsCopy;
+
+  /// Title and action for importing saved access links, distinct from importing a Settle Up CSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Import groups'**
+  String get myGroupsImport;
+
+  /// Instructions for importing a link-mode group catalog. Foreign-server links are rejected together.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste group links from this server, one per line. Existing groups keep their place and identity.'**
+  String get myGroupsImportHelp;
+
+  /// Multiline field for group URLs or bare tokens from the selected server.
+  ///
+  /// In en, this message translates to:
+  /// **'Group links'**
+  String get myGroupsLinks;
+
+  /// Button validating all pasted links before saving any of them.
+  ///
+  /// In en, this message translates to:
+  /// **'Import links'**
+  String get myGroupsImportAction;
+
+  /// Error for an empty or malformed group-link list; import is atomic.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter valid group links, one per line. Nothing was imported.'**
+  String get myGroupsInvalid;
+
+  /// Error when server selection changes while the import dialog is open; prevents capability disclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected server changed. Close this dialog and import the links on their own server.'**
+  String get myGroupsServerChanged;
+
+  /// Error when importing links would exceed the per-server catalog limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep at most {count} group links per server. Nothing was imported.'**
+  String myGroupsLimit(int count);
+
+  /// Success message counting only newly saved links; repeated and existing links are ignored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{These groups are already saved.} =1{Imported 1 new group link.} other{Imported {count} new group links.}}'**
+  String myGroupsImported(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

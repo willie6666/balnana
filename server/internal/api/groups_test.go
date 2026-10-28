@@ -666,8 +666,12 @@ func TestGroupTotalCap(t *testing.T) {
 	}
 	var e Expense
 	c.must(201, "POST", base+"/expenses", in("0.01"), &e)
-	// Almost all the room taken, without making a thousand requests.
-	_, err := pool.Exec(context.Background(), `update expenses set amount = $2 where id = $1`, e.Id, maxGroupTotal-5)
+	// Almost all the room taken, without making a thousand requests. Payer
+	// and split change with the amount, or the totals check refuses it.
+	_, err := pool.Exec(context.Background(), `
+		with x as (update expenses set amount = $2 where id = $1),
+		p as (update expense_payers set amount = $2 where expense_id = $1)
+		update expense_splits set amount = $2 where expense_id = $1`, e.Id, maxGroupTotal-5)
 	if err != nil {
 		t.Fatal(err)
 	}

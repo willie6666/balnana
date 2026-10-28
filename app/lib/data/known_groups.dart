@@ -52,6 +52,9 @@ class KnownGroup {
 /// person arranged them; a newly added group comes first.
 final knownGroupsProvider = NotifierProvider<KnownGroupsNotifier, List<KnownGroup>>(KnownGroupsNotifier.new);
 
+/// The summaries endpoint accepts at most this many links at once.
+const maxKnownGroups = 200;
+
 class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
   static const _key = 'groups.known';
 
@@ -60,7 +63,10 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
   @override
   List<KnownGroup> build() {
     _server = ref.watch(serverUrlProvider);
-    return [for (final g in _all()) if (g.server == _server) g];
+    return [
+      for (final g in _all())
+        if (g.server == _server) g,
+    ];
   }
 
   List<KnownGroup> _all() {
@@ -80,7 +86,10 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
   void _update(List<KnownGroup> Function(List<KnownGroup> mine) change) {
     final server = _server;
     if (server == null) return;
-    final others = [for (final g in _all()) if (g.server != server) g];
+    final others = [
+      for (final g in _all())
+        if (g.server != server) g,
+    ];
     final mine = change(state);
     state = mine;
     ref.read(prefsProvider).setString(_key, jsonEncode([...mine, ...others].map((g) => g.toJson()).toList()));
@@ -118,6 +127,24 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
     ref.invalidateSelf();
   }
 
+  /// Imports a fully validated list atomically, preserving existing identities
+  /// and the order of the new links. Other servers' catalogs stay separate.
+  int importOn(String server, List<String> tokens) {
+    final all = _all();
+    final existing = {
+      for (final g in all)
+        if (g.server == server) g.token,
+    };
+    final added = tokens.toSet().difference(existing);
+    if (existing.length + added.length > maxKnownGroups) throw const FormatException('too_many_groups');
+    if (added.isEmpty) return 0;
+    final now = DateTime.now();
+    final entries = [for (final token in added) KnownGroup(server: server, token: token, addedAt: now)];
+    ref.read(prefsProvider).setString(_key, jsonEncode([...entries, ...all].map((g) => g.toJson()).toList()));
+    ref.invalidateSelf();
+    return added.length;
+  }
+
   void setMember(String token, String? memberId) =>
       _update((mine) => [for (final g in mine) g.token == token ? g.copyWith(memberId: () => memberId) : g]);
 
@@ -125,14 +152,20 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
   void replaceToken(String oldToken, String newToken) =>
       _update((mine) => [for (final g in mine) g.token == oldToken ? g.copyWith(token: newToken) : g]);
 
-  void remove(String token) => _update((mine) => [for (final g in mine) if (g.token != token) g]);
+  void remove(String token) => _update(
+    (mine) => [
+      for (final g in mine)
+        if (g.token != token) g,
+    ],
+  );
 
   /// Puts the groups in the order of [tokens]; others keep their place at the end.
   void reorder(List<String> tokens) => _update((mine) {
     final index = {for (final (i, t) in tokens.indexed) t: i};
     return [
       for (final t in tokens) ?byToken(t),
-      for (final g in mine) if (!index.containsKey(g.token)) g,
+      for (final g in mine)
+        if (!index.containsKey(g.token)) g,
     ];
   });
 }
