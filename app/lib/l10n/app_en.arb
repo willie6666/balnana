@@ -3738,6 +3738,18 @@
   "@repeatHelp": {
     "description": "Help text under the repeat settings in the expense editor."
   },
+  "repeatDropReceiptTitle": "Remove the receipt?",
+  "@repeatDropReceiptTitle": {
+    "description": "Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it."
+  },
+  "repeatDropReceiptBody": "A repeating expense can't keep a receipt. You can add one to each expense it adds instead.",
+  "@repeatDropReceiptBody": {
+    "description": "Body of the dialog shown when the user makes an expense repeat after picking a receipt photo for it."
+  },
+  "repeatDropReceiptAction": "Repeat",
+  "@repeatDropReceiptAction": {
+    "description": "Button that removes the picked receipt and makes the expense repeat."
+  },
   "recurringTitle": "Recurring expenses",
   "@recurringTitle": {
     "description": "Title of the page listing a group's recurring expenses, and of its entry in group settings."

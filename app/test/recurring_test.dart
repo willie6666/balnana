@@ -6,7 +6,7 @@ import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
-import 'package:balnana/data/api.dart' show deviceTimeZone;
+import 'package:balnana/data/api.dart' show deviceTimeZone, fixedZone;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -71,6 +72,9 @@ class _Server implements HttpClientAdapter {
   final requests = <String>[];
   final bodies = <Map<String, Object?>>[];
 
+  /// A time zone name this server does not know.
+  String? unknownZone;
+
   static ResponseBody json(Object? data, [int status = 200]) => ResponseBody.fromString(
     jsonEncode(data),
     status,
@@ -91,6 +95,9 @@ class _Server implements HttpClientAdapter {
     if (options.data case final Map<String, Object?> body) bodies.add(body);
     final id = path.startsWith('/api/v1/g/tok/recurring/') ? path.split('/').last : null;
     final index = items.indexWhere((r) => r['id'] == id);
+    if (options.data case {'timeZone': final String zone} when zone == unknownZone) {
+      return json({'code': 'invalid_time_zone', 'message': 'unknown'}, 400);
+    }
     switch ((method, id)) {
       case ('GET', null):
         return json(items);
@@ -162,6 +169,33 @@ Future<ProviderContainer> _boot(WidgetTester tester, _Server server, [List<Overr
   return ProviderScope.containerOf(tester.element(find.byType(BalnanaApp)));
 }
 
+/// A picture of one transparent pixel.
+final _png = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+);
+
+/// Hands over [_png] for every photo asked for.
+class _Camera extends ImagePickerPlatform {
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => XFile.fromData(_png, name: 'receipt.png');
+}
+
+/// Fills in a new expense that repeats weekly and saves it.
+Future<void> _saveWeekly(WidgetTester tester, ProviderContainer container) async {
+  await _go(tester, container, '/g/tok/expenses/new');
+  await _tapVisible(tester, find.widgetWithText(ChoiceChip, 'Weekly'));
+  await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'), '30');
+  await tester.enterText(find.widgetWithText(TextFormField, 'What was it for?'), 'Cleaner');
+  await tester.tap(find.text('Save'));
+  await tester.pumpAndSettle();
+}
+
+/// The fixed zone this device is in at [startsAt], as sent instead of a name.
+String _offsetAt(Object? startsAt) => fixedZone(DateTime.parse(startsAt! as String).toLocal().timeZoneOffset);
+
 Future<void> _go(WidgetTester tester, ProviderContainer container, String path) async {
   container.read(routerProvider).go(path);
   await tester.pumpAndSettle();
@@ -229,6 +263,64 @@ void main() {
     expect(sent.containsKey('startsAt'), isTrue);
     expect(sent.containsKey('occurredAt'), isFalse);
     expect(sent.containsKey('endsOn'), isFalse);
+  });
+
+  test('a fixed zone is named by its offset', () {
+    expect(fixedZone(Duration.zero), 'UTC');
+    expect(fixedZone(const Duration(hours: 5, minutes: 30)), 'UTC+05:30');
+    expect(fixedZone(const Duration(hours: -3, minutes: -30)), 'UTC-03:30');
+    expect(fixedZone(const Duration(hours: 14)), 'UTC+14:00');
+  });
+
+  testWidgets('a device that names no time zone sends its offset', (tester) async {
+    deviceTimeZone = () async => null;
+    final server = _Server([]);
+    final container = await _boot(tester, server);
+    await _saveWeekly(tester, container);
+    expect(server.requests, ['POST /api/v1/g/tok/recurring']);
+    final sent = server.bodies.single;
+    expect(sent['timeZone'], _offsetAt(sent['startsAt']));
+  });
+
+  testWidgets('a time zone the server does not know is sent as its offset', (tester) async {
+    final server = _Server([])..unknownZone = 'Asia/Taipei';
+    final container = await _boot(tester, server);
+    await _saveWeekly(tester, container);
+    expect(server.requests, ['POST /api/v1/g/tok/recurring', 'POST /api/v1/g/tok/recurring']);
+    expect(server.bodies.first['timeZone'], 'Asia/Taipei');
+    expect(server.bodies.last['timeZone'], _offsetAt(server.bodies.last['startsAt']));
+    expect(server.items, hasLength(1));
+  });
+
+  testWidgets('repeating asks before it drops a picked receipt', (tester) async {
+    final picker = ImagePickerPlatform.instance;
+    addTearDown(() => ImagePickerPlatform.instance = picker);
+    ImagePickerPlatform.instance = _Camera();
+    final server = _Server([]);
+    final container = await _boot(tester, server);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await _tapVisible(tester, find.text('Take a photo'));
+    expect(find.text('Remove'), findsOneWidget);
+
+    // Kept when the user changes their mind.
+    await _tapVisible(tester, find.widgetWithText(ChoiceChip, 'Weekly'));
+    expect(find.text('Remove the receipt?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Weekly')).selected, isFalse);
+    expect(find.text('Remove', skipOffstage: false), findsOneWidget);
+
+    // Dropped when they go on.
+    await _tapVisible(tester, find.widgetWithText(ChoiceChip, 'Weekly'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Repeat'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Weekly')).selected, isTrue);
+    expect(find.text('Take a photo', skipOffstage: false), findsNothing);
+
+    // Back to once, the receipt is gone.
+    await _tapVisible(tester, find.widgetWithText(ChoiceChip, "Doesn't repeat"));
+    expect(find.text('Take a photo', skipOffstage: false), findsOneWidget);
+    expect(find.text('Remove', skipOffstage: false), findsNothing);
   });
 
   testWidgets('the list shows when each comes back, and pauses, resumes and deletes', (tester) async {

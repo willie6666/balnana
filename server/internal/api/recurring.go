@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -63,8 +64,9 @@ func (s schedule) ended(t time.Time) bool {
 	return s.end != "" && t.In(s.loc).Format(dateLayout) > s.end
 }
 
-// after is the first occurrence later than t, or nil when there is none.
-func (s schedule) after(t time.Time) *time.Time {
+// index is the number of the first occurrence later than t, whether or not
+// the schedule has ended by then.
+func (s schedule) index(t time.Time) int {
 	n := 0
 	if !s.start.After(t) {
 		// Guess low from the time between, then step to it: calendar days
@@ -88,11 +90,35 @@ func (s schedule) after(t time.Time) *time.Time {
 			n++
 		}
 	}
-	next := s.at(n)
-	if s.ended(next) {
+	return n
+}
+
+// after is the first occurrence later than t, or nil when there is none.
+func (s schedule) after(t time.Time) *time.Time {
+	return s.until(s.at(s.index(t)))
+}
+
+// until is t, or nil when the schedule has ended by then.
+func (s schedule) until(t time.Time) *time.Time {
+	if s.ended(t) {
 		return nil
 	}
-	return &next
+	return &t
+}
+
+// closest is the occurrence nearest to t that is later than last, the later
+// one of two as near, or nil when there is none.
+func (s schedule) closest(t, last time.Time) *time.Time {
+	n := s.index(t.Add(-time.Nanosecond))
+	if n > 0 {
+		if prev := s.at(n - 1); prev.After(last) && t.Sub(prev) < s.at(n).Sub(t) {
+			n--
+		}
+	}
+	if !s.at(n).After(last) {
+		return s.after(last)
+	}
+	return s.until(s.at(n))
 }
 
 // first is the first occurrence, or nil when the schedule ended before it.
@@ -117,8 +143,22 @@ func (s schedule) checkDue(next *time.Time, now time.Time) error {
 	return nil
 }
 
+// scheduleZone is the time zone a schedule counts days in: an IANA name, or
+// a fixed offset such as "UTC+05:30" from a device that knows only that.
+func scheduleZone(name string) (*time.Location, error) {
+	if rest, ok := strings.CutPrefix(name, "UTC"); ok && rest != "" {
+		t, err := time.Parse("-07:00", rest)
+		_, offset := t.Zone()
+		if err != nil || offset < -14*3600 || offset > 14*3600 {
+			return nil, badRequest("invalid_time_zone")
+		}
+		return time.FixedZone(name, offset), nil
+	}
+	return readerZone(nil, &name)
+}
+
 func scheduleOf(r *RecurringExpense) (schedule, error) {
-	loc, err := time.LoadLocation(r.TimeZone)
+	loc, err := scheduleZone(r.TimeZone)
 	if err != nil {
 		return schedule{}, err
 	}
@@ -158,7 +198,7 @@ func validateRecurring(ctx context.Context, q querier, g *group, in RecurringExp
 	if in.TimeZone != nil && *in.TimeZone != "" {
 		zone = *in.TimeZone
 	}
-	loc, err := readerZone(nil, &zone)
+	loc, err := scheduleZone(zone)
 	if err != nil {
 		return nil, schedule{}, err
 	}
@@ -205,29 +245,8 @@ func (r *RecurringExpense) payload() map[string]any {
 	return map[string]any{"title": r.Title, "amount": r.Amount}
 }
 
-func insertRecurringParts(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
-	for m, v := range d.payers {
-		if _, err := tx.Exec(ctx, `
-			insert into recurring_expense_payers (recurring_id, member_id, amount) values ($1, $2, $3)`, id, m, v); err != nil {
-			return err
-		}
-	}
-	for m, v := range d.splits {
-		var share *string
-		if s, ok := d.shares[m]; ok {
-			share = &s
-		}
-		if _, err := tx.Exec(ctx, `
-			insert into recurring_expense_splits (recurring_id, member_id, amount, share)
-			values ($1, $2, $3, $4::text::numeric)`, id, m, v, share); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 const recurringColumns = `id::text, title, category_id, amount, note, split_method::text, location_name, latitude,
-	longitude, unit, every, starts_at, time_zone, to_char(ends_on, 'YYYY-MM-DD'), next_at, last_at, paused,
+	longitude, unit, every, starts_at, time_zone, to_char(ends_on, 'YYYY-MM-DD'), next_at, last_at, paused_at is not null,
 	created_by_member::text, created_at, updated_at, version`
 
 // loadRecurring runs a query selecting recurringColumns and attaches payers and splits.
@@ -245,12 +264,7 @@ func loadRecurring(ctx context.Context, q querier, digits int, sql string, args 
 		err := row.Scan(&r.Id, &r.Title, &r.CategoryId, &amount, &r.Note, &method, &place, &lat, &lng, &unit,
 			&r.Repeat.Every, &r.StartsAt, &r.TimeZone, &r.EndsOn, &r.NextAt, &r.LastAt, &r.Paused, &r.CreatedBy,
 			&r.CreatedAt, &r.UpdatedAt, &r.Version)
-		if place != nil || lat != nil {
-			r.Location = &Location{Name: place}
-			if lat != nil && lng != nil {
-				r.Location.Point = &GeoPoint{Latitude: *lat, Longitude: *lng}
-			}
-		}
+		r.Location = locationOf(place, lat, lng)
 		r.SplitMethod = SplitMethod(method)
 		r.Repeat.Unit = RepeatUnit(unit)
 		r.Amount = domain.FormatAmount(amount, digits)
@@ -269,42 +283,9 @@ func loadRecurring(ctx context.Context, q querier, digits int, sql string, args 
 		ids[i] = list[i].Id
 	}
 
-	rows, err = q.Query(ctx, `
-		select p.recurring_id::text, p.member_id::text, p.amount
-		from recurring_expense_payers p join members m on m.id = p.member_id
-		where p.recurring_id = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return nil, err
-	}
-	var rid, mid string
-	var amount int64
-	_, err = pgx.ForEachRow(rows, []any{&rid, &mid, &amount}, func() error {
-		r := index[rid]
-		r.Payers = append(r.Payers, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err = q.Query(ctx, `
-		select s.recurring_id::text, s.member_id::text, s.amount, s.share::text
-		from recurring_expense_splits s join members m on m.id = s.member_id
-		where s.recurring_id = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return nil, err
-	}
-	var share *string
-	_, err = pgx.ForEachRow(rows, []any{&rid, &mid, &amount, &share}, func() error {
-		r := index[rid]
-		part := SplitPart{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}
-		if share != nil {
-			v := trimShare(*share)
-			part.Share = &v
-		}
-		r.Splits = append(r.Splits, part)
-		return nil
-	})
+	err = recurringParts.load(ctx, q, digits, ids,
+		func(id string, p Payer) { index[id].Payers = append(index[id].Payers, p) },
+		func(id string, p SplitPart) { index[id].Splits = append(index[id].Splits, p) })
 	return list, err
 }
 
@@ -332,28 +313,36 @@ func loadOneRecurring(ctx context.Context, q querier, g *group, id string, lock 
 // it on to the next. On an occurrence that cannot be added it stops there,
 // keeping those before, and returns why.
 func addDue(ctx context.Context, tx pgx.Tx, g *group, r *RecurringExpense, now time.Time) ([]Expense, error) {
+	if r.NextAt == nil || r.NextAt.After(now) {
+		return nil, nil
+	}
 	s, err := scheduleOf(r)
 	if err != nil {
 		return nil, err
 	}
-	var added []Expense
-	var members []member
+	// Every occurrence is the same expense on another day: it is checked
+	// once, and the group's total is kept up as they are added.
+	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	total, err := groupTotal(ctx, tx, g.id, nil)
+	if err != nil {
+		return nil, err
+	}
+	payload := d.payload(g.digits)
+	payload["recurring"] = true
+	var ids []string
 	var failed error
-	for r.NextAt != nil && !r.NextAt.After(now) && len(added) < maxDue {
+	for r.NextAt != nil && !r.NextAt.After(now) && len(ids) < maxDue {
 		due := *r.NextAt
-		if members == nil {
-			if members, err = groupMembers(ctx, tx, g.id); err != nil {
-				return nil, err
-			}
+		if failed = checkExpenseDate(due); failed == nil {
+			failed = fitsGroupTotal(total, d.amount)
 		}
-		d, err := validateExpense(ctx, tx, g, kindExpense, r.input(due), nil, members)
-		if err == nil {
-			err = checkGroupTotal(ctx, tx, g.id, d.amount, nil)
-		}
-		if err != nil {
-			failed = err
+		if failed != nil {
 			break
 		}
+		d.occurredAt = due
 		id, err := storeExpense(ctx, tx, g, r.CreatedBy, d)
 		if err != nil {
 			return nil, err
@@ -362,24 +351,25 @@ func addDue(ctx context.Context, tx pgx.Tx, g *group, r *RecurringExpense, now t
 			id, r.Id, due); err != nil {
 			return nil, err
 		}
-		payload := d.payload(g.digits)
-		payload["recurring"] = true
 		if err := logActivity(ctx, tx, g.id, r.CreatedBy, "expense.created", &id, payload); err != nil {
 			return nil, err
 		}
-		e, err := loadExpense(ctx, tx, g, id)
-		if err != nil {
-			return nil, err
-		}
-		added = append(added, e)
+		total += d.amount
+		ids = append(ids, id)
 		r.LastAt = &due
 		r.NextAt = s.after(due)
 	}
-	if len(added) > 0 {
-		if _, err := tx.Exec(ctx, `update recurring_expenses set next_at = $2, last_at = $3 where id = $1`,
-			r.Id, r.NextAt, r.LastAt); err != nil {
-			return nil, err
-		}
+	if len(ids) == 0 {
+		return nil, failed
+	}
+	if _, err := tx.Exec(ctx, `update recurring_expenses set next_at = $2, last_at = $3 where id = $1`,
+		r.Id, r.NextAt, r.LastAt); err != nil {
+		return nil, err
+	}
+	added, err := loadExpenses(ctx, tx, g.digits, `select `+expenseColumns+` from expenses
+		where id = any($1::uuid[]) order by occurred_at, id`, ids)
+	if err != nil {
+		return nil, err
 	}
 	return added, failed
 }
@@ -421,7 +411,7 @@ func (s *Server) RunRecurring(ctx context.Context) {
 func (s *Server) runRecurring(ctx context.Context, now time.Time) (int, error) {
 	rows, err := s.db.Query(ctx, `
 		select r.id::text from recurring_expenses r join groups g on g.id = r.group_id
-		where r.next_at <= $1 and not r.paused and g.archived_at is null
+		where r.next_at <= $1 and r.paused_at is null and g.archived_at is null
 		order by r.next_at limit 100`, now)
 	if err != nil {
 		return 0, err
@@ -446,11 +436,13 @@ func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) 
 	var added []Expense
 	var g *group
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
-		// The group first, as every change to it locks it first.
+		// The group first, as every change to it locks it first. One that
+		// is busy, such as with another server adding this, waits for the
+		// next round.
 		g, err = scanGroup(tx.QueryRow(ctx, `
 			select `+groupColumns+` from groups
 			where id = (select group_id from recurring_expenses where id = $1) and archived_at is null
-			for update`, id))
+			for update skip locked`, id))
 		if err != nil {
 			return err
 		}
@@ -470,8 +462,8 @@ func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) 
 		// It cannot go on as it is, such as when someone in it left: it
 		// waits for someone to change it and resume it.
 		if _, err := tx.Exec(ctx, `
-			update recurring_expenses set paused = true, updated_at = now(), version = version + 1
-			where id = $1`, id); err != nil {
+			update recurring_expenses set paused_at = $2, updated_at = now(), version = version + 1
+			where id = $1`, id, now); err != nil {
 			return err
 		}
 		payload := r.payload()
@@ -559,7 +551,7 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 		if err != nil {
 			return err
 		}
-		if err := insertRecurringParts(ctx, tx, id, d); err != nil {
+		if err := recurringParts.insert(ctx, tx, id, d); err != nil {
 			return err
 		}
 		if out, err = loadOneRecurring(ctx, tx, g, id, false); err != nil {
@@ -581,6 +573,32 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 		s.notifyExpense(g, who, "added", e)
 	}
 	return CreateRecurringExpense201JSONResponse(*out), nil
+}
+
+// continueAt is where sched, replacing r's schedule, goes on from. One that
+// has added nothing yet starts over. Otherwise the new schedule takes over
+// at its occurrence nearest to where the old one would have gone next, so
+// moving the day does not add a period's expense twice or leave one out.
+// Either way it does not bring back occurrences skipped while paused.
+func continueAt(r *RecurringExpense, sched schedule) (*time.Time, error) {
+	old, err := scheduleOf(r)
+	if err != nil {
+		return nil, err
+	}
+	old.end = ""
+	var next, nominal *time.Time
+	if r.LastAt == nil {
+		next, nominal = sched.first(), old.first()
+	} else {
+		nominal = old.after(*r.LastAt)
+		next = sched.closest(*nominal, *r.LastAt)
+	}
+	// It was going on later than the old schedule would: what came between
+	// was skipped.
+	if r.NextAt != nil && r.NextAt.After(*nominal) && next != nil && next.Before(*r.NextAt) {
+		next = sched.after(r.NextAt.Add(-time.Nanosecond))
+	}
+	return next, nil
 }
 
 func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurringExpenseRequestObject) (UpdateRecurringExpenseResponseObject, error) {
@@ -608,10 +626,9 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 		if err != nil {
 			return err
 		}
-		// The new schedule goes on from the latest occurrence added.
-		next := sched.first()
-		if r.LastAt != nil {
-			next = sched.after(*r.LastAt)
+		next, err := continueAt(r, sched)
+		if err != nil {
+			return err
 		}
 		if !r.Paused {
 			if err := sched.checkDue(next, now); err != nil {
@@ -637,13 +654,7 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `delete from recurring_expense_payers where recurring_id = $1`, r.Id); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `delete from recurring_expense_splits where recurring_id = $1`, r.Id); err != nil {
-			return err
-		}
-		if err := insertRecurringParts(ctx, tx, r.Id, d); err != nil {
+		if err := recurringParts.replace(ctx, tx, r.Id, d); err != nil {
 			return err
 		}
 		if out, err = loadOneRecurring(ctx, tx, g, r.Id, false); err != nil {
@@ -672,8 +683,11 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringExpenseRequestObject) (PauseRecurringExpenseResponseObject, error) {
 	now := time.Now()
 	var out *RecurringExpense
+	var added []Expense
+	var g *group
+	var who *string
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
-		g, err := s.groupByToken(ctx, tx, req.Token, true)
+		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
 		}
@@ -689,29 +703,44 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 		action := "recurring.paused"
 		if !req.Body.Paused {
 			action = "recurring.resumed"
-			// What it would add must still work, such as everyone in it
-			// still being in the group.
-			if _, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil, nil); err != nil {
+			var pausedAt time.Time
+			if err := tx.QueryRow(ctx, `select paused_at from recurring_expenses where id = $1`, r.Id).Scan(&pausedAt); err != nil {
 				return err
 			}
-			sched, err := scheduleOf(r)
+			// What came due before it was paused, such as an occurrence it
+			// could not add, is added now; what came due since is skipped.
+			if pausedAt.After(now) {
+				pausedAt = now
+			}
+			if added, err = addDue(ctx, tx, g, r, pausedAt); err != nil {
+				return err
+			}
+			// What it adds from now on must still work, such as everyone in
+			// it still being in the group.
+			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil, nil)
 			if err != nil {
 				return err
 			}
-			// Occurrences missed while paused are skipped.
-			from := now
-			if r.LastAt != nil && r.LastAt.After(from) {
-				from = *r.LastAt
+			if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
+				return err
 			}
-			next = sched.after(from)
+			next = r.NextAt
+			if next != nil && !next.After(now) {
+				sched, err := scheduleOf(r)
+				if err != nil {
+					return err
+				}
+				next = sched.after(now)
+			}
 		}
-		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
+		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `
-			update recurring_expenses set paused = $2, next_at = $3, updated_at = now(), version = version + 1
-			where id = $1`, r.Id, req.Body.Paused, next); err != nil {
+			update recurring_expenses set paused_at = case when $2 then $4::timestamptz end, next_at = $3,
+				updated_at = now(), version = version + 1
+			where id = $1`, r.Id, req.Body.Paused, next, now); err != nil {
 			return err
 		}
 		if err := logActivity(ctx, tx, g.id, who, action, &r.Id, r.payload()); err != nil {
@@ -722,6 +751,9 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 	})
 	if err != nil {
 		return nil, err
+	}
+	for _, e := range added {
+		s.notifyExpense(g, who, "added", e)
 	}
 	return PauseRecurringExpense200JSONResponse(*out), nil
 }

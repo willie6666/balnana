@@ -4435,6 +4435,24 @@ abstract class AppLocalizations {
   /// **'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.'**
   String get repeatHelp;
 
+  /// Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the receipt?'**
+  String get repeatDropReceiptTitle;
+
+  /// Body of the dialog shown when the user makes an expense repeat after picking a receipt photo for it.
+  ///
+  /// In en, this message translates to:
+  /// **'A repeating expense can\'t keep a receipt. You can add one to each expense it adds instead.'**
+  String get repeatDropReceiptBody;
+
+  /// Button that removes the picked receipt and makes the expense repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatDropReceiptAction;
+
   /// Title of the page listing a group's recurring expenses, and of its entry in group settings.
   ///
   /// In en, this message translates to:

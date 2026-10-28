@@ -46,19 +46,40 @@ const (
 // all far from int64 overflow.
 const maxGroupTotal = 1000 * domain.MaxMinor
 
-// checkGroupTotal refuses add more to the group's live entries when they
-// would pass maxGroupTotal. except leaves out an entry being replaced.
-func checkGroupTotal(ctx context.Context, q querier, groupID string, add int64, except *string) error {
+// groupTotal is what the group's live entries add up to. except leaves out
+// an entry being replaced.
+func groupTotal(ctx context.Context, q querier, groupID string, except *string) (int64, error) {
 	var total int64
 	err := q.QueryRow(ctx, `
 		select coalesce(sum(amount), 0)::bigint from expenses
 		where group_id = $1 and deleted_at is null and ($2::uuid is null or id <> $2::uuid)`,
 		groupID, except).Scan(&total)
+	return total, err
+}
+
+// checkGroupTotal refuses add more to the group's live entries when they
+// would pass maxGroupTotal. except leaves out an entry being replaced.
+func checkGroupTotal(ctx context.Context, q querier, groupID string, add int64, except *string) error {
+	total, err := groupTotal(ctx, q, groupID, except)
 	if err != nil {
 		return err
 	}
+	return fitsGroupTotal(total, add)
+}
+
+// fitsGroupTotal refuses adding add to a group whose entries add up to total
+// when that would pass maxGroupTotal.
+func fitsGroupTotal(total, add int64) error {
 	if total > maxGroupTotal-add {
 		return domain.ErrAmountTooLarge
+	}
+	return nil
+}
+
+// checkExpenseDate refuses a date outside the years an expense may have.
+func checkExpenseDate(t time.Time) error {
+	if y := t.Year(); t.IsZero() || y < minExpenseYear || y > maxExpenseYear {
+		return badRequest("invalid_date")
 	}
 	return nil
 }
@@ -98,8 +119,8 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		}
 		d.location = loc
 	}
-	if y := in.OccurredAt.Year(); in.OccurredAt.IsZero() || y < minExpenseYear || y > maxExpenseYear {
-		return nil, badRequest("invalid_date")
+	if err := checkExpenseDate(in.OccurredAt); err != nil {
+		return nil, err
 	}
 
 	if in.CategoryId != nil && *in.CategoryId != "" {
@@ -206,9 +227,18 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 	return d, nil
 }
 
-func insertParts(ctx context.Context, tx pgx.Tx, expenseID string, d *expenseData) error {
+// partTables names where the payers and splits of one kind of row are kept.
+type partTables struct{ payers, splits, key string }
+
+var (
+	expenseParts   = partTables{"expense_payers", "expense_splits", "expense_id"}
+	recurringParts = partTables{"recurring_expense_payers", "recurring_expense_splits", "recurring_id"}
+)
+
+func (t partTables) insert(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
 	for m, v := range d.payers {
-		if _, err := tx.Exec(ctx, `insert into expense_payers (expense_id, member_id, amount) values ($1, $2, $3)`, expenseID, m, v); err != nil {
+		if _, err := tx.Exec(ctx, `insert into `+t.payers+` (`+t.key+`, member_id, amount) values ($1, $2, $3)`,
+			id, m, v); err != nil {
 			return err
 		}
 	}
@@ -218,12 +248,63 @@ func insertParts(ctx context.Context, tx pgx.Tx, expenseID string, d *expenseDat
 			share = &s
 		}
 		if _, err := tx.Exec(ctx, `
-			insert into expense_splits (expense_id, member_id, amount, share)
-			values ($1, $2, $3, $4::text::numeric)`, expenseID, m, v, share); err != nil {
+			insert into `+t.splits+` (`+t.key+`, member_id, amount, share)
+			values ($1, $2, $3, $4::text::numeric)`, id, m, v, share); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// replace swaps the payers and splits of id for d's.
+func (t partTables) replace(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
+	for _, table := range []string{t.payers, t.splits} {
+		if _, err := tx.Exec(ctx, `delete from `+table+` where `+t.key+` = $1`, id); err != nil {
+			return err
+		}
+	}
+	return t.insert(ctx, tx, id, d)
+}
+
+// load reads the payers and splits of the rows ids, in member order, and
+// hands each to its row.
+func (t partTables) load(ctx context.Context, q querier, digits int, ids []string,
+	payer func(id string, p Payer), split func(id string, p SplitPart)) error {
+	rows, err := q.Query(ctx, `
+		select p.`+t.key+`::text, p.member_id::text, p.amount
+		from `+t.payers+` p join members m on m.id = p.member_id
+		where p.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
+	if err != nil {
+		return err
+	}
+	var id, mid string
+	var amount int64
+	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount}, func() error {
+		payer(id, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)})
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	rows, err = q.Query(ctx, `
+		select s.`+t.key+`::text, s.member_id::text, s.amount, s.share::text
+		from `+t.splits+` s join members m on m.id = s.member_id
+		where s.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
+	if err != nil {
+		return err
+	}
+	var share *string
+	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &share}, func() error {
+		part := SplitPart{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}
+		if share != nil {
+			v := trimShare(*share)
+			part.Share = &v
+		}
+		split(id, part)
+		return nil
+	})
+	return err
 }
 
 func (d *expenseData) payload(digits int) map[string]any {
@@ -268,6 +349,19 @@ func locationColumns(l *Location) (name *string, lat, lng *float64) {
 	return l.Name, lat, lng
 }
 
+// locationOf joins the location_name, latitude and longitude columns back
+// into a location.
+func locationOf(name *string, lat, lng *float64) *Location {
+	if name == nil && lat == nil {
+		return nil
+	}
+	l := &Location{Name: name}
+	if lat != nil && lng != nil {
+		l.Point = &GeoPoint{Latitude: *lat, Longitude: *lng}
+	}
+	return l
+}
+
 // insertExpense stores a validated expense and logs it.
 func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData, payload map[string]any) (string, error) {
 	id, err := storeExpense(ctx, tx, g, who, d)
@@ -290,7 +384,7 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 	if err != nil {
 		return "", err
 	}
-	return id, insertParts(ctx, tx, id, d)
+	return id, expenseParts.insert(ctx, tx, id, d)
 }
 
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
@@ -313,12 +407,7 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
 			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt,
 			&place, &lat, &lng, &e.RecurringId)
-		if place != nil || lat != nil {
-			e.Location = &Location{Name: place}
-			if lat != nil && lng != nil {
-				e.Location.Point = &GeoPoint{Latitude: *lat, Longitude: *lng}
-			}
-		}
+		e.Location = locationOf(place, lat, lng)
 		e.Kind = ExpenseKind(kind)
 		e.SplitMethod = SplitMethod(method)
 		e.Amount = domain.FormatAmount(amount, digits)
@@ -336,43 +425,9 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		index[list[i].Id] = &list[i]
 		ids[i] = list[i].Id
 	}
-
-	rows, err = q.Query(ctx, `
-		select p.expense_id::text, p.member_id::text, p.amount
-		from expense_payers p join members m on m.id = p.member_id
-		where p.expense_id = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return nil, err
-	}
-	var eid, mid string
-	var amount int64
-	_, err = pgx.ForEachRow(rows, []any{&eid, &mid, &amount}, func() error {
-		e := index[eid]
-		e.Payers = append(e.Payers, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err = q.Query(ctx, `
-		select s.expense_id::text, s.member_id::text, s.amount, s.share::text
-		from expense_splits s join members m on m.id = s.member_id
-		where s.expense_id = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return nil, err
-	}
-	var share *string
-	_, err = pgx.ForEachRow(rows, []any{&eid, &mid, &amount, &share}, func() error {
-		e := index[eid]
-		part := SplitPart{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}
-		if share != nil {
-			v := trimShare(*share)
-			part.Share = &v
-		}
-		e.Splits = append(e.Splits, part)
-		return nil
-	})
+	err = expenseParts.load(ctx, q, digits, ids,
+		func(id string, p Payer) { index[id].Payers = append(index[id].Payers, p) },
+		func(id string, p SplitPart) { index[id].Splits = append(index[id].Splits, p) })
 	return list, err
 }
 
@@ -650,13 +705,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `delete from expense_payers where expense_id = $1`, req.ExpenseId); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `delete from expense_splits where expense_id = $1`, req.ExpenseId); err != nil {
-			return err
-		}
-		if err := insertParts(ctx, tx, req.ExpenseId, d); err != nil {
+		if err := expenseParts.replace(ctx, tx, req.ExpenseId, d); err != nil {
 			return err
 		}
 		if err := logActivity(ctx, tx, g.id, who, "expense.updated", &req.ExpenseId, d.payload(g.digits)); err != nil {

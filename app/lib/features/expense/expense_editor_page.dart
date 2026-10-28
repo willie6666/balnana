@@ -537,6 +537,30 @@ class _EditorState extends ConsumerState<_Editor> {
     _ => null,
   };
 
+  /// Repeats every [unit]. A picked receipt belongs to one expense, so it is
+  /// dropped, once the user agrees.
+  Future<void> _repeat(RepeatUnit unit) async {
+    if (_receipt != null) {
+      final l10n = context.l10n;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.repeatDropReceiptTitle),
+          content: Text(l10n.repeatDropReceiptBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.repeatDropReceiptAction)),
+          ],
+        ),
+      );
+      if (!(ok ?? false) || !mounted) return;
+    }
+    setState(() {
+      _unit = unit;
+      _receipt = null;
+    });
+  }
+
   Future<void> _pickEnd() async {
     final start = DateUtils.dateOnly(_date);
     final end = _endsOn;
@@ -1075,7 +1099,7 @@ class _RepeatField extends StatelessWidget {
                 label: Text(label),
                 showCheckmark: false,
                 selected: unit == u,
-                onSelected: (_) => s._update(() => s._unit = u),
+                onSelected: (_) => s._repeat(u),
               ),
           ],
         ),

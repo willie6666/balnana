@@ -794,7 +794,7 @@ type RecurringExpenseInput struct {
 	// StartsAt The first occurrence.
 	StartsAt time.Time `json:"startsAt"`
 
-	// TimeZone The IANA time zone whose calendar the schedule follows, such as `Europe/Berlin`; UTC when left out. 400 `invalid_time_zone` for a name the server does not know.
+	// TimeZone The IANA time zone whose calendar the schedule follows, such as `Europe/Berlin`, or a fixed offset such as `UTC+05:30` for a device that knows only its offset; UTC when left out. 400 `invalid_time_zone` for a name the server does not know.
 	TimeZone *string `json:"timeZone,omitempty"`
 	Title    string  `json:"title"`
 

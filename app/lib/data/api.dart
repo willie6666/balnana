@@ -84,7 +84,8 @@ class RecurringDraft {
   /// The last day an occurrence may fall on.
   final DateTime? endsOn;
 
-  /// The IANA time zone whose calendar the schedule follows; UTC when null.
+  /// The time zone whose calendar the schedule follows: an IANA name, or a
+  /// fixed offset such as "UTC+05:30"; this device's when null.
   final String? timeZone;
 
   Map<String, Object?> toJson(int digits, {int? version}) {
@@ -590,23 +591,30 @@ class GroupApi {
         ),
       );
 
-  /// Sends [draft] in this device's time zone when it names none, or in UTC
-  /// when the server does not know this device's.
+  /// Sends [draft] in this device's time zone when it names none: by its
+  /// IANA name, or as the fixed offset at the start when the device does not
+  /// say or the server does not know the name, so the schedule keeps its
+  /// local day and time.
   Future<T> _inZone<T>(
     RecurringDraft draft,
     Future<T> Function(Map<String, Object?> Function(int digits, {int? version}) json) send,
   ) async {
-    final zone = draft.timeZone == null ? await deviceTimeZone() : null;
-    if (zone == null) return send(draft.toJson);
+    if (draft.timeZone != null) return send(draft.toJson);
+    Map<String, Object?> Function(int, {int? version}) inZone(String zone) =>
+        (digits, {version}) => {...draft.toJson(digits, version: version), 'timeZone': zone};
+    final offset = fixedZone(draft.expense.occurredAt.toLocal().timeZoneOffset);
+    final name = await deviceTimeZone();
+    if (name == null) return send(inZone(offset));
     try {
-      return await send((digits, {version}) => {...draft.toJson(digits, version: version), 'timeZone': zone});
+      return await send(inZone(name));
     } on ApiException catch (e) {
       if (e.code != 'invalid_time_zone') rethrow;
-      return send(draft.toJson);
+      return send(inZone(offset));
     }
   }
 
-  /// Resuming skips the occurrences that fell while it was paused.
+  /// Resuming adds what came due before it was paused and skips what came
+  /// due while it was.
   Future<RecurringExpense> pauseRecurring(String id, {required bool paused, required int digits}) => _send(
     () => _dio.patch<Object?>('$_base/recurring/$id', data: {'paused': paused}, options: _as),
     (data) => RecurringExpense.fromJson(data, digits),
@@ -742,6 +750,15 @@ class AdminApi {
     () => _dio.delete<Object?>('/admin/users/${Uri.encodeComponent(id)}', options: _as(token)),
     (_) {},
   );
+}
+
+/// A fixed time zone the server knows by its offset, such as "UTC+05:30".
+@visibleForTesting
+String fixedZone(Duration offset) {
+  if (offset == Duration.zero) return 'UTC';
+  final minutes = offset.inMinutes.abs();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return 'UTC${offset.isNegative ? '-' : '+'}${two(minutes ~/ 60)}:${two(minutes % 60)}';
 }
 
 /// This device's IANA time zone, such as "Europe/Berlin", or null when the

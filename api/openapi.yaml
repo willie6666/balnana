@@ -1334,8 +1334,11 @@ paths:
       operationId: updateRecurringExpense
       description: >-
         Changes what later occurrences add; expenses already added stay as
-        they are. The next occurrence is the first of the new schedule after
-        the latest one added. `version` must be the version that was read;
+        they are. The new schedule takes over at its occurrence nearest to
+        where the old one would have gone next, so moving the day neither
+        adds a period twice nor leaves one out; one that has added nothing
+        yet starts over. Occurrences skipped while paused stay skipped.
+        `version` must be the version that was read;
         otherwise the answer is 409 `recurring_version_conflict`.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
@@ -1358,9 +1361,11 @@ paths:
       operationId: pauseRecurringExpense
       summary: Pause or resume
       description: >-
-        Resuming skips the occurrences missed while paused. The server pauses
-        a recurring expense itself when an occurrence cannot be added, such
-        as when someone in it has left the group.
+        Resuming adds the occurrences that came due before it was paused,
+        such as one that could not be added, and skips those that came due
+        while it was paused. The server pauses a recurring expense itself
+        when an occurrence cannot be added, such as when someone in it has
+        left the group. 400 when what it would add no longer works.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -2101,8 +2106,9 @@ components:
           maxLength: 64
           description: >-
             The IANA time zone whose calendar the schedule follows, such as
-            `Europe/Berlin`; UTC when left out. 400 `invalid_time_zone` for a
-            name the server does not know.
+            `Europe/Berlin`, or a fixed offset such as `UTC+05:30` for a
+            device that knows only its offset; UTC when left out. 400
+            `invalid_time_zone` for a name the server does not know.
         version:
           type: integer
           description: Required when updating.

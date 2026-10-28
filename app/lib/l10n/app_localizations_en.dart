@@ -2528,6 +2528,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.';
 
   @override
+  String get repeatDropReceiptTitle => 'Remove the receipt?';
+
+  @override
+  String get repeatDropReceiptBody =>
+      'A repeating expense can\'t keep a receipt. You can add one to each expense it adds instead.';
+
+  @override
+  String get repeatDropReceiptAction => 'Repeat';
+
+  @override
   String get recurringTitle => 'Recurring expenses';
 
   @override
