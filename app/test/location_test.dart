@@ -24,18 +24,20 @@ void main() {
     expect(ExpenseLocation.fromJson(null), isNull);
   });
 
-  test('map tiles are only taken over http(s)', () {
-    ServerInfo info(Object? tiles) =>
-        ServerInfo.fromJson({
-          'name': 'balnana',
-          'version': 'test',
-          'authMode': 'link',
-          'publicUrl': 'https://x.test',
-          'mapTiles': tiles,
-        });
-    expect(info('https://tile.example/{z}/{x}/{y}.png').mapTiles, 'https://tile.example/{z}/{x}/{y}.png');
-    expect(info('javascript:alert(1)').mapTiles, isNull);
-    expect(info(null).mapTiles, isNull);
+  test('map styles and tiles are only taken over http(s)', () {
+    ServerInfo info({Object? style, Object? tiles}) => ServerInfo.fromJson({
+      'name': 'balnana',
+      'version': 'test',
+      'authMode': 'link',
+      'publicUrl': 'https://x.test',
+      'mapStyle': style,
+      'mapTiles': tiles,
+    });
+    expect(info(tiles: 'https://tile.example/{z}/{x}/{y}.png').mapTiles, 'https://tile.example/{z}/{x}/{y}.png');
+    expect(info(tiles: 'javascript:alert(1)').mapTiles, isNull);
+    expect(info(style: 'https://tiles.openfreemap.org/styles/liberty').mapStyle, isNotNull);
+    expect(info(style: 'javascript:alert(1)').maps, isFalse);
+    expect(info().maps, isFalse);
   });
 
   testWidgets('the device position is read only when asked for', (tester) async {

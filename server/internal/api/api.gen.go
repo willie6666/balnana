@@ -764,10 +764,13 @@ type ServerInfo struct {
 	// LinkGroups Groups may be opened by link alone. Always true in link mode.
 	LinkGroups bool `json:"linkGroups"`
 
-	// MapAttribution Credit the tiles' provider asks to be shown on the map.
+	// MapAttribution Credit the map's provider asks to be shown on the map. Empty with a style: show the credits the style names.
 	MapAttribution *string `json:"mapAttribution,omitempty"`
 
-	// MapTiles Map tile URL template with `{z}`, `{x}` and `{y}` (BALNANA_MAP_TILES). Absent when maps are off; the app then still keeps names and points, without showing a map.
+	// MapStyle MapLibre style URL to draw vector maps from (BALNANA_MAP_STYLE), when the map source is a style. At most one of `mapStyle` and `mapTiles` is set; with neither, maps are off and the app still keeps names and points, without showing a map.
+	MapStyle *string `json:"mapStyle,omitempty"`
+
+	// MapTiles Raster map tile URL template with `{z}`, `{x}` and `{y}` (BALNANA_MAP_TILES), when the map source is tiles.
 	MapTiles *string `json:"mapTiles,omitempty"`
 
 	// Name Always "balnana"; lets the app recognise a Balnana server.

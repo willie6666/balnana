@@ -4,6 +4,7 @@
 package config
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -86,9 +87,28 @@ func OIDCKey(id, field string) string {
 // UpstreamSourceURL is the official Balnana repository, the default source link.
 const UpstreamSourceURL = "https://github.com/willie6666/balnana"
 
+// DefaultMapStyle is OpenFreeMap's Liberty style: free vector maps from
+// OpenStreetMap data, with no key needed.
+const DefaultMapStyle = "https://tiles.openfreemap.org/styles/liberty"
+
 // DefaultMapTiles is OpenStreetMap's own tile server, fine for light use under
 // its tile usage policy.
 const DefaultMapTiles = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+// DefaultTilesAttribution credits OpenStreetMap for raster tiles when no
+// other credit is set. A vector style carries its own.
+const DefaultTilesAttribution = "© OpenStreetMap contributors"
+
+// MapSource is where the app's maps come from.
+type MapSource string
+
+const (
+	// MapStyle draws vector tiles from a MapLibre style, like OpenFreeMap's.
+	MapStyle MapSource = "style"
+	// MapTiles shows raster tiles from a {z}/{x}/{y} template.
+	MapTiles MapSource = "tiles"
+	MapOff   MapSource = "off"
+)
 
 type Config struct {
 	Listen      string
@@ -102,10 +122,14 @@ type Config struct {
 	// PrivacyURL is the server's own privacy policy; nil shows the app's
 	// built-in one.
 	PrivacyURL *url.URL
-	// MapTiles is the template ({z}/{x}/{y}) the app loads map tiles from;
-	// empty turns maps off.
+	// MapStyle is the MapLibre style URL the app draws maps from, when the
+	// map source is a style.
+	MapStyle string
+	// MapTiles is the template ({z}/{x}/{y}) the app loads raster map tiles
+	// from, when the map source is tiles. Both empty turn maps off.
 	MapTiles string
-	// MapAttribution credits the map data, shown on every map.
+	// MapAttribution credits the map data, shown on every map. Empty with a
+	// style shows the credits the style names.
 	MapAttribution string
 
 	// WebDir serves the Flutter web build from disk instead of the embedded copy.
@@ -159,8 +183,10 @@ var Managed = []Setting{
 	{Key: "BALNANA_PUBLIC_URL", Default: "http://localhost:8080"},
 	{Key: "BALNANA_SOURCE_URL", Default: UpstreamSourceURL},
 	{Key: "BALNANA_PRIVACY_URL"},
+	{Key: "BALNANA_MAP_SOURCE", Default: string(MapStyle)},
+	{Key: "BALNANA_MAP_STYLE", Default: DefaultMapStyle},
 	{Key: "BALNANA_MAP_TILES", Default: DefaultMapTiles},
-	{Key: "BALNANA_MAP_ATTRIBUTION", Default: "© OpenStreetMap contributors"},
+	{Key: "BALNANA_MAP_ATTRIBUTION"},
 	{Key: "BALNANA_AUTH_MODE", Default: string(AuthModeLink)},
 	{Key: "BALNANA_AUTH_PASSWORD", Default: "true"},
 	{Key: "BALNANA_AUTH_REQUIRE_EMAIL", Default: "true"},
@@ -374,16 +400,28 @@ func load(getenv func(string) string) (*Config, error) {
 		}
 	}
 
-	if tiles := e.managed("BALNANA_MAP_TILES"); tiles != "" && !strings.EqualFold(tiles, "off") {
+	switch source := MapSource(e.managed("BALNANA_MAP_SOURCE")); source {
+	case MapStyle:
+		style := e.managed("BALNANA_MAP_STYLE")
+		if u, err := url.Parse(style); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			e.fail("BALNANA_MAP_STYLE", "BALNANA_MAP_STYLE must be an absolute http(s) URL, got %q", style)
+		} else {
+			c.MapStyle = style
+			c.MapAttribution = e.managed("BALNANA_MAP_ATTRIBUTION")
+		}
+	case MapTiles:
+		tiles := e.managed("BALNANA_MAP_TILES")
 		u, err := url.Parse(strings.NewReplacer("{z}", "0", "{x}", "0", "{y}", "0").Replace(tiles))
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
 			!strings.Contains(tiles, "{z}") || !strings.Contains(tiles, "{x}") || !strings.Contains(tiles, "{y}") {
-			e.fail("BALNANA_MAP_TILES",
-				"BALNANA_MAP_TILES must be an http(s) URL with {z}, {x} and {y}, or off, got %q", tiles)
+			e.fail("BALNANA_MAP_TILES", "BALNANA_MAP_TILES must be an http(s) URL with {z}, {x} and {y}, got %q", tiles)
 		} else {
 			c.MapTiles = tiles
-			c.MapAttribution = e.managed("BALNANA_MAP_ATTRIBUTION")
+			c.MapAttribution = cmp.Or(e.managed("BALNANA_MAP_ATTRIBUTION"), DefaultTilesAttribution)
 		}
+	case MapOff:
+	default:
+		e.fail("BALNANA_MAP_SOURCE", "BALNANA_MAP_SOURCE must be style, tiles or off, got %q", source)
 	}
 
 	switch lvl := strings.ToLower(e.str("BALNANA_LOG_LEVEL", "info")); lvl {

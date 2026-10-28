@@ -2795,6 +2795,10 @@
   "@adminSectionAccess": {
     "description": "Label or control text for admin section access in the server administrator interface."
   },
+  "adminSectionMaps": "Maps",
+  "@adminSectionMaps": {
+    "description": "Heading of the section of map settings in the server administrator interface."
+  },
   "adminSectionAccounts": "Accounts",
   "@adminSectionAccounts": {
     "description": "Label or control text for admin section accounts in the server administrator interface."
@@ -3164,7 +3168,7 @@
   "@privacySharedTitle": {
     "description": "Heading for privacy shared title in the built-in privacy notice."
   },
-  "privacySharedBody": "Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google's Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification's content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.",
+  "privacySharedBody": "Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google's Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification's content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.",
   "@privacySharedBody": {
     "description": "Explanatory text for privacy shared body in the built-in privacy notice."
   },
@@ -3341,7 +3345,43 @@
   "@adminMapTiles": {
     "description": "Label or control text for admin map tiles in the server administrator interface."
   },
-  "adminMapTilesHelp": "Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap's own servers are only for light use; a busy server should use a tile provider.",
+  "adminMapSource": "Map source",
+  "@adminMapSource": {
+    "description": "Label of the choice of where maps come from in the server administrator interface."
+  },
+  "adminMapSourceStyle": "Vector style",
+  "@adminMapSourceStyle": {
+    "description": "Choice: maps drawn from a MapLibre vector style, such as OpenFreeMap's."
+  },
+  "adminMapSourceStyleHelp": "Maps drawn from a MapLibre style, such as OpenFreeMap's, which is free and needs no key.",
+  "@adminMapSourceStyleHelp": {
+    "description": "Help for the vector style map source in the server administrator interface."
+  },
+  "adminMapSourceTiles": "Raster tiles",
+  "@adminMapSourceTiles": {
+    "description": "Choice: maps shown from raster tile images."
+  },
+  "adminMapSourceTilesHelp": "Maps shown from tile pictures, such as OpenStreetMap's.",
+  "@adminMapSourceTilesHelp": {
+    "description": "Help for the raster tiles map source in the server administrator interface."
+  },
+  "adminMapSourceOff": "Off",
+  "@adminMapSourceOff": {
+    "description": "Choice: no maps."
+  },
+  "adminMapSourceOffHelp": "No maps. Expenses still keep place names and points.",
+  "@adminMapSourceOffHelp": {
+    "description": "Help for turning maps off in the server administrator interface."
+  },
+  "adminMapStyle": "Style URL",
+  "@adminMapStyle": {
+    "description": "Label of the MapLibre style URL setting in the server administrator interface."
+  },
+  "adminMapStyleHelp": "The address of a MapLibre style.json, like OpenFreeMap's Liberty (the default), Bright or Positron.",
+  "@adminMapStyleHelp": {
+    "description": "Help for the MapLibre style URL setting in the server administrator interface."
+  },
+  "adminMapTilesHelp": "A raster tile URL template with z, x and y in braces, like the default one. OpenStreetMap's own servers are only for light use; a busy server should use a tile provider.",
   "@adminMapTilesHelp": {
     "description": "Help text for admin map tiles help in the server administrator interface."
   },
@@ -3349,11 +3389,11 @@
   "@adminMapAttribution": {
     "description": "Label or control text for admin map attribution in the server administrator interface."
   },
-  "adminMapAttributionHelp": "Shown on every map, as the tile provider asks.",
+  "adminMapAttributionHelp": "Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.",
   "@adminMapAttributionHelp": {
     "description": "Help text for admin map attribution help in the server administrator interface."
   },
-  "adminInvalidMapTiles": "Enter an http(s) URL template with z, x and y in braces, or \"off\".",
+  "adminInvalidMapTiles": "Enter an http(s) URL template with z, x and y in braces.",
   "@adminInvalidMapTiles": {
     "description": "Label or control text for admin invalid map tiles in the server administrator interface."
   },

@@ -41,6 +41,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_map: ^8.3.2
+  flutter_map_vector_tiles: ^2.10.1
   flutter_riverpod: ^3.4.3
   flutter_timezone: ^5.1.1
   flutter_web_plugins:

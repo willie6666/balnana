@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_vector_tiles/flutter_map_vector_tiles.dart' as vt;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:material_ui/material_ui.dart';
@@ -16,6 +17,26 @@ import '../../ui/tokens.dart';
 
 /// Sent with every tile request, as tile servers ask apps to say who they are.
 const _userAgentPackage = 'me.devvillie.balnana';
+
+/// A map style, read once per style URL while the app runs.
+final _styleProvider = FutureProvider.family<vt.Style, String>((ref, uri) async {
+  final style = await vt.StyleReader(uri: uri).read();
+  if (!ref.mounted) {
+    style.dispose();
+  } else {
+    ref.onDispose(style.dispose);
+  }
+  return style;
+});
+
+/// Turns a light map dark: colours inverted, then hues turned back, as
+/// flutter_map's darkModeTileBuilder does for raster tiles.
+const _darkMap = ColorFilter.matrix([
+  0.574, -1.43, -0.144, 0, 255, //
+  -0.426, -0.43, -0.144, 0, 255, //
+  -0.426, -1.43, 0.856, 0, 255, //
+  0, 0, 0, 1, 0, //
+]);
 
 /// How close the map comes to a pin.
 const _pinZoom = 16.0;
@@ -58,7 +79,7 @@ Future<void> openInMaps(BuildContext context, GeoPoint point, String? name) asyn
   messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
 }
 
-/// A map from the tiles the server set, with a pin at [pin].
+/// A map from the style or tiles the server set, with a pin at [pin].
 class LocationMap extends ConsumerWidget {
   const LocationMap({
     super.key,
@@ -80,10 +101,15 @@ class LocationMap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(serverInfoProvider).value;
-    final tiles = info?.mapTiles;
     final scheme = Theme.of(context).colorScheme;
-    if (tiles == null) return ColoredBox(color: scheme.surfaceContainerHighest);
+    if (info == null || !info.maps) return ColoredBox(color: scheme.surfaceContainerHighest);
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final styleUrl = info.mapStyle;
+    // Drawn over the background until the style has loaded.
+    final style = styleUrl == null ? null : ref.watch(_styleProvider(styleUrl)).value;
+    final attribution = info.mapAttribution.isNotEmpty || style == null
+        ? info.mapAttribution
+        : style.attributions.map((a) => a.text).join(' · ');
     final pin = this.pin, onTap = this.onTap;
     return FlutterMap(
       mapController: controller,
@@ -99,11 +125,14 @@ class LocationMap extends ConsumerWidget {
         onTap: onTap == null ? null : (_, p) => onTap(_geoPoint(p)),
       ),
       children: [
-        TileLayer(
-          urlTemplate: tiles,
-          userAgentPackageName: _userAgentPackage,
-          tileBuilder: dark ? darkModeTileBuilder : null,
-        ),
+        if (style != null)
+          _VectorLayer(style: style, dark: dark)
+        else if (info.mapTiles case final tiles?)
+          TileLayer(
+            urlTemplate: tiles,
+            userAgentPackageName: _userAgentPackage,
+            tileBuilder: dark ? darkModeTileBuilder : null,
+          ),
         if (pin != null)
           MarkerLayer(
             markers: [
@@ -116,14 +145,58 @@ class LocationMap extends ConsumerWidget {
               ),
             ],
           ),
-        if (info!.mapAttribution.isNotEmpty)
+        if (attribution.isNotEmpty)
           SimpleAttributionWidget(
-            source: Text(info.mapAttribution, style: Theme.of(context).textTheme.labelSmall),
+            source: Text(attribution, style: Theme.of(context).textTheme.labelSmall),
             alignment: Alignment.bottomLeft,
             backgroundColor: scheme.surface.withValues(alpha: 0.8),
           ),
       ],
     );
+  }
+}
+
+class _VectorLayer extends StatefulWidget {
+  const _VectorLayer({required this.style, required this.dark});
+
+  final vt.Style style;
+  final bool dark;
+
+  @override
+  State<_VectorLayer> createState() => _VectorLayerState();
+}
+
+/// Starts the layer afresh when fonts load. On the web, fallback fonts for
+/// scripts like Chinese arrive after the first labels are drawn, and the
+/// layer keeps those labels with their missing glyphs until it is rebuilt.
+class _VectorLayerState extends State<_VectorLayer> {
+  var _fonts = 0;
+
+  void _fontsChanged() => setState(() => _fonts++);
+
+  @override
+  void initState() {
+    super.initState();
+    PaintingBinding.instance.systemFonts.addListener(_fontsChanged);
+  }
+
+  @override
+  void dispose() {
+    PaintingBinding.instance.systemFonts.removeListener(_fontsChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = widget.style;
+    final layer = vt.VectorTileLayer(
+      key: ValueKey(_fonts),
+      theme: style.theme,
+      tileProviders: style.providers,
+      rasterSources: style.rasterSources,
+      sprites: style.sprites,
+    );
+    return widget.dark ? ColorFiltered(colorFilter: _darkMap, child: layer) : layer;
   }
 }
 
@@ -173,7 +246,7 @@ class _LocationFieldState extends ConsumerState<LocationField> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    final maps = ref.watch(serverInfoProvider.select((i) => i.value?.mapTiles != null));
+    final maps = ref.watch(serverInfoProvider.select((i) => i.value?.maps ?? false));
     final point = widget.point;
 
     return Column(

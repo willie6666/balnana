@@ -104,6 +104,7 @@ class ServerInfo {
     required this.publicUrl,
     this.sourceUrl,
     this.privacyUrl,
+    this.mapStyle,
     this.mapTiles,
     this.mapAttribution = '',
     this.setupRequired = false,
@@ -147,10 +148,8 @@ class ServerInfo {
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
       privacyUrl: _webUrl(json['privacyUrl']),
-      mapTiles: switch (json['mapTiles']) {
-        final String t when t.startsWith('https://') || t.startsWith('http://') => t,
-        _ => null,
-      },
+      mapStyle: _httpUrl(json['mapStyle']),
+      mapTiles: _httpUrl(json['mapTiles']),
       mapAttribution: switch (json['mapAttribution']) {
         final String a => a,
         _ => '',
@@ -202,11 +201,19 @@ class ServerInfo {
   /// The operator's privacy policy, if they set one; else the app shows its own.
   final Uri? privacyUrl;
 
-  /// Where maps load their tiles from, a URL template with {z}, {x} and {y};
-  /// null when the server turned maps off.
+  /// The MapLibre style maps are drawn from, like OpenFreeMap's; null when
+  /// the server shows raster tiles or turned maps off.
+  final String? mapStyle;
+
+  /// Where maps load raster tiles from, a URL template with {z}, {x} and
+  /// {y}; null when the server draws a style or turned maps off.
   final String? mapTiles;
 
-  /// The credit the tile provider asks every map to show.
+  /// Whether the server shows maps at all.
+  bool get maps => mapStyle != null || mapTiles != null;
+
+  /// The credit the map provider asks every map to show. Empty with a style:
+  /// the style names its own.
   final String mapAttribution;
 
   /// No administrator password is set yet: the server is new, and the app
@@ -226,6 +233,13 @@ class OAuthProvider {
   /// What the button says: "Google", or the operator's name for their provider.
   final String name;
 }
+
+/// [value] when it is an http(s) URL. It may be a template, which [Uri]
+/// does not take.
+String? _httpUrl(Object? value) => switch (value) {
+  final String u when u.startsWith('https://') || u.startsWith('http://') => u,
+  _ => null,
+};
 
 Uri? _webUrl(Object? value) {
   if (value is! String) return null;

@@ -45,26 +45,47 @@ func TestSourceURL(t *testing.T) {
 	}
 }
 
-func TestMapTiles(t *testing.T) {
-	c, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x"}))
+func TestMaps(t *testing.T) {
+	maps := func(env map[string]string) (*Config, error) {
+		env["BALNANA_DATABASE_URL"] = "postgres:///x"
+		return load(envMap(env))
+	}
+	c, err := maps(map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.MapTiles != DefaultMapTiles || c.MapAttribution == "" {
-		t.Fatalf("default maps: %q %q", c.MapTiles, c.MapAttribution)
+	if c.MapStyle != DefaultMapStyle || c.MapTiles != "" || c.MapAttribution != "" {
+		t.Fatalf("default maps: %q %q %q", c.MapStyle, c.MapTiles, c.MapAttribution)
 	}
-	c, err = load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_MAP_TILES": "off"}))
+	c, err = maps(map[string]string{"BALNANA_MAP_SOURCE": "tiles"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.MapTiles != "" {
-		t.Fatalf("maps should be off: %q", c.MapTiles)
+	if c.MapStyle != "" || c.MapTiles != DefaultMapTiles || c.MapAttribution != DefaultTilesAttribution {
+		t.Fatalf("raster maps: %q %q %q", c.MapStyle, c.MapTiles, c.MapAttribution)
 	}
-	for _, bad := range []string{"https://tiles.example.com/{z}/{x}.png", "tiles.example.com/{z}/{x}/{y}.png",
-		"ftp://tiles.example.com/{z}/{x}/{y}.png"} {
-		_, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_MAP_TILES": bad}))
-		if err == nil || !strings.Contains(err.Error(), "BALNANA_MAP_TILES") {
-			t.Errorf("%q: want error, got %v", bad, err)
+	c, err = maps(map[string]string{"BALNANA_MAP_SOURCE": "off", "BALNANA_MAP_STYLE": "not a url"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.MapStyle != "" || c.MapTiles != "" {
+		t.Fatalf("maps should be off: %q %q", c.MapStyle, c.MapTiles)
+	}
+	for _, bad := range []struct {
+		env  map[string]string
+		want string
+	}{
+		{map[string]string{"BALNANA_MAP_SOURCE": "google"}, "BALNANA_MAP_SOURCE"},
+		{map[string]string{"BALNANA_MAP_STYLE": "tiles.openfreemap.org/styles/liberty"}, "BALNANA_MAP_STYLE"},
+		{map[string]string{"BALNANA_MAP_SOURCE": "tiles", "BALNANA_MAP_TILES": "https://tiles.example.com/{z}/{x}.png"},
+			"BALNANA_MAP_TILES"},
+		{map[string]string{"BALNANA_MAP_SOURCE": "tiles", "BALNANA_MAP_TILES": "tiles.example.com/{z}/{x}/{y}.png"},
+			"BALNANA_MAP_TILES"},
+		{map[string]string{"BALNANA_MAP_SOURCE": "tiles", "BALNANA_MAP_TILES": "ftp://tiles.example.com/{z}/{x}/{y}.png"},
+			"BALNANA_MAP_TILES"},
+	} {
+		if _, err := maps(bad.env); err == nil || !strings.Contains(err.Error(), bad.want) {
+			t.Errorf("%v: want error about %s, got %v", bad.env, bad.want, err)
 		}
 	}
 }

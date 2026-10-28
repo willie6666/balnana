@@ -27,7 +27,7 @@ const _toggles = {
 };
 
 /// Settings picked from a few values.
-const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP'};
+const _choices = {'BALNANA_AUTH_MODE', 'BALNANA_AUTH_SIGNUP', 'BALNANA_MAP_SOURCE'};
 
 /// The setting that turns each optional section on: the server uses the
 /// section when it is set. Its switch shows the rest of the section.
@@ -448,6 +448,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     // Only what the picked mode uses; hidden settings keep their values.
     final accounts = _current('BALNANA_AUTH_MODE', settings) == 'accounts';
     final passwords = _passwordForced || _current('BALNANA_AUTH_PASSWORD', settings).isTrue;
+    final mapSource = _current('BALNANA_MAP_SOURCE', settings);
     return [
       FormSection(l10n.adminSectionGeneral),
       _textField('BALNANA_PUBLIC_URL', keyboard: TextInputType.url),
@@ -455,10 +456,15 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       _textField('BALNANA_SOURCE_URL', keyboard: TextInputType.url),
       gap,
       _textField('BALNANA_PRIVACY_URL', keyboard: TextInputType.url),
-      gap,
-      _textField('BALNANA_MAP_TILES', keyboard: TextInputType.url),
-      gap,
-      _textField('BALNANA_MAP_ATTRIBUTION'),
+      FormSection(l10n.adminSectionMaps),
+      _choice('BALNANA_MAP_SOURCE', titled: false, {
+        'style': (l10n.adminMapSourceStyle, l10n.adminMapSourceStyleHelp),
+        'tiles': (l10n.adminMapSourceTiles, l10n.adminMapSourceTilesHelp),
+        'off': (l10n.adminMapSourceOff, l10n.adminMapSourceOffHelp),
+      }),
+      if (mapSource == 'style') ...[gap, _textField('BALNANA_MAP_STYLE', keyboard: TextInputType.url)],
+      if (mapSource == 'tiles') ...[gap, _textField('BALNANA_MAP_TILES', keyboard: TextInputType.url)],
+      if (mapSource != 'off') ...[gap, _textField('BALNANA_MAP_ATTRIBUTION')],
       FormSection(l10n.adminSectionAccess),
       _choice('BALNANA_AUTH_MODE', titled: false, {
         'link': (l10n.adminAuthModeLink, l10n.adminAuthModeLinkHelp),
@@ -839,6 +845,8 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrl,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrl,
+  'BALNANA_MAP_SOURCE' => l10n.adminMapSource,
+  'BALNANA_MAP_STYLE' => l10n.adminMapStyle,
   'BALNANA_MAP_TILES' => l10n.adminMapTiles,
   'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttribution,
   'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
@@ -865,6 +873,7 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrlHelp,
+  'BALNANA_MAP_STYLE' => l10n.adminMapStyleHelp,
   'BALNANA_MAP_TILES' => l10n.adminMapTilesHelp,
   'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttributionHelp,
   'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
@@ -882,6 +891,7 @@ String _problem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' ||
   'BALNANA_SOURCE_URL' ||
   'BALNANA_PRIVACY_URL' ||
+  'BALNANA_MAP_STYLE' ||
   'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
   'BALNANA_SMTP_FROM' => l10n.adminInvalidFrom,
   'BALNANA_SMTP_PORT' => l10n.adminInvalidPort,

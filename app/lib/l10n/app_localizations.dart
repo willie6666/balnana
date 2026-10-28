@@ -3247,6 +3247,12 @@ abstract class AppLocalizations {
   /// **'Access'**
   String get adminSectionAccess;
 
+  /// Heading of the section of map settings in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Maps'**
+  String get adminSectionMaps;
+
   /// Label or control text for admin section accounts in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -3772,7 +3778,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy shared body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
+  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
   String get privacySharedBody;
 
   /// Heading for privacy device title in the built-in privacy notice.
@@ -4015,10 +4021,64 @@ abstract class AppLocalizations {
   /// **'Map tiles'**
   String get adminMapTiles;
 
+  /// Label of the choice of where maps come from in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Map source'**
+  String get adminMapSource;
+
+  /// Choice: maps drawn from a MapLibre vector style, such as OpenFreeMap's.
+  ///
+  /// In en, this message translates to:
+  /// **'Vector style'**
+  String get adminMapSourceStyle;
+
+  /// Help for the vector style map source in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Maps drawn from a MapLibre style, such as OpenFreeMap\'s, which is free and needs no key.'**
+  String get adminMapSourceStyleHelp;
+
+  /// Choice: maps shown from raster tile images.
+  ///
+  /// In en, this message translates to:
+  /// **'Raster tiles'**
+  String get adminMapSourceTiles;
+
+  /// Help for the raster tiles map source in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Maps shown from tile pictures, such as OpenStreetMap\'s.'**
+  String get adminMapSourceTilesHelp;
+
+  /// Choice: no maps.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get adminMapSourceOff;
+
+  /// Help for turning maps off in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'No maps. Expenses still keep place names and points.'**
+  String get adminMapSourceOffHelp;
+
+  /// Label of the MapLibre style URL setting in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Style URL'**
+  String get adminMapStyle;
+
+  /// Help for the MapLibre style URL setting in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The address of a MapLibre style.json, like OpenFreeMap\'s Liberty (the default), Bright or Positron.'**
+  String get adminMapStyleHelp;
+
   /// Help text for admin map tiles help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.'**
+  /// **'A raster tile URL template with z, x and y in braces, like the default one. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.'**
   String get adminMapTilesHelp;
 
   /// Label or control text for admin map attribution in the server administrator interface.
@@ -4030,13 +4090,13 @@ abstract class AppLocalizations {
   /// Help text for admin map attribution help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Shown on every map, as the tile provider asks.'**
+  /// **'Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.'**
   String get adminMapAttributionHelp;
 
   /// Label or control text for admin invalid map tiles in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Enter an http(s) URL template with z, x and y in braces, or \"off\".'**
+  /// **'Enter an http(s) URL template with z, x and y in braces.'**
   String get adminInvalidMapTiles;
 
   /// Label or control text for admin users in the server administrator interface.

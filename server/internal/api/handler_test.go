@@ -78,8 +78,8 @@ func TestServerInfoLinkMode(t *testing.T) {
 	if info.SourceUrl != "https://git.example.com/balnana" {
 		t.Fatalf("source url %q", info.SourceUrl)
 	}
-	if info.MapTiles == nil || !strings.Contains(*info.MapTiles, "{z}") || info.MapAttribution == nil {
-		t.Fatalf("map tiles: %+v", info)
+	if info.MapStyle == nil || *info.MapStyle != config.DefaultMapStyle || info.MapTiles != nil || info.MapAttribution == nil {
+		t.Fatalf("maps: %+v", info)
 	}
 	if !info.SetupRequired || info.SetupCode {
 		t.Fatalf("a new server needs setting up, without a code: %+v", info)

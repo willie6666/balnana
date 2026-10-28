@@ -2422,16 +2422,25 @@ components:
           description: >-
             The server's own privacy policy (BALNANA_PRIVACY_URL). Without it
             the app shows its built-in one.
+        mapStyle:
+          type: string
+          description: >-
+            MapLibre style URL to draw vector maps from (BALNANA_MAP_STYLE),
+            when the map source is a style. At most one of `mapStyle` and
+            `mapTiles` is set; with neither, maps are off and the app still
+            keeps names and points, without showing a map.
+          example: https://tiles.openfreemap.org/styles/liberty
         mapTiles:
           type: string
           description: >-
-            Map tile URL template with `{z}`, `{x}` and `{y}`
-            (BALNANA_MAP_TILES). Absent when maps are off; the app then still
-            keeps names and points, without showing a map.
+            Raster map tile URL template with `{z}`, `{x}` and `{y}`
+            (BALNANA_MAP_TILES), when the map source is tiles.
           example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
         mapAttribution:
           type: string
-          description: Credit the tiles' provider asks to be shown on the map.
+          description: >-
+            Credit the map's provider asks to be shown on the map. Empty with
+            a style: show the credits the style names.
           example: © OpenStreetMap contributors
     AdminSetupInput:
       type: object

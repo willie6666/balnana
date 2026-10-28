@@ -385,4 +385,75 @@ void main() {
       },
     });
   });
+
+  testWidgets('the map source shows only the setting it uses', (tester) async {
+    final seen = <RequestOptions>[];
+    final api = _api(
+      seen,
+      (r) => switch ((r.method, r.path)) {
+        ('POST', '/admin/login') => (200, {'token': 'admin-token', 'expiresAt': '2026-10-27T00:00:00Z'}),
+        ('GET', '/admin/settings') => (
+          200,
+          {
+            'settings': [
+              _setting('BALNANA_PUBLIC_URL', value: _server, locked: true),
+              _setting('BALNANA_MAP_SOURCE', def: 'style'),
+              _setting('BALNANA_MAP_STYLE', def: 'https://tiles.openfreemap.org/styles/liberty'),
+              _setting('BALNANA_MAP_TILES', def: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+              _setting('BALNANA_MAP_ATTRIBUTION'),
+              _setting('BALNANA_AUTH_MODE', def: 'link'),
+            ],
+          },
+        ),
+        ('PUT', '/admin/settings') => (
+          400,
+          {
+            'code': 'invalid_settings',
+            'params': {
+              'keys': ['BALNANA_MAP_STYLE'],
+            },
+          },
+        ),
+        _ => (404, {'code': 'not_found'}),
+      },
+    );
+    await _boot(
+      tester,
+      info: const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server),
+      api: api,
+    );
+    final router = tester.widget<MaterialApp>(find.byType(MaterialApp)).routerConfig! as GoRouter;
+    router.go('/admin');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'the admin password');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    Finder field(String label) => find.widgetWithText(TextField, label);
+    // OpenFreeMap's style by default.
+    expect(field('Style URL'), findsOneWidget);
+    expect(field('Map tiles'), findsNothing);
+    expect(field('Map credit'), findsOneWidget);
+
+    await tester.tap(find.text('Raster tiles'));
+    await tester.pumpAndSettle();
+    expect(field('Style URL'), findsNothing);
+    expect(field('Map tiles'), findsOneWidget);
+
+    await tester.tap(find.text('Off'));
+    await tester.pumpAndSettle();
+    expect(field('Map tiles'), findsNothing);
+    expect(field('Map credit'), findsNothing);
+
+    await tester.tap(find.text('Vector style'));
+    await tester.pumpAndSettle();
+    await tester.enterText(field('Style URL'), 'tiles.example.com/style.json');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(seen.lastWhere((r) => r.method == 'PUT').data, {
+      'values': {'BALNANA_MAP_STYLE': 'tiles.example.com/style.json'},
+    });
+    expect(find.text('Enter a full address starting with https:// or http://.'), findsOneWidget);
+  });
 }

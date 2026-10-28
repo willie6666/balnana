@@ -1803,6 +1803,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSectionAccess => 'Access';
 
   @override
+  String get adminSectionMaps => 'Maps';
+
+  @override
   String get adminSectionAccounts => 'Accounts';
 
   @override
@@ -2090,7 +2093,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenStreetMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.';
+      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.';
 
   @override
   String get privacyDeviceTitle => 'On this device';
@@ -2225,17 +2228,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminMapTiles => 'Map tiles';
 
   @override
+  String get adminMapSource => 'Map source';
+
+  @override
+  String get adminMapSourceStyle => 'Vector style';
+
+  @override
+  String get adminMapSourceStyleHelp =>
+      'Maps drawn from a MapLibre style, such as OpenFreeMap\'s, which is free and needs no key.';
+
+  @override
+  String get adminMapSourceTiles => 'Raster tiles';
+
+  @override
+  String get adminMapSourceTilesHelp => 'Maps shown from tile pictures, such as OpenStreetMap\'s.';
+
+  @override
+  String get adminMapSourceOff => 'Off';
+
+  @override
+  String get adminMapSourceOffHelp => 'No maps. Expenses still keep place names and points.';
+
+  @override
+  String get adminMapStyle => 'Style URL';
+
+  @override
+  String get adminMapStyleHelp =>
+      'The address of a MapLibre style.json, like OpenFreeMap\'s Liberty (the default), Bright or Positron.';
+
+  @override
   String get adminMapTilesHelp =>
-      'Where maps load their pictures from, as a tile URL template like the default one, or \"off\" to turn maps off. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.';
+      'A raster tile URL template with z, x and y in braces, like the default one. OpenStreetMap\'s own servers are only for light use; a busy server should use a tile provider.';
 
   @override
   String get adminMapAttribution => 'Map credit';
 
   @override
-  String get adminMapAttributionHelp => 'Shown on every map, as the tile provider asks.';
+  String get adminMapAttributionHelp =>
+      'Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.';
 
   @override
-  String get adminInvalidMapTiles => 'Enter an http(s) URL template with z, x and y in braces, or \"off\".';
+  String get adminInvalidMapTiles => 'Enter an http(s) URL template with z, x and y in braces.';
 
   @override
   String get adminUsers => 'Accounts';
