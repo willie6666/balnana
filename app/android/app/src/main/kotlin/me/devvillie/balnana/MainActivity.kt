@@ -18,7 +18,10 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-private const val LOCATION_REQUEST = 1
+// Plugins ask for permissions through this activity too, and their results
+// come back here as well: flutter_local_notifications asks for notifications
+// with request code 1. This one is the app's own.
+private const val LOCATION_REQUEST = 0xBA1
 private const val LOCATION_WAIT_MS = 15_000L
 private const val LAST_KNOWN_MAX_AGE_MS = 10 * 60_000L
 
@@ -72,8 +75,15 @@ class MainActivity : FlutterActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != LOCATION_REQUEST) return
-        if (grantResults.any { it == PackageManager.PERMISSION_GRANTED }) locate() else sendLocation(null, "denied")
+        // Only the answer to a question this activity asked, still waited for.
+        if (requestCode != LOCATION_REQUEST || locationResult == null) return
+        if (granted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+            granted(Manifest.permission.ACCESS_FINE_LOCATION)
+        ) {
+            locate()
+        } else {
+            sendLocation(null, "denied")
+        }
     }
 
     private fun granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
