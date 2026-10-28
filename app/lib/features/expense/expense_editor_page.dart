@@ -20,6 +20,7 @@ import '../../ui/widgets/amount_field.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
 import 'location.dart';
@@ -143,9 +144,16 @@ class _EditorState extends ConsumerState<_Editor> {
   bool _multiPay = false;
   final _paid = <String, TextEditingController>{};
 
+  /// In a large group, the payers listed while [_multiPay].
+  final _payersShown = <String>{};
+
   SplitMethod _method = SplitMethod.equal;
   final _included = <String>{};
   final _values = <String, TextEditingController>{};
+
+  /// In a large group, what narrows the split's list.
+  final _splitQuery = TextEditingController();
+  bool _onlyIncluded = false;
 
   /// A new photo of the receipt, and whether the saved one is to go; both
   /// wait for the expense to be saved.
@@ -167,6 +175,9 @@ class _EditorState extends ConsumerState<_Editor> {
           (widget.expense?.splits.any((s) => s.memberId == m.id) ?? false))
         m,
   ];
+
+  /// Whether the group is too large to list everyone at once.
+  bool get _crowd => isCrowd(_people.length);
 
   @override
   void initState() {
@@ -195,6 +206,7 @@ class _EditorState extends ConsumerState<_Editor> {
         _multiPay = true;
         for (final p in e.payers) {
           _paid[p.memberId]?.text = formatAmount(p.amount, _digits);
+          _payersShown.add(p.memberId);
         }
       }
       _method = e.splitMethod;
@@ -253,7 +265,7 @@ class _EditorState extends ConsumerState<_Editor> {
 
   @override
   void dispose() {
-    for (final c in [_amount, _title, _note, _place, ..._paid.values, ..._values.values]) {
+    for (final c in [_amount, _title, _note, _place, _splitQuery, ..._paid.values, ..._values.values]) {
       c.dispose();
     }
     super.dispose();
@@ -326,6 +338,77 @@ class _EditorState extends ConsumerState<_Editor> {
       _multiPay = multi;
       if (multi && _payer != null && _paid.values.every((c) => c.text.isEmpty)) {
         _paid[_payer!]!.text = _amount.text;
+      }
+      if (multi && _payer != null) _payersShown.add(_payer!);
+    });
+  }
+
+  /// How many likely payers a large group offers before "Someone else".
+  static const _likelyCount = 4;
+
+  /// This device's member and whoever paid lately, then the payer: the
+  /// chips a large group offers.
+  List<Member> _likelyPayers() {
+    final recent = ref
+        .read(expensesProvider(_group.token))
+        .current(ref.read(identityProvider))
+        .value
+        ?.items
+        .expand((e) => e.payers.map((p) => p.memberId));
+    final out = <Member>[];
+    for (final id in [?myMemberIdRead(ref, _group.token), ...?recent]) {
+      if (out.length == _likelyCount) break;
+      final m = _people.where((m) => m.id == id && !m.left).firstOrNull;
+      if (m != null && !out.contains(m)) out.add(m);
+    }
+    if (_people.where((m) => m.id == _payer).firstOrNull case final payer? when !out.contains(payer)) {
+      out.add(payer);
+    }
+    return out;
+  }
+
+  Future<void> _pickPayer(String title) async {
+    final picked = await pickMember(
+      context,
+      title: title,
+      members: [
+        for (final m in _people)
+          if (!m.left) m,
+      ],
+      selected: _multiPay ? null : _payer,
+    );
+    if (picked?.id case final id? when mounted) {
+      setState(() {
+        _multiPay = false;
+        _payer = id;
+      });
+    }
+  }
+
+  /// Who is listed to pay part, in a large group.
+  Set<String> get _payersListed => {
+    for (final m in _people)
+      if (_payersShown.contains(m.id)) m.id,
+  };
+
+  Future<void> _pickPayers(String title) async {
+    final listed = _payersListed;
+    final picked = await pickMembers(
+      context,
+      title: title,
+      members: [
+        for (final m in _people)
+          if (!m.left || listed.contains(m.id)) m,
+      ],
+      selected: listed,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _payersShown
+        ..clear()
+        ..addAll(picked);
+      for (final id in listed.difference(picked)) {
+        _paid[id]!.clear();
       }
     });
   }
@@ -635,8 +718,11 @@ class _EditorState extends ConsumerState<_Editor> {
                 ),
                 const SizedBox(height: BSpace.s12),
                 if (preview.shares case final shares?) SplitBar(people: _people, shares: shares),
-                for (final m in _people)
-                  _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
+                if (_crowd)
+                  _CrowdSplit(state: this, shares: preview.shares, symbol: symbol)
+                else
+                  for (final m in _people)
+                    _SplitRow(state: this, member: m, share: preview.shares?[m.id], symbol: symbol),
                 _SplitSummary(state: this, error: preview.error),
 
                 FormSection(l10n.expenseLocation),
@@ -688,6 +774,16 @@ class _PaidBy extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final s = state;
+    final title = s._received ? l10n.expenseReceivedForLabel : l10n.expensePaidByLabel;
+    // A large group offers the likeliest payers and lists only the payers
+    // chosen; anyone else is picked from a list.
+    final offered = s._crowd
+        ? s._likelyPayers()
+        : [
+            for (final m in s._people)
+              if (!m.left || m.id == s._payer) m,
+          ];
+    final listed = s._crowd ? s._payersListed : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -695,18 +791,23 @@ class _PaidBy extends StatelessWidget {
           spacing: BSpace.s8,
           runSpacing: BSpace.s8,
           children: [
-            for (final m in s._people)
-              if (!m.left || m.id == s._payer)
-                ChoiceChip(
-                  avatar: MemberAvatar(member: m, size: 24),
-                  label: Text(m.name),
-                  showCheckmark: false,
-                  selected: !s._multiPay && s._payer == m.id,
-                  onSelected: (_) => s._update(() {
-                    s._multiPay = false;
-                    s._payer = m.id;
-                  }),
-                ),
+            for (final m in offered)
+              ChoiceChip(
+                avatar: MemberAvatar(member: m, size: 24),
+                label: Text(m.name),
+                showCheckmark: false,
+                selected: !s._multiPay && s._payer == m.id,
+                onSelected: (_) => s._update(() {
+                  s._multiPay = false;
+                  s._payer = m.id;
+                }),
+              ),
+            if (s._crowd)
+              ActionChip(
+                avatar: const Icon(Icons.person_search_outlined, size: 18),
+                label: Text(l10n.crowdSomeoneElse),
+                onPressed: () => s._pickPayer(title),
+              ),
             ChoiceChip(
               avatar: const Icon(Icons.group_outlined, size: 18),
               label: Text(l10n.expenseMultiplePayers),
@@ -719,29 +820,39 @@ class _PaidBy extends StatelessWidget {
         if (s._multiPay) ...[
           const SizedBox(height: BSpace.s8),
           for (final m in s._people)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: BSpace.s4),
-              child: Row(
-                children: [
-                  MemberAvatar(member: m, size: 32),
-                  const SizedBox(width: BSpace.s12),
-                  Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis)),
-                  SizedBox(
-                    width: 132,
-                    child: TextField(
-                      controller: s._paid[m.id],
-                      textAlign: TextAlign.end,
-                      keyboardType: TextInputType.numberWithOptions(decimal: s._digits > 0),
-                      inputFormatters: [AmountFormatter(s._digits)],
-                      decoration: InputDecoration(
-                        isDense: true,
-                        prefixIcon: FieldAffix(symbol),
-                        prefixIconConstraints: const BoxConstraints(),
-                        hintText: '0',
+            if (listed == null || listed.contains(m.id))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: BSpace.s4),
+                child: Row(
+                  children: [
+                    MemberAvatar(member: m, size: 32),
+                    const SizedBox(width: BSpace.s12),
+                    Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis)),
+                    SizedBox(
+                      width: 132,
+                      child: TextField(
+                        controller: s._paid[m.id],
+                        textAlign: TextAlign.end,
+                        keyboardType: TextInputType.numberWithOptions(decimal: s._digits > 0),
+                        inputFormatters: [AmountFormatter(s._digits)],
+                        decoration: InputDecoration(
+                          isDense: true,
+                          prefixIcon: FieldAffix(symbol),
+                          prefixIconConstraints: const BoxConstraints(),
+                          hintText: '0',
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+          if (s._crowd)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                onPressed: () => s._pickPayers(title),
+                icon: const Icon(Icons.group_add_outlined),
+                label: Text(l10n.crowdChoosePayers),
               ),
             ),
           _Remaining(
@@ -785,7 +896,7 @@ class FieldAffix extends StatelessWidget {
 }
 
 class _SplitRow extends StatelessWidget {
-  const _SplitRow({required this.state, required this.member, required this.share, required this.symbol});
+  const _SplitRow({super.key, required this.state, required this.member, required this.share, required this.symbol});
 
   final _EditorState state;
   final Member member;
@@ -861,6 +972,76 @@ class _SplitRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The split's people in a large group: a search, how many are included
+/// with All and None, and the rows that match.
+class _CrowdSplit extends StatelessWidget {
+  const _CrowdSplit({required this.state, required this.shares, required this.symbol});
+
+  final _EditorState state;
+  final Map<String, BigInt>? shares;
+  final String symbol;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final s = state;
+    final matching = [
+      for (final m in s._people)
+        if (nameMatches(m.name, s._splitQuery.text)) m,
+    ];
+    final shown = [
+      for (final m in matching)
+        if (!s._onlyIncluded || s._included.contains(m.id)) m,
+    ];
+    final included = s._people.where((m) => s._included.contains(m.id)).length;
+    // Both act on the people the search shows; people who left can only be taken out.
+    void tickAll(bool on) => s._update(() {
+      for (final m in matching) {
+        if (!on) {
+          s._included.remove(m.id);
+        } else if (!m.left) {
+          s._included.add(m.id);
+        }
+      }
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MemberSearchField(controller: s._splitQuery, onChanged: () => s._update(() {})),
+        const SizedBox(height: BSpace.s8),
+        Row(
+          children: [
+            Flexible(
+              child: FilterChip(
+                label: Text(l10n.crowdIncluded(included, s._people.length), overflow: TextOverflow.ellipsis),
+                tooltip: l10n.crowdOnlyIncluded,
+                selected: s._onlyIncluded,
+                onSelected: (on) => s._update(() => s._onlyIncluded = on),
+              ),
+            ),
+            const Spacer(),
+            TextButton(onPressed: () => tickAll(true), child: Text(l10n.crowdAll)),
+            TextButton(onPressed: () => tickAll(false), child: Text(l10n.crowdNone)),
+          ],
+        ),
+        if (shown.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(BSpace.s24),
+            child: Text(l10n.crowdNoMatch, textAlign: TextAlign.center),
+          )
+        else
+          ShowMore(
+            children: [
+              for (final m in shown)
+                _SplitRow(key: ValueKey(m.id), state: s, member: m, share: shares?[m.id], symbol: symbol),
+            ],
+          ),
+      ],
     );
   }
 }

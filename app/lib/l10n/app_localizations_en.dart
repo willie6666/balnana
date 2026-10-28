@@ -1356,6 +1356,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String joinTakenCount(int count) {
+    return '$count people have already joined.';
+  }
+
+  @override
   String get commonContinue => 'Continue';
 
   @override
@@ -2137,4 +2142,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminUserDeleted => 'Account deleted';
+
+  @override
+  String get commonDone => 'Done';
+
+  @override
+  String get crowdSearch => 'Search people';
+
+  @override
+  String get crowdNoMatch => 'No one matches.';
+
+  @override
+  String get crowdAll => 'All';
+
+  @override
+  String get crowdNone => 'None';
+
+  @override
+  String crowdChosen(int count, int total) {
+    return '$count of $total chosen';
+  }
+
+  @override
+  String crowdIncluded(int count, int total) {
+    return '$count of $total included';
+  }
+
+  @override
+  String get crowdOnlyIncluded => 'Only those included';
+
+  @override
+  String crowdShowMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count more', one: '1 more');
+    return '$_temp0';
+  }
+
+  @override
+  String get crowdShowFewer => 'Show fewer';
+
+  @override
+  String crowdShowAll(int count) {
+    return 'Show all $count';
+  }
+
+  @override
+  String get crowdBalances => 'Everyone\'s balance';
+
+  @override
+  String get crowdSomeoneElse => 'Someone else';
+
+  @override
+  String get crowdChoosePayers => 'Choose payers';
+
+  @override
+  String get crowdFilterTitle => 'Whose expenses?';
 }

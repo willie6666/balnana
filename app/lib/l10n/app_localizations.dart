@@ -2485,6 +2485,12 @@ abstract class AppLocalizations {
   /// **'Already joined: {names}'**
   String joinTaken(String names);
 
+  /// No description provided for @joinTakenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people have already joined.'**
+  String joinTakenCount(int count);
+
   /// No description provided for @commonContinue.
   ///
   /// In en, this message translates to:
@@ -3834,6 +3840,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account deleted'**
   String get adminUserDeleted;
+
+  /// No description provided for @commonDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get commonDone;
+
+  /// No description provided for @crowdSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search people'**
+  String get crowdSearch;
+
+  /// No description provided for @crowdNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No one matches.'**
+  String get crowdNoMatch;
+
+  /// No description provided for @crowdAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get crowdAll;
+
+  /// No description provided for @crowdNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get crowdNone;
+
+  /// No description provided for @crowdChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} chosen'**
+  String crowdChosen(int count, int total);
+
+  /// No description provided for @crowdIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} included'**
+  String crowdIncluded(int count, int total);
+
+  /// No description provided for @crowdOnlyIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Only those included'**
+  String get crowdOnlyIncluded;
+
+  /// No description provided for @crowdShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more} other{{count} more}}'**
+  String crowdShowMore(int count);
+
+  /// No description provided for @crowdShowFewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer'**
+  String get crowdShowFewer;
+
+  /// No description provided for @crowdShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count}'**
+  String crowdShowAll(int count);
+
+  /// No description provided for @crowdBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone\'s balance'**
+  String get crowdBalances;
+
+  /// No description provided for @crowdSomeoneElse.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else'**
+  String get crowdSomeoneElse;
+
+  /// No description provided for @crowdChoosePayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose payers'**
+  String get crowdChoosePayers;
+
+  /// No description provided for @crowdFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose expenses?'**
+  String get crowdFilterTitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -17,6 +17,7 @@ import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 
 /// Creates a group from another app's export: pick the file, check what it
 /// holds, say who you are, import.
@@ -33,12 +34,16 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
   Uint8List? _file;
   ImportPreview? _preview;
   String? _me;
+
+  /// Narrows a long list of people to pick from.
+  final _query = TextEditingController();
   String? _error;
   bool _busy = false;
 
   @override
   void dispose() {
     _name.dispose();
+    _query.dispose();
     super.dispose();
   }
 
@@ -167,6 +172,7 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
     final muted = text.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final (from, to) = (preview.from, preview.to);
+    final crowd = isCrowd(preview.members.length);
     return [
       const SizedBox(height: BSpace.s24),
       Form(
@@ -192,6 +198,10 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
       Text(l10n.importCurrency(preview.currency), style: muted),
       if (preview.skipped > 0) Text(l10n.importSkipped(preview.skipped), style: muted),
       FormSection(l10n.importWhoAreYou),
+      if (crowd) ...[
+        MemberSearchField(controller: _query, onChanged: () => setState(() {})),
+        const SizedBox(height: BSpace.s8),
+      ],
       RadioGroup<String>(
         groupValue: _me,
         onChanged: (v) => setState(() {
@@ -201,17 +211,18 @@ class _ImportGroupPageState extends ConsumerState<ImportGroupPage> {
         child: Column(
           children: [
             for (final m in preview.members)
-              RadioListTile<String>(
-                value: m.name,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.trailing,
-                secondary: MemberAvatar(member: Member(id: m.name, name: m.name, balance: m.balance)),
-                title: Text(m.name),
-                subtitle: Text(
-                  formatMoney(context, m.balance, preview.minorDigits, preview.currency, signed: true),
-                  style: text.bodyMedium?.copyWith(color: balanceColor(context, m.balance)),
+              if (!crowd || m.name == _me || nameMatches(m.name, _query.text))
+                RadioListTile<String>(
+                  value: m.name,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  secondary: MemberAvatar(member: Member(id: m.name, name: m.name, balance: m.balance)),
+                  title: Text(m.name),
+                  subtitle: Text(
+                    formatMoney(context, m.balance, preview.minorDigits, preview.currency, signed: true),
+                    style: text.bodyMedium?.copyWith(color: balanceColor(context, m.balance)),
+                  ),
                 ),
-              ),
           ],
         ),
       ),

@@ -19,6 +19,7 @@ import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 import '../../ui/widgets/menu_chip.dart';
 import 'categories_page.dart';
 import 'group_page.dart';
@@ -271,6 +272,19 @@ class _ExpenseFilterBarState extends ConsumerState<ExpenseFilterBar> {
                 avatar: member == null ? const Icon(Icons.person_outline) : MemberAvatar(member: member, size: 18),
                 label: member?.name ?? l10n.filterAnyone,
                 selected: member != null,
+                // Too many for a menu: a sheet to search instead.
+                onPressed: isCrowd(group.members.length)
+                    ? () async {
+                        final picked = await pickMember(
+                          context,
+                          title: l10n.crowdFilterTitle,
+                          members: group.members,
+                          selected: filter.member,
+                          anyone: l10n.filterAnyone,
+                        );
+                        if (picked != null) set(_filter.copyWith(member: () => picked.id));
+                      }
+                    : null,
                 items: [
                   MenuItemButton(
                     onPressed: () => set(filter.copyWith(member: () => null)),

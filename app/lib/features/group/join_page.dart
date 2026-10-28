@@ -13,6 +13,7 @@ import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 import 'identity_sheet.dart';
 
 final _joinInfoProvider = FutureProvider.autoDispose.family<JoinInfo, String>(
@@ -32,6 +33,13 @@ class JoinPage extends ConsumerStatefulWidget {
 
 class _JoinPageState extends ConsumerState<JoinPage> {
   bool _busy = false;
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -118,6 +126,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
         for (final m in info.members)
           if (m.claimed) m,
       ];
+      final crowd = isCrowd(open.length);
       body = LayoutBuilder(
         builder: (context, constraints) {
           final side = math.max(BSpace.s16, (constraints.maxWidth - formMaxWidth) / 2);
@@ -142,18 +151,23 @@ class _JoinPageState extends ConsumerState<JoinPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: BSpace.s16),
+              if (crowd) ...[
+                MemberSearchField(controller: _query, onChanged: () => setState(() {})),
+                const SizedBox(height: BSpace.s8),
+              ],
               for (final m in open)
-                ListTile(
-                  enabled: !_busy,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(BShape.md)),
+                if (!crowd || m.id == info.invitedMemberId || nameMatches(m.name, _query.text))
+                  ListTile(
+                    enabled: !_busy,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(BShape.md)),
+                    ),
+                    leading: MemberAvatar(member: _asMember(m)),
+                    title: Text(m.name, style: text.titleMedium),
+                    subtitle: m.id == info.invitedMemberId ? Text(l10n.joinInvitedAs) : null,
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _join(claim: m.id),
                   ),
-                  leading: MemberAvatar(member: _asMember(m)),
-                  title: Text(m.name, style: text.titleMedium),
-                  subtitle: m.id == info.invitedMemberId ? Text(l10n.joinInvitedAs) : null,
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _join(claim: m.id),
-                ),
               ListTile(
                 enabled: !_busy,
                 shape: const RoundedRectangleBorder(
@@ -171,7 +185,9 @@ class _JoinPageState extends ConsumerState<JoinPage> {
               if (taken.isNotEmpty) ...[
                 const SizedBox(height: BSpace.s16),
                 Text(
-                  l10n.joinTaken(taken.map((m) => m.name).join(', ')),
+                  isCrowd(taken.length)
+                      ? l10n.joinTakenCount(taken.length)
+                      : l10n.joinTaken(taken.map((m) => m.name).join(', ')),
                   style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),

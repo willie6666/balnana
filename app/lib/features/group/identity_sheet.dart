@@ -10,6 +10,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 
 /// "Who are you?": lets this device pick the member it acts as in [group],
 /// or join as someone new. The choice stays on this device.
@@ -32,6 +33,13 @@ class _IdentitySheet extends ConsumerStatefulWidget {
 
 class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
   bool _busy = false;
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   void _pick(String memberId) {
     ref.read(knownGroupsProvider.notifier).setMember(widget.group.token, memberId);
@@ -66,12 +74,19 @@ class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
       }
       return null;
     }));
+    final members = widget.group.activeMembers;
+    final crowd = isCrowd(members.length);
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
         child: ListView(
           shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(BSpace.s16, 0, BSpace.s16, BSpace.s16),
+          padding: EdgeInsets.fromLTRB(
+            BSpace.s16,
+            0,
+            BSpace.s16,
+            BSpace.s16 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
           children: [
             Text(l10n.identityTitle, style: text.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: BSpace.s8),
@@ -81,16 +96,21 @@ class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: BSpace.s16),
-            for (final m in widget.group.activeMembers)
-              ListTile(
-                enabled: !_busy,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
-                selected: m.id == current,
-                leading: MemberAvatar(member: m),
-                title: Text(m.name, style: text.titleMedium),
-                trailing: m.id == current ? const Icon(Icons.check) : null,
-                onTap: () => _pick(m.id),
-              ),
+            if (crowd) ...[
+              MemberSearchField(controller: _query, onChanged: () => setState(() {})),
+              const SizedBox(height: BSpace.s8),
+            ],
+            for (final m in members)
+              if (!crowd || nameMatches(m.name, _query.text))
+                ListTile(
+                  enabled: !_busy,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
+                  selected: m.id == current,
+                  leading: MemberAvatar(member: m),
+                  title: Text(m.name, style: text.titleMedium),
+                  trailing: m.id == current ? const Icon(Icons.check) : null,
+                  onTap: () => _pick(m.id),
+                ),
             ListTile(
               enabled: !_busy,
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),

@@ -14,6 +14,7 @@ import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../../ui/widgets/member_picker.dart';
 import '../../ui/widgets/menu_chip.dart';
 
 /// What a group spent: in total, by category, per person and by month.
@@ -153,6 +154,19 @@ class _StatsBody extends StatelessWidget {
     final amountWidth = memberAmounts
         .map((v) => _textWidth(context, money(v), _MemberRow.amountStyle(context)))
         .fold(0.0, math.max);
+    final crowd = isCrowd(stats.members.length);
+    Widget? memberRow(_MemberSpending m) {
+      final member = group.member(m.member);
+      if (member == null) return null;
+      return _MemberRow(
+        member: member,
+        paid: (money(m.paid), _fraction(m.paid, biggestMember)),
+        share: (money(m.share), _fraction(m.share, biggestMember)),
+        amountWidth: amountWidth,
+        onTap: () => onShow(ExpenseFilter(member: member.id)),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -191,25 +205,18 @@ class _StatsBody extends StatelessWidget {
               _Key(color: scheme.tertiary, label: l10n.statsShare),
             ],
           ),
-          child: Column(
-            children: [
-              for (final m in stats.members)
-                if (group.member(m.member) case final member?)
-                  _MemberRow(
-                    member: member,
-                    paid: (money(m.paid), _fraction(m.paid, biggestMember)),
-                    share: (money(m.share), _fraction(m.share, biggestMember)),
-                    amountWidth: amountWidth,
-                    onTap: () => onShow(ExpenseFilter(member: member.id)),
-                  ),
-            ],
-          ),
+          child: crowd
+              // The biggest spenders first, and the rest on request.
+              ? ShowMore(children: [for (final m in [...stats.members]..sort(_bySize)) ?memberRow(m)])
+              : Column(children: [for (final m in stats.members) ?memberRow(m)]),
         ),
       ],
     );
   }
 
   static BigInt _max(BigInt a, BigInt b) => a > b ? a : b;
+
+  static int _bySize(_MemberSpending a, _MemberSpending b) => _max(b.paid, b.share).compareTo(_max(a.paid, a.share));
 
   static double _textWidth(BuildContext context, String s, TextStyle? style) {
     final painter = TextPainter(
@@ -225,6 +232,8 @@ class _StatsBody extends StatelessWidget {
 
   static double _fraction(BigInt v, BigInt max) => max <= BigInt.zero ? 0 : (v / max).clamp(0, 1).toDouble();
 }
+
+typedef _MemberSpending = ({String member, BigInt paid, BigInt share});
 
 /// A titled card around one chart.
 class _Section extends StatelessWidget {

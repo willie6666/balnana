@@ -4,35 +4,49 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/l10n.dart';
 import '../../data/models.dart';
 
-/// A filter chip that opens a menu of choices.
+/// A filter chip that opens a menu of choices, or calls [onPressed] (to open
+/// a sheet, say) when it is set.
 class MenuChip extends StatelessWidget {
-  const MenuChip({super.key, required this.label, required this.selected, required this.items, this.avatar});
+  const MenuChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    this.items = const [],
+    this.avatar,
+    this.onPressed,
+  });
 
   final String label;
   final bool selected;
   final Widget? avatar;
   final List<Widget> items;
+  final VoidCallback? onPressed;
+
+  Widget _chip(VoidCallback onTap) => FilterChip(
+    avatar: avatar,
+    showCheckmark: false,
+    selected: selected,
+    label: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 200),
+          child: Text(label, overflow: TextOverflow.ellipsis),
+        ),
+        const Icon(Icons.arrow_drop_down, size: 18),
+      ],
+    ),
+    onSelected: (_) => onTap(),
+  );
 
   @override
-  Widget build(BuildContext context) => MenuAnchor(
-    menuChildren: items,
-    builder: (context, controller, _) => FilterChip(
-      avatar: avatar,
-      showCheckmark: false,
-      selected: selected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 200),
-            child: Text(label, overflow: TextOverflow.ellipsis),
-          ),
-          const Icon(Icons.arrow_drop_down, size: 18),
-        ],
-      ),
-      onSelected: (_) => controller.isOpen ? controller.close() : controller.open(),
-    ),
-  );
+  Widget build(BuildContext context) {
+    if (onPressed case final onPressed?) return _chip(onPressed);
+    return MenuAnchor(
+      menuChildren: items,
+      builder: (context, controller, _) => _chip(() => controller.isOpen ? controller.close() : controller.open()),
+    );
+  }
 }
 
 /// Ready-made periods, in local time.

@@ -39,6 +39,20 @@ Group _group(String name) => Group(
   ],
 );
 
+/// Ana, Ben and Person 3 to Person [count].
+Group _sized(int count) => Group(
+  token: 'tok',
+  name: 'Retreat',
+  currency: 'USD',
+  minorDigits: 2,
+  createdAt: DateTime.utc(2026),
+  members: [
+    Member(id: 'a', name: 'Ana', balance: BigInt.from(-100)),
+    Member(id: 'b', name: 'Ben', balance: BigInt.from(100)),
+    for (var i = 3; i <= count; i++) Member(id: 'p$i', name: 'Person $i', balance: BigInt.zero),
+  ],
+);
+
 Expense _expense(int version, String title, {bool hasReceipt = false}) => Expense(
   id: 'e1',
   kind: ExpenseKind.expense,
@@ -917,4 +931,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('too large'), findsNothing);
   });
+
+  // A small group keeps every list whole; a large one is condensed.
+  for (final count in [2, 30]) {
+    testWidgets('$count people get the ${count > 2 ? 'condensed' : 'whole'} lists', (tester) async {
+      final crowd = count > 2;
+      final container = await _boot(
+        tester,
+        [
+          groupProvider.overrideWith((ref, token) async => _sized(count)),
+          expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+          groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+        ],
+        balances: Balances(
+          nets: {'a': BigInt.from(-100), 'b': BigInt.from(100)},
+          transfers: [Transfer('a', 'b', BigInt.from(100))],
+        ),
+      );
+      await _go(tester, container, '/g/tok');
+      expect(find.text('Show all $count'), crowd ? findsOneWidget : findsNothing);
+
+      await _go(tester, container, '/g/tok/expenses/new');
+      expect(find.text('Someone else'), crowd ? findsOneWidget : findsNothing);
+      expect(find.text('Search people'), crowd ? findsOneWidget : findsNothing);
+      expect(find.text('Person 30', skipOffstage: false), findsNothing);
+      if (!crowd) return;
+
+      // The split lists a dozen until asked, and the search finds the rest.
+      expect(find.text('Person 12', skipOffstage: false), findsOneWidget);
+      await tester.enterText(find.widgetWithText(SearchBar, 'Search people'), 'person 30');
+      await tester.pumpAndSettle();
+      expect(find.text('Person 30', skipOffstage: false), findsOneWidget);
+      expect(find.text('Person 12', skipOffstage: false), findsNothing);
+    });
+  }
 }
