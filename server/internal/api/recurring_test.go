@@ -73,23 +73,27 @@ func TestContinueAt(t *testing.T) {
 		from, to   string // the old start and the new one
 		last, next *time.Time
 		want       *time.Time
+		skipped    *time.Time // where the days skipped while paused end
 	}{
 		// The day moves later in the month: this month's is already added,
 		// so it goes on next month.
-		{"later", Month, "2026-01-01", "2026-01-15", day("2026-10-01"), day("2026-11-01"), day("2026-11-15")},
+		{"later", Month, "2026-01-01", "2026-01-15", day("2026-10-01"), day("2026-11-01"), day("2026-11-15"), nil},
 		// Earlier, to the occurrence nearest where it would have gone.
-		{"earlier", Month, "2026-01-15", "2026-01-01", day("2026-10-15"), day("2026-11-15"), day("2026-11-01")},
-		{"a little earlier", Month, "2026-01-15", "2026-01-10", day("2026-10-15"), day("2026-11-15"), day("2026-11-10")},
+		{"earlier", Month, "2026-01-15", "2026-01-01", day("2026-10-15"), day("2026-11-15"), day("2026-11-01"), nil},
+		{"a little earlier", Month, "2026-01-15", "2026-01-10", day("2026-10-15"), day("2026-11-15"), day("2026-11-10"), nil},
 		// Resumed after skipping days: they stay skipped.
-		{"skipped", Day, "2026-10-01", "2026-10-01", day("2026-10-05"), day("2026-10-20"), day("2026-10-20")},
-		{"skipped and moved", Month, "2026-01-01", "2026-01-15", day("2026-06-01"), day("2026-10-01"), day("2026-10-15")},
+		{"skipped", Day, "2026-10-01", "2026-10-01", day("2026-10-05"), day("2026-10-20"), day("2026-10-20"), nil},
+		{"skipped and moved", Month, "2026-01-01", "2026-01-15", day("2026-06-01"), day("2026-10-01"), day("2026-10-15"), nil},
 		// Nothing added yet: it starts over.
-		{"not started", Month, "2026-11-01", "2026-11-20", nil, day("2026-11-01"), day("2026-11-20")},
+		{"not started", Month, "2026-11-01", "2026-11-20", nil, day("2026-11-01"), day("2026-11-20"), nil},
+		// Ended while paused, so next_at no longer says what was skipped.
+		{"ended after skipping", Day, "2026-10-01", "2026-10-01", day("2026-10-05"), nil, day("2026-10-20"),
+			ptr(mustTime(t, "2026-10-19T12:00:00Z"))},
 	} {
 		r := &RecurringExpense{StartsAt: *day(c.from), TimeZone: "UTC", Repeat: Repeat{Unit: c.unit, Every: 1},
 			LastAt: c.last, NextAt: c.next}
 		sched := schedule{start: *day(c.to), loc: time.UTC, unit: c.unit, every: 1}
-		got, err := continueAt(r, sched)
+		got, err := continueAt(r, sched, c.skipped)
 		if err != nil || got == nil || !got.Equal(*c.want) {
 			t.Errorf("%s: %v, want %v (err %v)", c.name, got, c.want, err)
 		}
@@ -155,6 +159,94 @@ func TestRecurringEditAfterResume(t *testing.T) {
 		t.Fatalf("edited: %+v", r)
 	}
 	if got := recurringAdded(c, base, r.Id); len(got) != 3 {
+		t.Fatalf("added %d", len(got))
+	}
+}
+
+func TestRecurringEditAfterEndedWhilePaused(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	ctx := context.Background()
+	g := createGroup(c, "Ana")
+	ana := g.Members[0].Id
+	base := "/g/" + g.Token
+	c.member = ana
+	now := time.Now().UTC().Truncate(time.Second)
+	in := RecurringExpenseInput{
+		Title: "Coffee", Amount: "3.00", StartsAt: now.Add(-48 * time.Hour),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "3.00"}},
+		SplitMethod: "equal", Splits: []Share{{MemberId: ana}},
+		Repeat: Repeat{Unit: Day, Every: 1},
+	}
+	var r RecurringExpense
+	c.must(201, "POST", base+"/recurring", in, &r)
+	c.must(200, "PATCH", base+"/recurring/"+r.Id, RecurringPause{Paused: true}, &r)
+	// As if that happened ten days ago, and it ended five days ago.
+	if _, err := pool.Exec(ctx, `
+		update recurring_expenses set starts_at = starts_at - interval '10 days', last_at = last_at - interval '10 days',
+			next_at = next_at - interval '10 days', paused_at = paused_at - interval '10 days', ends_on = $2
+		where id = $1`, r.Id, now.AddDate(0, 0, -5).Format(dateLayout)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `
+		update expenses set occurred_at = occurred_at - interval '10 days', recurring_due = recurring_due - interval '10 days'
+		where recurring_id = $1`, r.Id); err != nil {
+		t.Fatal(err)
+	}
+	id := r.Id
+	r = RecurringExpense{}
+	c.must(200, "PATCH", base+"/recurring/"+id, RecurringPause{Paused: false}, &r)
+	if r.NextAt != nil {
+		t.Fatalf("resumed after its end: %+v", r)
+	}
+	// Made to go on again, it does not bring back the days it was paused.
+	edit := in
+	edit.StartsAt = r.StartsAt
+	edit.Version = ptr(r.Version)
+	c.must(200, "PUT", base+"/recurring/"+r.Id, edit, &r)
+	if r.NextAt == nil || !r.NextAt.Equal(now.Add(24*time.Hour)) {
+		t.Fatalf("edited: %+v", r)
+	}
+	if got := recurringAdded(c, base, r.Id); len(got) != 3 {
+		t.Fatalf("added %d", len(got))
+	}
+}
+
+func TestRecurringTooManyDueWhilePaused(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	ctx := context.Background()
+	g := createGroup(c, "Ana")
+	ana := g.Members[0].Id
+	base := "/g/" + g.Token
+	c.member = ana
+	in := RecurringExpenseInput{
+		Title: "Coffee", Amount: "3.00", StartsAt: time.Now().UTC().Truncate(time.Second).Add(time.Hour),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "3.00"}},
+		SplitMethod: "equal", Splits: []Share{{MemberId: ana}},
+		Repeat: Repeat{Unit: Day, Every: 1},
+	}
+	var r RecurringExpense
+	c.must(201, "POST", base+"/recurring", in, &r)
+	c.must(200, "PATCH", base+"/recurring/"+r.Id, RecurringPause{Paused: true}, &r)
+
+	// An edit while paused is held to the same limit as one while running.
+	edit := in
+	edit.StartsAt = time.Now().Add(-200 * 24 * time.Hour)
+	edit.Version = ptr(r.Version)
+	if got := c.errorCode(400, "PUT", base+"/recurring/"+r.Id, edit); got != "too_many_due" {
+		t.Fatalf("edit: got %q", got)
+	}
+
+	// So is resuming one that fell far behind before it was paused, rather
+	// than adding the first hundred and skipping the rest.
+	if _, err := pool.Exec(ctx, `
+		update recurring_expenses set starts_at = now() - interval '200 days', next_at = now() - interval '200 days'
+		where id = $1`, r.Id); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.errorCode(400, "PATCH", base+"/recurring/"+r.Id, RecurringPause{Paused: false}); got != "too_many_due" {
+		t.Fatalf("resume: got %q", got)
+	}
+	if got := recurringAdded(c, base, r.Id); len(got) != 0 {
 		t.Fatalf("added %d", len(got))
 	}
 }

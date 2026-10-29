@@ -117,7 +117,9 @@ class SettingsPage extends ConsumerWidget {
               GroupedSwitchTile(
                 icon: Icons.notifications_outlined,
                 title: l10n.settingsNotifications,
-                subtitle: l10n.settingsNotificationsSubtitle,
+                subtitle: settings.notifications && ref.watch(pushBlockedProvider)
+                    ? l10n.settingsNotificationsBlocked
+                    : l10n.settingsNotificationsSubtitle,
                 value: settings.notifications,
                 onChanged: notifier.setNotifications,
               ),

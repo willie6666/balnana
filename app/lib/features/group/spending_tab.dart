@@ -489,11 +489,14 @@ class _MonthChartState extends State<_MonthChart> {
     final biggest = months.map((m) => m.amount).fold(BigInt.zero, _StatsBody._max);
     final manyYears = months.first.month.year != months.last.month.year;
 
-    String name(DateTime month, {bool long = false}) {
-      if (long) return DateFormat.yMMMM(locale).format(month);
-      // Mark where each year starts when the chart spans more than one.
+    String name(DateTime month, {bool long = false}) =>
+        (long ? DateFormat.yMMMM(locale) : DateFormat.MMM(locale)).format(month);
+
+    // Marks where each year starts when the chart spans more than one, on a
+    // line of its own: beside the month it would not fit the column.
+    String? year(DateTime month) {
       final first = month.month == 1 || month == months.first.month;
-      return manyYears && first ? DateFormat.yMMM(locale).format(month) : DateFormat.MMM(locale).format(month);
+      return manyYears && first ? DateFormat.y(locale).format(month) : null;
     }
 
     final columns = [
@@ -537,15 +540,16 @@ class _MonthChartState extends State<_MonthChart> {
                   // Room for the baseline, drawn once under every column.
                   const SizedBox(height: 1),
                   const SizedBox(height: BSpace.s4),
-                  Text(
-                    name(m.month),
-                    maxLines: 1,
-                    overflow: TextOverflow.visible,
-                    softWrap: false,
-                    style: text.labelSmall?.copyWith(
-                      color: m.month == picked.month ? scheme.onSurface : scheme.onSurfaceVariant,
+                  for (final label in [name(m.month), ?year(m.month)])
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: text.labelSmall?.copyWith(
+                        color: m.month == picked.month ? scheme.onSurface : scheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

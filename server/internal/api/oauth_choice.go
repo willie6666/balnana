@@ -61,7 +61,7 @@ func (s *Server) GetOAuthPending(ctx context.Context, req GetOAuthPendingRequest
 		return nil, err
 	}
 	var ae *apiError
-	switch err := s.signupAllowed(ctx, s.db, invited); {
+	switch err := s.newAccountAllowed(ctx, s.db, p.userID, invited); {
 	case err == nil:
 		out.Signup = true
 	case !errors.As(err, &ae):
@@ -106,15 +106,17 @@ func (s *Server) FinishOAuthPending(ctx context.Context, req FinishOAuthPendingR
 			!errors.Is(err, pgx.ErrNoRows) {
 			return nil, err
 		}
+		release, err := s.holdGuess(ctx, p.userID)
+		if err != nil {
+			return nil, err
+		}
 		if checked == nil {
 			checkPassword(dummyHash, "")
 		}
 		if checked == nil || in.Password == nil || !checkPassword(*checked, *in.Password) {
-			for range loginMissWeight {
-				noteMiss(ctx)
-			}
 			return nil, forbidden("wrong_password")
 		}
+		release()
 	}
 
 	var u *user
@@ -161,7 +163,7 @@ func (s *Server) FinishOAuthPending(ctx context.Context, req FinishOAuthPendingR
 			if err != nil {
 				return err
 			}
-			if err := s.signupAllowed(ctx, tx, invited); err != nil {
+			if err := s.newAccountAllowed(ctx, tx, userID, invited); err != nil {
 				return err
 			}
 			// The old account keeps going without the address, and the links
@@ -206,6 +208,26 @@ func (s *Server) FinishOAuthPending(ctx context.Context, req FinishOAuthPendingR
 	return FinishOAuthPending200JSONResponse(Session{Token: s.handOut(ctx, token, in.Cookie != nil && *in.Cookie), User: u.api()}), nil
 }
 
+// newAccountAllowed reports whether a sign-in may make an account of its
+// own, leaving oldID without the address: only when sign-up is open to it,
+// and oldID still has another way in, a username or a provider.
+func (s *Server) newAccountAllowed(ctx context.Context, q querier, oldID string, invited bool) error {
+	if err := s.signupAllowed(ctx, q, invited); err != nil {
+		return err
+	}
+	var other bool
+	err := q.QueryRow(ctx, `
+		select username is not null or exists (select 1 from oauth_identities where user_id = $1)
+		from users where id = $1`, oldID).Scan(&other)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	if !other {
+		return badRequest("email_needed")
+	}
+	return nil
+}
+
 func loadUser(ctx context.Context, q querier, id string) (*user, error) {
 	u := user{id: id}
 	err := q.QueryRow(ctx, `
@@ -216,51 +238,46 @@ func loadUser(ctx context.Context, q querier, id string) (*user, error) {
 	return &u, err
 }
 
-// linkIdentity adds a provider identity to the account that asked for it
+// addIdentity adds a provider identity to the account that asked for it
 // from its account page. An address the provider vouches for that is the
-// account's own is confirmed with it.
-func (s *Server) linkIdentity(ctx context.Context, p *oauthProvider, userID, subject string, c idClaims) error {
-	return pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if err := lockUsersTable(ctx, tx); err != nil {
-			return err
-		}
-		var email *string
-		var verified bool
-		err := tx.QueryRow(ctx, `select email::text, email_verified from users where id = $1 for update`, userID).
-			Scan(&email, &verified)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return badRequest("invalid_token")
+// account's own is confirmed with it. The users table must be locked.
+func addIdentity(ctx context.Context, tx pgx.Tx, userID, provider, issuer, subject string, vouched *string) error {
+	var email *string
+	var verified bool
+	err := tx.QueryRow(ctx, `select email::text, email_verified from users where id = $1 for update`, userID).
+		Scan(&email, &verified)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return badRequest("invalid_token")
+	}
+	if err != nil {
+		return err
+	}
+	var owner string
+	err = tx.QueryRow(ctx, `
+		select user_id::text from oauth_identities where provider = $1 and issuer = $2 and subject = $3`,
+		provider, issuer, subject).Scan(&owner)
+	switch {
+	case err == nil && owner != userID:
+		return conflict("identity_taken")
+	case err == nil:
+	case !errors.Is(err, pgx.ErrNoRows):
+		return err
+	default:
+		_, err := tx.Exec(ctx, `insert into oauth_identities (provider, issuer, subject, user_id) values ($1, $2, $3, $4)`,
+			provider, issuer, subject, userID)
+		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return conflict("identity_taken")
 		}
 		if err != nil {
 			return err
 		}
-		var owner string
-		err = tx.QueryRow(ctx, `
-			select user_id::text from oauth_identities where provider = $1 and issuer = $2 and subject = $3`,
-			p.id, p.issuer, subject).Scan(&owner)
-		switch {
-		case err == nil && owner != userID:
-			return conflict("identity_taken")
-		case err == nil:
-		case !errors.Is(err, pgx.ErrNoRows):
+	}
+	if !verified && email != nil && vouched != nil && strings.EqualFold(*email, *vouched) {
+		if _, err := tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID); err != nil {
 			return err
-		default:
-			_, err := tx.Exec(ctx, `insert into oauth_identities (provider, issuer, subject, user_id) values ($1, $2, $3, $4)`,
-				p.id, p.issuer, subject, userID)
-			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
-				return conflict("identity_taken")
-			}
-			if err != nil {
-				return err
-			}
 		}
-		if !verified && email != nil && p.vouched(c) && strings.EqualFold(*email, *c.email()) {
-			if _, err := tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	}
+	return nil
 }
 
 func (s *Server) GetMyOAuth(ctx context.Context, _ GetMyOAuthRequestObject) (GetMyOAuthResponseObject, error) {

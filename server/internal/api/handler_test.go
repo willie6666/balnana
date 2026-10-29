@@ -129,6 +129,11 @@ func TestCORS(t *testing.T) {
 	if allowed.Header().Get("Access-Control-Allow-Origin") != "http://localhost:5000" {
 		t.Fatal("allowed origin not echoed")
 	}
+	// The web app reads how long to wait, and export file names.
+	if exposed := allowed.Header().Get("Access-Control-Expose-Headers"); !strings.Contains(exposed, "Retry-After") ||
+		!strings.Contains(exposed, "Content-Disposition") {
+		t.Fatalf("exposed headers %q", exposed)
+	}
 	other := get(t, h, "/api/v1/nope", http.Header{"Origin": {"https://evil.example"}})
 	if other.Header().Get("Access-Control-Allow-Origin") != "" {
 		t.Fatal("unlisted origin allowed")

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -335,6 +336,25 @@ func cleanLocation(in Location) (*Location, error) {
 		return nil, nil
 	}
 	return &out, nil
+}
+
+var errNoCoordinate = errors.New("a point needs both coordinates")
+
+// UnmarshalJSON refuses a point missing a coordinate, which would otherwise
+// be 0.
+func (p *GeoPoint) UnmarshalJSON(b []byte) error {
+	var in struct {
+		Latitude  *float64 `json:"latitude"`
+		Longitude *float64 `json:"longitude"`
+	}
+	if err := json.Unmarshal(b, &in); err != nil {
+		return err
+	}
+	if in.Latitude == nil || in.Longitude == nil {
+		return errNoCoordinate
+	}
+	p.Latitude, p.Longitude = *in.Latitude, *in.Longitude
+	return nil
 }
 
 // locationColumns splits a location into its location_name, latitude and
@@ -688,6 +708,9 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
+		if err := keepsLeftNets(ctx, tx, req.ExpenseId, d); err != nil {
+			return err
+		}
 		if err := checkGroupTotal(ctx, tx, g.id, d.amount, &req.ExpenseId); err != nil {
 			return err
 		}
@@ -726,6 +749,45 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 	return UpdateExpense200JSONResponse(out), nil
 }
 
+// leftNets is what the expense adds to the balance of each member in it who
+// has left: what they paid minus their share.
+func leftNets(ctx context.Context, q querier, id string) (map[string]int64, error) {
+	rows, err := q.Query(ctx, `
+		select t.member_id::text, sum(t.amount)::bigint from (
+			select member_id, amount from expense_payers where expense_id = $1
+			union all
+			select member_id, -amount from expense_splits where expense_id = $1
+		) t join members m on m.id = t.member_id
+		where m.left_at is not null
+		group by t.member_id`, id)
+	if err != nil {
+		return nil, err
+	}
+	nets := map[string]int64{}
+	var member string
+	var net int64
+	_, err = pgx.ForEachRow(rows, []any{&member, &net}, func() error {
+		nets[member] = net
+		return nil
+	})
+	return nets, err
+}
+
+// keepsLeftNets fails with member_left when d would change the balance of
+// someone in the expense who has left, which they could no longer settle.
+func keepsLeftNets(ctx context.Context, q querier, id string, d *expenseData) error {
+	nets, err := leftNets(ctx, q, id)
+	if err != nil {
+		return err
+	}
+	for member, net := range nets {
+		if d.payers[member]-d.splits[member] != net {
+			return badRequest("member_left")
+		}
+	}
+	return nil
+}
+
 // noneLeft fails with member_left when someone in the expense has left.
 func noneLeft(ctx context.Context, q querier, id string) error {
 	var left bool
@@ -760,7 +822,18 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			return err
 		}
 		if deleted != del {
-			if !del {
+			if del {
+				// Deleting would take away a balance from whoever left since.
+				nets, err := leftNets(ctx, tx, id)
+				if err != nil {
+					return err
+				}
+				for _, net := range nets {
+					if net != 0 {
+						return &apiError{status: 409, code: "member_left"}
+					}
+				}
+			} else {
 				// Restoring would give back a balance to whoever left since.
 				if err := noneLeft(ctx, tx, id); err != nil {
 					return err

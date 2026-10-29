@@ -301,36 +301,21 @@ func TestReceiptRechecksAfterProcessing(t *testing.T) {
 	}
 }
 
+// Uploads are read as they come, but converted one at a time.
 func TestReceiptProcessingBound(t *testing.T) {
 	pool := testDB(t)
 	s := NewServer(baseConfig(t, map[string]string{}), pool, slog.New(slog.DiscardHandler), "test")
 	c := &client{t: t, h: NewHandler(s, http.NotFoundHandler())}
 	g := createGroup(c, "Ana", "Ben")
 	e := receiptExpense(c, g)
-	started, release := make(chan struct{}), make(chan struct{})
-	first := &watchedReceipt{Reader: bytes.NewReader(pngBytes(t, halves(4, 4))), before: func() { close(started); <-release }}
-	done := make(chan error, 1)
-	go func() {
-		_, err := s.PutReceipt(context.Background(), PutReceiptRequestObject{Token: g.Token, ExpenseId: e.Id, ContentType: "image/png", Body: first})
-		done <- err
-	}()
-	defer func() {
-		close(release)
-		if err := <-done; err != nil {
-			t.Error(err)
-		}
-	}()
-	select {
-	case <-started:
-	case <-time.After(5 * time.Second):
-		t.Fatal("first upload never started")
-	}
-	second := &watchedReceipt{Reader: bytes.NewReader([]byte("not a PNG"))}
+	receiptWorkers <- struct{}{}
+	defer func() { <-receiptWorkers }()
+	waiting := &watchedReceipt{Reader: bytes.NewReader([]byte("not a PNG"))}
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
-	_, err := s.PutReceipt(ctx, PutReceiptRequestObject{Token: g.Token, ExpenseId: e.Id, ContentType: "image/png", Body: second})
-	if !errors.Is(err, context.DeadlineExceeded) || second.reads.Load() != 0 {
-		t.Fatalf("waiting upload read before a worker was free: reads=%d err=%v", second.reads.Load(), err)
+	_, err := s.PutReceipt(ctx, PutReceiptRequestObject{Token: g.Token, ExpenseId: e.Id, ContentType: "image/png", Body: waiting})
+	if !errors.Is(err, context.DeadlineExceeded) || waiting.reads.Load() == 0 {
+		t.Fatalf("upload converted while the worker was busy: reads=%d err=%v", waiting.reads.Load(), err)
 	}
 }
 
@@ -373,23 +358,14 @@ func TestReceiptPixelBudget(t *testing.T) {
 	}
 }
 
-// An upload that stops sending gives up its turn after receiptReadTime, so
-// the uploads waiting behind it go ahead.
+// An upload that stops sending keeps no one waiting, and gives up after
+// receiptReadTime.
 func TestReceiptSlowUploadTimesOut(t *testing.T) {
 	old := receiptReadTime
 	receiptReadTime = 300 * time.Millisecond
 	t.Cleanup(func() { receiptReadTime = old })
 	c := newClient(t)
-	g := createGroup(c, "Ana")
-	var e Expense
-	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{
-		Title: "Lunch", Amount: "1", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
-		Payers: []PayerInput{{MemberId: g.Members[0].Id, Amount: "1"}}, SplitMethod: "equal",
-		Splits: []Share{{MemberId: g.Members[0].Id}},
-	}, &e)
-	srv := httptest.NewServer(c.h)
-	defer srv.Close()
-	url := srv.URL + BasePath + "/g/" + g.Token + "/expenses/" + e.Id + "/receipt"
+	url := receiptURL(t, c)
 
 	stalled, sender := io.Pipe()
 	defer sender.Close()
@@ -409,24 +385,53 @@ func TestReceiptSlowUploadTimesOut(t *testing.T) {
 	if _, err := sender.Write([]byte("\x89PNG")); err != nil { // then nothing more
 		t.Fatal(err)
 	}
-	for deadline := time.Now().Add(5 * time.Second); len(receiptWorkers) == 0; time.Sleep(5 * time.Millisecond) {
-		if time.Now().After(deadline) {
-			t.Fatal("the stalled upload never took its turn")
-		}
-	}
 
-	start := time.Now()
-	req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte("not a PNG")))
+	if status := putReceipt(t, url, []byte("not a PNG")); status != http.StatusUnsupportedMediaType {
+		t.Fatalf("other upload: status %d", status)
+	}
+	if status := <-slow; status != http.StatusRequestTimeout {
+		t.Fatalf("stalled upload: status %d", status)
+	}
+}
+
+// A photo that waits too long for its turn is turned away.
+func TestReceiptBusy(t *testing.T) {
+	old := receiptWait
+	receiptWait = 50 * time.Millisecond
+	t.Cleanup(func() { receiptWait = old })
+	c := newClient(t)
+	url := receiptURL(t, c)
+	receiptWorkers <- struct{}{}
+	status := putReceipt(t, url, []byte("not a PNG"))
+	<-receiptWorkers
+	if status != http.StatusServiceUnavailable {
+		t.Fatalf("status %d", status)
+	}
+}
+
+// receiptURL serves c's server over HTTP and returns where a new expense's
+// receipt goes.
+func receiptURL(t *testing.T, c *client) string {
+	g := createGroup(c, "Ana")
+	var e Expense
+	c.must(201, "POST", "/g/"+g.Token+"/expenses", ExpenseInput{
+		Title: "Lunch", Amount: "1", OccurredAt: mustTime(t, "2026-01-01T00:00:00Z"),
+		Payers: []PayerInput{{MemberId: g.Members[0].Id, Amount: "1"}}, SplitMethod: "equal",
+		Splits: []Share{{MemberId: g.Members[0].Id}},
+	}, &e)
+	srv := httptest.NewServer(c.h)
+	t.Cleanup(srv.Close)
+	return srv.URL + BasePath + "/g/" + g.Token + "/expenses/" + e.Id + "/receipt"
+}
+
+func putReceipt(t *testing.T, url string, body []byte) int {
+	t.Helper()
+	req, _ := http.NewRequest("PUT", url, bytes.NewReader(body))
 	req.Header.Set("Content-Type", "image/png")
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	res.Body.Close()
-	if res.StatusCode != http.StatusUnsupportedMediaType || time.Since(start) > 5*time.Second {
-		t.Fatalf("waiting upload: status %d after %v", res.StatusCode, time.Since(start))
-	}
-	if status := <-slow; status != http.StatusRequestTimeout {
-		t.Fatalf("stalled upload: status %d", status)
-	}
+	return res.StatusCode
 }

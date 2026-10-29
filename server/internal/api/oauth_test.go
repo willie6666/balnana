@@ -236,7 +236,7 @@ func TestOAuthWeb(t *testing.T) {
 
 func TestOAuthAccountsAndSignup(t *testing.T) {
 	f := newFakeIdP(t)
-	ana, mail := mailClient(t, f.env(map[string]string{"BALNANA_AUTH_SIGNUP": "invite_only"}))
+	ana, mail, srv := mailServer(t, f.env(map[string]string{"BALNANA_AUTH_SIGNUP": "invite_only"}))
 	anaUser := register(ana, "ana@example.com", "Ana")
 
 	// Not invited: no new account.
@@ -245,7 +245,9 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 		t.Fatal(e)
 	}
 
-	// Invited: the provider vouches for the invited address.
+	// Invited: the provider vouches for the invited address. Inviting takes
+	// a confirmed address; Ana's is unconfirmed again below.
+	confirmEmail(ana, mail, "ana@example.com")
 	var g Group
 	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
 	ana.must(204, "POST", "/g/"+g.Token+"/invites", InviteInput{Email: "ben@example.com", MemberId: &g.Members[1].Id}, nil)
@@ -261,6 +263,7 @@ func TestOAuthAccountsAndSignup(t *testing.T) {
 
 	// An account with the address that never confirmed it waits for the
 	// person signing in to say whether it is theirs.
+	takeAddress(t, srv.db, anaUser.Id, "ana@example.com")
 	other := ana.another()
 	pending := pendingToken(t, f.login(other, "/groups", person("a", "ana@example.com", "Ana G")))
 	var p OAuthPending
@@ -357,10 +360,28 @@ func TestOAuthPendingChoices(t *testing.T) {
 		t.Fatal("the linked identity reached another account")
 	}
 
-	// Not theirs: a new account gets the address, confirmed.
+	// Not theirs, but the account has no other way in: it keeps the address.
 	mallory := c.another()
 	taken := register(mallory, "ben@example.com", "Mallory")
 	ben := c.another()
+	pending = pendingToken(t, f.login(ben, "/groups", person("b", "ben@example.com", "Ben")))
+	var p OAuthPending
+	ben.must(200, "POST", "/auth/oauth/pending", OAuthPendingToken{Token: pending}, &p)
+	if p.Signup {
+		t.Fatalf("pending = %+v", p)
+	}
+	newAccount := OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceNewAccount, Cookie: ptr(true)}
+	if code := ben.errorCode(400, "POST", "/auth/oauth/pending/finish", newAccount); code != "email_needed" {
+		t.Fatal(code)
+	}
+
+	// With a provider of its own, a new account gets the address, confirmed.
+	var ticket OAuthLinkTicket
+	mallory.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
+	linking := c.another()
+	linking.token = mallory.token
+	linking.must(302, "GET", "/auth/oauth/oidc/start?"+url.Values{"app": {"web"}, "link": {ticket.Ticket}}.Encode(), nil, nil)
+	linking.must(302, "GET", f.approve(linking, person("m", "mallory@example.com", "Mallory")), nil, nil)
 	pending = pendingToken(t, f.login(ben, "/groups", person("b", "ben@example.com", "Ben")))
 	ben.must(200, "POST", "/auth/oauth/pending/finish",
 		OAuthPendingFinish{Token: pending, Choice: OAuthPendingFinishChoiceNewAccount, Cookie: ptr(true)}, &s)
@@ -429,16 +450,29 @@ func TestOAuthUntrustedProviderAndLinking(t *testing.T) {
 	var ticket OAuthLinkTicket
 	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
 
-	// The browser has no session; the ticket names the account, once.
-	browser := c.another()
+	// Sent to someone else, the ticket does nothing in their browser.
 	start := "/auth/oauth/oidc/start?" + url.Values{"app": {"web"}, "link": {ticket.Ticket}, "next": {"/account"}}.Encode()
+	other := c.another()
+	register(other, "eve@example.com", "Eve")
+	for _, b := range []*client{c.another(), other} {
+		b.must(302, "GET", start, nil, nil)
+		if e := oauthError(t, b.location); e != "invalid_token" {
+			t.Fatal(b.location)
+		}
+	}
+
+	// The account's own browser uses it, once.
+	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
+	start = "/auth/oauth/oidc/start?" + url.Values{"app": {"web"}, "link": {ticket.Ticket}, "next": {"/account"}}.Encode()
+	browser := c.another()
+	browser.token = c.token
 	browser.must(302, "GET", start, nil, nil)
 	browser.must(302, "GET", f.approve(browser, person("a", "ana@example.com", "Ana")), nil, nil)
 	if u, _ := url.Parse(browser.location); u.Query().Get("linked") != "oidc" {
 		t.Fatal(browser.location)
 	}
-	browser.errorCode(401, "GET", "/me", nil)
 	reused := c.another()
+	reused.token = c.token
 	reused.must(302, "GET", start, nil, nil)
 	if e := oauthError(t, reused.location); e != "invalid_token" {
 		t.Fatal(reused.location)
@@ -465,6 +499,7 @@ func TestOAuthUntrustedProviderAndLinking(t *testing.T) {
 	var benTicket OAuthLinkTicket
 	ben.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &benTicket)
 	b := c.another()
+	b.token = ben.token
 	b.must(302, "GET", "/auth/oauth/oidc/start?"+url.Values{"app": {"web"}, "link": {benTicket.Ticket}}.Encode(), nil, nil)
 	b.must(302, "GET", f.approve(b, person("a", "ana@example.com", "Ana")), nil, nil)
 	if e := oauthError(t, b.location); e != "identity_taken" {
@@ -600,6 +635,47 @@ func TestOAuthAndroid(t *testing.T) {
 	c.token = *s.Token
 	c.must(200, "GET", "/me", nil, nil)
 	c.another().errorCode(400, "POST", "/auth/oauth/exchange", OAuthExchange{Code: code, Verifier: "the app's own verifier"})
+}
+
+// The app adds a provider through a code only it can trade: a ticket sent to
+// someone else adds nothing for them.
+func TestOAuthLinkFromApp(t *testing.T) {
+	f := newFakeIdP(t)
+	c := accountsClient(t, f.env(map[string]string{}))
+	register(c, "ana@example.com", "Ana")
+	sum := sha256.Sum256([]byte("the app's own verifier"))
+	challenge := base64.RawURLEncoding.EncodeToString(sum[:])
+	link := func() string {
+		var ticket OAuthLinkTicket
+		c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, &ticket)
+		browser := c.another()
+		browser.must(302, "GET", "/auth/oauth/oidc/start?"+url.Values{
+			"app": {"android"}, "challenge": {challenge}, "link": {ticket.Ticket}}.Encode(), nil, nil)
+		browser.must(302, "GET", f.approve(browser, person("a", "ana@example.com", "Ana")), nil, nil)
+		u, _ := url.Parse(browser.location)
+		if u.Query().Get("linked") != "oidc" || u.Query().Get("code") == "" {
+			t.Fatal(browser.location)
+		}
+		return u.Query().Get("code")
+	}
+	var links OAuthLinks
+	if e := c.another().errorCode(400, "POST", "/auth/oauth/exchange", OAuthExchange{Code: link(), Verifier: "a guess"}); e != "invalid_token" {
+		t.Fatal(e)
+	}
+	c.must(200, "GET", "/me/oauth", nil, &links)
+	if len(links.Providers) != 0 {
+		t.Fatalf("links = %+v", links)
+	}
+
+	var s Session
+	c.must(200, "POST", "/auth/oauth/exchange", OAuthExchange{Code: link(), Verifier: "the app's own verifier"}, &s)
+	if s.Token != nil || !s.User.EmailVerified {
+		t.Fatalf("session = %+v", s)
+	}
+	c.must(200, "GET", "/me/oauth", nil, &links)
+	if len(links.Providers) != 1 {
+		t.Fatalf("links = %+v", links)
+	}
 }
 
 // The address owner taking an account back with a reset link shuts out its

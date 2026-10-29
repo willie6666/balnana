@@ -422,6 +422,7 @@ type GroupSummary struct {
 // GroupSummaryList defines model for GroupSummaryList.
 type GroupSummaryList struct {
 	Groups  []GroupSummary `json:"groups"`
+	Locked  []string       `json:"locked"`
 	Missing []string       `json:"missing"`
 }
 
@@ -878,7 +879,7 @@ type ServerInfo struct {
 	// Push The server sends Web Push notifications (RFC 8030), which the app receives through UnifiedPush.
 	Push bool `json:"push"`
 
-	// SetupCode Setting it up also needs the code the server printed in its log, since the server already held data when it first needed setting up.
+	// SetupCode Setting it up also needs the code the server printed in its log. A server makes one whenever it starts without a password.
 	SetupCode bool `json:"setupCode"`
 
 	// SetupRequired No administrator password is set yet; the app sends people to /admin to set one.
@@ -1059,7 +1060,7 @@ type StartOAuthParams struct {
 	// Origin A web app on another origin than this server's, such as `https://app.example`: it must be listed by name in BALNANA_CORS_ORIGINS (`*` is not enough), or the answer is `invalid_origin`. The sign-in comes back to it as a code.
 	Origin *string `form:"origin,omitempty" json:"origin,omitempty"`
 
-	// Link A ticket from POST /me/oauth/{provider}: the identity is added to that account instead of signing in. 400 `invalid_token` when it is spent or old.
+	// Link A ticket from POST /me/oauth/{provider}: the identity is added to that account instead of signing in. Without `challenge` the browser must be signed in to that account with its cookie. Comes back with `error` `invalid_token` when it is spent or old.
 	Link *string `form:"link,omitempty" json:"link,omitempty"`
 }
 

@@ -30,18 +30,21 @@ const (
 	receiptQuality      = 82
 )
 
-// receiptReadTime is how long an upload may take to send its photo once its
-// turn has come. The server has no overall read timeout, as event streams
-// stay open, and an upload that never finishes would otherwise keep every
-// other one waiting.
+// receiptReadTime is how long an upload may take to send its photo. The
+// server has no overall read timeout, as event streams stay open.
 var receiptReadTime = 2 * time.Minute
+
+// receiptWait is how long a sent photo may wait for its turn to be
+// converted before the upload is turned away as busy.
+var receiptWait = 30 * time.Second
 
 // receiptConnKey carries the upload's connection, for its read deadline.
 type receiptConnKey struct{}
 
-// One upload at a time bounds compressed input, the decoded frame (up to
-// 8 bytes per pixel), resize buffers and the optional orientation copy across
-// all server instances in this process. Acquire before reading the body.
+// One conversion at a time bounds the decoded frame (up to 8 bytes per
+// pixel), resize buffers and the optional orientation copy across all server
+// instances in this process. Acquire after reading the body, so an upload
+// that sends slowly keeps no one else waiting.
 var receiptWorkers = make(chan struct{}, 1)
 
 var errBadImage = &apiError{status: http.StatusUnsupportedMediaType, code: "bad_image"}
@@ -88,12 +91,6 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	if t, _, err := mime.ParseMediaType(req.ContentType); err != nil || !strings.HasPrefix(t, "image/") {
 		return nil, errBadImage
 	}
-	select {
-	case receiptWorkers <- struct{}{}:
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-	defer func() { <-receiptWorkers }()
 	if rc, ok := ctx.Value(receiptConnKey{}).(*http.ResponseController); ok {
 		_ = rc.SetReadDeadline(time.Now().Add(receiptReadTime))
 	}
@@ -111,7 +108,19 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	if len(raw) > maxReceiptBody {
 		return nil, &apiError{status: http.StatusRequestEntityTooLarge, code: "too_large"}
 	}
-	data, err := receiptJPEG(raw)
+	wait := time.NewTimer(receiptWait)
+	defer wait.Stop()
+	select {
+	case receiptWorkers <- struct{}{}:
+	case <-wait.C:
+		return nil, &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	data, err := func() ([]byte, error) {
+		defer func() { <-receiptWorkers }()
+		return receiptJPEG(raw)
+	}()
 	if err != nil {
 		return nil, err
 	}

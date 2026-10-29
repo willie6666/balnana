@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n.dart';
 import '../../core/server.dart';
@@ -8,8 +9,12 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import 'open_link.dart';
 
-/// The app pages a web link may open, after the server's address.
-final _appPaths = RegExp(r'^/(g/[A-Za-z0-9_-]{22}|invite/[A-Za-z0-9_-]+|verify-email|reset-password)/?$');
+/// The app pages a web link may open, after the server's address: those of
+/// the web app, which Android hands to this app.
+final _appPaths = RegExp(
+  r'^/(g/[A-Za-z0-9_-]{22}(?:/(?:(?:expenses|recurring)/[A-Za-z0-9_-]+|settings(?:/categories|/recurring)?|join))?'
+  r'|invite/[A-Za-z0-9_-]+|verify-email|reset-password)/?$',
+);
 
 /// The page of this app that [link] opens, for a link to the current server
 /// ([serverUrl], or the [publicUrl] it advertises). Throws
@@ -79,6 +84,7 @@ class LinkPage extends ConsumerWidget {
       });
       return Scaffold(body: Center(child: Text(l10n.linkOpening)));
     }
+    final web = foreign ? null : Uri.tryParse(url ?? '');
     return Scaffold(
       appBar: AppBar(),
       body: Center(
@@ -88,7 +94,22 @@ class LinkPage extends ConsumerWidget {
             icon: Icons.link_off,
             title: foreign ? l10n.linkForeignTitle : l10n.linkInvalidTitle,
             body: foreign && server != null ? l10n.linkForeignBody(server) : l10n.linkInvalidBody,
-            action: FilledButton(onPressed: () => context.go('/groups'), child: Text(l10n.linkGoHome)),
+            action: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: BSpace.s8,
+              runSpacing: BSpace.s8,
+              children: [
+                FilledButton(onPressed: () => context.go('/groups'), child: Text(l10n.linkGoHome)),
+                // A page of this server's web app that this app lacks. A
+                // browser tab of the app's own, since Android would hand
+                // the link straight back here.
+                if (web != null && (web.isScheme('https') || web.isScheme('http')))
+                  OutlinedButton(
+                    onPressed: () => launchUrl(web, mode: LaunchMode.inAppBrowserView),
+                    child: Text(l10n.linkOpenInBrowser),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

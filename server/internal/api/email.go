@@ -268,10 +268,14 @@ func (s *Server) InviteToGroup(ctx context.Context, req InviteToGroupRequestObje
 	if err != nil {
 		return nil, err
 	}
-	// Anyone may open an account and a group, so without a cap this would
-	// send any number of emails, with any text in the group's name.
-	if !s.invites.take(u.id, 1, time.Now()) {
-		return nil, errRateLimited
+	// Anyone may open an account and a group, so without these this would
+	// send any number of emails, with any text in the group's name: only an
+	// account with a confirmed address sends them, and only so many.
+	if !u.verified {
+		return nil, forbidden("email_unverified")
+	}
+	if now := time.Now(); !s.invites.take(u.id, 1, now) {
+		return nil, limited(s.invites, u.id, now)
 	}
 	var g *group
 	var inviter string
@@ -411,11 +415,12 @@ The link works for one hour. If it wasn't you, ignore this email; your password 
 
 func inviteMail(to, inviter, group, link string) mail.Message {
 	return mail.Message{
-		To:      to,
-		Subject: fmt.Sprintf("%s invited you to %s on Balnana", inviter, group),
+		To: to,
+		// The names are anyone's text, so they stay out of the subject.
+		Subject: "You are invited to a group on Balnana",
 		Body: fmt.Sprintf(`Hi,
 
-%s invited you to join "%s" on Balnana, where you can keep track of shared expenses together.
+A Balnana user named "%s" invited you to join their group "%s", where you can keep track of shared expenses together.
 
 Open this link to join:
 

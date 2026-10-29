@@ -79,6 +79,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get someone => 'Someone';
 
   @override
+  String get errorTooLarge => 'This is too big to send to the server.';
+
+  @override
+  String get errorBusy => 'The server is busy. Please try again in a moment.';
+
+  @override
+  String get errorTimeout => 'This took too long to send. Check your connection and try again.';
+
+  @override
+  String get errorBadOrigin =>
+      'The server does not accept sign-ins from this address. Whoever runs it should check its public URL.';
+
+  @override
+  String get errorInvalidCategory => 'That category was deleted meanwhile. Pick another one.';
+
+  @override
+  String get errorBuiltinCategory => 'Built-in categories can only be hidden.';
+
+  @override
+  String get errorUnknownMember => 'Someone in this is no longer in the group. Reload and try again.';
+
+  @override
+  String get errorNoPayers => 'Choose who paid.';
+
+  @override
+  String get errorPayerTotal => 'What each person paid must add up to the amount.';
+
+  @override
+  String get errorInvalidNote => 'The note is too long or has characters that cannot be saved.';
+
+  @override
+  String get errorInvalidDate => 'That date is out of range.';
+
+  @override
   String get errorGeneric => 'Something went wrong. Please try again.';
 
   @override
@@ -263,6 +297,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get groupMissingBody =>
       'This group was deleted, or its link was reset. Ask someone in the group for the new link.';
+
+  @override
+  String get groupLockedTitle => 'Sign in to open this group';
+
+  @override
+  String get groupLockedBody =>
+      'This group is only open to its members\' accounts. Sign in to the account that belongs to it.';
 
   @override
   String get groupForget => 'Remove from this device';
@@ -1037,6 +1078,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupsUnreachableBody => 'Check your connection, or the server address in Settings.';
 
   @override
+  String activityPartial(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups could not be loaded, so their changes are missing.',
+      one: 'One group could not be loaded, so its changes are missing.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get activityEmptyTitle => 'Nothing here yet';
 
   @override
@@ -1182,6 +1234,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNotificationsSubtitle => 'When someone adds, changes or deletes an expense you are in';
+
+  @override
+  String get settingsNotificationsBlocked =>
+      'Blocked in the phone\'s settings: allow notifications for Balnana there to see them';
 
   @override
   String get pushChannel => 'Expenses';
@@ -2066,6 +2122,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkGoHome => 'Go to groups';
+
+  @override
+  String get linkOpenInBrowser => 'Open in browser';
 
   @override
   String get privacyTitle => 'Privacy policy';

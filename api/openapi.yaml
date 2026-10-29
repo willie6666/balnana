@@ -225,7 +225,8 @@ paths:
         Reads a Settle Up CSV export and creates a group with its people,
         expenses and transfers, all in one go: if any row cannot be imported,
         nothing is. With `dryRun` nothing is stored and the response is a
-        preview. Amounts in other currencies use the export's converted
+        preview; it still counts against the client's allowance of new
+        groups. Amounts in other currencies use the export's converted
         amounts, so the group has one currency. In accounts mode the creator
         must be signed in and say which person in the file they are (`me`).
       requestBody:
@@ -263,7 +264,9 @@ paths:
       summary: Home screen cards for the groups a device knows
       description: >-
         Tokens the server does not know (deleted, or the link was reset) are
-        listed in `missing` so the app can forget them.
+        listed in `missing` so the app can forget them. Groups that are there
+        but not open to this caller (it must sign in, or is not a member) are
+        listed in `locked`.
       requestBody:
         required: true
         content:
@@ -288,6 +291,8 @@ paths:
         or invite_only and there is no invitation for the address. The first
         account on a server can always be created. 409 `email_taken` or
         `username_taken` when another account has it; 400 `invalid_username`.
+        With an invitation sent to the address, an account that never
+        confirmed it is taken back instead, as a password reset would.
       requestBody:
         required: true
         content:
@@ -397,7 +402,8 @@ paths:
         `next` and one of `code` (Android, or a web app on another origin:
         trade it with /auth/oauth/exchange), `pending` (ask whether an
         unverified account is theirs: /auth/oauth/pending), `linked` (with
-        `link`: the identity was added) or `error`.
+        `link`: the identity was added; with a `code` too, it is added when
+        the code is traded) or `error`.
       parameters:
         - name: app
           in: query
@@ -430,8 +436,9 @@ paths:
           in: query
           description: >-
             A ticket from POST /me/oauth/{provider}: the identity is added to
-            that account instead of signing in. 400 `invalid_token` when it is
-            spent or old.
+            that account instead of signing in. Without `challenge` the
+            browser must be signed in to that account with its cookie. Comes
+            back with `error` `invalid_token` when it is spent or old.
           schema:
             type: string
       responses:
@@ -494,6 +501,9 @@ paths:
     post:
       operationId: exchangeOAuthCode
       summary: Trade an Android or cross-origin web sign-in code for a session
+      description: >-
+        A code that came back with `linked` adds the identity to its account
+        instead, and the answer has no `token`: the app keeps its session.
       requestBody:
         required: true
         content:
@@ -776,7 +786,9 @@ paths:
         group are left out without an error. Only when `push` is on in
         /server-info; otherwise `push_off`. A subscription the server cannot
         send to (keys that are not sound, an endpoint that is not an https URL
-        on a public address) is `invalid_subscription`.
+        on a public address) is `invalid_subscription`. A client registering
+        too many new devices gets `rate_limited`; a group followed by 200
+        devices leaves new ones out.
       requestBody:
         required: true
         content:
@@ -911,7 +923,8 @@ paths:
       description: >-
         Optionally for one unclaimed member, whom the invited person is
         offered to join as. The invitation also lets them register on an
-        invite_only server.
+        invite_only server. Only an account with a confirmed address sends
+        invitations (otherwise 403 `email_unverified`).
       requestBody:
         required: true
         content:
@@ -1143,7 +1156,8 @@ paths:
         `version` must be the version that was read; otherwise the expense
         changed meanwhile and the answer is 409 `expense_version_conflict`.
         A member who left may stay in an expense they were already part of,
-        but not be added to one (400 `member_left`).
+        but not be added to one, nor have what they paid or their share
+        change (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1164,6 +1178,9 @@ paths:
     delete:
       operationId: deleteExpense
       summary: Delete (restorable)
+      description: >-
+        409 `member_left` when someone in the expense has left the group and
+        deleting it would change their balance.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1865,13 +1882,17 @@ components:
                 description: Who this device is in the group, for `balance`.
     GroupSummaryList:
       type: object
-      required: [groups, missing]
+      required: [groups, missing, locked]
       properties:
         groups:
           type: array
           items:
             $ref: "#/components/schemas/GroupSummary"
         missing:
+          type: array
+          items:
+            type: string
+        locked:
           type: array
           items:
             type: string
@@ -2676,8 +2697,8 @@ components:
         setupCode:
           type: boolean
           description: >-
-            Setting it up also needs the code the server printed in its log,
-            since the server already held data when it first needed setting up.
+            Setting it up also needs the code the server printed in its log.
+            A server makes one whenever it starts without a password.
         privacyUrl:
           type: string
           description: >-

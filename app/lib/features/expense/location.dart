@@ -300,7 +300,10 @@ class _LocationFieldState extends ConsumerState<LocationField> {
                     Positioned.fill(
                       child: Material(
                         type: MaterialType.transparency,
-                        child: InkWell(onTap: _pick),
+                        child: Semantics(
+                          label: context.l10n.locationChange,
+                          child: InkWell(onTap: _pick),
+                        ),
                       ),
                     ),
                   ],

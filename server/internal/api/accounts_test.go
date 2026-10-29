@@ -184,6 +184,15 @@ func TestAccountsGroupAccess(t *testing.T) {
 	if code := anon.errorCode(401, "GET", path, nil); code != "sign_in_required" {
 		t.Fatal(code)
 	}
+	// Home lists it as locked, not gone, so the app does not offer to forget it.
+	var sums GroupSummaryList
+	anon.must(200, "POST", "/groups/summaries", GroupSummaryRequest{Groups: []struct {
+		MemberId *string `json:"memberId,omitempty"`
+		Token    string  `json:"token"`
+	}{{Token: g.Token}}}, &sums)
+	if len(sums.Groups) != 0 || len(sums.Missing) != 0 || len(sums.Locked) != 1 || sums.Locked[0] != g.Token {
+		t.Fatalf("summaries: %+v", sums)
+	}
 	ben := ana.another()
 	register(ben, "ben@example.com", "Benjamin")
 	if code := ben.errorCode(403, "GET", path, nil); code != "not_a_member" {
@@ -253,6 +262,20 @@ func TestAccountsGroupAccess(t *testing.T) {
 	cy.must(200, "POST", path+"/join", JoinInput{}, &joined)
 	if *joined.MyMemberId != cyID {
 		t.Fatal("rejoining made a new member")
+	}
+
+	// The owner leaving hands the group on, and coming back by the link does
+	// not make them an owner again.
+	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, nil)
+	ben.must(201, "POST", path+"/payments", PaymentInput{FromMemberId: g.Members[0].Id, ToMemberId: g.Members[1].Id, Amount: "50.00"}, nil)
+	ana.must(204, "DELETE", path+"/members/"+g.Members[0].Id, nil, nil)
+	ben.must(200, "GET", path, nil, &g)
+	if g.Members[0].Owner || !g.Members[1].Owner {
+		t.Fatalf("after the owner left: %+v", g.Members)
+	}
+	ana.must(200, "POST", path+"/join", JoinInput{}, &joined)
+	if joined.Members[0].Owner {
+		t.Fatal("rejoining made them an owner again")
 	}
 }
 

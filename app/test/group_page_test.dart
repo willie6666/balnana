@@ -329,7 +329,7 @@ class _Taps implements PushService {
   Stream<void> get changes => const Stream.empty();
 
   @override
-  Future<void> requestPermission() async {}
+  Future<bool> requestPermission() async => true;
 
   @override
   Stream<PushTarget> get openedGroups => taps.stream;

@@ -110,6 +110,10 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
     if (widget.error case final error?) throw ApiException(error);
     final who = ref.read(identityProvider);
     if (widget.linked case final provider?) {
+      // The app adds it with its verifier, and keeps its session.
+      if (widget.code case final code?) {
+        await ref.read(balnanaApiProvider)!.exchangeOAuthCode(code: code, verifier: (await _verifier())!);
+      }
       await ref.read(prefsProvider).remove(_attemptKey);
       ref.invalidate(myOAuthProvider);
       if (mounted) {

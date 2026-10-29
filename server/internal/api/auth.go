@@ -430,6 +430,19 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 		if err := s.signupAllowed(ctx, tx, invited); err != nil {
 			return err
 		}
+		if invited {
+			// An account nobody confirmed holds the address the invitation
+			// reached: its owner takes it back, as a password reset would.
+			held, err := s.reclaimForInvite(ctx, tx, *email, hash, name, locale)
+			if err != nil {
+				return err
+			}
+			if held != nil {
+				out.User = held.api()
+				token, err = startSession(ctx, tx, held.id)
+				return err
+			}
+		}
 		u := user{email: email, username: username, verified: invited, hasPassword: true, name: name, locale: locale}
 		err = tx.QueryRow(ctx, `
 			insert into users (email, username, email_verified, password_hash, display_name, locale)
@@ -454,6 +467,39 @@ func (s *Server) Register(ctx context.Context, req RegisterRequestObject) (Regis
 	return Register201JSONResponse(out), nil
 }
 
+// reclaimForInvite gives the unconfirmed account holding email to whoever
+// registers with an invitation sent there. One known by its username keeps
+// it, and loses only the address; nil means there is no account to take.
+func (s *Server) reclaimForInvite(ctx context.Context, tx pgx.Tx, email, hash, name string, locale *string) (*user, error) {
+	var id string
+	var username *string
+	err := tx.QueryRow(ctx, `select id::text, username::text from users where email = $1 and not email_verified for update`,
+		email).Scan(&id, &username)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if username != nil {
+		_, err := tx.Exec(ctx, `update users set email = null, pending_email = null where id = $1`, id)
+		if err == nil {
+			_, err = tx.Exec(ctx, `delete from email_tokens where user_id = $1`, id)
+		}
+		return nil, err
+	}
+	_, err = tx.Exec(ctx, `
+		update users set password_hash = $2, email_verified = true, pending_email = null, display_name = $3, locale = $4
+		where id = $1`, id, hash, name, locale)
+	if err != nil {
+		return nil, err
+	}
+	if err := signOut(ctx, tx, id, true); err != nil {
+		return nil, err
+	}
+	return loadUser(ctx, tx, id)
+}
+
 var errBadLogin = &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
 
 func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginResponseObject, error) {
@@ -473,15 +519,22 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
 	}
+	// Unknown logins are counted like accounts, so the limit tells nothing.
+	account := u.id
+	if hash == nil {
+		account = "login:" + strings.ToLower(strings.TrimSpace(in.Login))
+	}
+	release, err := s.holdGuess(ctx, account)
+	if err != nil {
+		return nil, err
+	}
 	if hash == nil {
 		checkPassword(dummyHash, in.Password)
 	}
 	if hash == nil || !checkPassword(*hash, in.Password) {
-		for range loginMissWeight {
-			noteMiss(ctx)
-		}
 		return nil, errBadLogin
 	}
+	release()
 	// The password was checked outside the lock, as hashing is slow, so the
 	// account is locked and the hash read again before a session is made: the
 	// address owner may have taken the account back, or the password changed,

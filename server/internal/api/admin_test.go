@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"balnana/internal/config"
 )
 
 const adminPassword = "correct horse battery"
@@ -66,8 +68,8 @@ func TestAdminSetup(t *testing.T) {
 	if err := s.PrepareAdmin(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if info := serverInfo(c); !info.SetupRequired || info.SetupCode {
-		t.Fatalf("a new server needs setting up, without a code: %+v", info)
+	if info := serverInfo(c); !info.SetupRequired || !info.SetupCode {
+		t.Fatalf("a new server needs setting up, with a code: %+v", info)
 	}
 	if code := c.errorCode(409, "POST", "/admin/login", AdminLoginInput{Password: adminPassword}); code != "setup_required" {
 		t.Fatalf("login before setup: %s", code)
@@ -79,7 +81,16 @@ func TestAdminSetup(t *testing.T) {
 		t.Fatalf("short password: %s", code)
 	}
 
-	token := setUp(c)
+	if code := c.errorCode(403, "POST", "/admin/setup", AdminSetupInput{Password: adminPassword}); code != "invalid_setup_code" {
+		t.Fatalf("setup without the code: %s", code)
+	}
+	var code string
+	if err := s.db.QueryRow(context.Background(), `select setup_code from admin`).Scan(&code); err != nil {
+		t.Fatal(err)
+	}
+	var first AdminSession
+	c.must(201, "POST", "/admin/setup", AdminSetupInput{Password: adminPassword, Code: &code}, &first)
+	token := first.Token
 	if code := c.errorCode(409, "POST", "/admin/setup", AdminSetupInput{Password: "someone else's"}); code != "already_set_up" {
 		t.Fatalf("second setup: %s", code)
 	}
@@ -211,6 +222,43 @@ func toStrings(v any) []string {
 		out = append(out, x.(string))
 	}
 	return out
+}
+
+// Saved settings that stop fitting the environment never loosen sign-in:
+// the server keeps what is in force, or does not start.
+func TestSavedSettingsThatNoLongerFit(t *testing.T) {
+	_, s, pool := adminClient(t, map[string]string{})
+	ctx := context.Background()
+	save := func(settings map[string]string) {
+		t.Helper()
+		if _, err := pool.Exec(ctx, `delete from settings`); err != nil {
+			t.Fatal(err)
+		}
+		for k, v := range settings {
+			if _, err := pool.Exec(ctx, `insert into settings (key, value) values ($1, $2)`, k, v); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	save(map[string]string{"BALNANA_AUTH_MODE": "accounts", "BALNANA_AUTH_SIGNUP": "closed"})
+	if err := s.LoadSettings(ctx); err != nil || s.conf().AuthMode != config.AuthModeAccounts {
+		t.Fatal(err)
+	}
+
+	// Other settings at fault are left out, with the ones beside them.
+	save(map[string]string{"BALNANA_AUTH_MODE": "accounts", "BALNANA_SMTP_HOST": "smtp.example.com"})
+	if err := s.LoadSettings(ctx); err != nil || s.conf().AuthMode != config.AuthModeAccounts || s.conf().SMTP.Enabled() {
+		t.Fatal(err)
+	}
+
+	save(map[string]string{"BALNANA_AUTH_MODE": "accounts", "BALNANA_AUTH_SIGNUP": "nonsense"})
+	s.reloadSettings(ctx)
+	if s.conf().AuthMode != config.AuthModeAccounts {
+		t.Fatal("a reload fell back to link mode")
+	}
+	if err := s.LoadSettings(ctx); err == nil {
+		t.Fatal("started without the saved sign-in settings")
+	}
 }
 
 func TestAdminPassword(t *testing.T) {

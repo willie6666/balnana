@@ -9,15 +9,18 @@ plugins {
 }
 
 // Release signing: android/key.properties (kept out of git) names the upload
-// keystore. Without it, release APKs are signed with the debug key, with a
-// warning, so `flutter run --release` still works; such builds cannot update
-// an installed release. App bundles are only for the Play Store, so they need
-// the real key: storeFile, storePassword, keyAlias and keyPassword.
+// keystore: storeFile, storePassword, keyAlias and keyPassword. Without it,
+// release builds stop, since an APK signed with another key cannot update an
+// installed release, nor the reverse. To try a release build anyway, pass
+// -PallowDebugSigning (flutter: --android-project-arg=allowDebugSigning=true),
+// which signs APKs with the debug key. App bundles are only for the Play
+// Store, so they always need the real key.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+val allowDebugSigning = project.findProperty("allowDebugSigning")?.toString()?.let { it != "false" } ?: false
 
 gradle.taskGraph.whenReady {
     if (hasReleaseKey) return@whenReady
@@ -31,6 +34,12 @@ gradle.taskGraph.whenReady {
         )
     }
     if (names.any { it.startsWith("assemble") && it.endsWith("Release") }) {
+        if (!allowDebugSigning) {
+            throw GradleException(
+                "No release key: create android/key.properties (storeFile, storePassword, keyAlias, keyPassword), " +
+                    "or pass --android-project-arg=allowDebugSigning=true to sign this APK with the debug key."
+            )
+        }
         logger.warn("WARNING: android/key.properties is missing, so this release APK is signed with the debug key.")
     }
 }

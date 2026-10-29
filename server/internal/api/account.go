@@ -25,12 +25,14 @@ func (s *Server) confirmPassword(ctx context.Context, u *user, password *string)
 	if hash == nil {
 		return nil, nil
 	}
+	release, err := s.holdGuess(ctx, u.id)
+	if err != nil {
+		return nil, err
+	}
 	if password == nil || !checkPassword(*hash, *password) {
-		for range loginMissWeight {
-			noteMiss(ctx)
-		}
 		return nil, forbidden("wrong_password")
 	}
+	release()
 	return hash, nil
 }
 
@@ -98,6 +100,11 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		}
 		return ChangeEmail200JSONResponse(u.api()), nil
 	}
+	// Each change emails the new address, so it is not a way to send spam;
+	// without email, each tells whether an account has the address.
+	if now := time.Now(); email != nil && !s.emails.take(u.id, 1, now) {
+		return nil, limited(s.emails, u.id, now)
+	}
 	if email == nil || s.mailer() == nil {
 		// Nothing can confirm the address, so it takes the old one's place now.
 		err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -122,10 +129,6 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 		}
 		u.email, u.verified, u.pending = email, false, nil
 		return ChangeEmail200JSONResponse(u.api()), nil
-	}
-	// Each change emails the new address, so it is not a way to send spam.
-	if !s.emails.take(u.id, 1, time.Now()) {
-		return nil, errRateLimited
 	}
 	// The new address waits until a link sent to it is opened; until then the
 	// account keeps the old one, so a mistyped address never takes its place.

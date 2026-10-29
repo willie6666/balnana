@@ -27,6 +27,9 @@ class _FakePush implements PushService {
   /// While set, asking for permission waits for it.
   Future<void>? hold;
 
+  /// What asking for permission answers; null throws.
+  bool? allowed = true;
+
   @override
   Future<PushSubscription?> subscribe(String server, String vapid) async {
     keys.add(vapid);
@@ -40,9 +43,10 @@ class _FakePush implements PushService {
   Stream<void> get changes => refreshes.stream;
 
   @override
-  Future<void> requestPermission() async {
+  Future<bool> requestPermission() async {
     asked++;
     await hold;
+    return allowed ?? (throw StateError('no activity'));
   }
 
   @override
@@ -146,6 +150,23 @@ void main() {
       server.requests.last,
       startsWith('PUT /api/v1/push/devices/device-1 {"endpoint":"https://push.example.com/2"'),
     );
+  });
+
+  test('a refused or failed permission request still registers, and is shown', () async {
+    await boot();
+    expect(container.read(pushBlockedProvider), isFalse);
+
+    push.allowed = false;
+    container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
+    await _settle();
+    expect(server.requests, hasLength(2));
+    expect(container.read(pushBlockedProvider), isTrue);
+
+    push.allowed = null;
+    push.address = 'https://push.example.com/2';
+    push.refreshes.add(null);
+    await _settle();
+    expect(server.requests.last, contains('push.example.com/2'));
   });
 
   test('a device makes up its own ID and keeps it', () async {

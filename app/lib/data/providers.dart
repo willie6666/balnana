@@ -147,12 +147,16 @@ Future<void> signOut(WidgetRef ref) async {
 }
 
 class Summaries {
-  const Summaries({required this.groups, required this.missing});
+  const Summaries({required this.groups, required this.missing, this.locked = const []});
 
   final List<GroupSummary> groups;
 
   /// The tokens of groups on this device the server no longer has.
   final List<String> missing;
+
+  /// The tokens of groups on this device the server has, but that need
+  /// signing in, or another account, to open.
+  final List<String> locked;
 }
 
 /// The groups to show at home: the account's groups when signed in, else the
@@ -166,11 +170,11 @@ final summariesProvider = FutureProvider<Summaries>((ref) async {
   }
   final known = ref.watch(knownGroupsProvider);
   if (known.isEmpty) return _mark(who, Summaries(groups: [], missing: []));
-  final (groups, missing) = await api.summaries({for (final g in known) g.token: g.memberId});
+  final (:groups, :missing, :locked) = await api.summaries({for (final g in known) g.token: g.memberId});
   // Keep this device's order.
   final order = {for (final (i, g) in known.indexed) g.token: i};
   groups.sort((a, b) => (order[a.token] ?? 0).compareTo(order[b.token] ?? 0));
-  return _mark(who, Summaries(groups: groups, missing: missing));
+  return _mark(who, Summaries(groups: groups, missing: missing, locked: locked));
 });
 
 final groupProvider = FutureProvider.family<Group, String>(
@@ -248,6 +252,9 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
 
   /// Loads the next page, unless the last try failed and this is no [retry].
   Future<void> loadMore({bool retry = false}) async {
+    // While reloading, state still holds the old first page, and its cursor
+    // would add a page after it over the new one.
+    if (state.isLoading) return;
     final current = state.value;
     if (current == null || !current.hasMore || current.loadingMore) return;
     if (current.moreError != null && !retry) return;
@@ -257,12 +264,12 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     );
     try {
       final page = await groupApi(ref, token).expenses(_digits, cursor: current.nextCursor, filter: filter);
-      if (!ref.mounted || build != _build) return;
+      if (!ref.mounted || build != _build || state.isLoading) return;
       state = AsyncData(
         _mark(_who, ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter)),
       );
     } on Exception catch (e) {
-      if (!ref.mounted || build != _build) return;
+      if (!ref.mounted || build != _build || state.isLoading) return;
       state = AsyncData(
         _mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e)),
       );
@@ -274,10 +281,22 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
 typedef FeedItem = ({Activity activity, Group group});
 
 /// The latest changes in every group at home, newest first.
-final activityFeedProvider = FutureProvider<List<FeedItem>>((ref) async {
+/// What changed lately in the groups on this device, newest first.
+class ActivityFeed {
+  const ActivityFeed({required this.items, this.failed = 0});
+
+  final List<FeedItem> items;
+
+  /// How many groups could not be loaded, whose changes are missing.
+  final int failed;
+}
+
+final activityFeedProvider = FutureProvider<ActivityFeed>((ref) async {
   final who = ref.watch(identityProvider);
   final api = _api(ref);
   final home = await ref.watch(summariesProvider.future);
+  Object? error;
+  var failed = 0, gone = false;
   final perGroup = await Future.wait(
     home.groups.map((g) async {
       try {
@@ -285,15 +304,31 @@ final activityFeedProvider = FutureProvider<List<FeedItem>>((ref) async {
         final page = await api.group(g.token).activity(limit: 30);
         return [for (final a in page.items) (activity: a, group: group)];
       } on ApiException catch (e) {
-        if (e.isNotFound) return <FeedItem>[];
-        rethrow;
+        if (e.isNotFound || e.code == 'not_a_member') {
+          gone = true;
+          return <FeedItem>[];
+        }
+        failed++;
+        error ??= e;
+      } on Exception catch (e) {
+        failed++;
+        error ??= e;
       }
+      return <FeedItem>[];
     }),
   );
+  // The list of groups is out of date, so it is loaded again, and this
+  // with it.
+  if (gone && ref.mounted) ref.invalidate(summariesProvider);
+  // With nothing to show, why is worth more than an empty page.
+  if (failed > 0 && failed == home.groups.length) throw error!;
   return _mark(
     who,
-    perGroup.expand((items) => items).toList()
-      ..sort((a, b) => b.activity.createdAt.compareTo(a.activity.createdAt)),
+    ActivityFeed(
+      items: perGroup.expand((items) => items).toList()
+        ..sort((a, b) => b.activity.createdAt.compareTo(a.activity.createdAt)),
+      failed: failed,
+    ),
   );
 });
 

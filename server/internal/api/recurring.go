@@ -579,8 +579,9 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 // has added nothing yet starts over. Otherwise the new schedule takes over
 // at its occurrence nearest to where the old one would have gone next, so
 // moving the day does not add a period's expense twice or leave one out.
-// Either way it does not bring back occurrences skipped while paused.
-func continueAt(r *RecurringExpense, sched schedule) (*time.Time, error) {
+// Either way it does not bring back occurrences skipped while paused, which
+// end at skipped (nil when none were).
+func continueAt(r *RecurringExpense, sched schedule, skipped *time.Time) (*time.Time, error) {
 	old, err := scheduleOf(r)
 	if err != nil {
 		return nil, err
@@ -598,7 +599,19 @@ func continueAt(r *RecurringExpense, sched schedule) (*time.Time, error) {
 	if r.NextAt != nil && r.NextAt.After(*nominal) && next != nil && next.Before(*r.NextAt) {
 		next = sched.after(r.NextAt.Add(-time.Nanosecond))
 	}
+	// The same once it has ended, when next_at no longer says so.
+	if skipped != nil && next != nil && !next.After(*skipped) {
+		next = sched.after(*skipped)
+	}
 	return next, nil
+}
+
+// pauseTimes are when r was paused (nil when it is not) and where the
+// occurrences it skipped while paused end (nil when it never skipped any).
+func pauseTimes(ctx context.Context, tx pgx.Tx, id string) (paused, skipped *time.Time, err error) {
+	err = tx.QueryRow(ctx, `select paused_at, skipped_until from recurring_expenses where id = $1`, id).
+		Scan(&paused, &skipped)
+	return paused, skipped, err
 }
 
 func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurringExpenseRequestObject) (UpdateRecurringExpenseResponseObject, error) {
@@ -626,14 +639,22 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 		if err != nil {
 			return err
 		}
-		next, err := continueAt(r, sched)
+		paused, skipped, err := pauseTimes(ctx, tx, r.Id)
 		if err != nil {
 			return err
 		}
-		if !r.Paused {
-			if err := sched.checkDue(next, now); err != nil {
-				return err
-			}
+		next, err := continueAt(r, sched, skipped)
+		if err != nil {
+			return err
+		}
+		// Paused, what came due before the pause is added on resuming, so it
+		// is held to the same limit.
+		dueBy := now
+		if paused != nil && paused.Before(now) {
+			dueBy = *paused
+		}
+		if err := sched.checkDue(next, dueBy); err != nil {
+			return err
 		}
 		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
@@ -712,6 +733,14 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 			if pausedAt.After(now) {
 				pausedAt = now
 			}
+			sched, err := scheduleOf(r)
+			if err != nil {
+				return err
+			}
+			// addDue stops at maxDue, which would silently drop the rest.
+			if err := sched.checkDue(r.NextAt, pausedAt); err != nil {
+				return err
+			}
 			if added, err = addDue(ctx, tx, g, r, pausedAt); err != nil {
 				return err
 			}
@@ -726,10 +755,6 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 			}
 			next = r.NextAt
 			if next != nil && !next.After(now) {
-				sched, err := scheduleOf(r)
-				if err != nil {
-					return err
-				}
 				next = sched.after(now)
 			}
 		}
@@ -739,6 +764,7 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 		}
 		if _, err := tx.Exec(ctx, `
 			update recurring_expenses set paused_at = case when $2 then $4::timestamptz end, next_at = $3,
+				skipped_until = case when $2 then skipped_until else $4::timestamptz end,
 				updated_at = now(), version = version + 1
 			where id = $1`, r.Id, req.Body.Paused, next, now); err != nil {
 			return err

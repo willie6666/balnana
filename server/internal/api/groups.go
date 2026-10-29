@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"regexp"
 	"slices"
 	"strings"
@@ -127,20 +128,26 @@ func (s *Server) GetGroupSummaries(ctx context.Context, req GetGroupSummariesReq
 	// gone or its link reset meanwhile, which the app shows. However many,
 	// they count as one miss, or a phone holding a few would be locked out
 	// of the server by reloading its home page.
-	var misses int
+	misses := &missCount{}
 	defer func() {
-		if misses > 0 {
+		if misses.n > 0 {
 			noteMiss(ctx)
 		}
 	}()
-	lookup := context.WithValue(ctx, missesKey{}, &misses)
-	out := GroupSummaryList{Missing: []string{}}
+	lookup := context.WithValue(ctx, missesKey{}, misses)
+	out := GroupSummaryList{Missing: []string{}, Locked: []string{}}
 	var groups []*group
 	for _, item := range req.Body.Groups {
 		g, err := s.groupByToken(lookup, s.db, item.Token, false)
 		var ae *apiError
-		if errors.As(err, &ae) && ae.status >= 400 && ae.status < 500 {
+		if errors.As(err, &ae) && ae.status == http.StatusNotFound {
 			out.Missing = append(out.Missing, item.Token)
+			continue
+		}
+		// The group is there, but not open to this device as it is: the app
+		// must not offer to forget it.
+		if errors.As(err, &ae) && ae.status >= 400 && ae.status < 500 {
+			out.Locked = append(out.Locked, item.Token)
 			continue
 		}
 		if err != nil {
@@ -396,6 +403,10 @@ func (s *Server) ResetGroupLink(ctx context.Context, req ResetGroupLinkRequestOb
 		}
 		// Phones following by the old link hear nothing more (see pushDevices).
 		if _, err := tx.Exec(ctx, `delete from push_follows where group_id = $1 and link_token <> $2`, g.id, g.token); err != nil {
+			return err
+		}
+		// Invitations hand out the link, so they would hand out the new one.
+		if _, err := tx.Exec(ctx, `delete from invites where group_id = $1`, g.id); err != nil {
 			return err
 		}
 		if err := logActivity(ctx, tx, g.id, who, "group.link_reset", nil, nil); err != nil {

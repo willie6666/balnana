@@ -380,6 +380,24 @@ class _EditorState extends ConsumerState<_Editor> {
     }
   }
 
+  /// Why an amount typed for a payer or a share is not one, if any is not.
+  MoneyError? get _typedError {
+    final typed = [
+      if (_multiPay)
+        for (final c in _paid.values) (c.text, _digits),
+      if (_method != SplitMethod.equal)
+        for (final id in _included) (_values[id]!.text, _method == SplitMethod.shares ? 4 : _digits),
+    ];
+    for (final (text, digits) in typed) {
+      try {
+        parseInput(text, digits);
+      } on MoneyException catch (e) {
+        return e.error;
+      }
+    }
+    return null;
+  }
+
   List<SplitPart> get _parts => [
     for (final m in _people)
       if (_included.contains(m.id))
@@ -580,7 +598,8 @@ class _EditorState extends ConsumerState<_Editor> {
     if (!_form.currentState!.validate()) return;
     final total = _total, payers = _payers(), preview = _preview();
     if (total == null || payers == null || preview.shares == null) {
-      final message = preview.error != null ? moneyErrorMessage(l10n, preview.error!) : l10n.errorPayersTotal;
+      final error = _typedError ?? preview.error;
+      final message = error != null ? moneyErrorMessage(l10n, error) : l10n.errorPayersTotal;
       messenger.showSnackBar(SnackBar(content: Text(message)));
       return;
     }
@@ -638,6 +657,11 @@ class _EditorState extends ConsumerState<_Editor> {
       setState(() => _busy = false);
       if (e.code == 'expense_version_conflict' || e.code == 'recurring_version_conflict') {
         await _conflict(errorMessage(l10n, e));
+      } else if (e.code == 'invalid_category') {
+        // Someone deleted it meanwhile: offer the categories there are now.
+        setState(() => _category = null);
+        ref.invalidate(groupProvider(_group.token));
+        messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
       } else {
         messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
       }
@@ -823,7 +847,8 @@ class _EditorState extends ConsumerState<_Editor> {
                   ),
                   validator: (_) {
                     try {
-                      return _total == null ? l10n.errorInvalidAmount : null;
+                      final v = parseInput(_amount.text, _digits);
+                      return v != null && v > BigInt.zero ? null : l10n.errorInvalidAmount;
                     } on MoneyException catch (e) {
                       return moneyErrorMessage(l10n, e.error);
                     }
@@ -839,7 +864,8 @@ class _EditorState extends ConsumerState<_Editor> {
                 ),
                 const SizedBox(height: BSpace.s12),
                 SizedBox(
-                  height: 40,
+                  // The chips grow with the text size.
+                  height: MediaQuery.textScalerOf(context).scale(40),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -1036,6 +1062,8 @@ class _PaidBy extends StatelessWidget {
                         inputFormatters: [AmountFormatter(s._digits)],
                         decoration: InputDecoration(
                           isDense: true,
+                          errorText: _inputError(l10n, s._paid[m.id]!.text, s._digits),
+                          errorMaxLines: 3,
                           prefixIcon: FieldAffix(symbol),
                           prefixIconConstraints: const BoxConstraints(),
                           hintText: '0',
@@ -1183,6 +1211,7 @@ class _SplitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final s = state;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
@@ -1234,6 +1263,12 @@ class _SplitRow extends StatelessWidget {
                   inputFormatters: [AmountFormatter(method == SplitMethod.exact ? s._digits : 4)],
                   decoration: InputDecoration(
                     isDense: true,
+                    errorText: _inputError(
+                      l10n,
+                      s._values[member.id]!.text,
+                      method == SplitMethod.exact ? s._digits : 4,
+                    ),
+                    errorMaxLines: 3,
                     hintText: '0',
                     prefixIcon: method == SplitMethod.exact ? FieldAffix(symbol) : null,
                     prefixIconConstraints: const BoxConstraints(),
@@ -1247,6 +1282,17 @@ class _SplitRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Why [text] is not an amount with [digits] decimals, or null when it is
+/// one or blank.
+String? _inputError(AppLocalizations l10n, String text, int digits) {
+  try {
+    parseInput(text, digits);
+    return null;
+  } on MoneyException catch (e) {
+    return moneyErrorMessage(l10n, e.error);
   }
 }
 

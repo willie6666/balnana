@@ -60,7 +60,17 @@ String errorMessage(AppLocalizations l10n, Object error) {
       _importProblem(l10n, '${error.params['problem']}'),
     ),
     'import_me' => l10n.errorImportMe,
-    'too_large' => l10n.errorImportTooBig,
+    'too_large' => l10n.errorTooLarge,
+    'busy' => l10n.errorBusy,
+    'timeout' => l10n.errorTimeout,
+    'bad_origin' => l10n.errorBadOrigin,
+    'invalid_category' => l10n.errorInvalidCategory,
+    'builtin_category' => l10n.errorBuiltinCategory,
+    'unknown_member' || 'invalid_member' => l10n.errorUnknownMember,
+    'no_payers' => l10n.errorNoPayers,
+    'payer_total' => l10n.errorPayerTotal,
+    'invalid_note' => l10n.errorInvalidNote,
+    'invalid_date' => l10n.errorInvalidDate,
     'bad_image' => l10n.errorBadImage,
     final code =>
       MoneyError.values.where((e) => e.code == code).map((e) => moneyErrorMessage(l10n, e)).firstOrNull ??

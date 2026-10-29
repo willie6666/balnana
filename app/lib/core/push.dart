@@ -30,8 +30,9 @@ abstract interface class PushService {
   /// The subscription changed or ended, so the server needs telling again.
   Stream<void> get changes;
 
-  /// Asks to show notifications, where the system wants that asked.
-  Future<void> requestPermission();
+  /// Asks to show notifications, where the system wants that asked, and
+  /// whether they may be shown.
+  Future<bool> requestPermission();
 
   /// The group of each notification tapped while the app runs.
   Stream<PushTarget> get openedGroups;
@@ -72,7 +73,13 @@ class _UnifiedPush implements PushService {
   _UnifiedPush(this._prefs);
 
   final SharedPreferences _prefs;
-  late final Future<void> _ready = _start();
+  Future<void>? _started;
+
+  /// Set up once. A start that failed is tried again the next time.
+  Future<void> get _ready => _started ??= _start().catchError((Object e, StackTrace stack) {
+    _started = null;
+    Error.throwWithStackTrace(e, stack);
+  });
   final _changes = StreamController<void>.broadcast();
   final _opened = StreamController<PushTarget>.broadcast();
 
@@ -154,11 +161,12 @@ class _UnifiedPush implements PushService {
   Stream<void> get changes => _changes.stream;
 
   @override
-  Future<void> requestPermission() async {
+  Future<bool> requestPermission() async {
     await _ready;
-    await _notifications
+    final allowed = await _notifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+    return allowed ?? true;
   }
 
   @override
@@ -383,7 +391,24 @@ final pushSyncProvider = Provider<void>((ref) {
   ref.onDispose(timer.cancel);
 });
 
-final _pushReconcilerProvider = Provider<_PushReconciler>((ref) => _PushReconciler(ref.watch(prefsProvider)));
+final _pushReconcilerProvider = Provider<_PushReconciler>(
+  (ref) => _PushReconciler(ref.watch(prefsProvider), (blocked) {
+    if (ref.mounted) ref.read(pushBlockedProvider.notifier).set(blocked);
+  }),
+);
+
+/// Whether the system was last found to block this app's notifications, so
+/// none show however the setting is.
+final pushBlockedProvider = NotifierProvider<PushBlockedNotifier, bool>(PushBlockedNotifier.new);
+
+class PushBlockedNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool blocked) {
+    if (state != blocked) state = blocked;
+  }
+}
 
 /// What the server should know about this device, as of one change.
 class _PushWant {
@@ -415,9 +440,10 @@ class _PushWant {
 /// [_PushWant]: a registration still on its way when notifications are
 /// turned off is followed by a removal, not left standing.
 class _PushReconciler {
-  _PushReconciler(this._prefs);
+  _PushReconciler(this._prefs, this._blocked);
 
   final SharedPreferences _prefs;
+  final void Function(bool blocked) _blocked;
   _PushWant? _latest;
   bool _running = false;
 
@@ -457,7 +483,13 @@ class _PushReconciler {
       if (forgotten || before != server) await _prefs.remove(_registeredOn);
     }
     if (!want.register || _stale(want)) return;
-    await want.push.requestPermission();
+    try {
+      _blocked(!await want.push.requestPermission());
+    } on Object catch (e) {
+      // The server is told all the same: notifications allowed later, in
+      // the system's settings, then show straight away.
+      debugPrint('notification permission: $e');
+    }
     if (_stale(want)) return;
     final sub = await want.push.subscribe(server!, want.vapid!);
     if (sub == null || _stale(want)) return;

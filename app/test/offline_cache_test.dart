@@ -85,13 +85,13 @@ void main() {
   });
 
   test('keeps reading POSTs by body, and nothing else that writes', () async {
+    await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
     await dio.post<Object?>(
       '/groups/summaries',
       data: {
         'tokens': ['a'],
       },
     );
-    await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
     await saved();
     server.down = true;
     final summaries = await dio.post<Object?>(
@@ -114,6 +114,37 @@ void main() {
       dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'}),
       throwsA(isA<DioException>()),
     );
+  });
+
+  test('a change to a group forgets what was saved of it', () async {
+    await dio.get<Object?>('/g/tok');
+    await dio.get<Object?>('/g/tok/expenses', queryParameters: {'limit': '50'});
+    await dio.get<Object?>('/g/other');
+    await dio.post<Object?>(
+      '/groups/summaries',
+      data: {
+        'tokens': ['tok'],
+      },
+    );
+    await saved();
+    await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
+    server.down = true;
+    await expectLater(dio.get<Object?>('/g/tok'), throwsA(isA<DioException>()));
+    await expectLater(
+      dio.get<Object?>('/g/tok/expenses', queryParameters: {'limit': '50'}),
+      throwsA(isA<DioException>()),
+    );
+    await expectLater(
+      dio.post<Object?>(
+        '/groups/summaries',
+        data: {
+          'tokens': ['tok'],
+        },
+      ),
+      throwsA(isA<DioException>()),
+    );
+    // Other groups keep theirs.
+    await dio.get<Object?>('/g/other');
   });
 
   test('an error from the server is not covered up', () async {

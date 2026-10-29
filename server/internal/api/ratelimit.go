@@ -60,6 +60,17 @@ func (b *buckets) take(key string, n float64, now time.Time) bool {
 	return true
 }
 
+// give puts n tokens back, as when a request that took them turned out not to
+// need them.
+func (b *buckets) give(key string, n float64, now time.Time) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if k := b.m[key]; k != nil {
+		k.tokens = min(b.burst, k.tokens+now.Sub(k.last).Seconds()*b.perSecond+n)
+		k.last = now
+	}
+}
+
 // retryAfter is how long until key has one token again.
 func (b *buckets) retryAfter(key string, now time.Time) time.Duration {
 	b.mu.Lock()
@@ -89,6 +100,14 @@ func (b *buckets) sweep(now time.Time) {
 
 type missesKey struct{}
 
+// missCount is what rateLimit puts in a request's context: the misses noted so
+// far, and the client's bucket for those taken up front.
+type missCount struct {
+	n   int
+	b   *buckets
+	key string
+}
+
 type clientCtxKey struct{}
 
 // requestClient is the key rateLimit gave this request's client ("" when
@@ -101,9 +120,40 @@ func requestClient(ctx context.Context) string {
 // noteMiss records that this request asked for a group token that does not
 // exist, for the rate limiter.
 func noteMiss(ctx context.Context) {
-	if n, ok := ctx.Value(missesKey{}).(*int); ok {
-		*n++
+	if m, ok := ctx.Value(missesKey{}).(*missCount); ok {
+		m.n++
 	}
+}
+
+// holdGuess counts a password guess before it is checked: as misses against
+// the client, so a burst of concurrent guesses cannot all pass before the
+// first is counted, and against account, so guesses spread over many clients
+// still slow down. The returned func gives both back once the guess was right.
+func (s *Server) holdGuess(ctx context.Context, account string) (func(), error) {
+	now := time.Now()
+	m, _ := ctx.Value(missesKey{}).(*missCount)
+	if m != nil && m.b == nil {
+		m = nil
+	}
+	if m != nil && !m.b.take(m.key, loginMissWeight, now) {
+		return nil, limited(m.b, m.key, now)
+	}
+	held := s.conf().RateLimit != 0
+	if held && !s.guesses.take(account, 1, now) {
+		if m != nil {
+			m.b.give(m.key, loginMissWeight, now)
+		}
+		return nil, limited(s.guesses, account, now)
+	}
+	return func() {
+		now := time.Now()
+		if m != nil {
+			m.b.give(m.key, loginMissWeight, now)
+		}
+		if held {
+			s.guesses.give(account, 1, now)
+		}
+	}, nil
 }
 
 // Groups a client may create in a row, and how fast that allowance comes
@@ -122,6 +172,15 @@ const (
 	// after. Each one emails the new address.
 	emailChangeBurst   = 5
 	emailChangePerHour = 6
+	// Wrong passwords an account (or the administrator) may be sent in a row
+	// from anywhere, and how many an hour after. Someone who keeps guessing
+	// also slows the owner down, so this stays loose.
+	guessBurst   = 20
+	guessPerHour = 30
+	// Phones a client may register for push in a row, and how many a day
+	// after. Phones register again under the ID they have, which is free.
+	deviceBurst  = 20
+	devicePerDay = 20
 )
 
 var errRateLimited = &apiError{status: http.StatusTooManyRequests, code: "rate_limited"}
@@ -132,8 +191,8 @@ func (s *Server) limitCreates(ctx context.Context) error {
 	if s.conf().RateLimit == 0 {
 		return nil
 	}
-	if !s.creates.take(requestClient(ctx), 1, time.Now()) {
-		return errRateLimited
+	if now := time.Now(); !s.creates.take(requestClient(ctx), 1, now) {
+		return limited(s.creates, requestClient(ctx), now)
 	}
 	return nil
 }
@@ -144,8 +203,20 @@ func (s *Server) limitSignups(ctx context.Context) error {
 	if s.conf().RateLimit == 0 {
 		return nil
 	}
-	if !s.signups.take(requestClient(ctx), 1, time.Now()) {
-		return errRateLimited
+	if now := time.Now(); !s.signups.take(requestClient(ctx), 1, now) {
+		return limited(s.signups, requestClient(ctx), now)
+	}
+	return nil
+}
+
+// limitDevices counts a newly registered phone against the client's
+// allowance. Off when BALNANA_RATE_LIMIT is 0.
+func (s *Server) limitDevices(ctx context.Context) error {
+	if s.conf().RateLimit == 0 {
+		return nil
+	}
+	if now := time.Now(); !s.devices.take(requestClient(ctx), 1, now) {
+		return limited(s.devices, requestClient(ctx), now)
 	}
 	return nil
 }
@@ -174,18 +245,27 @@ func rateLimit(perMinute int, trustProxy bool, next http.Handler) http.Handler {
 			tooMany(w, wait)
 			return
 		}
-		var n int
-		ctx := context.WithValue(r.Context(), missesKey{}, &n)
+		m := &missCount{b: misses, key: key}
+		ctx := context.WithValue(r.Context(), missesKey{}, m)
 		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, clientCtxKey{}, key)))
-		if n > 0 {
-			misses.take(key, float64(n), time.Now())
+		if m.n > 0 {
+			misses.take(key, float64(m.n), time.Now())
 		}
 	})
 }
 
 func tooMany(w http.ResponseWriter, wait time.Duration) {
-	w.Header().Set("Retry-After", strconv.Itoa(max(1, int(wait.Seconds()+0.999))))
+	setRetryAfter(w, wait)
 	writeError(w, http.StatusTooManyRequests, "rate_limited")
+}
+
+func setRetryAfter(w http.ResponseWriter, wait time.Duration) {
+	w.Header().Set("Retry-After", strconv.Itoa(max(1, int(wait.Seconds()+0.999))))
+}
+
+// limited is the error for a request key has no tokens left for in b.
+func limited(b *buckets, key string, now time.Time) error {
+	return &apiError{status: http.StatusTooManyRequests, code: "rate_limited", retryAfter: b.retryAfter(key, now)}
 }
 
 // clientKey identifies the client: its IP address, or its /64 network for

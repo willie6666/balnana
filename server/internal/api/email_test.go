@@ -75,6 +75,13 @@ func takeAddress(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	}
 }
 
+// confirmEmail confirms the address on c's account through the email.
+func confirmEmail(c *client, f fakeMail, email string) {
+	c.t.Helper()
+	c.must(204, "POST", "/me/verify-email", nil, nil)
+	c.another().must(204, "POST", "/auth/verify-email", EmailToken{Token: lastPart(f.next(c.t, email))}, nil)
+}
+
 func lastPart(link string) string {
 	return regexp.MustCompile(`[^/=]+$`).FindString(link)
 }
@@ -182,9 +189,39 @@ func TestEmailOff(t *testing.T) {
 	}
 }
 
+// Someone who made an account with another person's address loses it when
+// that person registers with an invitation sent there.
+func TestInviteReclaimsAccount(t *testing.T) {
+	ana, f := mailClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	confirmEmail(ana, f, "ana@example.com")
+	g := createGroup(ana, "Ana", "Ben")
+	mallory := ana.another()
+	taken := register(mallory, "ben@example.com", "Mallory")
+
+	ana.must(204, "POST", "/g/"+g.Token+"/invites", InviteInput{Email: "ben@example.com"}, nil)
+	token := lastPart(f.next(t, "ben@example.com"))
+	ben := ana.another()
+	if code := ben.errorCode(409, "POST", "/auth/register", RegisterInput{Email: ptr("ben@example.com"), Password: "12345678", Name: "Ben"}); code != "email_taken" {
+		t.Fatal(code)
+	}
+	var s Session
+	ben.must(201, "POST", "/auth/register", RegisterInput{Email: ptr("ben@example.com"), Password: "12345678", Name: "Ben", Invite: &token}, &s)
+	if s.User.Id != taken.Id || !s.User.EmailVerified || s.User.Name != "Ben" {
+		t.Fatalf("session = %+v", s)
+	}
+	mallory.errorCode(401, "GET", "/me", nil)
+	mallory.another().errorCode(401, "POST", "/auth/login", LoginInput{Login: "ben@example.com", Password: "correct horse"})
+}
+
 func TestInvites(t *testing.T) {
 	ana, f := mailClient(t, map[string]string{"BALNANA_AUTH_SIGNUP": "invite_only"})
 	register(ana, "ana@example.com", "Ana")
+	// Only a confirmed address sends invitations.
+	if code := ana.errorCode(403, "POST", "/g/"+createGroup(ana, "Ana").Token+"/invites", InviteInput{Email: "ben@example.com"}); code != "email_unverified" {
+		t.Fatal(code)
+	}
+	confirmEmail(ana, f, "ana@example.com")
 	var g Group
 	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
 	path := "/g/" + g.Token
@@ -239,6 +276,13 @@ func TestInvites(t *testing.T) {
 	cy.must(201, "POST", "/auth/register", RegisterInput{Email: ptr("cy@example.com"), Password: "12345678", Name: "Cy", Invite: &cyToken}, &s)
 	cy.token = *s.Token
 	if code := cy.errorCode(403, "POST", "/g/"+g.Token+"/invites", InviteInput{Email: "dee@example.com"}); code != "not_a_member" {
+		t.Fatal(code)
+	}
+
+	// An invitation hands out the link, so resetting it withdraws them all.
+	ana.must(200, "GET", "/auth/invites/"+cyToken, nil, nil)
+	ana.must(200, "POST", path+"/reset-link", nil, nil)
+	if code := cy.errorCode(404, "GET", "/auth/invites/"+cyToken, nil); code != "not_found" {
 		t.Fatal(code)
 	}
 }

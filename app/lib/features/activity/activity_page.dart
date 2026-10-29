@@ -24,7 +24,8 @@ class ActivityPage extends ConsumerWidget {
     final l10n = context.l10n;
     final hasServer = ref.watch(serverUrlProvider) != null;
     final async = hasServer ? ref.watchCurrent(activityFeedProvider) : null;
-    final items = async?.value;
+    final feed = async?.value;
+    final items = feed?.items;
 
     if (items == null || items.isEmpty) {
       final failed = async != null && async.hasError && !async.isLoading;
@@ -40,17 +41,32 @@ class ActivityPage extends ConsumerWidget {
               title: l10n.groupsUnreachableTitle,
               body: errorMessage(l10n, async.error!),
               action: FilledButton.tonal(
-                onPressed: () => ref.invalidate(activityFeedProvider),
+                onPressed: () => ref
+                  ..invalidate(summariesProvider)
+                  ..invalidate(activityFeedProvider),
                 child: Text(l10n.commonRetry),
               ),
             )
           else
-            EmptyState(icon: Icons.history, title: l10n.activityEmptyTitle, body: l10n.activityEmptyBody),
+            EmptyState(
+              icon: Icons.history,
+              title: l10n.activityEmptyTitle,
+              body: feed != null && feed.failed > 0
+                  ? l10n.activityPartial(feed.failed)
+                  : l10n.activityEmptyBody,
+            ),
         ],
       );
     }
 
-    final rows = <Widget>[];
+    final rows = <Widget>[
+      if (feed!.failed > 0)
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s8),
+          leading: const Icon(Icons.cloud_off_outlined),
+          title: Text(l10n.activityPartial(feed.failed)),
+        ),
+    ];
     DateTime? day;
     for (final item in items) {
       final t = item.activity.createdAt.toLocal();
@@ -62,7 +78,10 @@ class ActivityPage extends ConsumerWidget {
       rows.add(ActivityTile(item: item));
     }
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(activityFeedProvider.future),
+      onRefresh: () {
+        ref.invalidate(summariesProvider);
+        return ref.refresh(activityFeedProvider.future);
+      },
       child: BPage(title: l10n.navActivity, children: rows),
     );
   }

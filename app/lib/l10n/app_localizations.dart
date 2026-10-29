@@ -229,6 +229,72 @@ abstract class AppLocalizations {
   /// **'Someone'**
   String get someone;
 
+  /// Message for a request the server refused as too big, such as a receipt photo or an import file.
+  ///
+  /// In en, this message translates to:
+  /// **'This is too big to send to the server.'**
+  String get errorTooLarge;
+
+  /// Message when the server has too much work to take this request now.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is busy. Please try again in a moment.'**
+  String get errorBusy;
+
+  /// Message when the server stopped waiting for an upload.
+  ///
+  /// In en, this message translates to:
+  /// **'This took too long to send. Check your connection and try again.'**
+  String get errorTimeout;
+
+  /// Message when the server refuses a signed-in request from a web address it was not set up for.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not accept sign-ins from this address. Whoever runs it should check its public URL.'**
+  String get errorBadOrigin;
+
+  /// Message when the expense's category no longer exists in the group.
+  ///
+  /// In en, this message translates to:
+  /// **'That category was deleted meanwhile. Pick another one.'**
+  String get errorInvalidCategory;
+
+  /// Message when trying to rename or delete a built-in category.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in categories can only be hidden.'**
+  String get errorBuiltinCategory;
+
+  /// Message when an expense names a member the group does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone in this is no longer in the group. Reload and try again.'**
+  String get errorUnknownMember;
+
+  /// Message when an expense has no payer.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose who paid.'**
+  String get errorNoPayers;
+
+  /// Message when the payers' amounts do not add up to the expense amount.
+  ///
+  /// In en, this message translates to:
+  /// **'What each person paid must add up to the amount.'**
+  String get errorPayerTotal;
+
+  /// Message when an expense note is refused.
+  ///
+  /// In en, this message translates to:
+  /// **'The note is too long or has characters that cannot be saved.'**
+  String get errorInvalidNote;
+
+  /// Message when an expense date is outside the years allowed.
+  ///
+  /// In en, this message translates to:
+  /// **'That date is out of range.'**
+  String get errorInvalidDate;
+
   /// Message for error generic in API error feedback.
   ///
   /// In en, this message translates to:
@@ -582,6 +648,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This group was deleted, or its link was reset. Ask someone in the group for the new link.'**
   String get groupMissingBody;
+
+  /// Heading in the group switcher for a group on this device that the server keeps for signed-in members.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to open this group'**
+  String get groupLockedTitle;
+
+  /// Explanation under groupLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This group is only open to its members\' accounts. Sign in to the account that belongs to it.'**
+  String get groupLockedBody;
 
   /// Label or control text for group forget in group creation, settings, or switching.
   ///
@@ -1915,6 +1993,12 @@ abstract class AppLocalizations {
   /// **'Check your connection, or the server address in Settings.'**
   String get groupsUnreachableBody;
 
+  /// Shown on the activity page when some groups could not be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One group could not be loaded, so its changes are missing.} other{{count} groups could not be loaded, so their changes are missing.}}'**
+  String activityPartial(int count);
+
   /// Heading for activity empty title in the cross-group activity timeline.
   ///
   /// In en, this message translates to:
@@ -2184,6 +2268,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When someone adds, changes or deletes an expense you are in'**
   String get settingsNotificationsSubtitle;
+
+  /// Subtitle of the notifications switch when the system blocks the app's notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked in the phone\'s settings: allow notifications for Balnana there to see them'**
+  String get settingsNotificationsBlocked;
 
   /// Message for push channel in Android notification content.
   ///
@@ -3732,6 +3822,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to groups'**
   String get linkGoHome;
+
+  /// Button on the page for a link the app cannot open, which opens it in a browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get linkOpenInBrowser;
 
   /// Heading for privacy title in the built-in privacy notice.
   ///

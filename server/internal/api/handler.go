@@ -26,6 +26,10 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 				writeError(w, http.StatusRequestEntityTooLarge, "too_large")
 				return
 			}
+			if errors.Is(err, errNoCoordinate) {
+				writeError(w, http.StatusBadRequest, "invalid_location")
+				return
+			}
 			writeError(w, http.StatusBadRequest, "bad_request")
 		},
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
@@ -133,6 +137,7 @@ func cors(origins []string, next http.Handler) http.Handler {
 		h := w.Header()
 		h.Add("Vary", "Origin")
 		h.Set("Access-Control-Allow-Origin", origin)
+		h.Set("Access-Control-Expose-Headers", "Retry-After, Content-Disposition")
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
 			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Balnana-Member, X-Balnana-Admin")

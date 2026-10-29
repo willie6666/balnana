@@ -113,10 +113,9 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	if err != nil {
 		return nil, err
 	}
-	if !dryRun {
-		if err := s.limitCreates(ctx); err != nil {
-			return nil, err
-		}
+	// A dry run does all the work of an import, rolled back, so it counts too.
+	if err := s.limitCreates(ctx); err != nil {
+		return nil, err
 	}
 
 	var preview ImportPreview
@@ -366,14 +365,20 @@ type share struct {
 	value int64
 }
 
-func addTo(list []share, id string, v int64) []share {
+// addTo adds v to id's value, failing when that would pass what any amount
+// may be, so a name repeated on many rows cannot overflow it.
+func addTo(list []share, id string, v int64) ([]share, bool) {
 	for i := range list {
 		if list[i].id == id {
-			list[i].value += v
-			return list
+			sum := list[i].value + v
+			if abs(sum) > domain.MaxMinor {
+				return list, false
+			}
+			list[i].value = sum
+			return list, true
 		}
 	}
-	return append(list, share{id, v})
+	return append(list, share{id, v}), true
 }
 
 // importInput turns one row into an expense or payment. The problem is
@@ -388,7 +393,9 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			if !ok {
 				return "", ExpenseInput{}, "amount"
 			}
-			paid = addTo(paid, ids[p.Name], v)
+			if paid, ok = addTo(paid, ids[p.Name], v); !ok {
+				return "", ExpenseInput{}, "amount"
+			}
 		}
 	case e.Rate == "":
 		return "", ExpenseInput{}, "currency"
@@ -398,7 +405,9 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			if !ok {
 				return "", ExpenseInput{}, "amount"
 			}
-			paid = addTo(paid, ids[p.Name], v)
+			if paid, ok = addTo(paid, ids[p.Name], v); !ok {
+				return "", ExpenseInput{}, "amount"
+			}
 		}
 	case len(e.Converted) == 1:
 		total, ok := toMinor(e.Converted[0], digits)
@@ -411,7 +420,9 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			if !ok {
 				return "", ExpenseInput{}, "amount"
 			}
-			weights = addTo(weights, ids[p.Name], w)
+			if weights, ok = addTo(weights, ids[p.Name], w); !ok {
+				return "", ExpenseInput{}, "amount"
+			}
 		}
 		if total == 0 {
 			return "", ExpenseInput{}, "skip"
@@ -426,7 +437,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			return "", ExpenseInput{}, "amount"
 		}
 		for _, w := range weights {
-			paid = addTo(paid, w.id, sign(total)*amounts[w.id])
+			paid, _ = addTo(paid, w.id, sign(total)*amounts[w.id])
 		}
 	default:
 		return "", ExpenseInput{}, "counts"
@@ -456,10 +467,13 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		if !ok {
 			return "", ExpenseInput{}, "amount"
 		}
-		weights = addTo(weights, ids[p.Name], abs(w))
+		if weights, ok = addTo(weights, ids[p.Name], abs(w)); !ok {
+			return "", ExpenseInput{}, "amount"
+		}
 		v, ok := toMinor(p.Amount, digits)
 		exactOK = exactOK && ok
-		exact = addTo(exact, ids[p.Name], abs(v))
+		exact, ok = addTo(exact, ids[p.Name], abs(v))
+		exactOK = exactOK && ok
 	}
 	var sum int64
 	for _, x := range exact {
@@ -566,6 +580,18 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		for _, x := range exact {
 			v := domain.FormatAmount(x.value, digits)
 			in.Splits = append(in.Splits, Share{MemberId: x.id, Value: &v})
+		}
+	case slices.ContainsFunc(people, func(p share) bool { return p.value > maxShareValue }):
+		// Weights larger than a share may be are kept as the amounts they
+		// come to.
+		owed, ok := spread(total, digits, people)
+		if !ok {
+			return "", ExpenseInput{}, "amount"
+		}
+		in.SplitMethod = SplitMethod(domain.SplitExact)
+		for _, p := range people {
+			v := domain.FormatAmount(owed[p.id], digits)
+			in.Splits = append(in.Splits, Share{MemberId: p.id, Value: &v})
 		}
 	default:
 		in.SplitMethod = SplitMethod(domain.SplitShares)

@@ -30,8 +30,12 @@ const (
 	minDeviceID = 16
 	maxDeviceID = 128
 	// Phones register again on every start; one silent this long is gone.
-	deviceKeep  = 90 * 24 * time.Hour
-	pushTimeout = 30 * time.Second
+	deviceKeep = 90 * 24 * time.Hour
+	// Phones a group may have following it. Every change to it is a message
+	// to each, from this server's address, so a client registering made-up
+	// phones must not be able to make that unbounded.
+	maxGroupDevices = 200
+	pushTimeout     = 30 * time.Second
 	// pushTTL is how long a push service keeps a message for a phone that
 	// is offline.
 	pushTTL = 24 * time.Hour
@@ -111,6 +115,15 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 	} else if u != nil {
 		session = &u.sessionID
 	}
+	var known bool
+	if err := s.db.QueryRow(ctx, `select exists (select 1 from push_devices where token = $1)`, req.Device).Scan(&known); err != nil {
+		return nil, err
+	}
+	if !known {
+		if err := s.limitDevices(ctx); err != nil {
+			return nil, err
+		}
+	}
 	type follow struct{ group, member, link string }
 	var follows []follow
 	for _, item := range req.Body.Groups {
@@ -154,9 +167,12 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 			return err
 		}
 		for _, f := range follows {
+			// A group already full keeps the phones that came first.
 			_, err := tx.Exec(ctx, `
-				insert into push_follows (device, group_id, member_id, link_token) values ($1, $2, $3, $4)
-				on conflict do nothing`, req.Device, f.group, f.member, f.link)
+				insert into push_follows (device, group_id, member_id, link_token)
+				select $1, $2, $3, $4
+				where (select count(*) from push_follows where group_id = $2) < $5
+				on conflict do nothing`, req.Device, f.group, f.member, f.link, maxGroupDevices)
 			if err != nil {
 				return err
 			}

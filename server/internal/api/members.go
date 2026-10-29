@@ -180,7 +180,24 @@ func (s *Server) RemoveMember(ctx context.Context, req RemoveMemberRequestObject
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `update members set left_at = now() where id = $1`, m.id); err != nil {
+		// Coming back by the link does not make them an owner again, and an
+		// invitation to be them no longer works.
+		if _, err := tx.Exec(ctx, `update members set left_at = now(), is_owner = false where id = $1`, m.id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `delete from invites where member_id = $1`, m.id); err != nil {
+			return err
+		}
+		// The last owner leaving hands the group on, as deleting the account
+		// does, to whoever joined with an account first.
+		_, err = tx.Exec(ctx, `
+			update members set is_owner = true where id = (
+				select id from members
+				where group_id = $1 and user_id is not null and left_at is null
+				order by created_at limit 1)
+			  and not exists (select 1 from members
+			                  where group_id = $1 and is_owner and user_id is not null and left_at is null)`, g.id)
+		if err != nil {
 			return err
 		}
 		return logActivity(ctx, tx, g.id, who, "member.removed", &m.id, map[string]any{"name": m.name})

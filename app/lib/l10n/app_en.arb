@@ -92,6 +92,50 @@
   "@someone": {
     "description": "Stands in for a person whose name is unknown."
   },
+  "errorTooLarge": "This is too big to send to the server.",
+  "@errorTooLarge": {
+    "description": "Message for a request the server refused as too big, such as a receipt photo or an import file."
+  },
+  "errorBusy": "The server is busy. Please try again in a moment.",
+  "@errorBusy": {
+    "description": "Message when the server has too much work to take this request now."
+  },
+  "errorTimeout": "This took too long to send. Check your connection and try again.",
+  "@errorTimeout": {
+    "description": "Message when the server stopped waiting for an upload."
+  },
+  "errorBadOrigin": "The server does not accept sign-ins from this address. Whoever runs it should check its public URL.",
+  "@errorBadOrigin": {
+    "description": "Message when the server refuses a signed-in request from a web address it was not set up for."
+  },
+  "errorInvalidCategory": "That category was deleted meanwhile. Pick another one.",
+  "@errorInvalidCategory": {
+    "description": "Message when the expense's category no longer exists in the group."
+  },
+  "errorBuiltinCategory": "Built-in categories can only be hidden.",
+  "@errorBuiltinCategory": {
+    "description": "Message when trying to rename or delete a built-in category."
+  },
+  "errorUnknownMember": "Someone in this is no longer in the group. Reload and try again.",
+  "@errorUnknownMember": {
+    "description": "Message when an expense names a member the group does not have."
+  },
+  "errorNoPayers": "Choose who paid.",
+  "@errorNoPayers": {
+    "description": "Message when an expense has no payer."
+  },
+  "errorPayerTotal": "What each person paid must add up to the amount.",
+  "@errorPayerTotal": {
+    "description": "Message when the payers' amounts do not add up to the expense amount."
+  },
+  "errorInvalidNote": "The note is too long or has characters that cannot be saved.",
+  "@errorInvalidNote": {
+    "description": "Message when an expense note is refused."
+  },
+  "errorInvalidDate": "That date is out of range.",
+  "@errorInvalidDate": {
+    "description": "Message when an expense date is outside the years allowed."
+  },
   "errorGeneric": "Something went wrong. Please try again.",
   "@errorGeneric": {
     "description": "Message for error generic in API error feedback."
@@ -345,6 +389,14 @@
   "groupMissingBody": "This group was deleted, or its link was reset. Ask someone in the group for the new link.",
   "@groupMissingBody": {
     "description": "Explanatory text for group missing body in group creation, settings, or switching."
+  },
+  "groupLockedTitle": "Sign in to open this group",
+  "@groupLockedTitle": {
+    "description": "Heading in the group switcher for a group on this device that the server keeps for signed-in members."
+  },
+  "groupLockedBody": "This group is only open to its members' accounts. Sign in to the account that belongs to it.",
+  "@groupLockedBody": {
+    "description": "Explanation under groupLockedTitle."
   },
   "groupForget": "Remove from this device",
   "@groupForget": {
@@ -1626,6 +1678,15 @@
   "@groupsUnreachableBody": {
     "description": "Explanatory text for groups unreachable body in the groups home page."
   },
+  "activityPartial": "{count, plural, =1{One group could not be loaded, so its changes are missing.} other{{count} groups could not be loaded, so their changes are missing.}}",
+  "@activityPartial": {
+    "description": "Shown on the activity page when some groups could not be loaded.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "activityEmptyTitle": "Nothing here yet",
   "@activityEmptyTitle": {
     "description": "Heading for activity empty title in the cross-group activity timeline."
@@ -1848,6 +1909,11 @@
   "@settingsNotificationsSubtitle": {
     "description": "Supporting text for settings notifications subtitle in application settings."
   },
+  "settingsNotificationsBlocked": "Blocked in the phone's settings: allow notifications for Balnana there to see them",
+  "@settingsNotificationsBlocked": {
+    "description": "Subtitle of the notifications switch when the system blocks the app's notifications."
+  },
+
   "pushChannel": "Expenses",
   "@pushChannel": {
     "description": "Message for push channel in Android notification content."
@@ -3139,6 +3205,10 @@
   "linkGoHome": "Go to groups",
   "@linkGoHome": {
     "description": "Label or control text for link go home in opening an app or group link."
+  },
+  "linkOpenInBrowser": "Open in browser",
+  "@linkOpenInBrowser": {
+    "description": "Button on the page for a link the app cannot open, which opens it in a browser."
   },
   "privacyTitle": "Privacy policy",
   "@privacyTitle": {

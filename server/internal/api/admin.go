@@ -37,9 +37,11 @@ const (
 // Setup codes avoid letters and digits that look alike.
 const setupCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-// LoadSettings puts the saved settings in force on top of the environment.
-// Saved settings that no longer fit the environment (say, a variable set
-// since) are left out until an administrator fixes them.
+// LoadSettings puts the saved settings in force on top of the environment,
+// as the server starts. Saved settings that no longer fit the environment
+// (say, a variable set since) are left out until an administrator fixes
+// them, except sign-in settings: without them the server would let in more
+// than it was set to, so it does not start.
 func (s *Server) LoadSettings(ctx context.Context) error {
 	stored, err := storedSettings(ctx, s.db)
 	if err != nil {
@@ -47,22 +49,42 @@ func (s *Server) LoadSettings(ctx context.Context) error {
 	}
 	cfg, err := config.LoadWith(stored)
 	if err != nil {
-		envOnly, envErr := config.Load()
-		if envErr != nil {
-			return errors.Join(err, envErr)
+		bad := config.ErrorKeys(err)
+		for _, k := range bad {
+			if strings.HasPrefix(k, "BALNANA_AUTH_") {
+				return err
+			}
 		}
-		s.log.Error("saved settings do not fit the environment; using the environment alone until they are fixed at /admin", "err", err)
-		cfg = envOnly
+		// A setting at fault goes with the ones beside it: a provider's
+		// client ID with its missing secret.
+		kept := maps.Clone(stored)
+		for _, k := range bad {
+			group := k[:strings.LastIndex(k, "_")+1]
+			maps.DeleteFunc(kept, func(key, _ string) bool { return strings.HasPrefix(key, group) })
+		}
+		var keptErr error
+		if cfg, keptErr = config.LoadWith(kept); keptErr != nil {
+			return errors.Join(err, keptErr)
+		}
+		s.log.Error("saved settings do not fit the environment; leaving them out until they are fixed at /admin",
+			"keys", bad, "err", err)
 	}
 	s.apply(cfg)
 	return nil
 }
 
-// reloadSettings follows settings another server saved.
+// reloadSettings follows settings another server saved. Saved settings
+// that do not fit this server's environment leave in force what is.
 func (s *Server) reloadSettings(ctx context.Context) {
-	if err := s.LoadSettings(ctx); err != nil {
-		s.log.Error("reloading settings failed", "err", err)
+	stored, err := storedSettings(ctx, s.db)
+	if err == nil {
+		var cfg *config.Config
+		if cfg, err = config.LoadWith(stored); err == nil {
+			s.apply(cfg)
+			return
+		}
 	}
+	s.log.Error("reloading settings failed; keeping the settings in force", "err", err)
 }
 
 func storedSettings(ctx context.Context, q querier) (map[string]string, error) {
@@ -82,9 +104,8 @@ func storedSettings(ctx context.Context, q querier) (map[string]string, error) {
 }
 
 // PrepareAdmin runs at start. While no administrator password is set, it
-// says so in the log, and when the server already holds data (it was set up
-// before administration existed) makes the setup code that /admin asks for,
-// so that whoever happens to open /admin first cannot take the server over.
+// makes the setup code that /admin asks for and prints it in the log, so
+// that whoever happens to open /admin first cannot take the server over.
 func (s *Server) PrepareAdmin(ctx context.Context) error {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
@@ -98,28 +119,17 @@ func (s *Server) PrepareAdmin(ctx context.Context) error {
 		return err
 	}
 	if code == nil {
-		var data bool
-		err := tx.QueryRow(ctx, `select exists (select 1 from users) or exists (select 1 from groups)`).Scan(&data)
-		if err != nil {
+		c := newSetupCode()
+		if _, err := tx.Exec(ctx, `update admin set setup_code = $1`, c); err != nil {
 			return err
 		}
-		if data {
-			c := newSetupCode()
-			if _, err := tx.Exec(ctx, `update admin set setup_code = $1`, c); err != nil {
-				return err
-			}
-			code = &c
-		}
+		code = &c
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
-	admin := s.appLink("/admin", nil)
-	if code != nil {
-		s.log.Warn("no administrator password yet: open "+admin+" to set one, with this setup code", "setup_code", *code)
-	} else {
-		s.log.Warn("no administrator password yet: open " + admin + " to set one")
-	}
+	s.log.Warn("no administrator password yet: open "+s.appLink("/admin", nil)+" to set one, with this setup code",
+		"setup_code", *code)
 	return nil
 }
 
@@ -159,6 +169,10 @@ func (s *Server) AdminSetup(ctx context.Context, req AdminSetupRequestObject) (A
 		return nil, err
 	}
 	hash := hashPassword(in.Password)
+	release, err := s.holdGuess(ctx, "admin")
+	if err != nil {
+		return nil, err
+	}
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -170,14 +184,13 @@ func (s *Server) AdminSetup(ctx context.Context, req AdminSetupRequestObject) (A
 		return nil, err
 	}
 	if set {
+		release()
 		return nil, conflict("already_set_up")
 	}
 	if code != nil && (in.Code == nil || !sameSetupCode(*code, *in.Code)) {
-		for range loginMissWeight {
-			noteMiss(ctx)
-		}
 		return nil, forbidden("invalid_setup_code")
 	}
+	release()
 	if _, err := tx.Exec(ctx, `update admin set password_hash = $1, setup_code = null`, hash); err != nil {
 		return nil, err
 	}
@@ -200,14 +213,16 @@ func (s *Server) AdminLogin(ctx context.Context, req AdminLoginRequestObject) (A
 	if hash == nil {
 		return nil, conflict("setup_required")
 	}
+	release, err := s.holdGuess(ctx, "admin")
+	if err != nil {
+		return nil, err
+	}
 	if !checkPassword(*hash, req.Body.Password) {
-		for range loginMissWeight {
-			noteMiss(ctx)
-		}
 		return nil, &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
 	}
+	release()
 	var session AdminSession
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if err := lockAdmin(ctx, tx, *hash, nil); err != nil {
 			return err
 		}
@@ -295,17 +310,19 @@ func (s *Server) ChangeAdminPassword(ctx context.Context, req ChangeAdminPasswor
 	if err := s.db.QueryRow(ctx, `select password_hash from admin`).Scan(&hash); err != nil {
 		return nil, err
 	}
+	release, err := s.holdGuess(ctx, "admin")
+	if err != nil {
+		return nil, err
+	}
 	if hash == nil || in.CurrentPassword == nil || !checkPassword(*hash, *in.CurrentPassword) {
-		for range loginMissWeight {
-			noteMiss(ctx)
-		}
 		return nil, forbidden("wrong_password")
 	}
+	release()
 	if err := validPassword(in.NewPassword); err != nil {
 		return nil, err
 	}
 	next := hashPassword(in.NewPassword)
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if err := lockAdmin(ctx, tx, *hash, token); err != nil {
 			return err
 		}

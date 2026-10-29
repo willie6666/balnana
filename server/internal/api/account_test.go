@@ -155,6 +155,19 @@ func TestChangeEmail(t *testing.T) {
 	if code := e.errorCode(400, "POST", "/me/email", EmailChange{Email: "", Password: ptr("correct horse")}); code != "email_needed" {
 		t.Fatal(code)
 	}
+
+	// Without email, each change still counts, as each tells whether an
+	// account has the address.
+	register(e.another(), "ben@example.com", "Ben")
+	for i := range emailChangeBurst - 1 {
+		e.must(200, "POST", "/me/email", EmailChange{Email: fmt.Sprintf("ana%d@example.com", i), Password: ptr("correct horse")}, nil)
+	}
+	if code := e.errorCode(409, "POST", "/me/email", EmailChange{Email: "ben@example.com", Password: ptr("correct horse")}); code != "email_taken" {
+		t.Fatal(code)
+	}
+	if code := e.errorCode(429, "POST", "/me/email", EmailChange{Email: "cy@example.com", Password: ptr("correct horse")}); code != "rate_limited" {
+		t.Fatal(code)
+	}
 }
 
 func TestSignupLimit(t *testing.T) {

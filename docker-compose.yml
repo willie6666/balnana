@@ -3,7 +3,10 @@
 #   docker compose up -d --build
 # The web app and API are then on http://localhost:${BALNANA_PORT:-8080}; the
 # first visit there asks for the administrator password, then shows /admin.
-# Put a TLS reverse proxy (Caddy, Traefik, nginx) in front for public use.
+# Put a TLS reverse proxy (Caddy, Traefik, nginx) in front for public use,
+# set BALNANA_TRUST_PROXY=true, and BALNANA_BIND=127.0.0.1 when the proxy runs
+# on this machine: a client that can reach the port directly could otherwise
+# fake its address to the rate limits.
 
 services:
   db:
@@ -38,7 +41,7 @@ services:
       # Empty unless .env sets it, so it can be set at /admin instead.
       BALNANA_PUBLIC_URL: ${BALNANA_PUBLIC_URL:-}
     ports:
-      - "${BALNANA_PORT:-8080}:8080"
+      - "${BALNANA_BIND:-0.0.0.0}:${BALNANA_PORT:-8080}:8080"
 
 volumes:
   db-data:

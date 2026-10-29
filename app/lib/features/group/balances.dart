@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +11,7 @@ import '../../data/providers.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/amount_field.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 import 'group_page.dart';
@@ -349,14 +349,14 @@ class BalanceBeam extends StatelessWidget {
             ),
           ),
           const SizedBox(width: BSpace.s12),
+          // Wider with the text size, and a long amount shrinks to fit:
+          // cut short, it would show the wrong number.
           SizedBox(
-            width: 104,
-            child: Text(
-              amount,
-              textAlign: TextAlign.end,
-              style: text.moneySmall.copyWith(color: color),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            width: MediaQuery.textScalerOf(context).scale(104),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(amount, style: text.moneySmall.copyWith(color: color), maxLines: 1),
             ),
           ),
         ],
@@ -503,8 +503,10 @@ class _PaymentDialogState extends State<_PaymentDialog> {
 
   void _submit() {
     try {
-      final v = parseAmount(_amount.text.trim().replaceAll(',', '.'), widget.group.minorDigits);
-      if (v <= BigInt.zero) throw const MoneyException(MoneyError.invalidAmount);
+      // As in the expense editor: a comma is the decimal point, never a
+      // thousands separator, which the field does not let in.
+      final v = parseInput(_amount.text, widget.group.minorDigits);
+      if (v == null || v <= BigInt.zero) throw const MoneyException(MoneyError.invalidAmount);
       Navigator.of(context).pop(v);
     } on MoneyException catch (e) {
       setState(() => _error = moneyErrorMessage(context.l10n, e.error));
@@ -528,8 +530,8 @@ class _PaymentDialogState extends State<_PaymentDialog> {
           TextField(
             controller: _amount,
             autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))],
+            keyboardType: TextInputType.numberWithOptions(decimal: g.minorDigits > 0),
+            inputFormatters: [AmountFormatter(g.minorDigits)],
             decoration: InputDecoration(
               labelText: l10n.expenseAmount,
               prefixText: moneySymbol(locale, g.currency, g.symbol),

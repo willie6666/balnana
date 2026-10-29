@@ -27,9 +27,13 @@ class LocationException implements Exception {
 /// Asks the device where it is, once. The app calls it only when the person
 /// taps "Use current location", never on its own: that tap is also when the
 /// system asks for permission. Throws [LocationException].
+///
+/// Android gives up 15 seconds after the person answers the permission
+/// question, however long that took, so this only guards against no answer
+/// at all.
 Future<GeoPoint> currentLocation() => impl
     .currentLocation()
-    .timeout(const Duration(seconds: 25), onTimeout: () => throw const LocationException(LocationProblem.unavailable));
+    .timeout(const Duration(minutes: 2), onTimeout: () => throw const LocationException(LocationProblem.unavailable));
 
 /// Reads the device's position; tests replace it.
 final currentLocationProvider = Provider<Future<GeoPoint> Function()>((ref) => currentLocation);

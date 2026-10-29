@@ -12,6 +12,7 @@ import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/member_avatar.dart';
+import '../account/sign_in_page.dart';
 import 'open_link.dart';
 
 /// The title of a group page: the group's badge and name, which opens the
@@ -122,6 +123,16 @@ class _GroupsSheet extends ConsumerWidget {
                 trailing: TextButton(
                   onPressed: () => ref.read(knownGroupsProvider.notifier).remove(token),
                   child: Text(l10n.commonRemove),
+                ),
+              ),
+            for (final token in data.locked)
+              ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: Text(l10n.groupLockedTitle),
+                subtitle: Text(l10n.groupLockedBody),
+                trailing: TextButton(
+                  onPressed: () => _then(context, (home) => home.go(signInPath('/g/$token'))),
+                  child: Text(l10n.signIn),
                 ),
               ),
           ],

@@ -14,6 +14,17 @@ void main() {
     expect(route('https://split.example.com/invite/abc_DEF-1'), '/invite/abc_DEF-1');
     expect(route('https://split.example.com/verify-email?token=t1'), '/verify-email?token=t1');
     expect(route('https://split.example.com/reset-password?token=t2'), '/reset-password?token=t2');
+    // The web app's pages within a group.
+    for (final page in [
+      'expenses/new',
+      'expenses/e-1',
+      'recurring/r_1',
+      'settings',
+      'settings/categories',
+      'join',
+    ]) {
+      expect(route('https://split.example.com/g/$token/$page'), '/g/$token/$page');
+    }
   });
 
   test('a server under a sub-path and its advertised address both count', () {
@@ -49,6 +60,8 @@ void main() {
     expect(route('https://split.example.com/'), isNull);
     expect(route('https://split.example.com/groups'), isNull);
     expect(route('https://split.example.com/g/short'), isNull);
+    expect(route('https://split.example.com/g/$token/nope'), isNull);
+    expect(route('https://split.example.com/g/$token/expenses/a/b'), isNull);
     expect(route('https://split.example.com/admin'), isNull);
     expect(route('balnana://app/oauth-done'), isNull);
     expect(route('https://user@split.example.com/g/$token'), isNull);

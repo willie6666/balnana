@@ -108,7 +108,12 @@ func TestCreateLimit(t *testing.T) {
 	for range createBurst {
 		createGroup(c, "Ana")
 	}
-	if code := c.errorCode(429, "POST", "/groups", GroupCreate{Name: "One more", Currency: "EUR", Members: []string{"Ana"}}); code != "rate_limited" {
+	rec := c.do("POST", "/groups", GroupCreate{Name: "One more", Currency: "EUR", Members: []string{"Ana"}})
+	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
+		t.Fatalf("status %d, Retry-After %q", rec.Code, rec.Header().Get("Retry-After"))
+	}
+	// An import's preview does the same work, so it waits too.
+	if code := c.errorCode(429, "POST", "/groups/import", importInputFor(settleUpFile(settleUpRows...), true)); code != "rate_limited" {
 		t.Fatal(code)
 	}
 	// With rate limits off, so is this one.
@@ -121,6 +126,7 @@ func TestCreateLimit(t *testing.T) {
 func TestInviteLimit(t *testing.T) {
 	ana, f := mailClient(t, map[string]string{})
 	register(ana, "ana@example.com", "Ana")
+	confirmEmail(ana, f, "ana@example.com")
 	path := "/g/" + createGroup(ana, "Ana").Token
 	for range inviteBurst {
 		ana.must(204, "POST", path+"/invites", InviteInput{Email: "ben@example.com"}, nil)
@@ -133,6 +139,7 @@ func TestInviteLimit(t *testing.T) {
 	// The cap is per account.
 	ben := ana.another()
 	register(ben, "ben@example.com", "Ben")
+	confirmEmail(ben, f, "ben@example.com")
 	ben.must(204, "POST", "/g/"+createGroup(ben, "Ben").Token+"/invites", InviteInput{Email: "ana@example.com"}, nil)
 }
 
@@ -165,5 +172,27 @@ func TestStreamsPerClient(t *testing.T) {
 	}
 	if h.clients["a"] != 1 {
 		t.Fatalf("client a holds %d streams, want 1", h.clients["a"])
+	}
+}
+
+func TestGuessLimit(t *testing.T) {
+	ana := accountsClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	right := LoginInput{Login: "ana@example.com", Password: "correct horse"}
+	wrong := LoginInput{Login: "ana@example.com", Password: "wrong horse"}
+	// Right passwords give back what they held, from the client and the
+	// account alike.
+	for range missBurst/loginMissWeight + 5 {
+		ana.another().must(200, "POST", "/auth/login", right, nil)
+	}
+	for range guessBurst {
+		ana.another().errorCode(401, "POST", "/auth/login", wrong)
+	}
+	// The account is held now, even for the right password; others are not.
+	if code := ana.another().errorCode(429, "POST", "/auth/login", right); code != "rate_limited" {
+		t.Fatal(code)
+	}
+	if code := ana.another().errorCode(401, "POST", "/auth/login", LoginInput{Login: "ben@example.com", Password: "x"}); code != "invalid_credentials" {
+		t.Fatal(code)
 	}
 }

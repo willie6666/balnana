@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf16"
+
+	"balnana/internal/domain"
+	"balnana/internal/importer"
 )
 
 const settleUpHeader = `"Who paid","Amount","Currency","For whom","Split amounts","Purpose","Category","Date & time","Timezone","Exchange rate","Converted amount","Type","Receipt"` + "\n"
@@ -297,5 +300,27 @@ func TestImportIncomingStats(t *testing.T) {
 				t.Fatalf("export %d %s", rec.Code, rec.Body)
 			}
 		})
+	}
+}
+
+// Rows that would overflow a sum are refused, and weights larger than a
+// share may be are kept as the amounts they come to.
+func TestImportInputLimits(t *testing.T) {
+	ids := map[string]string{"Ana": "a", "Ben": "b"}
+	// Each fits, but not twice.
+	amount := "9999999999999"
+	e := importer.Entry{Type: "expense", Currency: "USD"}
+	e.ForWhom = []importer.Part{{Name: "Ana", Amount: "1"}}
+	e.Payers = []importer.Part{{Name: "Ana", Amount: amount}, {Name: "Ana", Amount: amount}}
+	if _, _, problem := importInput(e, "USD", 2, "Untitled", ids, nil); problem != "amount" {
+		t.Errorf("overflowing payers: %q", problem)
+	}
+
+	e.Payers = []importer.Part{{Name: "Ana", Amount: "100.00"}}
+	e.ForWhom = []importer.Part{{Name: "Ana", Amount: "20000000000"}, {Name: "Ben", Amount: "60000000000"}}
+	_, in, problem := importInput(e, "USD", 2, "Untitled", ids, nil)
+	if problem != "" || in.SplitMethod != SplitMethod(domain.SplitExact) || len(in.Splits) != 2 ||
+		*in.Splits[0].Value != "25.00" || *in.Splits[1].Value != "75.00" {
+		t.Fatalf("large weights: %q %+v", problem, in)
 	}
 }

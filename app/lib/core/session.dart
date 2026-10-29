@@ -80,4 +80,16 @@ class SessionNotifier extends Notifier<SessionKey> {
     state = SessionKey(token, state.generation + 1);
     return true;
   }
+
+  /// The server said a call made as [from] needs signing in. A token it
+  /// answered that to is gone, so it is dropped. A cookie is unseen here:
+  /// while the app still shows someone [signedIn], everything reloads once
+  /// as a new session, and the account turns out signed out.
+  void lost(Identity from, {required bool signedIn}) {
+    if (from.token != null) {
+      set(null, from: from);
+    } else if (signedIn && from.server == _server && from.generation == state.generation) {
+      state = SessionKey(null, state.generation + 1);
+    }
+  }
 }

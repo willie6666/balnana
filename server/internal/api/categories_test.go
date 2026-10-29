@@ -3,6 +3,7 @@ package api
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestGroupCategories(t *testing.T) {
@@ -78,10 +79,22 @@ func TestGroupCategories(t *testing.T) {
 	if code := c.errorCode(400, "DELETE", "/g/"+g.Token+"/categories/food", nil); code != "builtin_category" {
 		t.Errorf("delete built-in: %q", code)
 	}
+	var r RecurringExpense
+	c.must(201, "POST", "/g/"+g.Token+"/recurring", RecurringExpenseInput{
+		Title: "Vet", CategoryId: &pets.Id, Amount: "30.00", StartsAt: time.Now().Add(30 * 24 * time.Hour),
+		Payers: []PayerInput{{MemberId: ana, Amount: "30.00"}}, SplitMethod: "equal", Splits: []Share{{MemberId: ana}},
+		Repeat: Repeat{Unit: Month, Every: 1},
+	}, &r)
 	c.must(204, "DELETE", "/g/"+g.Token+"/categories/"+pets.Id, nil, nil)
 	var after Expense
 	c.must(200, "GET", "/g/"+g.Token+"/expenses/"+e.Id, nil, &after)
 	if after.CategoryId != nil || after.Version != e.Version+1 {
 		t.Errorf("after delete: category %v, version %d", after.CategoryId, after.Version)
+	}
+	// Recurring ones too, so an app editing one sees it changed.
+	var rAfter RecurringExpense
+	c.must(200, "GET", "/g/"+g.Token+"/recurring/"+r.Id, nil, &rAfter)
+	if rAfter.CategoryId != nil || rAfter.Version != r.Version+1 {
+		t.Errorf("recurring after delete: category %v, version %d", rAfter.CategoryId, rAfter.Version)
 	}
 }

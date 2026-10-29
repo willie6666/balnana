@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -7,7 +8,9 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 import '../core/money.dart';
 import '../core/server.dart';
+import '../core/session.dart';
 import 'models.dart';
+import 'providers.dart';
 
 /// A failed request. [code] is the server's error code (see api/openapi.yaml),
 /// or [network] when no answer came back.
@@ -110,9 +113,12 @@ typedef PushSubscription = ({String endpoint, String p256dh, String auth});
 
 /// The Balnana HTTP API. Every call throws [ApiException] on failure.
 class BalnanaApi {
-  BalnanaApi(this._dio);
+  BalnanaApi(this._dio, {this.onSignInRequired});
 
   final Dio _dio;
+
+  /// Called when the server says the session this was made with is gone.
+  final void Function()? onSignInRequired;
 
   Future<T> _send<T>(Future<Response<Object?>> Function() request, T Function(Object? data) parse) async {
     try {
@@ -124,6 +130,7 @@ class BalnanaApi {
       final body = _errorBody(res.data);
       if (body is Map<String, Object?> && body['code'] is String) {
         final params = body['params'];
+        if (res.statusCode == 401 && body['code'] == 'sign_in_required') onSignInRequired?.call();
         throw ApiException(
           body['code'] as String,
           status: res.statusCode,
@@ -353,9 +360,12 @@ class BalnanaApi {
     'untitled': ?untitled,
   };
 
-  /// Summaries of the groups this device knows. The second list holds the
-  /// tokens the server no longer recognizes.
-  Future<(List<GroupSummary>, List<String>)> summaries(Map<String, String?> memberByToken) => _send(
+  /// Summaries of the groups this device knows. [missing] holds the tokens
+  /// the server no longer recognizes, [locked] those of groups it has that
+  /// this device may not open as it is, such as without signing in.
+  Future<({List<GroupSummary> groups, List<String> missing, List<String> locked})> summaries(
+    Map<String, String?> memberByToken,
+  ) => _send(
     () => _dio.post<Object?>(
       '/groups/summaries',
       data: {
@@ -366,9 +376,15 @@ class BalnanaApi {
     ),
     (data) {
       if (data is! Map<String, Object?>) throw const FormatException('expected an object');
-      final groups = data['groups'], missing = data['missing'];
-      if (groups is! List<Object?> || missing is! List<Object?>) throw const FormatException('bad summaries');
-      return ([for (final g in groups) GroupSummary.fromJson(g)], missing.whereType<String>().toList());
+      final groups = data['groups'], missing = data['missing'], locked = data['locked'] ?? const <Object?>[];
+      if (groups is! List<Object?> || missing is! List<Object?> || locked is! List<Object?>) {
+        throw const FormatException('bad summaries');
+      }
+      return (
+        groups: [for (final g in groups) GroupSummary.fromJson(g)],
+        missing: missing.whereType<String>().toList(),
+        locked: locked.whereType<String>().toList(),
+      );
     },
   );
 
@@ -776,5 +792,14 @@ Future<String?> Function() deviceTimeZone = () async {
 /// The API of the chosen server, or null when none is set.
 final balnanaApiProvider = Provider<BalnanaApi?>((ref) {
   final dio = ref.watch(apiProvider);
-  return dio == null ? null : BalnanaApi(dio);
+  if (dio == null) return null;
+  final who = ref.watch(identityProvider);
+  return BalnanaApi(
+    dio,
+    // A session ended elsewhere, such as by a password change on another
+    // device, ends here too, so the app stops showing it as signed in.
+    onSignInRequired: () => scheduleMicrotask(() {
+      if (ref.mounted) ref.read(sessionProvider.notifier).lost(who, signedIn: ref.read(signedInProvider));
+    }),
+  );
 });

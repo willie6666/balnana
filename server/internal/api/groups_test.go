@@ -109,6 +109,18 @@ func (c *client) another() *client {
 // It returns the status code.
 func (c *client) call(method, path string, body any, out any) int {
 	c.t.Helper()
+	rec := c.do(method, path, body)
+	if out != nil && rec.Body.Len() > 0 {
+		if err := json.Unmarshal(rec.Body.Bytes(), out); err != nil {
+			c.t.Fatalf("%s %s: decode %q: %v", method, path, rec.Body.String(), err)
+		}
+	}
+	return rec.Code
+}
+
+// do sends a request and returns the whole answer.
+func (c *client) do(method, path string, body any) *httptest.ResponseRecorder {
+	c.t.Helper()
 	var r io.Reader
 	if body != nil {
 		b, _ := json.Marshal(body)
@@ -137,12 +149,7 @@ func (c *client) call(method, path string, body any, out any) int {
 			c.jar = append(c.jar, ck)
 		}
 	}
-	if out != nil && rec.Body.Len() > 0 {
-		if err := json.Unmarshal(rec.Body.Bytes(), out); err != nil {
-			c.t.Fatalf("%s %s: decode %q: %v", method, path, rec.Body.String(), err)
-		}
-	}
-	return rec.Code
+	return rec
 }
 
 // must is call that fails the test unless the status is want.
@@ -468,6 +475,14 @@ func TestExpenseLocation(t *testing.T) {
 			t.Errorf("%+v: got %q", bad, code)
 		}
 	}
+	// A point missing a coordinate is not a point at 0.
+	var raw map[string]any
+	b, _ := json.Marshal(in)
+	json.Unmarshal(b, &raw)
+	raw["location"] = map[string]any{"point": map[string]any{"latitude": 35.0}}
+	if code := c.errorCode(400, "POST", base+"/expenses", raw); code != "invalid_location" {
+		t.Errorf("half a point: got %q", code)
+	}
 }
 
 func TestMembersSummariesAndLinkReset(t *testing.T) {
@@ -574,7 +589,7 @@ func minor(t *testing.T, s string) int64 {
 
 // Someone who left gains no new balance: new expenses and payments may not
 // name them, and a deleted expense with them stays deleted, but expenses they
-// were already in can still be edited.
+// were already in can still be edited as long as their part stays the same.
 func TestDepartedMembers(t *testing.T) {
 	c := newClient(t)
 	g := createGroup(c, "Ana", "Ben", "Cy")
@@ -614,6 +629,17 @@ func TestDepartedMembers(t *testing.T) {
 	}
 	if code := c.errorCode(409, "POST", base+"/expenses/"+gone.Id+"/restore", nil); code != "member_left" {
 		t.Fatalf("restore: %q", code)
+	}
+
+	// Neither their share nor what they paid may change, and the expense may
+	// not go away with their part in it.
+	more := expense("Taxi", "12.00", ana, cy)
+	more.Version = ptr(taxi.Version)
+	if code := c.errorCode(400, "PUT", base+"/expenses/"+taxi.Id, more); code != "member_left" {
+		t.Fatalf("changing their share: %q", code)
+	}
+	if code := c.errorCode(409, "DELETE", base+"/expenses/"+taxi.Id, nil); code != "member_left" {
+		t.Fatalf("delete: %q", code)
 	}
 
 	edit := expense("Taxi home", "10.00", ana, cy)

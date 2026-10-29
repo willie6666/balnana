@@ -6,6 +6,7 @@ import (
 	"crypto/ecdh"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -555,5 +556,35 @@ func TestPushEditTellsWhoWasTakenOut(t *testing.T) {
 	if len(sent) != 2 || sent[0].phone != "ben-phone" || sent[1].phone != "cy-phone" ||
 		sent[1].n.Key != "push_expense_edited" {
 		t.Fatalf("sent %+v", sent)
+	}
+}
+
+func TestPushDeviceLimits(t *testing.T) {
+	c, _, _ := pushClient(t, map[string]string{})
+	g := createGroup(c, "Ana")
+	in := follow(g.Token, g.Members[0].Id)
+	for i := range deviceBurst {
+		subscribe(c, fmt.Sprint("p", i), in)
+	}
+	// Phones already known register again for free; new ones wait.
+	subscribe(c, "p0", in)
+	in.Endpoint, in.P256dh, in.Auth = "https://push.example.com/up/new", phoneKey(), "MDEyMzQ1Njc4OWFiY2RlZg"
+	if code := c.errorCode(429, "PUT", "/push/devices/"+deviceID("new"), in); code != "rate_limited" {
+		t.Fatal(code)
+	}
+
+	// A group stops taking phones once full, keeping the ones it has.
+	c, _, s := pushClient(t, map[string]string{"BALNANA_RATE_LIMIT": "0"})
+	g = createGroup(c, "Ana")
+	in = follow(g.Token, g.Members[0].Id)
+	for i := range maxGroupDevices + 1 {
+		subscribe(c, fmt.Sprint("p", i), in)
+	}
+	var n int
+	var last bool
+	err := s.db.QueryRow(context.Background(), `
+		select count(*), bool_or(device = $1) from push_follows`, deviceID(fmt.Sprint("p", maxGroupDevices))).Scan(&n, &last)
+	if err != nil || n != maxGroupDevices || last {
+		t.Fatal(n, last, err)
 	}
 }

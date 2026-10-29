@@ -225,12 +225,15 @@ func (s *Server) DeleteCategory(ctx context.Context, req DeleteCategoryRequestOb
 		if err != nil {
 			return err
 		}
-		// Bump its expenses' versions so copies kept on devices update too.
-		_, err = tx.Exec(ctx, `
-			update expenses set category_id = null, version = version + 1, updated_at = now()
-			where group_id = $1 and category_id = $2`, g.id, c.Id)
-		if err != nil {
-			return err
+		// Bump its expenses' versions so copies kept on devices update too,
+		// and an editor open on one sees the change.
+		for _, table := range []string{"expenses", "recurring_expenses"} {
+			_, err = tx.Exec(ctx, `
+				update `+table+` set category_id = null, version = version + 1, updated_at = now()
+				where group_id = $1 and category_id = $2`, g.id, c.Id)
+			if err != nil {
+				return err
+			}
 		}
 		if _, err := tx.Exec(ctx, `delete from categories where id = $1`, c.Id); err != nil {
 			return err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"balnana/internal/domain"
 )
@@ -15,6 +16,8 @@ type apiError struct {
 	status int
 	code   string
 	params map[string]any
+	// retryAfter, for a 429, is how long until the client may try again.
+	retryAfter time.Duration
 }
 
 func (e *apiError) Error() string { return e.code }
@@ -38,6 +41,9 @@ func writeHandlerError(log *slog.Logger, w http.ResponseWriter, r *http.Request,
 		body := Error{Code: ae.code}
 		if ae.params != nil {
 			body.Params = &ae.params
+		}
+		if ae.retryAfter > 0 {
+			setRetryAfter(w, ae.retryAfter)
 		}
 		writeJSON(w, ae.status, body)
 	case errors.As(err, &dc):

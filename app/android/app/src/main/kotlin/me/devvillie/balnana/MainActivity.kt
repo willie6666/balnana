@@ -27,7 +27,8 @@ private const val LAST_KNOWN_MAX_AGE_MS = 10 * 60_000L
 
 class MainActivity : FlutterActivity() {
     private val handler = Handler(Looper.getMainLooper())
-    private var locationResult: MethodChannel.Result? = null
+    // Everyone waiting for the position being looked for.
+    private val locationResults = mutableListOf<MethodChannel.Result>()
     private var locationTimeout: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,8 +59,9 @@ class MainActivity : FlutterActivity() {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         MethodChannel(messenger, "balnana/location").setMethodCallHandler { call, result ->
             if (call.method != "current") return@setMethodCallHandler result.notImplemented()
-            if (locationResult != null) return@setMethodCallHandler result.error("busy", null, null)
-            locationResult = result
+            locationResults.add(result)
+            // Asked again while still looking: the answer goes to both.
+            if (locationResults.size > 1) return@setMethodCallHandler
             if (granted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
                 granted(Manifest.permission.ACCESS_FINE_LOCATION)
             ) {
@@ -76,7 +78,7 @@ class MainActivity : FlutterActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         // Only the answer to a question this activity asked, still waited for.
-        if (requestCode != LOCATION_REQUEST || locationResult == null) return
+        if (requestCode != LOCATION_REQUEST || locationResults.isEmpty()) return
         if (granted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
             granted(Manifest.permission.ACCESS_FINE_LOCATION)
         ) {
@@ -136,14 +138,16 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun sendLocation(location: Location?, error: String = "unavailable") {
-        val result = locationResult ?: return
-        locationResult = null
+        val results = locationResults.toList()
+        locationResults.clear()
         locationTimeout?.let { handler.removeCallbacks(it) }
         locationTimeout = null
-        if (location == null) {
-            result.error(error, null, null)
-        } else {
-            result.success(mapOf("latitude" to location.latitude, "longitude" to location.longitude))
+        for (result in results) {
+            if (location == null) {
+                result.error(error, null, null)
+            } else {
+                result.success(mapOf("latitude" to location.latitude, "longitude" to location.longitude))
+            }
         }
     }
 

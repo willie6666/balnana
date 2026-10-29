@@ -91,6 +91,24 @@ class CacheDb extends _$CacheDb {
     return query.getSingleOrNull();
   }
 
+  /// Forgets what [account] was told about [group] on [server], and the
+  /// lists of groups that sum it up, once it has changed there. Were the
+  /// reload after a change to fail, they would show it as it was before.
+  Future<void> forgetGroup(String server, String account, String group) {
+    final stale = delete(cachedResponses)
+      ..where(
+        (r) =>
+            r.server.equals(server) &
+            r.account.equals(account) &
+            (r.request.equals('GET /g/$group') |
+                r.request.like('GET /g/$group/%') |
+                r.request.like('GET /g/$group?%') |
+                r.request.equals('GET /me/groups') |
+                r.request.like('POST /groups/summaries %')),
+      );
+    return stale.go();
+  }
+
   /// Makes [account] the one signed in to [server], forgetting what any
   /// other account saw there and saving nothing more for them.
   Future<void> switchAccount(String server, String account) {
@@ -156,11 +174,23 @@ class OfflineCache extends Interceptor {
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  Future<void> onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) async {
     _offline(false);
-    final key = _key(response.requestOptions);
+    final options = response.requestOptions;
+    final key = _key(options);
     if (key != null && response.statusCode == 200 && response.data != null) {
       unawaited(_db.save(_server, _account, key, jsonEncode(response.data)).catchError((Object _) {}));
+    } else if (key == null && options.method != 'GET') {
+      // A change to a group: what was saved of it is out of date. This is
+      // done before the caller hears back, and so before it reloads.
+      final group = RegExp(r'^/g/([^/?]+)').firstMatch(options.path)?.group(1);
+      if (group != null) {
+        try {
+          await _db.forgetGroup(_server, _account, group);
+        } on Object {
+          // The cache only helps; a change is not undone for it.
+        }
+      }
     }
     handler.next(response);
   }

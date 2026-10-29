@@ -116,7 +116,7 @@ class ExpensesTab extends ConsumerWidget {
             sliver: SliverList.builder(
               itemCount: rows.length,
               itemBuilder: (context, i) {
-                if (list.hasMore && !stale && i >= rows.length - 5) {
+                if (list.hasMore && !stale && !async.isLoading && i >= rows.length - 5) {
                   WidgetsBinding.instance.addPostFrameCallback(
                     (_) => ref.read(expensesProvider(group.token).notifier).loadMore(),
                   );
@@ -523,7 +523,18 @@ class ExpenseTile extends ConsumerWidget {
               ),
               const SizedBox(width: BSpace.s8),
               if (lending != null)
-                lending
+                // Shrinks rather than pushing the row past the screen with
+                // many people, a long amount or large text.
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: WindowSize.of(context) == WindowSize.compact ? 168 : 240,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: lending,
+                  ),
+                )
               else if (effect != null)
                 ConstrainedBox(
                   // Narrow on phones, so the effect wraps under its label and leaves the title room.

@@ -178,6 +178,18 @@ func (s *Server) StartOAuth(ctx context.Context, req StartOAuthRequestObject) (S
 		if err != nil {
 			return nil, err
 		}
+		// Without a verifier only the account's own browser may use it,
+		// or a link someone else sent would add their sign-in to it.
+		if challenge == nil {
+			u, err := s.currentUser(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if u == nil || u.id != userID {
+				noteMiss(ctx)
+				return fail("invalid_token")
+			}
+		}
 		linkTo = &userID
 	}
 
@@ -272,7 +284,28 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 	q := url.Values{}
 	subject, c, err := s.finishOAuth(ctx, p, login, in)
 	if err == nil && login.linkTo != nil {
-		err = s.linkIdentity(ctx, p, *login.linkTo, subject, c)
+		var vouched *string
+		if p.vouched(c) {
+			vouched = c.email()
+		}
+		if login.challenge == nil {
+			err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+				if err := lockUsersTable(ctx, tx); err != nil {
+					return err
+				}
+				return addIdentity(ctx, tx, *login.linkTo, p.id, p.issuer, subject, vouched)
+			})
+		} else {
+			// Added when the app that asked for it trades the code with its
+			// verifier.
+			code = secretToken()
+			_, err = s.db.Exec(ctx, `
+				insert into oauth_codes (code_hash, user_id, challenge, expires_at,
+				                         link_provider, link_issuer, link_subject, link_email)
+				values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+				hashToken(code), *login.linkTo, *login.challenge, time.Now().Add(oauthCodeLifetime),
+				p.id, p.issuer, subject, vouched)
+		}
 	} else if err == nil {
 		// The account with the address was never confirmed, and whoever
 		// signs in now owns the address: they are asked whether it is
@@ -302,6 +335,9 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 		q.Set("error", "oauth_failed")
 	case login.linkTo != nil:
 		q.Set("linked", p.id)
+		if code != "" {
+			q.Set("code", code)
+		}
 	case pending != "":
 		q.Set("pending", pending)
 		if login.challenge == nil {
@@ -551,13 +587,22 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 	var out Session
 	var wrong bool
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		err := tx.QueryRow(ctx, `select user_id::text from oauth_codes where code_hash = $1`, hash).Scan(&u.id)
+		var link struct{ provider, issuer, subject, email *string }
+		err := tx.QueryRow(ctx, `
+			select user_id::text, link_provider, link_issuer, link_subject, link_email::text
+			from oauth_codes where code_hash = $1`, hash).
+			Scan(&u.id, &link.provider, &link.issuer, &link.subject, &link.email)
 		if errors.Is(err, pgx.ErrNoRows) {
 			wrong = true
 			return nil
 		}
 		if err != nil {
 			return err
+		}
+		if link.provider != nil {
+			if err := lockUsersTable(ctx, tx); err != nil {
+				return err
+			}
 		}
 		// The account is locked before the code, so the address owner taking
 		// the account back either ends the session made here, or comes first
@@ -586,6 +631,16 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 		}
 		if err != nil {
 			return err
+		}
+		if link.provider != nil {
+			// A provider added from the account page: the app keeps its
+			// session.
+			if err := addIdentity(ctx, tx, u.id, *link.provider, *link.issuer, *link.subject, link.email); err != nil {
+				return err
+			}
+			out.User = u.api()
+			out.User.EmailVerified = u.verified || link.email != nil && u.email != nil && strings.EqualFold(*u.email, *link.email)
+			return nil
 		}
 		out.User = u.api()
 		token, err := startSession(ctx, tx, u.id)
