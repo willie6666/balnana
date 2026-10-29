@@ -246,12 +246,15 @@ class SettingsPage extends ConsumerWidget {
         content: RadioGroup<T>(
           groupValue: current,
           onChanged: (value) => Navigator.pop(context, value),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final MapEntry(:key, :value) in options.entries)
-                RadioListTile<T>(value: key, title: Text(value)),
-            ],
+          // Scrolls once the list outgrows the screen, as the languages do.
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final MapEntry(:key, :value) in options.entries)
+                  RadioListTile<T>(value: key, title: Text(value)),
+              ],
+            ),
           ),
         ),
         actions: [
