@@ -159,6 +159,10 @@ class Summaries {
   final List<String> locked;
 }
 
+/// How many links one summaries request may carry: the server's `maxPageSize`
+/// (server/internal/api/store.go), past which it answers `too_many_groups`.
+const summariesBatch = 200;
+
 /// The groups to show at home: the account's groups when signed in, else the
 /// groups on this device, as the server sees them now.
 final summariesProvider = FutureProvider<Summaries>((ref) async {
@@ -170,7 +174,14 @@ final summariesProvider = FutureProvider<Summaries>((ref) async {
   }
   final known = ref.watch(knownGroupsProvider);
   if (known.isEmpty) return _mark(who, Summaries(groups: [], missing: []));
-  final (:groups, :missing, :locked) = await api.summaries({for (final g in known) g.token: g.memberId});
+  final groups = <GroupSummary>[], missing = <String>[], locked = <String>[];
+  for (var i = 0; i < known.length; i += summariesBatch) {
+    final batch = known.skip(i).take(summariesBatch);
+    final part = await api.summaries({for (final g in batch) g.token: g.memberId});
+    groups.addAll(part.groups);
+    missing.addAll(part.missing);
+    locked.addAll(part.locked);
+  }
   // Keep this device's order.
   final order = {for (final (i, g) in known.indexed) g.token: i};
   groups.sort((a, b) => (order[a.token] ?? 0).compareTo(order[b.token] ?? 0));

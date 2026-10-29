@@ -169,4 +169,92 @@ void main() {
     );
     expect(prefs.getString('groups.known'), isNull);
   });
+
+  test('more groups than one summaries request takes load in batches, in this device order', () async {
+    final tokens = [for (var i = 0; i < 450; i++) '$i'.padLeft(22, 'A')];
+    SharedPreferences.setMockInitialValues({
+      'settings.server': _server,
+      'groups.known': jsonEncode([
+        for (final (i, t) in tokens.indexed) {'server': _server, 'token': t, 'memberId': 'm$i'},
+      ]),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final batches = <List<Map<String, Object?>>>[];
+    final container = ProviderContainer(
+      overrides: [
+        prefsProvider.overrideWithValue(prefs),
+        serverInfoProvider.overrideWithValue(
+          const AsyncData(ServerInfo(version: 'test', authMode: AuthMode.link, publicUrl: _server)),
+        ),
+        accountProvider.overrideWithValue(const AsyncData(null)),
+        apiProvider.overrideWith(
+          (ref) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+            ..interceptors.add(
+              InterceptorsWrapper(
+                onRequest: (o, h) {
+                  final asked = [
+                    for (final g in (o.data as Map)['groups'] as List) (g as Map).cast<String, Object?>(),
+                  ];
+                  batches.add(asked);
+                  final mine = [for (final g in asked) g['token']! as String];
+                  // Every third group is gone and every third locked; the
+                  // rest come back in reverse, as the server may order them.
+                  h.resolve(
+                    Response(
+                      requestOptions: o,
+                      data: {
+                        'groups': [
+                          for (final t in mine.reversed)
+                            if (tokens.indexOf(t) % 3 == 2)
+                              {
+                                'token': t,
+                                'name': t,
+                                'currency': 'USD',
+                                'minorDigits': 2,
+                                'memberCount': 1,
+                                'updatedAt': '2026-10-30T00:00:00Z',
+                              },
+                        ],
+                        'missing': [
+                          for (final t in mine)
+                            if (tokens.indexOf(t) % 3 == 0) t,
+                        ],
+                        'locked': [
+                          for (final t in mine)
+                            if (tokens.indexOf(t) % 3 == 1) t,
+                        ],
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final summaries = await container.read(summariesProvider.future);
+    expect([for (final b in batches) b.length], [summariesBatch, summariesBatch, 50]);
+    expect(
+      [for (final b in batches) ...b],
+      [
+        for (final (i, t) in tokens.indexed) {'token': t, 'memberId': 'm$i'},
+      ],
+    );
+    expect(
+      [for (final g in summaries.groups) g.token],
+      [
+        for (final (i, t) in tokens.indexed)
+          if (i % 3 == 2) t,
+      ],
+    );
+    expect(summaries.missing, [
+      for (final (i, t) in tokens.indexed)
+        if (i % 3 == 0) t,
+    ]);
+    expect(summaries.locked, [
+      for (final (i, t) in tokens.indexed)
+        if (i % 3 == 1) t,
+    ]);
+  });
 }

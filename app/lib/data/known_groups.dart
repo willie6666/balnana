@@ -52,7 +52,8 @@ class KnownGroup {
 /// person arranged them; a newly added group comes first.
 final knownGroupsProvider = NotifierProvider<KnownGroupsNotifier, List<KnownGroup>>(KnownGroupsNotifier.new);
 
-/// The summaries endpoint accepts at most this many links at once.
+/// How many groups an import may leave on this device. Home loads any number,
+/// `summariesBatch` at a time.
 const maxKnownGroups = 200;
 
 class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
