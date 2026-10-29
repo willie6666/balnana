@@ -240,13 +240,33 @@ enum ExpenseKind { expense, payment }
 
 @immutable
 class ExpensePart {
-  const ExpensePart(this.memberId, this.amount, [this.share]);
+  const ExpensePart(this.memberId, this.amount, {this.share, this.foreignAmount});
 
   final String memberId;
   final BigInt amount;
 
   /// The weight entered, for shares splits.
   final String? share;
+
+  /// This part in the expense's [Expense.foreign] currency.
+  final BigInt? foreignAmount;
+}
+
+/// What an expense came to in the currency it was paid in, next to its
+/// amount in the group's currency.
+@immutable
+class ForeignMoney {
+  const ForeignMoney(this.currency, this.digits, this.amount);
+
+  static ForeignMoney? fromJson(Object? json) {
+    if (json is! Map<String, Object?>) return null;
+    final digits = _req<int>(json, 'minorDigits');
+    return ForeignMoney(_req(json, 'currency'), digits, _money(json, 'amount', digits));
+  }
+
+  final String currency;
+  final int digits;
+  final BigInt amount;
 }
 
 /// A point on the map, in degrees (WGS 84).
@@ -318,10 +338,15 @@ class Expense {
     this.hasReceipt = false,
     this.transactionType = 'expense',
     this.recurringId,
+    this.foreign,
   });
 
   factory Expense.fromJson(Object? data, int digits) {
     final json = _object(data);
+    final foreign = ForeignMoney.fromJson(json['foreign']);
+    BigInt? inForeign(Map<String, Object?> part) => foreign == null || part['foreignAmount'] == null
+        ? null
+        : _money(part, 'foreignAmount', foreign.digits);
     final kind = ExpenseKind.values.asNameMap()[_req<String>(json, 'kind')];
     final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')];
     if (kind == null || method == null) throw const FormatException('unknown kind or split method');
@@ -338,11 +363,16 @@ class Expense {
       splitMethod: method,
       payers: [
         for (final p in _objects(json, 'payers'))
-          ExpensePart(_req(p, 'memberId'), _money(p, 'amount', digits)),
+          ExpensePart(_req(p, 'memberId'), _money(p, 'amount', digits), foreignAmount: inForeign(p)),
       ],
       splits: [
         for (final s in _objects(json, 'splits'))
-          ExpensePart(_req(s, 'memberId'), _money(s, 'amount', digits), _opt(s, 'share')),
+          ExpensePart(
+            _req(s, 'memberId'),
+            _money(s, 'amount', digits),
+            share: _opt(s, 'share'),
+            foreignAmount: inForeign(s),
+          ),
       ],
       createdBy: _opt(json, 'createdBy'),
       createdAt: _time(json, 'createdAt'),
@@ -353,6 +383,7 @@ class Expense {
       hasReceipt: _opt<bool>(json, 'hasReceipt') ?? false,
       transactionType: _opt<String>(json, 'transactionType') ?? 'expense',
       recurringId: _opt(json, 'recurringId'),
+      foreign: foreign,
     );
   }
 
@@ -381,6 +412,10 @@ class Expense {
 
   /// The recurring expense that added it.
   final String? recurringId;
+
+  /// What it came to in the currency it was paid in, when that is not the
+  /// group's. [amount] and the parts' amounts stay in the group's currency.
+  final ForeignMoney? foreign;
 
   bool get isPayment => kind == ExpenseKind.payment;
 
@@ -450,7 +485,7 @@ class RecurringExpense {
       ],
       splits: [
         for (final s in _objects(json, 'splits'))
-          ExpensePart(_req(s, 'memberId'), _money(s, 'amount', digits), _opt(s, 'share')),
+          ExpensePart(_req(s, 'memberId'), _money(s, 'amount', digits), share: _opt(s, 'share')),
       ],
       repeat: (unit: unit, every: _req<int>(repeat, 'every')),
       startsAt: _time(json, 'startsAt'),

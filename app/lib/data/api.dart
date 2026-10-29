@@ -41,6 +41,7 @@ class ExpenseDraft {
     required this.payers,
     required this.splitMethod,
     required this.splits,
+    this.foreign,
   });
 
   final String title;
@@ -50,12 +51,16 @@ class ExpenseDraft {
   final String? note;
   final ExpenseLocation? location;
 
-  /// Member id to amount paid.
+  /// Member id to amount paid, in [foreign]'s currency when there is one.
   final Map<String, BigInt> payers;
   final SplitMethod splitMethod;
 
   /// Who shares the cost; values as [SplitPart.value] describes.
   final List<SplitPart> splits;
+
+  /// What it came to in another currency; [amount] is then what was paid in
+  /// the group's.
+  final ForeignMoney? foreign;
 
   Map<String, Object?> toJson(int digits, {int? version}) => {
     'title': title,
@@ -66,12 +71,13 @@ class ExpenseDraft {
     'location': ?location?.toJson(),
     'payers': [
       for (final MapEntry(:key, :value) in payers.entries)
-        {'memberId': key, 'amount': formatAmount(value, digits)},
+        {'memberId': key, 'amount': formatAmount(value, foreign?.digits ?? digits)},
     ],
     'splitMethod': splitMethod.name,
     'splits': [
       for (final s in splits) {'memberId': s.member, if (splitMethod != SplitMethod.equal) 'value': s.value},
     ],
+    if (foreign case final f?) 'foreign': {'currency': f.currency, 'amount': formatAmount(f.amount, f.digits)},
     'version': ?version,
   };
 }

@@ -74,7 +74,7 @@ func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (E
 	buf.WriteString("\xef\xbb\xbf") // so spreadsheets read UTF-8
 	w := csv.NewWriter(&buf)
 	header := []string{"Date", "Title", "Category", "Type", "Amount", "Currency", "Note", "Location", "Latitude",
-		"Longitude"}
+		"Longitude", "Original amount", "Original currency"}
 	for _, m := range members {
 		header = append(header, cellText(m.name))
 	}
@@ -85,7 +85,8 @@ func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (E
 	rows, err = q.Query(ctx, `
 		select e.id::text, case when e.transaction_type = 'expense' then e.kind::text else e.transaction_type end,
 		       e.title, coalesce(c.name, e.category_id, ''), e.amount, e.occurred_at, coalesce(e.note, ''),
-		       coalesce(e.location_name, ''), e.latitude, e.longitude
+		       coalesce(e.location_name, ''), e.latitude, e.longitude,
+		       coalesce(e.foreign_currency::text, ''), e.foreign_digits, e.foreign_amount
 		from expenses e left join categories c on c.id = e.category_id
 		where e.group_id = $1 and e.deleted_at is null
 		order by e.occurred_at, e.id`, g.id)
@@ -96,16 +97,25 @@ func exportCsv(ctx context.Context, q querier, g *group, zone *time.Location) (E
 	var amount int64
 	var at time.Time
 	var lat, lng *float64
+	var foreignCurrency string
+	var foreignDigits *int
+	var foreignAmount *int64
 	degrees := func(v *float64) string {
 		if v == nil {
 			return ""
 		}
 		return strconv.FormatFloat(*v, 'f', -1, 64)
 	}
-	scan := []any{&eid, &kind, &title, &category, &amount, &at, &note, &place, &lat, &lng}
+	scan := []any{&eid, &kind, &title, &category, &amount, &at, &note, &place, &lat, &lng,
+		&foreignCurrency, &foreignDigits, &foreignAmount}
 	_, err = pgx.ForEachRow(rows, scan, func() error {
+		original := ""
+		if foreignAmount != nil && foreignDigits != nil {
+			original = domain.FormatAmount(*foreignAmount, *foreignDigits)
+		}
 		record := []string{at.In(zone).Format(time.DateOnly), cellText(title), cellText(category), kind,
-			domain.FormatAmount(amount, g.digits), g.currency, cellText(note), cellText(place), degrees(lat), degrees(lng)}
+			domain.FormatAmount(amount, g.digits), g.currency, cellText(note), cellText(place), degrees(lat), degrees(lng),
+			original, foreignCurrency}
 		for _, m := range members {
 			record = append(record, domain.FormatAmount(nets[eid][m.id], g.digits))
 		}

@@ -1,5 +1,5 @@
 {
-  "_comment": "Shared money test vectors, run by both server/internal/domain (Go) and app/test/money_test.dart (Dart). Amounts are decimal strings; 'minor' is the integer number of minor units. Errors are stable codes.",
+  "_comment": "Shared money test vectors, run by both server/internal/domain (Go) and app/test/money_test.dart (Dart). Amounts are decimal strings; 'minor' is the integer number of minor units. Errors are stable codes. 'spread' amounts are all minor units.",
   "parse": [
     { "input": "12.34", "digits": 2, "minor": "1234" },
     { "input": "12.3", "digits": 2, "minor": "1230" },
@@ -203,6 +203,50 @@
       "digits": 2,
       "nets": { "a": "1", "b": "-2" },
       "error": "unbalanced"
+    }
+  ],
+  "spread": [
+    {
+      "name": "1000 yen three ways into 213: leftovers to the largest remainders",
+      "total": "213",
+      "amounts": { "a": "334", "b": "333", "c": "333" },
+      "expect": { "a": "71", "b": "71", "c": "71" }
+    },
+    {
+      "name": "a part too small to come to anything",
+      "total": "1",
+      "amounts": { "a": "1", "b": "2999" },
+      "expect": { "a": "0", "b": "1" }
+    },
+    {
+      "name": "a zero share stays zero",
+      "total": "500",
+      "amounts": { "a": "0", "b": "100" },
+      "expect": { "a": "0", "b": "500" }
+    },
+    {
+      "name": "products past 64 bits",
+      "total": "999999999999999",
+      "amounts": { "a": "999999999999999", "b": "1" },
+      "expect": { "a": "999999999999998", "b": "1" }
+    },
+    {
+      "name": "same amounts, ties to the lowest member id",
+      "total": "5",
+      "amounts": { "c": "1", "a": "1", "b": "1" },
+      "expect": { "a": "2", "b": "2", "c": "1" }
+    },
+    {
+      "name": "nothing to spread over",
+      "total": "10",
+      "amounts": { "a": "0", "b": "0" },
+      "error": "invalid_amount"
+    },
+    {
+      "name": "no total",
+      "total": "0",
+      "amounts": { "a": "1" },
+      "error": "invalid_amount"
     }
   ]
 }

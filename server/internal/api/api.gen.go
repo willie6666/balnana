@@ -265,6 +265,9 @@ type Expense struct {
 	CreatedBy *string    `json:"createdBy,omitempty"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 
+	// Foreign What the expense came to in the currency it was paid in. The rate is this amount against the expense's `amount`.
+	Foreign *Foreign `json:"foreign,omitempty"`
+
 	// HasReceipt Whether a photo of the receipt is attached (`/receipt`).
 	HasReceipt bool        `json:"hasReceipt"`
 	Id         string      `json:"id"`
@@ -304,12 +307,15 @@ type ExpenseInput struct {
 	Amount     Money   `json:"amount"`
 	CategoryId *string `json:"categoryId,omitempty"`
 
+	// Foreign What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, `invalid_payment` on a payment, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
+	Foreign *ForeignInput `json:"foreign,omitempty"`
+
 	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
 	Location   *Location `json:"location,omitempty"`
 	Note       *string   `json:"note,omitempty"`
 	OccurredAt time.Time `json:"occurredAt"`
 
-	// Payers Who paid; the amounts add up to `amount`.
+	// Payers Who paid; the amounts add up to `amount`, or to `foreign.amount` when the expense has one.
 	Payers      []PayerInput `json:"payers"`
 	SplitMethod SplitMethod  `json:"splitMethod"`
 	Splits      []Share      `json:"splits"`
@@ -323,6 +329,25 @@ type ExpenseInput struct {
 type ExpensePage struct {
 	Items      []Expense `json:"items"`
 	NextCursor *string   `json:"nextCursor,omitempty"`
+}
+
+// Foreign What the expense came to in the currency it was paid in. The rate is this amount against the expense's `amount`.
+type Foreign struct {
+	// Amount Decimal amount with `minorDigits` decimals.
+	Amount   string `json:"amount"`
+	Currency string `json:"currency"`
+
+	// MinorDigits Decimals of `amount` and of the parts' `foreignAmount`.
+	MinorDigits int `json:"minorDigits"`
+}
+
+// ForeignInput What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, `invalid_payment` on a payment, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
+type ForeignInput struct {
+	// Amount Decimal amount with up to the currency's usual decimals.
+	Amount string `json:"amount"`
+
+	// Currency ISO 4217 code, such as `JPY`.
+	Currency string `json:"currency"`
 }
 
 // GeoPoint defines model for GeoPoint.
@@ -700,8 +725,11 @@ type PasswordResetRequest struct {
 // Payer defines model for Payer.
 type Payer struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
-	Amount   Money  `json:"amount"`
-	MemberId string `json:"memberId"`
+	Amount Money `json:"amount"`
+
+	// ForeignAmount What they paid in the expense's `foreign` currency.
+	ForeignAmount *string `json:"foreignAmount,omitempty"`
+	MemberId      string  `json:"memberId"`
 }
 
 // PayerInput defines model for PayerInput.
@@ -924,8 +952,11 @@ type SplitMethod string
 // SplitPart defines model for SplitPart.
 type SplitPart struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
-	Amount   Money  `json:"amount"`
-	MemberId string `json:"memberId"`
+	Amount Money `json:"amount"`
+
+	// ForeignAmount Their share in the expense's `foreign` currency.
+	ForeignAmount *string `json:"foreignAmount,omitempty"`
+	MemberId      string  `json:"memberId"`
 
 	// Share The weight entered, for `shares`.
 	Share *string `json:"share,omitempty"`

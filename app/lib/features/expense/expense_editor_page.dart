@@ -17,6 +17,7 @@ import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/amount_field.dart';
+import '../../ui/widgets/currency_field.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
@@ -218,12 +219,29 @@ class _EditorState extends ConsumerState<_Editor> {
   final _every = TextEditingController(text: '1');
   DateTime? _endsOn;
 
+  /// The currency it was paid in when that is not the group's. The amount,
+  /// payers and exact split are then typed in it.
+  String? _foreign;
+
+  /// With [_foreign], what it came to in the group's currency, and the rate
+  /// between the two; editing either works out the other.
+  final _charged = TextEditingController();
+  final _rate = TextEditingController();
+
+  /// Whether a change of the amount keeps [_charged] and works out the rate,
+  /// as when it was typed or saved, rather than keeping the rate.
+  bool _chargedFixed = false;
+
   bool _busy = false;
   bool _tried = false;
 
   Group get _group => widget.group;
   bool get _received => widget.expense?.isReceived ?? false;
-  int get _digits => _group.minorDigits;
+
+  /// Decimals of what is typed: the foreign currency's while there is one.
+  int get _digits => _foreign == null ? _group.minorDigits : defaultMinorDigits(_foreign!);
+  String get _currency => _foreign ?? _group.currency;
+  String? get _symbol => _foreign == null ? _group.symbol : null;
 
   /// Current members, plus anyone who left but is part of this expense.
   late final List<Member> _people = [
@@ -254,7 +272,17 @@ class _EditorState extends ConsumerState<_Editor> {
       _payer = (me != null && !me.left) ? me.id : _group.activeMembers.firstOrNull?.id;
       _included.addAll(_group.activeMembers.map((m) => m.id));
     } else {
-      _amount.text = formatAmount(e.amount, _digits);
+      final f = e.foreign;
+      if (f != null) {
+        _foreign = f.currency;
+        _charged.text = formatAmount(e.amount, _group.minorDigits);
+        _rate.text = rateOf(f.amount, f.digits, e.amount, _group.minorDigits);
+        _chargedFixed = true;
+      }
+      // Parts are typed in the currency it was paid in.
+      String typed(ExpensePart p) =>
+          f == null ? formatAmount(p.amount, _digits) : formatAmount(p.foreignAmount!, f.digits);
+      _amount.text = f == null ? formatAmount(e.amount, _digits) : formatAmount(f.amount, f.digits);
       _title.text = e.title;
       _note.text = e.note ?? '';
       _place.text = e.location?.name ?? '';
@@ -266,7 +294,7 @@ class _EditorState extends ConsumerState<_Editor> {
       } else {
         _multiPay = true;
         for (final p in e.payers) {
-          _paid[p.memberId]?.text = formatAmount(p.amount, _digits);
+          _paid[p.memberId]?.text = typed(p);
           _payersShown.add(p.memberId);
         }
       }
@@ -275,7 +303,7 @@ class _EditorState extends ConsumerState<_Editor> {
         _included.add(s.memberId);
         _values[s.memberId]?.text = switch (_method) {
           SplitMethod.equal => '',
-          SplitMethod.exact => formatAmount(s.amount, _digits),
+          SplitMethod.exact => typed(s),
           SplitMethod.shares => s.share ?? '',
         };
       }
@@ -293,10 +321,78 @@ class _EditorState extends ConsumerState<_Editor> {
     for (final c in _paid.values) {
       c.addListener(_paidChanged);
     }
+    _amount.addListener(_convert);
     _initial = _snapshot();
   }
 
   void _changed() => setState(() {});
+
+  BigInt? get _chargedValue {
+    try {
+      final v = parseInput(_charged.text, _group.minorDigits);
+      return v != null && v > BigInt.zero ? v : null;
+    } on MoneyException {
+      return null;
+    }
+  }
+
+  /// Keeps what it came to and the rate in step with the amount.
+  void _convert() {
+    final total = _total;
+    if (_foreign == null || total == null) return;
+    if (_chargedFixed) {
+      if (_chargedValue case final charged?) _rate.text = rateOf(total, _digits, charged, _group.minorDigits);
+    } else if (convertAmount(total, _digits, shareValue(_rate.text), _group.minorDigits) case final charged?) {
+      _charged.text = charged == BigInt.zero ? '' : formatAmount(charged, _group.minorDigits);
+    }
+  }
+
+  void _rateChanged(String _) => setState(() {
+    _chargedFixed = false;
+    _convert();
+  });
+
+  void _chargedChanged(String _) => setState(() {
+    _chargedFixed = true;
+    _convert();
+  });
+
+  /// Whether it can be in another currency: payments and recurring
+  /// expenses stay in the group's.
+  bool get _canForeign => _unit == null && widget.recurring == null && !(widget.expense?.isPayment ?? false);
+
+  Future<void> _pickCurrency() async {
+    final picked = await showCurrencyPicker(context, current: _currency);
+    if (picked == null || picked == _currency || !mounted) return;
+    final foreign = picked == _group.currency ? null : picked;
+    setState(() {
+      _foreign = foreign;
+      // What was typed stays where it still is an amount in the new currency.
+      final typed = [if (!_multiPay) _amount, ..._paid.values, if (_method == SplitMethod.exact) ..._values.values];
+      for (final c in typed) {
+        try {
+          if (c.text.trim().isNotEmpty && parseInput(c.text, _digits) == null) c.clear();
+        } on MoneyException {
+          c.clear();
+        }
+      }
+      _charged.clear();
+      _rate.clear();
+      _chargedFixed = false;
+      // The rate the group last used for it, to start from.
+      final last = ref
+          .read(expensesProvider(_group.token))
+          .current(ref.read(identityProvider))
+          .value
+          ?.items
+          .where((e) => e.foreign?.currency == foreign)
+          .firstOrNull;
+      if (foreign != null && last != null) {
+        _rate.text = rateOf(last.foreign!.amount, last.foreign!.digits, last.amount, _group.minorDigits);
+        _convert();
+      }
+    });
+  }
 
   /// With several payers, the amount is what they paid together.
   void _paidChanged() {
@@ -327,6 +423,8 @@ class _EditorState extends ConsumerState<_Editor> {
     _multiPay,
     _method,
     _unit,
+    _foreign,
+    _charged.text,
     _every.text,
     _endsOn,
     for (final m in _people) ...[_included.contains(m.id), _paid[m.id]!.text, _values[m.id]!.text],
@@ -355,7 +453,18 @@ class _EditorState extends ConsumerState<_Editor> {
 
   @override
   void dispose() {
-    for (final c in [_amount, _title, _note, _place, _splitQuery, _every, ..._paid.values, ..._values.values]) {
+    for (final c in [
+      _amount,
+      _title,
+      _note,
+      _place,
+      _splitQuery,
+      _every,
+      _charged,
+      _rate,
+      ..._paid.values,
+      ..._values.values,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -603,10 +712,12 @@ class _EditorState extends ConsumerState<_Editor> {
       messenger.showSnackBar(SnackBar(content: Text(message)));
       return;
     }
+    final charged = _chargedValue;
+    if (_foreign != null && charged == null) return; // Shown by the field.
     final draft = ExpenseDraft(
       title: _title.text.trim(),
       categoryId: _category,
-      amount: total,
+      amount: charged ?? total,
       occurredAt: _date,
       note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       location: _place.text.trim().isEmpty && _point == null
@@ -615,6 +726,7 @@ class _EditorState extends ConsumerState<_Editor> {
       payers: payers,
       splitMethod: _method,
       splits: _parts,
+      foreign: _foreign == null ? null : ForeignMoney(_foreign!, _digits, total),
     );
     if (_endsOn case final end? when _unit != null && end.isBefore(DateUtils.dateOnly(_date))) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.errorInvalidEnd)));
@@ -631,10 +743,10 @@ class _EditorState extends ConsumerState<_Editor> {
           timeZone: widget.recurring?.timeZone,
         );
         if (widget.recurring case final r?) {
-          await api.updateRecurring(r.id, recurring, _digits, version: r.version);
+          await api.updateRecurring(r.id, recurring, _group.minorDigits, version: r.version);
           ref.invalidate(recurringOneProvider((token: _group.token, id: r.id)));
         } else {
-          await api.createRecurring(recurring, _digits);
+          await api.createRecurring(recurring, _group.minorDigits);
         }
         refreshGroup(ref, _group.token);
         if (mounted) context.pop();
@@ -644,9 +756,9 @@ class _EditorState extends ConsumerState<_Editor> {
       if (widget.expense case final e?) {
         id = e.id;
         // A new photo alone leaves the expense as it is.
-        if (_formDirty) await api.updateExpense(e.id, draft, _digits, version: e.version);
+        if (_formDirty) await api.updateExpense(e.id, draft, _group.minorDigits, version: e.version);
       } else {
-        id = (await api.createExpense(draft, _digits)).id;
+        id = (await api.createExpense(draft, _group.minorDigits)).id;
       }
       await _saveReceipt(api, id);
       ref.invalidate(expenseProvider((token: _group.token, id: id)));
@@ -675,7 +787,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (_receipt case final r?) {
-        await api.putReceipt(id, r.bytes, r.type, _digits);
+        await api.putReceipt(id, r.bytes, r.type, _group.minorDigits);
       } else if (_dropReceipt) {
         await api.deleteReceipt(id);
       }
@@ -768,7 +880,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final symbol = moneySymbol(locale, _group.currency, _group.symbol);
+    final symbol = moneySymbol(locale, _currency, _symbol);
     final preview = _preview();
     final editing = widget.expense != null;
 
@@ -854,6 +966,7 @@ class _EditorState extends ConsumerState<_Editor> {
                     }
                   },
                 ),
+                if (_canForeign) _ForeignField(state: this, locale: locale),
                 const SizedBox(height: BSpace.s8),
                 TextFormField(
                   controller: _title,
@@ -916,7 +1029,8 @@ class _EditorState extends ConsumerState<_Editor> {
                   },
                 ),
 
-                if (_canRepeat) ...[
+                // An occurrence is added later, at a rate not known yet.
+                if (_canRepeat && _foreign == null) ...[
                   FormSection(l10n.repeatSection),
                   _RepeatField(state: this, locale: locale),
                 ] else if (widget.expense?.recurringId case final id?) ...[
@@ -1102,6 +1216,91 @@ class _PaidBy extends StatelessWidget {
   }
 }
 
+/// The currency it was paid in and, when that is not the group's, what it
+/// came to in the group's.
+class _ForeignField extends StatelessWidget {
+  const _ForeignField({required this.state, required this.locale});
+
+  final _EditorState state;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final s = state;
+    final g = s._group;
+    final foreign = s._foreign;
+    final button = Center(
+      child: TextButton.icon(
+        onPressed: s._pickCurrency,
+        icon: const Icon(Icons.currency_exchange, size: 18),
+        label: Text(l10n.expensePaidIn(s._currency)),
+      ),
+    );
+    if (foreign == null) return button;
+    final rate = TextFormField(
+      controller: s._rate,
+      textAlign: TextAlign.end,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [AmountFormatter(rateDigits)],
+      onChanged: s._rateChanged,
+      decoration: InputDecoration(labelText: l10n.expenseRate(foreign, g.currency)),
+    );
+    final charged = TextFormField(
+      controller: s._charged,
+      textAlign: TextAlign.end,
+      keyboardType: TextInputType.numberWithOptions(decimal: g.minorDigits > 0),
+      inputFormatters: [AmountFormatter(g.minorDigits)],
+      onChanged: s._chargedChanged,
+      decoration: InputDecoration(
+        labelText: l10n.expenseInGroupCurrency(g.currency),
+        prefixIcon: FieldAffix(moneySymbol(locale, g.currency, g.symbol)),
+        prefixIconConstraints: const BoxConstraints(),
+        errorMaxLines: 3,
+      ),
+      validator: (_) {
+        try {
+          final v = parseInput(s._charged.text, g.minorDigits);
+          return v != null && v > BigInt.zero ? null : l10n.errorInvalidAmount;
+        } on MoneyException catch (e) {
+          return moneyErrorMessage(l10n, e.error);
+        }
+      },
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        button,
+        const SizedBox(height: BSpace.s8),
+        LayoutBuilder(
+          builder: (context, constraints) => constraints.maxWidth < 320
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [rate, const SizedBox(height: BSpace.s8), charged],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: rate),
+                    const SizedBox(width: BSpace.s8),
+                    Expanded(child: charged),
+                  ],
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(BSpace.s4, BSpace.s8, BSpace.s4, 0),
+          child: Text(
+            l10n.expenseForeignHelp(g.currency),
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Whether and how often the expense comes back, and until when.
 class _RepeatField extends StatelessWidget {
   const _RepeatField({required this.state, required this.locale});
@@ -1258,7 +1457,7 @@ class _SplitRow extends StatelessWidget {
                 width: 96,
                 child: Text(
                   included && share != null
-                      ? formatMoney(context, share!, s._digits, s._group.currency, symbol: s._group.symbol)
+                      ? formatMoney(context, share!, s._digits, s._currency, symbol: s._symbol)
                       : '',
                   textAlign: TextAlign.end,
                   style: text.moneySmall.copyWith(color: scheme.onSurfaceVariant),
@@ -1428,8 +1627,8 @@ class _SplitSummary extends StatelessWidget {
           total: s._total,
           sum: sum,
           digits: s._digits,
-          currency: s._group.currency,
-          symbol: s._group.symbol,
+          currency: s._currency,
+          symbol: s._symbol,
         );
       case SplitMethod.equal:
       case SplitMethod.shares:

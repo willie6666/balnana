@@ -43,6 +43,9 @@ Screenshots from the Android emulator, with made-up demo data.
   same suggestions.
 - **Exact money.** Amounts are kept in the currency's smallest unit, such as
   cents, never as floating point, so totals always add up.
+- **Spending abroad.** Enter an expense in the currency it was paid in, with
+  the rate or what it came to on a card statement. Balances stay in the
+  group's currency.
 - **Links or accounts.** In link mode, a group's private link is all anyone
   needs. In accounts mode, people sign in with a password, Google or any number
   of OpenID Connect providers, and can add or remove them in Settings.

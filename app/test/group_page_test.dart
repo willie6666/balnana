@@ -1165,4 +1165,132 @@ void main() {
     expect(amount.readOnly, isTrue);
     expect(find.textContaining('left'), findsNothing);
   });
+
+  foreignTests();
+}
+
+/// Keeps every request with its body, and answers saves with an expense.
+class _Saves implements HttpClientAdapter {
+  final sent = <(String, Object?)>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    sent.add(('${options.method} ${options.uri.path}', options.data));
+    return _GroupServer.reply(_expenseJson('e2'), options.method == 'POST' ? 201 : 200);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// 1,000 yen that came to 6.43 dollars, paid by Ana for Ana and Ben.
+final _yen = Expense(
+  id: 'f1',
+  kind: ExpenseKind.expense,
+  title: 'Ramen',
+  amount: BigInt.from(643),
+  occurredAt: DateTime.utc(2026, 1, 2),
+  splitMethod: SplitMethod.equal,
+  payers: [ExpensePart('a', BigInt.from(643), foreignAmount: BigInt.from(1000))],
+  splits: [
+    ExpensePart('a', BigInt.from(322), foreignAmount: BigInt.from(500)),
+    ExpensePart('b', BigInt.from(321), foreignAmount: BigInt.from(500)),
+  ],
+  createdAt: DateTime.utc(2026, 1, 2),
+  updatedAt: DateTime.utc(2026, 1, 2),
+  version: 1,
+  foreign: ForeignMoney('JPY', 0, BigInt.from(1000)),
+);
+
+void foreignTests() {
+  test('an expense reads its foreign amounts in their own decimals', () {
+    final e = Expense.fromJson({
+      ..._expenseJson('f1'),
+      'amount': '6.43',
+      'foreign': {'currency': 'KWD', 'minorDigits': 3, 'amount': '2.100'},
+      'payers': [
+        {'memberId': 'a', 'amount': '6.43', 'foreignAmount': '2.100'},
+      ],
+      'splits': [
+        {'memberId': 'a', 'amount': '3.22', 'foreignAmount': '1.050'},
+        {'memberId': 'b', 'amount': '3.21', 'foreignAmount': '1.050'},
+      ],
+    }, 2);
+    expect((e.foreign!.currency, e.foreign!.digits, e.foreign!.amount), ('KWD', 3, BigInt.from(2100)));
+    expect(e.payers.single.foreignAmount, BigInt.from(2100));
+    expect(e.splits.map((s) => s.foreignAmount), [BigInt.from(1050), BigInt.from(1050)]);
+    // Answers from before foreign currencies have none.
+    final plain = Expense.fromJson(_expenseJson('e1'), 2);
+    expect(plain.foreign, isNull);
+    expect(plain.payers.single.foreignAmount, isNull);
+  });
+
+  /// Ana and Ben in Flat, with [_yen] listed, saving through [server].
+  Future<ProviderContainer> boot(WidgetTester tester, _Saves server) {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    return _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expensesProvider.overrideWith2((token) => _Listed(token, [_yen])),
+      expenseProvider.overrideWith((ref, key) async => _yen),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+  }
+
+  EditableText field(WidgetTester tester, String label) => tester.widget<EditableText>(
+    find.descendant(of: find.widgetWithText(TextFormField, label), matching: find.byType(EditableText)),
+  );
+
+  testWidgets('an expense paid in yen shows both amounts', (tester) async {
+    final container = await boot(tester, _Saves());
+    await _go(tester, container, '/g/tok');
+    expect(find.text('¥1,000'), findsOneWidget);
+    expect(find.text('Ana paid · \$6.43'), findsOneWidget);
+
+    // Opened, it is in yen, with the rate worked out from the two.
+    await tester.tap(find.text('Ramen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Paid in JPY'), findsOneWidget);
+    expect(field(tester, '1 JPY in USD').controller.text, '0.00643');
+    expect(field(tester, 'Total in USD').controller.text, '6.43');
+  });
+
+  testWidgets('a new expense in yen starts from the last rate and saves what it came to', (tester) async {
+    final server = _Saves();
+    final container = await boot(tester, server);
+    // A new one starts from that rate.
+    await _go(tester, container, '/g/tok/expenses/new');
+    await tester.tap(find.text('Paid in USD'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.descendant(of: find.byType(BottomSheet), matching: find.byType(TextField)), 'JPY');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Japanese Yen'));
+    await tester.pumpAndSettle();
+    expect(field(tester, '1 JPY in USD').controller.text, '0.00643');
+    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0'), '2000');
+    await tester.pumpAndSettle();
+    expect(field(tester, 'Total in USD').controller.text, '12.86');
+    // What the card was charged wins over the rate.
+    await tester.enterText(find.widgetWithText(TextFormField, 'Total in USD'), '12.90');
+    await tester.pumpAndSettle();
+    expect(field(tester, '1 JPY in USD').controller.text, '0.00645');
+    await tester.enterText(find.widgetWithText(TextFormField, 'What was it for?'), 'Sushi');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    final (request, body) = server.sent.single;
+    expect(request, 'POST /api/v1/g/tok/expenses');
+    expect(body, containsPair('amount', '12.90'));
+    expect(body, containsPair('foreign', {'currency': 'JPY', 'amount': '2000'}));
+    expect(body, containsPair('payers', [
+      {'memberId': 'a', 'amount': '2000'},
+    ]));
+  });
 }

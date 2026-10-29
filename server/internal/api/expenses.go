@@ -33,6 +33,26 @@ type expenseData struct {
 	payers          map[string]int64
 	splits          map[string]int64
 	shares          map[string]string // entered weight, 4 decimals
+	foreign         *foreignData
+}
+
+// foreignData is what an expense paid in another currency came to in it.
+// The expenseData's amounts are the same spread over the group's currency.
+type foreignData struct {
+	currency string
+	digits   int
+	amount   int64
+	payers   map[string]int64
+	splits   map[string]int64
+}
+
+// foreignCurrency checks the currency of an expense's foreign amount.
+func foreignCurrency(g *group, in ForeignInput) (string, error) {
+	currency := strings.ToUpper(strings.TrimSpace(in.Currency))
+	if !currencyCode.MatchString(currency) || currency == g.currency {
+		return "", badRequest("invalid_currency")
+	}
+	return currency, nil
 }
 
 // Dates an expense may have: wide enough for any real one, and well inside
@@ -146,6 +166,27 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 	}
 	d.amount = amount
 
+	// Payers and the split are entered in the currency the expense was paid
+	// in: the group's, or the foreign one.
+	total, digits := amount, g.digits
+	if in.Foreign != nil {
+		if kind == kindPayment {
+			return nil, badRequest("invalid_payment")
+		}
+		currency, err := foreignCurrency(g, *in.Foreign)
+		if err != nil {
+			return nil, err
+		}
+		digits = domain.CurrencyDigits(currency)
+		if total, err = domain.ParseAmount(in.Foreign.Amount, digits); err != nil {
+			return nil, err
+		}
+		if total <= 0 {
+			return nil, domain.ErrInvalidAmount
+		}
+		d.foreign = &foreignData{currency: currency, digits: digits, amount: total}
+	}
+
 	if members == nil {
 		if members, err = groupMembers(ctx, q, g.id); err != nil {
 			return nil, err
@@ -177,7 +218,7 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		if _, dup := d.payers[p.MemberId]; dup {
 			return nil, domain.ErrDuplicateMember
 		}
-		v, err := domain.ParseAmount(p.Amount, g.digits)
+		v, err := domain.ParseAmount(p.Amount, digits)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +228,7 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		d.payers[p.MemberId] = v
 		paid += v // each v <= MaxMinor and there are few: no overflow
 	}
-	if paid != amount {
+	if paid != total {
 		return nil, badRequest("payer_total")
 	}
 
@@ -210,9 +251,24 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		}
 		parts = append(parts, domain.Part{Member: sp.MemberId, Value: value})
 	}
-	d.splits, err = domain.Split(amount, g.digits, d.method, parts)
+	d.splits, err = domain.Split(total, digits, d.method, parts)
 	if err != nil {
 		return nil, err
+	}
+
+	if f := d.foreign; f != nil {
+		f.payers, f.splits = d.payers, d.splits
+		if d.payers, err = domain.Spread(amount, f.payers); err != nil {
+			return nil, err
+		}
+		for _, v := range d.payers {
+			if v == 0 {
+				return nil, badRequest("payer_too_small")
+			}
+		}
+		if d.splits, err = domain.Spread(amount, f.splits); err != nil {
+			return nil, err
+		}
 	}
 
 	if kind == kindPayment {
@@ -229,17 +285,53 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 }
 
 // partTables names where the payers and splits of one kind of row are kept.
-type partTables struct{ payers, splits, key string }
+// Only expense parts have a foreign_amount column.
+type partTables struct {
+	payers, splits, key string
+	foreign             bool
+}
 
 var (
-	expenseParts   = partTables{"expense_payers", "expense_splits", "expense_id"}
-	recurringParts = partTables{"recurring_expense_payers", "recurring_expense_splits", "recurring_id"}
+	expenseParts   = partTables{"expense_payers", "expense_splits", "expense_id", true}
+	recurringParts = partTables{"recurring_expense_payers", "recurring_expense_splits", "recurring_id", false}
 )
 
+// foreignColumn is the foreign_amount column to select, or a null for parts
+// without one.
+func (t partTables) foreignColumn(alias string) string {
+	if t.foreign {
+		return alias + ".foreign_amount"
+	}
+	return "null::bigint"
+}
+
 func (t partTables) insert(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
+	if d.foreign != nil && !t.foreign {
+		return errors.New("api: " + t.payers + " cannot hold foreign amounts")
+	}
+	column := ""
+	if t.foreign {
+		column = ", foreign_amount"
+	}
+	// foreign is a part's foreign amount, or null when the expense has none.
+	foreign := func(amounts map[string]int64, m string) *int64 {
+		if d.foreign == nil {
+			return nil
+		}
+		v := amounts[m]
+		return &v
+	}
+	var payers, splits map[string]int64
+	if d.foreign != nil {
+		payers, splits = d.foreign.payers, d.foreign.splits
+	}
 	for m, v := range d.payers {
-		if _, err := tx.Exec(ctx, `insert into `+t.payers+` (`+t.key+`, member_id, amount) values ($1, $2, $3)`,
-			id, m, v); err != nil {
+		args, values := []any{id, m, v}, "$1, $2, $3"
+		if t.foreign {
+			args, values = append(args, foreign(payers, m)), values+", $4"
+		}
+		if _, err := tx.Exec(ctx, `insert into `+t.payers+` (`+t.key+`, member_id, amount`+column+`)
+			values (`+values+`)`, args...); err != nil {
 			return err
 		}
 	}
@@ -248,9 +340,13 @@ func (t partTables) insert(ctx context.Context, tx pgx.Tx, id string, d *expense
 		if s, ok := d.shares[m]; ok {
 			share = &s
 		}
+		args, values := []any{id, m, v, share}, "$1, $2, $3, $4::text::numeric"
+		if t.foreign {
+			args, values = append(args, foreign(splits, m)), values+", $5"
+		}
 		if _, err := tx.Exec(ctx, `
-			insert into `+t.splits+` (`+t.key+`, member_id, amount, share)
-			values ($1, $2, $3, $4::text::numeric)`, id, m, v, share); err != nil {
+			insert into `+t.splits+` (`+t.key+`, member_id, amount, share`+column+`)
+			values (`+values+`)`, args...); err != nil {
 			return err
 		}
 	}
@@ -268,11 +364,11 @@ func (t partTables) replace(ctx context.Context, tx pgx.Tx, id string, d *expens
 }
 
 // load reads the payers and splits of the rows ids, in member order, and
-// hands each to its row.
+// hands each to its row with its foreign amount in minor units, if any.
 func (t partTables) load(ctx context.Context, q querier, digits int, ids []string,
-	payer func(id string, p Payer), split func(id string, p SplitPart)) error {
+	payer func(id string, p Payer, foreign *int64), split func(id string, p SplitPart, foreign *int64)) error {
 	rows, err := q.Query(ctx, `
-		select p.`+t.key+`::text, p.member_id::text, p.amount
+		select p.`+t.key+`::text, p.member_id::text, p.amount, `+t.foreignColumn("p")+`
 		from `+t.payers+` p join members m on m.id = p.member_id
 		where p.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
 	if err != nil {
@@ -280,8 +376,9 @@ func (t partTables) load(ctx context.Context, q querier, digits int, ids []strin
 	}
 	var id, mid string
 	var amount int64
-	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount}, func() error {
-		payer(id, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)})
+	var foreign *int64
+	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &foreign}, func() error {
+		payer(id, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}, foreign)
 		return nil
 	})
 	if err != nil {
@@ -289,27 +386,32 @@ func (t partTables) load(ctx context.Context, q querier, digits int, ids []strin
 	}
 
 	rows, err = q.Query(ctx, `
-		select s.`+t.key+`::text, s.member_id::text, s.amount, s.share::text
+		select s.`+t.key+`::text, s.member_id::text, s.amount, s.share::text, `+t.foreignColumn("s")+`
 		from `+t.splits+` s join members m on m.id = s.member_id
 		where s.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
 	if err != nil {
 		return err
 	}
 	var share *string
-	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &share}, func() error {
+	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &share, &foreign}, func() error {
 		part := SplitPart{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}
 		if share != nil {
 			v := trimShare(*share)
 			part.Share = &v
 		}
-		split(id, part)
+		split(id, part, foreign)
 		return nil
 	})
 	return err
 }
 
 func (d *expenseData) payload(digits int) map[string]any {
-	return map[string]any{"title": d.title, "amount": domain.FormatAmount(d.amount, digits), "kind": d.kind}
+	p := map[string]any{"title": d.title, "amount": domain.FormatAmount(d.amount, digits), "kind": d.kind}
+	if f := d.foreign; f != nil {
+		p["foreignAmount"] = domain.FormatAmount(f.amount, f.digits)
+		p["foreignCurrency"] = f.currency
+	}
+	return p
 }
 
 // cleanLocation checks where an expense happened. A location with neither a
@@ -397,20 +499,30 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 	place, lat, lng := locationColumns(d.location)
 	err := tx.QueryRow(ctx, `
 		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note,
-			created_by_member, transaction_type, location_name, latitude, longitude)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) returning id::text`,
-		g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who,
-		d.transactionType, place, lat, lng).Scan(&id)
+			created_by_member, transaction_type, location_name, latitude, longitude,
+			foreign_currency, foreign_digits, foreign_amount)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) returning id::text`,
+		append([]any{g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who,
+			d.transactionType, place, lat, lng}, foreignColumns(d.foreign)...)...).Scan(&id)
 	if err != nil {
 		return "", err
 	}
 	return id, expenseParts.insert(ctx, tx, id, d)
 }
 
+// foreignColumns splits an expense's foreign amount into its foreign_currency,
+// foreign_digits and foreign_amount columns.
+func foreignColumns(f *foreignData) []any {
+	if f == nil {
+		return []any{nil, nil, nil}
+	}
+	return []any{f.currency, f.digits, f.amount}
+}
+
 const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
 	created_by_member::text, created_at, updated_at, deleted_at, version, transaction_type,
 	exists (select 1 from receipts r where r.expense_id = expenses.id), location_name, latitude, longitude,
-	recurring_id::text`
+	recurring_id::text, foreign_currency::text, foreign_digits, foreign_amount`
 
 // loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
 func loadExpenses(ctx context.Context, q querier, digits int, sql string, args ...any) ([]Expense, error) {
@@ -422,12 +534,18 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		var e Expense
 		var kind, method string
 		var amount int64
-		var place *string
+		var place, foreignCurrency *string
 		var lat, lng *float64
+		var foreignDigits *int
+		var foreignAmount *int64
 		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
 			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt,
-			&place, &lat, &lng, &e.RecurringId)
+			&place, &lat, &lng, &e.RecurringId, &foreignCurrency, &foreignDigits, &foreignAmount)
 		e.Location = locationOf(place, lat, lng)
+		if foreignCurrency != nil && foreignDigits != nil && foreignAmount != nil {
+			e.Foreign = &Foreign{Currency: *foreignCurrency, MinorDigits: *foreignDigits,
+				Amount: domain.FormatAmount(*foreignAmount, *foreignDigits)}
+		}
 		e.Kind = ExpenseKind(kind)
 		e.SplitMethod = SplitMethod(method)
 		e.Amount = domain.FormatAmount(amount, digits)
@@ -445,9 +563,24 @@ func loadExpenses(ctx context.Context, q querier, digits int, sql string, args .
 		index[list[i].Id] = &list[i]
 		ids[i] = list[i].Id
 	}
+	// foreignOf formats a part's foreign amount in its expense's currency.
+	foreignOf := func(id string, v *int64) *string {
+		f := index[id].Foreign
+		if f == nil || v == nil {
+			return nil
+		}
+		s := domain.FormatAmount(*v, f.MinorDigits)
+		return &s
+	}
 	err = expenseParts.load(ctx, q, digits, ids,
-		func(id string, p Payer) { index[id].Payers = append(index[id].Payers, p) },
-		func(id string, p SplitPart) { index[id].Splits = append(index[id].Splits, p) })
+		func(id string, p Payer, foreign *int64) {
+			p.ForeignAmount = foreignOf(id, foreign)
+			index[id].Payers = append(index[id].Payers, p)
+		},
+		func(id string, p SplitPart, foreign *int64) {
+			p.ForeignAmount = foreignOf(id, foreign)
+			index[id].Splits = append(index[id].Splits, p)
+		})
 	return list, err
 }
 
@@ -722,9 +855,10 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		_, err = tx.Exec(ctx, `
 			update expenses set title = $2, category_id = $3, amount = $4, split_method = $5,
 				occurred_at = $6, note = $7, location_name = $8, latitude = $9, longitude = $10,
+				foreign_currency = $11, foreign_digits = $12, foreign_amount = $13,
 				updated_at = now(), version = version + 1
-			where id = $1`, req.ExpenseId, d.title, d.category, d.amount, string(d.method), d.occurredAt, d.note,
-			place, lat, lng)
+			where id = $1`, append([]any{req.ExpenseId, d.title, d.category, d.amount, string(d.method), d.occurredAt, d.note,
+			place, lat, lng}, foreignColumns(d.foreign)...)...)
 		if err != nil {
 			return err
 		}

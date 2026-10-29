@@ -108,6 +108,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorPayerTotal => 'What each person paid must add up to the amount.';
 
   @override
+  String get errorPayerTooSmall =>
+      'Someone\'s part of what was paid comes to nothing in the group\'s currency. Check the amounts.';
+
+  @override
   String get errorInvalidNote => 'The note is too long or has characters that cannot be saved.';
 
   @override
@@ -804,6 +808,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseAmountFromPayers => 'What everyone paid, added up';
+
+  @override
+  String expensePaidIn(String currency) {
+    return 'Paid in $currency';
+  }
+
+  @override
+  String expenseRate(String from, String to) {
+    return '1 $from in $to';
+  }
+
+  @override
+  String expenseInGroupCurrency(String currency) {
+    return 'Total in $currency';
+  }
+
+  @override
+  String expenseForeignHelp(String currency) {
+    return 'Balances stay in $currency. Type the rate, or what it came to, such as from a card statement.';
+  }
 
   @override
   String get expenseNote => 'Note';

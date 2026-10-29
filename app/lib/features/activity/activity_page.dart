@@ -128,10 +128,21 @@ String activitySentence(BuildContext context, FeedItem item) {
   String amount() {
     final raw = a.text('amount');
     if (raw == null) return '';
+    final String money;
     try {
-      return formatMoney(context, parseAmount(raw, g.minorDigits), g.minorDigits, g.currency, symbol: g.symbol);
+      money = formatMoney(context, parseAmount(raw, g.minorDigits), g.minorDigits, g.currency, symbol: g.symbol);
     } on MoneyException {
       return raw;
+    }
+    // Paid in another currency: what it was there, then the group's.
+    final foreign = a.text('foreignAmount'), currency = a.text('foreignCurrency');
+    if (foreign == null || currency == null) return money;
+    final digits = foreign.contains('.') ? foreign.length - foreign.indexOf('.') - 1 : 0;
+    if (digits > maxDigits) return '$foreign $currency ($money)';
+    try {
+      return '${formatMoney(context, parseAmount(foreign, digits), digits, currency)} ($money)';
+    } on MoneyException {
+      return '$foreign $currency ($money)';
     }
   }
 

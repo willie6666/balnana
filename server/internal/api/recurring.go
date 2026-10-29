@@ -284,8 +284,8 @@ func loadRecurring(ctx context.Context, q querier, digits int, sql string, args 
 	}
 
 	err = recurringParts.load(ctx, q, digits, ids,
-		func(id string, p Payer) { index[id].Payers = append(index[id].Payers, p) },
-		func(id string, p SplitPart) { index[id].Splits = append(index[id].Splits, p) })
+		func(id string, p Payer, _ *int64) { index[id].Payers = append(index[id].Payers, p) },
+		func(id string, p SplitPart, _ *int64) { index[id].Splits = append(index[id].Splits, p) })
 	return list, err
 }
 

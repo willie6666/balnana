@@ -128,6 +128,10 @@
   "@errorPayerTotal": {
     "description": "Message when the payers' amounts do not add up to the expense amount."
   },
+  "errorPayerTooSmall": "Someone's part of what was paid comes to nothing in the group's currency. Check the amounts.",
+  "@errorPayerTooSmall": {
+    "description": "Message when a payer's part of an expense in a foreign currency rounds to zero in the group's currency."
+  },
   "errorInvalidNote": "The note is too long or has characters that cannot be saved.",
   "@errorInvalidNote": {
     "description": "Message when an expense note is refused."
@@ -1142,6 +1146,50 @@
   "expenseAmountFromPayers": "What everyone paid, added up",
   "@expenseAmountFromPayers": {
     "description": "Label or control text for expense amount from payers in the expense editor or expense list."
+  },
+  "expensePaidIn": "Paid in {currency}",
+  "@expensePaidIn": {
+    "placeholders": {
+      "currency": {
+        "type": "String",
+        "description": "Three-letter ISO currency code, such as JPY."
+      }
+    },
+    "description": "Button under the amount in the expense editor that picks the currency the expense was paid in."
+  },
+  "expenseRate": "1 {from} in {to}",
+  "@expenseRate": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "description": "Three-letter ISO currency code, such as JPY."
+      },
+      "to": {
+        "type": "String",
+        "description": "Three-letter ISO currency code, such as JPY."
+      }
+    },
+    "description": "Label of the exchange rate field in the expense editor: how much one unit of the currency paid in is worth in the group's currency."
+  },
+  "expenseInGroupCurrency": "Total in {currency}",
+  "@expenseInGroupCurrency": {
+    "placeholders": {
+      "currency": {
+        "type": "String",
+        "description": "Three-letter ISO currency code, such as JPY."
+      }
+    },
+    "description": "Label of the field in the expense editor for what an expense paid in another currency came to in the group's currency."
+  },
+  "expenseForeignHelp": "Balances stay in {currency}. Type the rate, or what it came to, such as from a card statement.",
+  "@expenseForeignHelp": {
+    "placeholders": {
+      "currency": {
+        "type": "String",
+        "description": "Three-letter ISO currency code, such as JPY."
+      }
+    },
+    "description": "Help under the exchange rate fields in the expense editor."
   },
   "expenseNote": "Note",
   "@expenseNote": {

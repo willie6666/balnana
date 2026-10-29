@@ -283,6 +283,12 @@ abstract class AppLocalizations {
   /// **'What each person paid must add up to the amount.'**
   String get errorPayerTotal;
 
+  /// Message when a payer's part of an expense in a foreign currency rounds to zero in the group's currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone\'s part of what was paid comes to nothing in the group\'s currency. Check the amounts.'**
+  String get errorPayerTooSmall;
+
   /// Message when an expense note is refused.
   ///
   /// In en, this message translates to:
@@ -1554,6 +1560,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What everyone paid, added up'**
   String get expenseAmountFromPayers;
+
+  /// Button under the amount in the expense editor that picks the currency the expense was paid in.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid in {currency}'**
+  String expensePaidIn(String currency);
+
+  /// Label of the exchange rate field in the expense editor: how much one unit of the currency paid in is worth in the group's currency.
+  ///
+  /// In en, this message translates to:
+  /// **'1 {from} in {to}'**
+  String expenseRate(String from, String to);
+
+  /// Label of the field in the expense editor for what an expense paid in another currency came to in the group's currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Total in {currency}'**
+  String expenseInGroupCurrency(String currency);
+
+  /// Help under the exchange rate fields in the expense editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances stay in {currency}. Type the rate, or what it came to, such as from a card statement.'**
+  String expenseForeignHelp(String currency);
 
   /// Label or control text for expense note in the expense editor or expense list.
   ///

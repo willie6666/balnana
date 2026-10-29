@@ -128,3 +128,32 @@ func weighted(total int64, parts []Part, weights []int64) map[string]int64 {
 	}
 	return out
 }
+
+// Spread divides total (minor units, > 0) between the members of amounts in
+// proportion to them, by the same largest-remainder method as weighted
+// splits. It turns what each payer or share of an expense came to in another
+// currency into the group's. amounts must not be negative and must add up to
+// more than zero.
+func Spread(total int64, amounts map[string]int64) (map[string]int64, error) {
+	if total <= 0 || total > MaxMinor {
+		return nil, ErrInvalidAmount
+	}
+	if len(amounts) == 0 {
+		return nil, ErrNoMembers
+	}
+	parts := make([]Part, 0, len(amounts))
+	weights := make([]int64, 0, len(amounts))
+	var sum int64
+	for m, v := range amounts {
+		if v < 0 || v > MaxMinor {
+			return nil, ErrInvalidAmount
+		}
+		parts = append(parts, Part{Member: m})
+		weights = append(weights, v)
+		sum += v // each v <= MaxMinor and there are few: no overflow
+	}
+	if sum == 0 {
+		return nil, ErrInvalidAmount
+	}
+	return weighted(total, parts, weights), nil
+}

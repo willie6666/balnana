@@ -59,6 +59,48 @@ void main() {
     }
   });
 
+  group('spread vectors', () {
+    for (final c in cases('spread')) {
+      test(c['name'] as String, () {
+        final total = BigInt.parse(c['total'] as String);
+        final amounts = (c['amounts'] as Map).cast<String, String>().map((m, v) => MapEntry(m, BigInt.parse(v)));
+        if (c['error'] case final String code) {
+          expect(() => spread(total, amounts), throwsMoney(code));
+          return;
+        }
+        expect(
+          spread(total, amounts).map((m, v) => MapEntry(m, v.toString())),
+          (c['expect'] as Map).cast<String, String>(),
+        );
+      });
+    }
+  });
+
+  group('rates', () {
+    test('convert rounds half up into the other digits', () {
+      // 1,000 yen at 0.21445 is 214.45 dollars... in cents, 21445.
+      expect(convertAmount(BigInt.from(1000), 0, '0.21445', 2), BigInt.from(21445));
+      expect(convertAmount(BigInt.from(1000), 0, '0.0064', 2), BigInt.from(640));
+      // 12.34 euros at 34.5 is 425.73 TWD (425.73).
+      expect(convertAmount(BigInt.from(1234), 2, '34.5', 2), BigInt.from(42573));
+      expect(convertAmount(BigInt.from(1), 2, '0.5', 0), BigInt.zero); // 0.005 rounds to 0
+      expect(convertAmount(BigInt.from(1), 0, '0.5', 0), BigInt.one); // 0.5 rounds up
+      expect(convertAmount(BigInt.from(1000), 0, '0', 2), isNull);
+      expect(convertAmount(BigInt.from(1000), 0, 'x', 2), isNull);
+      expect(convertAmount(BigInt.from(1000), 0, '0.123456789', 2), isNull);
+    });
+
+    test('rate of a charged amount keeps six significant digits', () {
+      expect(rateOf(BigInt.from(1000), 0, BigInt.from(21445), 2), '0.21445');
+      expect(rateOf(BigInt.from(1000), 0, BigInt.from(643), 2), '0.00643');
+      expect(rateOf(BigInt.from(300000), 0, BigInt.from(1), 2), '0.00000003');
+      expect(rateOf(BigInt.from(100), 2, BigInt.from(3125670), 2), '31256.7');
+      expect(rateOf(BigInt.from(300), 2, BigInt.from(100), 2), '0.333333');
+      expect(rateOf(BigInt.from(100), 2, BigInt.from(100), 2), '1');
+      expect(rateOf(BigInt.from(1), 0, BigInt.from(123456789), 0), '123456789');
+    });
+  });
+
   group('settle vectors', () {
     for (final c in cases('settle')) {
       test(c['name'] as String, () {

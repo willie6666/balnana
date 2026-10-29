@@ -69,6 +69,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'unknown_member' || 'invalid_member' => l10n.errorUnknownMember,
     'no_payers' => l10n.errorNoPayers,
     'payer_total' => l10n.errorPayerTotal,
+    'payer_too_small' => l10n.errorPayerTooSmall,
     'invalid_note' => l10n.errorInvalidNote,
     'invalid_date' => l10n.errorInvalidDate,
     'bad_image' => l10n.errorBadImage,

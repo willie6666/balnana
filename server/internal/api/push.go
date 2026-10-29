@@ -263,6 +263,9 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 		}
 		amount = *g.symbol + sep + e.Amount
 	}
+	if f := e.Foreign; f != nil {
+		amount = f.Amount + " " + f.Currency + " (" + amount + ")"
+	}
 	n := notification{Group: g.token, Expense: e.Id, Title: clip(g.name)}
 	switch {
 	case e.Kind == ExpenseKindPayment:

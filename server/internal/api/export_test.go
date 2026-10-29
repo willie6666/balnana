@@ -19,7 +19,8 @@ func TestExportCsv(t *testing.T) {
 	var e Expense
 	place := "=Cafe"
 	c.must(201, "POST", base+"/expenses", ExpenseInput{Title: "=SUM(A1)", Amount: "4",
-		OccurredAt: mustTime(t, "2026-10-23T10:00:00Z"), Payers: []PayerInput{{MemberId: ana, Amount: "4"}},
+		Foreign:    &ForeignInput{Currency: "JPY", Amount: "650"},
+		OccurredAt: mustTime(t, "2026-10-23T10:00:00Z"), Payers: []PayerInput{{MemberId: ana, Amount: "650"}},
 		SplitMethod: "equal", Splits: []Share{{MemberId: ben}},
 		Location: &Location{Name: &place, Point: &GeoPoint{Latitude: 25.0339, Longitude: 121.5645}}}, &e)
 	c.must(201, "POST", base+"/expenses", ExpenseInput{Title: "Gone", Amount: "7",
@@ -36,13 +37,13 @@ func TestExportCsv(t *testing.T) {
 		t.Fatalf("disposition: %q", got)
 	}
 	want := "\xef\xbb\xbf" + strings.Join([]string{
-		"Date,Title,Category,Type,Amount,Currency,Note,Location,Latitude,Longitude,Ana,Ben,Cleo,Dan",
-		"2026-10-01,Taxi,transport,expense,30.00,EUR,,,,,15.00,-15.00,0.00,0.00",
-		`2026-10-02,Dinner,food,expense,90.00,EUR,100% fun_night,,,,-30.00,60.00,-30.00,0.00`,
-		"2026-10-20,Groceries,groceries,expense,12.00,EUR,,,,,6.00,0.00,-6.00,0.00",
-		"2026-10-21,Snacks,,expense,6.00,EUR,,,,,0.00,0.00,0.00,0.00",
-		"2026-10-22,,,payment,15.00,EUR,,,,,-15.00,15.00,0.00,0.00",
-		"2026-10-23,'=SUM(A1),,expense,4.00,EUR,,'=Cafe,25.0339,121.5645,4.00,-4.00,0.00,0.00",
+		"Date,Title,Category,Type,Amount,Currency,Note,Location,Latitude,Longitude,Original amount,Original currency,Ana,Ben,Cleo,Dan",
+		"2026-10-01,Taxi,transport,expense,30.00,EUR,,,,,,,15.00,-15.00,0.00,0.00",
+		`2026-10-02,Dinner,food,expense,90.00,EUR,100% fun_night,,,,,,-30.00,60.00,-30.00,0.00`,
+		"2026-10-20,Groceries,groceries,expense,12.00,EUR,,,,,,,6.00,0.00,-6.00,0.00",
+		"2026-10-21,Snacks,,expense,6.00,EUR,,,,,,,0.00,0.00,0.00,0.00",
+		"2026-10-22,,,payment,15.00,EUR,,,,,,,-15.00,15.00,0.00,0.00",
+		"2026-10-23,'=SUM(A1),,expense,4.00,EUR,,'=Cafe,25.0339,121.5645,650,JPY,4.00,-4.00,0.00,0.00",
 	}, "\n") + "\n"
 	if got := rec.Body.String(); got != want {
 		t.Fatalf("got\n%s\nwant\n%s", got, want)

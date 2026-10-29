@@ -178,6 +178,60 @@ Map<String, BigInt> _weighted(BigInt total, List<SplitPart> parts, List<BigInt> 
   return {for (final (i, s) in slots.indexed) s.member: i < leftover ? s.amount + BigInt.one : s.amount};
 }
 
+/// Spreads [total] (minor units, > 0) over members in proportion to
+/// [amounts], which are in another currency's minor units: how an expense
+/// paid in a foreign currency comes to its parts in the group's. Leftovers go
+/// as in [split].
+Map<String, BigInt> spread(BigInt total, Map<String, BigInt> amounts) {
+  if (total <= BigInt.zero || total > maxMinor) throw const MoneyException(MoneyError.invalidAmount);
+  if (amounts.isEmpty) throw const MoneyException(MoneyError.noMembers);
+  if (amounts.values.any((v) => v.isNegative || v > maxMinor) ||
+      amounts.values.fold(BigInt.zero, (a, b) => a + b) == BigInt.zero) {
+    throw const MoneyException(MoneyError.invalidAmount);
+  }
+  return _weighted(total, [for (final m in amounts.keys) SplitPart(m)], amounts.values.toList());
+}
+
+/// How many decimals an exchange rate may be typed with.
+const rateDigits = 8;
+
+/// [amount] in [fromDigits] minor units times [rate], a decimal string, in
+/// [toDigits] minor units, rounded half up; null when [rate] is not a
+/// positive number or the result is too large.
+BigInt? convertAmount(BigInt amount, int fromDigits, String rate, int toDigits) {
+  // Amounts have at most maxDigits decimals; a rate may have more.
+  final m = RegExp(r'^([0-9]{1,15})(?:\.([0-9]+))?$').firstMatch(rate.trim());
+  final frac = m?.group(2) ?? '';
+  if (m == null || frac.length > rateDigits) return null;
+  final r = BigInt.parse(m.group(1)! + frac.padRight(rateDigits, '0'));
+  if (r <= BigInt.zero) return null;
+  final num = amount * r * BigInt.from(10).pow(toDigits);
+  final den = BigInt.from(10).pow(fromDigits + rateDigits);
+  final out = (num * BigInt.two + den) ~/ (den * BigInt.two);
+  return out > maxMinor ? null : out;
+}
+
+/// The rate [charged] (in [toDigits] minor units) is of [amount] (in
+/// [fromDigits]), as a decimal string with six significant digits, at most
+/// [rateDigits] decimals and no trailing zeros, e.g. "0.214" or "31.2567".
+String rateOf(BigInt amount, int fromDigits, BigInt charged, int toDigits) {
+  final num = charged * BigInt.from(10).pow(fromDigits);
+  final den = amount * BigInt.from(10).pow(toDigits);
+  var decimals = 0;
+  BigInt rounded() {
+    final scaled = num * BigInt.from(10).pow(decimals);
+    return (scaled * BigInt.two + den) ~/ (den * BigInt.two);
+  }
+
+  while (decimals < rateDigits && rounded() < BigInt.from(100000)) {
+    decimals++;
+  }
+  final digits = rounded().toString().padLeft(decimals + 1, '0');
+  final cut = digits.length - decimals;
+  final frac = digits.substring(cut).replaceFirst(RegExp(r'0+$'), '');
+  return frac.isEmpty ? digits.substring(0, cut) : '${digits.substring(0, cut)}.$frac';
+}
+
 /// One suggested payment: [from] pays [to] the [amount] (minor units).
 class Transfer {
   const Transfer(this.from, this.to, this.amount);

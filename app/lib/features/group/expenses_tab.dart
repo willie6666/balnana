@@ -419,6 +419,9 @@ class ExpenseTile extends ConsumerWidget {
     // Whether the row shows this member's part rather than the whole amount.
     // A payment is all theirs when they are in it.
     final part = myShare && !e.isPayment && net != BigInt.zero;
+    // Paid in another currency, the row leads with what it was there.
+    final f = e.foreign;
+    final whole = f == null ? money(e.amount) : formatMoney(context, f.amount, f.digits, f.currency);
 
     // Who paid or received goes on a line of its own, so a phone does not cut
     // it off after the time. Beside the whole amount it needs no amount.
@@ -432,8 +435,8 @@ class ExpenseTile extends ConsumerWidget {
       final type = e.transactionType == 'income' ? l10n.transactionIncome : l10n.transactionRefund;
       final receiver = _name(l10n, e.splits.first.memberId), receivers = e.splits.length;
       final by = switch ((part, receivers)) {
-        (true, 1) => l10n.expenseReceivedBy(receiver, money(e.amount)),
-        (true, _) => l10n.expenseReceivedByMany(receivers, money(e.amount)),
+        (true, 1) => l10n.expenseReceivedBy(receiver, whole),
+        (true, _) => l10n.expenseReceivedByMany(receivers, whole),
         (false, 1) => l10n.expenseReceivedByName(receiver),
         (false, _) => l10n.expenseReceivedByManyNames(receivers),
       };
@@ -443,12 +446,14 @@ class ExpenseTile extends ConsumerWidget {
       title = e.title;
       final payer = _name(l10n, e.payers.first.memberId), payers = e.payers.length;
       who = switch ((part, payers)) {
-        (true, 1) => l10n.expensePaidBy(payer, money(e.amount)),
-        (true, _) => l10n.expensePaidByMany(payers, money(e.amount)),
+        (true, 1) => l10n.expensePaidBy(payer, whole),
+        (true, _) => l10n.expensePaidByMany(payers, whole),
         (false, 1) => l10n.expensePaidByName(payer),
         (false, _) => l10n.expensePaidByManyNames(payers),
       };
     }
+    // ... and what it came to in the group's currency follows, small.
+    if (f != null && !part && who != null) who = '$who · ${money(e.amount)}';
 
     // Every row shows who paid or received and everyone it was for, under the
     // whole amount or, as settings choose, this member's part of it: green
@@ -461,7 +466,7 @@ class ExpenseTile extends ConsumerWidget {
         : net < BigInt.zero
         ? c.owe
         : c.settled;
-    final amount = Text(money(part ? net.abs() : e.amount), style: text.moneyRow.copyWith(color: color));
+    final amount = Text(part ? money(net.abs()) : whole, style: text.moneyRow.copyWith(color: color));
 
     final muted = text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
     Text line(String s) => Text(s, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis);

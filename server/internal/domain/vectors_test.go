@@ -45,6 +45,13 @@ type vectors struct {
 		} `json:"expect"`
 		Error string `json:"error"`
 	} `json:"settle"`
+	Spread []struct {
+		Name    string            `json:"name"`
+		Total   string            `json:"total"`
+		Amounts map[string]string `json:"amounts"`
+		Expect  map[string]string `json:"expect"`
+		Error   string            `json:"error"`
+	} `json:"spread"`
 }
 
 func loadVectors(t *testing.T) vectors {
@@ -161,6 +168,35 @@ func TestSettleVectors(t *testing.T) {
 				if g.From != e.From || g.To != e.To || FormatAmount(g.Amount, c.Digits) != e.Amount {
 					t.Errorf("transfer %d = %+v, want %+v", i, g, e)
 				}
+			}
+		})
+	}
+}
+
+func TestSpreadVectors(t *testing.T) {
+	for _, c := range loadVectors(t).Spread {
+		t.Run(c.Name, func(t *testing.T) {
+			total, _ := strconv.ParseInt(c.Total, 10, 64)
+			amounts := map[string]int64{}
+			for m, s := range c.Amounts {
+				amounts[m], _ = strconv.ParseInt(s, 10, 64)
+			}
+			got, err := Spread(total, amounts)
+			if c.Error != "" {
+				if codeOf(err) != c.Error {
+					t.Fatalf("error %q, want %q", codeOf(err), c.Error)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			formatted := map[string]string{}
+			for m, v := range got {
+				formatted[m] = strconv.FormatInt(v, 10)
+			}
+			if !reflect.DeepEqual(formatted, c.Expect) {
+				t.Fatalf("got %v, want %v", formatted, c.Expect)
 			}
 		})
 	}

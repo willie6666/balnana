@@ -1465,8 +1465,9 @@ paths:
       description: >-
         UTF-8 CSV with a byte order mark, oldest first. Fixed columns, in order:
         Date, Title, Category, Type (`expense`, `payment`, `refund` or `income`),
-        Amount, Currency, Note, Location, Latitude, Longitude, then
-        one per member with what the entry did to their balance (paid minus
+        Amount, Currency, Note, Location, Latitude, Longitude, Original amount,
+        Original currency (what an expense paid in another currency came to in
+        it, else empty), then one per member with what the entry did to their balance (paid minus
         share), so each member column adds up to their balance.
       parameters:
         - $ref: "#/components/parameters/TimeZone"
@@ -1961,7 +1962,9 @@ components:
           $ref: "#/components/schemas/Location"
         payers:
           type: array
-          description: Who paid; the amounts add up to `amount`.
+          description: >-
+            Who paid; the amounts add up to `amount`, or to `foreign.amount`
+            when the expense has one.
           items:
             $ref: "#/components/schemas/PayerInput"
         splitMethod:
@@ -1970,9 +1973,49 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Share"
+        foreign:
+          $ref: "#/components/schemas/ForeignInput"
         version:
           type: integer
           description: Required when updating.
+    ForeignInput:
+      type: object
+      required: [currency, amount]
+      description: >-
+        What an expense came to in another currency than the group's. The
+        expense's `amount` is then what was paid in the group's currency,
+        such as what a card was charged, while payer amounts and `exact`
+        split values are in this currency and add up to this `amount`, with
+        the currency's usual decimals. The server spreads the group-currency
+        amount over the payers and the split in proportion to their amounts
+        in this currency, largest remainders first, so every balance stays in
+        the group's currency. Errors: `invalid_currency` for a code that is
+        not three letters or is the group's own, `invalid_payment` on a
+        payment, and `payer_too_small` when a payer's part comes to nothing
+        in the group's currency.
+      properties:
+        currency:
+          type: string
+          description: ISO 4217 code, such as `JPY`.
+        amount:
+          type: string
+          description: Decimal amount with up to the currency's usual decimals.
+          example: "3000"
+    Foreign:
+      type: object
+      required: [currency, minorDigits, amount]
+      description: >-
+        What the expense came to in the currency it was paid in. The rate is
+        this amount against the expense's `amount`.
+      properties:
+        currency:
+          type: string
+        minorDigits:
+          type: integer
+          description: Decimals of `amount` and of the parts' `foreignAmount`.
+        amount:
+          type: string
+          description: Decimal amount with `minorDigits` decimals.
     Location:
       type: object
       description: >-
@@ -2072,6 +2115,8 @@ components:
         recurringId:
           type: string
           description: The recurring expense that added it, while that still exists.
+        foreign:
+          $ref: "#/components/schemas/Foreign"
     Repeat:
       type: object
       required: [unit, every]
@@ -2204,6 +2249,9 @@ components:
           type: string
         amount:
           $ref: "#/components/schemas/Money"
+        foreignAmount:
+          type: string
+          description: What they paid in the expense's `foreign` currency.
     SplitPart:
       type: object
       required: [memberId, amount]
@@ -2215,6 +2263,9 @@ components:
         share:
           type: string
           description: The weight entered, for `shares`.
+        foreignAmount:
+          type: string
+          description: Their share in the expense's `foreign` currency.
     ExpensePage:
       type: object
       required: [items]
