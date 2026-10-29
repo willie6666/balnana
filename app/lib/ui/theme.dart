@@ -5,13 +5,43 @@ import 'tokens.dart';
 
 const _font = 'PlusJakartaSans';
 
-/// The brand scheme. Fidelity keeps the seed's yellow recognizable in the
-/// primary container instead of washing it out.
-ColorScheme brandScheme(Brightness brightness) => ColorScheme.fromSeed(
-  seedColor: brandSeed,
-  brightness: brightness,
-  dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-);
+/// The brand scheme.
+ColorScheme brandScheme(Brightness brightness) => seedScheme(brandSeed, brightness);
+
+/// A scheme for [seed] that keeps its color to the accents. Surfaces come
+/// from [surfaceSeed], so every page shares the same near-neutral ground, and
+/// tonal spot keeps the secondary fills and selections calm. In light mode
+/// fidelity supplies the primary roles, so the seed itself fills the primary
+/// container; in the dark that is often too bright, so tonal spot's calmer
+/// tones stay.
+ColorScheme seedScheme(Color seed, Brightness brightness) {
+  ColorScheme of(DynamicSchemeVariant variant, [Color? from]) =>
+      ColorScheme.fromSeed(seedColor: from ?? seed, brightness: brightness, dynamicSchemeVariant: variant);
+  final calm = of(DynamicSchemeVariant.tonalSpot);
+  final neutral = of(DynamicSchemeVariant.neutral, surfaceSeed);
+  final vivid = brightness == Brightness.light ? of(DynamicSchemeVariant.fidelity) : calm;
+  return calm.copyWith(
+    primary: vivid.primary,
+    onPrimary: vivid.onPrimary,
+    primaryContainer: vivid.primaryContainer,
+    onPrimaryContainer: vivid.onPrimaryContainer,
+    surfaceTint: vivid.primary,
+    surface: neutral.surface,
+    onSurface: neutral.onSurface,
+    surfaceDim: neutral.surfaceDim,
+    surfaceBright: neutral.surfaceBright,
+    surfaceContainerLowest: neutral.surfaceContainerLowest,
+    surfaceContainerLow: neutral.surfaceContainerLow,
+    surfaceContainer: neutral.surfaceContainer,
+    surfaceContainerHigh: neutral.surfaceContainerHigh,
+    surfaceContainerHighest: neutral.surfaceContainerHighest,
+    onSurfaceVariant: neutral.onSurfaceVariant,
+    outline: neutral.outline,
+    outlineVariant: neutral.outlineVariant,
+    inverseSurface: neutral.inverseSurface,
+    onInverseSurface: neutral.onInverseSurface,
+  );
+}
 
 ThemeData buildTheme(ColorScheme scheme, {bool pureBlack = false}) {
   final dark = scheme.brightness == Brightness.dark;

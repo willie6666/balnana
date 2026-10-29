@@ -202,7 +202,7 @@ class _StatsBody extends StatelessWidget {
             spacing: BSpace.s12,
             children: [
               _Key(color: scheme.primary, label: l10n.statsPaid),
-              _Key(color: scheme.tertiary, label: l10n.statsShare),
+              _Key(color: scheme.primary.withValues(alpha: 0.4), label: l10n.statsShare),
             ],
           ),
           child: crowd
@@ -453,7 +453,7 @@ class _MemberRow extends StatelessWidget {
               ],
             ),
             line(l10n.statsPaid, paid, scheme.primary),
-            line(l10n.statsShare, share, scheme.tertiary),
+            line(l10n.statsShare, share, scheme.primary.withValues(alpha: 0.4)),
           ],
         ),
       ),

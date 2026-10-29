@@ -35,7 +35,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
 
   /// The field "Add person" just made, which takes the focus.
   TextEditingController? _added;
-  Color _color = BalnanaColors.palette.first;
+  Color _color = brandSeed;
 
   /// Empty for none. Until one is chosen, it follows the name.
   String _icon = '';

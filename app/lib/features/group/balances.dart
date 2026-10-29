@@ -31,7 +31,7 @@ class BalanceCard extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final myId = myMemberId(ref, group.token);
     final me = group.member(myId);
-    final onHeader = scheme.onPrimaryContainer;
+    final onHeader = scheme.onSecondaryContainer;
 
     Widget prompt(String title, String body, String action, VoidCallback onPressed) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +94,7 @@ class BalanceCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ColoredBox(
-            color: scheme.primaryContainer,
+            color: scheme.secondaryContainer,
             child: Padding(padding: const EdgeInsets.all(BSpace.s24), child: header),
           ),
           ColoredBox(
@@ -431,7 +431,7 @@ class _TransferTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: BSpace.tileGap * 2),
       child: Material(
-        color: involved ? scheme.secondaryContainer : scheme.surfaceContainerHigh,
+        color: involved ? scheme.surfaceContainerHighest : scheme.surfaceContainer,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(BSpace.s12, BSpace.s8, BSpace.s8, BSpace.s8),

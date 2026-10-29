@@ -3,6 +3,10 @@ import 'package:material_ui/material_ui.dart';
 /// The brand color: ripe banana.
 const brandSeed = Color(0xFFE8A800);
 
+/// Seeds the near-neutral surfaces of every scheme: a warm white that leans
+/// yellow rather than pink, the same under any group's color.
+const surfaceSeed = Color(0xFFA8A000);
+
 /// Colors the Material scheme has no role for. Widgets read them with
 /// `context.bColors`, never as literals.
 @immutable

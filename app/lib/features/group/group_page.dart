@@ -87,15 +87,7 @@ class GroupTheme extends ConsumerWidget {
     if (WallpaperColors.of(context)) return child;
     final brightness = Theme.of(context).brightness;
     final pureBlack = ref.watch(settingsProvider.select((s) => s.pureBlack));
-    final scheme = ColorScheme.fromSeed(
-      seedColor: paletteColor(group.color, group.token),
-      brightness: brightness,
-      // Fidelity keeps the group's own color, which in the dark is often
-      // too bright for text on it; tonal spot keeps the hue with calmer tones.
-      dynamicSchemeVariant: brightness == Brightness.dark
-          ? DynamicSchemeVariant.tonalSpot
-          : DynamicSchemeVariant.fidelity,
-    );
+    final scheme = seedScheme(paletteColor(group.color, group.token), brightness);
     return Theme(
       data: buildTheme(scheme, pureBlack: pureBlack),
       child: child,
