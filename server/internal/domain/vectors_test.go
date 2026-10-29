@@ -52,6 +52,7 @@ type vectors struct {
 		Expect  map[string]string `json:"expect"`
 		Error   string            `json:"error"`
 	} `json:"spread"`
+	CurrencyDigits map[string]int `json:"currencyDigits"`
 }
 
 func loadVectors(t *testing.T) vectors {
@@ -199,5 +200,13 @@ func TestSpreadVectors(t *testing.T) {
 				t.Fatalf("got %v, want %v", formatted, c.Expect)
 			}
 		})
+	}
+}
+
+func TestCurrencyDigitsVectors(t *testing.T) {
+	for currency, want := range loadVectors(t).CurrencyDigits {
+		if got := CurrencyDigits(currency); got != want {
+			t.Errorf("CurrencyDigits(%q) = %d, want %d", currency, got, want)
+		}
 	}
 }

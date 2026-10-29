@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:balnana/core/money.dart';
 import 'package:balnana/data/models.dart';
+import 'package:balnana/ui/money.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// api/testdata/money.json is shared with the Go tests in server/internal/domain.
@@ -99,6 +100,11 @@ void main() {
       expect(rateOf(BigInt.from(100), 2, BigInt.from(100), 2), '1');
       expect(rateOf(BigInt.from(1), 0, BigInt.from(123456789), 0), '123456789');
     });
+  });
+
+  test('currency digits vectors', () {
+    final want = (vectors['currencyDigits'] as Map).cast<String, int>();
+    expect({for (final c in want.keys) c: defaultMinorDigits(c)}, want);
   });
 
   group('settle vectors', () {
