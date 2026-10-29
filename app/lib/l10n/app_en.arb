@@ -640,6 +640,23 @@
   "@groupCopyLink": {
     "description": "Label or control text for group copy link in group creation, settings, or switching."
   },
+  "groupQrCode": "Show QR code",
+  "@groupQrCode": {
+    "description": "Settings tile that shows the group's link as a QR code to scan."
+  },
+  "groupQrCodeHelp": "Let people scan the link with their phone's camera.",
+  "@groupQrCodeHelp": {
+    "description": "Help text under the tile that shows the group's QR code."
+  },
+  "groupQrLabel": "QR code for the link to {group}",
+  "@groupQrLabel": {
+    "description": "Screen reader label of the QR code that encodes a group's link.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
   "groupCopyLinkHelp": "Anyone with the link can see and edit this group.",
   "@groupCopyLinkHelp": {
     "description": "Help text for group copy link help in group creation, settings, or switching."

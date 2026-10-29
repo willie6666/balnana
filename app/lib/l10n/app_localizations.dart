@@ -955,6 +955,24 @@ abstract class AppLocalizations {
   /// **'Copy link'**
   String get groupCopyLink;
 
+  /// Settings tile that shows the group's link as a QR code to scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Show QR code'**
+  String get groupQrCode;
+
+  /// Help text under the tile that shows the group's QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'Let people scan the link with their phone\'s camera.'**
+  String get groupQrCodeHelp;
+
+  /// Screen reader label of the QR code that encodes a group's link.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code for the link to {group}'**
+  String groupQrLabel(String group);
+
   /// Help text for group copy link help in group creation, settings, or switching.
   ///
   /// In en, this message translates to:

@@ -25,6 +25,7 @@ import '../../ui/widgets/symbol_field.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
+import 'share_sheet.dart';
 
 /// [name] made safe to use as a file name.
 @visibleForTesting
@@ -322,10 +323,14 @@ class _Settings extends ConsumerWidget {
             GroupedTile(
               icon: Icons.link,
               title: l10n.groupCopyLink,
-              subtitle: accounts && !group.linkAccess
-                  ? l10n.groupCopyLinkHelpAccounts
-                  : l10n.groupCopyLinkHelp,
+              subtitle: groupLinkHelp(l10n, accounts: accounts, group: group),
               onTap: () => copyGroupLink(context, ref, group.token),
+            ),
+            GroupedTile(
+              icon: Icons.qr_code_2,
+              title: l10n.groupQrCode,
+              subtitle: l10n.groupQrCodeHelp,
+              onTap: () => showShareSheet(context, group),
             ),
             if (signedIn && email && me != null)
               GroupedTile(

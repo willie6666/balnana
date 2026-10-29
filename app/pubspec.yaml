@@ -52,6 +52,7 @@ dependencies:
   latlong2: ^0.10.1
   material_ui: ^1.8.0
   path_provider: ^2.1.6
+  qr: ^4.0.0
   share_plus: ^13.3.1
   shared_preferences: ^2.5.6
   # 6.2 adds webcrypto (a native BoringSSL build) and window_manager, which

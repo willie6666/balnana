@@ -18,6 +18,7 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/expense/expense_editor_page.dart';
 import 'package:balnana/features/expense/receipt.dart';
 import 'package:balnana/features/group/group_settings_page.dart';
+import 'package:balnana/features/group/share_sheet.dart';
 import 'package:balnana/ui/colors.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -803,6 +804,28 @@ void main() {
     answer.complete(_GroupServer.reply({'code': 'forbidden', 'message': 'no'}, 403));
     await tester.pumpAndSettle();
     expect(find.text('Private'), findsNothing);
+  });
+
+  testWidgets('the share button and group settings both show the QR code', (tester) async {
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = _GroupServer(() async => _GroupServer.named('Flat'));
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    await tester.tap(find.byTooltip('Share link'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<QrCodeView>(find.byType(QrCodeView)).data, '$_server/g/tok');
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.byType(QrCodeView), findsNothing);
+
+    await _go(tester, container, '/g/tok/settings');
+    await tester.scrollUntilVisible(find.text('Show QR code'), 100, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Show QR code'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<QrCodeView>(find.byType(QrCodeView)).data, '$_server/g/tok');
   });
 
   testWidgets('a notification opens its group only on the server it came from', (tester) async {

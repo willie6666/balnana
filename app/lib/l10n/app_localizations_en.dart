@@ -470,6 +470,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCopyLink => 'Copy link';
 
   @override
+  String get groupQrCode => 'Show QR code';
+
+  @override
+  String get groupQrCodeHelp => 'Let people scan the link with their phone\'s camera.';
+
+  @override
+  String groupQrLabel(String group) {
+    return 'QR code for the link to $group';
+  }
+
+  @override
   String get groupCopyLinkHelp => 'Anyone with the link can see and edit this group.';
 
   @override

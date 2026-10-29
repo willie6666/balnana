@@ -29,6 +29,7 @@ import '../groups/group_switcher.dart';
 import 'balances.dart';
 import 'expenses_tab.dart';
 import 'identity_sheet.dart';
+import 'share_sheet.dart';
 import 'spending_tab.dart';
 
 /// Who this app acts as in [token]'s group: the signed-in account's member,
@@ -291,7 +292,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                 IconButton(
                   tooltip: l10n.groupShare,
                   icon: const Icon(Icons.share_outlined),
-                  onPressed: () => shareGroupLink(context, ref, group),
+                  onPressed: () => showShareSheet(context, group),
                 ),
                 IconButton(
                   tooltip: l10n.groupSettings,
