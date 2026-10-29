@@ -1447,6 +1447,18 @@ abstract class AppLocalizations {
   /// **'{count} people paid {amount}'**
   String expensePaidByMany(int count, String amount);
 
+  /// Caption naming who originally paid an outgoing expense, shown beside its total so it carries no amount. Placeholders are supplied by the app.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String expensePaidByName(String name);
+
+  /// Caption for an outgoing expense paid by several people, shown beside its total so it carries no amount. Placeholders are supplied by the app.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people paid'**
+  String expensePaidByManyNames(int count);
+
   /// Caption naming the original receiver of an imported refund or income. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:

@@ -414,7 +414,15 @@ class ExpenseTile extends ConsumerWidget {
 
     final e = expense;
     final time = DateFormat.jm(Localizations.localeOf(context).toLanguageTag()).format(e.occurredAt.toLocal());
+    final paid = me == null ? BigInt.zero : e.paidBy(me!), owed = me == null ? BigInt.zero : e.owedBy(me!);
+    final net = paid - owed;
+    // Whether an expense shows this member's part of it rather than its total.
+    final part = myShare && net != BigInt.zero;
+
+    // Who paid or received goes on a line of its own, so a phone does not cut
+    // it off after the time. Beside an expense's total it needs no amount.
     final String title, subtitle;
+    String? who;
     if (e.isPayment) {
       final from = _name(l10n, e.payers.first.memberId), to = _name(l10n, e.splits.first.memberId);
       title = l10n.paymentTitle(from, to);
@@ -422,28 +430,31 @@ class ExpenseTile extends ConsumerWidget {
     } else if (e.isReceived) {
       title = e.title;
       final type = e.transactionType == 'income' ? l10n.transactionIncome : l10n.transactionRefund;
-      final receivedBy = e.splits.length == 1
+      subtitle = '$time · $type';
+      who = e.splits.length == 1
           ? l10n.expenseReceivedBy(_name(l10n, e.splits.first.memberId), money(e.amount))
           : l10n.expenseReceivedByMany(e.splits.length, money(e.amount));
-      subtitle = '$time · $type · $receivedBy';
     } else {
       title = e.title;
-      final paidBy = e.payers.length == 1
-          ? l10n.expensePaidBy(_name(l10n, e.payers.first.memberId), money(e.amount))
-          : l10n.expensePaidByMany(e.payers.length, money(e.amount));
-      final place = e.location?.name;
-      subtitle = place == null ? '$time · $paidBy' : '$time · $paidBy · $place';
+      subtitle = time;
+      final payer = _name(l10n, e.payers.first.memberId), payers = e.payers.length;
+      who = switch ((part, payers)) {
+        (true, 1) => l10n.expensePaidBy(payer, money(e.amount)),
+        (true, _) => l10n.expensePaidByMany(payers, money(e.amount)),
+        (false, 1) => l10n.expensePaidByName(payer),
+        (false, _) => l10n.expensePaidByManyNames(payers),
+      };
     }
 
     // Payments and money received say in words what they mean for this
-    // device's member. An expense shows who lent to whom, with its total or,
-    // as settings choose, this member's part of it: green when they lent,
-    // red when they borrowed, gray when they are even or not in it.
+    // device's member. An expense shows who paid and everyone it was for,
+    // under its total or, as settings choose, this member's part of it: green
+    // when they lent, red when they borrowed, gray when they are even or not
+    // in it.
     String? effect;
     Color? effectColor;
+    Text? lent;
     _Lending? lending;
-    final paid = me == null ? BigInt.zero : e.paidBy(me!), owed = me == null ? BigInt.zero : e.owedBy(me!);
-    final net = paid - owed;
     if (e.isPayment) {
       if (paid > BigInt.zero) (effect, effectColor) = (l10n.effectYouPaid(money(paid)), c.owed);
       if (owed > BigInt.zero) (effect, effectColor) = (l10n.effectYouReceived(money(owed)), c.owe);
@@ -459,8 +470,24 @@ class ExpenseTile extends ConsumerWidget {
           : net < BigInt.zero
           ? c.owe
           : c.settled;
-      lending = _Lending(group, e, money(myShare && net != BigInt.zero ? net.abs() : e.amount), color);
+      lent = Text(money(part ? net.abs() : e.amount), style: text.moneyRow.copyWith(color: color));
+      lending = _Lending(group, e);
     }
+
+    final muted = text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    Text line(String s) => Text(s, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis);
+    final place = e.location;
+    // The place comes first and gives way to the time when space runs out.
+    final when = Row(
+      children: [
+        if (place != null) ...[
+          Icon(Icons.place_outlined, size: 16, color: scheme.onSurfaceVariant, semanticLabel: l10n.expenseHasLocation),
+          const SizedBox(width: BSpace.s4),
+          if (place.name case final name?) ...[Flexible(child: line(name)), Text(' · ', style: muted)],
+        ],
+        Text(subtitle, style: muted, maxLines: 1),
+      ],
+    );
 
     return Material(
       color: Colors.transparent,
@@ -469,7 +496,7 @@ class ExpenseTile extends ConsumerWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BSpace.s12, vertical: BSpace.s8),
+          padding: const EdgeInsets.symmetric(horizontal: BSpace.s8, vertical: BSpace.s8),
           child: Row(
             children: [
               CategoryIcon(expense: e, group: group),
@@ -478,64 +505,75 @@ class ExpenseTile extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // The amount shares only the title's line, so the title
+                    // keeps most of the row.
                     Row(
                       children: [
-                        Flexible(
-                          child: Text(title, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  title,
+                                  style: text.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (e.recurringId != null) ...[
+                                const SizedBox(width: BSpace.s4),
+                                Icon(
+                                  Icons.repeat,
+                                  size: 16,
+                                  color: scheme.onSurfaceVariant,
+                                  semanticLabel: l10n.expenseRecurring,
+                                ),
+                              ],
+                              if (e.hasReceipt) ...[
+                                const SizedBox(width: BSpace.s4),
+                                Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 16,
+                                  color: scheme.onSurfaceVariant,
+                                  semanticLabel: l10n.expenseHasReceipt,
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                        if (e.recurringId != null) ...[
-                          const SizedBox(width: BSpace.s4),
-                          Icon(
-                            Icons.repeat,
-                            size: 16,
-                            color: scheme.onSurfaceVariant,
-                            semanticLabel: l10n.expenseRecurring,
+                        if (lent != null) ...[const SizedBox(width: BSpace.s8), lent],
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [when, if (who != null) line(who)],
                           ),
-                        ],
-                        if (e.hasReceipt) ...[
-                          const SizedBox(width: BSpace.s4),
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 16,
-                            color: scheme.onSurfaceVariant,
-                            semanticLabel: l10n.expenseHasReceipt,
-                          ),
-                        ],
-                        if (e.location != null) ...[
-                          const SizedBox(width: BSpace.s4),
-                          Icon(
-                            Icons.place_outlined,
-                            size: 16,
-                            color: scheme.onSurfaceVariant,
-                            semanticLabel: l10n.expenseHasLocation,
+                        ),
+                        if (lending != null) ...[
+                          const SizedBox(width: BSpace.s8),
+                          // Shrinks rather than pushing the row past the screen
+                          // with many people or large text.
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: WindowSize.of(context) == WindowSize.compact ? 168 : 240,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: lending,
+                            ),
                           ),
                         ],
                       ],
                     ),
-                    Text(
-                      subtitle,
-                      style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: BSpace.s8),
-              if (lending != null)
-                // Shrinks rather than pushing the row past the screen with
-                // many people, a long amount or large text.
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: WindowSize.of(context) == WindowSize.compact ? 168 : 240,
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: lending,
-                  ),
-                )
-              else if (effect != null)
+              if (effect != null) ...[
+                const SizedBox(width: BSpace.s8),
                 ConstrainedBox(
                   // Narrow on phones, so the effect wraps under its label and leaves the title room.
                   constraints: BoxConstraints(maxWidth: WindowSize.of(context) == WindowSize.compact ? 112 : 160),
@@ -544,9 +582,11 @@ class ExpenseTile extends ConsumerWidget {
                     textAlign: TextAlign.end,
                     style: text.labelLarge?.copyWith(color: effectColor),
                   ),
-                )
-              else
+                ),
+              ] else if (lending == null) ...[
+                const SizedBox(width: BSpace.s8),
                 Text(money(e.amount), style: text.moneyRow),
+              ],
             ],
           ),
         ),
@@ -555,48 +595,49 @@ class ExpenseTile extends ConsumerWidget {
   }
 }
 
-/// An expense's amount between who lent it, at the start, and who borrowed
-/// it, at the end.
+/// Who paid an expense and everyone it was for.
 class _Lending extends StatelessWidget {
-  const _Lending(this.group, this.expense, this.amount, this.color);
+  const _Lending(this.group, this.expense);
 
   final Group group;
   final Expense expense;
-  final String amount;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
     final e = expense;
-    final net = {for (final m in {...e.payers, ...e.splits}.map((p) => p.memberId)) m: e.paidBy(m) - e.owedBy(m)};
-    List<Member> where(bool Function(BigInt net) test) => [
-      for (final MapEntry(:key, :value) in net.entries)
-        if (test(value)) ?group.member(key),
+    final ids = {...e.payers, ...e.splits}.map((p) => p.memberId).toSet();
+    List<Member> where(bool Function(String id) test) => [
+      for (final id in ids)
+        if (test(id)) ?group.member(id),
     ];
-    final lenders = where((v) => v > BigInt.zero), borrowers = where((v) => v < BigInt.zero);
+    final lenders = where((id) => e.paidBy(id) > BigInt.zero);
+    final borrowers = where((id) => e.owedBy(id) > BigInt.zero);
     return Semantics(
       label: '${lenders.map((m) => m.name).join(', ')} → ${borrowers.map((m) => m.name).join(', ')}',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ExcludeSemantics(child: _Faces(lenders)),
-          const SizedBox(width: BSpace.s8),
-          Text(amount, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
-          const SizedBox(width: BSpace.s8),
-          ExcludeSemantics(child: _Faces(borrowers)),
-        ],
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _Faces(lenders),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
+              child: Icon(Icons.arrow_forward, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            _Faces(borrowers),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Up to three people's avatars overlapping, the last one counting the rest.
+/// Up to four people's avatars overlapping, the last one counting the rest.
 class _Faces extends StatelessWidget {
   const _Faces(this.members);
 
   final List<Member> members;
 
-  static const _size = 24.0, _step = 16.0, _most = 3;
+  static const _size = 24.0, _step = 16.0, _most = 4;
 
   @override
   Widget build(BuildContext context) {

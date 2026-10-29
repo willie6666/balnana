@@ -511,6 +511,10 @@ void main() {
   });
 
   testWidgets('searching asks the server and clearing brings everything back', (tester) async {
+    // Tall enough for both expenses below the group's header.
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final search = _Search();
     final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
       ..httpClientAdapter = search;
@@ -924,7 +928,8 @@ void main() {
         groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
       ]);
       await _go(tester, container, '/g/tok');
-      expect(find.textContaining('$label · Ben received \$10.00'), findsOneWidget);
+      expect(find.textContaining(' · $label'), findsOneWidget);
+      expect(find.text('Ben received \$10.00'), findsOneWidget);
       expect(find.textContaining('paid'), findsNothing);
       // Ana's half came back to Ben for her.
       expect(find.text('\$5.00 for you'), findsOneWidget);
@@ -1062,8 +1067,11 @@ void main() {
     ]);
     await _go(tester, container, '/g/tok');
     expect(find.text('\$10.00'), findsOneWidget);
+    // Beside the total, who paid needs no amount of its own.
+    expect(find.text('Ana paid'), findsOneWidget);
+    // The total was for Ana too.
     expect(
-      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ana → Ben'),
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ana → Ana, Ben'),
       findsOneWidget,
     );
     expect(find.textContaining('lent'), findsNothing);
@@ -1071,7 +1079,12 @@ void main() {
     container.read(settingsProvider.notifier).setMyShare(true);
     await tester.pumpAndSettle();
     expect(find.text('\$5.00'), findsOneWidget);
-    expect(find.text('\$10.00'), findsNothing);
+    expect(find.text('Ana paid \$10.00'), findsOneWidget);
+    // My share still shows everyone the expense was for.
+    expect(
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ana → Ana, Ben'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('an expense I am not in still shows who and how much, in gray', (tester) async {
@@ -1104,8 +1117,9 @@ void main() {
     ]);
     await _go(tester, container, '/g/tok');
     expect(find.text('not involved'), findsNothing);
+    expect(find.text('Ben paid'), findsOneWidget);
     expect(
-      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ben → Cleo'),
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ben → Ben, Cleo'),
       findsOneWidget,
     );
     final amount = tester.widget<Text>(find.text('\$10.00'));
@@ -1115,6 +1129,7 @@ void main() {
     container.read(settingsProvider.notifier).setMyShare(true);
     await tester.pumpAndSettle();
     expect(find.text('\$10.00'), findsOneWidget);
+    expect(find.text('Ben paid'), findsOneWidget);
   });
 
   testWidgets('several payers add up to the amount', (tester) async {

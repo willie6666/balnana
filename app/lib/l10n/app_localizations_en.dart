@@ -738,6 +738,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String expensePaidByName(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String expensePaidByManyNames(int count) {
+    return '$count people paid';
+  }
+
+  @override
   String expenseReceivedBy(String name, String amount) {
     return '$name received $amount';
   }

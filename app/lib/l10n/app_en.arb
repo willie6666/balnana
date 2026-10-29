@@ -1021,6 +1021,26 @@
     },
     "description": "Caption for an outgoing expense paid by several people, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
+  "expensePaidByName": "{name} paid",
+  "@expensePaidByName": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Caption naming who originally paid an outgoing expense, shown beside its total so it carries no amount. Placeholders are supplied by the app."
+  },
+  "expensePaidByManyNames": "{count} people paid",
+  "@expensePaidByManyNames": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Caption for an outgoing expense paid by several people, shown beside its total so it carries no amount. Placeholders are supplied by the app."
+  },
   "expenseReceivedBy": "{name} received {amount}",
   "@expenseReceivedBy": {
     "placeholders": {
