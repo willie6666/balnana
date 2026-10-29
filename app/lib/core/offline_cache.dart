@@ -149,13 +149,26 @@ class OfflineNotifier extends Notifier<bool> {
 ///
 /// Answers are kept per [_account] (see [cacheAccount]), so no account ever
 /// sees what another one saw.
+///
+/// Once [isOffline] says the server is out of reach, saved answers are given
+/// back at once instead of after each request times out. A [probe] client
+/// still asks the server every time, so it can tell when it is back.
 class OfflineCache extends Interceptor {
-  OfflineCache(this._db, this._server, this._account, this._offline);
+  OfflineCache(
+    this._db,
+    this._server,
+    this._account,
+    this._offline, {
+    bool Function()? isOffline,
+    this.probe = false,
+  }) : _isOffline = isOffline ?? (() => false);
 
   final CacheDb _db;
   final String _server;
   final String _account;
   final void Function(bool offline) _offline;
+  final bool Function() _isOffline;
+  final bool probe;
 
   /// POSTs that only read, and so may be answered from the cache.
   static const _readingPosts = {'/groups/summaries'};
@@ -171,6 +184,29 @@ class OfflineCache extends Interceptor {
       return '$request ${jsonEncode(options.data)}';
     }
     return null;
+  }
+
+  Future<CachedResponse?> _find(String key) async {
+    try {
+      return await _db.find(_server, _account, key);
+    } on Object {
+      return null;
+    }
+  }
+
+  static Response<dynamic> _answer(RequestOptions options, CachedResponse saved) => Response<dynamic>(
+    requestOptions: options,
+    data: jsonDecode(saved.body),
+    statusCode: 200,
+    extra: {'savedAt': saved.savedAt},
+  );
+
+  @override
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    final key = probe || !_isOffline() ? null : _key(options);
+    final saved = key == null ? null : await _find(key);
+    if (saved == null) return handler.next(options);
+    handler.resolve(_answer(options, saved));
   }
 
   @override
@@ -211,21 +247,9 @@ class OfflineCache extends Interceptor {
       _ => false,
     };
     if (key == null || !unreachable) return handler.next(err);
-    CachedResponse? saved;
-    try {
-      saved = await _db.find(_server, _account, key);
-    } on Object {
-      saved = null;
-    }
+    final saved = await _find(key);
     if (saved == null) return handler.next(err);
     _offline(true);
-    handler.resolve(
-      Response<dynamic>(
-        requestOptions: err.requestOptions,
-        data: jsonDecode(saved.body),
-        statusCode: 200,
-        extra: {'savedAt': saved.savedAt},
-      ),
-    );
+    handler.resolve(_answer(err.requestOptions, saved));
   }
 }

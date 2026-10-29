@@ -251,7 +251,9 @@ Uri? _webUrl(Object? value) {
 Dio _newDio(String serverUrl) => Dio(
   BaseOptions(
     baseUrl: '$serverUrl$apiBasePath',
-    connectTimeout: const Duration(seconds: 10),
+    // Short, as a server out of reach keeps what was saved from showing
+    // until the first request gives up.
+    connectTimeout: const Duration(seconds: 4),
     receiveTimeout: const Duration(seconds: 20),
     responseType: ResponseType.json,
   ),
@@ -272,14 +274,22 @@ final apiProvider = Provider<Dio?>((ref) {
 });
 
 /// A client for [url] that falls back on what this device saved for
-/// [account] when the server cannot be reached.
-Dio _cachedDio(Ref ref, String url, String account) {
+/// [account] when the server cannot be reached. A [probe] client asks the
+/// server even while it is known to be out of reach (see [OfflineCache]).
+Dio _cachedDio(Ref ref, String url, String account, {bool probe = false}) {
   final dio = _newDio(url);
   if (ref.watch(cacheDbProvider) case final db?) {
     dio.interceptors.add(
-      OfflineCache(db, url, account, (offline) {
-        if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
-      }),
+      OfflineCache(
+        db,
+        url,
+        account,
+        (offline) {
+          if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
+        },
+        isOffline: () => ref.mounted && ref.read(offlineProvider),
+        probe: probe,
+      ),
     );
   }
   return dio;
@@ -296,7 +306,9 @@ class NoServerException implements Exception {
 final serverInfoProvider = FutureProvider<ServerInfo>((ref) async {
   final url = ref.watch(serverUrlProvider);
   if (url == null) throw const NoServerException();
-  final dio = _cachedDio(ref, url, CacheDb.public);
+  // The one request that keeps asking while offline, so retrying finds out
+  // whether the server is back.
+  final dio = _cachedDio(ref, url, CacheDb.public, probe: true);
   try {
     final res = await dio.get<Object?>('/server-info');
     return ServerInfo.fromJson(res.data);
@@ -347,3 +359,6 @@ Future<ServerInfo> probeServer(String serverUrl) async {
     dio.close();
   }
 }
+
+/// [probeServer], which tests replace.
+final serverProbeProvider = Provider<Future<ServerInfo> Function(String serverUrl)>((ref) => probeServer);

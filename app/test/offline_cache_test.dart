@@ -84,6 +84,28 @@ void main() {
     expect(offline.last, isFalse);
   });
 
+  test('once offline, saved answers come back without asking the server', () async {
+    var known = false;
+    Dio client({bool probe = false}) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..httpClientAdapter = server
+      ..interceptors.add(OfflineCache(db, _server, '', offline.add, isOffline: () => known, probe: probe));
+
+    final first = await client().get<Object?>('/g/tok');
+    await saved();
+    known = true;
+    final calls = server.calls;
+    final again = await client().get<Object?>('/g/tok');
+    expect(again.data, first.data);
+    expect(again.extra['savedAt'], isA<DateTime>());
+    expect(server.calls, calls);
+
+    // What was never saved, writes, and the probe still go to the server.
+    await client().get<Object?>('/g/other');
+    await client().post<Object?>('/g/tok/expenses', data: {'title': 'x'});
+    await client(probe: true).get<Object?>('/g/other');
+    expect(server.calls, calls + 3);
+  });
+
   test('keeps reading POSTs by body, and nothing else that writes', () async {
     await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
     await dio.post<Object?>(
@@ -238,6 +260,51 @@ void main() {
       expect(rows.where((r) => r.account == cacheAccount('a')), isEmpty);
     });
   }
+
+  testWidgets('while offline the bar keeps checking whether the server is back', (tester) async {
+    var probes = 0;
+    var up = false;
+    final container = ProviderContainer(
+      overrides: [
+        serverUrlProvider.overrideWithValue(_server),
+        serverInfoProvider.overrideWith(
+          (ref) async => const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server),
+        ),
+        serverProbeProvider.overrideWithValue((url) async {
+          probes++;
+          if (!up) throw const ProbeException(ProbeError.unreachable);
+          return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          builder: (context, child) => OfflineBar(child: child!),
+          home: const SizedBox(),
+        ),
+      ),
+    );
+    container.read(offlineProvider.notifier).set(true);
+    await tester.pump();
+    await tester.pump(OfflineBar.checkEvery);
+    expect(probes, 1);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
+
+    up = true;
+    await tester.pump(OfflineBar.checkEvery);
+    await tester.pumpAndSettle();
+    expect(probes, 2);
+    expect(container.read(offlineProvider), isFalse);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+
+    // Online again, so no more checks.
+    await tester.pump(OfflineBar.checkEvery * 2);
+    expect(probes, 2);
+  });
 
   testWidgets('a bar says the app is offline until the server answers again', (tester) async {
     var infoLoads = 0;

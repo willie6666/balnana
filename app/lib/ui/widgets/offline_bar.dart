@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -8,10 +10,15 @@ import '../tokens.dart';
 
 /// Puts a bar above [child] while the server is out of reach and what is
 /// shown was saved on this device, and reloads everything once it is back.
+///
+/// While offline, requests are answered from what was saved without asking
+/// the server, so the bar asks every [checkEvery] whether it is back.
 class OfflineBar extends ConsumerStatefulWidget {
   const OfflineBar({super.key, required this.child});
 
   final Widget child;
+
+  static const checkEvery = Duration(seconds: 15);
 
   @override
   ConsumerState<OfflineBar> createState() => _OfflineBarState();
@@ -19,6 +26,8 @@ class OfflineBar extends ConsumerStatefulWidget {
 
 class _OfflineBarState extends ConsumerState<OfflineBar> {
   late final AppLifecycleListener _lifecycle;
+  Timer? _checks;
+  var _checking = false;
 
   @override
   void initState() {
@@ -33,7 +42,32 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    _checks?.cancel();
     super.dispose();
+  }
+
+  void _keepChecking(bool offline) {
+    if (!offline) {
+      _checks?.cancel();
+      _checks = null;
+    } else {
+      _checks ??= Timer.periodic(OfflineBar.checkEvery, (_) => _check());
+    }
+  }
+
+  /// Marks the app online if the server answers, which reloads everything.
+  Future<void> _check() async {
+    final url = ref.read(serverUrlProvider);
+    if (_checking || url == null) return;
+    _checking = true;
+    try {
+      await ref.read(serverProbeProvider)(url);
+      if (mounted) ref.read(offlineProvider.notifier).set(false);
+    } on Object {
+      // Still out of reach.
+    } finally {
+      _checking = false;
+    }
   }
 
   void _retry() {
@@ -46,6 +80,7 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
     // Back online: what is shown may be old, so load it all again.
     ref.listen(offlineProvider, (was, now) {
       if (was == true && !now) _retry();
+      _keepChecking(now);
     });
     if (!ref.watch(offlineProvider)) return widget.child;
 
@@ -57,7 +92,11 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
         Material(
           color: scheme.surfaceContainerHighest,
           child: Padding(
-            padding: EdgeInsets.only(top: media.padding.top, left: media.padding.left, right: media.padding.right),
+            padding: EdgeInsets.only(
+              top: media.padding.top,
+              left: media.padding.left,
+              right: media.padding.right,
+            ),
             child: Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s4, BSpace.s8, BSpace.s4),
               child: Row(
