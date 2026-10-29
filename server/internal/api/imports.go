@@ -284,7 +284,7 @@ func importCurrency(entries []importer.Entry) (string, int, error) {
 	if currency == "" {
 		return "", 0, importFileError("currency")
 	}
-	digits := defaultDigits(currency)
+	digits := domain.CurrencyDigits(currency)
 	for _, e := range entries {
 		if e.Currency != currency {
 			continue
@@ -296,17 +296,6 @@ func importCurrency(entries []importer.Entry) (string, int, error) {
 		}
 	}
 	return currency, digits, nil
-}
-
-// defaultDigits mirrors the app's table of currencies without two decimals.
-func defaultDigits(currency string) int {
-	switch currency {
-	case "BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "PYG", "RWF", "UGX", "UYI", "VND", "VUV", "XAF", "XOF", "XPF":
-		return 0
-	case "BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND":
-		return 3
-	}
-	return 2
 }
 
 var decimalNumber = regexp.MustCompile(`^[-+]?(\d{1,18}(\.\d{0,18})?|\.\d{1,18})$`)
