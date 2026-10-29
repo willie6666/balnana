@@ -1055,6 +1055,26 @@
     },
     "description": "Caption naming the original receiver of an imported refund or income. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
+  "expenseReceivedByName": "{name} received",
+  "@expenseReceivedByName": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "Person, group, or category display name as entered by a user."
+      }
+    },
+    "description": "Caption naming the original receiver of a refund or income, shown beside its total so it carries no amount. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app."
+  },
+  "expenseReceivedByManyNames": "{count} people received",
+  "@expenseReceivedByManyNames": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    },
+    "description": "Caption naming several original receivers of a refund or income, shown beside its total so it carries no amount. Do not describe them as expense payers. Placeholders are supplied by the app."
+  },
   "expenseReceivedByMany": "{count} people received {amount}",
   "@expenseReceivedByMany": {
     "placeholders": {
@@ -1076,36 +1096,6 @@
   "transactionIncome": "Income",
   "@transactionIncome": {
     "description": "Label or control text for transaction income in imported transaction direction."
-  },
-  "effectYouPaid": "you paid {amount}",
-  "@effectYouPaid": {
-    "placeholders": {
-      "amount": {
-        "type": "String",
-        "description": "Preformatted money including its currency symbol."
-      }
-    },
-    "description": "Label or control text for effect you paid in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
-  },
-  "effectYouReceived": "you received {amount}",
-  "@effectYouReceived": {
-    "placeholders": {
-      "amount": {
-        "type": "String",
-        "description": "Preformatted money including its currency symbol."
-      }
-    },
-    "description": "Label or control text for effect you received in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
-  },
-  "effectForYou": "{amount} for you",
-  "@effectForYou": {
-    "placeholders": {
-      "amount": {
-        "type": "String",
-        "description": "Preformatted money including its currency symbol."
-      }
-    },
-    "description": "Label or control text for effect for you in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
   "paymentDelete": "Delete payment",
   "@paymentDelete": {

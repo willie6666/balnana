@@ -1465,6 +1465,18 @@ abstract class AppLocalizations {
   /// **'{name} received {amount}'**
   String expenseReceivedBy(String name, String amount);
 
+  /// Caption naming the original receiver of a refund or income, shown beside its total so it carries no amount. Stored ledger payer and split roles are reversed for these entries. Placeholders are supplied by the app.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} received'**
+  String expenseReceivedByName(String name);
+
+  /// Caption naming several original receivers of a refund or income, shown beside its total so it carries no amount. Do not describe them as expense payers. Placeholders are supplied by the app.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people received'**
+  String expenseReceivedByManyNames(int count);
+
   /// Caption naming several original receivers of a refund or income. Do not describe them as expense payers. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
@@ -1482,24 +1494,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income'**
   String get transactionIncome;
-
-  /// Label or control text for effect you paid in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
-  ///
-  /// In en, this message translates to:
-  /// **'you paid {amount}'**
-  String effectYouPaid(String amount);
-
-  /// Label or control text for effect you received in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
-  ///
-  /// In en, this message translates to:
-  /// **'you received {amount}'**
-  String effectYouReceived(String amount);
-
-  /// Label or control text for effect for you in the current member's effect from an expense. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
-  ///
-  /// In en, this message translates to:
-  /// **'{amount} for you'**
-  String effectForYou(String amount);
 
   /// Label or control text for payment delete in recorded member-to-member payments.
   ///

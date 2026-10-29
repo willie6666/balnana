@@ -928,11 +928,20 @@ void main() {
         groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
       ]);
       await _go(tester, container, '/g/tok');
-      expect(find.textContaining(' · $label'), findsOneWidget);
-      expect(find.text('Ben received \$10.00'), findsOneWidget);
+      expect(find.text('Ben received · $label'), findsOneWidget);
       expect(find.textContaining('paid'), findsNothing);
+      expect(find.text('\$10.00'), findsOneWidget);
+      // Ben received it, for himself and Ana.
+      expect(
+        find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Ben → Ben, Ana'),
+        findsOneWidget,
+      );
+
       // Ana's half came back to Ben for her.
-      expect(find.text('\$5.00 for you'), findsOneWidget);
+      container.read(settingsProvider.notifier).setMyShare(true);
+      await tester.pumpAndSettle();
+      expect(find.text('\$5.00'), findsOneWidget);
+      expect(find.text('Ben received \$10.00 · $label'), findsOneWidget);
 
       await tester.tap(find.text('Deposit back'));
       await tester.pumpAndSettle();
