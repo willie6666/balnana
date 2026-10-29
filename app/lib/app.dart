@@ -32,6 +32,8 @@ class BalnanaApp extends ConsumerWidget {
           // Material's own delegates cover the widgets and Cupertino strings too.
           localizationsDelegates: const [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates],
           supportedLocales: AppLocalizations.supportedLocales,
+          localeListResolutionCallback: (locales, supported) =>
+              resolveLocale(locales, WidgetsBinding.instance.platformDispatcher.locales),
           routerConfig: router,
           builder: (context, child) => WallpaperColors(
             on: wallpaper && settings.wallpaperGroups,

@@ -20,7 +20,15 @@ const _info = ServerInfo(version: 'test', authMode: AuthMode.accounts, password:
 Map<String, Object?> _user(String? locale) => {'id': 'ana', 'name': 'Ana', 'locale': locale};
 
 void main() {
-  for (final (tag, expected) in [('en', 'en'), ('en-US', 'en'), (null, null), ('zz', null)]) {
+  for (final (tag, expected) in [
+    ('en', 'en'),
+    ('en-US', 'en'),
+    ('zh-TW', 'zh-Hant'),
+    ('zh_HK', 'zh-Hant'),
+    ('zh-CN', 'zh'),
+    (null, null),
+    ('zz', null),
+  ]) {
     test('account language $tag loads as $expected', () async {
       SharedPreferences.setMockInitialValues({'settings.server': _a, 'settings.locale': 'en'});
       final prefs = await SharedPreferences.getInstance();

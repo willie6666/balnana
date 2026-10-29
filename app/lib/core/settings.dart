@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../l10n/app_localizations.dart';
+import 'l10n.dart';
 import 'prefs.dart';
 
 /// Device preferences. The language is also saved to a signed-in account.
@@ -111,11 +111,7 @@ class SettingsNotifier extends Notifier<Settings> {
   /// language follows the device until the person chooses one in Settings.
   void applyAccountLocale(String? tag) {
     final locale = tag == null || tag.isEmpty ? null : _parseLocale(tag.replaceAll('_', '-'));
-    final supported = AppLocalizations.supportedLocales;
-    setLocale(
-      supported.where((l) => l == locale).firstOrNull ??
-          supported.where((l) => l.languageCode == locale?.languageCode).firstOrNull,
-    );
+    setLocale(locale == null ? null : supportedLocaleFor(locale));
   }
 
   void setDynamicColor(bool on) {

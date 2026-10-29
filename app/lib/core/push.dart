@@ -13,8 +13,8 @@ import 'package:unifiedpush/unifiedpush.dart';
 
 import '../data/api.dart';
 import '../data/known_groups.dart';
-import '../l10n/app_localizations.dart';
 import '../ui/colors.dart';
+import 'l10n.dart';
 import 'prefs.dart';
 import 'server.dart';
 import 'session.dart';
@@ -288,10 +288,9 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message, String instan
     'k': final String key,
     'a': final List<Object?> args,
   }) {
-    final locale = SettingsNotifier.savedLocale(prefs) ?? PlatformDispatcher.instance.locale;
-    final l10n = lookupAppLocalizations(
-      AppLocalizations.delegate.isSupported(locale) ? locale : AppLocalizations.supportedLocales.first,
-    );
+    final saved = SettingsNotifier.savedLocale(prefs);
+    final device = PlatformDispatcher.instance.locales;
+    final l10n = lookupAppLocalizations(resolveLocale(saved == null ? device : [saved], device));
     final a = args.whereType<String>().toList();
     final body = switch ((key, a)) {
       ('push_payment_added', [final payer, final payee, final amount]) => l10n.pushPaymentAdded(
