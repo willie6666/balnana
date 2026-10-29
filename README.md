@@ -1,62 +1,110 @@
 <p align="center">
-  <img src="app/web/icons/Icon-192.png" width="88" height="88" alt="Balnana logo">
+  <img src="app/web/icons/Icon-192.png" width="96" height="96" alt="Balnana logo">
 </p>
 
 <h1 align="center">Balnana</h1>
 
-<p align="center"><strong>Split group expenses. Settle up with fewer payments.</strong></p>
+<p align="center">
+  <strong>Split group expenses. Settle up with fewer payments.<br>On a server you own.</strong>
+</p>
 
-<p align="center">Android &amp; web · Self-hosted · AGPL-3.0</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android">
+  <img src="https://img.shields.io/badge/Web-4285F4?logo=googlechrome&logoColor=white" alt="Web">
+  <img src="https://img.shields.io/badge/Self--hosted-Docker-2496ED?logo=docker&logoColor=white" alt="Self-hosted with Docker">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-E8A800" alt="AGPL-3.0"></a>
+  <img src="https://img.shields.io/badge/Status-early%20development-lightgrey" alt="Early development">
+</p>
 
-Balnana splits shared costs for trips, flatmates and nights out. Share a private
-link with your group, record who paid for what, and Balnana works out who owes
-whom and the payments that settle everyone up. You run it on your own server.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#built-with">Built with</a> ·
+  <a href="#license">License</a>
+</p>
 
-> Status: early development, preparing the first release.
+---
+
+Trips, flatmates, nights out: someone always pays, and someone always has to
+work out who owes what. **Balnana does the maths.** Share a private link with
+your group, add expenses as they happen, and Balnana tells everyone where they
+stand and the few payments that settle it all.
+
+No ads, no tracking, no subscription and no one else's cloud. Your group's
+money stays on your server.
+
+> **Status:** early development, preparing the first release.
 
 ## A weekend in Kyoto
 
-Four friends, one weekend and ¥123,400 in shared costs. Every purchase is
-tracked, every balance is clear, and the statistics show where the money went.
+Four friends, three days and ¥130,750 in shared costs, from the guesthouse to
+a kimono rental booked in dollars. Here is how that looks in Balnana.
 
 <table>
   <tr>
-    <th>Keep track of expenses</th>
-    <th>See how to settle up</th>
-    <th>Explore your spending</th>
+    <th width="25%">Every expense in one place</th>
+    <th width="25%">Who owes whom, at a glance</th>
+    <th width="25%">Where the money went</th>
+    <th width="25%">Paid abroad? No problem</th>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/expenses.png" width="260" alt="Kyoto weekend expense list with categorized meals, transport and activities"></td>
-    <td><img src="assets/screenshots/balances.png" width="260" alt="Alex is owed ¥37,430, with balances for four friends and three suggested payments"></td>
-    <td><img src="assets/screenshots/statistics.png" width="260" alt="Statistics for ¥123,400 across 12 expenses, broken down by category and member"></td>
+    <td><img src="assets/screenshots/expenses.png" alt="Kyoto weekend expense list showing places, times, who paid and who it was for"></td>
+    <td><img src="assets/screenshots/balances.png" alt="Alex is owed ¥35,113, with balances for four friends and three suggested payments"></td>
+    <td><img src="assets/screenshots/statistics.png" alt="¥130,750 spent across 13 expenses, broken down by category"></td>
+    <td><img src="assets/screenshots/foreign.png" alt="A $48.00 kimono rental converted to ¥7,350 at 153.125 yen to the dollar, split equally"></td>
   </tr>
 </table>
 
-Screenshots from the Android emulator, with made-up demo data.
+<sub>Screenshots from the Android emulator, with made-up demo data.</sub>
 
 ## Features
 
-- **Flexible splits.** Split equally, by exact amounts or by shares, with
-  several payers per expense. Record refunds and income as well as spending.
-- **Simple settling up.** Balnana suggests at most one payment fewer than the
-  number of people who owe or are owed, and the same balances always give the
-  same suggestions.
-- **Exact money.** Amounts are kept in the currency's smallest unit, such as
-  cents, never as floating point, so totals always add up.
-- **Spending abroad.** Enter an expense in the currency it was paid in, with
-  the rate or what it came to on a card statement. Balances stay in the
-  group's currency.
-- **Links or accounts.** In link mode, a group's private link is all anyone
-  needs. In accounts mode, people sign in with a password, Google or any number
-  of OpenID Connect providers, and can add or remove them in Settings.
-- **Live updates.** Open groups refresh as others add expenses, and phones get
+### Split it your way
+
+- **Equally, by exact amounts or by shares**, with several payers on one
+  expense when two people put their cards down.
+- **Refunds and income** count as well as spending.
+- **Recurring expenses** such as rent or subscriptions add themselves on
+  schedule.
+- **Places and receipts**: pin where an expense happened on a map and attach a
+  photo of the receipt.
+
+### Settle up with fewer payments
+
+- Balnana suggests **at most one payment fewer than the number of people who
+  owe or are owed**, and the same balances always give the same suggestions.
+- Record a suggested payment straight from the list once the money has
+  changed hands, and the balances update for everyone.
+
+### Built for travel
+
+- **Enter an expense in the currency it was paid in.** Type the rate, or what
+  it came to on your card statement. Balances stay in the group's currency.
+- **Exact money**: amounts are kept in the currency's smallest unit, never as
+  floating point, so totals always add up.
+- **Works on a bad connection**: saved groups and expenses still open while
+  the server is out of reach.
+
+### Easy to share
+
+- **Link mode**: a group's private link, or its QR code, is all anyone needs.
+  No sign-up.
+- **Accounts mode**: sign in with a password, Google or any number of OpenID
+  Connect providers.
+- **Live updates**: open groups refresh as others add expenses, and phones get
   push notifications over UnifiedPush, with no Firebase SDK in the app.
-- **Statistics, receipts and export.** See spending by category, member and
-  month, attach receipt photos, and export to CSV.
-- **Import from Settle Up.** Bring a group over from its CSV export with the
-  balances intact.
-- **Yours to run.** One Docker Compose file, a PostgreSQL database and a web
-  page for administering the server.
+
+### Know where the money went
+
+- Spending **by category, by member and by month**.
+- **Export to CSV**, and **import from Settle Up** with the balances intact.
+
+### Yours to run
+
+- One Docker Compose file, a PostgreSQL database and a web page for
+  administering the server.
+- A Material 3 app with light and dark themes and, if you like, your
+  wallpaper's colors.
 
 ## Quick start
 
@@ -74,8 +122,11 @@ administrator password, so do that right away. Every setting is listed in
 
 ## Built with
 
-A Go server (`server/`) backed by PostgreSQL, and a Flutter app (`app/`) for
-Android and the web. The API contract between them is `api/openapi.yaml`.
+| Part   | Stack                                                    |
+|--------|----------------------------------------------------------|
+| Server | Go, backed by PostgreSQL (`server/`)                     |
+| App    | Flutter, for Android and the web (`app/`)                |
+| API    | One OpenAPI contract between them (`api/openapi.yaml`)   |
 
 ## License
 
