@@ -3,11 +3,34 @@ import 'package:balnana/core/server.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/features/expense/location.dart';
 import 'package:balnana/l10n/app_localizations.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter_map_vector_tiles/flutter_map_vector_tiles.dart' as vt;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
+  testWidgets('map attribution wraps and retains style links on a narrow map', (tester) async {
+    final credit = vt.StyleAttribution.parse(
+      '© <a href="https://openfreemap.org">OpenFreeMap</a> '
+      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(width: 120, height: 200, child: MapAttribution(attributions: [credit])),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    final text = tester.widget<Text>(find.byType(Text));
+    final spans = (text.textSpan! as TextSpan).children!.whereType<TextSpan>();
+    expect(spans.where((span) => span.recognizer is TapGestureRecognizer), hasLength(2));
+    expect(tester.getSize(find.byType(Text)).width, lessThanOrEqualTo(114));
+  });
+
   test('a location is read from and written as JSON', () {
     final both = ExpenseLocation.fromJson({
       'name': 'Night market',
@@ -65,11 +88,8 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(
-              builder: (context, setState) => LocationField(
-                name: name,
-                point: point,
-                onPoint: (p) => setState(() => point = p),
-              ),
+              builder: (context, setState) =>
+                  LocationField(name: name, point: point, onPoint: (p) => setState(() => point = p)),
             ),
           ),
         ),

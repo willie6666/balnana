@@ -118,7 +118,7 @@ abstract class AppLocalizations {
   /// Label or control text for offline bar in the offline cache banner.
   ///
   /// In en, this message translates to:
-  /// **'Offline. Showing what this device saved; changes wait until you reconnect.'**
+  /// **'Offline. Showing what this device saved; changes cannot be saved until you reconnect.'**
   String get offlineBar;
 
   /// Label or control text for common save in shared buttons and controls.

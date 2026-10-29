@@ -22,7 +22,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRetry => 'Retry';
 
   @override
-  String get offlineBar => 'Offline. Showing what this device saved; changes wait until you reconnect.';
+  String get offlineBar =>
+      'Offline. Showing what this device saved; changes cannot be saved until you reconnect.';
 
   @override
   String get commonSave => 'Save';

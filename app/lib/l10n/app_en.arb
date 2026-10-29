@@ -16,7 +16,7 @@
   "@commonRetry": {
     "description": "Label or control text for common retry in shared buttons and controls."
   },
-  "offlineBar": "Offline. Showing what this device saved; changes wait until you reconnect.",
+  "offlineBar": "Offline. Showing what this device saved; changes cannot be saved until you reconnect.",
   "@offlineBar": {
     "description": "Label or control text for offline bar in the offline cache banner."
   },

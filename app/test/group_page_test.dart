@@ -935,6 +935,20 @@ void main() {
     expect(find.textContaining('too large'), findsNothing);
   });
 
+  testWidgets('the expense date and time fit on a narrow phone', (tester) async {
+    tester.view.physicalSize = const Size(240, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/new');
+    expect(find.byIcon(Icons.event_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   // A small group keeps every list whole; a large one is condensed.
   for (final count in [2, 30]) {
     testWidgets('$count people get the ${count > 2 ? 'condensed' : 'whole'} lists', (tester) async {

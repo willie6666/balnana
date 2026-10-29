@@ -799,7 +799,9 @@ final balnanaApiProvider = Provider<BalnanaApi?>((ref) {
     // A session ended elsewhere, such as by a password change on another
     // device, ends here too, so the app stops showing it as signed in.
     onSignInRequired: () => scheduleMicrotask(() {
-      if (ref.mounted) ref.read(sessionProvider.notifier).lost(who, signedIn: ref.read(signedInProvider));
+      if (ref.mounted) {
+        ref.read(sessionProvider.notifier).lost(who, signedIn: ref.container.read(signedInProvider));
+      }
     }),
   );
 });

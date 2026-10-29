@@ -313,53 +313,62 @@ class BalanceBeam extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BSpace.s8),
-      child: Row(
-        children: [
-          MemberAvatar(member: member, size: 36),
-          const SizedBox(width: BSpace.s12),
-          SizedBox(
-            width: 96,
-            child: Text(
-              isMe ? l10n.memberYou(member.name) : member.name,
-              style: text.titleSmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Expanded(
-            child: SizedBox(
-              height: 20,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: _Bar(fraction: net.isNegative ? fraction : 0, color: color, start: true),
-                    ),
-                  ),
-                  Container(width: 2, color: scheme.outlineVariant),
-                  Expanded(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: _Bar(fraction: net > BigInt.zero ? fraction : 0, color: color, start: false),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: BSpace.s12),
-          // Wider with the text size, and a long amount shrinks to fit:
-          // cut short, it would show the wrong number.
-          SizedBox(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 280;
+          final name = Text(
+            isMe ? l10n.memberYou(member.name) : member.name,
+            style: text.titleSmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          );
+          final value = SizedBox(
             width: MediaQuery.textScalerOf(context).scale(104),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerEnd,
               child: Text(amount, style: text.moneySmall.copyWith(color: color), maxLines: 1),
             ),
-          ),
-        ],
+          );
+          return Row(
+            children: [
+              MemberAvatar(member: member, size: 36),
+              const SizedBox(width: BSpace.s12),
+              if (narrow) Expanded(child: name) else SizedBox(width: 96, child: name),
+              if (!narrow)
+                Expanded(
+                  child: SizedBox(
+                    height: 20,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: _Bar(fraction: net.isNegative ? fraction : 0, color: color, start: true),
+                          ),
+                        ),
+                        Container(width: 2, color: scheme.outlineVariant),
+                        Expanded(
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: _Bar(
+                              fraction: net > BigInt.zero ? fraction : 0,
+                              color: color,
+                              start: false,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(width: BSpace.s12),
+              // Wider with the text size, and a long amount shrinks to fit:
+              // cut short, it would show the wrong number.
+              if (narrow) Flexible(child: value) else value,
+            ],
+          );
+        },
       ),
     );
   }

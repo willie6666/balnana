@@ -82,41 +82,50 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
       if (was == true && !now) _retry();
       _keepChecking(now);
     });
-    if (!ref.watch(offlineProvider)) return widget.child;
+    final offline = ref.watch(offlineProvider);
 
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
     return Column(
       children: [
-        Material(
-          color: scheme.surfaceContainerHighest,
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: media.padding.top,
-              left: media.padding.left,
-              right: media.padding.right,
-            ),
+        if (offline)
+          Material(
+            color: scheme.surfaceContainerHighest,
             child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s4, BSpace.s8, BSpace.s4),
-              child: Row(
-                children: [
-                  Icon(Icons.cloud_off_outlined, size: 20, color: scheme.onSurfaceVariant),
-                  const SizedBox(width: BSpace.s12),
-                  Expanded(
-                    child: Text(
-                      l10n.offlineBar,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+              padding: EdgeInsets.only(
+                top: media.padding.top,
+                left: media.padding.left,
+                right: media.padding.right,
+              ),
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(BSpace.s16, BSpace.s4, BSpace.s8, BSpace.s4),
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_off_outlined, size: 20, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: BSpace.s12),
+                    Expanded(
+                      child: Text(
+                        l10n.offlineBar,
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
                     ),
-                  ),
-                  TextButton(onPressed: _retry, child: Text(l10n.commonRetry)),
-                ],
+                    TextButton(onPressed: _retry, child: Text(l10n.commonRetry)),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          )
+        else
+          const SizedBox.shrink(),
         Expanded(
-          child: MediaQuery.removePadding(context: context, removeTop: true, child: widget.child),
+          // Keep the child in the same place when the bar appears or goes
+          // away, so an open form and an in-flight save are not disposed.
+          child: MediaQuery(
+            data: offline ? media.removePadding(removeTop: true) : media,
+            child: widget.child,
+          ),
         ),
       ],
     );

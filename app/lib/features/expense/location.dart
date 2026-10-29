@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_vector_tiles/flutter_map_vector_tiles.dart' as vt;
@@ -107,9 +108,9 @@ class LocationMap extends ConsumerWidget {
     final styleUrl = info.mapStyle;
     // Drawn over the background until the style has loaded.
     final style = styleUrl == null ? null : ref.watch(_styleProvider(styleUrl)).value;
-    final attribution = info.mapAttribution.isNotEmpty || style == null
-        ? info.mapAttribution
-        : style.attributions.map((a) => a.text).join(' · ');
+    final attributions = info.mapAttribution.isNotEmpty
+        ? [vt.StyleAttribution.parse(info.mapAttribution)]
+        : style?.attributions ?? <vt.StyleAttribution>[];
     final pin = this.pin, onTap = this.onTap;
     return FlutterMap(
       mapController: controller,
@@ -145,13 +146,75 @@ class LocationMap extends ConsumerWidget {
               ),
             ],
           ),
-        if (attribution.isNotEmpty)
-          SimpleAttributionWidget(
-            source: Text(attribution, style: Theme.of(context).textTheme.labelSmall),
-            alignment: Alignment.bottomLeft,
-            backgroundColor: scheme.surface.withValues(alpha: 0.8),
-          ),
+        if (attributions.isNotEmpty) MapAttribution(attributions: attributions),
       ],
+    );
+  }
+}
+
+/// The map's credits, including links supplied by the map style.
+class MapAttribution extends StatefulWidget {
+  const MapAttribution({super.key, required this.attributions});
+
+  final List<vt.StyleAttribution> attributions;
+
+  @override
+  State<MapAttribution> createState() => _MapAttributionState();
+}
+
+class _MapAttributionState extends State<MapAttribution> {
+  final _links = <TapGestureRecognizer>[];
+
+  @override
+  void dispose() {
+    for (final link in _links) {
+      link.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    for (final link in _links) {
+      link.dispose();
+    }
+    _links.clear();
+    final spans = <InlineSpan>[];
+    for (final attribution in widget.attributions) {
+      if (spans.isNotEmpty) spans.add(const TextSpan(text: ' · '));
+      var first = true;
+      for (final part in attribution.spans) {
+        if (!first && !RegExp(r'^[,.;:!?)\]]').hasMatch(part.text)) {
+          spans.add(const TextSpan(text: ' '));
+        }
+        first = false;
+        final url = Uri.tryParse(part.url ?? '');
+        final linked = url != null && (url.isScheme('http') || url.isScheme('https')) && url.host.isNotEmpty;
+        TapGestureRecognizer? link;
+        if (linked) {
+          link = TapGestureRecognizer()..onTap = () => launchUrl(url, mode: LaunchMode.externalApplication);
+          _links.add(link);
+        }
+        spans.add(
+          TextSpan(
+            text: part.text,
+            recognizer: link,
+            style: linked ? const TextStyle(decoration: TextDecoration.underline) : null,
+          ),
+        );
+      }
+    }
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomLeft,
+        child: ColoredBox(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: Text.rich(TextSpan(children: spans), style: Theme.of(context).textTheme.labelSmall),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -203,7 +266,13 @@ class _VectorLayerState extends State<_VectorLayer> {
 /// The location part of the expense editor: a place name to type, and a pin
 /// to drop on a map or to put where the device is.
 class LocationField extends ConsumerStatefulWidget {
-  const LocationField({super.key, required this.name, required this.point, required this.onPoint, this.around});
+  const LocationField({
+    super.key,
+    required this.name,
+    required this.point,
+    required this.onPoint,
+    this.around,
+  });
 
   final TextEditingController name;
   final GeoPoint? point;
@@ -291,22 +360,17 @@ class _LocationFieldState extends ConsumerState<LocationField> {
               borderRadius: BorderRadius.circular(BShape.md),
               child: SizedBox(
                 height: 160,
-                child: Stack(
-                  children: [
-                    // A picture of the place; tapping it opens the full map.
-                    Positioned.fill(
-                      child: IgnorePointer(child: LocationMap(key: ValueKey(point), center: point, pin: point)),
-                    ),
-                    Positioned.fill(
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Semantics(
-                          label: context.l10n.locationChange,
-                          child: InkWell(onTap: _pick),
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Semantics(
+                  label: context.l10n.locationChange,
+                  button: true,
+                  onTap: _pick,
+                  child: LocationMap(
+                    key: ValueKey(point),
+                    center: point,
+                    pin: point,
+                    interactive: false,
+                    onTap: (_) => _pick(),
+                  ),
                 ),
               ),
             )

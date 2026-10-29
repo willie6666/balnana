@@ -6,6 +6,7 @@ import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
+import 'package:balnana/data/providers.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/offline_bar.dart';
 import 'package:dio/dio.dart';
@@ -36,7 +37,9 @@ class _Server implements HttpClientAdapter {
     final who = options.headers['Authorization'];
     await hold;
     return ResponseBody.fromString(
-      jsonEncode({'path': options.uri.path, 'call': calls, 'who': who}),
+      jsonEncode(
+        status == 401 ? {'code': 'sign_in_required'} : {'path': options.uri.path, 'call': calls, 'who': who},
+      ),
       status,
       headers: {
         'content-type': ['application/json'],
@@ -66,6 +69,27 @@ void main() {
   tearDown(() => db.close());
 
   Future<void> saved() => Future<void>.delayed(const Duration(milliseconds: 20));
+
+  test('a rejected session can be cleared while the account loads', () async {
+    SharedPreferences.setMockInitialValues({});
+    server.status = 401;
+    final container = ProviderContainer(
+      overrides: [
+        prefsProvider.overrideWithValue(await SharedPreferences.getInstance()),
+        serverUrlProvider.overrideWithValue(_server),
+        cacheDbProvider.overrideWithValue(db),
+        apiProvider.overrideWithValue(dio),
+        serverInfoProvider.overrideWithValue(
+          const AsyncData(ServerInfo(version: 'test', authMode: AuthMode.accounts, publicUrl: _server)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(sessionProvider.notifier).set('expired', from: container.read(identityProvider));
+    expect(await container.read(accountProvider.future), isNull);
+    await saved();
+    expect(container.read(sessionProvider).token, isNull);
+  });
 
   test('shows the last answer while the server is out of reach', () async {
     final first = await dio.get<Object?>('/g/tok', queryParameters: {'a': '1'});
@@ -306,6 +330,27 @@ void main() {
     expect(probes, 2);
   });
 
+  testWidgets('connection changes keep the current form and its draft', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const OfflineBar(child: Scaffold(body: TextField())),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'unsaved draft');
+    container.read(offlineProvider.notifier).set(true);
+    await tester.pump();
+    expect(find.text('unsaved draft'), findsOneWidget);
+    container.read(offlineProvider.notifier).set(false);
+    await tester.pump();
+    expect(find.text('unsaved draft'), findsOneWidget);
+  });
+
   testWidgets('a bar says the app is offline until the server answers again', (tester) async {
     var infoLoads = 0;
     final container = ProviderContainer(
@@ -336,6 +381,7 @@ void main() {
     container.read(offlineProvider.notifier).set(true);
     await tester.pump();
     expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
+    expect(find.textContaining('changes cannot be saved until you reconnect'), findsOneWidget);
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(infoLoads, 2);

@@ -884,22 +884,36 @@ class _EditorState extends ConsumerState<_Editor> {
                   ),
                 ),
                 const SizedBox(height: BSpace.s12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickDate,
-                        icon: const Icon(Icons.event_outlined),
-                        label: Text(DateFormat.yMMMEd(locale).format(_date)),
-                      ),
-                    ),
-                    const SizedBox(width: BSpace.s8),
-                    OutlinedButton.icon(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final date = OutlinedButton.icon(
+                      onPressed: _pickDate,
+                      icon: const Icon(Icons.event_outlined),
+                      label: FittedBox(child: Text(DateFormat.yMMMEd(locale).format(_date))),
+                    );
+                    final time = OutlinedButton.icon(
                       onPressed: _pickTime,
                       icon: const Icon(Icons.schedule_outlined),
-                      label: Text(DateFormat.jm(locale).format(_date)),
-                    ),
-                  ],
+                      label: FittedBox(child: Text(DateFormat.jm(locale).format(_date))),
+                    );
+                    if (constraints.maxWidth < 320) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          date,
+                          const SizedBox(height: BSpace.s8),
+                          time,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: date),
+                        const SizedBox(width: BSpace.s8),
+                        time,
+                      ],
+                    );
+                  },
                 ),
 
                 if (_canRepeat) ...[
