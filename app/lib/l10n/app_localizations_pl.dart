@@ -2903,4 +2903,325 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Dodany przez wydatek cykliczny';
+
+  @override
+  String get adminPlans => 'Plany';
+
+  @override
+  String get adminPayments => 'Płatności';
+
+  @override
+  String get adminSectionBilling => 'Plany i płatności';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Plany podnoszą limity tego, co przechowuje ten serwer. Dzielenie wydatków i rozliczanie pozostają bezpłatne.';
+
+  @override
+  String get adminBillingOn => 'Plany i limity';
+
+  @override
+  String get adminBillingOnHelp => 'Po wyłączeniu ten serwer niczego nie ogranicza i nie pokazuje planów.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'Plany wymagają kont: najpierw zmień tryb dostępu na konta.';
+
+  @override
+  String get adminKofiUrl => 'Strona Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Tu odbywa się płatność. Linkują do niej tylko wersje, które dopuszczają płatności zewnętrzne.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL webhooka do wpisania w Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Token weryfikacyjny Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Znajduje się na stronie webhooka Ko-fi. Bez niego ten serwer ignoruje Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan do $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Nowy limit dotyczy tego, co zostanie dodane później. To, co już jest, zostaje. Puste pole oznacza brak limitu.';
+
+  @override
+  String get adminPlanAdd => 'Dodaj plan';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (domyślny)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Dni: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Produkty';
+
+  @override
+  String get adminProductsHelp =>
+      'Płatność trafia do produktu z nazwą jej poziomu, a jeśli go nie ma, do produktu bez nazwy poziomu, którego kwotę osiąga.';
+
+  @override
+  String get adminProductAdd => 'Dodaj produkt';
+
+  @override
+  String get adminProductEdit => 'Edytuj produkt';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Każda płatność od $amount';
+  }
+
+  @override
+  String get adminProductName => 'Nazwa poziomu';
+
+  @override
+  String get adminProductNameHelp =>
+      'Tak jak w Ko-fi. Zostaw puste, aby dopasowywać płatności jednorazowe i miesięczne według kwoty.';
+
+  @override
+  String get adminProductPlan => 'Plan';
+
+  @override
+  String get adminProductDays => 'Dni';
+
+  @override
+  String get adminProductDaysHelp =>
+      'Jak długo działa jedna płatność. Kolejna płatność dolicza się do pozostałego czasu.';
+
+  @override
+  String get adminProductMinAmount => 'Kwota minimalna';
+
+  @override
+  String get adminProductCurrency => 'Kod waluty';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Małe litery, cyfry i myślniki. Nie można tego później zmienić.';
+
+  @override
+  String get adminPlanName => 'Nazwa';
+
+  @override
+  String get adminPlanRank => 'Ranga';
+
+  @override
+  String get adminPlanRankHelp => 'Konto z kilkoma planami dostaje ten o najwyższej randze.';
+
+  @override
+  String get adminPlanDefault => 'Plan domyślny';
+
+  @override
+  String get adminPlanDefaultHelp => 'Dla każdego konta bez innego planu.';
+
+  @override
+  String get adminEntitlementGranted => 'Przyznany przez administratora';
+
+  @override
+  String get adminEntitlementRevoked => 'Cofnięty';
+
+  @override
+  String get adminEntitlementForever => 'Bez daty końcowej';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Do $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Zakończony $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'To konto nie ma jeszcze planów.';
+
+  @override
+  String get adminEntitlementRevoke => 'Cofnij';
+
+  @override
+  String get adminEntitlementNote => 'Notatka';
+
+  @override
+  String get adminEntitlementGrant => 'Przyznaj plan';
+
+  @override
+  String get adminPaymentApplied => 'Zastosowana';
+
+  @override
+  String get adminPaymentUnclaimed => 'Nieodebrana';
+
+  @override
+  String get adminPaymentUnmatched => 'Niedopasowana';
+
+  @override
+  String get adminPaymentsAll => 'Wszystkie';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count płatności',
+      many: '$count płatności',
+      few: '$count płatności',
+      two: '$count płatności',
+      one: '1 płatność',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Brak płatności.';
+
+  @override
+  String get adminPaymentAssigned => 'Plan przyznany kontu.';
+
+  @override
+  String get adminPaymentAssign => 'Przyznaj kontu';
+
+  @override
+  String get adminPaymentPickUser => 'Wybierz konto.';
+
+  @override
+  String get errorBillingOff => 'Ten serwer nie ma planów.';
+
+  @override
+  String get errorAlreadySponsored => 'Tę grupę obejmuje już plan innego członka.';
+
+  @override
+  String get errorPlanInUse => 'Konta lub produkty nadal używają tego planu.';
+
+  @override
+  String get errorPaymentApplied => 'Ta płatność została już zastosowana.';
+
+  @override
+  String get errorInvalidPlan => 'Sprawdź ustawienia planu: coś jest nieprawidłowe.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Ta grupa osiągnęła limit zdjęć paragonów: $max.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Ta grupa osiągnęła limit wydatków cyklicznych: $max.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Osiągnięto Twój limit grup: $max.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Maksymalna liczba grup, z którymi można dzielić plan: $max.';
+  }
+
+  @override
+  String get errorLimitOther => 'Osiągnięto limit tego serwera.';
+
+  @override
+  String get planTitle => 'Plan';
+
+  @override
+  String get planUnlimited => 'Bez limitu';
+
+  @override
+  String planUntil(String date) {
+    return 'Do $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Co ten serwer przechowuje dla Ciebie';
+
+  @override
+  String get planIntro =>
+      'Dzielenie i rozliczanie są zawsze bezpłatne. Plan zmienia tylko to, ile ten serwer dla Ciebie przechowuje.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used z $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return 'Użyto: $used';
+  }
+
+  @override
+  String get planLimits => 'Limity';
+
+  @override
+  String get planLimitReceipts => 'Zdjęcia paragonów na grupę';
+
+  @override
+  String get planLimitRecurring => 'Wydatki cykliczne na grupę';
+
+  @override
+  String get planLimitOwnGroups => 'Utworzone przez Ciebie grupy';
+
+  @override
+  String get planLimitSponsored => 'Grupy korzystające z Twojego planu';
+
+  @override
+  String get planGet => 'Uzyskaj plan';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Zapłać z potwierdzonego adresu e-mail konta lub dodaj poniżej adres, z którego płacisz.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Płatności z tego adresu liczą się dla Twojego konta';
+
+  @override
+  String get planPaymentEmailAdd => 'Dodaj e-mail do płatności';
+
+  @override
+  String get planPaymentEmailHelp => 'Wyślemy link, aby potwierdzić, że adres należy do Ciebie.';
+
+  @override
+  String get paymentEmailDone => 'Adres potwierdzony';
+
+  @override
+  String get paymentEmailDoneBody => 'Płatności z tego adresu liczą się teraz dla Twojego konta.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Zdjęcia paragonów: $receipts · Cykliczne: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Udostępnij mój plan tej grupie';
+
+  @override
+  String get groupUnsponsor => 'Przestań udostępniać mój plan';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Korzysta z planu: $name';
+  }
 }

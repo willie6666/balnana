@@ -106,6 +106,13 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 	if s.push != nil {
 		info.VapidPublicKey = &s.vapid
 	}
+	if cfg.Billing {
+		info.Billing = &ServerBilling{}
+		if cfg.KofiURL != nil {
+			kofi := cfg.KofiURL.String()
+			info.Billing.KofiUrl = &kofi
+		}
+	}
 	if cfg.PrivacyURL != nil {
 		privacy := cfg.PrivacyURL.String()
 		info.PrivacyUrl = &privacy

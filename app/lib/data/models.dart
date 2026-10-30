@@ -30,6 +30,8 @@ DateTime _time(Map<String, Object?> json, String key) {
 
 /// The server checked what it accepted, and sums of it, such as balances and
 /// totals, may exceed what one transaction holds.
+DateTime? _optTime(Map<String, Object?> json, String key) => json[key] == null ? null : _time(json, key);
+
 BigInt _money(Map<String, Object?> json, String key, int digits) =>
     parseAmount(_req<String>(json, key), digits, total: true);
 
@@ -1011,6 +1013,8 @@ class AdminUser {
     this.oauth = const [],
     this.groups = 0,
     required this.createdAt,
+    this.planName,
+    this.planExpiresAt,
   });
 
   factory AdminUser.fromJson(Object? data) {
@@ -1025,6 +1029,8 @@ class AdminUser {
       oauth: [...?_opt<List<Object?>>(json, 'oauth')?.whereType<String>()],
       groups: _opt<num>(json, 'groups')?.toInt() ?? 0,
       createdAt: _time(json, 'createdAt'),
+      planName: _opt(json, 'planName'),
+      planExpiresAt: _optTime(json, 'planExpiresAt'),
     );
   }
 
@@ -1041,4 +1047,345 @@ class AdminUser {
   /// How many groups it is in.
   final int groups;
   final DateTime createdAt;
+
+  /// The plan an entitlement gives it; null on the default plan.
+  final String? planName;
+
+  /// When [planName] ends; null when it doesn't.
+  final DateTime? planExpiresAt;
+}
+
+/// How much of a limit is used. A null [limit] means there is none.
+class PlanUsage {
+  const PlanUsage({this.limit, this.used = 0});
+
+  factory PlanUsage.fromJson(Object? data) {
+    final json = _object(data);
+    return PlanUsage(limit: _opt<num>(json, 'limit')?.toInt(), used: _opt<num>(json, 'used')?.toInt() ?? 0);
+  }
+
+  final int? limit;
+  final int used;
+}
+
+/// The signed-in account's plan and how much of it is used.
+class MyPlan {
+  const MyPlan({
+    required this.planName,
+    this.paid = false,
+    this.expiresAt,
+    required this.ownGroups,
+    required this.sponsoredGroups,
+    this.paymentEmails = const [],
+    this.receiptsPerGroup,
+    this.recurringPerGroup,
+  });
+
+  factory MyPlan.fromJson(Object? data) {
+    final json = _object(data);
+    return MyPlan(
+      planName: _req(json, 'planName'),
+      paid: _opt<bool>(json, 'paid') ?? false,
+      expiresAt: _optTime(json, 'expiresAt'),
+      ownGroups: PlanUsage.fromJson(json['ownGroups']),
+      sponsoredGroups: PlanUsage.fromJson(json['sponsoredGroups']),
+      paymentEmails: [...?_opt<List<Object?>>(json, 'paymentEmails')?.whereType<String>()],
+      receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
+      recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
+    );
+  }
+
+  final String planName;
+
+  /// Whether an entitlement gives the plan, rather than the server's default.
+  final bool paid;
+
+  /// When the plan ends; null when it doesn't.
+  final DateTime? expiresAt;
+  final PlanUsage ownGroups;
+  final PlanUsage sponsoredGroups;
+
+  /// Addresses the account showed are its own, besides its sign-in one.
+  final List<String> paymentEmails;
+
+  /// Null means no limit.
+  final int? receiptsPerGroup;
+
+  /// Null means no limit.
+  final int? recurringPerGroup;
+}
+
+/// The limits that apply to a group and how much of them is used.
+class GroupPlan {
+  const GroupPlan({
+    required this.planName,
+    this.canSponsor = false,
+    required this.receipts,
+    required this.recurring,
+    this.sponsorMemberId,
+  });
+
+  factory GroupPlan.fromJson(Object? data) {
+    final json = _object(data);
+    return GroupPlan(
+      planName: _req(json, 'planName'),
+      canSponsor: _opt<bool>(json, 'canSponsor') ?? false,
+      receipts: PlanUsage.fromJson(json['receipts']),
+      recurring: PlanUsage.fromJson(json['recurring']),
+      sponsorMemberId: _opt(json, 'sponsorMemberId'),
+    );
+  }
+
+  final String planName;
+
+  /// Whether the signed-in account could share its plan with the group.
+  final bool canSponsor;
+  final PlanUsage receipts;
+  final PlanUsage recurring;
+
+  /// The member whose plan covers the group, if any.
+  final String? sponsorMemberId;
+}
+
+/// What a plan allows. Null means no limit.
+class PlanLimits {
+  const PlanLimits({this.receiptsPerGroup, this.recurringPerGroup, this.ownGroups, this.sponsoredGroups});
+
+  factory PlanLimits.fromJson(Object? data) {
+    final json = _object(data);
+    return PlanLimits(
+      receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
+      recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
+      ownGroups: _opt<num>(json, 'ownGroups')?.toInt(),
+      sponsoredGroups: _opt<num>(json, 'sponsoredGroups')?.toInt(),
+    );
+  }
+
+  final int? receiptsPerGroup;
+  final int? recurringPerGroup;
+  final int? ownGroups;
+  final int? sponsoredGroups;
+
+  Map<String, Object?> toJson() => {
+    'receiptsPerGroup': ?receiptsPerGroup,
+    'recurringPerGroup': ?recurringPerGroup,
+    'ownGroups': ?ownGroups,
+    'sponsoredGroups': ?sponsoredGroups,
+  };
+}
+
+/// A plan the administrator set up.
+class Plan {
+  const Plan({
+    required this.id,
+    required this.name,
+    this.rank = 0,
+    this.isDefault = false,
+    this.limits = const PlanLimits(),
+  });
+
+  factory Plan.fromJson(Object? data) {
+    final json = _object(data);
+    return Plan(
+      id: _req(json, 'id'),
+      name: _req(json, 'name'),
+      rank: _opt<num>(json, 'rank')?.toInt() ?? 0,
+      isDefault: _opt<bool>(json, 'isDefault') ?? false,
+      limits: PlanLimits.fromJson(json['limits']),
+    );
+  }
+
+  final String id;
+  final String name;
+
+  /// When someone has several plans, the highest counts.
+  final int rank;
+
+  /// What anyone without an entitlement has.
+  final bool isDefault;
+  final PlanLimits limits;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'rank': rank,
+    'isDefault': isDefault,
+    'limits': limits.toJson(),
+  };
+}
+
+/// What a payment has to be for to give a plan.
+class PlanProduct {
+  const PlanProduct({
+    required this.provider,
+    required this.product,
+    required this.planId,
+    required this.days,
+    this.minAmount,
+    this.currency,
+  });
+
+  factory PlanProduct.fromJson(Object? data) {
+    final json = _object(data);
+    return PlanProduct(
+      provider: _req(json, 'provider'),
+      product: _req(json, 'product'),
+      planId: _req(json, 'planId'),
+      days: (_req<num>(json, 'days')).toInt(),
+      minAmount: _opt(json, 'minAmount'),
+      currency: _opt(json, 'currency'),
+    );
+  }
+
+  /// "kofi" or "play".
+  final String provider;
+
+  /// The Ko-fi tier or Play product; empty for any Ko-fi payment of at least
+  /// [minAmount].
+  final String product;
+  final String planId;
+  final int days;
+
+  /// A decimal amount such as "5.00".
+  final String? minAmount;
+  final String? currency;
+
+  Map<String, Object?> toJson() => {
+    'provider': provider,
+    'product': product,
+    'planId': planId,
+    'days': days,
+    'minAmount': ?minAmount,
+    'currency': ?currency,
+  };
+}
+
+/// Everything the administrator can sell and what it allows.
+class PlanCatalog {
+  const PlanCatalog({this.plans = const [], this.products = const []});
+
+  factory PlanCatalog.fromJson(Object? data) {
+    final json = _object(data);
+    return PlanCatalog(
+      plans: [for (final p in _opt<List<Object?>>(json, 'plans') ?? const <Object?>[]) Plan.fromJson(p)],
+      products: [
+        for (final p in _opt<List<Object?>>(json, 'products') ?? const <Object?>[]) PlanProduct.fromJson(p),
+      ],
+    );
+  }
+
+  final List<Plan> plans;
+  final List<PlanProduct> products;
+
+  Map<String, Object?> toJson() => {
+    'plans': [for (final p in plans) p.toJson()],
+    'products': [for (final p in products) p.toJson()],
+  };
+}
+
+/// A plan an account was given, by an administrator or a payment.
+class Entitlement {
+  const Entitlement({
+    required this.id,
+    required this.planId,
+    required this.planName,
+    required this.source,
+    this.note,
+    required this.startsAt,
+    this.expiresAt,
+    this.revokedAt,
+    required this.createdAt,
+  });
+
+  factory Entitlement.fromJson(Object? data) {
+    final json = _object(data);
+    return Entitlement(
+      id: _req(json, 'id'),
+      planId: _req(json, 'planId'),
+      planName: _req(json, 'planName'),
+      source: _req(json, 'source'),
+      note: _opt(json, 'note'),
+      startsAt: _time(json, 'startsAt'),
+      expiresAt: _optTime(json, 'expiresAt'),
+      revokedAt: _optTime(json, 'revokedAt'),
+      createdAt: _time(json, 'createdAt'),
+    );
+  }
+
+  final String id;
+  final String planId;
+  final String planName;
+
+  /// "admin", "kofi" or "play".
+  final String source;
+  final String? note;
+  final DateTime startsAt;
+
+  /// Null when it doesn't end.
+  final DateTime? expiresAt;
+  final DateTime? revokedAt;
+  final DateTime createdAt;
+
+  /// Whether it still counts at [now].
+  bool activeAt(DateTime now) =>
+      revokedAt == null && !startsAt.isAfter(now) && (expiresAt == null || expiresAt!.isAfter(now));
+}
+
+/// A payment a provider told the server about.
+class AdminPayment {
+  const AdminPayment({
+    required this.id,
+    required this.provider,
+    required this.kind,
+    required this.state,
+    this.email,
+    this.payerName,
+    this.amount,
+    this.currency,
+    this.product,
+    this.planId,
+    this.days,
+    this.userId,
+    this.userName,
+    required this.paidAt,
+  });
+
+  factory AdminPayment.fromJson(Object? data) {
+    final json = _object(data);
+    return AdminPayment(
+      id: _req(json, 'id'),
+      provider: _req(json, 'provider'),
+      kind: _req(json, 'kind'),
+      state: _req(json, 'state'),
+      email: _opt(json, 'email'),
+      payerName: _opt(json, 'payerName'),
+      amount: _opt(json, 'amount'),
+      currency: _opt(json, 'currency'),
+      product: _opt(json, 'product'),
+      planId: _opt(json, 'planId'),
+      days: _opt<num>(json, 'days')?.toInt(),
+      userId: _opt(json, 'userId'),
+      userName: _opt(json, 'userName'),
+      paidAt: _time(json, 'paidAt'),
+    );
+  }
+
+  final String id;
+  final String provider;
+
+  /// The provider's word for it, such as "Donation" or "Subscription".
+  final String kind;
+
+  /// "applied", "unclaimed" or "unmatched".
+  final String state;
+  final String? email;
+  final String? payerName;
+  final String? amount;
+  final String? currency;
+  final String? product;
+  final String? planId;
+  final int? days;
+  final String? userId;
+  final String? userName;
+  final DateTime paidAt;
 }

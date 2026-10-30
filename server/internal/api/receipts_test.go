@@ -69,6 +69,9 @@ func (c *client) upload(path, contentType string, body []byte) *httptest.Respons
 	if c.member != "" {
 		req.Header.Set("X-Balnana-Member", c.member)
 	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
 	rec := httptest.NewRecorder()
 	c.h.ServeHTTP(rec, req)
 	return rec

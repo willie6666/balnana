@@ -32,8 +32,14 @@ func (s *Server) ListAdminUsers(ctx context.Context, req ListAdminUsersRequestOb
 		       u.password_hash is not null, u.created_at,
 		       array(select provider from oauth_identities i where i.user_id = u.id order by provider),
 		       (select count(*) from members m join groups g on g.id = m.group_id
-		        where m.user_id = u.id and m.left_at is null and g.archived_at is null)
-		from users u where `+match+`
+		        where m.user_id = u.id and m.left_at is null and g.archived_at is null),
+		       paid.name, paid.expires_at
+		from users u
+		left join lateral (
+			select p.name, e.expires_at from entitlements e join plans p on p.id = e.plan_id
+			where e.user_id = u.id and not p.is_default and `+entitlementActive+`
+			order by p.rank desc, e.expires_at desc nulls first limit 1) paid on true
+		where `+match+`
 		order by u.created_at desc limit $2`, q, maxAdminUsers)
 	if err != nil {
 		return nil, err
@@ -42,7 +48,7 @@ func (s *Server) ListAdminUsers(ctx context.Context, req ListAdminUsersRequestOb
 		var a AdminUser
 		var created time.Time
 		err := row.Scan(&a.Id, &a.Name, &a.Email, &a.Username, &a.EmailVerified, &a.HasPassword, &created,
-			&a.Oauth, &a.Groups)
+			&a.Oauth, &a.Groups, &a.PlanName, &a.PlanExpiresAt)
 		a.CreatedAt = created.UTC()
 		return a, err
 	})

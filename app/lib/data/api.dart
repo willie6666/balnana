@@ -271,6 +271,17 @@ class BalnanaApi {
   /// Emails the signed-in account a link confirming its address.
   Future<void> sendVerifyEmail() => _send(() => _dio.post<Object?>('/me/verify-email'), (_) {});
 
+  /// The account's plan, after taking in payments made with its addresses.
+  Future<MyPlan> myPlan() => _send(() => _dio.get<Object?>('/me/plan'), MyPlan.fromJson);
+
+  /// Emails [email] a link that shows the address is the account's, for
+  /// payments made with it.
+  Future<void> sendPaymentEmail(String email) =>
+      _send(() => _dio.post<Object?>('/me/payment-email', data: {'email': email}), (_) {});
+
+  Future<MyPlan> confirmPaymentEmail(String token) =>
+      _send(() => _dio.post<Object?>('/me/payment-email/confirm', data: {'token': token}), MyPlan.fromJson);
+
   Future<InviteInfo> invite(String token) =>
       _send(() => _dio.get<Object?>('/auth/invites/${Uri.encodeComponent(token)}'), InviteInfo.fromJson);
 
@@ -436,6 +447,14 @@ class GroupApi {
       _api._send(request, parse);
 
   Future<Group> get() => _send(() => _dio.get<Object?>(_base), Group.fromJson);
+
+  /// The limits that apply to the group and how much of them is used.
+  Future<GroupPlan> plan() => _send(() => _dio.get<Object?>('$_base/plan'), GroupPlan.fromJson);
+
+  /// Shares the signed-in account's plan with the whole group.
+  Future<GroupPlan> sponsor() => _send(() => _dio.put<Object?>('$_base/sponsor'), GroupPlan.fromJson);
+
+  Future<GroupPlan> unsponsor() => _send(() => _dio.delete<Object?>('$_base/sponsor'), GroupPlan.fromJson);
 
   /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode.
   /// An empty [emoji] or [symbol] clears it.
@@ -771,6 +790,76 @@ class AdminApi {
   Future<void> deleteUser(String token, String id) => _api._send(
     () => _dio.delete<Object?>('/admin/users/${Uri.encodeComponent(id)}', options: _as(token)),
     (_) {},
+  );
+
+  Future<PlanCatalog> plans(String token) =>
+      _api._send(() => _dio.get<Object?>('/admin/plans', options: _as(token)), PlanCatalog.fromJson);
+
+  /// Replaces every plan and product. Throws `plan_in_use` when it would
+  /// drop a plan someone has, changing nothing.
+  Future<PlanCatalog> savePlans(String token, PlanCatalog catalog) => _api._send(
+    () => _dio.put<Object?>('/admin/plans', data: catalog.toJson(), options: _as(token)),
+    PlanCatalog.fromJson,
+  );
+
+  /// The plans the account was given, newest first.
+  Future<List<Entitlement>> entitlements(String token, String userId) => _api._send(
+    () => _dio.get<Object?>('/admin/users/${Uri.encodeComponent(userId)}/entitlements', options: _as(token)),
+    (data) {
+      if (data case {'entitlements': final List<Object?> list}) {
+        return [for (final e in list) Entitlement.fromJson(e)];
+      }
+      throw const FormatException('bad entitlements');
+    },
+  );
+
+  /// Gives the account [planId] for [days], or for good without them.
+  Future<Entitlement> grantEntitlement(
+    String token,
+    String userId, {
+    required String planId,
+    int? days,
+    String? note,
+  }) => _api._send(
+    () => _dio.post<Object?>(
+      '/admin/users/${Uri.encodeComponent(userId)}/entitlements',
+      data: {'planId': planId, 'days': ?days, 'note': ?note},
+      options: _as(token),
+    ),
+    Entitlement.fromJson,
+  );
+
+  Future<void> revokeEntitlement(String token, String id) => _api._send(
+    () => _dio.delete<Object?>('/admin/entitlements/${Uri.encodeComponent(id)}', options: _as(token)),
+    (_) {},
+  );
+
+  /// The latest payments, of [state] when given, with how many there are.
+  Future<(List<AdminPayment>, int)> payments(String token, {String? state}) => _api._send(
+    () => _dio.get<Object?>('/admin/payments', queryParameters: {'state': ?state}, options: _as(token)),
+    (data) {
+      if (data case {'payments': final List<Object?> payments, 'total': final num total}) {
+        return ([for (final p in payments) AdminPayment.fromJson(p)], total.toInt());
+      }
+      throw const FormatException('bad payments');
+    },
+  );
+
+  /// Gives [userId] what the payment paid for; a payment no product matched
+  /// also needs [planId] and [days].
+  Future<AdminPayment> assignPayment(
+    String token,
+    String id, {
+    required String userId,
+    String? planId,
+    int? days,
+  }) => _api._send(
+    () => _dio.post<Object?>(
+      '/admin/payments/${Uri.encodeComponent(id)}/assign',
+      data: {'userId': userId, 'planId': ?planId, 'days': ?days},
+      options: _as(token),
+    ),
+    AdminPayment.fromJson,
   );
 }
 

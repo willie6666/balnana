@@ -2767,4 +2767,317 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Ditambahkan oleh pengeluaran berulang';
+
+  @override
+  String get adminPlans => 'Paket';
+
+  @override
+  String get adminPayments => 'Pembayaran';
+
+  @override
+  String get adminSectionBilling => 'Paket dan pembayaran';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Paket menaikkan batas hal yang disimpan server ini. Membagi pengeluaran dan melunasi tetap gratis.';
+
+  @override
+  String get adminBillingOn => 'Paket dan batas';
+
+  @override
+  String get adminBillingOnHelp =>
+      'Jika nonaktif, server ini tidak membatasi apa pun dan tidak menampilkan paket.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'Paket memerlukan akun: ubah dulu mode akses ke akun.';
+
+  @override
+  String get adminKofiUrl => 'Halaman Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Tempat orang membayar. Hanya versi yang mengizinkan pembayaran luar yang menautkannya.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL webhook untuk Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Token verifikasi Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Tertera di halaman webhook Ko-fi. Tanpa token ini, server mengabaikan Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan hingga $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Batas baru berlaku untuk hal yang ditambahkan berikutnya. Yang sudah ada tetap tersimpan. Kosongkan jika tanpa batas.';
+
+  @override
+  String get adminPlanAdd => 'Tambah paket';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (default)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Hari: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Produk';
+
+  @override
+  String get adminProductsHelp =>
+      'Pembayaran masuk ke produk dengan nama tingkatnya, atau ke produk tanpa nama tingkat yang jumlahnya tercapai.';
+
+  @override
+  String get adminProductAdd => 'Tambah produk';
+
+  @override
+  String get adminProductEdit => 'Edit produk';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Pembayaran apa pun minimal $amount';
+  }
+
+  @override
+  String get adminProductName => 'Nama tingkat';
+
+  @override
+  String get adminProductNameHelp =>
+      'Sesuai tulisan di Ko-fi. Kosongkan untuk mencocokkan pembayaran sekali atau bulanan berdasarkan jumlah.';
+
+  @override
+  String get adminProductPlan => 'Paket';
+
+  @override
+  String get adminProductDays => 'Hari';
+
+  @override
+  String get adminProductDaysHelp => 'Lama satu pembayaran berlaku. Pembayaran lagi menambah sisa waktu.';
+
+  @override
+  String get adminProductMinAmount => 'Jumlah minimum';
+
+  @override
+  String get adminProductCurrency => 'Kode mata uang';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Huruf kecil, angka, dan tanda hubung. Tidak dapat diubah nanti.';
+
+  @override
+  String get adminPlanName => 'Nama';
+
+  @override
+  String get adminPlanRank => 'Peringkat';
+
+  @override
+  String get adminPlanRankHelp => 'Akun dengan beberapa paket mendapat paket berperingkat tertinggi.';
+
+  @override
+  String get adminPlanDefault => 'Paket default';
+
+  @override
+  String get adminPlanDefaultHelp => 'Untuk setiap akun tanpa paket lain.';
+
+  @override
+  String get adminEntitlementGranted => 'Diberikan oleh administrator';
+
+  @override
+  String get adminEntitlementRevoked => 'Dicabut';
+
+  @override
+  String get adminEntitlementForever => 'Tanpa tanggal akhir';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Hingga $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Berakhir $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Akun ini belum memiliki paket.';
+
+  @override
+  String get adminEntitlementRevoke => 'Cabut';
+
+  @override
+  String get adminEntitlementNote => 'Catatan';
+
+  @override
+  String get adminEntitlementGrant => 'Beri paket';
+
+  @override
+  String get adminPaymentApplied => 'Diterapkan';
+
+  @override
+  String get adminPaymentUnclaimed => 'Belum diklaim';
+
+  @override
+  String get adminPaymentUnmatched => 'Tidak cocok';
+
+  @override
+  String get adminPaymentsAll => 'Semua';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count pembayaran');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Tidak ada pembayaran.';
+
+  @override
+  String get adminPaymentAssigned => 'Paket diberikan ke akun.';
+
+  @override
+  String get adminPaymentAssign => 'Beri ke akun';
+
+  @override
+  String get adminPaymentPickUser => 'Pilih akun.';
+
+  @override
+  String get errorBillingOff => 'Server ini tidak memiliki paket.';
+
+  @override
+  String get errorAlreadySponsored => 'Paket anggota lain sudah mencakup grup ini.';
+
+  @override
+  String get errorPlanInUse => 'Akun atau produk masih menggunakan paket ini.';
+
+  @override
+  String get errorPaymentApplied => 'Pembayaran ini sudah diterapkan.';
+
+  @override
+  String get errorInvalidPlan => 'Periksa setelan paket: ada yang tidak valid.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Grup ini telah mencapai batas $max foto struk.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Grup ini telah mencapai batas $max pengeluaran berulang.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Anda telah mencapai batas $max grup.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Paket Anda tidak dapat dibagikan ke lebih dari $max grup.';
+  }
+
+  @override
+  String get errorLimitOther => 'Anda telah mencapai batas server ini.';
+
+  @override
+  String get planTitle => 'Paket';
+
+  @override
+  String get planUnlimited => 'Tanpa batas';
+
+  @override
+  String planUntil(String date) {
+    return 'Hingga $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Hal yang disimpan server ini untuk Anda';
+
+  @override
+  String get planIntro =>
+      'Membagi dan melunasi selalu gratis. Paket hanya mengubah seberapa banyak yang disimpan server ini untuk Anda.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used dari $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used digunakan';
+  }
+
+  @override
+  String get planLimits => 'Batas';
+
+  @override
+  String get planLimitReceipts => 'Foto struk per grup';
+
+  @override
+  String get planLimitRecurring => 'Pengeluaran berulang per grup';
+
+  @override
+  String get planLimitOwnGroups => 'Grup yang Anda buat';
+
+  @override
+  String get planLimitSponsored => 'Grup yang memakai paket Anda';
+
+  @override
+  String get planGet => 'Dapatkan paket';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Bayar dengan email akun yang sudah dikonfirmasi, atau tambahkan alamat yang Anda gunakan untuk membayar di bawah.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Pembayaran dari alamat ini dihitung untuk akun Anda';
+
+  @override
+  String get planPaymentEmailAdd => 'Tambah email pembayaran';
+
+  @override
+  String get planPaymentEmailHelp => 'Kami akan mengirim tautan untuk mengonfirmasi bahwa ini milik Anda.';
+
+  @override
+  String get paymentEmailDone => 'Alamat dikonfirmasi';
+
+  @override
+  String get paymentEmailDoneBody => 'Pembayaran dari alamat ini kini dihitung untuk akun Anda.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Foto struk: $receipts · Berulang: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Bagikan paket saya ke grup ini';
+
+  @override
+  String get groupUnsponsor => 'Berhenti membagikan paket saya';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Memakai paket $name';
+  }
 }

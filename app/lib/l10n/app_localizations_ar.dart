@@ -2857,4 +2857,322 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'أُضيف بواسطة مصروف متكرر';
+
+  @override
+  String get adminPlans => 'الخطط';
+
+  @override
+  String get adminPayments => 'المدفوعات';
+
+  @override
+  String get adminSectionBilling => 'الخطط والمدفوعات';
+
+  @override
+  String get adminSectionBillingBody =>
+      'ترفع الخطط حدود ما يحتفظ به هذا الخادم. يظل تقسيم المصروفات وتسويتها مجانيًا.';
+
+  @override
+  String get adminBillingOn => 'الخطط والحدود';
+
+  @override
+  String get adminBillingOnHelp => 'عند الإيقاف، لا يقيّد هذا الخادم شيئًا ولا يعرض أي خطط.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'تحتاج الخطط إلى حسابات: غيّر وضع الوصول إلى الحسابات أولًا.';
+
+  @override
+  String get adminKofiUrl => 'صفحة Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp => 'حيث يتم الدفع. لا ترتبط بها إلا الإصدارات التي تسمح بالدفع الخارجي.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'عنوان Webhook لإدخاله في Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'رمز التحقق من Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp => 'يظهر في صفحة Webhook على Ko-fi. بدونه يتجاهل هذا الخادم Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan حتى $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'ينطبق الحد الجديد على ما يُضاف لاحقًا، ويبقى الموجود كما هو. اتركه فارغًا لعدم وضع حد.';
+
+  @override
+  String get adminPlanAdd => 'إضافة خطة';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (الافتراضية)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'الأيام: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'المنتجات';
+
+  @override
+  String get adminProductsHelp =>
+      'تذهب الدفعة إلى المنتج الذي يحمل اسم مستواها، وإلا فإلى المنتج بلا اسم مستوى الذي تبلغ مبلغه.';
+
+  @override
+  String get adminProductAdd => 'إضافة منتج';
+
+  @override
+  String get adminProductEdit => 'تعديل المنتج';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'أي دفعة لا تقل عن $amount';
+  }
+
+  @override
+  String get adminProductName => 'اسم المستوى';
+
+  @override
+  String get adminProductNameHelp =>
+      'كما هو مكتوب في Ko-fi. اتركه فارغًا لمطابقة الدفعات الفردية أو الشهرية حسب المبلغ.';
+
+  @override
+  String get adminProductPlan => 'الخطة';
+
+  @override
+  String get adminProductDays => 'الأيام';
+
+  @override
+  String get adminProductDaysHelp => 'مدة الدفعة الواحدة. يُضاف الدفع مرة أخرى إلى المدة المتبقية.';
+
+  @override
+  String get adminProductMinAmount => 'الحد الأدنى للمبلغ';
+
+  @override
+  String get adminProductCurrency => 'رمز العملة';
+
+  @override
+  String get adminPlanId => 'المعرّف';
+
+  @override
+  String get adminPlanIdHelp => 'أحرف إنجليزية صغيرة وأرقام وشرطات. لا يمكن تغييره لاحقًا.';
+
+  @override
+  String get adminPlanName => 'الاسم';
+
+  @override
+  String get adminPlanRank => 'الرتبة';
+
+  @override
+  String get adminPlanRankHelp => 'يحصل الحساب الذي لديه عدة خطط على الخطة ذات أعلى رتبة.';
+
+  @override
+  String get adminPlanDefault => 'الخطة الافتراضية';
+
+  @override
+  String get adminPlanDefaultHelp => 'لكل حساب ليس لديه خطة أخرى.';
+
+  @override
+  String get adminEntitlementGranted => 'منحها مسؤول';
+
+  @override
+  String get adminEntitlementRevoked => 'أُلغيت';
+
+  @override
+  String get adminEntitlementForever => 'بلا تاريخ انتهاء';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'انتهت في $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'لا توجد خطط لهذا الحساب بعد.';
+
+  @override
+  String get adminEntitlementRevoke => 'إلغاء';
+
+  @override
+  String get adminEntitlementNote => 'ملاحظة';
+
+  @override
+  String get adminEntitlementGrant => 'منح الخطة';
+
+  @override
+  String get adminPaymentApplied => 'مُطبَّقة';
+
+  @override
+  String get adminPaymentUnclaimed => 'غير مطالب بها';
+
+  @override
+  String get adminPaymentUnmatched => 'غير مطابقة';
+
+  @override
+  String get adminPaymentsAll => 'الكل';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count دفعة',
+      many: '$count دفعة',
+      few: '$count دفعات',
+      two: 'دفعتان',
+      one: 'دفعة واحدة',
+      zero: 'لا توجد دفعات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'لا توجد دفعات.';
+
+  @override
+  String get adminPaymentAssigned => 'مُنحت الخطة للحساب.';
+
+  @override
+  String get adminPaymentAssign => 'منح لحساب';
+
+  @override
+  String get adminPaymentPickUser => 'اختر حسابًا.';
+
+  @override
+  String get errorBillingOff => 'لا توجد خطط على هذا الخادم.';
+
+  @override
+  String get errorAlreadySponsored => 'خطة عضو آخر تغطي هذه المجموعة بالفعل.';
+
+  @override
+  String get errorPlanInUse => 'ما زالت حسابات أو منتجات تستخدم هذه الخطة.';
+
+  @override
+  String get errorPaymentApplied => 'طُبّقت هذه الدفعة بالفعل.';
+
+  @override
+  String get errorInvalidPlan => 'تحقق من إعدادات الخطة: هناك قيمة غير صالحة.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'بلغت هذه المجموعة حد صور الإيصالات: $max.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'بلغت هذه المجموعة حد المصروفات المتكررة: $max.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'بلغت حد المجموعات: $max.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'الحد الأقصى للمجموعات التي يمكن مشاركة خطتك معها: $max.';
+  }
+
+  @override
+  String get errorLimitOther => 'بلغت أحد حدود هذا الخادم.';
+
+  @override
+  String get planTitle => 'الخطة';
+
+  @override
+  String get planUnlimited => 'بلا حد';
+
+  @override
+  String planUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'ما يحتفظ به هذا الخادم لك';
+
+  @override
+  String get planIntro =>
+      'التقسيم والتسوية مجانيان دائمًا. لا تغيّر الخطة إلا مقدار ما يحتفظ به هذا الخادم لك.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used من $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return 'المستخدم: $used';
+  }
+
+  @override
+  String get planLimits => 'الحدود';
+
+  @override
+  String get planLimitReceipts => 'صور الإيصالات لكل مجموعة';
+
+  @override
+  String get planLimitRecurring => 'المصروفات المتكررة لكل مجموعة';
+
+  @override
+  String get planLimitOwnGroups => 'المجموعات التي أنشأتها';
+
+  @override
+  String get planLimitSponsored => 'المجموعات التي تشارك خطتك';
+
+  @override
+  String get planGet => 'الحصول على خطة';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => 'ادفع بالبريد الإلكتروني المؤكد لحسابك، أو أضف أدناه العنوان الذي تدفع به.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'تُحتسب الدفعات من هذا العنوان لحسابك';
+
+  @override
+  String get planPaymentEmailAdd => 'إضافة بريد إلكتروني للدفع';
+
+  @override
+  String get planPaymentEmailHelp => 'سنرسل رابطًا لتأكيد أنه عنوانك.';
+
+  @override
+  String get paymentEmailDone => 'تم تأكيد العنوان';
+
+  @override
+  String get paymentEmailDoneBody => 'تُحتسب الدفعات من هذا العنوان لحسابك الآن.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'صور الإيصالات: $receipts · المتكررة: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'مشاركة خطتي مع هذه المجموعة';
+
+  @override
+  String get groupUnsponsor => 'إيقاف مشاركة خطتي';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'تستخدم خطة $name';
+  }
 }

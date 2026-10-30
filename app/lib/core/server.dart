@@ -20,6 +20,11 @@ String? get defaultServerUrl {
   return null;
 }
 
+/// Whether this build may send people to pay outside an app store. Google
+/// Play doesn't allow it, so an app shows no such link unless it is built
+/// with `--dart-define=BALNANA_EXTERNAL_PAYMENTS=true`. The web has no store.
+bool get externalPayments => kIsWeb || const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS');
+
 /// Whether the session lives in [serverUrl]'s cookie: only in the web app it
 /// serves. A web app on another origin cannot use that cookie, so it keeps a
 /// token as the Android app does.
@@ -104,6 +109,8 @@ class ServerInfo {
     required this.publicUrl,
     this.sourceUrl,
     this.privacyUrl,
+    this.billing = false,
+    this.kofiUrl,
     this.mapStyle,
     this.mapTiles,
     this.mapAttribution = '',
@@ -148,6 +155,11 @@ class ServerInfo {
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
       privacyUrl: _webUrl(json['privacyUrl']),
+      billing: json['billing'] is Map,
+      kofiUrl: switch (json['billing']) {
+        {'kofiUrl': final Object url} => _webUrl(url),
+        _ => null,
+      },
       mapStyle: _httpUrl(json['mapStyle']),
       mapTiles: _httpUrl(json['mapTiles']),
       mapAttribution: switch (json['mapAttribution']) {
@@ -200,6 +212,13 @@ class ServerInfo {
 
   /// The operator's privacy policy, if they set one; else the app shows its own.
   final Uri? privacyUrl;
+
+  /// Whether the server has paid plans.
+  final bool billing;
+
+  /// Where to pay for a plan with Ko-fi, if the operator set it. Show it
+  /// only when [externalPayments] allows.
+  final Uri? kofiUrl;
 
   /// The MapLibre style maps are drawn from, like OpenFreeMap's; null when
   /// the server shows raster tiles or turned maps off.

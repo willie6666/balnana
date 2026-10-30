@@ -46,6 +46,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	mux.HandleFunc(BasePath+"/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not_found")
 	})
+	mux.HandleFunc("POST "+BasePath+"/webhooks/kofi", s.KofiWebhook)
 	mux.HandleFunc("GET /healthz", s.Healthz)
 	mux.HandleFunc("GET /.well-known/assetlinks.json", s.assetLinks)
 	mux.Handle("/", web)
@@ -78,6 +79,8 @@ func checkBodies(next http.Handler) http.Handler {
 			t, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 			if receipt && err == nil && strings.HasPrefix(t, "image/") {
 				// An image, as it should be.
+			} else if r.URL.Path == kofiPath && err == nil && t == "application/x-www-form-urlencoded" {
+				// Ko-fi posts a form, and its token shows it came from there.
 			} else if err != nil || t != "application/json" {
 				writeError(w, http.StatusUnsupportedMediaType, "not_json")
 				return

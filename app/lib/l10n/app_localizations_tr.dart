@@ -2768,4 +2768,316 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Tekrarlayan harcama tarafından eklendi';
+
+  @override
+  String get adminPlans => 'Planlar';
+
+  @override
+  String get adminPayments => 'Ödemeler';
+
+  @override
+  String get adminSectionBilling => 'Planlar ve ödemeler';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Planlar bu sunucunun sakladıklarına ait sınırları yükseltir. Harcama bölüşme ve hesaplaşma ücretsiz kalır.';
+
+  @override
+  String get adminBillingOn => 'Planlar ve sınırlar';
+
+  @override
+  String get adminBillingOnHelp => 'Kapalıyken bu sunucu hiçbir şeyi sınırlamaz ve plan göstermez.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'Planlar için hesap gerekir: önce erişim modunu hesaplara çevirin.';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi sayfası';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Ödemenin yapıldığı yer. Yalnızca harici ödemelere izin veren sürümler buraya bağlantı verir.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Ko-fi\'ye girilecek webhook URL\'si: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi doğrulama jetonu';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Ko-fi\'nin webhook sayfasında gösterilir. Bu olmadan sunucu Ko-fi\'yi yok sayar.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan, bitiş: $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Yeni sınır, bundan sonra eklenenler için geçerlidir. Mevcut içerik kalır. Sınır olmaması için boş bırakın.';
+
+  @override
+  String get adminPlanAdd => 'Plan ekle';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (varsayılan)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Gün: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Ürünler';
+
+  @override
+  String get adminProductsHelp =>
+      'Ödeme önce kendi kademe adına sahip ürüne, yoksa kademe adı olmayan ve tutarına ulaştığı ürüne gider.';
+
+  @override
+  String get adminProductAdd => 'Ürün ekle';
+
+  @override
+  String get adminProductEdit => 'Ürünü düzenle';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'En az $amount tutarında her ödeme';
+  }
+
+  @override
+  String get adminProductName => 'Kademe adı';
+
+  @override
+  String get adminProductNameHelp =>
+      'Ko-fi\'de yazdığı gibi. Tek seferlik veya aylık ödemeleri tutara göre eşleştirmek için boş bırakın.';
+
+  @override
+  String get adminProductPlan => 'Plan';
+
+  @override
+  String get adminProductDays => 'Gün';
+
+  @override
+  String get adminProductDaysHelp => 'Bir ödemenin ne kadar süreceği. Yeniden ödeme kalan süreye eklenir.';
+
+  @override
+  String get adminProductMinAmount => 'En düşük tutar';
+
+  @override
+  String get adminProductCurrency => 'Para birimi kodu';
+
+  @override
+  String get adminPlanId => 'Kimlik';
+
+  @override
+  String get adminPlanIdHelp => 'Küçük harfler, rakamlar ve tireler. Sonradan değiştirilemez.';
+
+  @override
+  String get adminPlanName => 'Ad';
+
+  @override
+  String get adminPlanRank => 'Sıra';
+
+  @override
+  String get adminPlanRankHelp => 'Birden çok planı olan hesap, sırası en yüksek planı alır.';
+
+  @override
+  String get adminPlanDefault => 'Varsayılan plan';
+
+  @override
+  String get adminPlanDefaultHelp => 'Başka planı olmayan her hesap için.';
+
+  @override
+  String get adminEntitlementGranted => 'Yönetici tarafından verildi';
+
+  @override
+  String get adminEntitlementRevoked => 'İptal edildi';
+
+  @override
+  String get adminEntitlementForever => 'Bitiş tarihi yok';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Bitiş: $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '$date tarihinde bitti';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Bu hesabın henüz planı yok.';
+
+  @override
+  String get adminEntitlementRevoke => 'İptal et';
+
+  @override
+  String get adminEntitlementNote => 'Not';
+
+  @override
+  String get adminEntitlementGrant => 'Plan ver';
+
+  @override
+  String get adminPaymentApplied => 'Uygulandı';
+
+  @override
+  String get adminPaymentUnclaimed => 'Sahiplenilmedi';
+
+  @override
+  String get adminPaymentUnmatched => 'Eşleşmedi';
+
+  @override
+  String get adminPaymentsAll => 'Tümü';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count ödeme', one: '1 ödeme');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Ödeme yok.';
+
+  @override
+  String get adminPaymentAssigned => 'Plan hesaba verildi.';
+
+  @override
+  String get adminPaymentAssign => 'Bir hesaba ver';
+
+  @override
+  String get adminPaymentPickUser => 'Bir hesap seçin.';
+
+  @override
+  String get errorBillingOff => 'Bu sunucuda plan yok.';
+
+  @override
+  String get errorAlreadySponsored => 'Bu grup zaten başka bir üyenin planı kapsamında.';
+
+  @override
+  String get errorPlanInUse => 'Hesaplar veya ürünler bu planı hâlâ kullanıyor.';
+
+  @override
+  String get errorPaymentApplied => 'Bu ödeme zaten uygulandı.';
+
+  @override
+  String get errorInvalidPlan => 'Plan ayarlarını kontrol edin: geçersiz bir değer var.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Bu grup $max fiş fotoğrafı sınırına ulaştı.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Bu grup $max tekrarlayan harcama sınırına ulaştı.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return '$max grup sınırınıza ulaştınız.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Planınız en fazla $max grupla paylaşılabilir.';
+  }
+
+  @override
+  String get errorLimitOther => 'Bu sunucunun bir sınırına ulaştınız.';
+
+  @override
+  String get planTitle => 'Plan';
+
+  @override
+  String get planUnlimited => 'Sınır yok';
+
+  @override
+  String planUntil(String date) {
+    return 'Bitiş: $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Bu sunucunun sizin için sakladıkları';
+
+  @override
+  String get planIntro =>
+      'Bölüşme ve hesaplaşma her zaman ücretsizdir. Plan yalnızca bu sunucunun sizin için ne kadar sakladığını değiştirir.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used kullanılıyor';
+  }
+
+  @override
+  String get planLimits => 'Sınırlar';
+
+  @override
+  String get planLimitReceipts => 'Grup başına fiş fotoğrafı';
+
+  @override
+  String get planLimitRecurring => 'Grup başına tekrarlayan harcama';
+
+  @override
+  String get planLimitOwnGroups => 'Oluşturduğunuz gruplar';
+
+  @override
+  String get planLimitSponsored => 'Planınızı paylaşan gruplar';
+
+  @override
+  String get planGet => 'Plan edinin';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Hesabınızın doğrulanmış e-postasıyla ödeyin veya ödeme yaptığınız adresi aşağıya ekleyin.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Bu adresten yapılan ödemeler hesabınıza sayılır';
+
+  @override
+  String get planPaymentEmailAdd => 'Ödeme e-postası ekle';
+
+  @override
+  String get planPaymentEmailHelp => 'Size ait olduğunu doğrulamak için bir bağlantı göndereceğiz.';
+
+  @override
+  String get paymentEmailDone => 'Adres doğrulandı';
+
+  @override
+  String get paymentEmailDoneBody => 'Bu adresten yapılan ödemeler artık hesabınıza sayılıyor.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Fiş fotoğrafları: $receipts · Tekrarlayan: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Planımı bu grupla paylaş';
+
+  @override
+  String get groupUnsponsor => 'Planımı paylaşmayı durdur';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Planı kullanılan üye: $name';
+  }
 }

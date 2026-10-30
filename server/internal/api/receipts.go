@@ -88,6 +88,10 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	if !exists {
 		return nil, errNotFound
 	}
+	// Before the upload, so a full group doesn't send the photo for nothing.
+	if err := s.checkReceiptLimit(ctx, s.db, g, req.ExpenseId); err != nil {
+		return nil, err
+	}
 	if t, _, err := mime.ParseMediaType(req.ContentType); err != nil || !strings.HasPrefix(t, "image/") {
 		return nil, errBadImage
 	}
@@ -137,6 +141,9 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 		}
 		if deleted {
 			return errNotFound
+		}
+		if err := s.checkReceiptLimit(ctx, tx, g, req.ExpenseId); err != nil {
+			return err
 		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {

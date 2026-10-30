@@ -2757,4 +2757,318 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Được thêm bởi khoản chi định kỳ';
+
+  @override
+  String get adminPlans => 'Gói';
+
+  @override
+  String get adminPayments => 'Thanh toán';
+
+  @override
+  String get adminSectionBilling => 'Gói và thanh toán';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Các gói nâng giới hạn những gì máy chủ này lưu giữ. Chia chi phí và thanh toán nợ vẫn miễn phí.';
+
+  @override
+  String get adminBillingOn => 'Gói và giới hạn';
+
+  @override
+  String get adminBillingOnHelp => 'Khi tắt, máy chủ này không giới hạn gì và không hiển thị gói.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'Gói cần có tài khoản: hãy đổi chế độ truy cập sang tài khoản trước.';
+
+  @override
+  String get adminKofiUrl => 'Trang Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Nơi mọi người thanh toán. Chỉ các bản cho phép thanh toán bên ngoài mới liên kết tới đây.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL webhook để nhập trên Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Mã xác minh Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Hiển thị trên trang webhook của Ko-fi. Nếu thiếu, máy chủ này bỏ qua Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan đến $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Giới hạn mới áp dụng cho những gì được thêm sau đó. Nội dung đã có vẫn được giữ. Để trống nếu không giới hạn.';
+
+  @override
+  String get adminPlanAdd => 'Thêm gói';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (mặc định)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Số ngày: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Sản phẩm';
+
+  @override
+  String get adminProductsHelp =>
+      'Khoản thanh toán thuộc về sản phẩm có tên cấp của nó, nếu không thì về sản phẩm không có tên cấp mà số tiền đạt tới.';
+
+  @override
+  String get adminProductAdd => 'Thêm sản phẩm';
+
+  @override
+  String get adminProductEdit => 'Sửa sản phẩm';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Mọi khoản thanh toán từ $amount';
+  }
+
+  @override
+  String get adminProductName => 'Tên cấp';
+
+  @override
+  String get adminProductNameHelp =>
+      'Viết giống trên Ko-fi. Để trống để khớp khoản thanh toán một lần hoặc hằng tháng theo số tiền.';
+
+  @override
+  String get adminProductPlan => 'Gói';
+
+  @override
+  String get adminProductDays => 'Số ngày';
+
+  @override
+  String get adminProductDaysHelp =>
+      'Thời hạn của một khoản thanh toán. Thanh toán lại sẽ cộng vào thời gian còn lại.';
+
+  @override
+  String get adminProductMinAmount => 'Số tiền tối thiểu';
+
+  @override
+  String get adminProductCurrency => 'Mã tiền tệ';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Chữ thường, chữ số và dấu gạch nối. Không thể đổi sau này.';
+
+  @override
+  String get adminPlanName => 'Tên';
+
+  @override
+  String get adminPlanRank => 'Thứ hạng';
+
+  @override
+  String get adminPlanRankHelp => 'Tài khoản có nhiều gói sẽ nhận gói có thứ hạng cao nhất.';
+
+  @override
+  String get adminPlanDefault => 'Gói mặc định';
+
+  @override
+  String get adminPlanDefaultHelp => 'Dành cho mọi tài khoản không có gói khác.';
+
+  @override
+  String get adminEntitlementGranted => 'Do quản trị viên cấp';
+
+  @override
+  String get adminEntitlementRevoked => 'Đã thu hồi';
+
+  @override
+  String get adminEntitlementForever => 'Không có ngày kết thúc';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Đến $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Đã kết thúc $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Tài khoản này chưa có gói nào.';
+
+  @override
+  String get adminEntitlementRevoke => 'Thu hồi';
+
+  @override
+  String get adminEntitlementNote => 'Ghi chú';
+
+  @override
+  String get adminEntitlementGrant => 'Cấp gói';
+
+  @override
+  String get adminPaymentApplied => 'Đã áp dụng';
+
+  @override
+  String get adminPaymentUnclaimed => 'Chưa nhận';
+
+  @override
+  String get adminPaymentUnmatched => 'Chưa khớp';
+
+  @override
+  String get adminPaymentsAll => 'Tất cả';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count khoản thanh toán');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Không có khoản thanh toán nào.';
+
+  @override
+  String get adminPaymentAssigned => 'Đã cấp gói cho tài khoản.';
+
+  @override
+  String get adminPaymentAssign => 'Cấp cho tài khoản';
+
+  @override
+  String get adminPaymentPickUser => 'Hãy chọn một tài khoản.';
+
+  @override
+  String get errorBillingOff => 'Máy chủ này không có gói nào.';
+
+  @override
+  String get errorAlreadySponsored => 'Gói của một thành viên khác đã bao gồm nhóm này.';
+
+  @override
+  String get errorPlanInUse => 'Vẫn có tài khoản hoặc sản phẩm dùng gói này.';
+
+  @override
+  String get errorPaymentApplied => 'Khoản thanh toán này đã được áp dụng.';
+
+  @override
+  String get errorInvalidPlan => 'Hãy kiểm tra cài đặt gói: có mục không hợp lệ.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Nhóm này đã đạt giới hạn $max ảnh hóa đơn.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Nhóm này đã đạt giới hạn $max khoản chi định kỳ.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Bạn đã đạt giới hạn $max nhóm.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Gói của bạn chỉ có thể chia sẻ với tối đa $max nhóm.';
+  }
+
+  @override
+  String get errorLimitOther => 'Bạn đã đạt giới hạn của máy chủ này.';
+
+  @override
+  String get planTitle => 'Gói';
+
+  @override
+  String get planUnlimited => 'Không giới hạn';
+
+  @override
+  String planUntil(String date) {
+    return 'Đến $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Những gì máy chủ này lưu cho bạn';
+
+  @override
+  String get planIntro =>
+      'Chia và thanh toán nợ luôn miễn phí. Gói chỉ thay đổi lượng nội dung máy chủ này lưu cho bạn.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return 'Đã dùng $used';
+  }
+
+  @override
+  String get planLimits => 'Giới hạn';
+
+  @override
+  String get planLimitReceipts => 'Ảnh hóa đơn mỗi nhóm';
+
+  @override
+  String get planLimitRecurring => 'Khoản chi định kỳ mỗi nhóm';
+
+  @override
+  String get planLimitOwnGroups => 'Nhóm bạn đã tạo';
+
+  @override
+  String get planLimitSponsored => 'Nhóm dùng chung gói của bạn';
+
+  @override
+  String get planGet => 'Nhận gói';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Thanh toán bằng email đã xác nhận của tài khoản, hoặc thêm địa chỉ bạn dùng để thanh toán bên dưới.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Thanh toán từ địa chỉ này được tính cho tài khoản của bạn';
+
+  @override
+  String get planPaymentEmailAdd => 'Thêm email thanh toán';
+
+  @override
+  String get planPaymentEmailHelp => 'Chúng tôi sẽ gửi liên kết để xác nhận địa chỉ này là của bạn.';
+
+  @override
+  String get paymentEmailDone => 'Đã xác nhận địa chỉ';
+
+  @override
+  String get paymentEmailDoneBody => 'Thanh toán từ địa chỉ này giờ được tính cho tài khoản của bạn.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Ảnh hóa đơn: $receipts · Định kỳ: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Chia sẻ gói của tôi với nhóm này';
+
+  @override
+  String get groupUnsponsor => 'Ngừng chia sẻ gói của tôi';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Dùng gói của $name';
+  }
 }

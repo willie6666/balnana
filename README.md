@@ -103,6 +103,8 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 
 - One Docker Compose file, a PostgreSQL database and a web page for
   administering the server.
+- Optional plans, if you run a server for others: limits on what it stores,
+  with Ko-fi payments. Off by default.
 - A Material 3 app with light and dark themes and, if you like, your
   wallpaper's colors.
 

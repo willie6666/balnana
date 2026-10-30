@@ -121,6 +121,11 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	var preview ImportPreview
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		if creator != nil {
+			if err := s.checkOwnGroups(ctx, tx, creator.id); err != nil {
+				return err
+			}
+		}
 		g, err := scanGroup(tx.QueryRow(ctx, `
 			insert into groups (token, name, currency, minor_digits, link_access)
 			values ($1, $2, $3, $4, $5)

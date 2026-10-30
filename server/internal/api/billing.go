@@ -1,0 +1,499 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// paymentEmailLifetime is how long the link that proves an address works.
+const paymentEmailLifetime = 48 * time.Hour
+
+// entitlementActive picks the entitlements (as e) in force now.
+const entitlementActive = `e.revoked_at is null and e.starts_at <= now() and (e.expires_at is null or e.expires_at > now())`
+
+// plan is what someone may use. A nil limit is no limit.
+type plan struct {
+	name      string
+	isDefault bool
+	receipts  *int
+	recurring *int
+	ownGroups *int
+	sponsored *int
+}
+
+// userPlan is the plan userID has now: its best entitlement, or the default
+// one. Its second result is when that plan ends, if it does.
+func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time, error) {
+	var p plan
+	var ends *time.Time
+	err := q.QueryRow(ctx, `
+		select p.name, p.is_default, p.receipts_per_group, p.recurring_per_group, p.own_groups, p.sponsored_groups,
+		       e.expires_at
+		from plans p
+		left join entitlements e on e.plan_id = p.id and e.user_id = $1 and `+entitlementActive+`
+		where p.is_default or e.id is not null
+		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
+		limit 1`, userID).
+		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.ownGroups, &p.sponsored, &ends)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &p, ends, nil
+}
+
+// groupSponsor finds who sponsors the group: their account and member, while
+// they are still in it. Leaving it ends the sponsorship without a word.
+func groupSponsor(ctx context.Context, q querier, g *group) (userID, memberID *string, err error) {
+	err = q.QueryRow(ctx, `
+		select m.user_id::text, m.id::text from groups g
+		join members m on m.group_id = g.id and m.user_id = g.sponsor_user_id and m.left_at is null
+		where g.id = $1`, g.id).Scan(&userID, &memberID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil, nil
+	}
+	return userID, memberID, err
+}
+
+// groupPlan is the plan that applies to the whole group: its sponsor's, or
+// the default one.
+func groupPlan(ctx context.Context, q querier, g *group) (*plan, *string, error) {
+	userID, memberID, err := groupSponsor(ctx, q, g)
+	if err != nil {
+		return nil, nil, err
+	}
+	// No account has the empty id, so this finds the default plan.
+	id := nilUUID
+	if userID != nil {
+		id = *userID
+	}
+	p, _, err := userPlan(ctx, q, id)
+	return p, memberID, err
+}
+
+const nilUUID = "00000000-0000-0000-0000-000000000000"
+
+// planLimit is the refusal to add past a limit. What exists stays as it is:
+// only adding stops.
+func planLimit(limit string, max int) error {
+	return &apiError{status: http.StatusPaymentRequired, code: "plan_limit", params: map[string]any{"limit": limit, "max": max}}
+}
+
+func countReceipts(ctx context.Context, q querier, groupID string) (n int, err error) {
+	err = q.QueryRow(ctx, `
+		select count(*) from receipts r join expenses e on e.id = r.expense_id
+		where e.group_id = $1 and e.deleted_at is null`, groupID).Scan(&n)
+	return n, err
+}
+
+// countRecurring counts the paused and the ended too: either could carry on.
+func countRecurring(ctx context.Context, q querier, groupID string) (n int, err error) {
+	err = q.QueryRow(ctx, `select count(*) from recurring_expenses where group_id = $1`, groupID).Scan(&n)
+	return n, err
+}
+
+func countOwnGroups(ctx context.Context, q querier, userID string) (n int, err error) {
+	err = q.QueryRow(ctx, `
+		select count(*) from members m join groups g on g.id = m.group_id
+		where m.user_id = $1 and m.is_owner and m.left_at is null and g.archived_at is null`, userID).Scan(&n)
+	return n, err
+}
+
+func countSponsored(ctx context.Context, q querier, userID string) (n int, err error) {
+	err = q.QueryRow(ctx, `
+		select count(*) from groups g
+		join members m on m.group_id = g.id and m.user_id = g.sponsor_user_id and m.left_at is null
+		where g.sponsor_user_id = $1 and g.archived_at is null`, userID).Scan(&n)
+	return n, err
+}
+
+// checkReceiptLimit refuses a photo the group has no room for. One replacing
+// the expense's photo adds nothing. In a write it needs the group locked.
+func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, expenseID string) error {
+	if !s.conf().Billing {
+		return nil
+	}
+	p, _, err := groupPlan(ctx, q, g)
+	if err != nil || p.receipts == nil {
+		return err
+	}
+	var replaces bool
+	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
+		return err
+	}
+	n, err := countReceipts(ctx, q, g.id)
+	if err != nil {
+		return err
+	}
+	if n >= *p.receipts {
+		return planLimit("receipts", *p.receipts)
+	}
+	return nil
+}
+
+// checkRecurringLimit refuses a repeating expense the group has no room for.
+// It needs the group locked.
+func (s *Server) checkRecurringLimit(ctx context.Context, q querier, g *group) error {
+	if !s.conf().Billing {
+		return nil
+	}
+	p, _, err := groupPlan(ctx, q, g)
+	if err != nil || p.recurring == nil {
+		return err
+	}
+	n, err := countRecurring(ctx, q, g.id)
+	if err != nil {
+		return err
+	}
+	if n >= *p.recurring {
+		return planLimit("recurring", *p.recurring)
+	}
+	return nil
+}
+
+// holdAccount holds the account's row until the transaction ends, so that
+// counting what it has and adding to it happen one at a time.
+func holdAccount(ctx context.Context, tx pgx.Tx, userID string) error {
+	if err := lockUsersTable(ctx, tx); err != nil {
+		return err
+	}
+	_, err := tx.Exec(ctx, `select 1 from users where id = $1 for no key update`, userID)
+	return err
+}
+
+// checkOwnGroups refuses a new group to an account that owns all it may.
+func (s *Server) checkOwnGroups(ctx context.Context, tx pgx.Tx, userID string) error {
+	if !s.conf().Billing {
+		return nil
+	}
+	if err := holdAccount(ctx, tx, userID); err != nil {
+		return err
+	}
+	p, _, err := userPlan(ctx, tx, userID)
+	if err != nil || p.ownGroups == nil {
+		return err
+	}
+	n, err := countOwnGroups(ctx, tx, userID)
+	if err != nil {
+		return err
+	}
+	if n >= *p.ownGroups {
+		return planLimit("own_groups", *p.ownGroups)
+	}
+	return nil
+}
+
+func (s *Server) requireBilling() error {
+	if !s.conf().Billing {
+		return &apiError{status: http.StatusNotFound, code: "billing_off"}
+	}
+	return nil
+}
+
+func (s *Server) GetMyPlan(ctx context.Context, _ GetMyPlanRequestObject) (GetMyPlanResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	u, err := s.requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out MyPlan
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// Someone can come by a confirmed address in ways that don't pass
+		// through here, as by signing up with a provider.
+		if err := claimPayments(ctx, tx, u.id); err != nil {
+			return err
+		}
+		out, err = myPlan(ctx, tx, u.id)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return GetMyPlan200JSONResponse(out), nil
+}
+
+func myPlan(ctx context.Context, q querier, userID string) (MyPlan, error) {
+	p, ends, err := userPlan(ctx, q, userID)
+	if err != nil {
+		return MyPlan{}, err
+	}
+	out := MyPlan{
+		PlanName:          p.name,
+		Paid:              !p.isDefault,
+		ExpiresAt:         ends,
+		ReceiptsPerGroup:  p.receipts,
+		RecurringPerGroup: p.recurring,
+		OwnGroups:         Usage{Limit: p.ownGroups},
+		SponsoredGroups:   Usage{Limit: p.sponsored},
+	}
+	if out.OwnGroups.Used, err = countOwnGroups(ctx, q, userID); err != nil {
+		return MyPlan{}, err
+	}
+	if out.SponsoredGroups.Used, err = countSponsored(ctx, q, userID); err != nil {
+		return MyPlan{}, err
+	}
+	rows, err := q.Query(ctx, `select email::text from payment_emails where user_id = $1 order by created_at`, userID)
+	if err != nil {
+		return MyPlan{}, err
+	}
+	out.PaymentEmails, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	if out.PaymentEmails == nil {
+		out.PaymentEmails = []string{}
+	}
+	return out, err
+}
+
+func (s *Server) SendPaymentEmail(ctx context.Context, req SendPaymentEmailRequestObject) (SendPaymentEmailResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	if err := s.requireEmail(); err != nil {
+		return nil, err
+	}
+	u, err := s.requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	email, err := cleanEmail(req.Body.Email)
+	if err != nil {
+		return nil, err
+	}
+	// It mails an address someone typed, so it must not be a way to send spam.
+	if now := time.Now(); !s.emails.take(u.id, 1, now) {
+		return nil, limited(s.emails, u.id, now)
+	}
+	token, err := newEmailToken(ctx, s.db, u.id, email, "payment", paymentEmailLifetime)
+	if err != nil {
+		return nil, err
+	}
+	if token != "" {
+		s.sendMail(paymentMail(email, u.name, s.appLink("/payment-email", url.Values{"token": {token}})))
+	}
+	return SendPaymentEmail204Response{}, nil
+}
+
+func (s *Server) ConfirmPaymentEmail(ctx context.Context, req ConfirmPaymentEmailRequestObject) (ConfirmPaymentEmailResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	u, err := s.requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out MyPlan
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// Only the account that asked may use it: a link forwarded to someone
+		// else doesn't give them the payments.
+		var email string
+		var live bool
+		err := tx.QueryRow(ctx, `
+			delete from email_tokens where token_hash = $1 and purpose = 'payment' and user_id = $2
+			returning email::text, expires_at > now()`, hashToken(req.Body.Token), u.id).Scan(&email, &live)
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
+			noteMiss(ctx)
+			return badRequest("invalid_token")
+		}
+		if err != nil {
+			return err
+		}
+		if err := rememberPaymentEmail(ctx, tx, email, u.id); err != nil {
+			return err
+		}
+		if err := claimPayments(ctx, tx, u.id); err != nil {
+			return err
+		}
+		out, err = myPlan(ctx, tx, u.id)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ConfirmPaymentEmail200JSONResponse(out), nil
+}
+
+func rememberPaymentEmail(ctx context.Context, q querier, email, userID string) error {
+	_, err := q.Exec(ctx, `
+		insert into payment_emails (email, user_id) values ($1, $2)
+		on conflict (email) do update set user_id = excluded.user_id, created_at = now()`, email, userID)
+	return err
+}
+
+func (s *Server) GetGroupPlan(ctx context.Context, req GetGroupPlanRequestObject) (GetGroupPlanResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	g, err := s.groupByToken(ctx, s.db, req.Token, false)
+	if err != nil {
+		return nil, err
+	}
+	out, err := s.groupPlanFor(ctx, s.db, g)
+	if err != nil {
+		return nil, err
+	}
+	return GetGroupPlan200JSONResponse(out), nil
+}
+
+func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPlan, error) {
+	p, sponsor, err := groupPlan(ctx, q, g)
+	if err != nil {
+		return GroupPlan{}, err
+	}
+	out := GroupPlan{
+		PlanName:        p.name,
+		SponsorMemberId: sponsor,
+		Receipts:        Usage{Limit: p.receipts},
+		Recurring:       Usage{Limit: p.recurring},
+	}
+	if out.Receipts.Used, err = countReceipts(ctx, q, g.id); err != nil {
+		return GroupPlan{}, err
+	}
+	if out.Recurring.Used, err = countRecurring(ctx, q, g.id); err != nil {
+		return GroupPlan{}, err
+	}
+	u, err := s.currentUser(ctx)
+	if err != nil || u == nil || g.me == nil || sponsor != nil && *sponsor == *g.me {
+		return out, err
+	}
+	covered, err := sponsorCovers(ctx, q, g)
+	if err != nil || covered {
+		return out, err
+	}
+	out.CanSponsor, err = hasRoomToSponsor(ctx, q, u.id)
+	return out, err
+}
+
+// sponsorCovers reports whether the group's sponsor still has a plan that
+// sponsors groups. One who stopped paying doesn't keep others from it.
+func sponsorCovers(ctx context.Context, q querier, g *group) (bool, error) {
+	userID, _, err := groupSponsor(ctx, q, g)
+	if err != nil || userID == nil {
+		return false, err
+	}
+	p, _, err := userPlan(ctx, q, *userID)
+	if err != nil {
+		return false, err
+	}
+	return p.sponsored == nil || *p.sponsored > 0, nil
+}
+
+func hasRoomToSponsor(ctx context.Context, q querier, userID string) (bool, error) {
+	p, _, err := userPlan(ctx, q, userID)
+	if err != nil {
+		return false, err
+	}
+	if p.sponsored == nil {
+		return true, nil
+	}
+	n, err := countSponsored(ctx, q, userID)
+	return n < *p.sponsored, err
+}
+
+func (s *Server) SponsorGroup(ctx context.Context, req SponsorGroupRequestObject) (SponsorGroupResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	u, err := s.requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out GroupPlan
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// The account before the group, as deleting an account takes them.
+		if err := holdAccount(ctx, tx, u.id); err != nil {
+			return err
+		}
+		g, err := s.groupByToken(ctx, tx, req.Token, true)
+		if err != nil {
+			return err
+		}
+		if g.me == nil {
+			return forbidden("not_a_member")
+		}
+		sponsor, _, err := groupSponsor(ctx, tx, g)
+		if err != nil {
+			return err
+		}
+		if sponsor == nil || *sponsor != u.id {
+			if covered, err := sponsorCovers(ctx, tx, g); err != nil {
+				return err
+			} else if covered {
+				return conflict("already_sponsored")
+			}
+			p, _, err := userPlan(ctx, tx, u.id)
+			if err != nil {
+				return err
+			}
+			if room, err := hasRoomToSponsor(ctx, tx, u.id); err != nil {
+				return err
+			} else if !room {
+				return planLimit("sponsored_groups", *p.sponsored)
+			}
+			if _, err := tx.Exec(ctx, `update groups set sponsor_user_id = $1 where id = $2`, u.id, g.id); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx, `select pg_notify($1, $2)`, changeChannel, g.id); err != nil {
+				return err
+			}
+		}
+		out, err = s.groupPlanFor(ctx, tx, g)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return SponsorGroup200JSONResponse(out), nil
+}
+
+func (s *Server) UnsponsorGroup(ctx context.Context, req UnsponsorGroupRequestObject) (UnsponsorGroupResponseObject, error) {
+	if err := s.requireBilling(); err != nil {
+		return nil, err
+	}
+	u, err := s.requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out GroupPlan
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		g, err := s.groupByToken(ctx, tx, req.Token, true)
+		if err != nil {
+			return err
+		}
+		sponsor, _, err := groupSponsor(ctx, tx, g)
+		if err != nil {
+			return err
+		}
+		if sponsor != nil && *sponsor != u.id {
+			return forbidden("not_allowed")
+		}
+		if _, err := tx.Exec(ctx, `update groups set sponsor_user_id = null where id = $1`, g.id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `select pg_notify($1, $2)`, changeChannel, g.id); err != nil {
+			return err
+		}
+		out, err = s.groupPlanFor(ctx, tx, g)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return UnsponsorGroup200JSONResponse(out), nil
+}
+
+// cleanNote trims what an administrator wrote about an entitlement.
+func cleanNote(note *string) *string {
+	if note == nil {
+		return nil
+	}
+	if t := strings.TrimSpace(*note); t != "" {
+		return &t
+	}
+	return nil
+}

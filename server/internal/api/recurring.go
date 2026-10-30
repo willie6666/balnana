@@ -523,6 +523,9 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 		if err != nil {
 			return err
 		}
+		if err := s.checkRecurringLimit(ctx, tx, g); err != nil {
+			return err
+		}
 		d, sched, err := validateRecurring(ctx, tx, g, *req.Body)
 		if err != nil {
 			return err

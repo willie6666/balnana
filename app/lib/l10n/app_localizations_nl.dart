@@ -2782,4 +2782,325 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Toegevoegd door een terugkerende uitgave';
+
+  @override
+  String get adminPlans => 'Abonnementen';
+
+  @override
+  String get adminPayments => 'Betalingen';
+
+  @override
+  String get adminSectionBilling => 'Abonnementen en betalingen';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Abonnementen verhogen de limieten op wat deze server bewaart. Uitgaven delen en verrekenen blijft gratis.';
+
+  @override
+  String get adminBillingOn => 'Abonnementen en limieten';
+
+  @override
+  String get adminBillingOnHelp =>
+      'Als dit uit staat, beperkt deze server niets en toont hij geen abonnementen.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'Abonnementen hebben accounts nodig: zet de toegang eerst op accounts.';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi-pagina';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Waar mensen betalen. Alleen versies die externe betalingen toestaan, linken ernaar.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Webhook-URL om op Ko-fi in te vullen: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi-verificatietoken';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Staat op de webhookpagina van Ko-fi. Zonder dit negeert deze server Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan tot $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Een nieuwe limiet geldt voor wat hierna wordt toegevoegd. Wat er al is, blijft. Laat leeg voor geen limiet.';
+
+  @override
+  String get adminPlanAdd => 'Abonnement toevoegen';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (standaard)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Dagen: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Producten';
+
+  @override
+  String get adminProductsHelp =>
+      'Een betaling gaat naar het product met de naam van het niveau, anders naar het product zonder niveaunaam waarvan het bedrag wordt gehaald.';
+
+  @override
+  String get adminProductAdd => 'Product toevoegen';
+
+  @override
+  String get adminProductEdit => 'Product bewerken';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Elke betaling van minimaal $amount';
+  }
+
+  @override
+  String get adminProductName => 'Niveaunaam';
+
+  @override
+  String get adminProductNameHelp =>
+      'Zoals op Ko-fi geschreven. Laat leeg om eenmalige of maandelijkse betalingen op bedrag te koppelen.';
+
+  @override
+  String get adminProductPlan => 'Abonnement';
+
+  @override
+  String get adminProductDays => 'Dagen';
+
+  @override
+  String get adminProductDaysHelp =>
+      'Hoe lang één betaling geldig is. Opnieuw betalen komt bij de resterende tijd.';
+
+  @override
+  String get adminProductMinAmount => 'Minimumbedrag';
+
+  @override
+  String get adminProductCurrency => 'Valutacode';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp =>
+      'Kleine letters, cijfers en koppeltekens. Dit kan later niet worden gewijzigd.';
+
+  @override
+  String get adminPlanName => 'Naam';
+
+  @override
+  String get adminPlanRank => 'Rang';
+
+  @override
+  String get adminPlanRankHelp => 'Een account met meerdere abonnementen krijgt dat met de hoogste rang.';
+
+  @override
+  String get adminPlanDefault => 'Standaardabonnement';
+
+  @override
+  String get adminPlanDefaultHelp => 'Voor elk account zonder ander abonnement.';
+
+  @override
+  String get adminEntitlementGranted => 'Gegeven door een beheerder';
+
+  @override
+  String get adminEntitlementRevoked => 'Ingetrokken';
+
+  @override
+  String get adminEntitlementForever => 'Geen einddatum';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Tot $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Beëindigd op $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Dit account heeft nog geen abonnementen.';
+
+  @override
+  String get adminEntitlementRevoke => 'Intrekken';
+
+  @override
+  String get adminEntitlementNote => 'Notitie';
+
+  @override
+  String get adminEntitlementGrant => 'Abonnement geven';
+
+  @override
+  String get adminPaymentApplied => 'Toegepast';
+
+  @override
+  String get adminPaymentUnclaimed => 'Niet opgeëist';
+
+  @override
+  String get adminPaymentUnmatched => 'Niet gekoppeld';
+
+  @override
+  String get adminPaymentsAll => 'Alle';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count betalingen',
+      one: '1 betaling',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Geen betalingen.';
+
+  @override
+  String get adminPaymentAssigned => 'Abonnement aan het account gegeven.';
+
+  @override
+  String get adminPaymentAssign => 'Aan een account geven';
+
+  @override
+  String get adminPaymentPickUser => 'Kies een account.';
+
+  @override
+  String get errorBillingOff => 'Deze server heeft geen abonnementen.';
+
+  @override
+  String get errorAlreadySponsored => 'Het abonnement van een ander lid dekt deze groep al.';
+
+  @override
+  String get errorPlanInUse => 'Accounts of producten gebruiken dit abonnement nog.';
+
+  @override
+  String get errorPaymentApplied => 'Deze betaling is al toegepast.';
+
+  @override
+  String get errorInvalidPlan => 'Controleer de abonnementsinstellingen: er klopt iets niet.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Deze groep heeft de limiet van $max bonfoto\'s bereikt.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Deze groep heeft de limiet van $max terugkerende uitgaven bereikt.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Je hebt je limiet van $max groepen bereikt.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Je abonnement kan met maximaal $max groepen worden gedeeld.';
+  }
+
+  @override
+  String get errorLimitOther => 'Je hebt een limiet van deze server bereikt.';
+
+  @override
+  String get planTitle => 'Abonnement';
+
+  @override
+  String get planUnlimited => 'Geen limiet';
+
+  @override
+  String planUntil(String date) {
+    return 'Tot $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Wat deze server voor je bewaart';
+
+  @override
+  String get planIntro =>
+      'Delen en verrekenen zijn altijd gratis. Een abonnement verandert alleen hoeveel deze server voor je bewaart.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used van $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used in gebruik';
+  }
+
+  @override
+  String get planLimits => 'Limieten';
+
+  @override
+  String get planLimitReceipts => 'Bonfoto\'s per groep';
+
+  @override
+  String get planLimitRecurring => 'Terugkerende uitgaven per groep';
+
+  @override
+  String get planLimitOwnGroups => 'Groepen die je hebt gemaakt';
+
+  @override
+  String get planLimitSponsored => 'Groepen die je abonnement delen';
+
+  @override
+  String get planGet => 'Abonnement nemen';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Betaal met het bevestigde e-mailadres van je account, of voeg hieronder het adres toe waarmee je betaalt.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Betalingen vanaf dit adres tellen voor je account';
+
+  @override
+  String get planPaymentEmailAdd => 'Betaal-e-mailadres toevoegen';
+
+  @override
+  String get planPaymentEmailHelp => 'We sturen een link om te bevestigen dat het van jou is.';
+
+  @override
+  String get paymentEmailDone => 'Adres bevestigd';
+
+  @override
+  String get paymentEmailDoneBody => 'Betalingen vanaf dit adres tellen nu voor je account.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Bonfoto\'s: $receipts · Terugkerend: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Mijn abonnement met deze groep delen';
+
+  @override
+  String get groupUnsponsor => 'Mijn abonnement niet meer delen';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Gebruikt het abonnement van $name';
+  }
 }

@@ -163,6 +163,15 @@ type Config struct {
 	// on a private address, such as a ntfy server on the same network.
 	PushPrivateEndpoints bool
 
+	// Billing charges for what the server stores: plans and their limits
+	// apply. It needs accounts, as a plan belongs to one.
+	Billing bool
+	// KofiToken is the verification token Ko-fi sends with its webhooks;
+	// empty turns the webhook off.
+	KofiToken string
+	// KofiURL is the page people pay at; nil offers no way there.
+	KofiURL *url.URL
+
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
 	AndroidCertSHA256 []string
@@ -203,6 +212,9 @@ var Managed = []Setting{
 	{Key: "BALNANA_OAUTH_GOOGLE_TRUST_EMAIL", Default: "true"},
 	// Each provider listed has the settings in oidcFields; see OIDCKey.
 	{Key: "BALNANA_OAUTH_OIDC_PROVIDERS"},
+	{Key: "BALNANA_BILLING_ENABLED", Default: "false"},
+	{Key: "BALNANA_KOFI_URL"},
+	{Key: "BALNANA_KOFI_TOKEN", Secret: true},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
@@ -352,6 +364,8 @@ func load(getenv func(string) string) (*Config, error) {
 		RequireVerified: e.managedBool("BALNANA_AUTH_REQUIRE_VERIFIED"),
 		Signup:          Signup(e.managed("BALNANA_AUTH_SIGNUP")),
 		LinkGroups:      e.managedBool("BALNANA_LINK_GROUPS"),
+		Billing:         e.managedBool("BALNANA_BILLING_ENABLED"),
+		KofiToken:       e.managed("BALNANA_KOFI_TOKEN"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.int("BALNANA_SMTP_PORT", 587),
@@ -397,6 +411,14 @@ func load(getenv func(string) string) (*Config, error) {
 			e.fail("BALNANA_PRIVACY_URL", "BALNANA_PRIVACY_URL must be an absolute http(s) URL, got %q", privacyURL)
 		} else {
 			c.PrivacyURL = u
+		}
+	}
+
+	if kofiURL := e.managed("BALNANA_KOFI_URL"); kofiURL != "" {
+		if u, err := url.Parse(kofiURL); err != nil || u.Scheme != "https" || u.Host == "" {
+			e.fail("BALNANA_KOFI_URL", "BALNANA_KOFI_URL must be an absolute https URL, got %q", kofiURL)
+		} else {
+			c.KofiURL = u
 		}
 	}
 
@@ -446,6 +468,10 @@ func load(getenv func(string) string) (*Config, error) {
 	case SignupOpen, SignupInviteOnly, SignupClosed:
 	default:
 		e.fail("BALNANA_AUTH_SIGNUP", "BALNANA_AUTH_SIGNUP must be open, invite_only or closed, got %q", c.Signup)
+	}
+
+	if c.Billing && c.AuthMode != AuthModeAccounts {
+		e.fail("BALNANA_BILLING_ENABLED", "BALNANA_BILLING_ENABLED needs BALNANA_AUTH_MODE=accounts")
 	}
 
 	if c.RateLimit < 0 {

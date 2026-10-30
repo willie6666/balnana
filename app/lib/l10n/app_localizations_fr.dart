@@ -2842,4 +2842,323 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Ajoutée par une dépense récurrente';
+
+  @override
+  String get adminPlans => 'Formules';
+
+  @override
+  String get adminPayments => 'Paiements';
+
+  @override
+  String get adminSectionBilling => 'Formules et paiements';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Les formules relèvent les limites de ce que ce serveur conserve. Partager les dépenses et régler restent gratuits.';
+
+  @override
+  String get adminBillingOn => 'Formules et limites';
+
+  @override
+  String get adminBillingOnHelp => 'Si désactivé, ce serveur ne limite rien et n’affiche aucune formule.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'Les formules nécessitent des comptes : passez d’abord le mode d’accès aux comptes.';
+
+  @override
+  String get adminKofiUrl => 'Page Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'La page de paiement. Seules les versions qui autorisent les paiements externes y renvoient.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL de webhook à saisir sur Ko-fi : $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Jeton de vérification Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp => 'Affiché sur la page webhook de Ko-fi. Sans lui, ce serveur ignore Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan jusqu’au $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Une nouvelle limite s’applique à ce qui sera ajouté ensuite. L’existant reste. Laissez vide pour ne fixer aucune limite.';
+
+  @override
+  String get adminPlanAdd => 'Ajouter une formule';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (par défaut)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label : $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Jours : $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Produits';
+
+  @override
+  String get adminProductsHelp =>
+      'Un paiement va au produit portant son nom de palier, sinon à celui sans nom de palier dont il atteint le montant.';
+
+  @override
+  String get adminProductAdd => 'Ajouter un produit';
+
+  @override
+  String get adminProductEdit => 'Modifier le produit';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Tout paiement d’au moins $amount';
+  }
+
+  @override
+  String get adminProductName => 'Nom du palier';
+
+  @override
+  String get adminProductNameHelp =>
+      'Tel qu’écrit sur Ko-fi. Laissez vide pour associer les paiements uniques ou mensuels par leur montant.';
+
+  @override
+  String get adminProductPlan => 'Formule';
+
+  @override
+  String get adminProductDays => 'Jours';
+
+  @override
+  String get adminProductDaysHelp => 'Durée d’un paiement. Un nouveau paiement s’ajoute au temps restant.';
+
+  @override
+  String get adminProductMinAmount => 'Montant minimum';
+
+  @override
+  String get adminProductCurrency => 'Code de devise';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Minuscules, chiffres et tirets. Non modifiable par la suite.';
+
+  @override
+  String get adminPlanName => 'Nom';
+
+  @override
+  String get adminPlanRank => 'Rang';
+
+  @override
+  String get adminPlanRankHelp => 'Un compte avec plusieurs formules obtient celle de rang le plus élevé.';
+
+  @override
+  String get adminPlanDefault => 'Formule par défaut';
+
+  @override
+  String get adminPlanDefaultHelp => 'Pour tous les comptes sans autre formule.';
+
+  @override
+  String get adminEntitlementGranted => 'Attribuée par un administrateur';
+
+  @override
+  String get adminEntitlementRevoked => 'Révoquée';
+
+  @override
+  String get adminEntitlementForever => 'Sans date de fin';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Jusqu’au $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Terminée le $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Ce compte n’a pas encore de formule.';
+
+  @override
+  String get adminEntitlementRevoke => 'Révoquer';
+
+  @override
+  String get adminEntitlementNote => 'Note';
+
+  @override
+  String get adminEntitlementGrant => 'Attribuer la formule';
+
+  @override
+  String get adminPaymentApplied => 'Appliqué';
+
+  @override
+  String get adminPaymentUnclaimed => 'Non réclamé';
+
+  @override
+  String get adminPaymentUnmatched => 'Non associé';
+
+  @override
+  String get adminPaymentsAll => 'Tous';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count paiements',
+      one: '1 paiement',
+      zero: '$count paiement',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Aucun paiement.';
+
+  @override
+  String get adminPaymentAssigned => 'Formule attribuée au compte.';
+
+  @override
+  String get adminPaymentAssign => 'Attribuer à un compte';
+
+  @override
+  String get adminPaymentPickUser => 'Choisissez un compte.';
+
+  @override
+  String get errorBillingOff => 'Ce serveur n’a pas de formules.';
+
+  @override
+  String get errorAlreadySponsored => 'La formule d’un autre membre couvre déjà ce groupe.';
+
+  @override
+  String get errorPlanInUse => 'Des comptes ou des produits utilisent encore cette formule.';
+
+  @override
+  String get errorPaymentApplied => 'Ce paiement a déjà été appliqué.';
+
+  @override
+  String get errorInvalidPlan => 'Vérifiez les réglages de la formule : un élément n’est pas valide.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Ce groupe a atteint sa limite de $max photos de justificatifs.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Ce groupe a atteint sa limite de $max dépenses récurrentes.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Vous avez atteint votre limite de $max groupes.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Votre formule ne peut pas être partagée avec plus de $max groupes.';
+  }
+
+  @override
+  String get errorLimitOther => 'Vous avez atteint une limite de ce serveur.';
+
+  @override
+  String get planTitle => 'Formule';
+
+  @override
+  String get planUnlimited => 'Aucune limite';
+
+  @override
+  String planUntil(String date) {
+    return 'Jusqu’au $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Ce que ce serveur conserve pour vous';
+
+  @override
+  String get planIntro =>
+      'Partager et régler restent toujours gratuits. Une formule change seulement ce que ce serveur conserve pour vous.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used sur $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used utilisés';
+  }
+
+  @override
+  String get planLimits => 'Limites';
+
+  @override
+  String get planLimitReceipts => 'Photos de justificatifs par groupe';
+
+  @override
+  String get planLimitRecurring => 'Dépenses récurrentes par groupe';
+
+  @override
+  String get planLimitOwnGroups => 'Groupes que vous avez créés';
+
+  @override
+  String get planLimitSponsored => 'Groupes partageant votre formule';
+
+  @override
+  String get planGet => 'Obtenir une formule';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Payez avec l’e-mail confirmé de votre compte, ou ajoutez ci-dessous l’adresse avec laquelle vous payez.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Les paiements depuis cette adresse comptent pour votre compte';
+
+  @override
+  String get planPaymentEmailAdd => 'Ajouter un e-mail de paiement';
+
+  @override
+  String get planPaymentEmailHelp => 'Nous enverrons un lien pour confirmer qu’il est à vous.';
+
+  @override
+  String get paymentEmailDone => 'Adresse confirmée';
+
+  @override
+  String get paymentEmailDoneBody =>
+      'Les paiements depuis cette adresse comptent désormais pour votre compte.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Photos de justificatifs : $receipts · Récurrentes : $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Partager ma formule avec ce groupe';
+
+  @override
+  String get groupUnsponsor => 'Ne plus partager ma formule';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Utilise la formule de $name';
+  }
 }

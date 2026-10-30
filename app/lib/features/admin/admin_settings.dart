@@ -15,6 +15,8 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import 'admin_page.dart';
+import 'admin_payments_page.dart';
+import 'admin_plans_page.dart';
 import 'admin_users_page.dart';
 
 /// Settings that are on or off; the server reads them as "true" or "false".
@@ -22,6 +24,7 @@ const _toggles = {
   'BALNANA_AUTH_PASSWORD',
   'BALNANA_AUTH_REQUIRE_EMAIL',
   'BALNANA_AUTH_REQUIRE_VERIFIED',
+  'BALNANA_BILLING_ENABLED',
   'BALNANA_LINK_GROUPS',
   'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL',
 };
@@ -400,6 +403,20 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
                       .push(MaterialPageRoute<void>(builder: (_) => AdminUsersPage(token: widget.token))),
             ),
             IconButton(
+              tooltip: l10n.adminPlans,
+              icon: const Icon(Icons.workspace_premium_outlined),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => AdminPlansPage(token: widget.token))),
+            ),
+            IconButton(
+              tooltip: l10n.adminPayments,
+              icon: const Icon(Icons.receipt_long_outlined),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => AdminPaymentsPage(token: widget.token))),
+            ),
+            IconButton(
               tooltip: l10n.adminChangePassword,
               icon: const Icon(Icons.key_outlined),
               onPressed: () => showDialog<void>(
@@ -535,6 +552,18 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
             ),
           ),
       ],
+      FormSection(l10n.adminSectionBilling),
+      _note(l10n.adminSectionBillingBody),
+      _toggle(
+        'BALNANA_BILLING_ENABLED',
+        enabled: accounts,
+        help: accounts ? null : l10n.adminBillingNeedsAccounts,
+      ),
+      gap,
+      _textField('BALNANA_KOFI_URL', keyboard: TextInputType.url),
+      gap,
+      _note(l10n.adminKofiWebhook('$publicUrl$apiBasePath/webhooks/kofi')),
+      _textField('BALNANA_KOFI_TOKEN'),
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
@@ -866,6 +895,9 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminOidcIssuer,
   'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcName,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprints,
+  'BALNANA_BILLING_ENABLED' => l10n.adminBillingOn,
+  'BALNANA_KOFI_URL' => l10n.adminKofiUrl,
+  'BALNANA_KOFI_TOKEN' => l10n.adminKofiToken,
   _ => key,
 };
 
@@ -883,6 +915,9 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
   'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcNameHelp,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprintsHelp,
+  'BALNANA_BILLING_ENABLED' => l10n.adminBillingOnHelp,
+  'BALNANA_KOFI_URL' => l10n.adminKofiUrlHelp,
+  'BALNANA_KOFI_TOKEN' => l10n.adminKofiTokenHelp,
   _ => null,
 };
 
@@ -891,6 +926,7 @@ String _problem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' ||
   'BALNANA_SOURCE_URL' ||
   'BALNANA_PRIVACY_URL' ||
+  'BALNANA_KOFI_URL' ||
   'BALNANA_MAP_STYLE' ||
   'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
   'BALNANA_SMTP_FROM' => l10n.adminInvalidFrom,
@@ -899,6 +935,7 @@ String _problem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_OAUTH_OIDC_CLIENT_ID' ||
   'BALNANA_OAUTH_OIDC_SECRET' => l10n.adminInvalidRequired,
   'BALNANA_AUTH_MODE' => l10n.adminNeedsSignIn,
+  'BALNANA_BILLING_ENABLED' => l10n.adminBillingNeedsAccounts,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminInvalidFingerprint,
   'BALNANA_MAP_TILES' => l10n.adminInvalidMapTiles,
   _ => l10n.adminInvalidValue,

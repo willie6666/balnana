@@ -13,8 +13,9 @@ import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import 'admin_page.dart';
+import 'admin_user_plan_dialog.dart';
 
-/// The server's accounts, for finding one and deleting it.
+/// The server's accounts, for finding one, giving it a plan and deleting it.
 class AdminUsersPage extends ConsumerStatefulWidget {
   const AdminUsersPage({super.key, required this.token});
 
@@ -68,6 +69,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   void _search(String _) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), _load);
+  }
+
+  Future<void> _showPlan(AdminUser user) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AdminUserPlanDialog(api: _api, token: widget.token, user: user),
+    );
+    if (mounted) await _load();
   }
 
   Future<void> _delete(AdminUser user) async {
@@ -166,9 +175,17 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                       if (u.email != null) u.emailVerified ? u.email! : '${u.email} (${l10n.adminUserUnverified})',
                       ...u.oauth,
                       l10n.adminUserGroups(u.groups),
+                      if (u.planName case final plan?)
+                        u.planExpiresAt == null
+                            ? plan
+                            : l10n.adminUserPlanUntil(
+                                plan,
+                                DateFormat.yMMMd(locale).format(u.planExpiresAt!.toLocal()),
+                              ),
                       DateFormat.yMMMd(locale).format(u.createdAt.toLocal()),
                     ].join(' · '),
                   ),
+                  onTap: () => _showPlan(u),
                   trailing: IconButton(
                     tooltip: l10n.accountDelete,
                     icon: const Icon(Icons.delete_outline),

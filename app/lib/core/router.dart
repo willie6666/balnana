@@ -20,6 +20,7 @@ import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
 import '../features/groups/link_page.dart';
 import '../features/not_found_page.dart';
+import '../features/settings/plan_page.dart';
 import '../features/settings/privacy_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
@@ -106,6 +107,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify-email',
         builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token'] ?? ''),
+      ),
+      GoRoute(
+        path: '/payment-email',
+        builder: (context, state) => PaymentEmailPage(token: state.uri.queryParameters['token'] ?? ''),
       ),
       GoRoute(
         path: '/confirm-email',
@@ -243,6 +248,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     redirect: (context, state) => canChooseServer ? null : '/settings',
                     builder: (context, state) => const ServerPage(),
                   ),
+                  GoRoute(path: 'plan', builder: (context, state) => const PlanPage()),
                 ],
               ),
             ],

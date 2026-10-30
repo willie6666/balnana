@@ -2897,4 +2897,324 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Додано автоматично за розкладом';
+
+  @override
+  String get adminPlans => 'Тарифи';
+
+  @override
+  String get adminPayments => 'Платежі';
+
+  @override
+  String get adminSectionBilling => 'Тарифи й платежі';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Тарифи підвищують ліміти на те, що зберігає цей сервер. Поділ витрат і розрахунки залишаються безкоштовними.';
+
+  @override
+  String get adminBillingOn => 'Тарифи й ліміти';
+
+  @override
+  String get adminBillingOnHelp => 'Якщо вимкнено, сервер нічого не обмежує й не показує тарифів.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'Для тарифів потрібні облікові записи: спочатку ввімкніть режим доступу з обліковими записами.';
+
+  @override
+  String get adminKofiUrl => 'Сторінка Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Тут виконується оплата. Посилання є лише у версіях, де дозволено зовнішні платежі.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL вебхука для Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Токен перевірки Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp => 'Указано на сторінці вебхука Ko-fi. Без нього сервер ігнорує Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan до $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Новий ліміт діє на те, що додадуть далі. Уже додане залишається. Залиште порожнім, щоб не обмежувати.';
+
+  @override
+  String get adminPlanAdd => 'Додати тариф';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (типовий)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Днів: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Продукти';
+
+  @override
+  String get adminProductsHelp =>
+      'Платіж належить до продукту з назвою його рівня, а якщо такого немає — до продукту без назви рівня, суму якого досягнуто.';
+
+  @override
+  String get adminProductAdd => 'Додати продукт';
+
+  @override
+  String get adminProductEdit => 'Змінити продукт';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Будь-який платіж від $amount';
+  }
+
+  @override
+  String get adminProductName => 'Назва рівня';
+
+  @override
+  String get adminProductNameHelp =>
+      'Як на Ko-fi. Залиште порожнім, щоб зіставляти разові й щомісячні платежі за сумою.';
+
+  @override
+  String get adminProductPlan => 'Тариф';
+
+  @override
+  String get adminProductDays => 'Днів';
+
+  @override
+  String get adminProductDaysHelp => 'На скільки вистачає одного платежу. Новий платіж додається до залишку.';
+
+  @override
+  String get adminProductMinAmount => 'Мінімальна сума';
+
+  @override
+  String get adminProductCurrency => 'Код валюти';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Малі латинські літери, цифри й дефіси. Змінити потім не можна.';
+
+  @override
+  String get adminPlanName => 'Назва';
+
+  @override
+  String get adminPlanRank => 'Ранг';
+
+  @override
+  String get adminPlanRankHelp => 'Обліковий запис із кількома тарифами отримує тариф із найвищим рангом.';
+
+  @override
+  String get adminPlanDefault => 'Типовий тариф';
+
+  @override
+  String get adminPlanDefaultHelp => 'Для всіх облікових записів без іншого тарифу.';
+
+  @override
+  String get adminEntitlementGranted => 'Надано адміністратором';
+
+  @override
+  String get adminEntitlementRevoked => 'Відкликано';
+
+  @override
+  String get adminEntitlementForever => 'Без дати завершення';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'До $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Завершено $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Цей обліковий запис ще не має тарифів.';
+
+  @override
+  String get adminEntitlementRevoke => 'Відкликати';
+
+  @override
+  String get adminEntitlementNote => 'Нотатка';
+
+  @override
+  String get adminEntitlementGrant => 'Надати тариф';
+
+  @override
+  String get adminPaymentApplied => 'Застосовано';
+
+  @override
+  String get adminPaymentUnclaimed => 'Не отримано';
+
+  @override
+  String get adminPaymentUnmatched => 'Не зіставлено';
+
+  @override
+  String get adminPaymentsAll => 'Усі';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count платежу',
+      many: '$count платежів',
+      few: '$count платежі',
+      two: '$count платежі',
+      one: '$count платіж',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Платежів немає.';
+
+  @override
+  String get adminPaymentAssigned => 'Тариф надано обліковому запису.';
+
+  @override
+  String get adminPaymentAssign => 'Надати обліковому запису';
+
+  @override
+  String get adminPaymentPickUser => 'Виберіть обліковий запис.';
+
+  @override
+  String get errorBillingOff => 'На цьому сервері немає тарифів.';
+
+  @override
+  String get errorAlreadySponsored => 'Цю групу вже покриває тариф іншого учасника.';
+
+  @override
+  String get errorPlanInUse => 'Цей тариф ще використовують облікові записи або продукти.';
+
+  @override
+  String get errorPaymentApplied => 'Цей платіж уже застосовано.';
+
+  @override
+  String get errorInvalidPlan => 'Перевірте налаштування тарифу: щось указано неправильно.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Група досягла ліміту фото чеків: $max.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Група досягла ліміту регулярних витрат: $max.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'Ви досягли ліміту груп: $max.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Тарифом можна поділитися максимум із такою кількістю груп: $max.';
+  }
+
+  @override
+  String get errorLimitOther => 'Ви досягли ліміту цього сервера.';
+
+  @override
+  String get planTitle => 'Тариф';
+
+  @override
+  String get planUnlimited => 'Без ліміту';
+
+  @override
+  String planUntil(String date) {
+    return 'До $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Що цей сервер зберігає для вас';
+
+  @override
+  String get planIntro =>
+      'Поділ і розрахунки завжди безкоштовні. Тариф змінює лише те, скільки цей сервер зберігає для вас.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used з $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return 'Використано: $used';
+  }
+
+  @override
+  String get planLimits => 'Ліміти';
+
+  @override
+  String get planLimitReceipts => 'Фото чеків на групу';
+
+  @override
+  String get planLimitRecurring => 'Регулярні витрати на групу';
+
+  @override
+  String get planLimitOwnGroups => 'Створені вами групи';
+
+  @override
+  String get planLimitSponsored => 'Групи з вашим тарифом';
+
+  @override
+  String get planGet => 'Отримати тариф';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Платіть із підтвердженої пошти облікового запису або додайте нижче адресу, з якої платите.';
+
+  @override
+  String get planPaymentEmailConfirmed => 'Платежі з цієї адреси зараховуються вашому обліковому запису';
+
+  @override
+  String get planPaymentEmailAdd => 'Додати пошту для оплати';
+
+  @override
+  String get planPaymentEmailHelp => 'Ми надішлемо посилання, щоб підтвердити, що адреса ваша.';
+
+  @override
+  String get paymentEmailDone => 'Адресу підтверджено';
+
+  @override
+  String get paymentEmailDoneBody => 'Платежі з цієї адреси тепер зараховуються вашому обліковому запису.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'Фото чеків: $receipts · Регулярні: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Поділитися тарифом із цією групою';
+
+  @override
+  String get groupUnsponsor => 'Більше не ділитися тарифом';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Використовує тариф учасника $name';
+  }
 }

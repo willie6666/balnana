@@ -2667,4 +2667,308 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get expenseRecurring => '반복 지출에서 자동 추가됨';
+
+  @override
+  String get adminPlans => '요금제';
+
+  @override
+  String get adminPayments => '결제';
+
+  @override
+  String get adminSectionBilling => '요금제와 결제';
+
+  @override
+  String get adminSectionBillingBody => '요금제는 이 서버에 저장할 수 있는 양의 한도를 높여요. 비용 나누기와 정산은 언제나 무료예요.';
+
+  @override
+  String get adminBillingOn => '요금제와 한도';
+
+  @override
+  String get adminBillingOnHelp => '끄면 이 서버는 아무것도 제한하지 않고 요금제도 표시하지 않아요.';
+
+  @override
+  String get adminBillingNeedsAccounts => '요금제에는 계정이 필요해요. 먼저 접근 방식을 계정으로 바꿔 주세요.';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi 페이지';
+
+  @override
+  String get adminKofiUrlHelp => '결제하러 가는 페이지예요. 외부 결제를 허용하는 빌드에서만 연결돼요.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Ko-fi에 입력할 웹훅 URL: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi 인증 토큰';
+
+  @override
+  String get adminKofiTokenHelp => 'Ko-fi의 웹훅 페이지에 표시돼요. 없으면 이 서버는 Ko-fi를 무시해요.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan, $date까지';
+  }
+
+  @override
+  String get adminPlansHelp => '새 한도는 앞으로 추가하는 항목에 적용되고 기존 항목은 그대로 남아요. 비워 두면 한도가 없어요.';
+
+  @override
+  String get adminPlanAdd => '요금제 추가';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (기본)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return '일수: $count';
+  }
+
+  @override
+  String get adminProductsSection => '상품';
+
+  @override
+  String get adminProductsHelp => '결제는 먼저 티어 이름이 같은 상품에, 없으면 티어 이름이 없고 금액을 충족하는 상품에 연결돼요.';
+
+  @override
+  String get adminProductAdd => '상품 추가';
+
+  @override
+  String get adminProductEdit => '상품 수정';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return '$amount 이상의 모든 결제';
+  }
+
+  @override
+  String get adminProductName => '티어 이름';
+
+  @override
+  String get adminProductNameHelp => 'Ko-fi에 적힌 그대로 입력하세요. 비워 두면 일회성·월간 결제를 금액으로 판단해요.';
+
+  @override
+  String get adminProductPlan => '요금제';
+
+  @override
+  String get adminProductDays => '일수';
+
+  @override
+  String get adminProductDaysHelp => '결제 한 번의 유효 기간이에요. 다시 결제하면 남은 기간에 더해져요.';
+
+  @override
+  String get adminProductMinAmount => '최소 금액';
+
+  @override
+  String get adminProductCurrency => '통화 코드';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => '영문 소문자, 숫자, 하이픈만 사용할 수 있어요. 나중에 바꿀 수 없어요.';
+
+  @override
+  String get adminPlanName => '이름';
+
+  @override
+  String get adminPlanRank => '순위';
+
+  @override
+  String get adminPlanRankHelp => '계정에 요금제가 여러 개 있으면 순위가 가장 높은 요금제가 적용돼요.';
+
+  @override
+  String get adminPlanDefault => '기본 요금제';
+
+  @override
+  String get adminPlanDefaultHelp => '다른 요금제가 없는 모든 계정에 적용돼요.';
+
+  @override
+  String get adminEntitlementGranted => '관리자가 제공';
+
+  @override
+  String get adminEntitlementRevoked => '취소됨';
+
+  @override
+  String get adminEntitlementForever => '종료일 없음';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return '$date까지';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '$date에 종료됨';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => '이 계정에는 아직 요금제가 없어요.';
+
+  @override
+  String get adminEntitlementRevoke => '취소';
+
+  @override
+  String get adminEntitlementNote => '메모';
+
+  @override
+  String get adminEntitlementGrant => '요금제 제공';
+
+  @override
+  String get adminPaymentApplied => '적용됨';
+
+  @override
+  String get adminPaymentUnclaimed => '미확인';
+
+  @override
+  String get adminPaymentUnmatched => '연결 안 됨';
+
+  @override
+  String get adminPaymentsAll => '전체';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '결제 $count건');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => '결제가 없어요.';
+
+  @override
+  String get adminPaymentAssigned => '계정에 요금제를 제공했어요.';
+
+  @override
+  String get adminPaymentAssign => '계정에 제공';
+
+  @override
+  String get adminPaymentPickUser => '계정을 선택해 주세요.';
+
+  @override
+  String get errorBillingOff => '이 서버에는 요금제가 없어요.';
+
+  @override
+  String get errorAlreadySponsored => '이 그룹에는 이미 다른 멤버의 요금제가 적용되어 있어요.';
+
+  @override
+  String get errorPlanInUse => '이 요금제를 사용하는 계정이나 상품이 있어요.';
+
+  @override
+  String get errorPaymentApplied => '이 결제는 이미 적용되었어요.';
+
+  @override
+  String get errorInvalidPlan => '요금제 설정을 확인해 주세요. 올바르지 않은 내용이 있어요.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return '이 그룹의 영수증 사진이 한도인 $max장에 도달했어요.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return '이 그룹의 반복 지출이 한도인 $max건에 도달했어요.';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return '그룹이 한도인 $max개에 도달했어요.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return '요금제는 최대 $max개 그룹에만 공유할 수 있어요.';
+  }
+
+  @override
+  String get errorLimitOther => '이 서버의 한도에 도달했어요.';
+
+  @override
+  String get planTitle => '요금제';
+
+  @override
+  String get planUnlimited => '한도 없음';
+
+  @override
+  String planUntil(String date) {
+    return '$date까지';
+  }
+
+  @override
+  String get planSettingsHelp => '이 서버가 보관하는 내용';
+
+  @override
+  String get planIntro => '비용 나누기와 정산은 언제나 무료예요. 요금제는 이 서버에 보관할 수 있는 양만 바꿔요.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used개 사용 중';
+  }
+
+  @override
+  String get planLimits => '한도';
+
+  @override
+  String get planLimitReceipts => '그룹당 영수증 사진';
+
+  @override
+  String get planLimitRecurring => '그룹당 반복 지출';
+
+  @override
+  String get planLimitOwnGroups => '내가 만든 그룹';
+
+  @override
+  String get planLimitSponsored => '내 요금제를 공유하는 그룹';
+
+  @override
+  String get planGet => '요금제 받기';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => '계정의 확인된 이메일로 결제하거나, 결제에 쓰는 주소를 아래에 추가하세요.';
+
+  @override
+  String get planPaymentEmailConfirmed => '이 주소의 결제가 내 계정에 반영돼요';
+
+  @override
+  String get planPaymentEmailAdd => '결제 이메일 추가';
+
+  @override
+  String get planPaymentEmailHelp => '본인 주소인지 확인하는 링크를 보내 드려요.';
+
+  @override
+  String get paymentEmailDone => '주소가 확인되었어요';
+
+  @override
+  String get paymentEmailDoneBody => '이제 이 주소의 결제가 내 계정에 반영돼요.';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return '영수증 사진: $receipts · 반복 지출: $recurring';
+  }
+
+  @override
+  String get groupSponsor => '이 그룹에 내 요금제 공유';
+
+  @override
+  String get groupUnsponsor => '요금제 공유 중지';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return '$name의 요금제 사용 중';
+  }
 }

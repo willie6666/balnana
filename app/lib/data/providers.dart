@@ -192,6 +192,18 @@ final groupProvider = FutureProvider.family<Group, String>(
   (ref, token) => _load(ref, (_) => groupApi(ref, token).get()),
 );
 
+/// The signed-in account's plan.
+final myPlanProvider = FutureProvider.autoDispose<MyPlan>((ref) {
+  ref.watch(identityProvider);
+  return _load(ref, (api) => api.myPlan());
+});
+
+/// The limits on a group. Dropped when nothing shows it, so it is fresh after
+/// adding receipts.
+final groupPlanProvider = FutureProvider.autoDispose.family<GroupPlan, String>(
+  (ref, token) => _load(ref, (_) => groupApi(ref, token).plan()),
+);
+
 final balancesProvider = FutureProvider.family<Balances, String>((ref, token) async {
   final group = await ref.watch(groupProvider(token).future);
   return _load(ref, (_) => groupApi(ref, token).balances(group.minorDigits));

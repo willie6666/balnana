@@ -2733,4 +2733,315 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'เพิ่มโดยค่าใช้จ่ายประจำ';
+
+  @override
+  String get adminPlans => 'แพ็กเกจ';
+
+  @override
+  String get adminPayments => 'การชำระเงิน';
+
+  @override
+  String get adminSectionBilling => 'แพ็กเกจและการชำระเงิน';
+
+  @override
+  String get adminSectionBillingBody =>
+      'แพ็กเกจช่วยเพิ่มขีดจำกัดของสิ่งที่เซิร์ฟเวอร์นี้เก็บไว้ การหารค่าใช้จ่ายและการเคลียร์ยอดยังคงฟรี';
+
+  @override
+  String get adminBillingOn => 'แพ็กเกจและขีดจำกัด';
+
+  @override
+  String get adminBillingOnHelp => 'เมื่อปิด เซิร์ฟเวอร์นี้จะไม่จำกัดสิ่งใดและไม่แสดงแพ็กเกจ';
+
+  @override
+  String get adminBillingNeedsAccounts => 'แพ็กเกจต้องใช้บัญชี: เปลี่ยนโหมดการเข้าถึงเป็นบัญชีก่อน';
+
+  @override
+  String get adminKofiUrl => 'หน้า Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'หน้าที่ผู้ใช้ไปชำระเงิน เฉพาะรุ่นที่อนุญาตการชำระเงินภายนอกเท่านั้นที่ลิงก์มาที่นี่';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL ของ Webhook สำหรับใส่ใน Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'โทเค็นยืนยันของ Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp => 'แสดงอยู่ในหน้า Webhook ของ Ko-fi หากไม่มี เซิร์ฟเวอร์นี้จะไม่สนใจ Ko-fi';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan ถึง $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'ขีดจำกัดใหม่มีผลกับสิ่งที่เพิ่มหลังจากนี้ ส่วนของเดิมยังอยู่ เว้นว่างไว้หากไม่จำกัด';
+
+  @override
+  String get adminPlanAdd => 'เพิ่มแพ็กเกจ';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (ค่าเริ่มต้น)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'จำนวนวัน: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'สินค้า';
+
+  @override
+  String get adminProductsHelp =>
+      'การชำระเงินจะไปยังสินค้าที่มีชื่อระดับตรงกัน หากไม่มีจะไปยังสินค้าที่ไม่มีชื่อระดับและจำนวนเงินถึงเกณฑ์';
+
+  @override
+  String get adminProductAdd => 'เพิ่มสินค้า';
+
+  @override
+  String get adminProductEdit => 'แก้ไขสินค้า';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'การชำระเงินใด ๆ ตั้งแต่ $amount';
+  }
+
+  @override
+  String get adminProductName => 'ชื่อระดับ';
+
+  @override
+  String get adminProductNameHelp =>
+      'ตามที่เขียนบน Ko-fi เว้นว่างไว้เพื่อจับคู่การชำระเงินครั้งเดียวหรือรายเดือนตามจำนวนเงิน';
+
+  @override
+  String get adminProductPlan => 'แพ็กเกจ';
+
+  @override
+  String get adminProductDays => 'จำนวนวัน';
+
+  @override
+  String get adminProductDaysHelp =>
+      'ระยะเวลาของการชำระเงินหนึ่งครั้ง การชำระอีกครั้งจะบวกเพิ่มจากเวลาที่เหลือ';
+
+  @override
+  String get adminProductMinAmount => 'จำนวนเงินขั้นต่ำ';
+
+  @override
+  String get adminProductCurrency => 'รหัสสกุลเงิน';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'อักษรตัวเล็ก ตัวเลข และขีดกลาง เปลี่ยนภายหลังไม่ได้';
+
+  @override
+  String get adminPlanName => 'ชื่อ';
+
+  @override
+  String get adminPlanRank => 'อันดับ';
+
+  @override
+  String get adminPlanRankHelp => 'บัญชีที่มีหลายแพ็กเกจจะได้แพ็กเกจที่อันดับสูงสุด';
+
+  @override
+  String get adminPlanDefault => 'แพ็กเกจเริ่มต้น';
+
+  @override
+  String get adminPlanDefaultHelp => 'สำหรับทุกบัญชีที่ไม่มีแพ็กเกจอื่น';
+
+  @override
+  String get adminEntitlementGranted => 'ผู้ดูแลเป็นผู้ให้';
+
+  @override
+  String get adminEntitlementRevoked => 'เพิกถอนแล้ว';
+
+  @override
+  String get adminEntitlementForever => 'ไม่มีวันสิ้นสุด';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'ถึง $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'สิ้นสุดเมื่อ $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'บัญชีนี้ยังไม่มีแพ็กเกจ';
+
+  @override
+  String get adminEntitlementRevoke => 'เพิกถอน';
+
+  @override
+  String get adminEntitlementNote => 'หมายเหตุ';
+
+  @override
+  String get adminEntitlementGrant => 'ให้แพ็กเกจ';
+
+  @override
+  String get adminPaymentApplied => 'นำไปใช้แล้ว';
+
+  @override
+  String get adminPaymentUnclaimed => 'ยังไม่มีผู้รับ';
+
+  @override
+  String get adminPaymentUnmatched => 'ไม่ตรงกับสินค้า';
+
+  @override
+  String get adminPaymentsAll => 'ทั้งหมด';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count รายการชำระเงิน');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'ไม่มีการชำระเงิน';
+
+  @override
+  String get adminPaymentAssigned => 'ให้แพ็กเกจแก่บัญชีแล้ว';
+
+  @override
+  String get adminPaymentAssign => 'ให้แก่บัญชี';
+
+  @override
+  String get adminPaymentPickUser => 'เลือกบัญชี';
+
+  @override
+  String get errorBillingOff => 'เซิร์ฟเวอร์นี้ไม่มีแพ็กเกจ';
+
+  @override
+  String get errorAlreadySponsored => 'แพ็กเกจของสมาชิกคนอื่นครอบคลุมกลุ่มนี้อยู่แล้ว';
+
+  @override
+  String get errorPlanInUse => 'ยังมีบัญชีหรือสินค้าที่ใช้แพ็กเกจนี้';
+
+  @override
+  String get errorPaymentApplied => 'การชำระเงินนี้ถูกนำไปใช้แล้ว';
+
+  @override
+  String get errorInvalidPlan => 'ตรวจสอบการตั้งค่าแพ็กเกจ มีบางอย่างไม่ถูกต้อง';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'กลุ่มนี้ถึงขีดจำกัด $max รูปใบเสร็จแล้ว';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'กลุ่มนี้ถึงขีดจำกัด $max รายการค่าใช้จ่ายประจำแล้ว';
+  }
+
+  @override
+  String errorLimitOwnGroups(int max) {
+    return 'คุณถึงขีดจำกัด $max กลุ่มแล้ว';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'แชร์แพ็กเกจของคุณได้ไม่เกิน $max กลุ่ม';
+  }
+
+  @override
+  String get errorLimitOther => 'คุณถึงขีดจำกัดของเซิร์ฟเวอร์นี้แล้ว';
+
+  @override
+  String get planTitle => 'แพ็กเกจ';
+
+  @override
+  String get planUnlimited => 'ไม่จำกัด';
+
+  @override
+  String planUntil(String date) {
+    return 'ถึง $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'สิ่งที่เซิร์ฟเวอร์นี้เก็บไว้ให้คุณ';
+
+  @override
+  String get planIntro =>
+      'การหารและการเคลียร์ยอดฟรีเสมอ แพ็กเกจเปลี่ยนแค่ปริมาณที่เซิร์ฟเวอร์นี้เก็บไว้ให้คุณ';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used จาก $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return 'ใช้แล้ว $used';
+  }
+
+  @override
+  String get planLimits => 'ขีดจำกัด';
+
+  @override
+  String get planLimitReceipts => 'รูปใบเสร็จต่อกลุ่ม';
+
+  @override
+  String get planLimitRecurring => 'ค่าใช้จ่ายประจำต่อกลุ่ม';
+
+  @override
+  String get planLimitOwnGroups => 'กลุ่มที่คุณสร้าง';
+
+  @override
+  String get planLimitSponsored => 'กลุ่มที่ใช้แพ็กเกจของคุณ';
+
+  @override
+  String get planGet => 'รับแพ็กเกจ';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => 'ชำระด้วยอีเมลที่ยืนยันแล้วของบัญชี หรือเพิ่มที่อยู่ที่คุณใช้ชำระเงินด้านล่าง';
+
+  @override
+  String get planPaymentEmailConfirmed => 'การชำระเงินจากที่อยู่นี้จะนับให้บัญชีของคุณ';
+
+  @override
+  String get planPaymentEmailAdd => 'เพิ่มอีเมลสำหรับชำระเงิน';
+
+  @override
+  String get planPaymentEmailHelp => 'เราจะส่งลิงก์เพื่อยืนยันว่าเป็นของคุณ';
+
+  @override
+  String get paymentEmailDone => 'ยืนยันที่อยู่แล้ว';
+
+  @override
+  String get paymentEmailDoneBody => 'การชำระเงินจากที่อยู่นี้จะนับให้บัญชีของคุณแล้ว';
+
+  @override
+  String groupPlanUsage(String receipts, String recurring) {
+    return 'รูปใบเสร็จ: $receipts · ค่าใช้จ่ายประจำ: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'แชร์แพ็กเกจของฉันกับกลุ่มนี้';
+
+  @override
+  String get groupUnsponsor => 'หยุดแชร์แพ็กเกจของฉัน';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'ใช้แพ็กเกจของ $name';
+  }
 }
