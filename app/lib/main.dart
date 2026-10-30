@@ -12,13 +12,15 @@ import 'app.dart';
 import 'core/prefs.dart';
 import 'core/push.dart';
 import 'core/settings.dart';
+import 'ui/smooth_wheel.dart';
 
 Future<void> main(List<String> args) async {
   // Started by a push message while the app is closed: no screen to show.
   if (args.contains('--unifiedpush-bg')) return receivePushInBackground();
   // Clean URLs (`/g/<token>`), served by the server's single-page fallback.
   usePathUrlStrategy();
-  WidgetsFlutterBinding.ensureInitialized();
+  // WidgetsFlutterBinding plus eased mouse-wheel scrolling in every scroll view.
+  SmoothWheelBinding();
   LicenseRegistry.addLicense(() async* {
     final ofl = await rootBundle.loadString('assets/fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(const ['Plus Jakarta Sans'], ofl);
