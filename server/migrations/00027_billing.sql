@@ -61,9 +61,9 @@ create table payment_events (
   currency       text,
   product        text,
   recurring      boolean not null default false,
-  -- applied: an entitlement came of it. unclaimed: it bought a plan, for an
-  -- address no account has shown is theirs yet. unmatched: nothing it bought
-  -- is configured, so an administrator decides.
+  -- applied: an entitlement came of it. unclaimed: it bought a plan, and
+  -- nothing says for which account yet. unmatched: nothing it bought is
+  -- configured, so an administrator decides.
   state          text not null check (state in ('applied', 'unclaimed', 'unmatched')),
   plan_id        text references plans(id) on delete set null,
   days           integer,
@@ -76,8 +76,8 @@ create table payment_events (
 create index payment_events_created_idx on payment_events (created_at desc);
 create index payment_events_email_idx on payment_events (email) where state = 'unclaimed';
 
--- Addresses an account proved it reads, so that payments made with one reach
--- it. The latest account to prove an address has it.
+-- Addresses that paid a subscription for an account. A subscription's later
+-- payments carry no message, and go to the account their address is kept for.
 create table payment_emails (
   email      citext primary key,
   user_id    uuid not null references users(id) on delete cascade,
@@ -90,14 +90,7 @@ create index payment_emails_user_idx on payment_emails (user_id);
 alter table groups add column sponsor_user_id uuid references users(id) on delete set null;
 create index groups_sponsor_idx on groups (sponsor_user_id) where sponsor_user_id is not null;
 
-alter table email_tokens drop constraint email_tokens_purpose_check;
-alter table email_tokens add constraint email_tokens_purpose_check check (purpose in ('verify', 'reset', 'payment'));
-
 -- +goose Down
-
-delete from email_tokens where purpose = 'payment';
-alter table email_tokens drop constraint email_tokens_purpose_check;
-alter table email_tokens add constraint email_tokens_purpose_check check (purpose in ('verify', 'reset'));
 
 alter table groups drop column sponsor_user_id;
 drop table payment_emails;

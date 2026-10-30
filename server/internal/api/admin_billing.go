@@ -352,7 +352,7 @@ func (s *Server) AssignAdminPayment(ctx context.Context, req AssignAdminPaymentR
 		if err != nil {
 			return err
 		}
-		if err := applyPayment(ctx, tx, req.PaymentId, req.Body.UserId); err != nil {
+		if err := applyPayment(ctx, tx, req.PaymentId, req.Body.UserId, true); err != nil {
 			return err
 		}
 		if recurring && email != nil {

@@ -290,7 +290,8 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 		if err != nil {
 			return err
 		}
-		if state == "applied" && (owner == nil || *owner != u.id) {
+		// Someone else's, even with nothing given yet; or that of a deleted account.
+		if owner != nil && *owner != u.id || owner == nil && state == "applied" {
 			return conflict("payment_applied")
 		}
 		if recurring && email != nil {
@@ -302,9 +303,12 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 			// Nothing to give, but the administrator can see whose it is.
 			noPlan = true
 			_, err = tx.Exec(ctx, `update payment_events set user_id = coalesce(user_id, $1) where id = $2`, u.id, id)
-			return err
+			if err != nil {
+				return err
+			}
+			return claimPayments(ctx, tx, u.id)
 		}
-		if err := applyPayment(ctx, tx, id, u.id); err != nil {
+		if err := applyPayment(ctx, tx, id, u.id, true); err != nil {
 			return err
 		}
 		if err := claimPayments(ctx, tx, u.id); err != nil {
@@ -322,10 +326,24 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 	return ClaimPayment200JSONResponse(out), nil
 }
 
+// rememberPaymentEmail sends the address's next subscription payments to
+// userID, whoever had them before.
 func rememberPaymentEmail(ctx context.Context, q querier, email, userID string) error {
 	_, err := q.Exec(ctx, `
 		insert into payment_emails (email, user_id) values ($1, $2)
 		on conflict (email) do update set user_id = excluded.user_id, created_at = now()`, email, userID)
+	return err
+}
+
+// adoptPaymentEmail is rememberPaymentEmail for a code in a message, which can
+// be anyone's: a gift doesn't take the payments of a Ko-fi plan still running.
+func adoptPaymentEmail(ctx context.Context, q querier, email, userID string) error {
+	_, err := q.Exec(ctx, `
+		insert into payment_emails (email, user_id) values ($1, $2)
+		on conflict (email) do update set user_id = excluded.user_id, created_at = now()
+		where not exists (
+			select 1 from entitlements e
+			where e.user_id = payment_emails.user_id and e.source = 'kofi' and `+entitlementActive+`)`, email, userID)
 	return err
 }
 

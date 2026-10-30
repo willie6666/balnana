@@ -23,6 +23,10 @@ var errPaymentNotFound = &apiError{status: http.StatusNotFound, code: "payment_n
 // documents a one-off tip as Tip, while its examples send Donation.
 var kofiSupport = []string{"Tip", "Donation", "Subscription"}
 
+// kofiSampleTransaction is the ID in Ko-fi's published sample, which its test
+// messages can carry. Anyone can look it up, so it proves nothing.
+const kofiSampleTransaction = "00000000-1111-2222-3333-444444444444"
+
 // A price as Ko-fi and the admin page write it. Anything else is not read as
 // an amount, and a payment with no amount only reaches a plan by its tier.
 var decimalAmount = regexp.MustCompile(`^[0-9]{1,10}(\.[0-9]{1,2})?$`)
@@ -32,8 +36,9 @@ var decimalAmount = regexp.MustCompile(`^[0-9]{1,10}(\.[0-9]{1,2})?$`)
 const paymentCodeLetters = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 var (
-	// A payment code among whatever else a payer wrote.
-	paymentCodeInMessage = regexp.MustCompile(`(?i)\bBAL-?([0-9A-Z]{8})\b`)
+	// A payment code among whatever else a payer wrote. Keyboards and retyping
+	// turn its hyphen into other dashes or a space.
+	paymentCodeInMessage = regexp.MustCompile(`(?i)\bBAL[\s\p{Pd}\p{Zs}]?([` + paymentCodeLetters + `]{8})\b`)
 	// A transaction ID, which is also part of the link to a Ko-fi payment.
 	uuidInText = regexp.MustCompile(`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)
 )
@@ -68,6 +73,15 @@ func paymentReference(s string) string {
 		return id
 	}
 	return s
+}
+
+// kofiReference is the ID to keep for claiming a Ko-fi payment, if it has one
+// only its payer knows.
+func kofiReference(transactionID string) *string {
+	if id := paymentReference(transactionID); id != kofiSampleTransaction {
+		return optional(id)
+	}
+	return nil
 }
 
 // payment is a provider's report of one payment.
@@ -146,7 +160,7 @@ func (s *Server) KofiWebhook(w http.ResponseWriter, r *http.Request) {
 		currency:  optional(strings.ToUpper(ev.Currency)),
 		recurring: ev.Subscription,
 		paidAt:    paidAt,
-		reference: optional(paymentReference(ev.TransactionID)),
+		reference: kofiReference(ev.TransactionID),
 		code:      paymentCodeIn(ev.Message),
 	}
 	if ev.TierName != nil {
@@ -197,16 +211,21 @@ func recordPayment(ctx context.Context, tx pgx.Tx, p payment) error {
 	if err := holdAccount(ctx, tx, *userID); err != nil {
 		return err
 	}
-	if p.recurring && p.email != nil {
-		if err := rememberPaymentEmail(ctx, tx, *p.email, *userID); err != nil {
+	remember := p.recurring && p.email != nil
+	if remember {
+		if err := adoptPaymentEmail(ctx, tx, *p.email, *userID); err != nil {
 			return err
 		}
 	}
 	if planID == nil {
 		_, err = tx.Exec(ctx, `update payment_events set user_id = $1 where id = $2`, *userID, id)
+	} else {
+		err = applyPayment(ctx, tx, id, *userID, false)
+	}
+	if err != nil || !remember {
 		return err
 	}
-	return applyPayment(ctx, tx, id, *userID)
+	return claimPayments(ctx, tx, *userID)
 }
 
 // paymentOwner finds whose p is: the account whose code its message carries
@@ -261,7 +280,9 @@ func matchProduct(ctx context.Context, q querier, p payment) (planID *string, da
 // nothing; a one-off adds to what is left. It needs the account held, so that
 // two payments can't both start an entitlement, and gives a payment only once.
 // One whose plan was deleted gives nothing until an administrator picks another.
-func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) error {
+// With byHand, someone placed it after the fact: a membership's payment whose
+// time ran out while it waited runs from now, or it would have bought nothing.
+func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string, byHand bool) error {
 	var provider, planID string
 	var days int
 	var recurring bool
@@ -275,6 +296,9 @@ func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) erro
 	}
 	if err != nil {
 		return err
+	}
+	if now := time.Now(); byHand && paidAt.AddDate(0, 0, days).Before(now) {
+		paidAt = now
 	}
 	var entitlement string
 	err = tx.QueryRow(ctx, `
@@ -330,7 +354,7 @@ func claimPayments(ctx context.Context, tx pgx.Tx, userID string) error {
 		return err
 	}
 	for _, id := range ids {
-		if err := applyPayment(ctx, tx, id, userID); err != nil {
+		if err := applyPayment(ctx, tx, id, userID, false); err != nil {
 			return err
 		}
 	}

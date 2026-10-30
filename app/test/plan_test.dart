@@ -58,15 +58,19 @@ class _FakePlay extends GooglePlay {
 }
 
 class _FakeApi extends BalnanaApi {
-  _FakeApi({this.failure}) : super(Dio());
+  _FakeApi({this.failure, this.claiming}) : super(Dio());
 
   final ApiException? failure;
+
+  /// Holds a claim on its way to the server until it completes.
+  final Completer<void>? claiming;
   final reported = <String>[];
   final claimed = <String>[];
 
   @override
   Future<MyPlan> claimPayment(String reference) async {
     claimed.add(reference);
+    await claiming?.future;
     if (failure case final failure?) throw failure;
     return _plan;
   }
@@ -235,10 +239,13 @@ void main() {
   }, skip: !externalPayments);
 
   group('claiming a payment', () {
-    Future<void> open(WidgetTester tester, BalnanaApi api) async {
+    Future<void> open(WidgetTester tester, BalnanaApi api, {Future<MyPlan> Function()? plan}) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [balnanaApiProvider.overrideWithValue(api)],
+          overrides: [
+            balnanaApiProvider.overrideWithValue(api),
+            if (plan != null) myPlanProvider.overrideWith((ref) => plan()),
+          ],
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -269,6 +276,40 @@ void main() {
       expect(api.claimed, ['00000000-1111-2222-3333-444444444444']);
       expect(find.byType(PaymentClaimDialog), findsNothing);
       expect(find.text(l10n.planPaymentClaimed), findsOneWidget);
+    });
+
+    testWidgets('a claim that lands after the dialog was dismissed still refreshes the plan', (tester) async {
+      final claiming = Completer<void>();
+      var loads = 0;
+      await open(
+        tester,
+        _FakeApi(claiming: claiming),
+        plan: () async {
+          loads++;
+          return _plan;
+        },
+      );
+      final context = tester.element(find.text('open'));
+      final container = ProviderScope.containerOf(context);
+      final plans = container.listen(myPlanProvider, (_, _) {});
+      addTearDown(plans.close);
+      await tester.pump();
+      expect(loads, 1);
+
+      await tester.enterText(find.byType(TextFormField), 'tx');
+      await tester.tap(find.text(l10n.planPaymentClaimAction));
+      await tester.pump();
+      Navigator.of(context).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(PaymentClaimDialog), findsNothing);
+
+      claiming.complete();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('open'), findsOneWidget, reason: 'the page under the dialog stays');
+      expect(find.text(l10n.planPaymentClaimed), findsOneWidget);
+      expect(loads, 2);
     });
 
     testWidgets('needs something to send', (tester) async {

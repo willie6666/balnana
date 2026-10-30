@@ -275,14 +275,16 @@ class _PaymentClaimDialogState extends ConsumerState<PaymentClaimDialog> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    // The dialog can be dismissed while this runs, and the plan still changes.
+    final container = ProviderScope.containerOf(context, listen: false);
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
       await ref.read(balnanaApiProvider)!.claimPayment(_reference.text.trim());
-      ref.invalidate(myPlanProvider);
-      navigator.pop();
+      container.invalidate(myPlanProvider);
+      if (mounted) navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text(l10n.planPaymentClaimed)));
     } on ApiException catch (e) {
       if (!mounted) return;
