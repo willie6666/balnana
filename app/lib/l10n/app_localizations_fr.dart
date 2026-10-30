@@ -3052,6 +3052,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorPaymentApplied => 'Ce paiement a déjà été appliqué.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Aucun paiement avec cet identifiant pour l\'instant. Si vous venez de payer, réessayez dans une minute.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Ce paiement ne correspond à aucun forfait. Demandez à l\'administrateur du serveur de l\'appliquer.';
+
+  @override
   String get errorInvalidPlan => 'Vérifiez les réglages de la formule : un élément n’est pas valide.';
 
   @override
@@ -3128,23 +3136,28 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Payez avec l’e-mail confirmé de votre compte, ou ajoutez ci-dessous l’adresse avec laquelle vous payez.';
+      'Collez votre code de paiement dans le message Ko-fi pour que le paiement arrive sur votre compte.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Les paiements depuis cette adresse comptent pour votre compte';
+  String get planPaymentCodeHelp => 'Votre code de paiement. Touchez pour le copier.';
 
   @override
-  String get planPaymentEmailAdd => 'Ajouter un e-mail de paiement';
+  String get planPaymentCodeCopied => 'Code de paiement copié';
 
   @override
-  String get planPaymentEmailHelp => 'Nous enverrons un lien pour confirmer qu’il est à vous.';
+  String get planPaymentClaim => 'Code oublié ?';
 
   @override
-  String get paymentEmailDone => 'Adresse confirmée';
+  String get planPaymentClaimHelp => 'Ajoutez un paiement avec son identifiant de transaction Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody =>
-      'Les paiements depuis cette adresse comptent désormais pour votre compte.';
+  String get planPaymentClaimField => 'Identifiant de transaction ou lien du paiement';
+
+  @override
+  String get planPaymentClaimAction => 'Ajouter le paiement';
+
+  @override
+  String get planPaymentClaimed => 'Paiement ajouté';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

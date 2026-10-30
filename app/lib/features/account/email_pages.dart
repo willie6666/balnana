@@ -89,48 +89,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   }
 }
 
-/// Opened from the email sent to an address someone paid with. The server
-/// takes it only from the account that asked, so this page needs signing in.
-class PaymentEmailPage extends ConsumerStatefulWidget {
-  const PaymentEmailPage({super.key, required this.token});
-
-  final String token;
-
-  @override
-  ConsumerState<PaymentEmailPage> createState() => _PaymentEmailPageState();
-}
-
-class _PaymentEmailPageState extends ConsumerState<PaymentEmailPage> {
-  late final Future<void> _confirmed = ref.read(balnanaApiProvider)!.confirmPaymentEmail(widget.token);
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return _LinkScaffold(
-      child: FutureBuilder(
-        future: _confirmed,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return _centered(const CircularProgressIndicator());
-          }
-          final error = snapshot.error;
-          return _centered(
-            EmptyState(
-              icon: error == null ? Icons.mark_email_read_outlined : Icons.link_off,
-              title: error == null ? l10n.paymentEmailDone : l10n.verifyEmailFailed,
-              body: error == null ? l10n.paymentEmailDoneBody : errorMessage(l10n, error),
-              action: FilledButton(
-                onPressed: () => context.go(error == null ? '/settings/plan' : '/groups'),
-                child: Text(l10n.commonContinue),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 /// Opened from the password reset email.
 class ResetPasswordPage extends ConsumerStatefulWidget {
   const ResetPasswordPage({super.key, required this.token});

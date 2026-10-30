@@ -281,13 +281,11 @@ class BalnanaApi {
     MyPlan.fromJson,
   );
 
-  /// Emails [email] a link that shows the address is the account's, for
-  /// payments made with it.
-  Future<void> sendPaymentEmail(String email) =>
-      _send(() => _dio.post<Object?>('/me/payment-email', data: {'email': email}), (_) {});
-
-  Future<MyPlan> confirmPaymentEmail(String token) =>
-      _send(() => _dio.post<Object?>('/me/payment-email/confirm', data: {'token': token}), MyPlan.fromJson);
+  /// Takes a Ko-fi payment by its transaction ID, or the link with it in.
+  Future<MyPlan> claimPayment(String reference) => _send(
+    () => _dio.post<Object?>('/me/payments/claim', data: {'reference': reference}),
+    MyPlan.fromJson,
+  );
 
   Future<InviteInfo> invite(String token) =>
       _send(() => _dio.get<Object?>('/auth/invites/${Uri.encodeComponent(token)}'), InviteInfo.fromJson);

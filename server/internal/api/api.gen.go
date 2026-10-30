@@ -719,9 +719,10 @@ type MyPlan struct {
 	// Paid Whether it comes from an entitlement rather than being the default.
 	Paid bool `json:"paid"`
 
-	// PaymentEmails Addresses that payments reach the account by, besides its own.
-	PaymentEmails []string `json:"paymentEmails"`
-	PlanName      string   `json:"planName"`
+	// PaymentCode What to write in a Ko-fi message so that the payment reaches this
+	// account. Left out when the server takes no Ko-fi payments.
+	PaymentCode *string `json:"paymentCode,omitempty"`
+	PlanName    string  `json:"planName"`
 
 	// Play What can be bought through Google Play. Left out when nothing can.
 	Play              *PlayBilling `json:"play,omitempty"`
@@ -847,9 +848,12 @@ type Payment struct {
 	PlanId    *string         `json:"planId,omitempty"`
 	Product   *string         `json:"product,omitempty"`
 	Provider  PaymentProvider `json:"provider"`
-	State     PaymentState    `json:"state"`
-	UserId    *string         `json:"userId,omitempty"`
-	UserName  *string         `json:"userName,omitempty"`
+
+	// Reference The provider's ID for the transaction.
+	Reference *string      `json:"reference,omitempty"`
+	State     PaymentState `json:"state"`
+	UserId    *string      `json:"userId,omitempty"`
+	UserName  *string      `json:"userName,omitempty"`
 }
 
 // PaymentProvider defines model for Payment.Provider.
@@ -862,9 +866,10 @@ type PaymentAssign struct {
 	UserId string  `json:"userId"`
 }
 
-// PaymentEmailRequest defines model for PaymentEmailRequest.
-type PaymentEmailRequest struct {
-	Email string `json:"email"`
+// PaymentClaim defines model for PaymentClaim.
+type PaymentClaim struct {
+	// Reference The transaction ID, or the link to the payment.
+	Reference string `json:"reference"`
 }
 
 // PaymentInput defines model for PaymentInput.
@@ -1644,11 +1649,8 @@ type LinkOAuthJSONRequestBody = OAuthLinkInput
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody = PasswordChange
 
-// SendPaymentEmailJSONRequestBody defines body for SendPaymentEmail for application/json ContentType.
-type SendPaymentEmailJSONRequestBody = PaymentEmailRequest
-
-// ConfirmPaymentEmailJSONRequestBody defines body for ConfirmPaymentEmail for application/json ContentType.
-type ConfirmPaymentEmailJSONRequestBody = EmailToken
+// ClaimPaymentJSONRequestBody defines body for ClaimPayment for application/json ContentType.
+type ClaimPaymentJSONRequestBody = PaymentClaim
 
 // ReportPlayPurchaseJSONRequestBody defines body for ReportPlayPurchase for application/json ContentType.
 type ReportPlayPurchaseJSONRequestBody = PlayPurchaseRequest
@@ -1886,12 +1888,9 @@ type ServerInterface interface {
 	// Set a new password; other sessions are signed out
 	// (POST /me/password)
 	ChangePassword(w http.ResponseWriter, r *http.Request)
-	// Email a link that shows an address is the account's
-	// (POST /me/payment-email)
-	SendPaymentEmail(w http.ResponseWriter, r *http.Request)
-	// Take in the payments made with the address the token went to
-	// (POST /me/payment-email/confirm)
-	ConfirmPaymentEmail(w http.ResponseWriter, r *http.Request)
+	// Take a Ko-fi payment by its transaction ID
+	// (POST /me/payments/claim)
+	ClaimPayment(w http.ResponseWriter, r *http.Request)
 	// The account's plan and how much of it is used
 	// (GET /me/plan)
 	GetMyPlan(w http.ResponseWriter, r *http.Request)
@@ -5321,8 +5320,8 @@ func (siw *ServerInterfaceWrapper) ChangePassword(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
-// SendPaymentEmail operation middleware
-func (siw *ServerInterfaceWrapper) SendPaymentEmail(w http.ResponseWriter, r *http.Request) {
+// ClaimPayment operation middleware
+func (siw *ServerInterfaceWrapper) ClaimPayment(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -5333,29 +5332,7 @@ func (siw *ServerInterfaceWrapper) SendPaymentEmail(w http.ResponseWriter, r *ht
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.SendPaymentEmail(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ConfirmPaymentEmail operation middleware
-func (siw *ServerInterfaceWrapper) ConfirmPaymentEmail(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, CookieScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ConfirmPaymentEmail(w, r)
+		siw.Handler.ClaimPayment(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5715,8 +5692,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/me/oauth/{provider}", wrapper.UnlinkOAuth)
 	m.HandleFunc("POST "+options.BaseURL+"/me/oauth/{provider}", wrapper.LinkOAuth)
 	m.HandleFunc("POST "+options.BaseURL+"/me/password", wrapper.ChangePassword)
-	m.HandleFunc("POST "+options.BaseURL+"/me/payment-email", wrapper.SendPaymentEmail)
-	m.HandleFunc("POST "+options.BaseURL+"/me/payment-email/confirm", wrapper.ConfirmPaymentEmail)
+	m.HandleFunc("POST "+options.BaseURL+"/me/payments/claim", wrapper.ClaimPayment)
 	m.HandleFunc("GET "+options.BaseURL+"/me/plan", wrapper.GetMyPlan)
 	m.HandleFunc("POST "+options.BaseURL+"/me/play/purchases", wrapper.ReportPlayPurchase)
 	m.HandleFunc("POST "+options.BaseURL+"/me/verify-email", wrapper.SendVerifyEmail)
@@ -8034,57 +8010,29 @@ func (response ChangePassworddefaultJSONResponse) VisitChangePasswordResponse(w 
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
-type SendPaymentEmailRequestObject struct {
-	Body *SendPaymentEmailJSONRequestBody
+type ClaimPaymentRequestObject struct {
+	Body *ClaimPaymentJSONRequestBody
 }
 
-type SendPaymentEmailResponseObject interface {
-	VisitSendPaymentEmailResponse(w http.ResponseWriter) error
+type ClaimPaymentResponseObject interface {
+	VisitClaimPaymentResponse(w http.ResponseWriter) error
 }
 
-type SendPaymentEmail204Response struct {
-}
+type ClaimPayment200JSONResponse MyPlan
 
-func (response SendPaymentEmail204Response) VisitSendPaymentEmailResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
-	return nil
-}
-
-type SendPaymentEmaildefaultJSONResponse struct {
-	Body       Error
-	StatusCode int
-}
-
-func (response SendPaymentEmaildefaultJSONResponse) VisitSendPaymentEmailResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
-}
-
-type ConfirmPaymentEmailRequestObject struct {
-	Body *ConfirmPaymentEmailJSONRequestBody
-}
-
-type ConfirmPaymentEmailResponseObject interface {
-	VisitConfirmPaymentEmailResponse(w http.ResponseWriter) error
-}
-
-type ConfirmPaymentEmail200JSONResponse MyPlan
-
-func (response ConfirmPaymentEmail200JSONResponse) VisitConfirmPaymentEmailResponse(w http.ResponseWriter) error {
+func (response ClaimPayment200JSONResponse) VisitClaimPaymentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConfirmPaymentEmaildefaultJSONResponse struct {
+type ClaimPaymentdefaultJSONResponse struct {
 	Body       Error
 	StatusCode int
 }
 
-func (response ConfirmPaymentEmaildefaultJSONResponse) VisitConfirmPaymentEmailResponse(w http.ResponseWriter) error {
+func (response ClaimPaymentdefaultJSONResponse) VisitClaimPaymentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -8478,12 +8426,9 @@ type StrictServerInterface interface {
 	// Set a new password; other sessions are signed out
 	// (POST /me/password)
 	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
-	// Email a link that shows an address is the account's
-	// (POST /me/payment-email)
-	SendPaymentEmail(ctx context.Context, request SendPaymentEmailRequestObject) (SendPaymentEmailResponseObject, error)
-	// Take in the payments made with the address the token went to
-	// (POST /me/payment-email/confirm)
-	ConfirmPaymentEmail(ctx context.Context, request ConfirmPaymentEmailRequestObject) (ConfirmPaymentEmailResponseObject, error)
+	// Take a Ko-fi payment by its transaction ID
+	// (POST /me/payments/claim)
+	ClaimPayment(ctx context.Context, request ClaimPaymentRequestObject) (ClaimPaymentResponseObject, error)
 	// The account's plan and how much of it is used
 	// (GET /me/plan)
 	GetMyPlan(ctx context.Context, request GetMyPlanRequestObject) (GetMyPlanResponseObject, error)
@@ -10770,11 +10715,11 @@ func (sh *strictHandler) ChangePassword(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// SendPaymentEmail operation middleware
-func (sh *strictHandler) SendPaymentEmail(w http.ResponseWriter, r *http.Request) {
-	var request SendPaymentEmailRequestObject
+// ClaimPayment operation middleware
+func (sh *strictHandler) ClaimPayment(w http.ResponseWriter, r *http.Request) {
+	var request ClaimPaymentRequestObject
 
-	var body SendPaymentEmailJSONRequestBody
+	var body ClaimPaymentJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
@@ -10782,49 +10727,18 @@ func (sh *strictHandler) SendPaymentEmail(w http.ResponseWriter, r *http.Request
 	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.SendPaymentEmail(ctx, request.(SendPaymentEmailRequestObject))
+		return sh.ssi.ClaimPayment(ctx, request.(ClaimPaymentRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "SendPaymentEmail")
+		handler = middleware(handler, "ClaimPayment")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(SendPaymentEmailResponseObject); ok {
-		if err := validResponse.VisitSendPaymentEmailResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ConfirmPaymentEmail operation middleware
-func (sh *strictHandler) ConfirmPaymentEmail(w http.ResponseWriter, r *http.Request) {
-	var request ConfirmPaymentEmailRequestObject
-
-	var body ConfirmPaymentEmailJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ConfirmPaymentEmail(ctx, request.(ConfirmPaymentEmailRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ConfirmPaymentEmail")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ConfirmPaymentEmailResponseObject); ok {
-		if err := validResponse.VisitConfirmPaymentEmailResponse(w); err != nil {
+	} else if validResponse, ok := response.(ClaimPaymentResponseObject); ok {
+		if err := validResponse.VisitClaimPaymentResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

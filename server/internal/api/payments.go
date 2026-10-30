@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,8 @@ import (
 
 const kofiPath = BasePath + "/webhooks/kofi"
 
+var errPaymentNotFound = &apiError{status: http.StatusNotFound, code: "payment_not_found"}
+
 // kofiSupport are the kinds of payment that buy a plan by their amount. Ko-fi
 // documents a one-off tip as Tip, while its examples send Donation.
 var kofiSupport = []string{"Tip", "Donation", "Subscription"}
@@ -23,6 +26,49 @@ var kofiSupport = []string{"Tip", "Donation", "Subscription"}
 // A price as Ko-fi and the admin page write it. Anything else is not read as
 // an amount, and a payment with no amount only reaches a plan by its tier.
 var decimalAmount = regexp.MustCompile(`^[0-9]{1,10}(\.[0-9]{1,2})?$`)
+
+// paymentCodeLetters leaves out what reads like something else, so that a code
+// copied by hand still arrives.
+const paymentCodeLetters = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+var (
+	// A payment code among whatever else a payer wrote.
+	paymentCodeInMessage = regexp.MustCompile(`(?i)\bBAL-?([0-9A-Z]{8})\b`)
+	// A transaction ID, which is also part of the link to a Ko-fi payment.
+	uuidInText = regexp.MustCompile(`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)
+)
+
+// newPaymentCode makes the code that ties a payment to an account. It isn't a
+// secret: all someone can do with another's code is pay for them.
+func newPaymentCode() string {
+	b := make([]byte, 8)
+	rand.Read(b)
+	for i := range b {
+		b[i] = paymentCodeLetters[int(b[i])%len(paymentCodeLetters)]
+	}
+	return "BAL-" + string(b)
+}
+
+// paymentCodeIn finds the code in a payer's message. The message itself is
+// the payer's and isn't kept.
+func paymentCodeIn(message string) *string {
+	m := paymentCodeInMessage.FindStringSubmatch(message)
+	if m == nil {
+		return nil
+	}
+	code := "BAL-" + strings.ToUpper(m[1])
+	return &code
+}
+
+// paymentReference reduces what a provider or a payer gave to a transaction
+// ID: payers may paste the whole link.
+func paymentReference(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if id := uuidInText.FindString(s); id != "" {
+		return id
+	}
+	return s
+}
 
 // payment is a provider's report of one payment.
 type payment struct {
@@ -36,6 +82,8 @@ type payment struct {
 	product   *string
 	recurring bool
 	paidAt    time.Time
+	reference *string // the provider's ID for the transaction
+	code      *string // the payment code the payer left, if any
 }
 
 // kofiEvent is the JSON Ko-fi sends in the form's data field.
@@ -45,11 +93,13 @@ type kofiEvent struct {
 	Timestamp         string  `json:"timestamp"`
 	Type              string  `json:"type"`
 	FromName          string  `json:"from_name"`
+	Message           string  `json:"message"`
 	Email             string  `json:"email"`
 	Amount            string  `json:"amount"`
 	Currency          string  `json:"currency"`
 	Subscription      bool    `json:"is_subscription_payment"`
 	TierName          *string `json:"tier_name"`
+	TransactionID     string  `json:"kofi_transaction_id"`
 }
 
 func optional(s string) *string {
@@ -96,6 +146,8 @@ func (s *Server) KofiWebhook(w http.ResponseWriter, r *http.Request) {
 		currency:  optional(strings.ToUpper(ev.Currency)),
 		recurring: ev.Subscription,
 		paidAt:    paidAt,
+		reference: optional(paymentReference(ev.TransactionID)),
+		code:      paymentCodeIn(ev.Message),
 	}
 	if ev.TierName != nil {
 		p.product = optional(*ev.TierName)
@@ -113,7 +165,7 @@ func (s *Server) KofiWebhook(w http.ResponseWriter, r *http.Request) {
 
 // recordPayment keeps p, once, and gives it to its account if it can tell
 // whose it is. A payment nobody can place yet stays for later: see
-// claimPayments and AssignAdminPayment.
+// ClaimPayment and AssignAdminPayment.
 func recordPayment(ctx context.Context, tx pgx.Tx, p payment) error {
 	planID, days, err := matchProduct(ctx, tx, p)
 	if err != nil {
@@ -126,35 +178,56 @@ func recordPayment(ctx context.Context, tx pgx.Tx, p payment) error {
 	var id string
 	err = tx.QueryRow(ctx, `
 		insert into payment_events (provider, event_id, kind, email, payer_name, amount, currency, product,
-		                            recurring, state, plan_id, days, paid_at)
-		values ($1, $2, $3, $4, $5, $6::numeric, $7, $8, $9, $10, $11, $12, $13)
+		                            recurring, state, plan_id, days, paid_at, reference)
+		values ($1, $2, $3, $4, $5, $6::numeric, $7, $8, $9, $10, $11, $12, $13, $14)
 		on conflict (provider, event_id) do nothing
 		returning id::text`,
 		p.provider, p.eventID, p.kind, p.email, p.name, p.amount, p.currency, p.product,
-		p.recurring, state, planID, days, p.paidAt).Scan(&id)
+		p.recurring, state, planID, days, p.paidAt, p.reference).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil // heard already
 	}
-	if err != nil || p.email == nil {
+	if err != nil {
 		return err
 	}
-	// An address someone proved first, then the account's own if confirmed:
-	// anyone could sign up with a payer's address and wait for the payment.
-	var userID *string
-	err = tx.QueryRow(ctx, `
-		select coalesce((select user_id from payment_emails where email = $1),
-		                (select id from users where email = $1 and email_verified))::text`, *p.email).Scan(&userID)
+	userID, err := paymentOwner(ctx, tx, p)
 	if err != nil || userID == nil {
-		return err
-	}
-	if planID == nil {
-		_, err = tx.Exec(ctx, `update payment_events set user_id = $1 where id = $2`, *userID, id)
 		return err
 	}
 	if err := holdAccount(ctx, tx, *userID); err != nil {
 		return err
 	}
+	if p.recurring && p.email != nil {
+		if err := rememberPaymentEmail(ctx, tx, *p.email, *userID); err != nil {
+			return err
+		}
+	}
+	if planID == nil {
+		_, err = tx.Exec(ctx, `update payment_events set user_id = $1 where id = $2`, *userID, id)
+		return err
+	}
 	return applyPayment(ctx, tx, id, *userID)
+}
+
+// paymentOwner finds whose p is: the account whose code its message carries
+// or, for a subscription's next payment, which has no message to go by, the
+// account that took an earlier payment from that address. Nobody chooses that
+// address and nothing else goes by it, so sharing one reaches no account.
+func paymentOwner(ctx context.Context, q querier, p payment) (*string, error) {
+	var userID *string
+	if p.code != nil {
+		err := q.QueryRow(ctx, `select id::text from users where payment_code = $1`, *p.code).Scan(&userID)
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return userID, err
+		}
+	}
+	if p.recurring && p.email != nil {
+		err := q.QueryRow(ctx, `select user_id::text from payment_emails where email = $1`, *p.email).Scan(&userID)
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return userID, err
+		}
+	}
+	return nil, nil
 }
 
 // matchProduct finds what p bought: by its membership tier, or else by how
@@ -238,17 +311,13 @@ func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) erro
 	return err
 }
 
-// claimPayments gives userID the payments waiting for an address it has
-// shown is its own.
+// claimPayments gives userID the subscription payments waiting for an address
+// it took a payment from.
 func claimPayments(ctx context.Context, tx pgx.Tx, userID string) error {
 	rows, err := tx.Query(ctx, `
 		select id::text from payment_events
-		where state = 'unclaimed' and email in (
-			select email from payment_emails where user_id = $1
-			union
-			select u.email from users u
-			where u.id = $1 and u.email_verified
-			  and not exists (select 1 from payment_emails e where e.email = u.email and e.user_id <> $1))
+		where state = 'unclaimed' and recurring
+		  and email in (select email from payment_emails where user_id = $1)
 		order by paid_at`, userID)
 	if err != nil {
 		return err

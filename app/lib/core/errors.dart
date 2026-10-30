@@ -65,6 +65,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'already_sponsored' => l10n.errorAlreadySponsored,
     'plan_in_use' => l10n.errorPlanInUse,
     'payment_applied' => l10n.errorPaymentApplied,
+    'payment_not_found' => l10n.errorPaymentNotFound,
+    'payment_no_plan' => l10n.errorPaymentNoPlan,
     'invalid_plan' => l10n.errorInvalidPlan,
     'invalid_purchase' => l10n.errorInvalidPurchase,
     'play_other_account' => l10n.errorPlayOtherAccount,

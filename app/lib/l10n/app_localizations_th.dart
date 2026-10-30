@@ -2937,6 +2937,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorPaymentApplied => 'การชำระเงินนี้ถูกนำไปใช้แล้ว';
 
   @override
+  String get errorPaymentNotFound =>
+      'ยังไม่มีการชำระเงินด้วยรหัสนี้ หากเพิ่งชำระ โปรดลองอีกครั้งในอีกหนึ่งนาที';
+
+  @override
+  String get errorPaymentNoPlan => 'การชำระเงินนี้ไม่ตรงกับแพ็กเกจใด โปรดให้ผู้ดูแลเซิร์ฟเวอร์ดำเนินการให้';
+
+  @override
   String get errorInvalidPlan => 'ตรวจสอบการตั้งค่าแพ็กเกจ มีบางอย่างไม่ถูกต้อง';
 
   @override
@@ -3012,22 +3019,28 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'ชำระด้วยอีเมลที่ยืนยันแล้วของบัญชี หรือเพิ่มที่อยู่ที่คุณใช้ชำระเงินด้านล่าง';
+  String get planKofiHelp => 'วางรหัสชำระเงินในข้อความบน Ko-fi เพื่อให้ยอดชำระเข้าบัญชีของคุณ';
 
   @override
-  String get planPaymentEmailConfirmed => 'การชำระเงินจากที่อยู่นี้จะนับให้บัญชีของคุณ';
+  String get planPaymentCodeHelp => 'รหัสชำระเงินของคุณ แตะเพื่อคัดลอก';
 
   @override
-  String get planPaymentEmailAdd => 'เพิ่มอีเมลสำหรับชำระเงิน';
+  String get planPaymentCodeCopied => 'คัดลอกรหัสชำระเงินแล้ว';
 
   @override
-  String get planPaymentEmailHelp => 'เราจะส่งลิงก์เพื่อยืนยันว่าเป็นของคุณ';
+  String get planPaymentClaim => 'ลืมใส่รหัสใช่ไหม';
 
   @override
-  String get paymentEmailDone => 'ยืนยันที่อยู่แล้ว';
+  String get planPaymentClaimHelp => 'เพิ่มการชำระเงินด้วยรหัสธุรกรรมของ Ko-fi';
 
   @override
-  String get paymentEmailDoneBody => 'การชำระเงินจากที่อยู่นี้จะนับให้บัญชีของคุณแล้ว';
+  String get planPaymentClaimField => 'รหัสธุรกรรมหรือลิงก์การชำระเงิน';
+
+  @override
+  String get planPaymentClaimAction => 'เพิ่มการชำระเงิน';
+
+  @override
+  String get planPaymentClaimed => 'เพิ่มการชำระเงินแล้ว';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

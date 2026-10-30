@@ -3116,6 +3116,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get errorPaymentApplied => 'Ta płatność została już zastosowana.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Nie ma jeszcze płatności o tym identyfikatorze. Jeśli właśnie zapłacono, spróbuj ponownie za minutę.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Ta płatność nie pasuje do żadnego planu. Poproś administratora serwera o jej przypisanie.';
+
+  @override
   String get errorInvalidPlan => 'Sprawdź ustawienia planu: coś jest nieprawidłowe.';
 
   @override
@@ -3192,22 +3200,28 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Zapłać z potwierdzonego adresu e-mail konta lub dodaj poniżej adres, z którego płacisz.';
+      'Wklej swój kod płatności w wiadomości Ko-fi, aby płatność dotarła na Twoje konto.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Płatności z tego adresu liczą się dla Twojego konta';
+  String get planPaymentCodeHelp => 'Twój kod płatności. Dotknij, aby skopiować.';
 
   @override
-  String get planPaymentEmailAdd => 'Dodaj e-mail do płatności';
+  String get planPaymentCodeCopied => 'Skopiowano kod płatności';
 
   @override
-  String get planPaymentEmailHelp => 'Wyślemy link, aby potwierdzić, że adres należy do Ciebie.';
+  String get planPaymentClaim => 'Nie dodano kodu?';
 
   @override
-  String get paymentEmailDone => 'Adres potwierdzony';
+  String get planPaymentClaimHelp => 'Dodaj płatność za pomocą identyfikatora transakcji Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'Płatności z tego adresu liczą się teraz dla Twojego konta.';
+  String get planPaymentClaimField => 'Identyfikator transakcji lub link do płatności';
+
+  @override
+  String get planPaymentClaimAction => 'Dodaj płatność';
+
+  @override
+  String get planPaymentClaimed => 'Dodano płatność';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

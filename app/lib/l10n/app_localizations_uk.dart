@@ -3109,6 +3109,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorPaymentApplied => 'Цей платіж уже застосовано.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Платежу з таким ID поки немає. Якщо ви щойно оплатили, спробуйте знову за хвилину.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Цей платіж не відповідає жодному тарифу. Попросіть адміністратора сервера застосувати його.';
+
+  @override
   String get errorInvalidPlan => 'Перевірте налаштування тарифу: щось указано неправильно.';
 
   @override
@@ -3185,22 +3193,28 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Платіть із підтвердженої пошти облікового запису або додайте нижче адресу, з якої платите.';
+      'Вставте платіжний код у повідомлення на Ko-fi, щоб платіж потрапив на ваш обліковий запис.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Платежі з цієї адреси зараховуються вашому обліковому запису';
+  String get planPaymentCodeHelp => 'Ваш платіжний код. Торкніться, щоб скопіювати.';
 
   @override
-  String get planPaymentEmailAdd => 'Додати пошту для оплати';
+  String get planPaymentCodeCopied => 'Платіжний код скопійовано';
 
   @override
-  String get planPaymentEmailHelp => 'Ми надішлемо посилання, щоб підтвердити, що адреса ваша.';
+  String get planPaymentClaim => 'Забули код?';
 
   @override
-  String get paymentEmailDone => 'Адресу підтверджено';
+  String get planPaymentClaimHelp => 'Додайте платіж за ID транзакції Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'Платежі з цієї адреси тепер зараховуються вашому обліковому запису.';
+  String get planPaymentClaimField => 'ID транзакції або посилання на платіж';
+
+  @override
+  String get planPaymentClaimAction => 'Додати платіж';
+
+  @override
+  String get planPaymentClaimed => 'Платіж додано';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

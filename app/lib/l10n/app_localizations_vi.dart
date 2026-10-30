@@ -2963,6 +2963,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorPaymentApplied => 'Khoản thanh toán này đã được áp dụng.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Chưa có khoản thanh toán với mã đó. Nếu bạn vừa thanh toán, hãy thử lại sau một phút.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Khoản thanh toán này không khớp với gói nào. Hãy nhờ quản trị viên máy chủ áp dụng.';
+
+  @override
   String get errorInvalidPlan => 'Hãy kiểm tra cài đặt gói: có mục không hợp lệ.';
 
   @override
@@ -3039,22 +3047,28 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Thanh toán bằng email đã xác nhận của tài khoản, hoặc thêm địa chỉ bạn dùng để thanh toán bên dưới.';
+      'Hãy dán mã thanh toán vào lời nhắn trên Ko-fi để khoản thanh toán về đúng tài khoản của bạn.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Thanh toán từ địa chỉ này được tính cho tài khoản của bạn';
+  String get planPaymentCodeHelp => 'Mã thanh toán của bạn. Nhấn để sao chép.';
 
   @override
-  String get planPaymentEmailAdd => 'Thêm email thanh toán';
+  String get planPaymentCodeCopied => 'Đã sao chép mã thanh toán';
 
   @override
-  String get planPaymentEmailHelp => 'Chúng tôi sẽ gửi liên kết để xác nhận địa chỉ này là của bạn.';
+  String get planPaymentClaim => 'Quên mã?';
 
   @override
-  String get paymentEmailDone => 'Đã xác nhận địa chỉ';
+  String get planPaymentClaimHelp => 'Thêm khoản thanh toán bằng mã giao dịch Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'Thanh toán từ địa chỉ này giờ được tính cho tài khoản của bạn.';
+  String get planPaymentClaimField => 'Mã giao dịch hoặc liên kết thanh toán';
+
+  @override
+  String get planPaymentClaimAction => 'Thêm khoản thanh toán';
+
+  @override
+  String get planPaymentClaimed => 'Đã thêm khoản thanh toán';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

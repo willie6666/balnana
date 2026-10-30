@@ -3076,6 +3076,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorPaymentApplied => 'Этот платёж уже применён.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Платежа с таким ID пока нет. Если вы только что оплатили, повторите попытку через минуту.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Этот платёж не соответствует ни одному тарифу. Попросите администратора сервера применить его.';
+
+  @override
   String get errorInvalidPlan => 'Проверьте настройки тарифа: что-то указано неверно.';
 
   @override
@@ -3152,22 +3160,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Платите с подтверждённой почты аккаунта или добавьте ниже адрес, с которого платите.';
+      'Вставьте платёжный код в сообщение на Ko-fi, чтобы платёж попал на ваш аккаунт.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Платежи с этого адреса засчитываются вашему аккаунту';
+  String get planPaymentCodeHelp => 'Ваш платёжный код. Нажмите, чтобы скопировать.';
 
   @override
-  String get planPaymentEmailAdd => 'Добавить почту для оплаты';
+  String get planPaymentCodeCopied => 'Платёжный код скопирован';
 
   @override
-  String get planPaymentEmailHelp => 'Мы отправим ссылку, чтобы подтвердить, что адрес ваш.';
+  String get planPaymentClaim => 'Забыли код?';
 
   @override
-  String get paymentEmailDone => 'Адрес подтверждён';
+  String get planPaymentClaimHelp => 'Добавьте платёж по ID транзакции Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'Платежи с этого адреса теперь засчитываются вашему аккаунту.';
+  String get planPaymentClaimField => 'ID транзакции или ссылка на платёж';
+
+  @override
+  String get planPaymentClaimAction => 'Добавить платёж';
+
+  @override
+  String get planPaymentClaimed => 'Платёж добавлен';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

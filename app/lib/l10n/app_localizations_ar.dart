@@ -3068,6 +3068,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorPaymentApplied => 'طُبّقت هذه الدفعة بالفعل.';
 
   @override
+  String get errorPaymentNotFound =>
+      'لا توجد دفعة بهذا المعرّف بعد. إذا كنت قد دفعت للتو، فحاول مرة أخرى بعد دقيقة.';
+
+  @override
+  String get errorPaymentNoPlan => 'هذه الدفعة لا تطابق أي خطة. اطلب من مسؤول الخادم تطبيقها.';
+
+  @override
   String get errorInvalidPlan => 'تحقق من إعدادات الخطة: هناك قيمة غير صالحة.';
 
   @override
@@ -3143,22 +3150,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'ادفع بالبريد الإلكتروني المؤكد لحسابك، أو أضف أدناه العنوان الذي تدفع به.';
+  String get planKofiHelp => 'ألصق رمز الدفع في رسالة Ko-fi ليصل الدفع إلى حسابك.';
 
   @override
-  String get planPaymentEmailConfirmed => 'تُحتسب الدفعات من هذا العنوان لحسابك';
+  String get planPaymentCodeHelp => 'رمز الدفع الخاص بك. انقر للنسخ.';
 
   @override
-  String get planPaymentEmailAdd => 'إضافة بريد إلكتروني للدفع';
+  String get planPaymentCodeCopied => 'تم نسخ رمز الدفع';
 
   @override
-  String get planPaymentEmailHelp => 'سنرسل رابطًا لتأكيد أنه عنوانك.';
+  String get planPaymentClaim => 'هل نسيت الرمز؟';
 
   @override
-  String get paymentEmailDone => 'تم تأكيد العنوان';
+  String get planPaymentClaimHelp => 'أضف دفعة باستخدام معرّف معاملة Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'تُحتسب الدفعات من هذا العنوان لحسابك الآن.';
+  String get planPaymentClaimField => 'معرّف المعاملة أو رابط الدفع';
+
+  @override
+  String get planPaymentClaimAction => 'إضافة الدفعة';
+
+  @override
+  String get planPaymentClaimed => 'تمت إضافة الدفعة';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

@@ -172,6 +172,9 @@ const (
 	// after. Each one emails the new address.
 	emailChangeBurst   = 5
 	emailChangePerHour = 6
+	// Transaction IDs an account may try in a row, and how many an hour after.
+	claimBurst   = 10
+	claimPerHour = 10
 	// Wrong passwords an account (or the administrator) may be sent in a row
 	// from anywhere, and how many an hour after. Someone who keeps guessing
 	// also slows the owner down, so this stays loose.

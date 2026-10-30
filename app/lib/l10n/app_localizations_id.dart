@@ -2972,6 +2972,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get errorPaymentApplied => 'Pembayaran ini sudah diterapkan.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Belum ada pembayaran dengan ID itu. Jika baru saja membayar, coba lagi dalam satu menit.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Pembayaran ini tidak cocok dengan paket mana pun. Minta administrator server untuk menerapkannya.';
+
+  @override
   String get errorInvalidPlan => 'Periksa setelan paket: ada yang tidak valid.';
 
   @override
@@ -3047,23 +3055,28 @@ class AppLocalizationsId extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'Bayar dengan email akun yang sudah dikonfirmasi, atau tambahkan alamat yang Anda gunakan untuk membayar di bawah.';
+  String get planKofiHelp => 'Tempel kode pembayaran Anda di pesan Ko-fi agar pembayaran masuk ke akun Anda.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Pembayaran dari alamat ini dihitung untuk akun Anda';
+  String get planPaymentCodeHelp => 'Kode pembayaran Anda. Ketuk untuk menyalin.';
 
   @override
-  String get planPaymentEmailAdd => 'Tambah email pembayaran';
+  String get planPaymentCodeCopied => 'Kode pembayaran disalin';
 
   @override
-  String get planPaymentEmailHelp => 'Kami akan mengirim tautan untuk mengonfirmasi bahwa ini milik Anda.';
+  String get planPaymentClaim => 'Lupa kodenya?';
 
   @override
-  String get paymentEmailDone => 'Alamat dikonfirmasi';
+  String get planPaymentClaimHelp => 'Tambahkan pembayaran dengan ID transaksi Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'Pembayaran dari alamat ini kini dihitung untuk akun Anda.';
+  String get planPaymentClaimField => 'ID transaksi atau tautan pembayaran';
+
+  @override
+  String get planPaymentClaimAction => 'Tambahkan pembayaran';
+
+  @override
+  String get planPaymentClaimed => 'Pembayaran ditambahkan';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

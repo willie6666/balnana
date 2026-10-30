@@ -170,10 +170,8 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 			return err
 		}
 		if !pending {
-			if _, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID); err != nil {
-				return err
-			}
-			return claimPayments(ctx, tx, userID)
+			_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+			return err
 		}
 		// A new address takes the old one's place only now, once its owner
 		// has opened the link. Links sent to the old one stop working with it.
@@ -182,10 +180,7 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return conflict("email_taken")
 		}
-		if err != nil {
-			return err
-		}
-		return claimPayments(ctx, tx, userID)
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -399,21 +394,6 @@ Confirm that this is your email address by opening this link:
 %s
 
 The link works for 48 hours. If you didn't create a Balnana account, you can ignore this email.
-`, name, link),
-	}
-}
-
-func paymentMail(to, name, link string) mail.Message {
-	return mail.Message{
-		To:      to,
-		Subject: "Link this email to your Balnana account",
-		Body: fmt.Sprintf(`Hi %s,
-
-Payments made with this email address will reach your Balnana account once you open this link, signed in:
-
-%s
-
-The link works for 48 hours. If you didn't ask for this, you can ignore this email.
 `, name, link),
 	}
 }

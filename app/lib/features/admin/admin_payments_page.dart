@@ -154,6 +154,7 @@ class _AdminPaymentsPageState extends ConsumerState<AdminPaymentsPage> {
                       _stateName(l10n, p.state),
                       ?p.userName,
                       date.format(p.paidAt.toLocal()),
+                      ?p.reference,
                     ].join(' · '),
                   ),
                   trailing: p.state == 'applied' ? null : const Icon(Icons.chevron_right),

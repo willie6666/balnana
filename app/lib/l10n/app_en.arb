@@ -4396,6 +4396,14 @@
   "@errorPaymentApplied": {
     "description": "Label or control text for error payment applied in an error message."
   },
+  "errorPaymentNotFound": "No payment with that ID yet. If you just paid, try again in a minute.",
+  "@errorPaymentNotFound": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "errorPaymentNoPlan": "This payment doesn't match a plan. Ask the server's administrator to apply it.",
+  "@errorPaymentNoPlan": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
   "errorInvalidPlan": "Check the plan settings: something in them isn't valid.",
   "@errorInvalidPlan": {
     "description": "Label or control text for error invalid plan in an error message."
@@ -4521,29 +4529,37 @@
   "@planKofi": {
     "description": "Label or control text for plan kofi in the plan screens."
   },
-  "planKofiHelp": "Pay with your account's confirmed email, or add the address you pay with below.",
+  "planKofiHelp": "Put your payment code in the Ko-fi message, so the payment reaches your account.",
   "@planKofiHelp": {
     "description": "Label or control text for plan kofi help in the plan screens."
   },
-  "planPaymentEmailConfirmed": "Payments from this address count for your account",
-  "@planPaymentEmailConfirmed": {
-    "description": "Label or control text for plan payment email confirmed in the plan screens."
+  "planPaymentCodeHelp": "Your payment code. Tap to copy.",
+  "@planPaymentCodeHelp": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "planPaymentEmailAdd": "Add a payment email",
-  "@planPaymentEmailAdd": {
-    "description": "Label or control text for plan payment email add in the plan screens."
+  "planPaymentCodeCopied": "Payment code copied",
+  "@planPaymentCodeCopied": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "planPaymentEmailHelp": "We'll send a link to confirm it's yours.",
-  "@planPaymentEmailHelp": {
-    "description": "Label or control text for plan payment email help in the plan screens."
+  "planPaymentClaim": "Forgot the code?",
+  "@planPaymentClaim": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "paymentEmailDone": "Address confirmed",
-  "@paymentEmailDone": {
-    "description": "Label or control text for payment email done in the plan screens."
+  "planPaymentClaimHelp": "Add a payment with its Ko-fi transaction ID.",
+  "@planPaymentClaimHelp": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "paymentEmailDoneBody": "Payments from this address now count for your account.",
-  "@paymentEmailDoneBody": {
-    "description": "Label or control text for payment email done body in the plan screens."
+  "planPaymentClaimField": "Transaction ID or payment link",
+  "@planPaymentClaimField": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimAction": "Add payment",
+  "@planPaymentClaimAction": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimed": "Payment added",
+  "@planPaymentClaimed": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
   "groupPlanUsage": "Receipt photos: {receipts} · Recurring: {recurring}",
   "@groupPlanUsage": {

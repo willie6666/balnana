@@ -109,10 +109,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token'] ?? ''),
       ),
       GoRoute(
-        path: '/payment-email',
-        builder: (context, state) => PaymentEmailPage(token: state.uri.queryParameters['token'] ?? ''),
-      ),
-      GoRoute(
         path: '/confirm-email',
         builder: (context, state) => ConfirmEmailPage(next: state.uri.queryParameters['next']),
       ),

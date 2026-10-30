@@ -2972,6 +2972,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorPaymentApplied => 'Bu ödeme zaten uygulandı.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Bu kimlikle henüz ödeme yok. Az önce ödediyseniz bir dakika sonra tekrar deneyin.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Bu ödeme hiçbir planla eşleşmiyor. Sunucu yöneticisinden uygulamasını isteyin.';
+
+  @override
   String get errorInvalidPlan => 'Plan ayarlarını kontrol edin: geçersiz bir değer var.';
 
   @override
@@ -3047,23 +3055,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'Hesabınızın doğrulanmış e-postasıyla ödeyin veya ödeme yaptığınız adresi aşağıya ekleyin.';
+  String get planKofiHelp => 'Ödemenin hesabınıza ulaşması için ödeme kodunuzu Ko-fi mesajına yapıştırın.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Bu adresten yapılan ödemeler hesabınıza sayılır';
+  String get planPaymentCodeHelp => 'Ödeme kodunuz. Kopyalamak için dokunun.';
 
   @override
-  String get planPaymentEmailAdd => 'Ödeme e-postası ekle';
+  String get planPaymentCodeCopied => 'Ödeme kodu kopyalandı';
 
   @override
-  String get planPaymentEmailHelp => 'Size ait olduğunu doğrulamak için bir bağlantı göndereceğiz.';
+  String get planPaymentClaim => 'Kodu mu unuttunuz?';
 
   @override
-  String get paymentEmailDone => 'Adres doğrulandı';
+  String get planPaymentClaimHelp => 'Ko-fi işlem kimliğiyle bir ödeme ekleyin.';
 
   @override
-  String get paymentEmailDoneBody => 'Bu adresten yapılan ödemeler artık hesabınıza sayılıyor.';
+  String get planPaymentClaimField => 'İşlem kimliği veya ödeme bağlantısı';
+
+  @override
+  String get planPaymentClaimAction => 'Ödemeyi ekle';
+
+  @override
+  String get planPaymentClaimed => 'Ödeme eklendi';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

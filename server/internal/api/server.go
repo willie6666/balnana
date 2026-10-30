@@ -35,6 +35,7 @@ type Server struct {
 	emails   *buckets // address changes, by account
 	guesses  *buckets // password guesses, by account
 	devices  *buckets // push devices registered, by client
+	claims   *buckets // transaction IDs tried, by account
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -61,6 +62,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		emails:  &buckets{perSecond: emailChangePerHour / 3600.0, burst: emailChangeBurst, m: map[string]*bucket{}},
 		guesses: &buckets{perSecond: guessPerHour / 3600.0, burst: guessBurst, m: map[string]*bucket{}},
 		devices: &buckets{perSecond: devicePerDay / 86400.0, burst: deviceBurst, m: map[string]*bucket{}},
+		claims:  &buckets{perSecond: claimPerHour / 3600.0, burst: claimBurst, m: map[string]*bucket{}},
 	}
 	s.apply(cfg)
 	return s

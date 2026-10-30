@@ -5188,6 +5188,18 @@ abstract class AppLocalizations {
   /// **'This payment has already been applied.'**
   String get errorPaymentApplied;
 
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment with that ID yet. If you just paid, try again in a minute.'**
+  String get errorPaymentNotFound;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment doesn\'t match a plan. Ask the server\'s administrator to apply it.'**
+  String get errorPaymentNoPlan;
+
   /// Label or control text for error invalid plan in an error message.
   ///
   /// In en, this message translates to:
@@ -5311,38 +5323,50 @@ abstract class AppLocalizations {
   /// Label or control text for plan kofi help in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Pay with your account\'s confirmed email, or add the address you pay with below.'**
+  /// **'Put your payment code in the Ko-fi message, so the payment reaches your account.'**
   String get planKofiHelp;
 
-  /// Label or control text for plan payment email confirmed in the plan screens.
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Payments from this address count for your account'**
-  String get planPaymentEmailConfirmed;
+  /// **'Your payment code. Tap to copy.'**
+  String get planPaymentCodeHelp;
 
-  /// Label or control text for plan payment email add in the plan screens.
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Add a payment email'**
-  String get planPaymentEmailAdd;
+  /// **'Payment code copied'**
+  String get planPaymentCodeCopied;
 
-  /// Label or control text for plan payment email help in the plan screens.
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'We\'ll send a link to confirm it\'s yours.'**
-  String get planPaymentEmailHelp;
+  /// **'Forgot the code?'**
+  String get planPaymentClaim;
 
-  /// Label or control text for payment email done in the plan screens.
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Address confirmed'**
-  String get paymentEmailDone;
+  /// **'Add a payment with its Ko-fi transaction ID.'**
+  String get planPaymentClaimHelp;
 
-  /// Label or control text for payment email done body in the plan screens.
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Payments from this address now count for your account.'**
-  String get paymentEmailDoneBody;
+  /// **'Transaction ID or payment link'**
+  String get planPaymentClaimField;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Add payment'**
+  String get planPaymentClaimAction;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment added'**
+  String get planPaymentClaimed;
 
   /// Label or control text for group plan usage in the plan screens.
   ///

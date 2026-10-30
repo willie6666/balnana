@@ -2864,6 +2864,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorPaymentApplied => 'この支払いはすでに適用されています。';
 
   @override
+  String get errorPaymentNotFound => 'その ID の支払いはまだ届いていません。支払った直後なら、1 分ほどしてからもう一度お試しください。';
+
+  @override
+  String get errorPaymentNoPlan => 'この支払いに対応するプランがありません。サーバー管理者に適用を依頼してください。';
+
+  @override
   String get errorInvalidPlan => 'プランの設定を確認してください。無効な内容があります。';
 
   @override
@@ -2938,22 +2944,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'アカウントの確認済みメールで支払うか、支払いに使うアドレスを下で追加してください。';
+  String get planKofiHelp => '支払いをアカウントに反映するには、Ko-fi のメッセージに支払いコードを貼り付けてください。';
 
   @override
-  String get planPaymentEmailConfirmed => 'このアドレスからの支払いはアカウントに反映されます';
+  String get planPaymentCodeHelp => 'あなたの支払いコード。タップしてコピー。';
 
   @override
-  String get planPaymentEmailAdd => '支払い用メールを追加';
+  String get planPaymentCodeCopied => '支払いコードをコピーしました';
 
   @override
-  String get planPaymentEmailHelp => 'ご本人のアドレスか確認するリンクをお送りします。';
+  String get planPaymentClaim => 'コードを書き忘れましたか？';
 
   @override
-  String get paymentEmailDone => 'アドレスを確認しました';
+  String get planPaymentClaimHelp => 'Ko-fi の取引 ID で支払いを追加します。';
 
   @override
-  String get paymentEmailDoneBody => 'このアドレスからの支払いがアカウントに反映されるようになりました。';
+  String get planPaymentClaimField => '取引 ID または支払いリンク';
+
+  @override
+  String get planPaymentClaimAction => '支払いを追加';
+
+  @override
+  String get planPaymentClaimed => '支払いを追加しました';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

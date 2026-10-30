@@ -4,15 +4,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
-
-// paymentEmailLifetime is how long the link that proves an address works.
-const paymentEmailLifetime = 48 * time.Hour
 
 // entitlementActive picks the entitlements (as e) in force now.
 const entitlementActive = `e.revoked_at is null and e.starts_at <= now() and (e.expires_at is null or e.expires_at > now())`
@@ -209,16 +205,7 @@ func (s *Server) GetMyPlan(ctx context.Context, _ GetMyPlanRequestObject) (GetMy
 	if err != nil {
 		return nil, err
 	}
-	var out MyPlan
-	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		// Someone can come by a confirmed address in ways that don't pass
-		// through here, as by signing up with a provider.
-		if err := claimPayments(ctx, tx, u.id); err != nil {
-			return err
-		}
-		out, err = s.myPlan(ctx, tx, u.id)
-		return err
-	})
+	out, err := s.myPlan(ctx, s.db, u.id)
 	if err != nil {
 		return nil, err
 	}
@@ -248,76 +235,76 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.Play, err = s.playOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
-	rows, err := q.Query(ctx, `select email::text from payment_emails where user_id = $1 order by created_at`, userID)
-	if err != nil {
-		return MyPlan{}, err
+	if cfg := s.conf(); cfg.KofiToken != "" && cfg.KofiURL != nil {
+		if out.PaymentCode, err = paymentCode(ctx, q, userID); err != nil {
+			return MyPlan{}, err
+		}
 	}
-	out.PaymentEmails, err = pgx.CollectRows(rows, pgx.RowTo[string])
-	if out.PaymentEmails == nil {
-		out.PaymentEmails = []string{}
-	}
-	return out, err
+	return out, nil
 }
 
-func (s *Server) SendPaymentEmail(ctx context.Context, req SendPaymentEmailRequestObject) (SendPaymentEmailResponseObject, error) {
-	if err := s.requireBilling(); err != nil {
-		return nil, err
+// paymentCode is the account's code for payment messages. Most accounts never
+// pay, so it's made when first shown.
+func paymentCode(ctx context.Context, q querier, userID string) (*string, error) {
+	var code *string
+	err := q.QueryRow(ctx, `select payment_code from users where id = $1`, userID).Scan(&code)
+	if err != nil || code != nil {
+		return code, err
 	}
-	if err := s.requireEmail(); err != nil {
-		return nil, err
-	}
-	u, err := s.requireUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	email, err := cleanEmail(req.Body.Email)
-	if err != nil {
-		return nil, err
-	}
-	// It mails an address someone typed, so it must not be a way to send spam.
-	if now := time.Now(); !s.emails.take(u.id, 1, now) {
-		return nil, limited(s.emails, u.id, now)
-	}
-	token, err := newEmailToken(ctx, s.db, u.id, email, "payment", paymentEmailLifetime)
-	if err != nil {
-		return nil, err
-	}
-	if token != "" {
-		s.sendMail(paymentMail(email, u.name, s.appLink("/payment-email", url.Values{"token": {token}})))
-	}
-	return SendPaymentEmail204Response{}, nil
+	err = q.QueryRow(ctx, `
+		update users set payment_code = coalesce(payment_code, $2) where id = $1
+		returning payment_code`, userID, newPaymentCode()).Scan(&code)
+	return code, err
 }
 
-func (s *Server) ConfirmPaymentEmail(ctx context.Context, req ConfirmPaymentEmailRequestObject) (ConfirmPaymentEmailResponseObject, error) {
+// ClaimPayment takes a payment by its transaction ID, for payers who left no
+// code. Ko-fi shows the ID to the payer, and it can't be guessed.
+func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject) (ClaimPaymentResponseObject, error) {
 	if err := s.requireBilling(); err != nil {
 		return nil, err
 	}
 	u, err := s.requireUser(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if now := time.Now(); !s.claims.take(u.id, 1, now) {
+		return nil, limited(s.claims, u.id, now)
 	}
 	var out MyPlan
+	var noPlan bool
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		// The account before its token, as useEmailToken has it, and before
-		// the insert below touches its row.
 		if err := holdAccount(ctx, tx, u.id); err != nil {
 			return err
 		}
-		// Only the account that asked may use it: a link forwarded to someone
-		// else doesn't give them the payments.
-		var email string
-		var live bool
+		var id, state string
+		var owner, email *string
+		var planned, recurring bool
 		err := tx.QueryRow(ctx, `
-			delete from email_tokens where token_hash = $1 and purpose = 'payment' and user_id = $2
-			returning email::text, expires_at > now()`, hashToken(req.Body.Token), u.id).Scan(&email, &live)
-		if errors.Is(err, pgx.ErrNoRows) || err == nil && !live {
-			noteMiss(ctx)
-			return badRequest("invalid_token")
+			select id::text, state, user_id::text, email::text, plan_id is not null, recurring
+			from payment_events where provider = 'kofi' and reference = $1
+			order by paid_at desc limit 1 for update`, paymentReference(req.Body.Reference)).
+			Scan(&id, &state, &owner, &email, &planned, &recurring)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return errPaymentNotFound
 		}
 		if err != nil {
 			return err
 		}
-		if err := rememberPaymentEmail(ctx, tx, email, u.id); err != nil {
+		if state == "applied" && (owner == nil || *owner != u.id) {
+			return conflict("payment_applied")
+		}
+		if recurring && email != nil {
+			if err := rememberPaymentEmail(ctx, tx, *email, u.id); err != nil {
+				return err
+			}
+		}
+		if !planned {
+			// Nothing to give, but the administrator can see whose it is.
+			noPlan = true
+			_, err = tx.Exec(ctx, `update payment_events set user_id = coalesce(user_id, $1) where id = $2`, u.id, id)
+			return err
+		}
+		if err := applyPayment(ctx, tx, id, u.id); err != nil {
 			return err
 		}
 		if err := claimPayments(ctx, tx, u.id); err != nil {
@@ -329,7 +316,10 @@ func (s *Server) ConfirmPaymentEmail(ctx context.Context, req ConfirmPaymentEmai
 	if err != nil {
 		return nil, err
 	}
-	return ConfirmPaymentEmail200JSONResponse(out), nil
+	if noPlan {
+		return nil, conflict("payment_no_plan")
+	}
+	return ClaimPayment200JSONResponse(out), nil
 }
 
 func rememberPaymentEmail(ctx context.Context, q querier, email, userID string) error {

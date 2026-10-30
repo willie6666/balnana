@@ -2995,6 +2995,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get errorPaymentApplied => 'Deze betaling is al toegepast.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Nog geen betaling met die ID. Heb je net betaald, probeer het dan over een minuut opnieuw.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Deze betaling past bij geen enkel abonnement. Vraag de serverbeheerder om haar toe te wijzen.';
+
+  @override
   String get errorInvalidPlan => 'Controleer de abonnementsinstellingen: er klopt iets niet.';
 
   @override
@@ -3070,23 +3078,28 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'Betaal met het bevestigde e-mailadres van je account, of voeg hieronder het adres toe waarmee je betaalt.';
+  String get planKofiHelp => 'Plak je betaalcode in het Ko-fi-bericht, zodat de betaling je account bereikt.';
 
   @override
-  String get planPaymentEmailConfirmed => 'Betalingen vanaf dit adres tellen voor je account';
+  String get planPaymentCodeHelp => 'Je betaalcode. Tik om te kopiëren.';
 
   @override
-  String get planPaymentEmailAdd => 'Betaal-e-mailadres toevoegen';
+  String get planPaymentCodeCopied => 'Betaalcode gekopieerd';
 
   @override
-  String get planPaymentEmailHelp => 'We sturen een link om te bevestigen dat het van jou is.';
+  String get planPaymentClaim => 'Code vergeten?';
 
   @override
-  String get paymentEmailDone => 'Adres bevestigd';
+  String get planPaymentClaimHelp => 'Voeg een betaling toe met de Ko-fi-transactie-ID.';
 
   @override
-  String get paymentEmailDoneBody => 'Betalingen vanaf dit adres tellen nu voor je account.';
+  String get planPaymentClaimField => 'Transactie-ID of betaallink';
+
+  @override
+  String get planPaymentClaimAction => 'Betaling toevoegen';
+
+  @override
+  String get planPaymentClaimed => 'Betaling toegevoegd';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

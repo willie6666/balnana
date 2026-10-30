@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -327,59 +328,41 @@ func TestKofiWebhookChecks(t *testing.T) {
 }
 
 func TestKofiPaymentsReachAccounts(t *testing.T) {
-	c, f, s := billingServer(t)
+	c, _, s := billingServer(t)
 	kofiProducts(t, s)
 	u := register(c, "ana@example.test", "Ana")
-	sneak := c.another()
-	register(sneak, "sneak@example.test", "Sneak")
-
-	// A payment nobody can place waits, even for an unconfirmed address.
-	exec(t, s, `update users set email = 'payer@example.test' where email = 'sneak@example.test'`)
-	c.kofiOK(map[string]any{"message_id": "a", "amount": "3.00"})
-	if state, who := paymentState(t, s, "a"); state != "unclaimed" || who != nil {
-		t.Fatal(state, who)
-	}
-	if p := myPlanOf(sneak); p.Paid {
-		t.Fatalf("an unconfirmed address got the plan: %+v", p)
-	}
-	exec(t, s, `update users set email = 'sneak@example.test' where email = 'payer@example.test'`)
-
-	// Proving the address gives the account what waited for it.
-	c.must(204, "POST", "/me/payment-email", PaymentEmailRequest{Email: "Payer@Example.test"}, nil)
-	link := f.next(t, "payer@example.test")
-	if !strings.Contains(link, "/payment-email") {
-		t.Fatal(link)
-	}
-	token := EmailToken{Token: lastPart(link)}
-	// Only for the account that asked.
-	if code := sneak.errorCode(400, "POST", "/me/payment-email/confirm", token); code != "invalid_token" {
+	code := *myPlanOf(c).PaymentCode
+	if !regexp.MustCompile(`^BAL-[2-9A-HJKMNP-TV-Z]{8}$`).MatchString(code) {
 		t.Fatal(code)
 	}
-	var p MyPlan
-	c.must(200, "POST", "/me/payment-email/confirm", token, &p)
-	if !p.Paid || p.PlanName != "Plus" || p.ExpiresAt == nil || len(p.PaymentEmails) != 1 || !strings.EqualFold(p.PaymentEmails[0], "payer@example.test") {
-		t.Fatalf("%+v", p)
+	if again := *myPlanOf(c).PaymentCode; again != code {
+		t.Fatal(again, code)
 	}
-	if code := c.errorCode(400, "POST", "/me/payment-email/confirm", token); code != "invalid_token" {
-		t.Fatal(code)
-	}
+
+	// The code reaches the account whatever the address, however it's written,
+	// and without the message being kept.
+	c.kofiOK(map[string]any{"message_id": "a", "email": "payer@example.test", "amount": "3.00",
+		"message": "thanks! " + strings.ToLower(strings.Replace(code, "-", "", 1)) + "."})
 	if state, who := paymentState(t, s, "a"); state != "applied" || who == nil || *who != u.Id {
 		t.Fatal(state, who)
 	}
+	p := myPlanOf(c)
+	if !p.Paid || p.PlanName != "Plus" || p.ExpiresAt == nil {
+		t.Fatalf("%+v", p)
+	}
 
-	// From now on the address is enough; a repeat of a message counts once;
-	// a one-off adds to what is left.
+	// A repeat of a message counts once, and a one-off adds to what is left.
 	before := *p.ExpiresAt
-	c.kofiOK(map[string]any{"message_id": "b", "amount": "3.00"})
-	c.kofiOK(map[string]any{"message_id": "b", "amount": "3.00"})
+	c.kofiOK(map[string]any{"message_id": "b", "amount": "3.00", "message": code})
+	c.kofiOK(map[string]any{"message_id": "b", "amount": "3.00", "message": code})
 	p = myPlanOf(c)
 	if d := p.ExpiresAt.Sub(before); d < 29*24*time.Hour || d > 31*24*time.Hour {
 		t.Fatalf("added %v", d)
 	}
 
 	// Too little buys nothing, and a shop order isn't a plan, but they are kept.
-	c.kofiOK(map[string]any{"message_id": "c", "amount": "2.99"})
-	c.kofiOK(map[string]any{"message_id": "d", "type": "Shop Order", "amount": "50.00"})
+	c.kofiOK(map[string]any{"message_id": "c", "amount": "2.99", "message": code})
+	c.kofiOK(map[string]any{"message_id": "d", "type": "Shop Order", "amount": "50.00", "message": code})
 	for _, id := range []string{"c", "d"} {
 		if state, who := paymentState(t, s, id); state != "unmatched" || who == nil || *who != u.Id {
 			t.Fatal(id, state, who)
@@ -387,26 +370,141 @@ func TestKofiPaymentsReachAccounts(t *testing.T) {
 	}
 
 	// Ko-fi documents a one-off tip as Tip, and its examples send Donation.
-	c.kofiOK(map[string]any{"message_id": "e", "type": "Tip", "amount": "3.00"})
+	c.kofiOK(map[string]any{"message_id": "e", "type": "Tip", "amount": "3.00", "message": code})
 	if state, _ := paymentState(t, s, "e"); state != "applied" {
 		t.Fatal(state)
+	}
+
+	// A code nobody has places nothing.
+	c.kofiOK(map[string]any{"message_id": "f", "amount": "3.00", "message": "BAL-22222222"})
+	if state, who := paymentState(t, s, "f"); state != "unclaimed" || who != nil {
+		t.Fatal(state, who)
+	}
+}
+
+func TestKofiNeverGoesByAccountEmail(t *testing.T) {
+	c, f, s := billingServer(t)
+	kofiProducts(t, s)
+	u := register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
+	c.kofiOK(map[string]any{"message_id": "a", "email": "ana@example.test", "amount": "10.00"})
+	c.kofiOK(map[string]any{"message_id": "b", "email": "ana@example.test", "amount": "4.00", "is_subscription_payment": true})
+	if p := myPlanOf(c); p.Paid {
+		t.Fatalf("%+v", p)
+	}
+
+	// Nor does a one-off from an address the account took a payment from.
+	exec(t, s, `insert into payment_emails (email, user_id) values ('ana@example.test', $1)`, u.Id)
+	c.kofiOK(map[string]any{"message_id": "c", "email": "ana@example.test", "amount": "10.00"})
+	if state, who := paymentState(t, s, "c"); state != "unclaimed" || who != nil {
+		t.Fatal(state, who)
+	}
+}
+
+func TestClaimPayment(t *testing.T) {
+	c, _, s := billingServer(t)
+	kofiProducts(t, s)
+	u := register(c, "ana@example.test", "Ana")
+	other := c.another()
+	register(other, "ben@example.test", "Ben")
+	const id = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+	claim := func(reference string) PaymentClaim { return PaymentClaim{Reference: reference} }
+
+	if code := c.errorCode(404, "POST", "/me/payments/claim", claim(id)); code != "payment_not_found" {
+		t.Fatal(code)
+	}
+	c.kofiOK(map[string]any{"message_id": "a", "email": "payer@example.test", "amount": "3.00",
+		"kofi_transaction_id": strings.ToUpper(id)})
+
+	// The ID, or the link with it in, in any case.
+	var p MyPlan
+	c.must(200, "POST", "/me/payments/claim", claim("https://ko-fi.com/Home/CoffeeShop?txid="+strings.ToUpper(id)), &p)
+	if !p.Paid || p.PlanName != "Plus" {
+		t.Fatalf("%+v", p)
+	}
+	if state, who := paymentState(t, s, "a"); state != "applied" || who == nil || *who != u.Id {
+		t.Fatal(state, who)
+	}
+
+	// Once, and only for one account.
+	ends := *p.ExpiresAt
+	c.must(200, "POST", "/me/payments/claim", claim(" "+id+"\n"), &p)
+	if !p.ExpiresAt.Equal(ends) {
+		t.Fatal(p.ExpiresAt, ends)
+	}
+	if code := other.errorCode(409, "POST", "/me/payments/claim", claim(id)); code != "payment_applied" {
+		t.Fatal(code)
+	}
+
+	// A claim of a one-off teaches nothing about the address.
+	c.kofiOK(map[string]any{"message_id": "b", "email": "payer@example.test", "amount": "3.00"})
+	if state, _ := paymentState(t, s, "b"); state != "unclaimed" {
+		t.Fatal(state)
+	}
+
+	// Nothing on sale matches: it's left for the administrator, who can see whose it is.
+	const small = "1a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+	c.kofiOK(map[string]any{"message_id": "c", "amount": "1.00", "kofi_transaction_id": small})
+	if code := c.errorCode(409, "POST", "/me/payments/claim", claim(small)); code != "payment_no_plan" {
+		t.Fatal(code)
+	}
+	if state, who := paymentState(t, s, "c"); state != "unmatched" || who == nil || *who != u.Id {
+		t.Fatal(state, who)
+	}
+
+	// Trying IDs is limited.
+	for range claimBurst - 1 {
+		other.errorCode(404, "POST", "/me/payments/claim", claim("nothing"))
+	}
+	if code := other.errorCode(429, "POST", "/me/payments/claim", claim("nothing")); code != "rate_limited" {
+		t.Fatal(code)
+	}
+}
+
+func TestClaimTakesTheSubscription(t *testing.T) {
+	c, _, s := billingServer(t)
+	kofiProducts(t, s)
+	u := register(c, "ana@example.test", "Ana")
+	subscription := func(id string) {
+		c.kofiOK(map[string]any{"message_id": id, "type": "Subscription", "tier_name": "supporter", "amount": "4.00",
+			"is_subscription_payment": true, "kofi_transaction_id": "tx-" + id})
+	}
+	// Claiming one payment brings the months that waited, and the months to come.
+	subscription("a")
+	subscription("b")
+	c.must(200, "POST", "/me/payments/claim", PaymentClaim{Reference: "tx-a"}, nil)
+	subscription("c")
+	for _, id := range []string{"a", "b", "c"} {
+		if state, who := paymentState(t, s, id); state != "applied" || who == nil || *who != u.Id {
+			t.Fatal(id, state, who)
+		}
+	}
+}
+
+func TestPaymentCodeNeedsKofi(t *testing.T) {
+	c := accountsClient(t, map[string]string{"BALNANA_BILLING_ENABLED": "true"})
+	register(c, "ana@example.test", "Ana")
+	if p := myPlanOf(c); p.PaymentCode != nil {
+		t.Fatalf("%+v", p)
 	}
 }
 
 func TestKofiPaymentOutlivesItsPlan(t *testing.T) {
-	c, f, s := billingServer(t)
+	c, _, s := billingServer(t)
 	kofiProducts(t, s)
-	c.kofiOK(map[string]any{"message_id": "early", "email": "ana@example.test", "amount": "10.00"})
+	c.kofiOK(map[string]any{"message_id": "early", "amount": "10.00", "kofi_transaction_id": "tx"})
 	exec(t, s, `delete from plan_products`)
 	exec(t, s, `delete from plans where id = 'plus'`)
 
 	// It gives nothing, and doesn't stand in the way of the account.
-	register(c, "ana@example.test", "Ana")
-	confirmEmail(c, f, "ana@example.test")
+	u := register(c, "ana@example.test", "Ana")
+	if code := c.errorCode(409, "POST", "/me/payments/claim", PaymentClaim{Reference: "tx"}); code != "payment_no_plan" {
+		t.Fatal(code)
+	}
 	if p := myPlanOf(c); p.Paid {
 		t.Fatalf("%+v", p)
 	}
-	if state, who := paymentState(t, s, "early"); state != "unclaimed" || who != nil {
+	if state, who := paymentState(t, s, "early"); state != "unclaimed" || who == nil || *who != u.Id {
 		t.Fatal(state, who)
 	}
 }
@@ -429,35 +527,20 @@ func TestDeletingAPlanShowsItsWaitingPayments(t *testing.T) {
 	}
 }
 
-func TestKofiVerifiedAddressClaims(t *testing.T) {
-	c, f, s := billingServer(t)
-	kofiProducts(t, s)
-	c.kofiOK(map[string]any{"message_id": "early", "email": "ana@example.test", "amount": "10.00"})
-	register(c, "ana@example.test", "Ana")
-	if p := myPlanOf(c); p.Paid {
-		t.Fatalf("paid before confirming: %+v", p)
-	}
-	confirmEmail(c, f, "ana@example.test")
-	if p := myPlanOf(c); !p.Paid {
-		t.Fatalf("%+v", p)
-	}
-	if state, _ := paymentState(t, s, "early"); state != "applied" {
-		t.Fatal(state)
-	}
-}
-
 func TestKofiMembershipRenews(t *testing.T) {
-	c, f, s := billingServer(t)
+	c, _, s := billingServer(t)
 	kofiProducts(t, s)
 	register(c, "ana@example.test", "Ana")
-	confirmEmail(c, f, "ana@example.test")
+	code := *myPlanOf(c).PaymentCode
 
-	month := func(id string, paid time.Time) {
-		c.kofiOK(map[string]any{"message_id": id, "type": "Subscription", "email": "ANA@example.test", "tier_name": "supporter",
-			"amount": "4.00", "is_subscription_payment": true, "timestamp": paid.Format(time.RFC3339)})
+	subscription := func(id string, paid time.Time, message string) {
+		c.kofiOK(map[string]any{"message_id": id, "type": "Subscription", "email": "PAYER@example.test", "tier_name": "supporter",
+			"amount": "4.00", "is_subscription_payment": true, "timestamp": paid.Format(time.RFC3339), "message": message})
 	}
+	month := func(id string, paid time.Time) { subscription(id, paid, "") }
 	start := time.Now().Add(-40 * 24 * time.Hour).UTC().Truncate(time.Second)
-	month("late", time.Now().Add(-10*24*time.Hour).UTC().Truncate(time.Second))
+	// The first payment names the account; the ones after it have no message.
+	subscription("late", time.Now().Add(-10*24*time.Hour).UTC().Truncate(time.Second), code)
 	p := myPlanOf(c)
 	want := time.Now().Add(25 * 24 * time.Hour)
 	if !p.Paid || p.ExpiresAt == nil || p.ExpiresAt.Sub(want).Abs() > time.Minute {
@@ -554,10 +637,11 @@ func TestAdminAssignsPayment(t *testing.T) {
 	admin := c.asAdmin(setUp(c))
 	u := register(c, "ana@example.test", "Ana")
 	c.kofiOK(map[string]any{"message_id": "a", "email": "other@example.test", "from_name": "Ana's dad"})
-	c.kofiOK(map[string]any{"message_id": "b", "email": "other@example.test"})
+	c.kofiOK(map[string]any{"message_id": "b", "email": "other@example.test", "is_subscription_payment": true,
+		"kofi_transaction_id": "tx"})
 	var list PaymentList
 	admin.must(200, "GET", "/admin/payments?state=unmatched", nil, &list)
-	if list.Total != 2 || len(list.Payments) != 2 {
+	if list.Total != 2 || len(list.Payments) != 2 || list.Payments[0].Reference == nil || *list.Payments[0].Reference != "tx" {
 		t.Fatalf("%+v", list)
 	}
 	id := list.Payments[0].Id
@@ -574,22 +658,21 @@ func TestAdminAssignsPayment(t *testing.T) {
 	if code := admin.errorCode(409, "POST", "/admin/payments/"+id+"/assign", in); code != "payment_applied" {
 		t.Fatal(code)
 	}
-	if m := myPlanOf(c); !m.Paid || len(m.PaymentEmails) != 1 {
+	if m := myPlanOf(c); !m.Paid {
 		t.Fatalf("%+v", m)
 	}
-	// The address is remembered for what comes next.
-	c.kofiOK(map[string]any{"message_id": "c", "email": "other@example.test"})
+	// A subscription's address is remembered for what comes next.
+	c.kofiOK(map[string]any{"message_id": "c", "email": "other@example.test", "is_subscription_payment": true})
 	if state, who := paymentState(t, s, "c"); state != "unmatched" || who == nil {
 		t.Fatal(state, who)
 	}
 }
 
 func TestDeletedAccountKeepsPayments(t *testing.T) {
-	c, f, s := billingServer(t)
+	c, _, s := billingServer(t)
 	kofiProducts(t, s)
 	register(c, "ana@example.test", "Ana")
-	confirmEmail(c, f, "ana@example.test")
-	c.kofiOK(map[string]any{"message_id": "a", "email": "ana@example.test", "amount": "9.00"})
+	c.kofiOK(map[string]any{"message_id": "a", "amount": "9.00", "message": *myPlanOf(c).PaymentCode})
 	c.must(204, "POST", "/me/delete", AccountDelete{Password: ptr("correct horse")}, nil)
 	state, who := paymentState(t, s, "a")
 	if state != "applied" || who != nil {

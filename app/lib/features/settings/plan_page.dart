@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -110,6 +111,13 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
   }
 
+  Future<void> _copyCode(String code) async {
+    final message = context.l10n.planPaymentCodeCopied;
+    final messenger = ScaffoldMessenger.of(context);
+    await Clipboard.setData(ClipboardData(text: code));
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -215,24 +223,25 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                 GroupedTile(
                   icon: Icons.coffee_outlined,
                   title: l10n.planKofi,
-                  subtitle: l10n.planKofiHelp,
+                  subtitle: plan.paymentCode == null ? null : l10n.planKofiHelp,
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _open(kofi),
                 ),
-                for (final email in plan.paymentEmails)
+                if (plan.paymentCode case final code?) ...[
                   GroupedTile(
-                    icon: Icons.mail_outline,
-                    title: email,
-                    subtitle: l10n.planPaymentEmailConfirmed,
+                    icon: Icons.tag,
+                    title: code,
+                    subtitle: l10n.planPaymentCodeHelp,
+                    trailing: const Icon(Icons.copy),
+                    onTap: () => _copyCode(code),
                   ),
-                if (info?.email ?? false)
                   GroupedTile(
-                    icon: Icons.add,
-                    title: l10n.planPaymentEmailAdd,
-                    subtitle: l10n.planPaymentEmailHelp,
-                    onTap: () =>
-                        showDialog<void>(context: context, builder: (_) => const _PaymentEmailDialog()),
+                    icon: Icons.receipt_long_outlined,
+                    title: l10n.planPaymentClaim,
+                    subtitle: l10n.planPaymentClaimHelp,
+                    onTap: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
                   ),
+                ],
               ],
             ],
           ),
@@ -241,22 +250,23 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   }
 }
 
-class _PaymentEmailDialog extends ConsumerStatefulWidget {
-  const _PaymentEmailDialog();
+/// Takes a Ko-fi payment made without the account's code.
+class PaymentClaimDialog extends ConsumerStatefulWidget {
+  const PaymentClaimDialog({super.key});
 
   @override
-  ConsumerState<_PaymentEmailDialog> createState() => _PaymentEmailDialogState();
+  ConsumerState<PaymentClaimDialog> createState() => _PaymentClaimDialogState();
 }
 
-class _PaymentEmailDialogState extends ConsumerState<_PaymentEmailDialog> {
+class _PaymentClaimDialogState extends ConsumerState<PaymentClaimDialog> {
   final _form = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  final _reference = TextEditingController();
   bool _busy = false;
   String? _error;
 
   @override
   void dispose() {
-    _email.dispose();
+    _reference.dispose();
     super.dispose();
   }
 
@@ -265,15 +275,15 @@ class _PaymentEmailDialogState extends ConsumerState<_PaymentEmailDialog> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final email = _email.text.trim();
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(balnanaApiProvider)!.sendPaymentEmail(email);
+      await ref.read(balnanaApiProvider)!.claimPayment(_reference.text.trim());
+      ref.invalidate(myPlanProvider);
       navigator.pop();
-      messenger.showSnackBar(SnackBar(content: Text(l10n.verifyEmailSent(email))));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.planPaymentClaimed)));
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -288,7 +298,7 @@ class _PaymentEmailDialogState extends ConsumerState<_PaymentEmailDialog> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: Text(l10n.planPaymentEmailAdd),
+      title: Text(l10n.planPaymentClaim),
       content: Form(
         key: _form,
         child: Column(
@@ -296,13 +306,13 @@ class _PaymentEmailDialogState extends ConsumerState<_PaymentEmailDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
-              controller: _email,
+              controller: _reference,
               enabled: !_busy,
               autofocus: true,
               autocorrect: false,
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: TextInputType.url,
               onFieldSubmitted: (_) => _submit(),
-              decoration: InputDecoration(labelText: l10n.accountEmail),
+              decoration: InputDecoration(labelText: l10n.planPaymentClaimField),
               validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
             ),
             if (_error case final error?) ...[
@@ -314,7 +324,7 @@ class _PaymentEmailDialogState extends ConsumerState<_PaymentEmailDialog> {
       ),
       actions: [
         TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.commonCancel)),
-        TextButton(onPressed: _busy ? null : _submit, child: Text(l10n.forgotPasswordAction)),
+        TextButton(onPressed: _busy ? null : _submit, child: Text(l10n.planPaymentClaimAction)),
       ],
     );
   }

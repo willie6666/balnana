@@ -1104,7 +1104,7 @@ class MyPlan {
     this.expiresAt,
     required this.ownGroups,
     required this.sponsoredGroups,
-    this.paymentEmails = const [],
+    this.paymentCode,
     this.receiptsPerGroup,
     this.recurringPerGroup,
     this.play,
@@ -1118,7 +1118,7 @@ class MyPlan {
       expiresAt: _optTime(json, 'expiresAt'),
       ownGroups: PlanUsage.fromJson(json['ownGroups']),
       sponsoredGroups: PlanUsage.fromJson(json['sponsoredGroups']),
-      paymentEmails: [...?_opt<List<Object?>>(json, 'paymentEmails')?.whereType<String>()],
+      paymentCode: _opt(json, 'paymentCode'),
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
@@ -1135,8 +1135,9 @@ class MyPlan {
   final PlanUsage ownGroups;
   final PlanUsage sponsoredGroups;
 
-  /// Addresses the account showed are its own, besides its sign-in one.
-  final List<String> paymentEmails;
+  /// What to write in a Ko-fi message for the payment to reach this account.
+  /// Null when the server takes no Ko-fi payments.
+  final String? paymentCode;
 
   /// Null means no limit.
   final int? receiptsPerGroup;
@@ -1381,6 +1382,7 @@ class AdminPayment {
     this.userId,
     this.userName,
     required this.paidAt,
+    this.reference,
   });
 
   factory AdminPayment.fromJson(Object? data) {
@@ -1400,6 +1402,7 @@ class AdminPayment {
       userId: _opt(json, 'userId'),
       userName: _opt(json, 'userName'),
       paidAt: _time(json, 'paidAt'),
+      reference: _opt(json, 'reference'),
     );
   }
 
@@ -1421,4 +1424,7 @@ class AdminPayment {
   final String? userId;
   final String? userName;
   final DateTime paidAt;
+
+  /// The provider's ID for the transaction.
+  final String? reference;
 }

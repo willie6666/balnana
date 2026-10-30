@@ -3000,6 +3000,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get errorPaymentApplied => 'Questo pagamento è già stato applicato.';
 
   @override
+  String get errorPaymentNotFound =>
+      'Ancora nessun pagamento con questo ID. Se hai appena pagato, riprova tra un minuto.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Questo pagamento non corrisponde a nessun piano. Chiedi all\'amministratore del server di applicarlo.';
+
+  @override
   String get errorInvalidPlan => 'Controlla le impostazioni del piano: qualcosa non è valido.';
 
   @override
@@ -3076,22 +3084,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Paga con l\'email confermata del tuo account oppure aggiungi qui sotto l\'indirizzo con cui paghi.';
+      'Incolla il tuo codice di pagamento nel messaggio di Ko-fi perché il pagamento arrivi al tuo account.';
 
   @override
-  String get planPaymentEmailConfirmed => 'I pagamenti da questo indirizzo contano per il tuo account';
+  String get planPaymentCodeHelp => 'Il tuo codice di pagamento. Tocca per copiarlo.';
 
   @override
-  String get planPaymentEmailAdd => 'Aggiungi email di pagamento';
+  String get planPaymentCodeCopied => 'Codice di pagamento copiato';
 
   @override
-  String get planPaymentEmailHelp => 'Ti invieremo un link per confermare che è tuo.';
+  String get planPaymentClaim => 'Hai dimenticato il codice?';
 
   @override
-  String get paymentEmailDone => 'Indirizzo confermato';
+  String get planPaymentClaimHelp => 'Aggiungi un pagamento con il suo ID transazione Ko-fi.';
 
   @override
-  String get paymentEmailDoneBody => 'I pagamenti da questo indirizzo ora contano per il tuo account.';
+  String get planPaymentClaimField => 'ID transazione o link del pagamento';
+
+  @override
+  String get planPaymentClaimAction => 'Aggiungi pagamento';
+
+  @override
+  String get planPaymentClaimed => 'Pagamento aggiunto';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

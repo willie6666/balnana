@@ -389,35 +389,25 @@ paths:
                 $ref: "#/components/schemas/MyPlan"
         default:
           $ref: "#/components/responses/Error"
-  /me/payment-email:
+  /me/payments/claim:
     post:
-      operationId: sendPaymentEmail
-      summary: Email a link that shows an address is the account's
-      description: For payments made with an address other than the account's.
+      operationId: claimPayment
+      summary: Take a Ko-fi payment by its transaction ID
+      description: |
+        For a payment that came without the account's payment code. Claiming
+        one's own payment again changes nothing. `payment_not_found` is an ID
+        the server hasn't heard of, `payment_applied` a payment of another
+        account, and `payment_no_plan` a payment nothing on sale matches, which
+        is left for the administrator.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PaymentEmailRequest"
-      responses:
-        "204":
-          description: Sent, unless one went out a moment ago
-        default:
-          $ref: "#/components/responses/Error"
-  /me/payment-email/confirm:
-    post:
-      operationId: confirmPaymentEmail
-      summary: Take in the payments made with the address the token went to
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EmailToken"
+              $ref: "#/components/schemas/PaymentClaim"
       responses:
         "200":
-          description: Confirmed
+          description: Claimed
           content:
             application/json:
               schema:
@@ -3279,6 +3269,9 @@ components:
         kind:
           type: string
           description: What the provider called it, such as "Subscription".
+        reference:
+          type: string
+          description: The provider's ID for the transaction.
         state:
           $ref: "#/components/schemas/PaymentState"
         email:
@@ -3334,7 +3327,7 @@ components:
           description: Left out means no limit.
     MyPlan:
       type: object
-      required: [planName, paid, ownGroups, sponsoredGroups, paymentEmails]
+      required: [planName, paid, ownGroups, sponsoredGroups]
       properties:
         planName:
           type: string
@@ -3353,11 +3346,11 @@ components:
           type: integer
         recurringPerGroup:
           type: integer
-        paymentEmails:
-          type: array
-          description: Addresses that payments reach the account by, besides its own.
-          items:
-            type: string
+        paymentCode:
+          type: string
+          description: |
+            What to write in a Ko-fi message so that the payment reaches this
+            account. Left out when the server takes no Ko-fi payments.
         play:
           $ref: "#/components/schemas/PlayBilling"
     PlayBilling:
@@ -3386,12 +3379,13 @@ components:
       properties:
         purchaseToken:
           type: string
-    PaymentEmailRequest:
+    PaymentClaim:
       type: object
-      required: [email]
+      required: [reference]
       properties:
-        email:
+        reference:
           type: string
+          description: The transaction ID, or the link to the payment.
     GroupPlan:
       type: object
       required: [planName, receipts, recurring, canSponsor]

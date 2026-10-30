@@ -2865,6 +2865,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorPaymentApplied => '이 결제는 이미 적용되었어요.';
 
   @override
+  String get errorPaymentNotFound => '해당 ID의 결제가 아직 없습니다. 방금 결제했다면 1분 후 다시 시도하세요.';
+
+  @override
+  String get errorPaymentNoPlan => '이 결제에 맞는 요금제가 없습니다. 서버 관리자에게 적용을 요청하세요.';
+
+  @override
   String get errorInvalidPlan => '요금제 설정을 확인해 주세요. 올바르지 않은 내용이 있어요.';
 
   @override
@@ -2939,22 +2945,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '계정의 확인된 이메일로 결제하거나, 결제에 쓰는 주소를 아래에 추가하세요.';
+  String get planKofiHelp => '결제가 계정에 반영되도록 Ko-fi 메시지에 결제 코드를 붙여 넣으세요.';
 
   @override
-  String get planPaymentEmailConfirmed => '이 주소의 결제가 내 계정에 반영돼요';
+  String get planPaymentCodeHelp => '내 결제 코드입니다. 탭하여 복사하세요.';
 
   @override
-  String get planPaymentEmailAdd => '결제 이메일 추가';
+  String get planPaymentCodeCopied => '결제 코드를 복사했습니다';
 
   @override
-  String get planPaymentEmailHelp => '본인 주소인지 확인하는 링크를 보내 드려요.';
+  String get planPaymentClaim => '코드를 잊으셨나요?';
 
   @override
-  String get paymentEmailDone => '주소가 확인되었어요';
+  String get planPaymentClaimHelp => 'Ko-fi 거래 ID로 결제를 추가합니다.';
 
   @override
-  String get paymentEmailDoneBody => '이제 이 주소의 결제가 내 계정에 반영돼요.';
+  String get planPaymentClaimField => '거래 ID 또는 결제 링크';
+
+  @override
+  String get planPaymentClaimAction => '결제 추가';
+
+  @override
+  String get planPaymentClaimed => '결제를 추가했습니다';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

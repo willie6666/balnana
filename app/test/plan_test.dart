@@ -10,6 +10,7 @@ import 'package:balnana/features/settings/plan_page.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -61,6 +62,14 @@ class _FakeApi extends BalnanaApi {
 
   final ApiException? failure;
   final reported = <String>[];
+  final claimed = <String>[];
+
+  @override
+  Future<MyPlan> claimPayment(String reference) async {
+    claimed.add(reference);
+    if (failure case final failure?) throw failure;
+    return _plan;
+  }
 
   @override
   Future<MyPlan> reportPlayPurchase(String token) async {
@@ -159,7 +168,7 @@ void main() {
       'ownGroups': {'used': 1, 'limit': 5},
       'sponsoredGroups': {'used': 0, 'limit': 0},
       'receiptsPerGroup': 20,
-      'paymentEmails': ['me@example.com', 42],
+      'paymentCode': 'BAL-ABCD2345',
     });
     expect(plan.paid, isFalse);
     expect(plan.expiresAt, isNull);
@@ -167,7 +176,7 @@ void main() {
     expect(plan.sponsoredGroups.limit, 0);
     expect(plan.receiptsPerGroup, 20);
     expect(plan.recurringPerGroup, isNull);
-    expect(plan.paymentEmails, ['me@example.com']);
+    expect(plan.paymentCode, 'BAL-ABCD2345');
   });
 
   testWidgets('the plan page shows the plan and how much of it is used', (tester) async {
@@ -186,7 +195,103 @@ void main() {
 
     expect(find.text(l10n.planKofi), findsNothing);
     expect(find.text(l10n.planGet), findsNothing);
-    expect(find.text(l10n.planPaymentEmailAdd), findsNothing);
+    expect(find.text(l10n.planPaymentClaim), findsNothing);
+  });
+
+  // Runs with --dart-define=BALNANA_EXTERNAL_PAYMENTS=true.
+  testWidgets('a build with external payments shows the code to pay with', (tester) async {
+    Object? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'];
+      return null;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    await _pump(
+      tester,
+      const MyPlan(
+        planName: 'Free',
+        ownGroups: PlanUsage(used: 0),
+        sponsoredGroups: PlanUsage(used: 0),
+        paymentCode: 'BAL-ABCD2345',
+      ),
+      api: _FakeApi(),
+    );
+
+    expect(find.text(l10n.planKofiHelp), findsOneWidget);
+    await tester.ensureVisible(find.text('BAL-ABCD2345'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('BAL-ABCD2345'));
+    await tester.pumpAndSettle();
+    expect(copied, 'BAL-ABCD2345');
+    expect(find.text(l10n.planPaymentCodeCopied), findsOneWidget);
+
+    await tester.ensureVisible(find.text(l10n.planPaymentClaim));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.planPaymentClaim));
+    await tester.pumpAndSettle();
+    expect(find.byType(PaymentClaimDialog), findsOneWidget);
+  }, skip: !externalPayments);
+
+  group('claiming a payment', () {
+    Future<void> open(WidgetTester tester, BalnanaApi api) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [balnanaApiProvider.overrideWithValue(api)],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('sends what was pasted and closes', (tester) async {
+      final api = _FakeApi();
+      await open(tester, api);
+
+      await tester.enterText(find.byType(TextFormField), '  00000000-1111-2222-3333-444444444444\n');
+      await tester.tap(find.text(l10n.planPaymentClaimAction));
+      await tester.pumpAndSettle();
+
+      expect(api.claimed, ['00000000-1111-2222-3333-444444444444']);
+      expect(find.byType(PaymentClaimDialog), findsNothing);
+      expect(find.text(l10n.planPaymentClaimed), findsOneWidget);
+    });
+
+    testWidgets('needs something to send', (tester) async {
+      final api = _FakeApi();
+      await open(tester, api);
+
+      await tester.tap(find.text(l10n.planPaymentClaimAction));
+      await tester.pumpAndSettle();
+
+      expect(api.claimed, isEmpty);
+      expect(find.text(l10n.errorRequired), findsOneWidget);
+    });
+
+    testWidgets('stays open and says why when the server refuses', (tester) async {
+      await open(tester, _FakeApi(failure: const ApiException('payment_not_found', status: 404)));
+
+      await tester.enterText(find.byType(TextFormField), 'nothing');
+      await tester.tap(find.text(l10n.planPaymentClaimAction));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PaymentClaimDialog), findsOneWidget);
+      expect(find.text(l10n.errorPaymentNotFound), findsOneWidget);
+    });
   });
 
   group('Google Play', () {

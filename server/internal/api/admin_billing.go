@@ -267,13 +267,13 @@ func (s *Server) RevokeAdminEntitlement(ctx context.Context, req RevokeAdminEnti
 
 const paymentSelect = `
 	select pe.id::text, pe.provider, pe.kind, pe.state, pe.email::text, pe.payer_name, pe.amount::text, pe.currency,
-	       pe.product, pe.plan_id, pe.days, pe.user_id::text, u.display_name, pe.paid_at
+	       pe.product, pe.plan_id, pe.days, pe.user_id::text, u.display_name, pe.paid_at, pe.reference
 	from payment_events pe left join users u on u.id = pe.user_id`
 
 func scanPayment(row pgx.CollectableRow) (Payment, error) {
 	var p Payment
 	err := row.Scan(&p.Id, &p.Provider, &p.Kind, &p.State, &p.Email, &p.PayerName, &p.Amount, &p.Currency,
-		&p.Product, &p.PlanId, &p.Days, &p.UserId, &p.UserName, &p.PaidAt)
+		&p.Product, &p.PlanId, &p.Days, &p.UserId, &p.UserName, &p.PaidAt, &p.Reference)
 	return p, err
 }
 
@@ -318,8 +318,9 @@ func (s *Server) AssignAdminPayment(ctx context.Context, req AssignAdminPaymentR
 		var state string
 		var email, plan *string
 		var days *int
-		err := tx.QueryRow(ctx, `select state, email::text, plan_id, days from payment_events where id = $1 for update`,
-			req.PaymentId).Scan(&state, &email, &plan, &days)
+		var recurring bool
+		err := tx.QueryRow(ctx, `select state, email::text, plan_id, days, recurring from payment_events where id = $1 for update`,
+			req.PaymentId).Scan(&state, &email, &plan, &days, &recurring)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errNotFound
 		}
@@ -354,7 +355,7 @@ func (s *Server) AssignAdminPayment(ctx context.Context, req AssignAdminPaymentR
 		if err := applyPayment(ctx, tx, req.PaymentId, req.Body.UserId); err != nil {
 			return err
 		}
-		if email != nil {
+		if recurring && email != nil {
 			if err := rememberPaymentEmail(ctx, tx, *email, req.Body.UserId); err != nil {
 				return err
 			}

@@ -2852,6 +2852,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorPaymentApplied => '这笔付款已经应用。';
 
   @override
+  String get errorPaymentNotFound => '还没有这笔交易。如果刚付款，请过一分钟再试。';
+
+  @override
+  String get errorPaymentNoPlan => '这笔付款对应不到方案，请联系服务器管理员处理。';
+
+  @override
   String get errorInvalidPlan => '请检查方案设置，其中有无效内容。';
 
   @override
@@ -2926,22 +2932,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '请使用账号已确认的邮箱付款，或在下方添加你付款用的地址。';
+  String get planKofiHelp => '请把付款代码粘贴到 Ko-fi 留言中，款项才会进入你的账号。';
 
   @override
-  String get planPaymentEmailConfirmed => '从此地址付款会计入你的账号';
+  String get planPaymentCodeHelp => '你的付款代码，点按即可复制。';
 
   @override
-  String get planPaymentEmailAdd => '添加付款邮箱';
+  String get planPaymentCodeCopied => '已复制付款代码';
 
   @override
-  String get planPaymentEmailHelp => '我们会发送链接，确认这是你的地址。';
+  String get planPaymentClaim => '忘记留代码？';
 
   @override
-  String get paymentEmailDone => '地址已确认';
+  String get planPaymentClaimHelp => '用 Ko-fi 的交易编号添加付款。';
 
   @override
-  String get paymentEmailDoneBody => '从此地址付款现在会计入你的账号。';
+  String get planPaymentClaimField => '交易编号或付款链接';
+
+  @override
+  String get planPaymentClaimAction => '添加付款';
+
+  @override
+  String get planPaymentClaimed => '已添加付款';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {
@@ -5868,6 +5880,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get errorPaymentApplied => '這筆付款已經套用。';
 
   @override
+  String get errorPaymentNotFound => '還沒有這筆交易。如果剛付款，請過一分鐘再試。';
+
+  @override
+  String get errorPaymentNoPlan => '這筆付款對不到方案，請聯絡伺服器管理員處理。';
+
+  @override
   String get errorInvalidPlan => '請檢查方案設定，其中有無效的內容。';
 
   @override
@@ -5942,22 +5960,28 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '請用帳戶已確認的電子郵件付款，或在下方新增你付款用的地址。';
+  String get planKofiHelp => '請把付款代碼貼到 Ko-fi 留言，款項才會進到你的帳號。';
 
   @override
-  String get planPaymentEmailConfirmed => '從這個地址付款會計入你的帳戶';
+  String get planPaymentCodeHelp => '你的付款代碼，點一下複製。';
 
   @override
-  String get planPaymentEmailAdd => '新增付款用的電子郵件';
+  String get planPaymentCodeCopied => '已複製付款代碼';
 
   @override
-  String get planPaymentEmailHelp => '我們會寄送連結，確認這是你的地址。';
+  String get planPaymentClaim => '忘記留代碼？';
 
   @override
-  String get paymentEmailDone => '地址已確認';
+  String get planPaymentClaimHelp => '用 Ko-fi 的交易編號加入付款。';
 
   @override
-  String get paymentEmailDoneBody => '從這個地址付款現在會計入你的帳戶。';
+  String get planPaymentClaimField => '交易編號或付款連結';
+
+  @override
+  String get planPaymentClaimAction => '加入付款';
+
+  @override
+  String get planPaymentClaimed => '已加入付款';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {

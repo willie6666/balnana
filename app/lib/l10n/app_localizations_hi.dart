@@ -3012,6 +3012,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get errorPaymentApplied => 'यह भुगतान पहले ही लागू हो चुका है।';
 
   @override
+  String get errorPaymentNotFound =>
+      'इस आईडी का कोई भुगतान अभी नहीं है। अगर आपने अभी भुगतान किया है, तो एक मिनट बाद फिर कोशिश करें।';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'यह भुगतान किसी प्लान से मेल नहीं खाता। सर्वर व्यवस्थापक से इसे लागू करने को कहें।';
+
+  @override
   String get errorInvalidPlan => 'प्लान की सेटिंग जाँचें: कुछ मान्य नहीं है।';
 
   @override
@@ -3087,23 +3095,28 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'अपने खाते के पुष्ट ईमेल से भुगतान करें, या नीचे वह पता जोड़ें जिससे आप भुगतान करते हैं।';
+  String get planKofiHelp => 'अपना भुगतान कोड Ko-fi संदेश में चिपकाएँ, ताकि भुगतान आपके खाते में पहुँचे।';
 
   @override
-  String get planPaymentEmailConfirmed => 'इस पते से हुए भुगतान आपके खाते में गिने जाते हैं';
+  String get planPaymentCodeHelp => 'आपका भुगतान कोड। कॉपी करने के लिए टैप करें।';
 
   @override
-  String get planPaymentEmailAdd => 'भुगतान ईमेल जोड़ें';
+  String get planPaymentCodeCopied => 'भुगतान कोड कॉपी किया गया';
 
   @override
-  String get planPaymentEmailHelp => 'यह आपका है इसकी पुष्टि के लिए हम एक लिंक भेजेंगे।';
+  String get planPaymentClaim => 'कोड भूल गए?';
 
   @override
-  String get paymentEmailDone => 'पते की पुष्टि हो गई';
+  String get planPaymentClaimHelp => 'Ko-fi लेन-देन आईडी से भुगतान जोड़ें।';
 
   @override
-  String get paymentEmailDoneBody => 'इस पते से हुए भुगतान अब आपके खाते में गिने जाएँगे।';
+  String get planPaymentClaimField => 'लेन-देन आईडी या भुगतान लिंक';
+
+  @override
+  String get planPaymentClaimAction => 'भुगतान जोड़ें';
+
+  @override
+  String get planPaymentClaimed => 'भुगतान जोड़ा गया';
 
   @override
   String groupPlanUsage(String receipts, String recurring) {
