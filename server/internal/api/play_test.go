@@ -30,6 +30,7 @@ type fakePlay struct {
 	mu       sync.Mutex
 	subs     map[string]map[string]any
 	acks     []string
+	ackFails int // the status acknowledging answers with, if not 0
 	down     bool
 	key      *rsa.PrivateKey
 	audience string
@@ -56,6 +57,10 @@ func (f *fakePlay) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path, ok := strings.CutPrefix(r.URL.EscapedPath(), prefix+"subscriptions/")
 	if token, found := strings.CutSuffix(path, ":acknowledge"); ok && found && r.Method == "POST" {
 		_, token, _ = strings.Cut(token, "/tokens/")
+		if f.ackFails != 0 {
+			http.Error(w, "refused", f.ackFails)
+			return
+		}
 		f.acks = append(f.acks, token)
 		f.subs[token]["acknowledgementState"] = "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED"
 		w.WriteHeader(200)
@@ -407,6 +412,81 @@ func TestPlayWebhookChecks(t *testing.T) {
 	}
 	if p := myPlanOf(c); !p.Paid {
 		t.Fatal("not granted")
+	}
+}
+
+func TestPlayAcknowledgeRetries(t *testing.T) {
+	c, f, _ := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	account := playAccountID(ana.Id)
+
+	// Whatever Google says, an unacknowledged purchase isn't done with: left
+	// alone it is refunded. A failure gets the notification sent again.
+	f.buy("token-1", "plus_monthly", "GPA.1", &account, nil)
+	f.ackFails = http.StatusBadRequest
+	c.notify(f, "token-1", 500)
+	if p := myPlanOf(c); !p.Paid {
+		t.Fatal("not granted")
+	}
+	f.ackFails = 0
+	c.notify(f, "token-1", 200)
+	if got := f.acked(); len(got) != 1 {
+		t.Fatalf("acknowledged %v", got)
+	}
+
+	// Reporting has given the plan by then, and the next report tries again.
+	f.buy("token-2", "plus_monthly", "GPA.2", &account, nil)
+	f.ackFails = http.StatusInternalServerError
+	if p := c.reportPlay("token-2"); !p.Paid {
+		t.Fatal("not granted")
+	}
+	f.ackFails = 0
+	c.reportPlay("token-2")
+	if got := f.acked(); len(got) != 2 || got[1] != "token-2" {
+		t.Fatalf("acknowledged %v", got)
+	}
+}
+
+func TestPlayChangeKeepsWhatWasPaidFor(t *testing.T) {
+	c, f, s := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	f.buy("token-1", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+	c.notify(f, "token-1", 200)
+
+	// A change not paid for yet, or to something not on sale, gives nothing
+	// to replace the plan with.
+	f.buy("waiting", "plus_monthly", "GPA.2", nil, map[string]any{
+		"linkedPurchaseToken": "token-1", "subscriptionState": "SUBSCRIPTION_STATE_PENDING"})
+	c.notify(f, "waiting", 200)
+	if p := myPlanOf(c); !p.Paid {
+		t.Fatal("a pending change ended the plan")
+	}
+	f.buy("unlisted", "other", "GPA.3", nil, map[string]any{"linkedPurchaseToken": "token-1"})
+	c.notify(f, "unlisted", 200)
+	if p := myPlanOf(c); !p.Paid {
+		t.Fatal("a change to an unlisted product ended the plan")
+	}
+
+	// Paid for, it takes over.
+	f.set("waiting", map[string]any{"subscriptionState": "SUBSCRIPTION_STATE_ACTIVE"})
+	c.notify(f, "waiting", 200)
+	var active int
+	if err := s.db.QueryRow(context.Background(), `select count(*) from entitlements e where e.user_id = $1 and `+entitlementActive,
+		ana.Id).Scan(&active); err != nil || active != 1 {
+		t.Fatalf("%d active, %v", active, err)
+	}
+}
+
+func TestPlayRefundOfProductOffSale(t *testing.T) {
+	c, f, s := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	f.buy("token-1", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+	c.reportPlay("token-1")
+	exec(t, s, `delete from plan_products where provider = 'play'`)
+	f.set("token-1", map[string]any{"subscriptionState": "SUBSCRIPTION_STATE_EXPIRED"})
+	c.notify(f, "token-1", 200)
+	if p := myPlanOf(c); p.Paid {
+		t.Fatal("taking the product off sale kept a refunded plan")
 	}
 }
 

@@ -115,15 +115,21 @@ func countSponsored(ctx context.Context, q querier, userID string) (n int, err e
 // checkReceiptLimit refuses a photo the group has no room for. One replacing
 // the expense's photo adds nothing. In a write it needs the group locked.
 func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, expenseID string) error {
+	var replaces bool
+	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
+		return err
+	}
+	return s.checkReceiptRoom(ctx, q, g)
+}
+
+// checkReceiptRoom refuses one more counted photo: a new one, or that of a
+// deleted expense coming back. In a write it needs the group locked.
+func (s *Server) checkReceiptRoom(ctx context.Context, q querier, g *group) error {
 	if !s.conf().Billing {
 		return nil
 	}
 	p, _, err := groupPlan(ctx, q, g)
 	if err != nil || p.receipts == nil {
-		return err
-	}
-	var replaces bool
-	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
 		return err
 	}
 	n, err := countReceipts(ctx, q, g.id)
@@ -292,6 +298,11 @@ func (s *Server) ConfirmPaymentEmail(ctx context.Context, req ConfirmPaymentEmai
 	}
 	var out MyPlan
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		// The account before its token, as useEmailToken has it, and before
+		// the insert below touches its row.
+		if err := holdAccount(ctx, tx, u.id); err != nil {
+			return err
+		}
 		// Only the account that asked may use it: a link forwarded to someone
 		// else doesn't give them the payments.
 		var email string
@@ -360,12 +371,17 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	if out.Recurring.Used, err = countRecurring(ctx, q, g.id); err != nil {
 		return GroupPlan{}, err
 	}
-	u, err := s.currentUser(ctx)
-	if err != nil || u == nil || g.me == nil || sponsor != nil && *sponsor == *g.me {
-		return out, err
+	// A sponsor who stopped paying still sees the group as theirs, to stop.
+	if sponsor != nil && g.me != nil && *sponsor == *g.me {
+		return out, nil
 	}
 	covered, err := sponsorCovers(ctx, q, g)
 	if err != nil || covered {
+		return out, err
+	}
+	out.SponsorMemberId = nil // to everyone else, nobody sponsors it now
+	u, err := s.currentUser(ctx)
+	if err != nil || u == nil || g.me == nil {
 		return out, err
 	}
 	out.CanSponsor, err = hasRoomToSponsor(ctx, q, u.id)

@@ -15,6 +15,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/jackc/pgx/v5"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
 
 	"balnana/internal/config"
@@ -41,7 +42,17 @@ var (
 	errPlayPurchase     = badRequest("invalid_purchase")
 	errPlayOtherAccount = conflict("play_other_account")
 	errPlayUnavailable  = &apiError{status: http.StatusServiceUnavailable, code: "play_unavailable"}
+	// errPlayUnacknowledged is a purchase that counts here but that Google
+	// wasn't told about, which is to be tried again.
+	errPlayUnacknowledged = errors.New("acknowledging a google play purchase failed")
 )
+
+// playRefusal is an answer from the Developer API other than a success.
+type playRefusal struct{ status int }
+
+func (e playRefusal) Error() string {
+	return fmt.Sprintf("google play: %d %s", e.status, http.StatusText(e.status))
+}
 
 // playClient talks to Google Play for one app.
 type playClient struct {
@@ -66,7 +77,10 @@ func newPlayClient(cfg *config.Config, audience string) *playClient {
 		Scopes:     []string{playScope},
 		TokenURL:   playTokenURL,
 	}
-	c := &playClient{packageName: cfg.PlayPackage, http: key.Client(context.Background()), base: playAPI}
+	// Fetching the access token ignores the context of the call it is for, and
+	// every other call waits for it, so it needs a limit of its own.
+	tokens := context.WithValue(context.Background(), oauth2.HTTPClient, &http.Client{Timeout: playTimeout})
+	c := &playClient{packageName: cfg.PlayPackage, http: key.Client(tokens), base: playAPI}
 	if cfg.PlayPushAccount != "" {
 		keys := oidc.NewRemoteKeySet(context.Background(), googleCerts)
 		c.pushAccount = cfg.PlayPushAccount
@@ -130,10 +144,8 @@ func (p *playClient) call(ctx context.Context, method, path string, body io.Read
 	}
 	defer resp.Body.Close()
 	switch {
-	case resp.StatusCode == http.StatusBadRequest, resp.StatusCode == http.StatusNotFound, resp.StatusCode == http.StatusGone:
-		return errPlayPurchase
 	case resp.StatusCode >= 300:
-		return fmt.Errorf("google play: %s", resp.Status)
+		return playRefusal{resp.StatusCode}
 	case out == nil:
 		return nil
 	}
@@ -143,6 +155,11 @@ func (p *playClient) call(ctx context.Context, method, path string, body io.Read
 func (p *playClient) subscription(ctx context.Context, token string) (*playSubscription, error) {
 	var sub playSubscription
 	if err := p.call(ctx, http.MethodGet, "/purchases/subscriptionsv2/tokens/"+url.PathEscape(token), nil, &sub); err != nil {
+		var refused playRefusal
+		if errors.As(err, &refused) &&
+			(refused.status == http.StatusBadRequest || refused.status == http.StatusNotFound || refused.status == http.StatusGone) {
+			return nil, errPlayPurchase
+		}
 		return nil, err
 	}
 	if len(sub.LineItems) == 0 {
@@ -199,7 +216,10 @@ func (s *Server) syncPlay(ctx context.Context, play *playClient, token string, r
 	if err != nil || !keep {
 		return err
 	}
-	return play.acknowledge(ctx, sub.LineItems[0].ProductID, token)
+	if err := play.acknowledge(ctx, sub.LineItems[0].ProductID, token); err != nil {
+		return fmt.Errorf("%w: %w", errPlayUnacknowledged, err)
+	}
+	return nil
 }
 
 // applyPlay records the subscription and sets its entitlement. It says
@@ -237,11 +257,11 @@ func applyPlay(ctx context.Context, tx pgx.Tx, token string, sub *playSubscripti
 	}
 	until := sub.paidUntil()
 	switch {
-	case planID == nil:
-		// Nothing to give: an administrator sees it among the payments.
 	case until.IsZero() && entitlement != nil:
 		_, err = tx.Exec(ctx, `update entitlements set expires_at = least(expires_at, now()) where id = $1`, *entitlement)
 	case until.IsZero():
+	case planID == nil:
+		// Nothing to give: an administrator sees it among the payments.
 	case entitlement != nil:
 		_, err = tx.Exec(ctx, `update entitlements set plan_id = $2, expires_at = $3 where id = $1`, *entitlement, *planID, until)
 	default:
@@ -252,12 +272,15 @@ func applyPlay(ctx context.Context, tx pgx.Tx, token string, sub *playSubscripti
 	if err != nil {
 		return false, err
 	}
-	// The purchase it replaced stops counting, whatever comes of its own news.
-	_, err = tx.Exec(ctx, `
-		update entitlements set expires_at = least(expires_at, now())
-		where id = (select entitlement_id from play_subscriptions where purchase_token = $1)`, sub.LinkedToken)
-	if err != nil {
-		return false, err
+	// The purchase it replaced stops counting once this one gives something,
+	// whatever comes of its own news. Until then it is what was paid for.
+	if planID != nil && !until.IsZero() {
+		_, err = tx.Exec(ctx, `
+			update entitlements set expires_at = least(expires_at, now())
+			where id = (select entitlement_id from play_subscriptions where purchase_token = $1)`, sub.LinkedToken)
+		if err != nil {
+			return false, err
+		}
 	}
 	_, err = tx.Exec(ctx, `
 		insert into play_subscriptions (purchase_token, user_id, product_id, entitlement_id) values ($1, $2, $3, $4)
@@ -336,13 +359,17 @@ func (s *Server) ReportPlayPurchase(ctx context.Context, req ReportPlayPurchaseR
 	if token == "" || len(token) > maxPurchaseToken {
 		return nil, errPlayPurchase
 	}
-	if err := s.syncPlay(ctx, play, token, &u.id); err != nil {
-		var known *apiError
-		if !errors.As(err, &known) {
-			s.log.Error("asking google play failed", "err", err)
-			return nil, errPlayUnavailable
-		}
+	err = s.syncPlay(ctx, play, token, &u.id)
+	var known *apiError
+	switch {
+	case errors.Is(err, errPlayUnacknowledged):
+		// The plan is theirs already. The next report or notification retries.
+		s.log.Error("taking a google play purchase failed", "err", err)
+	case errors.As(err, &known):
 		return nil, err
+	case err != nil:
+		s.log.Error("asking google play failed", "err", err)
+		return nil, errPlayUnavailable
 	}
 	out, err := s.myPlan(ctx, s.db, u.id)
 	if err != nil {

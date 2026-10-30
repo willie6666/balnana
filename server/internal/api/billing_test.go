@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -158,6 +159,12 @@ func TestReceiptLimit(t *testing.T) {
 	if plan.Receipts.Used != 1 || *plan.Receipts.Limit != 1 {
 		t.Fatalf("%+v", plan)
 	}
+	// Bringing the deleted one back would be one too many, until there's room.
+	if code := c.errorCode(402, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil); code != "plan_limit" {
+		t.Fatal(code)
+	}
+	c.must(204, "DELETE", "/g/"+g.Token+"/expenses/"+second.Id, nil, nil)
+	c.must(200, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil, nil)
 }
 
 func TestRecurringLimit(t *testing.T) {
@@ -256,9 +263,16 @@ func TestSponsor(t *testing.T) {
 
 	// A sponsor without a plan stops counting, and another member can step in.
 	exec(t, s, `update entitlements set revoked_at = now() where user_id = $1`, anaUser.Id)
-	ben.must(200, "GET", base+"/plan", nil, &plan)
-	if plan.PlanName != "Free" || !plan.CanSponsor {
-		t.Fatalf("%+v", plan)
+	var lapsed GroupPlan
+	ben.must(200, "GET", base+"/plan", nil, &lapsed)
+	if lapsed.PlanName != "Free" || !lapsed.CanSponsor || lapsed.SponsorMemberId != nil {
+		t.Fatalf("%+v", lapsed)
+	}
+	// To the one who stopped paying it stays theirs to stop.
+	var own GroupPlan
+	c.must(200, "GET", base+"/plan", nil, &own)
+	if own.SponsorMemberId == nil || *own.SponsorMemberId != g.Members[0].Id {
+		t.Fatalf("%+v", own)
 	}
 	ben.must(200, "PUT", base+"/sponsor", nil, &plan)
 	if plan.SponsorMemberId == nil || *plan.SponsorMemberId != g.Members[1].Id {
@@ -379,6 +393,42 @@ func TestKofiPaymentsReachAccounts(t *testing.T) {
 	}
 }
 
+func TestKofiPaymentOutlivesItsPlan(t *testing.T) {
+	c, f, s := billingServer(t)
+	kofiProducts(t, s)
+	c.kofiOK(map[string]any{"message_id": "early", "email": "ana@example.test", "amount": "10.00"})
+	exec(t, s, `delete from plan_products`)
+	exec(t, s, `delete from plans where id = 'plus'`)
+
+	// It gives nothing, and doesn't stand in the way of the account.
+	register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
+	if p := myPlanOf(c); p.Paid {
+		t.Fatalf("%+v", p)
+	}
+	if state, who := paymentState(t, s, "early"); state != "unclaimed" || who != nil {
+		t.Fatal(state, who)
+	}
+}
+
+func TestDeletingAPlanShowsItsWaitingPayments(t *testing.T) {
+	c, s, _ := adminClient(t, map[string]string{
+		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_KOFI_TOKEN": kofiTestToken,
+	})
+	admin := c.asAdmin(setUp(c))
+	kofiProducts(t, s)
+	c.kofiOK(map[string]any{"message_id": "early", "amount": "10.00"})
+	var catalog PlanCatalog
+	admin.must(200, "GET", "/admin/plans", nil, &catalog)
+	kept := catalog
+	kept.Plans = slices.DeleteFunc(slices.Clone(catalog.Plans), func(p Plan) bool { return p.Id == "plus" })
+	kept.Products = []PlanProduct{}
+	admin.must(200, "PUT", "/admin/plans", kept, nil)
+	if state, _ := paymentState(t, s, "early"); state != "unmatched" {
+		t.Fatal(state)
+	}
+}
+
 func TestKofiVerifiedAddressClaims(t *testing.T) {
 	c, f, s := billingServer(t)
 	kofiProducts(t, s)
@@ -455,6 +505,19 @@ func TestAdminPlans(t *testing.T) {
 	withEmpty := catalog
 	withEmpty.Products = []PlanProduct{{Provider: Kofi, PlanId: "gold", Days: 35}}
 	admin.errorCode(400, "PUT", "/admin/plans", withEmpty)
+	// However the amount is written, it is the same product.
+	repeated := catalog
+	repeated.Products = []PlanProduct{
+		{Provider: Kofi, PlanId: "gold", Days: 35, MinAmount: ptr("3"), Currency: ptr("USD")},
+		{Provider: Kofi, PlanId: "gold", Days: 35, MinAmount: ptr("3.00"), Currency: ptr("USD")},
+	}
+	if code := admin.errorCode(400, "PUT", "/admin/plans", repeated); code != "invalid_plan" {
+		t.Fatal(code)
+	}
+	admin.must(200, "GET", "/admin/plans", nil, &catalog)
+	if len(catalog.Products) != 1 {
+		t.Fatalf("a refused change must change nothing: %+v", catalog)
+	}
 
 	// A plan someone has stays until they don't.
 	u := register(c, "ana@example.test", "Ana")

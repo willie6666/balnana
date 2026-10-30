@@ -973,11 +973,22 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 					return err
 				}
 				var amount int64
-				if err := tx.QueryRow(ctx, `select amount from expenses where id = $1`, id).Scan(&amount); err != nil {
+				var photo bool
+				err := tx.QueryRow(ctx, `
+					select amount, exists (select 1 from receipts where expense_id = $1)
+					from expenses where id = $1`, id).Scan(&amount, &photo)
+				if err != nil {
 					return err
 				}
 				if err := checkGroupTotal(ctx, tx, g.id, amount, nil); err != nil {
 					return err
+				}
+				// Deleting took its photo off the count, and something may have
+				// taken the room since.
+				if photo {
+					if err := s.checkReceiptRoom(ctx, tx, g); err != nil {
+						return err
+					}
 				}
 			}
 			changed = true

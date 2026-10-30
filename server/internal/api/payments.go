@@ -187,6 +187,7 @@ func matchProduct(ctx context.Context, q querier, p payment) (planID *string, da
 // payment runs from when it was paid, so that renewing a little early adds
 // nothing; a one-off adds to what is left. It needs the account held, so that
 // two payments can't both start an entitlement, and gives a payment only once.
+// One whose plan was deleted gives nothing until an administrator picks another.
 func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) error {
 	var provider, planID string
 	var days int
@@ -194,7 +195,7 @@ func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) erro
 	var paidAt time.Time
 	err := tx.QueryRow(ctx, `
 		select provider, plan_id, days, recurring, paid_at from payment_events
-		where id = $1 and state <> 'applied' for update`, paymentID).
+		where id = $1 and state <> 'applied' and plan_id is not null for update`, paymentID).
 		Scan(&provider, &planID, &days, &recurring, &paidAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil

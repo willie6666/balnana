@@ -90,8 +90,6 @@ func validateCatalog(c *PlanCatalog) error {
 	if defaults != 1 {
 		return errInvalidPlan
 	}
-	type key struct{ provider, product, amount, currency string }
-	seen := map[key]bool{}
 	for i := range c.Products {
 		p := &c.Products[i]
 		p.Product = strings.TrimSpace(p.Product)
@@ -106,17 +104,6 @@ func validateCatalog(c *PlanCatalog) error {
 		if p.Product == "" && (p.Provider != Kofi || p.MinAmount == nil || p.Currency == nil) {
 			return errInvalidPlan
 		}
-		k := key{provider: string(p.Provider), product: strings.ToLower(p.Product)}
-		if p.MinAmount != nil {
-			k.amount = *p.MinAmount
-		}
-		if p.Currency != nil {
-			k.currency = *p.Currency
-		}
-		if seen[k] {
-			return errInvalidPlan
-		}
-		seen[k] = true
 	}
 	return nil
 }
@@ -160,6 +147,10 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 			_, err := tx.Exec(ctx, `
 				insert into plan_products (provider, product, plan_id, days, min_amount, currency)
 				values ($1, $2, $3, $4, $5::numeric, $6)`, string(p.Provider), p.Product, p.PlanId, p.Days, p.MinAmount, p.Currency)
+			// The index knows the same product however its amount is written.
+			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return errInvalidPlan
+			}
 			if err != nil {
 				return err
 			}
@@ -168,6 +159,11 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23503" {
 			return conflict("plan_in_use")
 		}
+		if err != nil {
+			return err
+		}
+		// A payment waiting for a plan that is gone needs an administrator now.
+		_, err = tx.Exec(ctx, `update payment_events set state = 'unmatched' where state = 'unclaimed' and plan_id is null`)
 		if err != nil {
 			return err
 		}

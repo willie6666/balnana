@@ -46,8 +46,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     } on ApiException {
       return;
     }
-    if (play == null) return;
+    if (play == null || !mounted) return;
     final store = ref.read(googlePlayProvider);
+    final api = ref.read(balnanaApiProvider);
     final offers = await store.offers(play.products);
     if (!mounted) return;
     setState(() => _offers = offers);
@@ -56,17 +57,17 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final held = await store.purchases();
     if (!mounted) return;
     try {
-      await _report(held);
+      await _report(api, held);
     } on ApiException {
       return;
     }
   }
 
   /// Tells the server about purchases, and returns whether they gave a plan.
-  Future<bool> _report(List<String> tokens) async {
-    if (tokens.isEmpty) return false;
-    final api = ref.read(balnanaApiProvider);
-    if (api == null) return false;
+  /// [api] is read before waiting for Play: the page may close meanwhile, and
+  /// what was bought still has to be reported.
+  Future<bool> _report(BalnanaApi? api, List<String> tokens) async {
+    if (tokens.isEmpty || api == null) return false;
     var paid = false;
     for (final token in tokens) {
       paid = (await api.reportPlayPurchase(token)).paid;
@@ -79,16 +80,17 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final store = ref.read(googlePlayProvider);
+    final api = ref.read(balnanaApiProvider);
     void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
     setState(() => _buying = true);
     try {
       final tokens = await store.buy(offer, play.accountId);
-      if (tokens.isNotEmpty && !await _report(tokens)) tell(l10n.planPlayPending);
+      if (tokens.isNotEmpty && !await _report(api, tokens)) tell(l10n.planPlayPending);
     } on PlayException catch (e) {
       if (e.owned) {
         // Held but not known here: likely another account's, which the server says.
         try {
-          await _report(await store.purchases());
+          await _report(api, await store.purchases());
         } on ApiException catch (e) {
           tell(errorMessage(l10n, e));
         }

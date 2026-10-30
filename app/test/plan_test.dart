@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:balnana/core/errors.dart';
 import 'package:balnana/core/google_play.dart';
 import 'package:balnana/core/server.dart';
@@ -27,11 +29,14 @@ const _offer = PlayOffer(productId: 'plus_monthly', offerToken: 'offer', name: '
 const _play = PlayBilling(accountId: 'hash', packageName: 'me.devvillie.balnana', products: ['plus_monthly']);
 
 class _FakePlay extends GooglePlay {
-  _FakePlay({this.held = const [], this.bought = const [], this.owned = false});
+  _FakePlay({this.held = const [], this.bought = const [], this.owned = false, this.paying});
 
   final List<String> held;
   final List<String> bought;
   final bool owned;
+
+  /// Holds a purchase in Play's own sheet until it completes.
+  final Completer<void>? paying;
   String? boughtFor;
 
   @override
@@ -46,6 +51,7 @@ class _FakePlay extends GooglePlay {
   Future<List<String>> buy(PlayOffer offer, String account) async {
     if (owned) throw const PlayException(owned: true);
     boughtFor = account;
+    await paying?.future;
     return bought;
   }
 }
@@ -73,7 +79,7 @@ Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, Balnana
       overrides: [
         myPlanProvider.overrideWith((ref) async => plan),
         if (store != null) googlePlayProvider.overrideWithValue(store),
-        if (api != null) balnanaApiProvider.overrideWithValue(api),
+        balnanaApiProvider.overrideWithValue(api),
         serverInfoProvider.overrideWithValue(
           AsyncValue.data(
             ServerInfo(
@@ -210,6 +216,26 @@ void main() {
 
       expect(store.boughtFor, 'hash');
       expect(api.reported, ['token']);
+    });
+
+    testWidgets('a purchase is reported after the page has closed', (tester) async {
+      final paying = Completer<void>();
+      final api = _FakeApi();
+      await _pump(tester, withPlay(_play), store: _FakePlay(bought: ['token'], paying: paying), api: api);
+
+      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.pump();
+      tester.state<NavigatorState>(find.byType(Navigator)).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PlanPage), findsNothing);
+
+      paying.complete();
+      await tester.pumpAndSettle();
+
+      expect(api.reported, ['token']);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('changing your mind reports nothing', (tester) async {
