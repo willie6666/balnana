@@ -47,6 +47,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 		writeError(w, http.StatusNotFound, "not_found")
 	})
 	mux.HandleFunc("POST "+BasePath+"/webhooks/kofi", s.KofiWebhook)
+	mux.HandleFunc("POST "+BasePath+"/webhooks/play", s.PlayWebhook)
 	mux.HandleFunc("GET /healthz", s.Healthz)
 	mux.HandleFunc("GET /.well-known/assetlinks.json", s.assetLinks)
 	mux.Handle("/", web)

@@ -2958,6 +2958,68 @@ class AppLocalizationsZh extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return '使用 $name 的方案';
   }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play 订阅不会随账号一起结束，请先到 Google Play 取消。';
+
+  @override
+  String get planPlayManage => '管理订阅';
+
+  @override
+  String get planPlayManageHelp => '到 Google Play 更改或取消';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 个月', one: '月');
+    return '每 $_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play 无法完成这笔购买。';
+
+  @override
+  String get planPlayPending => '付款仍在处理中，完成后方案才会开始。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play 查不到这笔购买。';
+
+  @override
+  String get errorPlayOtherAccount => '此订阅属于另一个账号。请登录该账号，或到 Google Play 取消。';
+
+  @override
+  String get errorPlayUnavailable => '无法连接 Google Play，请稍后再试。';
+
+  @override
+  String get adminPlayPackage => 'Google Play 软件包名称';
+
+  @override
+  String get adminPlayPackageHelp => '应用在 Google Play 上的 ID。与下方的服务账号一起设置后，即开启 Google Play 订阅。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play 服务账号';
+
+  @override
+  String get adminPlayServiceAccountHelp => '服务账号的 JSON 密钥，需在 Play Console 中有查看和管理订单与订阅的权限。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub 推送账号';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub 用来签署推送的服务账号邮箱。未设置时，续订要等有人打开方案页才会收到。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub 推送端点，受众也填此网址：$url';
+  }
+
+  @override
+  String get adminProductProvider => '付款方式';
+
+  @override
+  String get adminProductPlayId => '产品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => '与 Play Console 中填写的相同。每笔付款的到期时间由 Google Play 决定，因此无需设置天数。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -5912,4 +5974,66 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String groupSponsoredBy(String name) {
     return '使用 $name 的方案';
   }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play 訂閱不會隨帳號一起結束，請先到 Google Play 取消。';
+
+  @override
+  String get planPlayManage => '管理訂閱';
+
+  @override
+  String get planPlayManageHelp => '到 Google Play 變更或取消';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 個月', one: '月');
+    return '每 $_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play 無法完成這筆購買。';
+
+  @override
+  String get planPlayPending => '付款仍在處理中，完成後方案才會開始。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play 查無這筆購買。';
+
+  @override
+  String get errorPlayOtherAccount => '這份訂閱屬於另一個帳號。請登入該帳號，或到 Google Play 取消。';
+
+  @override
+  String get errorPlayUnavailable => '無法連上 Google Play，請稍後再試。';
+
+  @override
+  String get adminPlayPackage => 'Google Play 套件名稱';
+
+  @override
+  String get adminPlayPackageHelp => 'App 在 Google Play 上的 ID。與下方的服務帳號一起設定後，就會開啟 Google Play 訂閱。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play 服務帳號';
+
+  @override
+  String get adminPlayServiceAccountHelp => '服務帳號的 JSON 金鑰，需在 Play Console 有檢視及管理訂單與訂閱的權限。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub 推送帳號';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub 用來簽署推送的服務帳號 email。沒有設定時，續訂要等有人開啟方案頁才會收到。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub 推送端點，目標對象也填這個網址：$url';
+  }
+
+  @override
+  String get adminProductProvider => '付款方式';
+
+  @override
+  String get adminProductPlayId => '產品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => '與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。';
 }

@@ -93,6 +93,15 @@ android {
         manifestPlaceholders["balnanaLinkPath"] = linkServer?.path?.trimEnd('/') ?: ""
     }
 
+    // One app, built for each of the places it comes from. Google Play wants
+    // its own billing, whose library is proprietary; F-Droid won't carry that.
+    // Plain flutter commands build foss (default-flavor in pubspec.yaml).
+    flavorDimensions += "store"
+    productFlavors {
+        create("play") { dimension = "store" }
+        create("foss") { dimension = "store" }
+    }
+
     signingConfigs {
         if (hasReleaseKey) {
             create("release") {
@@ -133,5 +142,7 @@ dependencies {
     // Firebase SDK in the app. Phones with a distributor such as ntfy use it
     // instead.
     implementation("org.unifiedpush.android:embedded-fcm-distributor:3.1.0")
+    // Spelled as a flavor's own: F-Droid's scanner accepts it only that way.
+    "playImplementation"("com.android.billingclient:billing:9.1.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

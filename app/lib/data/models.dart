@@ -1068,6 +1068,34 @@ class PlanUsage {
   final int used;
 }
 
+/// What the server sells on Google Play, for an account that can buy it.
+class PlayBilling {
+  const PlayBilling({
+    required this.accountId,
+    required this.packageName,
+    this.products = const [],
+    this.subscribed = const [],
+  });
+
+  factory PlayBilling.fromJson(Object? data) {
+    final json = _object(data);
+    return PlayBilling(
+      accountId: _req(json, 'accountId'),
+      packageName: _req(json, 'packageName'),
+      products: [...?_opt<List<Object?>>(json, 'products')?.whereType<String>()],
+      subscribed: [...?_opt<List<Object?>>(json, 'subscribed')?.whereType<String>()],
+    );
+  }
+
+  /// Goes with a purchase, for Google to say whose it is.
+  final String accountId;
+  final String packageName;
+  final List<String> products;
+
+  /// The products the account has a running subscription to.
+  final List<String> subscribed;
+}
+
 /// The signed-in account's plan and how much of it is used.
 class MyPlan {
   const MyPlan({
@@ -1079,6 +1107,7 @@ class MyPlan {
     this.paymentEmails = const [],
     this.receiptsPerGroup,
     this.recurringPerGroup,
+    this.play,
   });
 
   factory MyPlan.fromJson(Object? data) {
@@ -1092,6 +1121,7 @@ class MyPlan {
       paymentEmails: [...?_opt<List<Object?>>(json, 'paymentEmails')?.whereType<String>()],
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
+      play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
     );
   }
 
@@ -1113,6 +1143,9 @@ class MyPlan {
 
   /// Null means no limit.
   final int? recurringPerGroup;
+
+  /// Null when the server doesn't sell on Google Play.
+  final PlayBilling? play;
 }
 
 /// The limits that apply to a group and how much of them is used.

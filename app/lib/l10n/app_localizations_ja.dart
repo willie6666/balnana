@@ -2970,4 +2970,66 @@ class AppLocalizationsJa extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return '$nameのプランを使用';
   }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play の定期購入はアカウントを削除しても終了しません。先に Google Play で解約してください。';
+
+  @override
+  String get planPlayManage => '定期購入を管理';
+
+  @override
+  String get planPlayManageHelp => 'Google Play で変更または解約';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months か月ごと', one: '毎月');
+    return '$_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play で購入を完了できませんでした。';
+
+  @override
+  String get planPlayPending => 'お支払いを処理中です。完了するとプランが始まります。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play でこの購入を確認できません。';
+
+  @override
+  String get errorPlayOtherAccount => 'この定期購入は別のアカウントのものです。そのアカウントでログインするか、Google Play で解約してください。';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play に接続できません。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get adminPlayPackage => 'Google Play のパッケージ名';
+
+  @override
+  String get adminPlayPackageHelp => 'Google Play でのアプリの ID。下のサービスアカウントと合わせて設定すると Google Play の定期購入が有効になります。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play サービスアカウント';
+
+  @override
+  String get adminPlayServiceAccountHelp => 'Play Console で注文と定期購入の表示・管理ができるサービスアカウントの JSON キー。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub プッシュアカウント';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub が配信の署名に使うサービスアカウントのメールアドレス。未設定だと、更新は誰かがプランページを開くまで届きません。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub のプッシュエンドポイント（オーディエンスも同じ）：$url';
+  }
+
+  @override
+  String get adminProductProvider => '支払い方法';
+
+  @override
+  String get adminProductPlayId => '商品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => 'Play Console の表記のとおりに入力します。各支払いの終了日は Google Play が決めるため、日数の設定はありません。';
 }

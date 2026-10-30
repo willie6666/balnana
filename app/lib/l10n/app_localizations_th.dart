@@ -3044,4 +3044,77 @@ class AppLocalizationsTh extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'ใช้แพ็กเกจของ $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'การสมัครสมาชิก Google Play ไม่สิ้นสุดพร้อมบัญชีของคุณ โปรดยกเลิกใน Google Play ก่อน';
+
+  @override
+  String get planPlayManage => 'จัดการการสมัครสมาชิก';
+
+  @override
+  String get planPlayManageHelp => 'เปลี่ยนหรือยกเลิกใน Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'ทุก $months เดือน',
+      one: 'ต่อเดือน',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play ทำรายการซื้อไม่สำเร็จ';
+
+  @override
+  String get planPlayPending => 'กำลังดำเนินการชำระเงินของคุณ แพ็กเกจจะเริ่มเมื่อเสร็จสิ้น';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play ไม่รู้จักการซื้อนี้';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'การสมัครสมาชิกนี้เป็นของบัญชีอื่น โปรดลงชื่อเข้าใช้บัญชีนั้น หรือยกเลิกใน Google Play';
+
+  @override
+  String get errorPlayUnavailable => 'ติดต่อ Google Play ไม่ได้ โปรดลองอีกครั้งในอีกสักครู่';
+
+  @override
+  String get adminPlayPackage => 'ชื่อแพ็กเกจ Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'ID ของแอปใน Google Play เมื่อตั้งค่าพร้อมบัญชีบริการด้านล่าง จะเปิดการสมัครสมาชิก Google Play';
+
+  @override
+  String get adminPlayServiceAccount => 'บัญชีบริการ Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'คีย์ JSON ของบัญชีบริการที่ดูและจัดการคำสั่งซื้อและการสมัครสมาชิกใน Play Console ได้';
+
+  @override
+  String get adminPlayPushAccount => 'บัญชีพุช Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'อีเมลของบัญชีบริการที่ Pub/Sub ใช้ลงนามการส่ง หากไม่ตั้งค่า การต่ออายุจะมาถึงเมื่อมีคนเปิดหน้าแพ็กเกจเท่านั้น';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'ปลายทางพุชของ Pub/Sub และเป็นกลุ่มเป้าหมายด้วย: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'ชำระผ่าน';
+
+  @override
+  String get adminProductPlayId => 'ID ผลิตภัณฑ์';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'ตามที่เขียนใน Play Console Google Play เป็นผู้บอกว่าการชำระเงินแต่ละครั้งสิ้นสุดเมื่อใด จึงไม่ต้องตั้งจำนวนวัน';
 }

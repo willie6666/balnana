@@ -26,7 +26,9 @@ info:
 
     Billing: on a server that charges, adding past a plan's limit answers
     402 `plan_limit`, with the limit in `params` (`limit`, `max`). Ko-fi posts
-    its payments as a form to /webhooks/kofi, which this contract leaves out.
+    its payments as a form to /webhooks/kofi, and Google's Pub/Sub pushes
+    Google Play's notifications to /webhooks/play. This contract leaves both
+    out.
 
     Administration (/admin/...): one password, set once at /admin/setup
     while server-info says `setupRequired`. /admin/login trades it for a
@@ -355,6 +357,32 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/play/purchases:
+    post:
+      operationId: reportPlayPurchase
+      summary: Tell the server of a Google Play subscription
+      description: |
+        The server asks Google about the token rather than taking the app's
+        word for anything. Reporting a purchase again changes nothing, and
+        brings in a renewal the server hasn't heard of. `invalid_purchase` is
+        a token Google doesn't know, `play_other_account` a purchase of
+        another account, and `play_unavailable` means Google couldn't be
+        asked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayPurchaseRequest"
+      responses:
+        "200":
+          description: The account's plan now
           content:
             application/json:
               schema:
@@ -3170,7 +3198,7 @@ components:
         days:
           type: integer
           minimum: 1
-          description: How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late.
+          description: How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late. Google Play says for itself when each payment ends, so this is ignored for it.
         minAmount:
           type: string
           description: A decimal number, such as "3.00".
@@ -3330,6 +3358,34 @@ components:
           description: Addresses that payments reach the account by, besides its own.
           items:
             type: string
+        play:
+          $ref: "#/components/schemas/PlayBilling"
+    PlayBilling:
+      type: object
+      description: What can be bought through Google Play. Left out when nothing can.
+      required: [accountId, packageName, products, subscribed]
+      properties:
+        accountId:
+          type: string
+          description: Give Google this with a purchase, so that it reaches this account.
+        packageName:
+          type: string
+        products:
+          type: array
+          description: Subscription product ids.
+          items:
+            type: string
+        subscribed:
+          type: array
+          description: The products the account has a subscription to.
+          items:
+            type: string
+    PlayPurchaseRequest:
+      type: object
+      required: [purchaseToken]
+      properties:
+        purchaseToken:
+          type: string
     PaymentEmailRequest:
       type: object
       required: [email]

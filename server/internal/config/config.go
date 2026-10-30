@@ -7,6 +7,7 @@ import (
 	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -171,10 +172,24 @@ type Config struct {
 	KofiToken string
 	// KofiURL is the page people pay at; nil offers no way there.
 	KofiURL *url.URL
+	// PlayPackage is the Android app's package on Google Play. With
+	// PlayServiceAccount, it turns on Google Play subscriptions.
+	PlayPackage string
+	// PlayServiceAccount is the key the server reads purchases with.
+	PlayServiceAccount *ServiceAccount
+	// PlayPushAccount is the service account Pub/Sub signs Google Play's
+	// notifications as; empty turns them away.
+	PlayPushAccount string
 
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
 	AndroidCertSHA256 []string
+}
+
+// ServiceAccount is what a Google Cloud service account's JSON key holds.
+type ServiceAccount struct {
+	Email      string `json:"client_email"`
+	PrivateKey string `json:"private_key"`
 }
 
 // Setting is one setting an administrator can change at /admin.
@@ -215,6 +230,9 @@ var Managed = []Setting{
 	{Key: "BALNANA_BILLING_ENABLED", Default: "false"},
 	{Key: "BALNANA_KOFI_URL"},
 	{Key: "BALNANA_KOFI_TOKEN", Secret: true},
+	{Key: "BALNANA_PLAY_PACKAGE"},
+	{Key: "BALNANA_PLAY_SERVICE_ACCOUNT", Secret: true},
+	{Key: "BALNANA_PLAY_PUSH_ACCOUNT"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
@@ -366,6 +384,8 @@ func load(getenv func(string) string) (*Config, error) {
 		LinkGroups:      e.managedBool("BALNANA_LINK_GROUPS"),
 		Billing:         e.managedBool("BALNANA_BILLING_ENABLED"),
 		KofiToken:       e.managed("BALNANA_KOFI_TOKEN"),
+		PlayPackage:     e.managed("BALNANA_PLAY_PACKAGE"),
+		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.int("BALNANA_SMTP_PORT", 587),
@@ -419,6 +439,15 @@ func load(getenv func(string) string) (*Config, error) {
 			e.fail("BALNANA_KOFI_URL", "BALNANA_KOFI_URL must be an absolute https URL, got %q", kofiURL)
 		} else {
 			c.KofiURL = u
+		}
+	}
+
+	if key := e.managed("BALNANA_PLAY_SERVICE_ACCOUNT"); key != "" {
+		var account ServiceAccount
+		if err := json.Unmarshal([]byte(key), &account); err != nil || account.Email == "" || account.PrivateKey == "" {
+			e.fail("BALNANA_PLAY_SERVICE_ACCOUNT", "BALNANA_PLAY_SERVICE_ACCOUNT must be a service account's JSON key")
+		} else {
+			c.PlayServiceAccount = &account
 		}
 	}
 

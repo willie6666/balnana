@@ -204,12 +204,12 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
                     [
                       providerName(p.provider),
                       planName(p.planId),
-                      l10n.adminPlanDays(p.days),
+                      if (p.provider != 'play') l10n.adminPlanDays(p.days),
                       if (p.product.isNotEmpty && p.minAmount != null)
                         '${p.minAmount} ${p.currency ?? ''}'.trim(),
                     ].join(' · '),
                   ),
-                  onTap: _busy || p.provider != 'kofi' ? null : () => _editProduct(p),
+                  onTap: _busy ? null : () => _editProduct(p),
                   trailing: IconButton(
                     tooltip: l10n.commonRemove,
                     icon: const Icon(Icons.delete_outline),
@@ -411,6 +411,9 @@ class _ProductDialogState extends State<_ProductDialog> {
   late final _minAmount = TextEditingController(text: widget.product?.minAmount);
   late final _currency = TextEditingController(text: widget.product?.currency);
   late String? _plan = widget.product?.planId;
+  late String _provider = widget.product?.provider ?? 'kofi';
+
+  bool get _play => _provider == 'play';
 
   List<Plan> get _plans => [...widget.plans.where((p) => !p.isDefault)];
 
@@ -429,12 +432,12 @@ class _ProductDialogState extends State<_ProductDialog> {
     Navigator.pop(
       context,
       PlanProduct(
-        provider: 'kofi',
+        provider: _provider,
         product: _name.text.trim(),
         planId: _plan!,
         days: int.parse(_days.text.trim()),
-        minAmount: amount.isEmpty ? null : amount,
-        currency: currency.isEmpty ? null : currency,
+        minAmount: _play || amount.isEmpty ? null : amount,
+        currency: _play || currency.isEmpty ? null : currency,
       ),
     );
   }
@@ -453,13 +456,28 @@ class _ProductDialogState extends State<_ProductDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              DropdownButtonFormField<String>(
+                initialValue: _provider,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l10n.adminProductProvider),
+                items: [
+                  for (final p in const ['kofi', 'play'])
+                    DropdownMenuItem(value: p, child: Text(providerName(p))),
+                ],
+                // A product's provider is part of what it is.
+                onChanged: widget.product != null
+                    ? null
+                    : (v) => setState(() => _provider = v!),
+              ),
+              gap,
               TextFormField(
                 controller: _name,
                 decoration: InputDecoration(
-                  labelText: l10n.adminProductName,
-                  helperText: l10n.adminProductNameHelp,
+                  labelText: _play ? l10n.adminProductPlayId : l10n.adminProductName,
+                  helperText: _play ? l10n.adminProductPlayIdHelp : l10n.adminProductNameHelp,
                   helperMaxLines: 4,
                 ),
+                validator: (v) => _play && (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
               ),
               gap,
               DropdownButtonFormField<String>(
@@ -470,43 +488,46 @@ class _ProductDialogState extends State<_ProductDialog> {
                 onChanged: (v) => setState(() => _plan = v),
                 validator: (v) => v == null ? l10n.errorRequired : null,
               ),
-              gap,
-              TextFormField(
-                controller: _days,
-                keyboardType: TextInputType.number,
-                inputFormatters: _digits,
-                decoration: InputDecoration(
-                  labelText: l10n.adminProductDays,
-                  helperText: l10n.adminProductDaysHelp,
-                  helperMaxLines: 4,
+              // Google Play says when each payment ends, and in what money.
+              if (!_play) ...[
+                gap,
+                TextFormField(
+                  controller: _days,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: _digits,
+                  decoration: InputDecoration(
+                    labelText: l10n.adminProductDays,
+                    helperText: l10n.adminProductDaysHelp,
+                    helperMaxLines: 4,
+                  ),
+                  validator: (v) => _checkNumber(l10n, v, min: 1, max: _maxDays),
                 ),
-                validator: (v) => _checkNumber(l10n, v, min: 1, max: _maxDays),
-              ),
-              gap,
-              TextFormField(
-                controller: _minAmount,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(labelText: l10n.adminProductMinAmount),
-                validator: (v) {
-                  final amount = (v ?? '').trim();
-                  if (amount.isEmpty) return needsAmount() ? l10n.errorRequired : null;
-                  return _amount.hasMatch(amount) ? null : l10n.adminInvalidValue;
-                },
-              ),
-              gap,
-              TextFormField(
-                controller: _currency,
-                textCapitalization: TextCapitalization.characters,
-                autocorrect: false,
-                decoration: InputDecoration(labelText: l10n.adminProductCurrency),
-                validator: (v) {
-                  final currency = (v ?? '').trim().toUpperCase();
-                  if (currency.isEmpty) {
-                    return needsAmount() || _minAmount.text.trim().isNotEmpty ? l10n.errorRequired : null;
-                  }
-                  return _currencyCode.hasMatch(currency) ? null : l10n.adminInvalidValue;
-                },
-              ),
+                gap,
+                TextFormField(
+                  controller: _minAmount,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(labelText: l10n.adminProductMinAmount),
+                  validator: (v) {
+                    final amount = (v ?? '').trim();
+                    if (amount.isEmpty) return needsAmount() ? l10n.errorRequired : null;
+                    return _amount.hasMatch(amount) ? null : l10n.adminInvalidValue;
+                  },
+                ),
+                gap,
+                TextFormField(
+                  controller: _currency,
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  decoration: InputDecoration(labelText: l10n.adminProductCurrency),
+                  validator: (v) {
+                    final currency = (v ?? '').trim().toUpperCase();
+                    if (currency.isEmpty) {
+                      return needsAmount() || _minAmount.text.trim().isNotEmpty ? l10n.errorRequired : null;
+                    }
+                    return _currencyCode.hasMatch(currency) ? null : l10n.adminInvalidValue;
+                  },
+                ),
+              ],
             ],
           ),
         ),

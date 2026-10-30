@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -43,6 +44,7 @@ type settings struct {
 	cfg   *config.Config
 	mail  mail.Sender // nil when the server has no email
 	oauth map[string]*oauthProvider
+	play  *playClient // nil when the server sells nothing through Google Play
 }
 
 var _ StrictServerInterface = (*Server)(nil)
@@ -75,6 +77,7 @@ func (s *Server) apply(cfg *config.Config) {
 			st.mail = m
 		}
 	}
+	st.play = newPlayClient(cfg, strings.TrimSuffix(cfg.PublicURL.String(), "/")+playPath)
 	s.settings.Store(st)
 }
 

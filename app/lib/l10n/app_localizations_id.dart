@@ -3080,4 +3080,77 @@ class AppLocalizationsId extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Memakai paket $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Langganan Google Play tidak berakhir bersama akun Anda. Batalkan dulu di Google Play.';
+
+  @override
+  String get planPlayManage => 'Kelola langganan';
+
+  @override
+  String get planPlayManageHelp => 'Ubah atau batalkan di Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'setiap $months bulan',
+      one: 'per bulan',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play tidak dapat menyelesaikan pembelian.';
+
+  @override
+  String get planPlayPending => 'Pembayaran Anda masih diproses. Paket dimulai setelah selesai.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play tidak mengenali pembelian ini.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Langganan ini milik akun lain. Masuk ke akun itu, atau batalkan di Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Tidak dapat menghubungi Google Play. Coba lagi sebentar lagi.';
+
+  @override
+  String get adminPlayPackage => 'Nama paket Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'ID aplikasi di Google Play. Bersama akun layanan di bawah, ini mengaktifkan langganan Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Akun layanan Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Kunci JSON akun layanan yang dapat melihat dan mengelola pesanan serta langganan di Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Akun push Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Email akun layanan yang dipakai Pub/Sub untuk menandatangani pengiriman. Tanpanya, perpanjangan baru tiba saat seseorang membuka halaman paket.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Endpoint push Pub/Sub, sekaligus audiensnya: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Dibayar lewat';
+
+  @override
+  String get adminProductPlayId => 'ID produk';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
 }

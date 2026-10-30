@@ -564,6 +564,13 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       gap,
       _note(l10n.adminKofiWebhook('$publicUrl$apiBasePath/webhooks/kofi')),
       _textField('BALNANA_KOFI_TOKEN'),
+      gap,
+      _textField('BALNANA_PLAY_PACKAGE', keyboard: TextInputType.url),
+      gap,
+      _textField('BALNANA_PLAY_SERVICE_ACCOUNT'),
+      gap,
+      _note(l10n.adminPlayWebhook('$publicUrl$apiBasePath/webhooks/play')),
+      _textField('BALNANA_PLAY_PUSH_ACCOUNT', keyboard: TextInputType.emailAddress),
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
@@ -898,6 +905,9 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_BILLING_ENABLED' => l10n.adminBillingOn,
   'BALNANA_KOFI_URL' => l10n.adminKofiUrl,
   'BALNANA_KOFI_TOKEN' => l10n.adminKofiToken,
+  'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackage,
+  'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccount,
+  'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccount,
   _ => key,
 };
 
@@ -918,6 +928,9 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_BILLING_ENABLED' => l10n.adminBillingOnHelp,
   'BALNANA_KOFI_URL' => l10n.adminKofiUrlHelp,
   'BALNANA_KOFI_TOKEN' => l10n.adminKofiTokenHelp,
+  'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackageHelp,
+  'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccountHelp,
+  'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccountHelp,
   _ => null,
 };
 

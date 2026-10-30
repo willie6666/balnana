@@ -2971,4 +2971,68 @@ class AppLocalizationsKo extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return '$name의 요금제 사용 중';
   }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play 구독은 계정을 삭제해도 끝나지 않습니다. 먼저 Google Play에서 해지하세요.';
+
+  @override
+  String get planPlayManage => '구독 관리';
+
+  @override
+  String get planPlayManageHelp => 'Google Play에서 변경 또는 해지';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months개월마다', one: '매월');
+    return '$_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play에서 구매를 완료하지 못했습니다.';
+
+  @override
+  String get planPlayPending => '결제를 처리 중입니다. 완료되면 요금제가 시작됩니다.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play에서 이 구매를 확인할 수 없습니다.';
+
+  @override
+  String get errorPlayOtherAccount => '이 구독은 다른 계정의 것입니다. 그 계정으로 로그인하거나 Google Play에서 해지하세요.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play에 연결할 수 없습니다. 잠시 후 다시 시도하세요.';
+
+  @override
+  String get adminPlayPackage => 'Google Play 패키지 이름';
+
+  @override
+  String get adminPlayPackageHelp => 'Google Play에서의 앱 ID입니다. 아래 서비스 계정과 함께 설정하면 Google Play 구독이 켜집니다.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play 서비스 계정';
+
+  @override
+  String get adminPlayServiceAccountHelp => 'Play Console에서 주문과 구독을 보고 관리할 수 있는 서비스 계정의 JSON 키입니다.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub 푸시 계정';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Pub/Sub가 전송에 서명할 때 쓰는 서비스 계정 이메일입니다. 없으면 갱신은 누군가 요금제 페이지를 열 때만 도착합니다.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub 푸시 엔드포인트(대상도 동일): $url';
+  }
+
+  @override
+  String get adminProductProvider => '결제 수단';
+
+  @override
+  String get adminProductPlayId => '상품 ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Play Console에 적힌 그대로 입력하세요. 각 결제의 종료일은 Google Play가 정하므로 일수는 설정하지 않습니다.';
 }

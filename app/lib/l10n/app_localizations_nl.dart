@@ -3103,4 +3103,77 @@ class AppLocalizationsNl extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Gebruikt het abonnement van $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Een Google Play-abonnement stopt niet met je account. Zeg het eerst op via Google Play.';
+
+  @override
+  String get planPlayManage => 'Abonnement beheren';
+
+  @override
+  String get planPlayManageHelp => 'Wijzigen of opzeggen via Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'elke $months maanden',
+      one: 'per maand',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play kon de aankoop niet afronden.';
+
+  @override
+  String get planPlayPending => 'Je betaling wordt nog verwerkt. Het abonnement begint zodra die rond is.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play herkent deze aankoop niet.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Dit abonnement hoort bij een ander account. Log daarop in of zeg het op via Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play is niet bereikbaar. Probeer het zo opnieuw.';
+
+  @override
+  String get adminPlayPackage => 'Google Play-pakketnaam';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'De ID van de app op Google Play. Samen met het serviceaccount hieronder zet dit Google Play-abonnementen aan.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play-serviceaccount';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'De JSON-sleutel van een serviceaccount dat in Play Console bestellingen en abonnementen kan bekijken en beheren.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub-pushaccount';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Het e-mailadres van het serviceaccount waarmee Pub/Sub zijn leveringen ondertekent. Zonder dit komen verlengingen pas binnen als iemand de abonnementspagina opent.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub-pusheindpunt, en ook de doelgroep: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Betaald via';
+
+  @override
+  String get adminProductPlayId => 'Product-ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Zoals in Play Console staat. Google Play bepaalt wanneer elke betaling afloopt, dus er zijn geen dagen in te stellen.';
 }

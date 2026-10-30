@@ -3120,4 +3120,77 @@ class AppLocalizationsHi extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return '$name का प्लान इस्तेमाल करता है';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Google Play सदस्यता आपके खाते के साथ खत्म नहीं होती। पहले उसे Google Play पर रद्द करें।';
+
+  @override
+  String get planPlayManage => 'सदस्यता प्रबंधित करें';
+
+  @override
+  String get planPlayManageHelp => 'Google Play पर बदलें या रद्द करें';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'हर $months महीने',
+      one: 'प्रति माह',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play खरीदारी पूरी नहीं कर सका।';
+
+  @override
+  String get planPlayPending => 'आपका भुगतान अभी प्रोसेस हो रहा है। पूरा होने पर प्लान शुरू होगा।';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play इस खरीदारी को नहीं पहचानता।';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'यह सदस्यता किसी दूसरे खाते की है। उस खाते में साइन इन करें या इसे Google Play पर रद्द करें।';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play से संपर्क नहीं हो सका। थोड़ी देर में फिर कोशिश करें।';
+
+  @override
+  String get adminPlayPackage => 'Google Play पैकेज नाम';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Google Play पर ऐप की ID। नीचे दिए सर्विस खाते के साथ यह Google Play सदस्यताएँ चालू करता है।';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play सर्विस खाता';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'ऐसे सर्विस खाते की JSON कुंजी जो Play Console में ऑर्डर और सदस्यताएँ देख और प्रबंधित कर सके।';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub पुश खाता';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'उस सर्विस खाते का ईमेल जिससे Pub/Sub अपनी डिलीवरी पर हस्ताक्षर करता है। इसके बिना नवीनीकरण तभी पहुँचते हैं जब कोई प्लान पेज खोले।';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub पुश एंडपॉइंट, और यही ऑडियंस भी: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'भुगतान का माध्यम';
+
+  @override
+  String get adminProductPlayId => 'प्रोडक्ट ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'जैसा Play Console में लिखा है। हर भुगतान कब खत्म होगा यह Google Play बताता है, इसलिए दिन सेट नहीं करने होते।';
 }

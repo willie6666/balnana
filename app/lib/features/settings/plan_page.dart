@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/errors.dart';
+import '../../core/google_play.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../data/api.dart';
@@ -21,10 +22,86 @@ String planUsage(AppLocalizations l10n, PlanUsage usage) {
 }
 
 /// The account's plan, what it allows, and where to get one.
-class PlanPage extends ConsumerWidget {
+class PlanPage extends ConsumerStatefulWidget {
   const PlanPage({super.key});
 
-  Future<void> _openKofi(BuildContext context, Uri url) async {
+  @override
+  ConsumerState<PlanPage> createState() => _PlanPageState();
+}
+
+class _PlanPageState extends ConsumerState<PlanPage> {
+  List<PlayOffer> _offers = const [];
+  bool _buying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlay();
+  }
+
+  Future<void> _loadPlay() async {
+    final PlayBilling? play;
+    try {
+      play = (await ref.read(myPlanProvider.future)).play;
+    } on ApiException {
+      return;
+    }
+    if (play == null) return;
+    final store = ref.read(googlePlayProvider);
+    final offers = await store.offers(play.products);
+    if (!mounted) return;
+    setState(() => _offers = offers);
+    // For a purchase that never reached the server, or a renewal on a server
+    // without Google's notifications. What fails is tried on the next visit.
+    final held = await store.purchases();
+    if (!mounted) return;
+    try {
+      await _report(held);
+    } on ApiException {
+      return;
+    }
+  }
+
+  /// Tells the server about purchases, and returns whether they gave a plan.
+  Future<bool> _report(List<String> tokens) async {
+    if (tokens.isEmpty) return false;
+    final api = ref.read(balnanaApiProvider);
+    if (api == null) return false;
+    var paid = false;
+    for (final token in tokens) {
+      paid = (await api.reportPlayPurchase(token)).paid;
+    }
+    if (mounted) ref.invalidate(myPlanProvider);
+    return paid;
+  }
+
+  Future<void> _buy(PlayOffer offer, PlayBilling play) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final store = ref.read(googlePlayProvider);
+    void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
+    setState(() => _buying = true);
+    try {
+      final tokens = await store.buy(offer, play.accountId);
+      if (tokens.isNotEmpty && !await _report(tokens)) tell(l10n.planPlayPending);
+    } on PlayException catch (e) {
+      if (e.owned) {
+        // Held but not known here: likely another account's, which the server says.
+        try {
+          await _report(await store.purchases());
+        } on ApiException catch (e) {
+          tell(errorMessage(l10n, e));
+        }
+      } else {
+        tell(l10n.planPlayFailed);
+      }
+    } on ApiException catch (e) {
+      tell(errorMessage(l10n, e));
+    }
+    if (mounted) setState(() => _buying = false);
+  }
+
+  Future<void> _open(Uri url) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
@@ -32,7 +109,7 @@ class PlanPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final async = ref.watch(myPlanProvider);
     final plan = async.value;
@@ -59,6 +136,9 @@ class PlanPage extends ConsumerWidget {
     final info = ref.watch(serverInfoProvider).value;
     final kofi = externalPayments ? info?.kofiUrl : null;
     final expires = plan.expiresAt;
+    final play = plan.play;
+    // A second subscription would pay twice for one plan.
+    final offers = play == null || play.subscribed.isNotEmpty ? const <PlayOffer>[] : _offers;
     String limit(int? n) => n?.toString() ?? l10n.planUnlimited;
     return BPage(
       title: l10n.planTitle,
@@ -75,6 +155,19 @@ class PlanPage extends ConsumerWidget {
                           .format(expires.toLocal()),
                     ),
             ),
+            if (play != null && play.subscribed.isNotEmpty)
+              GroupedTile(
+                icon: Icons.manage_accounts_outlined,
+                title: l10n.planPlayManage,
+                subtitle: l10n.planPlayManageHelp,
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => _open(
+                  Uri.https('play.google.com', '/store/account/subscriptions', {
+                    'sku': play.subscribed.first,
+                    'package': play.packageName,
+                  }),
+                ),
+              ),
           ],
         ),
         GroupedList(
@@ -102,27 +195,43 @@ class PlanPage extends ConsumerWidget {
             ),
           ],
         ),
-        if (kofi != null)
+        if (offers.isNotEmpty || kofi != null)
           GroupedList(
             title: l10n.planGet,
             children: [
-              GroupedTile(
-                icon: Icons.coffee_outlined,
-                title: l10n.planKofi,
-                subtitle: l10n.planKofiHelp,
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _openKofi(context, kofi),
-              ),
-              for (final email in plan.paymentEmails)
-                GroupedTile(icon: Icons.mail_outline, title: email, subtitle: l10n.planPaymentEmailConfirmed),
-              if (info?.email ?? false)
+              for (final offer in offers)
                 GroupedTile(
-                  icon: Icons.add,
-                  title: l10n.planPaymentEmailAdd,
-                  subtitle: l10n.planPaymentEmailHelp,
-                  onTap: () =>
-                      showDialog<void>(context: context, builder: (_) => const _PaymentEmailDialog()),
+                  icon: Icons.shop_outlined,
+                  title: offer.name,
+                  subtitle: switch (offer.months) {
+                    final months? => l10n.planPlayPrice(months, offer.price),
+                    null => offer.price,
+                  },
+                  onTap: _buying ? null : () => _buy(offer, play!),
                 ),
+              if (kofi != null) ...[
+                GroupedTile(
+                  icon: Icons.coffee_outlined,
+                  title: l10n.planKofi,
+                  subtitle: l10n.planKofiHelp,
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => _open(kofi),
+                ),
+                for (final email in plan.paymentEmails)
+                  GroupedTile(
+                    icon: Icons.mail_outline,
+                    title: email,
+                    subtitle: l10n.planPaymentEmailConfirmed,
+                  ),
+                if (info?.email ?? false)
+                  GroupedTile(
+                    icon: Icons.add,
+                    title: l10n.planPaymentEmailAdd,
+                    subtitle: l10n.planPaymentEmailHelp,
+                    onTap: () =>
+                        showDialog<void>(context: context, builder: (_) => const _PaymentEmailDialog()),
+                  ),
+              ],
             ],
           ),
       ],

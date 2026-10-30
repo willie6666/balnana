@@ -274,6 +274,13 @@ class BalnanaApi {
   /// The account's plan, after taking in payments made with its addresses.
   Future<MyPlan> myPlan() => _send(() => _dio.get<Object?>('/me/plan'), MyPlan.fromJson);
 
+  /// Tells the server about a Google Play purchase, which it checks with
+  /// Google. Doing it again changes nothing.
+  Future<MyPlan> reportPlayPurchase(String token) => _send(
+    () => _dio.post<Object?>('/me/play/purchases', data: {'purchaseToken': token}),
+    MyPlan.fromJson,
+  );
+
   /// Emails [email] a link that shows the address is the account's, for
   /// payments made with it.
   Future<void> sendPaymentEmail(String email) =>

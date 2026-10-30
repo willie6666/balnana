@@ -3071,4 +3071,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Uses $name\'s plan';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'A Google Play subscription doesn\'t end with your account. Cancel it on Google Play first.';
+
+  @override
+  String get planPlayManage => 'Manage subscription';
+
+  @override
+  String get planPlayManageHelp => 'Change or cancel it on Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months months', one: 'month');
+    return '$price every $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play couldn\'t complete the purchase.';
+
+  @override
+  String get planPlayPending =>
+      'Your payment is still being processed. The plan starts once it goes through.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play doesn\'t recognize this purchase.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'This subscription belongs to another account. Sign in to that one, or cancel it on Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Couldn\'t reach Google Play. Try again in a moment.';
+
+  @override
+  String get adminPlayPackage => 'Google Play package name';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'The app\'s ID on Google Play. With the service account below, it turns on Google Play subscriptions.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play service account';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'The JSON key of a service account that can view and manage orders and subscriptions in Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub push account';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub push endpoint, and its audience too: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Paid through';
+
+  @override
+  String get adminProductPlayId => 'Product ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'As written in Play Console. Google Play says when each payment ends, so there are no days to set.';
 }

@@ -1,4 +1,5 @@
 import 'package:balnana/core/errors.dart';
+import 'package:balnana/core/google_play.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/data/models.dart';
@@ -6,6 +7,7 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/settings/plan_page.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,11 +22,58 @@ const _plan = MyPlan(
   receiptsPerGroup: 2000,
 );
 
-Future<void> _pump(WidgetTester tester, MyPlan plan) async {
+const _offer = PlayOffer(productId: 'plus_monthly', offerToken: 'offer', name: 'Plus', price: r'$3', period: 'P3M');
+
+const _play = PlayBilling(accountId: 'hash', packageName: 'me.devvillie.balnana', products: ['plus_monthly']);
+
+class _FakePlay extends GooglePlay {
+  _FakePlay({this.held = const [], this.bought = const [], this.owned = false});
+
+  final List<String> held;
+  final List<String> bought;
+  final bool owned;
+  String? boughtFor;
+
+  @override
+  Future<List<PlayOffer>> offers(List<String> products) async => [
+    if (products.contains(_offer.productId)) _offer,
+  ];
+
+  @override
+  Future<List<String>> purchases() async => held;
+
+  @override
+  Future<List<String>> buy(PlayOffer offer, String account) async {
+    if (owned) throw const PlayException(owned: true);
+    boughtFor = account;
+    return bought;
+  }
+}
+
+class _FakeApi extends BalnanaApi {
+  _FakeApi({this.failure}) : super(Dio());
+
+  final ApiException? failure;
+  final reported = <String>[];
+
+  @override
+  Future<MyPlan> reportPlayPurchase(String token) async {
+    reported.add(token);
+    if (failure case final failure?) throw failure;
+    return _plan;
+  }
+}
+
+Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, BalnanaApi? api}) async {
+  // Tall enough for the whole page: its lists only build what is on screen.
+  tester.view.physicalSize = const Size(1200, 3000);
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         myPlanProvider.overrideWith((ref) async => plan),
+        if (store != null) googlePlayProvider.overrideWithValue(store),
+        if (api != null) balnanaApiProvider.overrideWithValue(api),
         serverInfoProvider.overrideWithValue(
           AsyncValue.data(
             ServerInfo(
@@ -132,5 +181,83 @@ void main() {
     expect(find.text(l10n.planKofi), findsNothing);
     expect(find.text(l10n.planGet), findsNothing);
     expect(find.text(l10n.planPaymentEmailAdd), findsNothing);
+  });
+
+  group('Google Play', () {
+    MyPlan withPlay(PlayBilling? play) => MyPlan(
+      planName: _plan.planName,
+      paid: false,
+      ownGroups: _plan.ownGroups,
+      sponsoredGroups: _plan.sponsoredGroups,
+      play: play,
+    );
+
+    testWidgets('sells what the server and Play both have, at the price Play shows', (tester) async {
+      await _pump(tester, withPlay(_play), store: _FakePlay());
+
+      expect(find.text(l10n.planGet), findsOneWidget);
+      expect(find.text(l10n.planPlayPrice(3, r'$3')), findsOneWidget);
+      expect(find.text(l10n.planPlayManage), findsNothing);
+    });
+
+    testWidgets('buying reports the purchase under the account it was made for', (tester) async {
+      final store = _FakePlay(bought: ['token']);
+      final api = _FakeApi();
+      await _pump(tester, withPlay(_play), store: store, api: api);
+
+      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.pumpAndSettle();
+
+      expect(store.boughtFor, 'hash');
+      expect(api.reported, ['token']);
+    });
+
+    testWidgets('changing your mind reports nothing', (tester) async {
+      final api = _FakeApi();
+      await _pump(tester, withPlay(_play), store: _FakePlay(), api: api);
+
+      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.pumpAndSettle();
+
+      expect(api.reported, isEmpty);
+    });
+
+    testWidgets('a subscription someone else holds says so', (tester) async {
+      final api = _FakeApi(failure: const ApiException('play_other_account'));
+      await _pump(tester, withPlay(_play), store: _FakePlay(owned: true, held: ['theirs']), api: api);
+      expect(api.reported, ['theirs']);
+
+      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.errorPlayOtherAccount), findsOneWidget);
+    });
+
+    testWidgets('opening the page reports what Play holds', (tester) async {
+      final api = _FakeApi();
+      await _pump(tester, withPlay(_play), store: _FakePlay(held: ['renewed']), api: api);
+
+      expect(api.reported, ['renewed']);
+    });
+
+    testWidgets('a subscriber can manage it and is not sold another', (tester) async {
+      const play = PlayBilling(
+        accountId: 'hash',
+        packageName: 'me.devvillie.balnana',
+        products: ['plus_monthly'],
+        subscribed: ['plus_monthly'],
+      );
+      await _pump(tester, withPlay(play), store: _FakePlay());
+
+      expect(find.text(l10n.planPlayManage), findsOneWidget);
+      expect(find.text(l10n.planGet), findsNothing);
+    });
+
+    testWidgets('a server without it asks nothing of Play', (tester) async {
+      await _pump(tester, withPlay(null), store: _FakePlay(held: ['token']));
+
+      expect(find.text(l10n.planGet), findsNothing);
+      expect(find.text(l10n.planPlayManage), findsNothing);
+    });
   });
 }

@@ -3175,4 +3175,77 @@ class AppLocalizationsAr extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'تستخدم خطة $name';
   }
+
+  @override
+  String get accountDeletePlayNote => 'لا ينتهي اشتراك Google Play مع حسابك. ألغِه أولًا على Google Play.';
+
+  @override
+  String get planPlayManage => 'إدارة الاشتراك';
+
+  @override
+  String get planPlayManageHelp => 'غيّره أو ألغِه على Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'كل $months شهرًا',
+      few: 'كل $months أشهر',
+      one: 'شهريًا',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'تعذّر على Google Play إتمام عملية الشراء.';
+
+  @override
+  String get planPlayPending => 'لا تزال دفعتك قيد المعالجة. ستبدأ الخطة عند اكتمالها.';
+
+  @override
+  String get errorInvalidPurchase => 'لا يتعرّف Google Play على عملية الشراء هذه.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'هذا الاشتراك يخص حسابًا آخر. سجّل الدخول إليه أو ألغِ الاشتراك على Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'تعذّر الوصول إلى Google Play. حاول مرة أخرى بعد قليل.';
+
+  @override
+  String get adminPlayPackage => 'اسم حزمة Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'معرّف التطبيق على Google Play. مع حساب الخدمة أدناه، يفعّل اشتراكات Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'حساب خدمة Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'مفتاح JSON لحساب خدمة يمكنه عرض الطلبات والاشتراكات وإدارتها في Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'حساب دفع Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'البريد الإلكتروني لحساب الخدمة الذي يوقّع به Pub/Sub عمليات التسليم. بدونه لا تصل التجديدات إلا عندما يفتح أحدهم صفحة الخطة.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'نقطة نهاية الدفع في Pub/Sub، وهي الجمهور أيضًا: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'الدفع عبر';
+
+  @override
+  String get adminProductPlayId => 'معرّف المنتج';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'كما هو مكتوب في Play Console. يحدد Google Play موعد انتهاء كل دفعة، لذا لا توجد أيام لضبطها.';
 }

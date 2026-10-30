@@ -201,7 +201,10 @@ Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   final who = ref.read(identityProvider);
   final deleted = await showDialog<bool>(
     context: context,
-    builder: (_) => _DeleteAccountDialog(askPassword: account.hasPassword),
+    builder: (_) => _DeleteAccountDialog(
+      askPassword: account.hasPassword,
+      billing: ref.read(serverInfoProvider).value?.billing ?? false,
+    ),
   );
   if (deleted != true || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -303,9 +306,10 @@ class _ConfirmPassword extends StatelessWidget {
 }
 
 class _DeleteAccountDialog extends ConsumerStatefulWidget {
-  const _DeleteAccountDialog({required this.askPassword});
+  const _DeleteAccountDialog({required this.askPassword, required this.billing});
 
   final bool askPassword;
+  final bool billing;
 
   @override
   ConsumerState<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -356,6 +360,10 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.accountDeleteBody),
+            if (widget.billing) ...[
+              const SizedBox(height: BSpace.s16),
+              Text(l10n.accountDeletePlayNote),
+            ],
             if (widget.askPassword) ...[
               const SizedBox(height: BSpace.s16),
               _ConfirmPassword(controller: _password, error: _error, onSubmitted: _delete, autofocus: true),

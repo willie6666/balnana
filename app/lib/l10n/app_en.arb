@@ -1989,7 +1989,6 @@
   "@settingsNotificationsBlocked": {
     "description": "Subtitle of the notifications switch when the system blocks the app's notifications."
   },
-
   "pushChannel": "Expenses",
   "@pushChannel": {
     "description": "Message for push channel in Android notification content."
@@ -4574,5 +4573,94 @@
         "type": "String"
       }
     }
+  },
+  "accountDeletePlayNote": "A Google Play subscription doesn't end with your account. Cancel it on Google Play first.",
+  "@accountDeletePlayNote": {
+    "description": "Label or control text for account delete play note in the account screens."
+  },
+  "planPlayManage": "Manage subscription",
+  "@planPlayManage": {
+    "description": "Label or control text for plan play manage in the plan screens."
+  },
+  "planPlayManageHelp": "Change or cancel it on Google Play",
+  "@planPlayManageHelp": {
+    "description": "Label or control text for plan play manage help in the plan screens."
+  },
+  "planPlayPrice": "{price} every {months, plural, =1{month} other{{months} months}}",
+  "@planPlayPrice": {
+    "description": "Label or control text for plan play price in the plan screens.",
+    "placeholders": {
+      "months": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "planPlayFailed": "Google Play couldn't complete the purchase.",
+  "@planPlayFailed": {
+    "description": "Label or control text for plan play failed in the plan screens."
+  },
+  "planPlayPending": "Your payment is still being processed. The plan starts once it goes through.",
+  "@planPlayPending": {
+    "description": "Label or control text for plan play pending in the plan screens."
+  },
+  "errorInvalidPurchase": "Google Play doesn't recognize this purchase.",
+  "@errorInvalidPurchase": {
+    "description": "Label or control text for error invalid purchase in an error message."
+  },
+  "errorPlayOtherAccount": "This subscription belongs to another account. Sign in to that one, or cancel it on Google Play.",
+  "@errorPlayOtherAccount": {
+    "description": "Label or control text for error play other account in an error message."
+  },
+  "errorPlayUnavailable": "Couldn't reach Google Play. Try again in a moment.",
+  "@errorPlayUnavailable": {
+    "description": "Label or control text for error play unavailable in an error message."
+  },
+  "adminPlayPackage": "Google Play package name",
+  "@adminPlayPackage": {
+    "description": "Label or control text for admin play package in the server administrator interface."
+  },
+  "adminPlayPackageHelp": "The app's ID on Google Play. With the service account below, it turns on Google Play subscriptions.",
+  "@adminPlayPackageHelp": {
+    "description": "Label or control text for admin play package help in the server administrator interface."
+  },
+  "adminPlayServiceAccount": "Google Play service account",
+  "@adminPlayServiceAccount": {
+    "description": "Label or control text for admin play service account in the server administrator interface."
+  },
+  "adminPlayServiceAccountHelp": "The JSON key of a service account that can view and manage orders and subscriptions in Play Console.",
+  "@adminPlayServiceAccountHelp": {
+    "description": "Label or control text for admin play service account help in the server administrator interface."
+  },
+  "adminPlayPushAccount": "Pub/Sub push account",
+  "@adminPlayPushAccount": {
+    "description": "Label or control text for admin play push account in the server administrator interface."
+  },
+  "adminPlayPushAccountHelp": "The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.",
+  "@adminPlayPushAccountHelp": {
+    "description": "Label or control text for admin play push account help in the server administrator interface."
+  },
+  "adminPlayWebhook": "Pub/Sub push endpoint, and its audience too: {url}",
+  "@adminPlayWebhook": {
+    "description": "Label or control text for admin play webhook in the server administrator interface.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "adminProductProvider": "Paid through",
+  "@adminProductProvider": {
+    "description": "Label or control text for admin product provider in the server administrator interface."
+  },
+  "adminProductPlayId": "Product ID",
+  "@adminProductPlayId": {
+    "description": "Label or control text for admin product play id in the server administrator interface."
+  },
+  "adminProductPlayIdHelp": "As written in Play Console. Google Play says when each payment ends, so there are no days to set.",
+  "@adminProductPlayIdHelp": {
+    "description": "Label or control text for admin product play id help in the server administrator interface."
   }
 }

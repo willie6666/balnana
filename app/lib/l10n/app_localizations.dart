@@ -5367,6 +5367,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uses {name}\'s plan'**
   String groupSponsoredBy(String name);
+
+  /// Label or control text for account delete play note in the account screens.
+  ///
+  /// In en, this message translates to:
+  /// **'A Google Play subscription doesn\'t end with your account. Cancel it on Google Play first.'**
+  String get accountDeletePlayNote;
+
+  /// Label or control text for plan play manage in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage subscription'**
+  String get planPlayManage;
+
+  /// Label or control text for plan play manage help in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Change or cancel it on Google Play'**
+  String get planPlayManageHelp;
+
+  /// Label or control text for plan play price in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} every {months, plural, =1{month} other{{months} months}}'**
+  String planPlayPrice(int months, String price);
+
+  /// Label or control text for plan play failed in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play couldn\'t complete the purchase.'**
+  String get planPlayFailed;
+
+  /// Label or control text for plan play pending in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is still being processed. The plan starts once it goes through.'**
+  String get planPlayPending;
+
+  /// Label or control text for error invalid purchase in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play doesn\'t recognize this purchase.'**
+  String get errorInvalidPurchase;
+
+  /// Label or control text for error play other account in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This subscription belongs to another account. Sign in to that one, or cancel it on Google Play.'**
+  String get errorPlayOtherAccount;
+
+  /// Label or control text for error play unavailable in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Google Play. Try again in a moment.'**
+  String get errorPlayUnavailable;
+
+  /// Label or control text for admin play package in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play package name'**
+  String get adminPlayPackage;
+
+  /// Label or control text for admin play package help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The app\'s ID on Google Play. With the service account below, it turns on Google Play subscriptions.'**
+  String get adminPlayPackageHelp;
+
+  /// Label or control text for admin play service account in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play service account'**
+  String get adminPlayServiceAccount;
+
+  /// Label or control text for admin play service account help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The JSON key of a service account that can view and manage orders and subscriptions in Play Console.'**
+  String get adminPlayServiceAccountHelp;
+
+  /// Label or control text for admin play push account in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Pub/Sub push account'**
+  String get adminPlayPushAccount;
+
+  /// Label or control text for admin play push account help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.'**
+  String get adminPlayPushAccountHelp;
+
+  /// Label or control text for admin play webhook in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Pub/Sub push endpoint, and its audience too: {url}'**
+  String adminPlayWebhook(String url);
+
+  /// Label or control text for admin product provider in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid through'**
+  String get adminProductProvider;
+
+  /// Label or control text for admin product play id in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Product ID'**
+  String get adminProductPlayId;
+
+  /// Label or control text for admin product play id help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'As written in Play Console. Google Play says when each payment ends, so there are no days to set.'**
+  String get adminProductPlayIdHelp;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

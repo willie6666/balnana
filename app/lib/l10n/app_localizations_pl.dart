@@ -3224,4 +3224,79 @@ class AppLocalizationsPl extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Korzysta z planu: $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Subskrypcja Google Play nie kończy się wraz z kontem. Najpierw anuluj ją w Google Play.';
+
+  @override
+  String get planPlayManage => 'Zarządzaj subskrypcją';
+
+  @override
+  String get planPlayManageHelp => 'Zmień lub anuluj w Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'co $months miesięcy',
+      few: 'co $months miesiące',
+      one: 'miesięcznie',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play nie udało się dokończyć zakupu.';
+
+  @override
+  String get planPlayPending =>
+      'Płatność jest wciąż przetwarzana. Plan zacznie się, gdy zostanie zakończona.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play nie rozpoznaje tego zakupu.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Ta subskrypcja należy do innego konta. Zaloguj się na nie lub anuluj ją w Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Nie można połączyć się z Google Play. Spróbuj ponownie za chwilę.';
+
+  @override
+  String get adminPlayPackage => 'Nazwa pakietu Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Identyfikator aplikacji w Google Play. Razem z kontem usługi poniżej włącza subskrypcje Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Konto usługi Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Klucz JSON konta usługi, które może przeglądać zamówienia i subskrypcje oraz nimi zarządzać w Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Konto push Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Adres e-mail konta usługi, którym Pub/Sub podpisuje dostawy. Bez niego odnowienia docierają dopiero, gdy ktoś otworzy stronę planu.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Punkt końcowy push Pub/Sub, a także odbiorcy: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Płatność przez';
+
+  @override
+  String get adminProductPlayId => 'Identyfikator produktu';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Tak jak w Play Console. Google Play określa, kiedy kończy się każda płatność, więc nie ma dni do ustawienia.';
 }

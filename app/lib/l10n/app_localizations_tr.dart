@@ -3080,4 +3080,77 @@ class AppLocalizationsTr extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Planı kullanılan üye: $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Google Play aboneliği hesabınızla birlikte bitmez. Önce Google Play\'den iptal edin.';
+
+  @override
+  String get planPlayManage => 'Aboneliği yönet';
+
+  @override
+  String get planPlayManageHelp => 'Google Play\'de değiştirin veya iptal edin';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months ayda bir',
+      one: 'aylık',
+    );
+    return '$_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play satın alma işlemini tamamlayamadı.';
+
+  @override
+  String get planPlayPending => 'Ödemeniz hâlâ işleniyor. Plan, ödeme tamamlanınca başlar.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play bu satın alma işlemini tanımıyor.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Bu abonelik başka bir hesaba ait. O hesapla giriş yapın veya Google Play\'den iptal edin.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play\'e ulaşılamadı. Birazdan tekrar deneyin.';
+
+  @override
+  String get adminPlayPackage => 'Google Play paket adı';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Uygulamanın Google Play\'deki kimliği. Aşağıdaki hizmet hesabıyla birlikte Google Play aboneliklerini açar.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play hizmet hesabı';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Play Console\'da siparişleri ve abonelikleri görüp yönetebilen bir hizmet hesabının JSON anahtarı.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub push hesabı';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Pub/Sub\'ın teslimatlarını imzaladığı hizmet hesabının e-postası. Olmazsa yenilemeler ancak biri plan sayfasını açtığında gelir.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub push uç noktası, aynı zamanda hedef kitlesi: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Ödeme yolu';
+
+  @override
+  String get adminProductPlayId => 'Ürün kimliği';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Play Console\'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.';
 }

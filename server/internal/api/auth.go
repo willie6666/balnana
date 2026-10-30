@@ -84,7 +84,8 @@ type authState struct {
 // wait on each other forever.
 func (s *Server) sessions(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, BasePath+"/") || s.conf().AuthMode != config.AuthModeAccounts {
+		// Google's Pub/Sub sends its own bearer token, which is no session.
+		if !strings.HasPrefix(r.URL.Path, BasePath+"/") || r.URL.Path == playPath || s.conf().AuthMode != config.AuthModeAccounts {
 			next.ServeHTTP(w, r)
 			return
 		}

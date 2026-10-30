@@ -3217,4 +3217,78 @@ class AppLocalizationsUk extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Використовує тариф учасника $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Підписка Google Play не закінчується разом з обліковим записом. Спершу скасуйте її в Google Play.';
+
+  @override
+  String get planPlayManage => 'Керувати підпискою';
+
+  @override
+  String get planPlayManageHelp => 'Змінити або скасувати в Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'кожні $months місяців',
+      few: 'кожні $months місяці',
+      one: 'на місяць',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play не вдалося завершити покупку.';
+
+  @override
+  String get planPlayPending => 'Платіж ще обробляється. Тариф почне діяти після його завершення.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play не розпізнає цю покупку.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Ця підписка належить іншому обліковому запису. Увійдіть у нього або скасуйте її в Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Не вдалося зв\'язатися з Google Play. Спробуйте трохи згодом.';
+
+  @override
+  String get adminPlayPackage => 'Назва пакета Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'ID застосунку в Google Play. Разом зі службовим обліковим записом нижче вмикає підписки Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Службовий обліковий запис Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'JSON-ключ службового облікового запису, який може переглядати замовлення й підписки та керувати ними в Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Push-обліковий запис Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Адреса службового облікового запису, яким Pub/Sub підписує доставки. Без неї поновлення надходять, лише коли хтось відкриває сторінку тарифу.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Push-адреса Pub/Sub, вона ж аудиторія: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Спосіб оплати';
+
+  @override
+  String get adminProductPlayId => 'ID продукту';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Як указано в Play Console. Google Play сам повідомляє, коли закінчується кожен платіж, тому дні задавати не потрібно.';
 }

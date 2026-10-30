@@ -210,7 +210,7 @@ func (s *Server) GetMyPlan(ctx context.Context, _ GetMyPlanRequestObject) (GetMy
 		if err := claimPayments(ctx, tx, u.id); err != nil {
 			return err
 		}
-		out, err = myPlan(ctx, tx, u.id)
+		out, err = s.myPlan(ctx, tx, u.id)
 		return err
 	})
 	if err != nil {
@@ -219,7 +219,7 @@ func (s *Server) GetMyPlan(ctx context.Context, _ GetMyPlanRequestObject) (GetMy
 	return GetMyPlan200JSONResponse(out), nil
 }
 
-func myPlan(ctx context.Context, q querier, userID string) (MyPlan, error) {
+func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, error) {
 	p, ends, err := userPlan(ctx, q, userID)
 	if err != nil {
 		return MyPlan{}, err
@@ -237,6 +237,9 @@ func myPlan(ctx context.Context, q querier, userID string) (MyPlan, error) {
 		return MyPlan{}, err
 	}
 	if out.SponsoredGroups.Used, err = countSponsored(ctx, q, userID); err != nil {
+		return MyPlan{}, err
+	}
+	if out.Play, err = s.playOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
 	rows, err := q.Query(ctx, `select email::text from payment_emails where user_id = $1 order by created_at`, userID)
@@ -309,7 +312,7 @@ func (s *Server) ConfirmPaymentEmail(ctx context.Context, req ConfirmPaymentEmai
 		if err := claimPayments(ctx, tx, u.id); err != nil {
 			return err
 		}
-		out, err = myPlan(ctx, tx, u.id)
+		out, err = s.myPlan(ctx, tx, u.id)
 		return err
 	})
 	if err != nil {

@@ -3161,4 +3161,78 @@ class AppLocalizationsFr extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Utilise la formule de $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Un abonnement Google Play ne s\'arrête pas avec votre compte. Résiliez-le d\'abord sur Google Play.';
+
+  @override
+  String get planPlayManage => 'Gérer l\'abonnement';
+
+  @override
+  String get planPlayManageHelp => 'Le modifier ou le résilier sur Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'tous les $months mois',
+      one: 'par mois',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play n\'a pas pu finaliser l\'achat.';
+
+  @override
+  String get planPlayPending =>
+      'Votre paiement est en cours de traitement. Le forfait commencera une fois celui-ci validé.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play ne reconnaît pas cet achat.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Cet abonnement appartient à un autre compte. Connectez-vous à celui-ci ou résiliez-le sur Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Impossible de joindre Google Play. Réessayez dans un instant.';
+
+  @override
+  String get adminPlayPackage => 'Nom du package Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'L\'identifiant de l\'application sur Google Play. Avec le compte de service ci-dessous, il active les abonnements Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Compte de service Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'La clé JSON d\'un compte de service pouvant voir et gérer les commandes et abonnements dans la Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Compte push Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'L\'adresse e-mail du compte de service avec lequel Pub/Sub signe ses envois. Sans elle, les renouvellements n\'arrivent que lorsque quelqu\'un ouvre la page du forfait.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Point de terminaison push Pub/Sub, et aussi son audience : $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Payé via';
+
+  @override
+  String get adminProductPlayId => 'ID du produit';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Tel qu\'écrit dans la Play Console. Google Play indique la fin de chaque paiement, il n\'y a donc pas de jours à définir.';
 }

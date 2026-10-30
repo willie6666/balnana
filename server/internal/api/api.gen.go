@@ -720,11 +720,14 @@ type MyPlan struct {
 	Paid bool `json:"paid"`
 
 	// PaymentEmails Addresses that payments reach the account by, besides its own.
-	PaymentEmails     []string `json:"paymentEmails"`
-	PlanName          string   `json:"planName"`
-	ReceiptsPerGroup  *int     `json:"receiptsPerGroup,omitempty"`
-	RecurringPerGroup *int     `json:"recurringPerGroup,omitempty"`
-	SponsoredGroups   Usage    `json:"sponsoredGroups"`
+	PaymentEmails []string `json:"paymentEmails"`
+	PlanName      string   `json:"planName"`
+
+	// Play What can be bought through Google Play. Left out when nothing can.
+	Play              *PlayBilling `json:"play,omitempty"`
+	ReceiptsPerGroup  *int         `json:"receiptsPerGroup,omitempty"`
+	RecurringPerGroup *int         `json:"recurringPerGroup,omitempty"`
+	SponsoredGroups   Usage        `json:"sponsoredGroups"`
 }
 
 // OAuthExchange defines model for OAuthExchange.
@@ -917,7 +920,7 @@ type PlanLimits struct {
 type PlanProduct struct {
 	Currency *string `json:"currency,omitempty"`
 
-	// Days How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late.
+	// Days How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late. Google Play says for itself when each payment ends, so this is ignored for it.
 	Days int `json:"days"`
 
 	// MinAmount A decimal number, such as "3.00".
@@ -931,6 +934,24 @@ type PlanProduct struct {
 
 // PlanProductProvider defines model for PlanProduct.Provider.
 type PlanProductProvider string
+
+// PlayBilling What can be bought through Google Play. Left out when nothing can.
+type PlayBilling struct {
+	// AccountId Give Google this with a purchase, so that it reaches this account.
+	AccountId   string `json:"accountId"`
+	PackageName string `json:"packageName"`
+
+	// Products Subscription product ids.
+	Products []string `json:"products"`
+
+	// Subscribed The products the account has a subscription to.
+	Subscribed []string `json:"subscribed"`
+}
+
+// PlayPurchaseRequest defines model for PlayPurchaseRequest.
+type PlayPurchaseRequest struct {
+	PurchaseToken string `json:"purchaseToken"`
+}
 
 // PushDeviceInput The device's Web Push subscription, as its UnifiedPush distributor gave it, and the groups it follows.
 type PushDeviceInput struct {
@@ -1629,6 +1650,9 @@ type SendPaymentEmailJSONRequestBody = PaymentEmailRequest
 // ConfirmPaymentEmailJSONRequestBody defines body for ConfirmPaymentEmail for application/json ContentType.
 type ConfirmPaymentEmailJSONRequestBody = EmailToken
 
+// ReportPlayPurchaseJSONRequestBody defines body for ReportPlayPurchase for application/json ContentType.
+type ReportPlayPurchaseJSONRequestBody = PlayPurchaseRequest
+
 // RegisterPushDeviceJSONRequestBody defines body for RegisterPushDevice for application/json ContentType.
 type RegisterPushDeviceJSONRequestBody = PushDeviceInput
 
@@ -1871,6 +1895,9 @@ type ServerInterface interface {
 	// The account's plan and how much of it is used
 	// (GET /me/plan)
 	GetMyPlan(w http.ResponseWriter, r *http.Request)
+	// Tell the server of a Google Play subscription
+	// (POST /me/play/purchases)
+	ReportPlayPurchase(w http.ResponseWriter, r *http.Request)
 	// Email a new verification link to the account's address
 	// (POST /me/verify-email)
 	SendVerifyEmail(w http.ResponseWriter, r *http.Request)
@@ -5360,6 +5387,28 @@ func (siw *ServerInterfaceWrapper) GetMyPlan(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
+// ReportPlayPurchase operation middleware
+func (siw *ServerInterfaceWrapper) ReportPlayPurchase(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportPlayPurchase(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SendVerifyEmail operation middleware
 func (siw *ServerInterfaceWrapper) SendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 
@@ -5669,6 +5718,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/me/payment-email", wrapper.SendPaymentEmail)
 	m.HandleFunc("POST "+options.BaseURL+"/me/payment-email/confirm", wrapper.ConfirmPaymentEmail)
 	m.HandleFunc("GET "+options.BaseURL+"/me/plan", wrapper.GetMyPlan)
+	m.HandleFunc("POST "+options.BaseURL+"/me/play/purchases", wrapper.ReportPlayPurchase)
 	m.HandleFunc("POST "+options.BaseURL+"/me/verify-email", wrapper.SendVerifyEmail)
 	m.HandleFunc("DELETE "+options.BaseURL+"/push/devices/{device}", wrapper.RemovePushDevice)
 	m.HandleFunc("PUT "+options.BaseURL+"/push/devices/{device}", wrapper.RegisterPushDevice)
@@ -8069,6 +8119,35 @@ func (response GetMyPlandefaultJSONResponse) VisitGetMyPlanResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type ReportPlayPurchaseRequestObject struct {
+	Body *ReportPlayPurchaseJSONRequestBody
+}
+
+type ReportPlayPurchaseResponseObject interface {
+	VisitReportPlayPurchaseResponse(w http.ResponseWriter) error
+}
+
+type ReportPlayPurchase200JSONResponse MyPlan
+
+func (response ReportPlayPurchase200JSONResponse) VisitReportPlayPurchaseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReportPlayPurchasedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ReportPlayPurchasedefaultJSONResponse) VisitReportPlayPurchaseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type SendVerifyEmailRequestObject struct {
 }
 
@@ -8408,6 +8487,9 @@ type StrictServerInterface interface {
 	// The account's plan and how much of it is used
 	// (GET /me/plan)
 	GetMyPlan(ctx context.Context, request GetMyPlanRequestObject) (GetMyPlanResponseObject, error)
+	// Tell the server of a Google Play subscription
+	// (POST /me/play/purchases)
+	ReportPlayPurchase(ctx context.Context, request ReportPlayPurchaseRequestObject) (ReportPlayPurchaseResponseObject, error)
 	// Email a new verification link to the account's address
 	// (POST /me/verify-email)
 	SendVerifyEmail(ctx context.Context, request SendVerifyEmailRequestObject) (SendVerifyEmailResponseObject, error)
@@ -10767,6 +10849,37 @@ func (sh *strictHandler) GetMyPlan(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetMyPlanResponseObject); ok {
 		if err := validResponse.VisitGetMyPlanResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReportPlayPurchase operation middleware
+func (sh *strictHandler) ReportPlayPurchase(w http.ResponseWriter, r *http.Request) {
+	var request ReportPlayPurchaseRequestObject
+
+	var body ReportPlayPurchaseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReportPlayPurchase(ctx, request.(ReportPlayPurchaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReportPlayPurchase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReportPlayPurchaseResponseObject); ok {
+		if err := validResponse.VisitReportPlayPurchaseResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

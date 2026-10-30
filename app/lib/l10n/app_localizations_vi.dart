@@ -3071,4 +3071,77 @@ class AppLocalizationsVi extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Dùng gói của $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Gói đăng ký Google Play không kết thúc cùng tài khoản. Hãy hủy trên Google Play trước.';
+
+  @override
+  String get planPlayManage => 'Quản lý gói đăng ký';
+
+  @override
+  String get planPlayManageHelp => 'Thay đổi hoặc hủy trên Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'mỗi $months tháng',
+      one: 'mỗi tháng',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play không thể hoàn tất giao dịch.';
+
+  @override
+  String get planPlayPending => 'Thanh toán của bạn vẫn đang được xử lý. Gói sẽ bắt đầu khi hoàn tất.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play không nhận ra giao dịch này.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Gói đăng ký này thuộc tài khoản khác. Hãy đăng nhập tài khoản đó hoặc hủy trên Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Không thể kết nối Google Play. Hãy thử lại sau giây lát.';
+
+  @override
+  String get adminPlayPackage => 'Tên gói Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'ID của ứng dụng trên Google Play. Cùng với tài khoản dịch vụ bên dưới, mục này bật gói đăng ký Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Tài khoản dịch vụ Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Khóa JSON của tài khoản dịch vụ có quyền xem và quản lý đơn hàng cùng gói đăng ký trong Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Tài khoản đẩy Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Email của tài khoản dịch vụ mà Pub/Sub dùng để ký khi gửi. Nếu không có, các lần gia hạn chỉ đến khi có người mở trang gói.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Điểm cuối đẩy của Pub/Sub, đồng thời là đối tượng: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Thanh toán qua';
+
+  @override
+  String get adminProductPlayId => 'ID sản phẩm';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Như ghi trong Play Console. Google Play cho biết khi nào mỗi khoản thanh toán kết thúc nên không cần đặt số ngày.';
 }

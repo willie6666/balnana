@@ -3123,4 +3123,78 @@ class AppLocalizationsDe extends AppLocalizations {
   String groupSponsoredBy(String name) {
     return 'Nutzt den Tarif von $name';
   }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Ein Google-Play-Abo endet nicht mit deinem Konto. Kündige es zuerst bei Google Play.';
+
+  @override
+  String get planPlayManage => 'Abo verwalten';
+
+  @override
+  String get planPlayManageHelp => 'Bei Google Play ändern oder kündigen';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'alle $months Monate',
+      one: 'pro Monat',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play konnte den Kauf nicht abschließen.';
+
+  @override
+  String get planPlayPending =>
+      'Deine Zahlung wird noch verarbeitet. Der Tarif beginnt, sobald sie durch ist.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play kennt diesen Kauf nicht.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Dieses Abo gehört zu einem anderen Konto. Melde dich dort an oder kündige es bei Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play ist nicht erreichbar. Versuche es gleich noch einmal.';
+
+  @override
+  String get adminPlayPackage => 'Google-Play-Paketname';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Die ID der App bei Google Play. Zusammen mit dem Dienstkonto unten schaltet sie Google-Play-Abos ein.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google-Play-Dienstkonto';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Der JSON-Schlüssel eines Dienstkontos, das in der Play Console Bestellungen und Abos ansehen und verwalten darf.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub-Push-Konto';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Die E-Mail-Adresse des Dienstkontos, mit dem Pub/Sub seine Zustellungen signiert. Ohne sie kommen Verlängerungen erst an, wenn jemand die Tarifseite öffnet.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub-Push-Endpunkt, auch als Zielgruppe: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Bezahlt über';
+
+  @override
+  String get adminProductPlayId => 'Produkt-ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Wie in der Play Console geschrieben. Google Play bestimmt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.';
 }
