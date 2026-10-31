@@ -57,6 +57,18 @@ class SettingsPage extends ConsumerWidget {
       title: l10n.navSettings,
       children: [
         if (ref.watch(accountsModeProvider)) const AccountSection(),
+        if (ref.watch(signedInProvider) && (ref.watch(serverInfoProvider).value?.billing ?? false))
+          GroupedList(
+            children: [
+              GroupedTile(
+                icon: Icons.workspace_premium_outlined,
+                title: l10n.planTitle,
+                subtitle: l10n.planSettingsHelp,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/plan'),
+              ),
+            ],
+          ),
         GroupedList(
           title: l10n.settingsAppearance,
           children: [

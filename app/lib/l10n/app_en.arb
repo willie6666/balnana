@@ -616,7 +616,7 @@
     },
     "description": "Heading for member remove title in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
-  "memberRemoveBody": "They'll stay on past expenses but can't be added to new ones.",
+  "memberRemoveBody": "Their expenses and balance stay in the group.",
   "@memberRemoveBody": {
     "description": "Explanatory text for member remove body in group member management."
   },
@@ -1357,6 +1357,14 @@
   "@expenseChangedElsewhere": {
     "description": "Label or control text for expense changed elsewhere in the expense editor or expense list."
   },
+  "expenseNewerTitle": "Made with a newer version",
+  "@expenseNewerTitle": {
+    "description": "Title of the read-only page for an expense made by a newer version of the app, which this version cannot edit."
+  },
+  "expenseNewerBody": "Update Balnana to change this entry.",
+  "@expenseNewerBody": {
+    "description": "Body of the read-only page for an expense made by a newer version of the app."
+  },
   "suggestedPayments": "Suggested payments",
   "@suggestedPayments": {
     "description": "Label or control text for suggested payments in the application interface."
@@ -1758,7 +1766,8 @@
     "description": "Shown on the activity page when some groups could not be loaded.",
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "description": "Item count used by this message."
       }
     }
   },
@@ -1988,7 +1997,6 @@
   "@settingsNotificationsBlocked": {
     "description": "Subtitle of the notifications switch when the system blocks the app's notifications."
   },
-
   "pushChannel": "Expenses",
   "@pushChannel": {
     "description": "Message for push channel in Android notification content."
@@ -3329,7 +3337,7 @@
   "@privacyDeleteTitle": {
     "description": "Heading for privacy delete title in the built-in privacy notice."
   },
-  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. For anything else, contact the server's operator.",
+  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server's operator.",
   "@privacyDeleteBody": {
     "description": "Explanatory text for privacy delete body in the built-in privacy notice."
   },
@@ -3883,6 +3891,10 @@
   "@repeatHelp": {
     "description": "Help text under the repeat settings in the expense editor."
   },
+  "repeatCustom": "Custom schedule",
+  "@repeatCustom": {
+    "description": "Label for a repeat schedule this version of the app does not recognise."
+  },
   "repeatDropReceiptTitle": "Remove the receipt?",
   "@repeatDropReceiptTitle": {
     "description": "Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it."
@@ -4106,5 +4118,646 @@
   "expenseRecurring": "Added by a recurring expense",
   "@expenseRecurring": {
     "description": "Accessibility label of the icon on expenses that a recurring expense added."
+  },
+  "adminPlans": "Plans",
+  "@adminPlans": {
+    "description": "Label or control text for admin plans in the server administrator interface."
+  },
+  "adminPayments": "Payments",
+  "@adminPayments": {
+    "description": "Label or control text for admin payments in the server administrator interface."
+  },
+  "adminSectionBilling": "Plans and payments",
+  "@adminSectionBilling": {
+    "description": "Label or control text for admin section billing in the server administrator interface."
+  },
+  "adminSectionBillingBody": "Plans raise the limits on what this server keeps. Splitting expenses and settling up stay free.",
+  "@adminSectionBillingBody": {
+    "description": "Label or control text for admin section billing body in the server administrator interface."
+  },
+  "adminBillingOn": "Plans and limits",
+  "@adminBillingOn": {
+    "description": "Label or control text for admin billing on in the server administrator interface."
+  },
+  "adminBillingOnHelp": "When off, this server limits nothing and shows no plans.",
+  "@adminBillingOnHelp": {
+    "description": "Label or control text for admin billing on help in the server administrator interface."
+  },
+  "adminBillingNeedsAccounts": "Plans need accounts: set Access to Accounts first.",
+  "@adminBillingNeedsAccounts": {
+    "description": "Label or control text for admin billing needs accounts in the server administrator interface."
+  },
+  "adminKofiUrl": "Ko-fi page",
+  "@adminKofiUrl": {
+    "description": "Label or control text for admin kofi url in the server administrator interface."
+  },
+  "adminKofiUrlHelp": "Where people go to pay. Only builds that allow outside payments link to it.",
+  "@adminKofiUrlHelp": {
+    "description": "Label or control text for admin kofi url help in the server administrator interface."
+  },
+  "adminKofiWebhook": "Webhook URL to enter on Ko-fi: {url}",
+  "@adminKofiWebhook": {
+    "description": "Label or control text for admin kofi webhook in the server administrator interface.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "adminKofiToken": "Ko-fi verification token",
+  "@adminKofiToken": {
+    "description": "Label or control text for admin kofi token in the server administrator interface."
+  },
+  "adminKofiTokenHelp": "Shown on Ko-fi's webhook page. Without it, this server ignores Ko-fi.",
+  "@adminKofiTokenHelp": {
+    "description": "Label or control text for admin kofi token help in the server administrator interface."
+  },
+  "adminUserPlanUntil": "{plan} until {date}",
+  "@adminUserPlanUntil": {
+    "description": "Label or control text for admin user plan until in the server administrator interface.",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPlansHelp": "A new limit applies to what people add next. What they already have stays. Leave a limit empty for no limit.",
+  "@adminPlansHelp": {
+    "description": "Label or control text for admin plans help in the server administrator interface."
+  },
+  "adminPlanAdd": "Add plan",
+  "@adminPlanAdd": {
+    "description": "Label or control text for admin plan add in the server administrator interface."
+  },
+  "adminPlanDefaultName": "{name} (default)",
+  "@adminPlanDefaultName": {
+    "description": "Label or control text for admin plan default name in the server administrator interface.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPlanLimit": "{label}: {value}",
+  "@adminPlanLimit": {
+    "description": "Label or control text for admin plan limit in the server administrator interface.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPlanDays": "Days: {count}",
+  "@adminPlanDays": {
+    "description": "Label or control text for admin plan days in the server administrator interface.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "adminProductsSection": "Products",
+  "@adminProductsSection": {
+    "description": "Label or control text for admin products section in the server administrator interface."
+  },
+  "adminProductsHelp": "A payment goes to the product with its tier name, or else to the one without a tier name that its amount reaches.",
+  "@adminProductsHelp": {
+    "description": "Label or control text for admin products help in the server administrator interface."
+  },
+  "adminProductAdd": "Add product",
+  "@adminProductAdd": {
+    "description": "Label or control text for admin product add in the server administrator interface."
+  },
+  "adminProductEdit": "Edit product",
+  "@adminProductEdit": {
+    "description": "Label or control text for admin product edit in the server administrator interface."
+  },
+  "adminProductAnyPayment": "Any payment of at least {amount}",
+  "@adminProductAnyPayment": {
+    "description": "Label or control text for admin product any payment in the server administrator interface.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "adminProductName": "Tier name",
+  "@adminProductName": {
+    "description": "Label or control text for admin product name in the server administrator interface."
+  },
+  "adminProductNameHelp": "As written on Ko-fi. Leave empty to match any one-off or monthly payment by its amount.",
+  "@adminProductNameHelp": {
+    "description": "Label or control text for admin product name help in the server administrator interface."
+  },
+  "adminProductPlan": "Plan",
+  "@adminProductPlan": {
+    "description": "Label or control text for admin product plan in the server administrator interface."
+  },
+  "adminProductDays": "Days",
+  "@adminProductDays": {
+    "description": "Label or control text for admin product days in the server administrator interface."
+  },
+  "adminProductDaysHelp": "How long one payment lasts. Paying again adds to what is left.",
+  "@adminProductDaysHelp": {
+    "description": "Label or control text for admin product days help in the server administrator interface."
+  },
+  "adminProductMinAmount": "Minimum amount",
+  "@adminProductMinAmount": {
+    "description": "Label or control text for admin product min amount in the server administrator interface."
+  },
+  "adminProductCurrency": "Currency code",
+  "@adminProductCurrency": {
+    "description": "Label or control text for admin product currency in the server administrator interface."
+  },
+  "adminPlanId": "ID",
+  "@adminPlanId": {
+    "description": "Label or control text for admin plan id in the server administrator interface."
+  },
+  "adminPlanIdHelp": "Lowercase letters, digits and hyphens. It can't be changed later.",
+  "@adminPlanIdHelp": {
+    "description": "Label or control text for admin plan id help in the server administrator interface."
+  },
+  "adminPlanName": "Name",
+  "@adminPlanName": {
+    "description": "Label or control text for admin plan name in the server administrator interface."
+  },
+  "adminPlanRank": "Rank",
+  "@adminPlanRank": {
+    "description": "Label or control text for admin plan rank in the server administrator interface."
+  },
+  "adminPlanRankHelp": "An account with several plans gets the one with the highest rank.",
+  "@adminPlanRankHelp": {
+    "description": "Label or control text for admin plan rank help in the server administrator interface."
+  },
+  "adminPlanDefault": "Default plan",
+  "@adminPlanDefault": {
+    "description": "Label or control text for admin plan default in the server administrator interface."
+  },
+  "adminPlanDefaultHelp": "For every account without another plan.",
+  "@adminPlanDefaultHelp": {
+    "description": "Label or control text for admin plan default help in the server administrator interface."
+  },
+  "adminPlanRemoveTitle": "Remove {name}?",
+  "@adminPlanRemoveTitle": {
+    "description": "Title of the confirmation before an administrator removes a plan or a product.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPlanRemoveBody": "Its products go with it and can no longer be bought: {products}",
+  "@adminPlanRemoveBody": {
+    "description": "Body of the confirmation before removing a plan. {products} is a comma-separated list of product names.",
+    "placeholders": {
+      "products": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementGranted": "Given by an administrator",
+  "@adminEntitlementGranted": {
+    "description": "Label or control text for admin entitlement granted in the server administrator interface."
+  },
+  "adminEntitlementRevoked": "Revoked",
+  "@adminEntitlementRevoked": {
+    "description": "Label or control text for admin entitlement revoked in the server administrator interface."
+  },
+  "adminEntitlementForever": "No end date",
+  "@adminEntitlementForever": {
+    "description": "Label or control text for admin entitlement forever in the server administrator interface."
+  },
+  "adminEntitlementUntil": "Until {date}",
+  "@adminEntitlementUntil": {
+    "description": "Label or control text for admin entitlement until in the server administrator interface.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementEnded": "Ended {date}",
+  "@adminEntitlementEnded": {
+    "description": "Label or control text for admin entitlement ended in the server administrator interface.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementsEmpty": "This account has no plans yet.",
+  "@adminEntitlementsEmpty": {
+    "description": "Label or control text for admin entitlements empty in the server administrator interface."
+  },
+  "adminEntitlementRevoke": "Revoke",
+  "@adminEntitlementRevoke": {
+    "description": "Label or control text for admin entitlement revoke in the server administrator interface."
+  },
+  "adminEntitlementRevokeTitle": "Revoke {plan}?",
+  "@adminEntitlementRevokeTitle": {
+    "description": "Title of the confirmation before an administrator revokes a plan a user holds.",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementRevokeBody": "{user} loses this plan right away. This can't be undone.",
+  "@adminEntitlementRevokeBody": {
+    "description": "Body of the confirmation before revoking a plan. {user} is the name of the user.",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementNote": "Note",
+  "@adminEntitlementNote": {
+    "description": "Label or control text for admin entitlement note in the server administrator interface."
+  },
+  "adminEntitlementGrant": "Give plan",
+  "@adminEntitlementGrant": {
+    "description": "Label or control text for admin entitlement grant in the server administrator interface."
+  },
+  "adminPaymentApplied": "Applied",
+  "@adminPaymentApplied": {
+    "description": "Label or control text for admin payment applied in the server administrator interface."
+  },
+  "adminPaymentUnclaimed": "Unclaimed",
+  "@adminPaymentUnclaimed": {
+    "description": "Label or control text for admin payment unclaimed in the server administrator interface."
+  },
+  "adminPaymentUnmatched": "Unmatched",
+  "@adminPaymentUnmatched": {
+    "description": "Label or control text for admin payment unmatched in the server administrator interface."
+  },
+  "adminPaymentsAll": "All",
+  "@adminPaymentsAll": {
+    "description": "Label or control text for admin payments all in the server administrator interface."
+  },
+  "adminPaymentsCount": "{count, plural, =1{1 payment} other{{count} payments}}",
+  "@adminPaymentsCount": {
+    "description": "Label or control text for admin payments count in the server administrator interface.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "adminPaymentsEmpty": "No payments here.",
+  "@adminPaymentsEmpty": {
+    "description": "Label or control text for admin payments empty in the server administrator interface."
+  },
+  "adminPaymentAssigned": "Plan given to the account.",
+  "@adminPaymentAssigned": {
+    "description": "Label or control text for admin payment assigned in the server administrator interface."
+  },
+  "adminPaymentAssign": "Give to an account",
+  "@adminPaymentAssign": {
+    "description": "Label or control text for admin payment assign in the server administrator interface."
+  },
+  "adminPaymentPickUser": "Choose an account.",
+  "@adminPaymentPickUser": {
+    "description": "Label or control text for admin payment pick user in the server administrator interface."
+  },
+  "errorBillingOff": "This server has no plans.",
+  "@errorBillingOff": {
+    "description": "Label or control text for error billing off in an error message."
+  },
+  "errorAlreadySponsored": "Another member's plan already covers this group.",
+  "@errorAlreadySponsored": {
+    "description": "Label or control text for error already sponsored in an error message."
+  },
+  "errorPlanInUse": "Accounts or products still use this plan.",
+  "@errorPlanInUse": {
+    "description": "Label or control text for error plan in use in an error message."
+  },
+  "errorPaymentApplied": "This payment has already been applied.",
+  "@errorPaymentApplied": {
+    "description": "Label or control text for error payment applied in an error message."
+  },
+  "errorPaymentNotFound": "No payment with that ID yet. If you just paid, try again in a minute.",
+  "@errorPaymentNotFound": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "errorPaymentNoPlan": "This payment doesn't match a plan. Ask the server's administrator to apply it.",
+  "@errorPaymentNoPlan": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "errorInvalidPlan": "Check the plan settings: something in them isn't valid.",
+  "@errorInvalidPlan": {
+    "description": "Label or control text for error invalid plan in an error message."
+  },
+  "errorLimitReceipts": "This group has reached its limit of {max} receipt photos.",
+  "@errorLimitReceipts": {
+    "description": "Label or control text for error limit receipts in an error message.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitRecurring": "This group has reached its limit of {max} recurring expenses.",
+  "@errorLimitRecurring": {
+    "description": "Label or control text for error limit recurring in an error message.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitJoinedGroups": "You've reached your limit of {max} groups.",
+  "@errorLimitJoinedGroups": {
+    "description": "Error when an account is already in as many groups as its plan allows.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitMembers": "This group has reached its limit of {max} people.",
+  "@errorLimitMembers": {
+    "description": "Error when a group already has as many people as its plan allows.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitSponsored": "Your plan can't be shared with more than {max} groups.",
+  "@errorLimitSponsored": {
+    "description": "Label or control text for error limit sponsored in an error message.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitOther": "You've reached a limit on this server.",
+  "@errorLimitOther": {
+    "description": "Label or control text for error limit other in an error message."
+  },
+  "planTitle": "Plan",
+  "@planTitle": {
+    "description": "Label or control text for plan title in the plan screens."
+  },
+  "planUnlimited": "No limit",
+  "@planUnlimited": {
+    "description": "Label or control text for plan unlimited in the plan screens."
+  },
+  "planUntil": "Until {date}",
+  "@planUntil": {
+    "description": "Label or control text for plan until in the plan screens.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "planSettingsHelp": "What this server keeps for you",
+  "@planSettingsHelp": {
+    "description": "Label or control text for plan settings help in the plan screens."
+  },
+  "planIntro": "Splitting and settling up are always free. A plan only changes how much this server keeps for you.",
+  "@planIntro": {
+    "description": "Label or control text for plan intro in the plan screens."
+  },
+  "planUsage": "{used} of {limit}",
+  "@planUsage": {
+    "description": "Label or control text for plan usage in the plan screens.",
+    "placeholders": {
+      "used": {
+        "type": "int",
+        "description": "Item count used by this message."
+      },
+      "limit": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "planUsed": "{used} used",
+  "@planUsed": {
+    "description": "Label or control text for plan used in the plan screens.",
+    "placeholders": {
+      "used": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "planLimits": "Limits",
+  "@planLimits": {
+    "description": "Label or control text for plan limits in the plan screens."
+  },
+  "planLimitReceipts": "Receipt photos per group",
+  "@planLimitReceipts": {
+    "description": "Label or control text for plan limit receipts in the plan screens."
+  },
+  "planLimitRecurring": "Recurring expenses per group",
+  "@planLimitRecurring": {
+    "description": "Label or control text for plan limit recurring in the plan screens."
+  },
+  "planLimitJoinedGroups": "Groups you're in",
+  "@planLimitJoinedGroups": {
+    "description": "The limit on how many groups an account can be in, in the plan screens."
+  },
+  "planLimitMembers": "People per group",
+  "@planLimitMembers": {
+    "description": "The limit on how many people a group can have, in the plan screens."
+  },
+  "planLimitSponsored": "Groups sharing your plan",
+  "@planLimitSponsored": {
+    "description": "Label or control text for plan limit sponsored in the plan screens."
+  },
+  "planGet": "Get a plan",
+  "@planGet": {
+    "description": "Label or control text for plan get in the plan screens."
+  },
+  "planKofi": "Ko-fi",
+  "@planKofi": {
+    "description": "Label or control text for plan kofi in the plan screens."
+  },
+  "planKofiHelp": "Put your payment code in the Ko-fi message, so the payment reaches your account.",
+  "@planKofiHelp": {
+    "description": "Label or control text for plan kofi help in the plan screens."
+  },
+  "planPaymentCodeHelp": "Your payment code. Tap to copy.",
+  "@planPaymentCodeHelp": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentCodeCopied": "Payment code copied",
+  "@planPaymentCodeCopied": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaim": "Forgot the code?",
+  "@planPaymentClaim": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimHelp": "Add a payment with its Ko-fi transaction ID.",
+  "@planPaymentClaimHelp": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimField": "Transaction ID or payment link",
+  "@planPaymentClaimField": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimAction": "Add payment",
+  "@planPaymentClaimAction": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPaymentClaimed": "Payment added",
+  "@planPaymentClaimed": {
+    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "groupPlanUsage": "People: {members} · Receipt photos: {receipts} · Recurring: {recurring}",
+  "@groupPlanUsage": {
+    "description": "Label or control text for group plan usage in the plan screens.",
+    "placeholders": {
+      "members": {
+        "type": "String"
+      },
+      "receipts": {
+        "type": "String"
+      },
+      "recurring": {
+        "type": "String"
+      }
+    }
+  },
+  "groupSponsor": "Share my plan with this group",
+  "@groupSponsor": {
+    "description": "Label or control text for group sponsor in the plan screens."
+  },
+  "groupUnsponsor": "Stop sharing my plan",
+  "@groupUnsponsor": {
+    "description": "Label or control text for group unsponsor in the plan screens."
+  },
+  "groupSponsoredBy": "Uses {name}'s plan",
+  "@groupSponsoredBy": {
+    "description": "Label or control text for group sponsored by in the plan screens.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeletePlayNote": "A Google Play subscription doesn't end with your account. Cancel it on Google Play first.",
+  "@accountDeletePlayNote": {
+    "description": "Label or control text for account delete play note in the account screens."
+  },
+  "planPlayManage": "Manage subscription",
+  "@planPlayManage": {
+    "description": "Label or control text for plan play manage in the plan screens."
+  },
+  "planPlayManageHelp": "Change or cancel it on Google Play",
+  "@planPlayManageHelp": {
+    "description": "Label or control text for plan play manage help in the plan screens."
+  },
+  "planPlayPrice": "{price} every {months, plural, =1{month} other{{months} months}}",
+  "@planPlayPrice": {
+    "description": "Label or control text for plan play price in the plan screens.",
+    "placeholders": {
+      "months": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "planPlayFailed": "Google Play couldn't complete the purchase.",
+  "@planPlayFailed": {
+    "description": "Label or control text for plan play failed in the plan screens."
+  },
+  "planPlayPending": "Your payment is still being processed. The plan starts once it goes through.",
+  "@planPlayPending": {
+    "description": "Label or control text for plan play pending in the plan screens."
+  },
+  "planPlayOnHold": "Your last payment failed. Update your payment method on Google Play to keep this plan.",
+  "@planPlayOnHold": {
+    "description": "Shown on the plan page when the Google Play subscription payment failed and is on hold."
+  },
+  "planPlayHeldElsewhere": "This Google Play account already has a subscription, which may belong to another Balnana account.",
+  "@planPlayHeldElsewhere": {
+    "description": "Error when this Google Play account already holds a subscription that may belong to a different Balnana account."
+  },
+  "planPlayUnavailable": "Couldn't reach Google Play. Try again later.",
+  "@planPlayUnavailable": {
+    "description": "Error when the app could not reach Google Play billing."
+  },
+  "errorInvalidPurchase": "Google Play doesn't recognize this purchase.",
+  "@errorInvalidPurchase": {
+    "description": "Label or control text for error invalid purchase in an error message."
+  },
+  "errorPlayOtherAccount": "This subscription belongs to another account. Sign in to that one, or cancel it on Google Play.",
+  "@errorPlayOtherAccount": {
+    "description": "Label or control text for error play other account in an error message."
+  },
+  "errorPlayUnavailable": "Couldn't reach Google Play. Try again in a moment.",
+  "@errorPlayUnavailable": {
+    "description": "Label or control text for error play unavailable in an error message."
+  },
+  "adminPlayPackage": "Google Play package name",
+  "@adminPlayPackage": {
+    "description": "Label or control text for admin play package in the server administrator interface."
+  },
+  "adminPlayPackageHelp": "The app's ID on Google Play. With the service account below, it turns on Google Play subscriptions.",
+  "@adminPlayPackageHelp": {
+    "description": "Label or control text for admin play package help in the server administrator interface."
+  },
+  "adminPlayServiceAccount": "Google Play service account",
+  "@adminPlayServiceAccount": {
+    "description": "Label or control text for admin play service account in the server administrator interface."
+  },
+  "adminPlayServiceAccountHelp": "The JSON key of a service account that can view and manage orders and subscriptions in Play Console.",
+  "@adminPlayServiceAccountHelp": {
+    "description": "Label or control text for admin play service account help in the server administrator interface."
+  },
+  "adminPlayPushAccount": "Pub/Sub push account",
+  "@adminPlayPushAccount": {
+    "description": "Label or control text for admin play push account in the server administrator interface."
+  },
+  "adminPlayPushAccountHelp": "The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.",
+  "@adminPlayPushAccountHelp": {
+    "description": "Label or control text for admin play push account help in the server administrator interface."
+  },
+  "adminPlayWebhook": "Pub/Sub push endpoint, and its audience too: {url}",
+  "@adminPlayWebhook": {
+    "description": "Label or control text for admin play webhook in the server administrator interface.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "adminProductProvider": "Paid through",
+  "@adminProductProvider": {
+    "description": "Label or control text for admin product provider in the server administrator interface."
+  },
+  "adminProductPlayId": "Product ID",
+  "@adminProductPlayId": {
+    "description": "Label or control text for admin product play id in the server administrator interface."
+  },
+  "adminProductPlayIdHelp": "As written in Play Console. Google Play says when each payment ends, so there are no days to set.",
+  "@adminProductPlayIdHelp": {
+    "description": "Label or control text for admin product play id help in the server administrator interface."
+  },
+  "adminProductRemoveBody": "Payments for it stop being applied to accounts. Plans already held stay until they end.",
+  "@adminProductRemoveBody": {
+    "description": "Body of the confirmation before an administrator removes a product."
   }
 }

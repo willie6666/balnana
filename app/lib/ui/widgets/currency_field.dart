@@ -97,7 +97,7 @@ class _CurrencyPickerState extends State<_CurrencyPicker> {
     if (query.isEmpty) {
       suggested = {
         if (widget.current.isNotEmpty) widget.current,
-        localCurrency(locale),
+        ?localCurrency(locale),
         'USD',
         'EUR',
       }.toList();

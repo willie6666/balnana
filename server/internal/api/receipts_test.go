@@ -69,6 +69,9 @@ func (c *client) upload(path, contentType string, body []byte) *httptest.Respons
 	if c.member != "" {
 		req.Header.Set("X-Balnana-Member", c.member)
 	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
 	rec := httptest.NewRecorder()
 	c.h.ServeHTTP(rec, req)
 	return rec
@@ -434,4 +437,48 @@ func putReceipt(t *testing.T, url string, body []byte) int {
 	}
 	res.Body.Close()
 	return res.StatusCode
+}
+
+func TestJPEGScans(t *testing.T) {
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, halves(32, 32), nil); err != nil {
+		t.Fatal(err)
+	}
+	plain := buf.Bytes()
+	if n := jpegScans(plain); n != 1 {
+		t.Fatalf("plain photo: %d scans", n)
+	}
+	// A thumbnail in the metadata is no scan of the photo.
+	thumb := []byte{0xff, 0xe1, 0x00, 0x08, 'E', 'x', 0xff, 0xda, 0, 0}
+	withThumb := append(append(append([]byte{}, plain[:2]...), thumb...), plain[2:]...)
+	if n := jpegScans(withThumb); n != 1 {
+		t.Fatalf("with a thumbnail: %d scans", n)
+	}
+	if _, err := receiptJPEG(withThumb); err != nil {
+		t.Fatal(err)
+	}
+	// Decoding takes time for every scan, however little the file holds.
+	many := plain[:len(plain)-2]
+	for range maxJPEGScans {
+		many = append(many, 0xff, 0xda, 0, 8, 1, 1, 0, 0, 63, 0)
+	}
+	if _, err := receiptJPEG(many); !errors.Is(err, errBadImage) {
+		t.Fatalf("too many scans: %v", err)
+	}
+}
+
+// Slow uploads don't get to hold ever more photos in memory.
+func TestReceiptUploadsBounded(t *testing.T) {
+	c := newClient(t)
+	url := receiptURL(t, c)
+	for range cap(receiptUploads) {
+		receiptUploads <- struct{}{}
+	}
+	status := putReceipt(t, url, []byte("not a PNG"))
+	for range cap(receiptUploads) {
+		<-receiptUploads
+	}
+	if status != http.StatusServiceUnavailable {
+		t.Fatalf("status %d", status)
+	}
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -33,7 +34,10 @@ Locale resolveLocale(List<Locale>? preferred, List<Locale> device) {
     final match = supportedLocaleFor(locale);
     if (match == null) continue;
     final region =
-        locale.countryCode ?? device.where((d) => supportedLocaleFor(d) == match).firstOrNull?.countryCode;
+        locale.countryCode ??
+        device.where((d) => supportedLocaleFor(d) == match).firstOrNull?.countryCode ??
+        // intl has no plain "zh-Hant": it would fall back to mainland China.
+        (match.scriptCode == 'Hant' ? 'TW' : null);
     return Locale.fromSubtags(
       languageCode: match.languageCode,
       scriptCode: match.scriptCode,
@@ -41,4 +45,12 @@ Locale resolveLocale(List<Locale>? preferred, List<Locale> device) {
     );
   }
   return const Locale('en');
+}
+
+/// Dates show the same digits as amounts, which are all Latin and are what
+/// people type. Left alone, intl writes Arabic dates in Arabic-Indic digits.
+void useLatinDigits() {
+  for (final locale in const ['ar', 'ar_EG']) {
+    DateFormat.useNativeDigitsByDefaultFor(locale, false);
+  }
 }

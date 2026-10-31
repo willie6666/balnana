@@ -22,6 +22,7 @@ import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
 import '../../ui/widgets/symbol_field.dart';
+import '../settings/plan_page.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
@@ -113,11 +114,14 @@ class _Settings extends ConsumerWidget {
     )) {
       return;
     }
+    if (!context.mounted) return;
+    // The page can go during the request, and its ref with it.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       final updated = await groupApiOf(ref, group.token).resetLink();
-      ref.read(knownGroupsProvider.notifier).replaceToken(group.token, updated.token);
-      ref.invalidate(summariesProvider);
-      ref.invalidate(activityFeedProvider);
+      container.read(knownGroupsProvider.notifier).replaceToken(group.token, updated.token);
+      container.invalidate(summariesProvider);
+      container.invalidate(activityFeedProvider);
       if (!context.mounted) return;
       _snack(context, l10n.resetLinkDone);
       context.go('/g/${updated.token}');
@@ -209,10 +213,11 @@ class _Settings extends ConsumerWidget {
       action: l10n.leaveAction,
     );
     if (!ok || !context.mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await groupApiOf(ref, group.token).removeMember(me.id);
-      refreshGroup(ref, group.token);
-      ref.read(currentGroupProvider.notifier).set(null);
+      refreshGroupIn(container, group.token);
+      container.read(currentGroupProvider.notifier).set(null);
       if (context.mounted) context.go('/groups');
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
@@ -228,22 +233,23 @@ class _Settings extends ConsumerWidget {
       action: l10n.commonRemove,
     );
     if (!ok || !context.mounted) return;
-    _dropLocally(ref);
+    _dropLocally(ProviderScope.containerOf(context, listen: false));
     context.go('/groups');
   }
 
   /// Takes the group off this device's list and out of what shows it.
-  void _dropLocally(WidgetRef ref) {
-    ref.read(knownGroupsProvider.notifier).remove(group.token);
-    ref.invalidate(summariesProvider);
-    ref.invalidate(activityFeedProvider);
-    ref.read(currentGroupProvider.notifier).set(null);
+  void _dropLocally(ProviderContainer container) {
+    container.read(knownGroupsProvider.notifier).remove(group.token);
+    container.invalidate(summariesProvider);
+    container.invalidate(activityFeedProvider);
+    container.read(currentGroupProvider.notifier).set(null);
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final ok = await showDialog<bool>(context: context, builder: (_) => _DeleteGroupDialog(name: group.name));
     if (ok != true || !context.mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await groupApiOf(ref, group.token).delete();
     } on ApiException catch (e) {
@@ -251,7 +257,7 @@ class _Settings extends ConsumerWidget {
       _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
       return;
     }
-    _dropLocally(ref);
+    _dropLocally(container);
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     context.go('/groups');
@@ -408,6 +414,8 @@ class _Settings extends ConsumerWidget {
               subtitle: l10n.recurringHelp,
               onTap: () => context.go('/g/${group.token}/settings/recurring'),
             ),
+            if (ref.watch(serverInfoProvider).value?.billing ?? false)
+              _GroupPlanTile(group: group, me: me?.id),
             GroupedTile(
               icon: Icons.download_outlined,
               title: l10n.exportCsv,
@@ -587,6 +595,7 @@ class _DeleteGroupDialogState extends State<_DeleteGroupDialog> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
+      scrollable: true,
       icon: const Icon(Icons.delete_forever_outlined),
       title: Text(l10n.groupDeleteTitle(widget.name)),
       content: Column(
@@ -614,6 +623,74 @@ class _DeleteGroupDialogState extends State<_DeleteGroupDialog> {
           child: Text(l10n.groupDeleteAction),
         ),
       ],
+    );
+  }
+}
+
+/// What the group may hold and who pays for it. A signed-in member can share
+/// their plan with the group, or stop.
+class _GroupPlanTile extends ConsumerStatefulWidget {
+  const _GroupPlanTile({required this.group, required this.me});
+
+  final Group group;
+
+  /// The member this device is, if any.
+  final String? me;
+
+  @override
+  ConsumerState<_GroupPlanTile> createState() => _GroupPlanTileState();
+}
+
+class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
+  bool _busy = false;
+
+  Future<void> _sponsor({required bool stop}) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final token = widget.group.token;
+    setState(() => _busy = true);
+    try {
+      final api = groupApiOf(ref, token);
+      await (stop ? api.unsponsor() : api.sponsor());
+      ref.invalidate(groupPlanProvider(token));
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final plan = ref.watch(groupPlanProvider(widget.group.token)).value;
+    if (plan == null) return const SizedBox.shrink();
+    final sponsor = plan.sponsorMemberId;
+    final sponsorName = widget.group.activeMembers
+        .where((m) => m.id == sponsor)
+        .map((m) => m.name)
+        .firstOrNull;
+    final usage = l10n.groupPlanUsage(
+      planUsage(l10n, plan.members),
+      planUsage(l10n, plan.receipts),
+      planUsage(l10n, plan.recurring),
+    );
+    final mine = sponsor != null && sponsor == widget.me;
+    final signedIn = ref.watch(signedInProvider);
+    return GroupedTile(
+      icon: Icons.workspace_premium_outlined,
+      title: mine
+          ? l10n.groupUnsponsor
+          : sponsor == null && signedIn && plan.canSponsor
+          ? l10n.groupSponsor
+          : plan.planName,
+      subtitle: sponsorName == null ? usage : '${l10n.groupSponsoredBy(sponsorName)}\n$usage',
+      onTap: _busy
+          ? null
+          : mine
+          ? () => _sponsor(stop: true)
+          : sponsor == null && signedIn && plan.canSponsor
+          ? () => _sponsor(stop: false)
+          : null,
     );
   }
 }

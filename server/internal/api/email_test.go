@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -39,6 +41,28 @@ func (f fakeMail) next(t *testing.T, to string) string {
 		t.Fatalf("no mail to %s", to)
 		return ""
 	}
+}
+
+// nextAfterNotice is next for a message sent along with one to old, which
+// comes in either order. It says what was sent to old.
+func (f fakeMail) nextAfterNotice(t *testing.T, to, old string) (link, notice string) {
+	t.Helper()
+	for range 2 {
+		select {
+		case m := <-f:
+			switch {
+			case strings.EqualFold(m.To, old):
+				notice = m.Body
+			case strings.EqualFold(m.To, to):
+				link = regexp.MustCompile(`https?://\S+`).FindString(m.Body)
+			default:
+				t.Fatalf("mail to %s", m.To)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("no mail to %s or %s", to, old)
+		}
+	}
+	return link, notice
 }
 
 func (f fakeMail) none(t *testing.T) {
@@ -310,16 +334,20 @@ func TestChangeEmailWaitsForConfirmation(t *testing.T) {
 	f.none(t) // within a minute of the last one
 
 	c.another().must(204, "POST", "/auth/verify-email", EmailToken{Token: lastPart(link)}, nil)
+	// The account may have changed hands, so nothing stays signed in.
+	c.errorCode(401, "GET", "/me", nil)
+	var again Session
+	c.must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.org", Password: "correct horse"}, &again)
+	c.token = *again.Token
 	me = User{} // fields left out of the answer stay as they were otherwise
 	c.must(200, "GET", "/me", nil, &me)
 	if *me.Email != "ana@example.org" || !me.EmailVerified || me.PendingEmail != nil {
 		t.Fatalf("me = %+v", me)
 	}
-	c.another().must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.org", Password: "correct horse"}, nil)
 
 	// Going back to the current address drops a pending one, and its link.
 	c.must(200, "POST", "/me/email", EmailChange{Email: "typo@example.con", Password: pw}, &me)
-	link = f.next(t, "typo@example.con")
+	link, _ = f.nextAfterNotice(t, "typo@example.con", "ana@example.org")
 	me = User{}
 	c.must(200, "POST", "/me/email", EmailChange{Email: "ana@example.org", Password: pw}, &me)
 	if me.PendingEmail != nil || !me.EmailVerified {
@@ -331,7 +359,7 @@ func TestChangeEmailWaitsForConfirmation(t *testing.T) {
 
 	// An address taken while it was pending is not handed over.
 	c.must(200, "POST", "/me/email", EmailChange{Email: "cy@example.com", Password: pw}, nil)
-	link = f.next(t, "cy@example.com")
+	link, _ = f.nextAfterNotice(t, "cy@example.com", "ana@example.org")
 	register(c.another(), "cy@example.com", "Cy")
 	if code := c.another().errorCode(409, "POST", "/auth/verify-email", EmailToken{Token: lastPart(link)}); code != "email_taken" {
 		t.Fatal(code)
@@ -339,6 +367,79 @@ func TestChangeEmailWaitsForConfirmation(t *testing.T) {
 	c.must(200, "GET", "/me", nil, &me)
 	if *me.Email != "ana@example.org" {
 		t.Fatalf("me = %+v", me)
+	}
+}
+
+// The old address hears of a change, and the owner taking the password back
+// stops it, whichever way they do that.
+func TestPasswordEndsAnEmailChange(t *testing.T) {
+	const pw = "correct horse"
+	start := func(t *testing.T) (*client, fakeMail, string, string) {
+		c, f, s := mailServer(t, map[string]string{})
+		u := register(c, "ana@example.com", "Ana")
+		exec(t, s, `update users set email_verified = true where id = $1`, u.Id)
+		c.must(200, "POST", "/me/email", EmailChange{Email: "thief@example.org", Password: ptr(pw)}, nil)
+		link, notice := f.nextAfterNotice(t, "thief@example.org", "ana@example.com")
+		if !strings.Contains(notice, "thief@example.org") {
+			t.Fatal(notice)
+		}
+		return c, f, lastPart(link), u.Id
+	}
+	check := func(t *testing.T, c *client, token string) {
+		t.Helper()
+		if code := c.another().errorCode(400, "POST", "/auth/verify-email", EmailToken{Token: token}); code != "invalid_token" {
+			t.Fatal(code)
+		}
+		c.another().must(200, "POST", "/auth/login", LoginInput{Login: "ana@example.com", Password: "a new password"}, nil)
+	}
+	t.Run("changed", func(t *testing.T) {
+		c, _, token, _ := start(t)
+		c.must(204, "POST", "/me/password", PasswordChange{CurrentPassword: ptr(pw), NewPassword: "a new password"}, nil)
+		check(t, c, token)
+	})
+	t.Run("reset", func(t *testing.T) {
+		c, f, token, _ := start(t)
+		c.another().must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+		reset := lastPart(f.next(t, "ana@example.com"))
+		c.another().must(204, "POST", "/auth/password-reset/confirm", PasswordReset{Token: reset, NewPassword: "a new password"}, nil)
+		check(t, c, token)
+	})
+	t.Run("completed", func(t *testing.T) {
+		c, f, token, _ := start(t)
+		c.another().must(204, "POST", "/auth/verify-email", EmailToken{Token: token}, nil)
+		select {
+		case m := <-f:
+			if m.To != "ana@example.com" || !strings.Contains(m.Body, "thief@example.org") {
+				t.Fatalf("%+v", m)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("the old address never heard")
+		}
+	})
+}
+
+// Only so many reset emails go out, and asking past that looks the same.
+func TestPasswordResetEmailLimit(t *testing.T) {
+	c, f := mailClient(t, map[string]string{})
+	register(c, "ana@example.com", "Ana")
+	sent := 0
+	for range resetBurst {
+		c.another().must(204, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}, nil)
+	}
+	for {
+		select {
+		case <-f:
+			sent++
+			continue
+		case <-time.After(200 * time.Millisecond):
+		}
+		break
+	}
+	if sent != 1 { // within a minute of the first
+		t.Fatalf("%d sent", sent)
+	}
+	if code := c.another().errorCode(429, "POST", "/auth/password-reset", PasswordResetRequest{Email: "ana@example.com"}); code != "rate_limited" {
+		t.Fatal(code)
 	}
 }
 
@@ -353,4 +454,31 @@ func TestChangeEmailLimit(t *testing.T) {
 		t.Fatal(code)
 	}
 	f.none(t)
+}
+
+// failsOnce turns down the first message, as a busy mail server does.
+type failsOnce struct {
+	fakeMail
+	failed atomic.Bool
+}
+
+func (f *failsOnce) Send(ctx context.Context, m mail.Message) error {
+	if f.failed.CompareAndSwap(false, true) {
+		return errors.New("try again")
+	}
+	return f.fakeMail.Send(ctx, m)
+}
+
+func TestMailRetriesOnce(t *testing.T) {
+	old := mailRetry
+	mailRetry = time.Millisecond
+	t.Cleanup(func() { mailRetry = old })
+	s := NewServer(baseConfig(t, map[string]string{}), nil, slog.New(slog.DiscardHandler), "test")
+	sent := make(fakeMail, 1)
+	s.settings.Store(&settings{cfg: s.conf(), mail: &failsOnce{fakeMail: sent}})
+	s.sendMail(mail.Message{To: "ana@example.com", Body: "https://example.com/"})
+	s.FinishMail()
+	if len(sent) != 1 {
+		t.Fatal("not sent the second time")
+	}
 }

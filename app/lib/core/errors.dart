@@ -60,6 +60,17 @@ String errorMessage(AppLocalizations l10n, Object error) {
       _importProblem(l10n, '${error.params['problem']}'),
     ),
     'import_me' => l10n.errorImportMe,
+    'plan_limit' => _planLimit(l10n, error.params),
+    'billing_off' => l10n.errorBillingOff,
+    'already_sponsored' => l10n.errorAlreadySponsored,
+    'plan_in_use' => l10n.errorPlanInUse,
+    'payment_applied' => l10n.errorPaymentApplied,
+    'payment_not_found' => l10n.errorPaymentNotFound,
+    'payment_no_plan' => l10n.errorPaymentNoPlan,
+    'invalid_plan' => l10n.errorInvalidPlan,
+    'invalid_purchase' => l10n.errorInvalidPurchase,
+    'play_other_account' => l10n.errorPlayOtherAccount,
+    'play_unavailable' => l10n.errorPlayUnavailable,
     'too_large' => l10n.errorTooLarge,
     'busy' => l10n.errorBusy,
     'timeout' => l10n.errorTimeout,
@@ -99,3 +110,15 @@ String _importProblem(AppLocalizations l10n, String problem) => switch (problem)
   'currency' => l10n.errorImportRowCurrency,
   _ => errorMessage(l10n, ApiException(problem)),
 };
+
+String _planLimit(AppLocalizations l10n, Map<String, Object?> params) {
+  final max = (params['max'] as num?)?.toInt() ?? 0;
+  return switch (params['limit']) {
+    'receipts' => l10n.errorLimitReceipts(max),
+    'recurring' => l10n.errorLimitRecurring(max),
+    'joined_groups' => l10n.errorLimitJoinedGroups(max),
+    'members' => l10n.errorLimitMembers(max),
+    'sponsored_groups' => l10n.errorLimitSponsored(max),
+    _ => l10n.errorLimitOther,
+  };
+}

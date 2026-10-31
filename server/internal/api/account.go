@@ -161,6 +161,9 @@ func (s *Server) ChangeEmail(ctx context.Context, req ChangeEmailRequestObject) 
 	}
 	u.pending = email
 	s.sendMail(verifyMail(*email, u.name, s.appLink("/verify-email", url.Values{"token": {token}})))
+	if u.email != nil && u.verified {
+		s.sendMail(emailChangingMail(*u.email, u.name, *email))
+	}
 	return ChangeEmail200JSONResponse(u.api()), nil
 }
 

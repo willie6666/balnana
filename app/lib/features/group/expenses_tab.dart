@@ -466,7 +466,8 @@ class ExpenseTile extends ConsumerWidget {
         : net < BigInt.zero
         ? c.owe
         : c.settled;
-    final amount = Text(part ? money(net.abs()) : whole, style: text.moneyRow.copyWith(color: color));
+    final mine = formatMoney(context, net, group.minorDigits, group.currency, symbol: group.symbol, signed: true);
+    final amount = Text(part ? mine : whole, style: text.moneyRow.copyWith(color: color));
 
     final muted = text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
     Text line(String s) => Text(s, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis);

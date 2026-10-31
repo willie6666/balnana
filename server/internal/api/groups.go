@@ -80,10 +80,14 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names))
+		if err != nil {
+			return err
+		}
 		g, err := scanGroup(tx.QueryRow(ctx, `
-			insert into groups (token, name, emoji, color, currency, symbol, minor_digits, link_access)
-			values ($1, $2, $3, $4, $5, $6, $7, $8)
-			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, symbol, digits, linkAccess))
+			insert into groups (token, name, emoji, color, currency, symbol, minor_digits, link_access, sponsor_user_id)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, symbol, digits, linkAccess, sponsor))
 		if err != nil {
 			return err
 		}
@@ -188,7 +192,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	if err != nil {
 		return nil, err
 	}
-	out := GroupSummaryList{Missing: []string{}}
+	out := GroupSummaryList{Missing: []string{}, Locked: []string{}}
 	if out.Groups, err = summarize(ctx, s.db, groups); err != nil {
 		return nil, err
 	}

@@ -30,6 +30,7 @@ class MainActivity : FlutterActivity() {
     // Everyone waiting for the position being looked for.
     private val locationResults = mutableListOf<MethodChannel.Result>()
     private var locationTimeout: Runnable? = null
+    private var billing: PlayBilling? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         intent = withWholeLink(intent)
@@ -38,6 +39,12 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(withWholeLink(intent))
+    }
+
+    override fun onDestroy() {
+        billing?.close()
+        billing = null
+        super.onDestroy()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -57,6 +64,7 @@ class MainActivity : FlutterActivity() {
         // location". LocationManager rather than Play Services keeps the app
         // free of proprietary libraries.
         val messenger = flutterEngine.dartExecutor.binaryMessenger
+        billing = PlayBilling(this, messenger)
         MethodChannel(messenger, "balnana/location").setMethodCallHandler { call, result ->
             if (call.method != "current") return@setMethodCallHandler result.notImplemented()
             locationResults.add(result)

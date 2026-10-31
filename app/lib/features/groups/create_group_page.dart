@@ -45,7 +45,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_currency.text.isEmpty) _currency.text = localCurrency(Localizations.localeOf(context));
+    if (_currency.text.isEmpty) _currency.text = localCurrency(Localizations.localeOf(context)) ?? '';
     if (_me.text.isEmpty) _me.text = ref.read(currentAccountProvider).value?.name ?? '';
   }
 

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -42,29 +45,34 @@ func TestBuckets(t *testing.T) {
 }
 
 func TestClientKey(t *testing.T) {
+	const xff, realIP = "X-Forwarded-For", "X-Real-Ip"
 	tests := []struct {
-		remote, xff, realIP string
-		trust               bool
-		want                string
+		remote string
+		header map[string][]string
+		trust  string
+		want   string
 	}{
-		{"192.0.2.7:5000", "", "", false, "192.0.2.7"},
-		{"192.0.2.7:5000", "198.51.100.1", "", false, "192.0.2.7"},
-		{"192.0.2.7:5000", "203.0.113.9, 198.51.100.1", "", true, "198.51.100.1"},
-		{"192.0.2.7:5000", "", "198.51.100.2", true, "198.51.100.2"},
-		{"[2001:db8:1:2:3:4:5:6]:5000", "", "", false, "2001:db8:1:2::/64"},
-		{"[::ffff:192.0.2.8]:5000", "", "", false, "192.0.2.8"},
+		{"192.0.2.7:5000", nil, "", "192.0.2.7"},
+		{"192.0.2.7:5000", map[string][]string{xff: {"198.51.100.1"}}, "", "192.0.2.7"},
+		{"192.0.2.7:5000", map[string][]string{xff: {"203.0.113.9, 198.51.100.1"}}, xff, "198.51.100.1"},
+		// A proxy adding a line of its own, after the client's.
+		{"192.0.2.7:5000", map[string][]string{xff: {"203.0.113.9", "198.51.100.1"}}, xff, "198.51.100.1"},
+		// One setting only X-Real-IP is not fooled by a client's X-Forwarded-For.
+		{"192.0.2.7:5000", map[string][]string{xff: {"203.0.113.9"}, realIP: {"198.51.100.2"}}, realIP, "198.51.100.2"},
+		{"192.0.2.7:5000", map[string][]string{realIP: {"198.51.100.2"}}, xff, "192.0.2.7"},
+		// Nothing a client makes up becomes a key of its own.
+		{"192.0.2.7:5000", map[string][]string{xff: {"made up"}}, xff, "192.0.2.7"},
+		{"[2001:db8:1:2:3:4:5:6]:5000", nil, "", "2001:db8:1:2::/64"},
+		{"[::ffff:192.0.2.8]:5000", nil, "", "192.0.2.8"},
 	}
 	for _, tt := range tests {
 		r := httptest.NewRequest(http.MethodGet, "/api/v1/server-info", nil)
 		r.RemoteAddr = tt.remote
-		if tt.xff != "" {
-			r.Header.Set("X-Forwarded-For", tt.xff)
-		}
-		if tt.realIP != "" {
-			r.Header.Set("X-Real-IP", tt.realIP)
+		for k, v := range tt.header {
+			r.Header[k] = v
 		}
 		if got := clientKey(r, tt.trust); got != tt.want {
-			t.Errorf("clientKey(%q, xff %q, trust %v) = %q, want %q", tt.remote, tt.xff, tt.trust, got, tt.want)
+			t.Errorf("clientKey(%q, %v, %q) = %q, want %q", tt.remote, tt.header, tt.trust, got, tt.want)
 		}
 	}
 }
@@ -188,11 +196,41 @@ func TestGuessLimit(t *testing.T) {
 	for range guessBurst {
 		ana.another().errorCode(401, "POST", "/auth/login", wrong)
 	}
-	// The account is held now, even for the right password; others are not.
+	// The account is held now for this client, even with the right password;
+	// others are not.
 	if code := ana.another().errorCode(429, "POST", "/auth/login", right); code != "rate_limited" {
 		t.Fatal(code)
 	}
 	if code := ana.another().errorCode(401, "POST", "/auth/login", LoginInput{Login: "ben@example.com", Password: "x"}); code != "invalid_credentials" {
 		t.Fatal(code)
+	}
+}
+
+// Someone guessing from one place keeps guessing from that place only: the
+// owner gets in from their own.
+func TestGuessesFromOneClientLeaveTheOwnerIn(t *testing.T) {
+	s := NewServer(baseConfig(t, map[string]string{}), nil, slog.New(slog.DiscardHandler), "test")
+	from := func(client string) context.Context {
+		return context.WithValue(context.Background(), clientCtxKey{}, client)
+	}
+	for range guessBurst {
+		if _, err := s.holdGuess(from("attacker"), "ana"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for range 3 * guessBurst {
+		if _, err := s.holdGuess(from("attacker"), "ana"); err == nil {
+			t.Fatal("kept guessing")
+		}
+	}
+	if _, err := s.holdGuess(from("owner"), "ana"); err != nil {
+		t.Fatal(err)
+	}
+	// Guesses from everywhere still run out.
+	for i := range allGuessBurst {
+		s.holdGuess(from(fmt.Sprint("client", i)), "ana")
+	}
+	if _, err := s.holdGuess(from("owner"), "ana"); err == nil {
+		t.Fatal("no limit over all clients")
 	}
 }

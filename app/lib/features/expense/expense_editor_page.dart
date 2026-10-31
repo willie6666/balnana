@@ -76,6 +76,7 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
     if (group.value case final g? when expense == null || expense.hasValue || listed != null) {
       final latest = expense?.value ?? listed;
       final base = _base ??= latest;
+      if (base != null && !base.editable) return _newer();
       return GroupTheme(
         group: g,
         child: _Editor(
@@ -101,6 +102,7 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
     final recurring = ref.watchCurrent(recurringOneProvider((token: token, id: id)));
     if (group.value case final g? when recurring.hasValue) {
       final base = _recurringBase ??= recurring.requireValue;
+      if (!base.editable) return _newer();
       return GroupTheme(
         group: g,
         child: _Editor(
@@ -118,6 +120,25 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
       ref.invalidate(groupProvider(token));
       ref.invalidate(recurringOneProvider((token: token, id: id)));
     });
+  }
+
+  /// A newer app or server made this: the form could not save it back as it
+  /// is, so it stays closed.
+  Widget _newer() {
+    final l10n = context.l10n;
+    return Scaffold(
+      appBar: AppBar(leading: const CloseButton()),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(BSpace.s16),
+          child: EmptyState(
+            icon: Icons.system_update_outlined,
+            title: l10n.expenseNewerTitle,
+            body: l10n.expenseNewerBody,
+          ),
+        ),
+      ),
+    );
   }
 
   /// A spinner while loading, or what went wrong.
@@ -233,6 +254,9 @@ class _EditorState extends ConsumerState<_Editor> {
   bool _chargedFixed = false;
 
   bool _busy = false;
+
+  /// Sent with the new expense, so saving again after a lost answer adds it once.
+  late final _key = newClientKey();
   bool _tried = false;
 
   Group get _group => widget.group;
@@ -243,13 +267,11 @@ class _EditorState extends ConsumerState<_Editor> {
   String get _currency => _foreign ?? _group.currency;
   String? get _symbol => _foreign == null ? _group.symbol : null;
 
-  /// Current members, plus anyone who left but is part of this expense.
+  /// Current members, then anyone who left: an expense can still name them.
   late final List<Member> _people = [
+    ..._group.activeMembers,
     for (final m in _group.members)
-      if (!m.left ||
-          (widget.expense?.payers.any((p) => p.memberId == m.id) ?? false) ||
-          (widget.expense?.splits.any((s) => s.memberId == m.id) ?? false))
-        m,
+      if (m.left) m,
   ];
 
   /// Whether the group is too large to list every payer at once.
@@ -302,7 +324,7 @@ class _EditorState extends ConsumerState<_Editor> {
       for (final s in e.splits) {
         _included.add(s.memberId);
         _values[s.memberId]?.text = switch (_method) {
-          SplitMethod.equal => '',
+          SplitMethod.equal || SplitMethod.unknown => '',
           SplitMethod.exact => typed(s),
           SplitMethod.shares => s.share ?? '',
         };
@@ -367,11 +389,19 @@ class _EditorState extends ConsumerState<_Editor> {
     final foreign = picked == _group.currency ? null : picked;
     setState(() {
       _foreign = foreign;
-      // What was typed stays where it still is an amount in the new currency.
+      // What was typed stays where it still is an amount in the new currency,
+      // written the way that currency's field accepts it: "12.00" would leave
+      // a field without decimals unable to take any further edit.
       final typed = [if (!_multiPay) _amount, ..._paid.values, if (_method == SplitMethod.exact) ..._values.values];
       for (final c in typed) {
+        if (c.text.trim().isEmpty) continue;
         try {
-          if (c.text.trim().isNotEmpty && parseInput(c.text, _digits) == null) c.clear();
+          final parsed = parseInput(c.text, _digits);
+          if (parsed == null) {
+            c.clear();
+          } else {
+            c.text = formatAmount(parsed, _digits);
+          }
         } on MoneyException {
           c.clear();
         }
@@ -590,10 +620,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final picked = await pickMember(
       context,
       title: title,
-      members: [
-        for (final m in _people)
-          if (!m.left) m,
-      ],
+      members: _people,
       selected: _multiPay ? null : _payer,
     );
     if (picked?.id case final id? when mounted) {
@@ -615,10 +642,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final picked = await pickMembers(
       context,
       title: title,
-      members: [
-        for (final m in _people)
-          if (!m.left || listed.contains(m.id)) m,
-      ],
+      members: _people,
       selected: listed,
     );
     if (picked == null || !mounted) return;
@@ -734,6 +758,8 @@ class _EditorState extends ConsumerState<_Editor> {
     }
     setState(() => _busy = true);
     final api = groupApiOf(ref, _group.token);
+    // The page can go while this waits, and its ref with it.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       if (_unit case final unit?) {
         final recurring = RecurringDraft(
@@ -744,11 +770,11 @@ class _EditorState extends ConsumerState<_Editor> {
         );
         if (widget.recurring case final r?) {
           await api.updateRecurring(r.id, recurring, _group.minorDigits, version: r.version);
-          ref.invalidate(recurringOneProvider((token: _group.token, id: r.id)));
+          container.invalidate(recurringOneProvider((token: _group.token, id: r.id)));
         } else {
-          await api.createRecurring(recurring, _group.minorDigits);
+          await api.createRecurring(recurring, _group.minorDigits, key: _key);
         }
-        refreshGroup(ref, _group.token);
+        refreshGroupIn(container, _group.token);
         if (mounted) context.pop();
         return;
       }
@@ -758,11 +784,11 @@ class _EditorState extends ConsumerState<_Editor> {
         // A new photo alone leaves the expense as it is.
         if (_formDirty) await api.updateExpense(e.id, draft, _group.minorDigits, version: e.version);
       } else {
-        id = (await api.createExpense(draft, _group.minorDigits)).id;
+        id = (await api.createExpense(draft, _group.minorDigits, key: _key)).id;
       }
-      await _saveReceipt(api, id);
-      ref.invalidate(expenseProvider((token: _group.token, id: id)));
-      refreshGroup(ref, _group.token);
+      await _saveReceipt(api, id, l10n, messenger);
+      container.invalidate(expenseProvider((token: _group.token, id: id)));
+      refreshGroupIn(container, _group.token);
       if (mounted) context.pop();
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -782,9 +808,7 @@ class _EditorState extends ConsumerState<_Editor> {
 
   /// Uploads or removes the photo once the expense is saved. The expense
   /// stays saved when this fails, so it is only told.
-  Future<void> _saveReceipt(GroupApi api, String id) async {
-    final l10n = context.l10n;
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _saveReceipt(GroupApi api, String id, AppLocalizations l10n, ScaffoldMessengerState messenger) async {
     try {
       if (_receipt case final r?) {
         await api.putReceipt(id, r.bytes, r.type, _group.minorDigits);
@@ -885,9 +909,9 @@ class _EditorState extends ConsumerState<_Editor> {
     final editing = widget.expense != null;
 
     return PopScope(
-      canPop: !_dirty || _busy,
+      canPop: !_dirty && !_busy,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave();
+        if (!didPop && !_busy) _leave();
       },
       child: FormPage(
         title: widget.recurring != null
@@ -1130,12 +1154,7 @@ class _PaidBy extends StatelessWidget {
     final title = s._received ? l10n.expenseReceivedForLabel : l10n.expensePaidByLabel;
     // A large group offers the likeliest payers and lists only the payers
     // chosen; anyone else is picked from a list.
-    final offered = s._crowd
-        ? s._likelyPayers()
-        : [
-            for (final m in s._people)
-              if (!m.left || m.id == s._payer) m,
-          ];
+    final offered = s._crowd ? s._likelyPayers() : s._people;
     final listed = s._crowd ? s._payersListed : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1556,7 +1575,7 @@ class _CrowdSplit extends StatelessWidget {
     // Lit once ticks or shares have put the list out of order.
     final stale = !listEquals(sorted, [for (final m in people) m.id]);
     void sort() => s._update(() => s._splitOrder = sorted);
-    // Both act on the people the search shows; people who left can only be taken out.
+    // Both act on the people the search shows; ticking everyone means everyone still here.
     void tickAll(bool on) => s._update(() {
       for (final m in matching) {
         if (!on) {
@@ -1632,6 +1651,7 @@ class _SplitSummary extends StatelessWidget {
         );
       case SplitMethod.equal:
       case SplitMethod.shares:
+      case SplitMethod.unknown:
         if (error == null) return const SizedBox.shrink();
         return _Note(text: moneyErrorMessage(l10n, error!), error: true);
     }

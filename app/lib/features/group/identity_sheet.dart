@@ -42,9 +42,13 @@ class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
   }
 
   void _pick(String memberId) {
-    ref.read(knownGroupsProvider.notifier).setMember(widget.group.token, memberId);
-    ref.invalidate(summariesProvider);
+    _remember(ProviderScope.containerOf(context, listen: false), memberId);
     Navigator.of(context).pop();
+  }
+
+  void _remember(ProviderContainer container, String memberId) {
+    container.read(knownGroupsProvider.notifier).setMember(widget.group.token, memberId);
+    container.invalidate(summariesProvider);
   }
 
   Future<void> _join() async {
@@ -52,10 +56,13 @@ class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
     final name = await askForName(context, title: l10n.identityNewTitle, action: l10n.identityJoin);
     if (name == null || !mounted) return;
     setState(() => _busy = true);
+    // Swiping the sheet away takes its ref along; the member was still added.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       final member = await groupApiOf(ref, widget.group.token).addMember(name, digits: widget.group.minorDigits);
-      refreshGroup(ref, widget.group.token);
-      _pick(member.id);
+      refreshGroupIn(container, widget.group.token);
+      _remember(container, member.id);
+      if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -166,6 +173,7 @@ class _NameDialogState extends State<_NameDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(widget.title),
       content: TextField(
         controller: _controller,

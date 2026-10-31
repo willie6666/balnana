@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -18,8 +19,13 @@ import (
 	"balnana/internal/importer"
 )
 
-// errDryRun rolls back a preview import.
-var errDryRun = errors.New("dry run")
+// importSlots bounds the imports running at once: each holds its file's rows
+// in memory, and one being stored a database connection for all of them.
+var importSlots = make(chan struct{}, 2)
+
+// importWait is how long an import may wait for its turn before it is turned
+// away as busy.
+var importWait = 30 * time.Second
 
 func importFileError(problem string) error {
 	return &apiError{status: http.StatusBadRequest, code: "import_file", params: map[string]any{"problem": problem}}
@@ -30,7 +36,8 @@ func importRowError(line int, problem string) error {
 }
 
 // ImportGroup creates a group from another app's export. With dryRun it
-// does the same work, reports what the group would hold and keeps nothing.
+// checks every row the same way and reports what the group would hold,
+// without touching the database.
 func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) (ImportGroupResponseObject, error) {
 	var creator *user
 	if s.conf().AuthMode == config.AuthModeAccounts {
@@ -44,6 +51,20 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	dryRun := in.DryRun != nil && *in.DryRun
 	if in.Format != SettleUp {
 		return nil, badRequest("invalid_format")
+	}
+	// Before the file is read, as that is the work: one that fails counts too.
+	if err := s.limitCreates(ctx); err != nil {
+		return nil, err
+	}
+	wait := time.NewTimer(importWait)
+	defer wait.Stop()
+	select {
+	case importSlots <- struct{}{}:
+		defer func() { <-importSlots }()
+	case <-wait.C:
+		return nil, &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 	file, err := importer.SettleUp(in.File)
 	var ie *importer.Error
@@ -113,29 +134,71 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	if err != nil {
 		return nil, err
 	}
-	// A dry run does all the work of an import, rolled back, so it counts too.
-	if err := s.limitCreates(ctx); err != nil {
+	categories, err := builtInCategories(ctx, s.db)
+	if err != nil {
 		return nil, err
 	}
+	// Splits give a leftover cent by member id when it is a tie, so ids
+	// that sort in file order make the preview and the import agree.
+	ordered := make([]string, len(names))
+	for i := range ordered {
+		ordered[i] = uuid.NewString()
+	}
+	slices.Sort(ordered)
+	ids := make(map[string]string, len(names))
+	for i, id := range ordered {
+		ids[file.People[i]] = id
+	}
+	rows := importRows{file: file, currency: currency, digits: digits, untitled: untitled, ids: ids, categories: categories}
 
-	var preview ImportPreview
+	if dryRun {
+		err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			_, err := s.checkNewGroup(ctx, tx, creator, len(names))
+			return err
+		})
+		if err != nil {
+			return nil, err
+		}
+		members := make([]member, len(names))
+		for i, n := range names {
+			members[i] = member{id: ordered[i], name: n}
+		}
+		nets := map[string]int64{}
+		g := &group{currency: currency, digits: digits}
+		_, preview, err := rows.check(ctx, g, members, func(d *expenseData) error {
+			for id, v := range d.payers {
+				nets[id] += v
+			}
+			for id, v := range d.splits {
+				nets[id] -= v
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		preview.Currency = currency
+		preview.MinorDigits = digits
+		preview.Members = make([]ImportMember, len(names))
+		for i, m := range members {
+			preview.Members[i] = ImportMember{Name: m.name, Balance: domain.FormatAmount(nets[m.id], digits)}
+		}
+		return ImportGroup200JSONResponse(preview), nil
+	}
+
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		g, err := scanGroup(tx.QueryRow(ctx, `
-			insert into groups (token, name, currency, minor_digits, link_access)
-			values ($1, $2, $3, $4, $5)
-			returning `+groupColumns, newToken(), name, currency, digits, creator == nil))
+		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names))
 		if err != nil {
 			return err
 		}
-		// Splits give a leftover cent by member id when it is a tie, so ids
-		// that sort in file order make the preview and the import agree.
-		ordered := make([]string, len(names))
-		for i := range ordered {
-			ordered[i] = uuid.NewString()
+		g, err := scanGroup(tx.QueryRow(ctx, `
+			insert into groups (token, name, currency, minor_digits, link_access, sponsor_user_id)
+			values ($1, $2, $3, $4, $5, $6)
+			returning `+groupColumns, newToken(), name, currency, digits, creator == nil, sponsor))
+		if err != nil {
+			return err
 		}
-		slices.Sort(ordered)
-		ids := make(map[string]string, len(names))
 		for i, n := range names {
 			id := ordered[i]
 			var userID *string
@@ -149,84 +212,22 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			if err != nil {
 				return err
 			}
-			ids[file.People[i]] = id
 		}
 		actor := ids[file.People[owner]]
 		if err := logActivity(ctx, tx, g.id, &actor, "group.created", nil, map[string]any{"name": name}); err != nil {
 			return err
 		}
 
-		categories := map[string]string{}
-		rows, err := tx.Query(ctx, `select id, emoji from categories where group_id is null`)
-		if err != nil {
-			return err
-		}
-		for rows.Next() {
-			var id, emoji string
-			if err := rows.Scan(&id, &emoji); err != nil {
-				return err
-			}
-			categories[plainEmoji(emoji)] = id
-		}
-		if err := rows.Err(); err != nil {
-			return err
-		}
-
-		// Loaded once: validating each row against the database would take
-		// a query per row of a file of up to importer.MaxRows.
 		members, err := groupMembers(ctx, tx, g.id)
 		if err != nil {
 			return err
 		}
-		count := 0
-		var total int64 // what the new group's entries add up to, see maxGroupTotal
-		for _, e := range file.Entries {
-			kind, input, problem := importInput(e, currency, digits, untitled, ids, categories)
-			if problem == "skip" {
-				preview.Skipped++
-				continue
-			}
-			if problem != "" {
-				return importRowError(e.Line, problem)
-			}
-			d, err := validateExpense(ctx, tx, g, kind, input, nil, members)
-			if err != nil {
-				var ae *apiError
-				var dc domain.Code
-				switch {
-				case errors.As(err, &ae):
-					return importRowError(e.Line, ae.code)
-				case errors.As(err, &dc):
-					return importRowError(e.Line, string(dc))
-				}
-				return err
-			}
-			if total > maxGroupTotal-d.amount {
-				return importRowError(e.Line, string(domain.ErrAmountTooLarge))
-			}
-			total += d.amount
-			if kind == kindExpense {
-				if e.Type == "income" {
-					d.transactionType = "income"
-				} else if importReceived(e, currency, digits) {
-					d.transactionType = "refund"
-				}
-			}
-			if _, err := storeExpense(ctx, tx, g, &actor, d); err != nil {
-				return err
-			}
-			count++
-			if kind == kindPayment {
-				preview.Payments++
-			} else {
-				preview.Expenses++
-			}
-			if preview.From == nil || e.Time.Before(*preview.From) {
-				preview.From = &e.Time
-			}
-			if preview.To == nil || e.Time.After(*preview.To) {
-				preview.To = &e.Time
-			}
+		count, _, err := rows.check(ctx, g, members, func(d *expenseData) error {
+			_, err := storeExpense(ctx, tx, g, &actor, d)
+			return err
+		})
+		if err != nil {
+			return err
 		}
 		if err := logActivity(ctx, tx, g.id, &actor, "group.imported", nil, map[string]any{"count": count, "from": "Settle Up"}); err != nil {
 			return err
@@ -235,24 +236,98 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			return err
 		}
 		out, err = loadGroup(ctx, tx, g)
-		if err != nil || !dryRun {
-			return err
-		}
-		preview.Currency = currency
-		preview.MinorDigits = digits
-		preview.Members = make([]ImportMember, len(out.Members))
-		for i, m := range out.Members {
-			preview.Members[i] = ImportMember{Name: m.Name, Balance: m.Balance}
-		}
-		return errDryRun
+		return err
 	})
-	if dryRun && errors.Is(err, errDryRun) {
-		return ImportGroup200JSONResponse(preview), nil
-	}
 	if err != nil {
 		return nil, err
 	}
 	return ImportGroup201JSONResponse(out), nil
+}
+
+// builtInCategories maps the emoji of the categories every group has to their ids.
+func builtInCategories(ctx context.Context, q querier) (map[string]string, error) {
+	rows, err := q.Query(ctx, `select id, emoji from categories where group_id is null`)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]string{}
+	var id, emoji string
+	_, err = pgx.ForEachRow(rows, []any{&id, &emoji}, func() error {
+		out[plainEmoji(emoji)] = id
+		return nil
+	})
+	return out, err
+}
+
+// importRows is what turning a file's rows into expenses takes.
+type importRows struct {
+	file       *importer.File
+	currency   string
+	digits     int
+	untitled   string
+	ids        map[string]string // people in the file to member ids
+	categories map[string]string
+}
+
+// check validates the rows in order and hands each that moves money to keep,
+// returning how many there were and what they come to. It asks nothing of the
+// database: the members are given, and the categories are those it was given.
+func (r importRows) check(ctx context.Context, g *group, members []member, keep func(*expenseData) error) (int, ImportPreview, error) {
+	var preview ImportPreview
+	count := 0
+	var total int64 // what the new group's entries add up to, see maxGroupTotal
+	for _, e := range r.file.Entries {
+		kind, input, problem := importInput(e, r.currency, r.digits, r.untitled, r.ids, r.categories)
+		if problem == "skip" {
+			preview.Skipped++
+			continue
+		}
+		if problem != "" {
+			return 0, preview, importRowError(e.Line, problem)
+		}
+		category := input.CategoryId
+		input.CategoryId = nil
+		d, err := validateExpense(ctx, nil, g, kind, input, members)
+		if err != nil {
+			var ae *apiError
+			var dc domain.Code
+			switch {
+			case errors.As(err, &ae):
+				return 0, preview, importRowError(e.Line, ae.code)
+			case errors.As(err, &dc):
+				return 0, preview, importRowError(e.Line, string(dc))
+			}
+			return 0, preview, err
+		}
+		d.category = category
+		if total > maxGroupTotal-d.amount {
+			return 0, preview, importRowError(e.Line, string(domain.ErrAmountTooLarge))
+		}
+		total += d.amount
+		if kind == kindExpense {
+			if e.Type == "income" {
+				d.transactionType = "income"
+			} else if importReceived(e, r.currency, r.digits) {
+				d.transactionType = "refund"
+			}
+		}
+		if err := keep(d); err != nil {
+			return 0, preview, err
+		}
+		count++
+		if kind == kindPayment {
+			preview.Payments++
+		} else {
+			preview.Expenses++
+		}
+		if preview.From == nil || e.Time.Before(*preview.From) {
+			preview.From = &e.Time
+		}
+		if preview.To == nil || e.Time.After(*preview.To) {
+			preview.To = &e.Time
+		}
+	}
+	return count, preview, nil
 }
 
 // importName makes a name from another app fit ours: one line, not too long.

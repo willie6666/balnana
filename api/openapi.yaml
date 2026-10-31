@@ -24,6 +24,13 @@ info:
     link mode. Without a session they answer 401 `sign_in_required`; for a
     signed-in non-member, 403 `not_a_member` (see /g/{token}/join).
 
+    Billing: on a server that charges, adding past a plan's limit answers
+    402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
+    already stays as it is, even past a limit. Ko-fi posts
+    its payments as a form to /webhooks/kofi, and Google's Pub/Sub pushes
+    Google Play's notifications to /webhooks/play. This contract leaves both
+    out.
+
     Administration (/admin/...): one password, set once at /admin/setup
     while server-info says `setupRequired`. /admin/login trades it for a
     token to send as `X-Balnana-Admin`; without a valid one, admin
@@ -195,13 +202,228 @@ paths:
           description: Deleted
         default:
           $ref: "#/components/responses/Error"
+  /admin/users/{userId}/entitlements:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: listAdminEntitlements
+      summary: Everything the account has been given, newest first
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntitlementList"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: grantAdminEntitlement
+      summary: Give the account a plan, for some days or for good
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntitlementGrant"
+      responses:
+        "201":
+          description: Granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entitlement"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/entitlements/{entitlementId}:
+    parameters:
+      - name: entitlementId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: revokeAdminEntitlement
+      summary: End an entitlement now, after a refund for example
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "204":
+          description: Revoked
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/plans:
+    get:
+      operationId: getAdminPlans
+      summary: The plans and what buys them
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanCatalog"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateAdminPlans
+      summary: Replace the plans and what buys them, all or nothing
+      description: >-
+        Plans left out are deleted, which `plan_in_use` refuses for one that
+        an entitlement or a product still names. Exactly one plan must be the
+        default.
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanCatalog"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanCatalog"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/payments:
+    get:
+      operationId: listAdminPayments
+      summary: The payments providers reported, newest first, at most 200
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+        - name: state
+          in: query
+          description: Only payments in this state.
+          schema:
+            $ref: "#/components/schemas/PaymentState"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentList"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/payments/{paymentId}/assign:
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: assignAdminPayment
+      summary: Give a payment that found no account to one
+      description: >-
+        The payment's address reaches that account from now on, so that the
+        next payment needs no one's help. A payment that bought nothing
+        configured needs `planId` and `days`.
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentAssign"
+      responses:
+        "200":
+          description: Assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/plan:
+    get:
+      operationId: getMyPlan
+      summary: The account's plan and how much of it is used
+      description: Takes in payments made with its confirmed addresses first.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/play/purchases:
+    post:
+      operationId: reportPlayPurchase
+      summary: Tell the server of a Google Play subscription
+      description: |
+        The server asks Google about the token rather than taking the app's
+        word for anything. Reporting a purchase again changes nothing, and
+        brings in a renewal the server hasn't heard of. `invalid_purchase` is
+        a token Google doesn't know, `play_other_account` a purchase of
+        another account, and `play_unavailable` means Google couldn't be
+        asked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayPurchaseRequest"
+      responses:
+        "200":
+          description: The account's plan now
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/payments/claim:
+    post:
+      operationId: claimPayment
+      summary: Take a Ko-fi payment by its transaction ID
+      description: |
+        For a payment that came without the account's payment code. Claiming
+        one's own payment again changes nothing. `payment_not_found` is an ID
+        the server hasn't heard of, `payment_applied` a payment of another
+        account, and `payment_no_plan` a payment nothing on sale matches, which
+        is left for the administrator.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentClaim"
+      responses:
+        "200":
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
   /groups:
     post:
       operationId: createGroup
       summary: Create a group with its first members
       description: >-
         The response carries the secret token. In accounts mode the creator
-        must be signed in and becomes the first member.
+        must be signed in and becomes the first member. A group with more
+        people than the default plan allows starts sponsored by its creator,
+        whose plan must allow it.
       requestBody:
         required: true
         content:
@@ -229,6 +451,7 @@ paths:
         groups. Amounts in other currencies use the export's converted
         amounts, so the group has one currency. In accounts mode the creator
         must be signed in and say which person in the file they are (`me`).
+        Too many people for the default plan are handled as by createGroup.
       requestBody:
         required: true
         content:
@@ -898,7 +1121,9 @@ paths:
       summary: Become a member, as a new member or by claiming a placeholder
       description: >-
         Joining again after leaving brings the old member back. Joining when
-        already a member changes nothing.
+        already a member changes nothing. It counts towards the account's
+        `joined_groups` limit; only someone new takes a place in the group's
+        `members` limit, not someone claiming a placeholder.
       requestBody:
         required: true
         content:
@@ -934,6 +1159,51 @@ paths:
       responses:
         "204":
           description: Sent
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/plan:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getGroupPlan
+      summary: The limits that apply to the group and how much of them is used
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/sponsor:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    put:
+      operationId: sponsorGroup
+      summary: Share the signed-in account's plan with the whole group
+      description: >-
+        `already_sponsored` while another member's plan covers it, and
+        `plan_limit` when the account sponsors all that its plan allows.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPlan"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: unsponsorGroup
+      summary: Stop sponsoring the group; only its sponsor may
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPlan"
         default:
           $ref: "#/components/responses/Error"
   /g/{token}/members:
@@ -985,8 +1255,9 @@ paths:
       operationId: removeMember
       summary: Mark a member as having left
       description: >-
-        Only members whose balance is zero can leave. They stay in past
-        expenses; error `member_has_balance` otherwise.
+        Anyone can leave, whatever their balance. They stay in expenses and
+        recurring expenses, and the balances keep them while they owe or are
+        owed anything.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1115,10 +1386,11 @@ paths:
     post:
       operationId: createExpense
       description: >-
-        Every payer and split member must be in the group and not have left
-        it (400 `unknown_member` or `member_left`).
+        Every payer and split member must be in the group, which includes
+        those who left it (400 `unknown_member`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1155,9 +1427,6 @@ paths:
       description: >-
         `version` must be the version that was read; otherwise the expense
         changed meanwhile and the answer is 409 `expense_version_conflict`.
-        A member who left may stay in an expense they were already part of,
-        but not be added to one, nor have what they paid or their share
-        change (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1178,9 +1447,6 @@ paths:
     delete:
       operationId: deleteExpense
       summary: Delete (restorable)
-      description: >-
-        409 `member_left` when someone in the expense has left the group and
-        deleting it would change their balance.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1250,9 +1516,6 @@ paths:
     post:
       operationId: restoreExpense
       summary: Undo a delete
-      description: >-
-        409 `member_left` when someone in the expense has left the group
-        since, as restoring it would give them a balance again.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1270,9 +1533,10 @@ paths:
     post:
       operationId: createPayment
       summary: Record that one member paid another
-      description: Both members must not have left the group (400 `member_left`).
+      description: Either member may have left the group.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1313,10 +1577,11 @@ paths:
         The server adds the expense at every occurrence, as made by whoever
         set it up. Occurrences already due, from `startsAt` on, are added
         straight away; 400 `too_many_due` when that would be more than 100.
-        Every payer and split member must be in the group and not have left
-        it (400 `unknown_member` or `member_left`).
+        Every payer and split member must be in the group, which includes
+        those who left it (400 `unknown_member`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1381,8 +1646,8 @@ paths:
         Resuming adds the occurrences that came due before it was paused,
         such as one that could not be added, and skips those that came due
         while it was paused. The server pauses a recurring expense itself
-        when an occurrence cannot be added, such as when someone in it has
-        left the group. 400 when what it would add no longer works.
+        when an occurrence cannot be added. 400 when what it would add no
+        longer works.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1616,6 +1881,17 @@ components:
       schema:
         type: string
         maxLength: 64
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >-
+        A UUID the client makes up once for what it is creating and sends
+        again with every retry. A key this group has seen returns what it
+        created then, whatever else the request says, and creates nothing.
+      schema:
+        type: string
+        format: uuid
     ActingMember:
       name: X-Balnana-Member
       in: header
@@ -2682,6 +2958,8 @@ components:
           type: string
           description: Always "balnana"; lets the app recognise a Balnana server.
           example: balnana
+        billing:
+          $ref: "#/components/schemas/ServerBilling"
         version:
           type: string
           example: 0.1.0
@@ -2863,9 +3141,302 @@ components:
         groups:
           type: integer
           description: Groups the account is a current member of.
+        planName:
+          type: string
+          description: Its current paid plan; left out on the default one.
+        planExpiresAt:
+          type: string
+          format: date-time
         createdAt:
           type: string
           format: date-time
+    PlanLimits:
+      type: object
+      description: How much a plan allows. Left out means no limit.
+      properties:
+        receiptsPerGroup:
+          type: integer
+          minimum: 0
+        recurringPerGroup:
+          type: integer
+          minimum: 0
+        joinedGroups:
+          type: integer
+          minimum: 0
+          description: The groups an account can be in, whoever made them.
+        membersPerGroup:
+          type: integer
+          minimum: 0
+          description: The people a group can have. A server allows 100 at most whatever this says.
+        sponsoredGroups:
+          type: integer
+          minimum: 0
+    Plan:
+      type: object
+      required: [id, name, rank, isDefault, limits]
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9-]{0,31}$"
+        name:
+          type: string
+        rank:
+          type: integer
+          description: When someone has several plans, the highest counts.
+        isDefault:
+          type: boolean
+          description: What anyone without an entitlement has.
+        limits:
+          $ref: "#/components/schemas/PlanLimits"
+    PlanProduct:
+      type: object
+      required: [provider, product, planId, days]
+      properties:
+        provider:
+          type: string
+          enum: [kofi, play]
+        product:
+          type: string
+          description: >-
+            A Ko-fi membership tier's name or a Google Play product id. Empty
+            for Ko-fi: any payment of at least `minAmount` in `currency`.
+        planId:
+          type: string
+        days:
+          type: integer
+          minimum: 1
+          description: How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late. Google Play says for itself when each payment ends, so this is ignored for it.
+        minAmount:
+          type: string
+          description: A decimal number, such as "3.00".
+        currency:
+          type: string
+    PlanCatalog:
+      type: object
+      required: [plans, products]
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/Plan"
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanProduct"
+    Entitlement:
+      type: object
+      required: [id, planId, planName, source, startsAt, createdAt]
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        planName:
+          type: string
+        source:
+          type: string
+          enum: [admin, kofi, play]
+        note:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          description: Left out when it never ends.
+        revokedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    EntitlementList:
+      type: object
+      required: [entitlements]
+      properties:
+        entitlements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entitlement"
+    EntitlementGrant:
+      type: object
+      required: [planId]
+      properties:
+        planId:
+          type: string
+        days:
+          type: integer
+          minimum: 1
+          description: Left out, it never ends.
+        note:
+          type: string
+    PaymentState:
+      type: string
+      enum: [applied, unclaimed, unmatched]
+    Payment:
+      type: object
+      required: [id, provider, kind, state, paidAt]
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+          enum: [kofi, play]
+        kind:
+          type: string
+          description: What the provider called it, such as "Subscription".
+        reference:
+          type: string
+          description: The provider's ID for the transaction.
+        state:
+          $ref: "#/components/schemas/PaymentState"
+        email:
+          type: string
+        payerName:
+          type: string
+        amount:
+          type: string
+        currency:
+          type: string
+        product:
+          type: string
+        planId:
+          type: string
+        days:
+          type: integer
+        userId:
+          type: string
+        userName:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+    PaymentList:
+      type: object
+      required: [payments, total]
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: integer
+    PaymentAssign:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+        planId:
+          type: string
+        days:
+          type: integer
+          minimum: 1
+    Usage:
+      type: object
+      required: [used]
+      properties:
+        used:
+          type: integer
+        limit:
+          type: integer
+          description: Left out means no limit.
+    MyPlan:
+      type: object
+      required: [planName, paid, joinedGroups, sponsoredGroups]
+      properties:
+        planName:
+          type: string
+        paid:
+          type: boolean
+          description: Whether it comes from an entitlement rather than being the default.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the current plan ends. Left out when it does not.
+        joinedGroups:
+          $ref: "#/components/schemas/Usage"
+          description: Groups the account is in, not counting archived ones or those it left.
+        sponsoredGroups:
+          $ref: "#/components/schemas/Usage"
+        receiptsPerGroup:
+          type: integer
+        recurringPerGroup:
+          type: integer
+        membersPerGroup:
+          type: integer
+          description: For groups this account sponsors. Others have the default plan's limit.
+        paymentCode:
+          type: string
+          description: |
+            What to write in a Ko-fi message so that the payment reaches this
+            account. Left out when the server takes no Ko-fi payments.
+        play:
+          $ref: "#/components/schemas/PlayBilling"
+    PlayBilling:
+      type: object
+      description: What can be bought through Google Play. Left out when nothing can.
+      required: [accountId, packageName, products, subscribed, onHold]
+      properties:
+        accountId:
+          type: string
+          description: Give Google this with a purchase, so that it reaches this account.
+        packageName:
+          type: string
+        products:
+          type: array
+          description: Subscription product ids.
+          items:
+            type: string
+        subscribed:
+          type: array
+          description: The products the account has a subscription to.
+          items:
+            type: string
+        onHold:
+          type: array
+          description: Products whose subscription Google has held back or paused. They are still the account's, and buying again could charge twice.
+          items:
+            type: string
+    PlayPurchaseRequest:
+      type: object
+      required: [purchaseToken]
+      properties:
+        purchaseToken:
+          type: string
+    PaymentClaim:
+      type: object
+      required: [reference]
+      properties:
+        reference:
+          type: string
+          description: The transaction ID, or the link to the payment.
+    GroupPlan:
+      type: object
+      required: [planName, members, receipts, recurring, canSponsor]
+      properties:
+        planName:
+          type: string
+        sponsorMemberId:
+          type: string
+          description: The member who pays for this group's limits.
+        members:
+          $ref: "#/components/schemas/Usage"
+          description: People in the group, with or without accounts, not counting those who left.
+        receipts:
+          $ref: "#/components/schemas/Usage"
+        recurring:
+          $ref: "#/components/schemas/Usage"
+        canSponsor:
+          type: boolean
+          description: Whether the signed-in account could sponsor the group now.
+    ServerBilling:
+      type: object
+      description: Present when the server charges for what it stores.
+      properties:
+        kofiUrl:
+          type: string
     AdminUserList:
       type: object
       required: [users, total]

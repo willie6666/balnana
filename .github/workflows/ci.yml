@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: balnana
+          POSTGRES_PASSWORD: balnana
+          POSTGRES_DB: balnana
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U balnana -d balnana"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://balnana:balnana@localhost:5432/balnana?sslmode=disable
+      # Without it, a database that can't be reached skips the tests that need it.
+      REQUIRE_DB: "1"
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      # The build that may link to Ko-fi, which the Play build must never do.
+      - run: flutter test --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --plain-name "a build with external payments shows the code to pay with" test/plan_test.dart

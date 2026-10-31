@@ -23,6 +23,7 @@ String repeatUnitLabel(AppLocalizations l10n, RepeatUnit unit, int count) => swi
   RepeatUnit.week => l10n.repeatUnitWeek(count),
   RepeatUnit.month => l10n.repeatUnitMonth(count),
   RepeatUnit.year => l10n.repeatUnitYear(count),
+  RepeatUnit.unknown => '',
 };
 
 /// "Every 2 weeks".
@@ -31,6 +32,7 @@ String repeatLabel(AppLocalizations l10n, Repeat repeat) => switch (repeat.unit)
   RepeatUnit.week => l10n.repeatIntervalWeek(repeat.every),
   RepeatUnit.month => l10n.repeatIntervalMonth(repeat.every),
   RepeatUnit.year => l10n.repeatIntervalYear(repeat.every),
+  RepeatUnit.unknown => l10n.repeatCustom,
 };
 
 /// Asks, then deletes [recurring]; the expenses it added stay. Returns

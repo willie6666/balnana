@@ -469,8 +469,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Die Person bleibt in bisherigen Ausgaben erhalten, kann aber nicht zu neuen hinzugefügt werden.';
+  String get memberRemoveBody => 'Die Ausgaben und der Saldo dieser Person bleiben in der Gruppe.';
 
   @override
   String get groupLinkCopied => 'Link kopiert. Alle mit diesem Link können die Gruppe öffnen.';
@@ -968,6 +967,12 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get expenseChangedElsewhere =>
       'Jemand anderes hat diese Ausgabe geändert. Beim Neuladen wird die andere Version angezeigt und deine Änderungen hier werden verworfen.';
+
+  @override
+  String get expenseNewerTitle => 'Mit einer neueren Version erstellt';
+
+  @override
+  String get expenseNewerBody => 'Aktualisiere Balnana, um diesen Eintrag zu ändern.';
 
   @override
   String get suggestedPayments => 'Vorgeschlagene Zahlungen';
@@ -2251,7 +2256,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Der Inhaber einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Bei allem anderen wende dich an die betreibende Person des Servers.';
+      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Der Inhaber einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Gelöschte Gruppen und die Fotos gelöschter Ausgaben werden nach 30 Tagen endgültig entfernt. Bei allem anderen wende dich an die betreibende Person des Servers.';
 
   @override
   String get privacyOperatorPolicy => 'Datenschutzerklärung der betreibenden Person';
@@ -2677,6 +2682,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wird an jedem Datum automatisch zur Gruppe hinzugefügt, beginnend mit dem Datum oben. Bereits vergangene Termine werden beim Speichern hinzugefügt.';
 
   @override
+  String get repeatCustom => 'Eigener Zeitplan';
+
+  @override
   String get repeatDropReceiptTitle => 'Beleg entfernen?';
 
   @override
@@ -2804,4 +2812,454 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Von einer wiederkehrenden Ausgabe hinzugefügt';
+
+  @override
+  String get adminPlans => 'Tarife';
+
+  @override
+  String get adminPayments => 'Zahlungen';
+
+  @override
+  String get adminSectionBilling => 'Tarife und Zahlungen';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Tarife erhöhen die Grenzen dafür, was dieser Server speichert. Ausgaben teilen und ausgleichen bleibt kostenlos.';
+
+  @override
+  String get adminBillingOn => 'Tarife und Grenzen';
+
+  @override
+  String get adminBillingOnHelp => 'Wenn aus, begrenzt dieser Server nichts und zeigt keine Tarife.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'Tarife brauchen Konten: Stelle die Anmeldung zuerst auf Konten um.';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi-Seite';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Hier wird bezahlt. Nur Versionen, die externe Zahlungen erlauben, verlinken dorthin.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Webhook-URL für Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi-Prüftoken';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Steht auf der Webhook-Seite von Ko-fi. Ohne Token ignoriert dieser Server Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan bis $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Eine neue Grenze gilt für das, was als Nächstes hinzukommt. Vorhandenes bleibt. Leer bedeutet keine Grenze.';
+
+  @override
+  String get adminPlanAdd => 'Tarif hinzufügen';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (Standard)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Tage: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Produkte';
+
+  @override
+  String get adminProductsHelp =>
+      'Eine Zahlung gehört zum Produkt mit ihrem Stufennamen, sonst zu dem ohne Stufennamen, dessen Betrag sie erreicht.';
+
+  @override
+  String get adminProductAdd => 'Produkt hinzufügen';
+
+  @override
+  String get adminProductEdit => 'Produkt bearbeiten';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Jede Zahlung ab $amount';
+  }
+
+  @override
+  String get adminProductName => 'Stufenname';
+
+  @override
+  String get adminProductNameHelp =>
+      'Wie auf Ko-fi geschrieben. Leer lassen, um einmalige oder monatliche Zahlungen nach dem Betrag zuzuordnen.';
+
+  @override
+  String get adminProductPlan => 'Tarif';
+
+  @override
+  String get adminProductDays => 'Tage';
+
+  @override
+  String get adminProductDaysHelp =>
+      'Wie lange eine Zahlung gilt. Eine weitere Zahlung kommt zur Restzeit hinzu.';
+
+  @override
+  String get adminProductMinAmount => 'Mindestbetrag';
+
+  @override
+  String get adminProductCurrency => 'Währungscode';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Kleinbuchstaben, Ziffern und Bindestriche. Lässt sich später nicht ändern.';
+
+  @override
+  String get adminPlanName => 'Name';
+
+  @override
+  String get adminPlanRank => 'Rang';
+
+  @override
+  String get adminPlanRankHelp => 'Ein Konto mit mehreren Tarifen erhält den mit dem höchsten Rang.';
+
+  @override
+  String get adminPlanDefault => 'Standardtarif';
+
+  @override
+  String get adminPlanDefaultHelp => 'Für jedes Konto ohne anderen Tarif.';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name entfernen?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Die zugehörigen Produkte werden mit entfernt und können nicht mehr gekauft werden: $products';
+  }
+
+  @override
+  String get adminEntitlementGranted => 'Von einem Administrator vergeben';
+
+  @override
+  String get adminEntitlementRevoked => 'Widerrufen';
+
+  @override
+  String get adminEntitlementForever => 'Kein Enddatum';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Bis $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Beendet am $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Dieses Konto hat noch keine Tarife.';
+
+  @override
+  String get adminEntitlementRevoke => 'Widerrufen';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan widerrufen?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user verliert diesen Tarif sofort. Das lässt sich nicht rückgängig machen.';
+  }
+
+  @override
+  String get adminEntitlementNote => 'Notiz';
+
+  @override
+  String get adminEntitlementGrant => 'Tarif vergeben';
+
+  @override
+  String get adminPaymentApplied => 'Angewendet';
+
+  @override
+  String get adminPaymentUnclaimed => 'Nicht beansprucht';
+
+  @override
+  String get adminPaymentUnmatched => 'Nicht zugeordnet';
+
+  @override
+  String get adminPaymentsAll => 'Alle';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Zahlungen',
+      one: '1 Zahlung',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Keine Zahlungen.';
+
+  @override
+  String get adminPaymentAssigned => 'Tarif an das Konto vergeben.';
+
+  @override
+  String get adminPaymentAssign => 'Einem Konto zuweisen';
+
+  @override
+  String get adminPaymentPickUser => 'Wähle ein Konto aus.';
+
+  @override
+  String get errorBillingOff => 'Dieser Server hat keine Tarife.';
+
+  @override
+  String get errorAlreadySponsored => 'Der Tarif eines anderen Mitglieds gilt bereits für diese Gruppe.';
+
+  @override
+  String get errorPlanInUse => 'Konten oder Produkte nutzen diesen Tarif noch.';
+
+  @override
+  String get errorPaymentApplied => 'Diese Zahlung wurde bereits angewendet.';
+
+  @override
+  String get errorPaymentNotFound =>
+      'Noch keine Zahlung mit dieser ID. Wenn du gerade bezahlt hast, versuche es in einer Minute erneut.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Diese Zahlung passt zu keinem Tarif. Bitte die Serveradministration, sie zuzuordnen.';
+
+  @override
+  String get errorInvalidPlan => 'Prüfe die Tarifeinstellungen: Etwas darin ist ungültig.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Diese Gruppe hat ihre Grenze von $max Belegfotos erreicht.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Diese Gruppe hat ihre Grenze von $max wiederkehrenden Ausgaben erreicht.';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return 'Du hast deine Grenze von $max Gruppen erreicht.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Diese Gruppe hat ihre Grenze von $max Personen erreicht.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Dein Tarif lässt sich mit höchstens $max Gruppen teilen.';
+  }
+
+  @override
+  String get errorLimitOther => 'Du hast eine Grenze dieses Servers erreicht.';
+
+  @override
+  String get planTitle => 'Tarif';
+
+  @override
+  String get planUnlimited => 'Keine Grenze';
+
+  @override
+  String planUntil(String date) {
+    return 'Bis $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Was dieser Server für dich speichert';
+
+  @override
+  String get planIntro =>
+      'Teilen und Ausgleichen sind immer kostenlos. Ein Tarif ändert nur, wie viel dieser Server für dich speichert.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used von $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used genutzt';
+  }
+
+  @override
+  String get planLimits => 'Grenzen';
+
+  @override
+  String get planLimitReceipts => 'Belegfotos pro Gruppe';
+
+  @override
+  String get planLimitRecurring => 'Wiederkehrende Ausgaben pro Gruppe';
+
+  @override
+  String get planLimitJoinedGroups => 'Gruppen, in denen du bist';
+
+  @override
+  String get planLimitMembers => 'Personen pro Gruppe';
+
+  @override
+  String get planLimitSponsored => 'Gruppen, die deinen Tarif teilen';
+
+  @override
+  String get planGet => 'Tarif holen';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Füge deinen Zahlungscode in die Ko-fi-Nachricht ein, damit die Zahlung dein Konto erreicht.';
+
+  @override
+  String get planPaymentCodeHelp => 'Dein Zahlungscode. Zum Kopieren tippen.';
+
+  @override
+  String get planPaymentCodeCopied => 'Zahlungscode kopiert';
+
+  @override
+  String get planPaymentClaim => 'Code vergessen?';
+
+  @override
+  String get planPaymentClaimHelp => 'Füge eine Zahlung mit ihrer Ko-fi-Transaktions-ID hinzu.';
+
+  @override
+  String get planPaymentClaimField => 'Transaktions-ID oder Zahlungslink';
+
+  @override
+  String get planPaymentClaimAction => 'Zahlung hinzufügen';
+
+  @override
+  String get planPaymentClaimed => 'Zahlung hinzugefügt';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Personen: $members · Belegfotos: $receipts · Wiederkehrend: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Meinen Tarif mit dieser Gruppe teilen';
+
+  @override
+  String get groupUnsponsor => 'Tarif nicht mehr teilen';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Nutzt den Tarif von $name';
+  }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Ein Google-Play-Abo endet nicht mit deinem Konto. Kündige es zuerst bei Google Play.';
+
+  @override
+  String get planPlayManage => 'Abo verwalten';
+
+  @override
+  String get planPlayManageHelp => 'Bei Google Play ändern oder kündigen';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'alle $months Monate',
+      one: 'pro Monat',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play konnte den Kauf nicht abschließen.';
+
+  @override
+  String get planPlayPending =>
+      'Deine Zahlung wird noch verarbeitet. Der Tarif beginnt, sobald sie durch ist.';
+
+  @override
+  String get planPlayOnHold =>
+      'Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere deine Zahlungsmethode bei Google Play, um diesen Tarif zu behalten.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Dieses Google-Play-Konto hat bereits ein Abo, das eventuell zu einem anderen Balnana-Konto gehört.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play ist nicht erreichbar. Versuch es später noch einmal.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play kennt diesen Kauf nicht.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Dieses Abo gehört zu einem anderen Konto. Melde dich dort an oder kündige es bei Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play ist nicht erreichbar. Versuche es gleich noch einmal.';
+
+  @override
+  String get adminPlayPackage => 'Google-Play-Paketname';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Die ID der App bei Google Play. Zusammen mit dem Dienstkonto unten schaltet sie Google-Play-Abos ein.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google-Play-Dienstkonto';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Der JSON-Schlüssel eines Dienstkontos, das in der Play Console Bestellungen und Abos ansehen und verwalten darf.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub-Push-Konto';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Die E-Mail-Adresse des Dienstkontos, mit dem Pub/Sub seine Zustellungen signiert. Ohne sie kommen Verlängerungen erst an, wenn jemand die Tarifseite öffnet.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub-Push-Endpunkt, auch als Zielgruppe: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Bezahlt über';
+
+  @override
+  String get adminProductPlayId => 'Produkt-ID';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Wie in der Play Console geschrieben. Google Play bestimmt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.';
 }

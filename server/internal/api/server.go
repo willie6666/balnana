@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -20,20 +21,27 @@ import (
 
 // Server implements StrictServerInterface.
 type Server struct {
-	settings atomic.Pointer[settings]
-	db       *pgxpool.Pool
-	log      *slog.Logger
-	version  string
-	hub      *hub
-	push     push.Sender // nil when the server sends no push notifications
-	vapid    string      // the public key push messages are signed with
-	pushing  sync.WaitGroup
-	creates  *buckets // groups created, by client
-	invites  *buckets // invitations sent, by account
-	signups  *buckets // password accounts made, by client
-	emails   *buckets // address changes, by account
-	guesses  *buckets // password guesses, by account
-	devices  *buckets // push devices registered, by client
+	settings      atomic.Pointer[settings]
+	db            *pgxpool.Pool
+	log           *slog.Logger
+	version       string
+	hub           *hub
+	push          push.Sender // nil when the server sends no push notifications
+	vapid         string      // the public key push messages are signed with
+	pushing       sync.WaitGroup
+	mailing       sync.WaitGroup
+	creates       *buckets // groups created, by client
+	invites       *buckets // invitations sent, by account
+	signups       *buckets // password accounts made, by client
+	emails        *buckets // address changes, by account
+	guesses       *buckets // password guesses, by account
+	devices       *buckets // push devices registered, by client
+	claims        *buckets // transaction IDs tried, by account
+	allGuesses    *buckets // wrong passwords, by account from anywhere
+	resets        *buckets // password reset requests, by client
+	resetMails    *buckets // password reset emails, by address and client
+	allResetMails *buckets // password reset emails, by address
+	rejected      *buckets // payment notifications logged as turned away, by provider
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -43,22 +51,29 @@ type settings struct {
 	cfg   *config.Config
 	mail  mail.Sender // nil when the server has no email
 	oauth map[string]*oauthProvider
+	play  *playClient // nil when the server sells nothing through Google Play
 }
 
 var _ StrictServerInterface = (*Server)(nil)
 
 func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version string) *Server {
 	s := &Server{
-		db:      db,
-		log:     log,
-		version: version,
-		hub:     newHub(),
-		creates: newBuckets(createPerMinute, createBurst),
-		invites: newBuckets(invitePerMinute, inviteBurst),
-		signups: &buckets{perSecond: signupPerHour / 3600.0, burst: signupBurst, m: map[string]*bucket{}},
-		emails:  &buckets{perSecond: emailChangePerHour / 3600.0, burst: emailChangeBurst, m: map[string]*bucket{}},
-		guesses: &buckets{perSecond: guessPerHour / 3600.0, burst: guessBurst, m: map[string]*bucket{}},
-		devices: &buckets{perSecond: devicePerDay / 86400.0, burst: deviceBurst, m: map[string]*bucket{}},
+		db:            db,
+		log:           log,
+		version:       version,
+		hub:           newHub(),
+		creates:       newBuckets(createPerMinute, createBurst),
+		invites:       newBuckets(invitePerMinute, inviteBurst),
+		signups:       &buckets{perSecond: signupPerHour / 3600.0, burst: signupBurst, m: map[string]*bucket{}},
+		emails:        &buckets{perSecond: emailChangePerHour / 3600.0, burst: emailChangeBurst, m: map[string]*bucket{}},
+		guesses:       &buckets{perSecond: guessPerHour / 3600.0, burst: guessBurst, m: map[string]*bucket{}},
+		devices:       &buckets{perSecond: devicePerDay / 86400.0, burst: deviceBurst, m: map[string]*bucket{}},
+		claims:        &buckets{perSecond: claimPerHour / 3600.0, burst: claimBurst, m: map[string]*bucket{}},
+		rejected:      newBuckets(1, 1),
+		allGuesses:    &buckets{perSecond: allGuessPerHour / 3600.0, burst: allGuessBurst, m: map[string]*bucket{}},
+		resets:        &buckets{perSecond: resetPerHour / 3600.0, burst: resetBurst, m: map[string]*bucket{}},
+		resetMails:    &buckets{perSecond: resetMailPerDay / 86400.0, burst: resetMailBurst, m: map[string]*bucket{}},
+		allResetMails: &buckets{perSecond: allResetMailPerDay / 86400.0, burst: allResetMailBurst, m: map[string]*bucket{}},
 	}
 	s.apply(cfg)
 	return s
@@ -75,6 +90,7 @@ func (s *Server) apply(cfg *config.Config) {
 			st.mail = m
 		}
 	}
+	st.play = newPlayClient(cfg, strings.TrimSuffix(cfg.PublicURL.String(), "/")+playPath)
 	s.settings.Store(st)
 }
 
@@ -105,6 +121,13 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 	}
 	if s.push != nil {
 		info.VapidPublicKey = &s.vapid
+	}
+	if cfg.Billing {
+		info.Billing = &ServerBilling{}
+		if cfg.KofiURL != nil && cfg.KofiToken != "" {
+			kofi := cfg.KofiURL.String()
+			info.Billing.KofiUrl = &kofi
+		}
 	}
 	if cfg.PrivacyURL != nil {
 		privacy := cfg.PrivacyURL.String()

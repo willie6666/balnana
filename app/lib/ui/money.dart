@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../core/currencies.dart';
 import '../core/money.dart';
 import 'colors.dart';
 
@@ -56,13 +57,6 @@ int defaultMinorDigits(String currency) => switch (currency) {
   _ => 2,
 };
 
-/// The currency of [locale]'s region, or USD.
-String localCurrency(Locale locale) {
-  try {
-    final name = NumberFormat.simpleCurrency(locale: locale.toLanguageTag()).currencyName;
-    if (name != null && RegExp(r'^[A-Z]{3}$').hasMatch(name)) return name;
-  } on ArgumentError {
-    // Unknown locale.
-  }
-  return 'USD';
-}
+/// The currency of [locale]'s region, if it has one. A language alone says
+/// nothing about money: Arabic runs from Morocco to Oman.
+String? localCurrency(Locale locale) => regionCurrencies[locale.countryCode];

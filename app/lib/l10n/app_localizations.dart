@@ -961,7 +961,7 @@ abstract class AppLocalizations {
   /// Explanatory text for member remove body in group member management.
   ///
   /// In en, this message translates to:
-  /// **'They\'ll stay on past expenses but can\'t be added to new ones.'**
+  /// **'Their expenses and balance stay in the group.'**
   String get memberRemoveBody;
 
   /// Label or control text for group link copied in group creation, settings, or switching.
@@ -1845,6 +1845,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Someone else changed this expense. Reloading shows their version and drops your changes here.'**
   String get expenseChangedElsewhere;
+
+  /// Title of the read-only page for an expense made by a newer version of the app, which this version cannot edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with a newer version'**
+  String get expenseNewerTitle;
+
+  /// Body of the read-only page for an expense made by a newer version of the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Balnana to change this entry.'**
+  String get expenseNewerBody;
 
   /// Label or control text for suggested payments in the application interface.
   ///
@@ -3991,7 +4003,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy delete body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.'**
+  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.'**
   String get privacyDeleteBody;
 
   /// Label or control text for privacy operator policy in the built-in privacy notice.
@@ -4624,6 +4636,12 @@ abstract class AppLocalizations {
   /// **'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.'**
   String get repeatHelp;
 
+  /// Label for a repeat schedule this version of the app does not recognise.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom schedule'**
+  String get repeatCustom;
+
   /// Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it.
   ///
   /// In en, this message translates to:
@@ -4833,6 +4851,738 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Added by a recurring expense'**
   String get expenseRecurring;
+
+  /// Label or control text for admin plans in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get adminPlans;
+
+  /// Label or control text for admin payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get adminPayments;
+
+  /// Label or control text for admin section billing in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans and payments'**
+  String get adminSectionBilling;
+
+  /// Label or control text for admin section billing body in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans raise the limits on what this server keeps. Splitting expenses and settling up stay free.'**
+  String get adminSectionBillingBody;
+
+  /// Label or control text for admin billing on in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans and limits'**
+  String get adminBillingOn;
+
+  /// Label or control text for admin billing on help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, this server limits nothing and shows no plans.'**
+  String get adminBillingOnHelp;
+
+  /// Label or control text for admin billing needs accounts in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans need accounts: set Access to Accounts first.'**
+  String get adminBillingNeedsAccounts;
+
+  /// Label or control text for admin kofi url in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Ko-fi page'**
+  String get adminKofiUrl;
+
+  /// Label or control text for admin kofi url help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Where people go to pay. Only builds that allow outside payments link to it.'**
+  String get adminKofiUrlHelp;
+
+  /// Label or control text for admin kofi webhook in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Webhook URL to enter on Ko-fi: {url}'**
+  String adminKofiWebhook(String url);
+
+  /// Label or control text for admin kofi token in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Ko-fi verification token'**
+  String get adminKofiToken;
+
+  /// Label or control text for admin kofi token help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on Ko-fi\'s webhook page. Without it, this server ignores Ko-fi.'**
+  String get adminKofiTokenHelp;
+
+  /// Label or control text for admin user plan until in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'{plan} until {date}'**
+  String adminUserPlanUntil(String plan, String date);
+
+  /// Label or control text for admin plans help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'A new limit applies to what people add next. What they already have stays. Leave a limit empty for no limit.'**
+  String get adminPlansHelp;
+
+  /// Label or control text for admin plan add in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Add plan'**
+  String get adminPlanAdd;
+
+  /// Label or control text for admin plan default name in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (default)'**
+  String adminPlanDefaultName(String name);
+
+  /// Label or control text for admin plan limit in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: {value}'**
+  String adminPlanLimit(String label, String value);
+
+  /// Label or control text for admin plan days in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Days: {count}'**
+  String adminPlanDays(int count);
+
+  /// Label or control text for admin products section in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get adminProductsSection;
+
+  /// Label or control text for admin products help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'A payment goes to the product with its tier name, or else to the one without a tier name that its amount reaches.'**
+  String get adminProductsHelp;
+
+  /// Label or control text for admin product add in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get adminProductAdd;
+
+  /// Label or control text for admin product edit in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit product'**
+  String get adminProductEdit;
+
+  /// Label or control text for admin product any payment in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Any payment of at least {amount}'**
+  String adminProductAnyPayment(String amount);
+
+  /// Label or control text for admin product name in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier name'**
+  String get adminProductName;
+
+  /// Label or control text for admin product name help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'As written on Ko-fi. Leave empty to match any one-off or monthly payment by its amount.'**
+  String get adminProductNameHelp;
+
+  /// Label or control text for admin product plan in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get adminProductPlan;
+
+  /// Label or control text for admin product days in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get adminProductDays;
+
+  /// Label or control text for admin product days help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'How long one payment lasts. Paying again adds to what is left.'**
+  String get adminProductDaysHelp;
+
+  /// Label or control text for admin product min amount in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum amount'**
+  String get adminProductMinAmount;
+
+  /// Label or control text for admin product currency in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency code'**
+  String get adminProductCurrency;
+
+  /// Label or control text for admin plan id in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get adminPlanId;
+
+  /// Label or control text for admin plan id help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase letters, digits and hyphens. It can\'t be changed later.'**
+  String get adminPlanIdHelp;
+
+  /// Label or control text for admin plan name in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get adminPlanName;
+
+  /// Label or control text for admin plan rank in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank'**
+  String get adminPlanRank;
+
+  /// Label or control text for admin plan rank help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with several plans gets the one with the highest rank.'**
+  String get adminPlanRankHelp;
+
+  /// Label or control text for admin plan default in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Default plan'**
+  String get adminPlanDefault;
+
+  /// Label or control text for admin plan default help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'For every account without another plan.'**
+  String get adminPlanDefaultHelp;
+
+  /// Title of the confirmation before an administrator removes a plan or a product.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String adminPlanRemoveTitle(String name);
+
+  /// Body of the confirmation before removing a plan. {products} is a comma-separated list of product names.
+  ///
+  /// In en, this message translates to:
+  /// **'Its products go with it and can no longer be bought: {products}'**
+  String adminPlanRemoveBody(String products);
+
+  /// Label or control text for admin entitlement granted in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Given by an administrator'**
+  String get adminEntitlementGranted;
+
+  /// Label or control text for admin entitlement revoked in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get adminEntitlementRevoked;
+
+  /// Label or control text for admin entitlement forever in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get adminEntitlementForever;
+
+  /// Label or control text for admin entitlement until in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String adminEntitlementUntil(String date);
+
+  /// Label or control text for admin entitlement ended in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended {date}'**
+  String adminEntitlementEnded(String date);
+
+  /// Label or control text for admin entitlements empty in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no plans yet.'**
+  String get adminEntitlementsEmpty;
+
+  /// Label or control text for admin entitlement revoke in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get adminEntitlementRevoke;
+
+  /// Title of the confirmation before an administrator revokes a plan a user holds.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke {plan}?'**
+  String adminEntitlementRevokeTitle(String plan);
+
+  /// Body of the confirmation before revoking a plan. {user} is the name of the user.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} loses this plan right away. This can\'t be undone.'**
+  String adminEntitlementRevokeBody(String user);
+
+  /// Label or control text for admin entitlement note in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get adminEntitlementNote;
+
+  /// Label or control text for admin entitlement grant in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Give plan'**
+  String get adminEntitlementGrant;
+
+  /// Label or control text for admin payment applied in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied'**
+  String get adminPaymentApplied;
+
+  /// Label or control text for admin payment unclaimed in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclaimed'**
+  String get adminPaymentUnclaimed;
+
+  /// Label or control text for admin payment unmatched in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched'**
+  String get adminPaymentUnmatched;
+
+  /// Label or control text for admin payments all in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get adminPaymentsAll;
+
+  /// Label or control text for admin payments count in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 payment} other{{count} payments}}'**
+  String adminPaymentsCount(int count);
+
+  /// Label or control text for admin payments empty in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments here.'**
+  String get adminPaymentsEmpty;
+
+  /// Label or control text for admin payment assigned in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan given to the account.'**
+  String get adminPaymentAssigned;
+
+  /// Label or control text for admin payment assign in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Give to an account'**
+  String get adminPaymentAssign;
+
+  /// Label or control text for admin payment pick user in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an account.'**
+  String get adminPaymentPickUser;
+
+  /// Label or control text for error billing off in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This server has no plans.'**
+  String get errorBillingOff;
+
+  /// Label or control text for error already sponsored in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Another member\'s plan already covers this group.'**
+  String get errorAlreadySponsored;
+
+  /// Label or control text for error plan in use in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts or products still use this plan.'**
+  String get errorPlanInUse;
+
+  /// Label or control text for error payment applied in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment has already been applied.'**
+  String get errorPaymentApplied;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment with that ID yet. If you just paid, try again in a minute.'**
+  String get errorPaymentNotFound;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment doesn\'t match a plan. Ask the server\'s administrator to apply it.'**
+  String get errorPaymentNoPlan;
+
+  /// Label or control text for error invalid plan in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the plan settings: something in them isn\'t valid.'**
+  String get errorInvalidPlan;
+
+  /// Label or control text for error limit receipts in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has reached its limit of {max} receipt photos.'**
+  String errorLimitReceipts(int max);
+
+  /// Label or control text for error limit recurring in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has reached its limit of {max} recurring expenses.'**
+  String errorLimitRecurring(int max);
+
+  /// Error when an account is already in as many groups as its plan allows.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached your limit of {max} groups.'**
+  String errorLimitJoinedGroups(int max);
+
+  /// Error when a group already has as many people as its plan allows.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has reached its limit of {max} people.'**
+  String errorLimitMembers(int max);
+
+  /// Label or control text for error limit sponsored in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan can\'t be shared with more than {max} groups.'**
+  String errorLimitSponsored(int max);
+
+  /// Label or control text for error limit other in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached a limit on this server.'**
+  String get errorLimitOther;
+
+  /// Label or control text for plan title in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get planTitle;
+
+  /// Label or control text for plan unlimited in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'No limit'**
+  String get planUnlimited;
+
+  /// Label or control text for plan until in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String planUntil(String date);
+
+  /// Label or control text for plan settings help in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'What this server keeps for you'**
+  String get planSettingsHelp;
+
+  /// Label or control text for plan intro in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Splitting and settling up are always free. A plan only changes how much this server keeps for you.'**
+  String get planIntro;
+
+  /// Label or control text for plan usage in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {limit}'**
+  String planUsage(int used, int limit);
+
+  /// Label or control text for plan used in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} used'**
+  String planUsed(int used);
+
+  /// Label or control text for plan limits in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits'**
+  String get planLimits;
+
+  /// Label or control text for plan limit receipts in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt photos per group'**
+  String get planLimitReceipts;
+
+  /// Label or control text for plan limit recurring in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expenses per group'**
+  String get planLimitRecurring;
+
+  /// The limit on how many groups an account can be in, in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups you\'re in'**
+  String get planLimitJoinedGroups;
+
+  /// The limit on how many people a group can have, in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'People per group'**
+  String get planLimitMembers;
+
+  /// Label or control text for plan limit sponsored in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups sharing your plan'**
+  String get planLimitSponsored;
+
+  /// Label or control text for plan get in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a plan'**
+  String get planGet;
+
+  /// Label or control text for plan kofi in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Ko-fi'**
+  String get planKofi;
+
+  /// Label or control text for plan kofi help in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Put your payment code in the Ko-fi message, so the payment reaches your account.'**
+  String get planKofiHelp;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment code. Tap to copy.'**
+  String get planPaymentCodeHelp;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment code copied'**
+  String get planPaymentCodeCopied;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot the code?'**
+  String get planPaymentClaim;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a payment with its Ko-fi transaction ID.'**
+  String get planPaymentClaimHelp;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction ID or payment link'**
+  String get planPaymentClaimField;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Add payment'**
+  String get planPaymentClaimAction;
+
+  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment added'**
+  String get planPaymentClaimed;
+
+  /// Label or control text for group plan usage in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'People: {members} · Receipt photos: {receipts} · Recurring: {recurring}'**
+  String groupPlanUsage(String members, String receipts, String recurring);
+
+  /// Label or control text for group sponsor in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Share my plan with this group'**
+  String get groupSponsor;
+
+  /// Label or control text for group unsponsor in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing my plan'**
+  String get groupUnsponsor;
+
+  /// Label or control text for group sponsored by in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses {name}\'s plan'**
+  String groupSponsoredBy(String name);
+
+  /// Label or control text for account delete play note in the account screens.
+  ///
+  /// In en, this message translates to:
+  /// **'A Google Play subscription doesn\'t end with your account. Cancel it on Google Play first.'**
+  String get accountDeletePlayNote;
+
+  /// Label or control text for plan play manage in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage subscription'**
+  String get planPlayManage;
+
+  /// Label or control text for plan play manage help in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Change or cancel it on Google Play'**
+  String get planPlayManageHelp;
+
+  /// Label or control text for plan play price in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} every {months, plural, =1{month} other{{months} months}}'**
+  String planPlayPrice(int months, String price);
+
+  /// Label or control text for plan play failed in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play couldn\'t complete the purchase.'**
+  String get planPlayFailed;
+
+  /// Label or control text for plan play pending in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is still being processed. The plan starts once it goes through.'**
+  String get planPlayPending;
+
+  /// Shown on the plan page when the Google Play subscription payment failed and is on hold.
+  ///
+  /// In en, this message translates to:
+  /// **'Your last payment failed. Update your payment method on Google Play to keep this plan.'**
+  String get planPlayOnHold;
+
+  /// Error when this Google Play account already holds a subscription that may belong to a different Balnana account.
+  ///
+  /// In en, this message translates to:
+  /// **'This Google Play account already has a subscription, which may belong to another Balnana account.'**
+  String get planPlayHeldElsewhere;
+
+  /// Error when the app could not reach Google Play billing.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Google Play. Try again later.'**
+  String get planPlayUnavailable;
+
+  /// Label or control text for error invalid purchase in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play doesn\'t recognize this purchase.'**
+  String get errorInvalidPurchase;
+
+  /// Label or control text for error play other account in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This subscription belongs to another account. Sign in to that one, or cancel it on Google Play.'**
+  String get errorPlayOtherAccount;
+
+  /// Label or control text for error play unavailable in an error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Google Play. Try again in a moment.'**
+  String get errorPlayUnavailable;
+
+  /// Label or control text for admin play package in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play package name'**
+  String get adminPlayPackage;
+
+  /// Label or control text for admin play package help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The app\'s ID on Google Play. With the service account below, it turns on Google Play subscriptions.'**
+  String get adminPlayPackageHelp;
+
+  /// Label or control text for admin play service account in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play service account'**
+  String get adminPlayServiceAccount;
+
+  /// Label or control text for admin play service account help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The JSON key of a service account that can view and manage orders and subscriptions in Play Console.'**
+  String get adminPlayServiceAccountHelp;
+
+  /// Label or control text for admin play push account in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Pub/Sub push account'**
+  String get adminPlayPushAccount;
+
+  /// Label or control text for admin play push account help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.'**
+  String get adminPlayPushAccountHelp;
+
+  /// Label or control text for admin play webhook in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Pub/Sub push endpoint, and its audience too: {url}'**
+  String adminPlayWebhook(String url);
+
+  /// Label or control text for admin product provider in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid through'**
+  String get adminProductProvider;
+
+  /// Label or control text for admin product play id in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Product ID'**
+  String get adminProductPlayId;
+
+  /// Label or control text for admin product play id help in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'As written in Play Console. Google Play says when each payment ends, so there are no days to set.'**
+  String get adminProductPlayIdHelp;
+
+  /// Body of the confirmation before an administrator removes a product.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments for it stop being applied to accounts. Plans already held stay until they end.'**
+  String get adminProductRemoveBody;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

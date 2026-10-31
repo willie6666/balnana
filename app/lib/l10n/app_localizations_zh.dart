@@ -445,7 +445,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => '此成员会保留在以前的支出中，但无法加入新的支出。';
+  String get memberRemoveBody => '此成员的支出和余额仍会保留在群组中。';
 
   @override
   String get groupLinkCopied => '链接已复制。任何拥有链接的人都可以打开此群组。';
@@ -930,6 +930,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseChangedElsewhere => '其他人修改了此支出。重新加载会显示对方的版本，并丢弃你在此处的更改。';
+
+  @override
+  String get expenseNewerTitle => '由较新版本创建';
+
+  @override
+  String get expenseNewerBody => '请更新 Balnana 后再修改此项。';
 
   @override
   String get suggestedPayments => '建议转账';
@@ -2147,7 +2153,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组所有者可以在群组设置中删除整个群组。其他数据相关问题，请联系服务器运营者。';
+      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组所有者可以在群组设置中删除整个群组。已删除的群组和已删除费用的照片会在 30 天后彻底清除。其他数据相关问题，请联系服务器运营者。';
 
   @override
   String get privacyOperatorPolicy => '运营者的隐私政策';
@@ -2531,6 +2537,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repeatHelp => '从上方日期开始，按设定日期自动添加到群组。保存时也会添加已经过去的日期。';
 
   @override
+  String get repeatCustom => '自定义周期';
+
+  @override
   String get repeatDropReceiptTitle => '移除收据？';
 
   @override
@@ -2654,6 +2663,424 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseRecurring => '由周期性支出添加';
+
+  @override
+  String get adminPlans => '方案';
+
+  @override
+  String get adminPayments => '付款记录';
+
+  @override
+  String get adminSectionBilling => '方案与付款';
+
+  @override
+  String get adminSectionBillingBody => '方案会提高此服务器保存内容的上限。分账和结清始终免费。';
+
+  @override
+  String get adminBillingOn => '方案与限制';
+
+  @override
+  String get adminBillingOnHelp => '关闭时，此服务器不做任何限制，也不显示方案。';
+
+  @override
+  String get adminBillingNeedsAccounts => '方案需要账号：请先将访问方式改为账号。';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi 页面';
+
+  @override
+  String get adminKofiUrlHelp => '用户前往付款的页面。只有允许外部付款的版本才会链接到这里。';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return '请在 Ko-fi 填写此 Webhook 地址：$url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi 验证令牌';
+
+  @override
+  String get adminKofiTokenHelp => '显示在 Ko-fi 的 Webhook 页面。未设置时，此服务器会忽略 Ko-fi。';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan，至 $date';
+  }
+
+  @override
+  String get adminPlansHelp => '新的上限只影响之后添加的内容，已有内容会保留。留空表示没有上限。';
+
+  @override
+  String get adminPlanAdd => '添加方案';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name（默认）';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label：$value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return '天数：$count';
+  }
+
+  @override
+  String get adminProductsSection => '商品';
+
+  @override
+  String get adminProductsHelp => '付款会先匹配同名的赞助等级；没有时，再匹配未填等级名称且金额达标的商品。';
+
+  @override
+  String get adminProductAdd => '添加商品';
+
+  @override
+  String get adminProductEdit => '编辑商品';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return '任何不低于 $amount 的付款';
+  }
+
+  @override
+  String get adminProductName => '等级名称';
+
+  @override
+  String get adminProductNameHelp => '与 Ko-fi 上的名称相同。留空时，单次或每月付款都按金额匹配。';
+
+  @override
+  String get adminProductPlan => '方案';
+
+  @override
+  String get adminProductDays => '天数';
+
+  @override
+  String get adminProductDaysHelp => '一笔付款的有效天数。再次付款会接在剩余天数之后。';
+
+  @override
+  String get adminProductMinAmount => '最低金额';
+
+  @override
+  String get adminProductCurrency => '货币代码';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => '小写英文字母、数字和连字符。之后无法更改。';
+
+  @override
+  String get adminPlanName => '名称';
+
+  @override
+  String get adminPlanRank => '优先级';
+
+  @override
+  String get adminPlanRankHelp => '账号有多个方案时，使用优先级最高的方案。';
+
+  @override
+  String get adminPlanDefault => '默认方案';
+
+  @override
+  String get adminPlanDefaultHelp => '用于没有其他方案的所有账号。';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return '要移除 $name 吗？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '其商品也会一并移除，且无法再购买：$products';
+  }
+
+  @override
+  String get adminEntitlementGranted => '由管理员提供';
+
+  @override
+  String get adminEntitlementRevoked => '已撤销';
+
+  @override
+  String get adminEntitlementForever => '没有结束日期';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return '至 $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '已于 $date 结束';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => '此账号还没有方案。';
+
+  @override
+  String get adminEntitlementRevoke => '撤销';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '要撤销 $plan 吗？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user 会立即失去此方案，且无法恢复。';
+  }
+
+  @override
+  String get adminEntitlementNote => '备注';
+
+  @override
+  String get adminEntitlementGrant => '提供方案';
+
+  @override
+  String get adminPaymentApplied => '已应用';
+
+  @override
+  String get adminPaymentUnclaimed => '待认领';
+
+  @override
+  String get adminPaymentUnmatched => '未匹配';
+
+  @override
+  String get adminPaymentsAll => '全部';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 笔付款');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => '这里没有付款记录。';
+
+  @override
+  String get adminPaymentAssigned => '方案已提供给账号。';
+
+  @override
+  String get adminPaymentAssign => '提供给账号';
+
+  @override
+  String get adminPaymentPickUser => '请选择账号。';
+
+  @override
+  String get errorBillingOff => '此服务器没有方案。';
+
+  @override
+  String get errorAlreadySponsored => '此群组已由其他成员的方案覆盖。';
+
+  @override
+  String get errorPlanInUse => '仍有账号或商品在使用此方案。';
+
+  @override
+  String get errorPaymentApplied => '这笔付款已经应用。';
+
+  @override
+  String get errorPaymentNotFound => '还没有这笔交易。如果刚付款，请过一分钟再试。';
+
+  @override
+  String get errorPaymentNoPlan => '这笔付款对应不到方案，请联系服务器管理员处理。';
+
+  @override
+  String get errorInvalidPlan => '请检查方案设置，其中有无效内容。';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return '此群组已达 $max 张收据照片的上限。';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return '此群组已达 $max 笔周期性支出的上限。';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return '你已达 $max 个群组的上限。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return '此群组已达 $max 人的上限。';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return '你的方案最多只能共享给 $max 个群组。';
+  }
+
+  @override
+  String get errorLimitOther => '你已达此服务器的上限。';
+
+  @override
+  String get planTitle => '方案';
+
+  @override
+  String get planUnlimited => '没有上限';
+
+  @override
+  String planUntil(String date) {
+    return '至 $date';
+  }
+
+  @override
+  String get planSettingsHelp => '此服务器为你保存的内容';
+
+  @override
+  String get planIntro => '分账和结清始终免费。方案只会改变此服务器能为你保存多少内容。';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '已使用 $used';
+  }
+
+  @override
+  String get planLimits => '上限';
+
+  @override
+  String get planLimitReceipts => '每个群组的收据照片';
+
+  @override
+  String get planLimitRecurring => '每个群组的周期性支出';
+
+  @override
+  String get planLimitJoinedGroups => '你加入的群组';
+
+  @override
+  String get planLimitMembers => '每个群组的人数';
+
+  @override
+  String get planLimitSponsored => '共享你方案的群组';
+
+  @override
+  String get planGet => '获取方案';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => '请把付款代码粘贴到 Ko-fi 留言中，款项才会进入你的账号。';
+
+  @override
+  String get planPaymentCodeHelp => '你的付款代码，点按即可复制。';
+
+  @override
+  String get planPaymentCodeCopied => '已复制付款代码';
+
+  @override
+  String get planPaymentClaim => '忘记留代码？';
+
+  @override
+  String get planPaymentClaimHelp => '用 Ko-fi 的交易编号添加付款。';
+
+  @override
+  String get planPaymentClaimField => '交易编号或付款链接';
+
+  @override
+  String get planPaymentClaimAction => '添加付款';
+
+  @override
+  String get planPaymentClaimed => '已添加付款';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人数：$members · 收据照片：$receipts · 周期性支出：$recurring';
+  }
+
+  @override
+  String get groupSponsor => '与此群组共享我的方案';
+
+  @override
+  String get groupUnsponsor => '停止共享我的方案';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return '使用 $name 的方案';
+  }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play 订阅不会随账号一起结束，请先到 Google Play 取消。';
+
+  @override
+  String get planPlayManage => '管理订阅';
+
+  @override
+  String get planPlayManageHelp => '到 Google Play 更改或取消';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 个月', one: '月');
+    return '每 $_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play 无法完成这笔购买。';
+
+  @override
+  String get planPlayPending => '付款仍在处理中，完成后方案才会开始。';
+
+  @override
+  String get planPlayOnHold => '上次付款失败。请到 Google Play 更新付款方式，以保留此方案。';
+
+  @override
+  String get planPlayHeldElsewhere => '这个 Google Play 账号已有订阅，可能属于另一个 Balnana 账号。';
+
+  @override
+  String get planPlayUnavailable => '无法连接 Google Play，请稍后再试。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play 查不到这笔购买。';
+
+  @override
+  String get errorPlayOtherAccount => '此订阅属于另一个账号。请登录该账号，或到 Google Play 取消。';
+
+  @override
+  String get errorPlayUnavailable => '无法连接 Google Play，请稍后再试。';
+
+  @override
+  String get adminPlayPackage => 'Google Play 软件包名称';
+
+  @override
+  String get adminPlayPackageHelp => '应用在 Google Play 上的 ID。与下方的服务账号一起设置后，即开启 Google Play 订阅。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play 服务账号';
+
+  @override
+  String get adminPlayServiceAccountHelp => '服务账号的 JSON 密钥，需在 Play Console 中有查看和管理订单与订阅的权限。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub 推送账号';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub 用来签署推送的服务账号邮箱。未设置时，续订要等有人打开方案页才会收到。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub 推送端点，受众也填此网址：$url';
+  }
+
+  @override
+  String get adminProductProvider => '付款方式';
+
+  @override
+  String get adminProductPlayId => '产品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => '与 Play Console 中填写的相同。每笔付款的到期时间由 Google Play 决定，因此无需设置天数。';
+
+  @override
+  String get adminProductRemoveBody => '此商品的付款将不再计入账号。已持有的方案会保留到结束。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3096,7 +3523,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get memberRemoveBody => '這個人仍會保留在過去的支出中，但無法加入新的支出。';
+  String get memberRemoveBody => '這個人的支出和餘額仍會保留在群組中。';
 
   @override
   String get groupLinkCopied => '已複製連結。任何人都能透過連結開啟這個群組。';
@@ -3581,6 +4008,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get expenseChangedElsewhere => '其他人已修改這筆支出。重新載入會顯示對方的版本，並捨棄你在此處的變更。';
+
+  @override
+  String get expenseNewerTitle => '由較新的版本建立';
+
+  @override
+  String get expenseNewerBody => '請更新 Balnana 後再修改這筆資料。';
 
   @override
   String get suggestedPayments => '建議轉帳方式';
@@ -4798,7 +5231,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組擁有者可以在群組設定中刪除整個群組。其他資料刪除需求請聯絡伺服器管理者。';
+      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組擁有者可以在群組設定中刪除整個群組。已刪除的群組和已刪除費用的照片會在 30 天後徹底清除。其他資料刪除需求請聯絡伺服器管理者。';
 
   @override
   String get privacyOperatorPolicy => '管理者的隱私權政策';
@@ -5181,6 +5614,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get repeatHelp => '從上方日期開始，在每個指定日期自動新增至群組。儲存時也會新增已過去日期的支出。';
 
   @override
+  String get repeatCustom => '自訂週期';
+
+  @override
   String get repeatDropReceiptTitle => '要移除收據嗎？';
 
   @override
@@ -5304,4 +5740,422 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get expenseRecurring => '由定期支出新增';
+
+  @override
+  String get adminPlans => '方案';
+
+  @override
+  String get adminPayments => '付款紀錄';
+
+  @override
+  String get adminSectionBilling => '方案與付款';
+
+  @override
+  String get adminSectionBillingBody => '方案會提高這台伺服器保存內容的上限。分帳和結清永遠免費。';
+
+  @override
+  String get adminBillingOn => '方案與限制';
+
+  @override
+  String get adminBillingOnHelp => '關閉時，這台伺服器不做任何限制，也不顯示方案。';
+
+  @override
+  String get adminBillingNeedsAccounts => '方案需要帳戶：請先把存取方式改為帳戶。';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi 頁面';
+
+  @override
+  String get adminKofiUrlHelp => '使用者前往付款的頁面。只有允許外部付款的版本才會連到這裡。';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return '請在 Ko-fi 填入這個 Webhook 網址：$url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi 驗證權杖';
+
+  @override
+  String get adminKofiTokenHelp => '顯示在 Ko-fi 的 Webhook 頁面。沒有設定時，這台伺服器會忽略 Ko-fi。';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan，到 $date';
+  }
+
+  @override
+  String get adminPlansHelp => '新的上限只影響之後新增的內容，已有的內容會保留。留白代表沒有上限。';
+
+  @override
+  String get adminPlanAdd => '新增方案';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name（預設）';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label：$value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return '天數：$count';
+  }
+
+  @override
+  String get adminProductsSection => '商品';
+
+  @override
+  String get adminProductsHelp => '付款會先對應同名的贊助等級；沒有時，再對應未填等級名稱且金額達標的商品。';
+
+  @override
+  String get adminProductAdd => '新增商品';
+
+  @override
+  String get adminProductEdit => '編輯商品';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return '任何至少 $amount 的付款';
+  }
+
+  @override
+  String get adminProductName => '等級名稱';
+
+  @override
+  String get adminProductNameHelp => '與 Ko-fi 上的名稱相同。留白時，單次或每月付款都依金額對應。';
+
+  @override
+  String get adminProductPlan => '方案';
+
+  @override
+  String get adminProductDays => '天數';
+
+  @override
+  String get adminProductDaysHelp => '一筆付款的有效天數。再次付款會接在剩餘天數之後。';
+
+  @override
+  String get adminProductMinAmount => '最低金額';
+
+  @override
+  String get adminProductCurrency => '貨幣代碼';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => '小寫英文字母、數字和連字號。之後無法變更。';
+
+  @override
+  String get adminPlanName => '名稱';
+
+  @override
+  String get adminPlanRank => '順位';
+
+  @override
+  String get adminPlanRankHelp => '帳戶有多個方案時，採用順位最高的方案。';
+
+  @override
+  String get adminPlanDefault => '預設方案';
+
+  @override
+  String get adminPlanDefaultHelp => '用於沒有其他方案的所有帳戶。';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return '要移除 $name 嗎？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '它的商品也會一併移除，且無法再購買：$products';
+  }
+
+  @override
+  String get adminEntitlementGranted => '由管理員提供';
+
+  @override
+  String get adminEntitlementRevoked => '已撤銷';
+
+  @override
+  String get adminEntitlementForever => '沒有結束日期';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return '到 $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '已於 $date 結束';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => '這個帳戶還沒有方案。';
+
+  @override
+  String get adminEntitlementRevoke => '撤銷';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '要撤銷 $plan 嗎？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user 會立即失去這個方案，且無法復原。';
+  }
+
+  @override
+  String get adminEntitlementNote => '備註';
+
+  @override
+  String get adminEntitlementGrant => '提供方案';
+
+  @override
+  String get adminPaymentApplied => '已套用';
+
+  @override
+  String get adminPaymentUnclaimed => '待認領';
+
+  @override
+  String get adminPaymentUnmatched => '未對應';
+
+  @override
+  String get adminPaymentsAll => '全部';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 筆付款');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => '這裡沒有付款紀錄。';
+
+  @override
+  String get adminPaymentAssigned => '方案已提供給帳戶。';
+
+  @override
+  String get adminPaymentAssign => '提供給帳戶';
+
+  @override
+  String get adminPaymentPickUser => '請選擇帳戶。';
+
+  @override
+  String get errorBillingOff => '這台伺服器沒有方案。';
+
+  @override
+  String get errorAlreadySponsored => '這個群組已由其他成員的方案涵蓋。';
+
+  @override
+  String get errorPlanInUse => '仍有帳戶或商品在使用這個方案。';
+
+  @override
+  String get errorPaymentApplied => '這筆付款已經套用。';
+
+  @override
+  String get errorPaymentNotFound => '還沒有這筆交易。如果剛付款，請過一分鐘再試。';
+
+  @override
+  String get errorPaymentNoPlan => '這筆付款對不到方案，請聯絡伺服器管理員處理。';
+
+  @override
+  String get errorInvalidPlan => '請檢查方案設定，其中有無效的內容。';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return '這個群組已達 $max 張收據照片的上限。';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return '這個群組已達 $max 筆定期支出的上限。';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return '你已達 $max 個群組的上限。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return '此群組已達 $max 人的上限。';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return '你的方案最多只能分享給 $max 個群組。';
+  }
+
+  @override
+  String get errorLimitOther => '你已達這台伺服器的上限。';
+
+  @override
+  String get planTitle => '方案';
+
+  @override
+  String get planUnlimited => '沒有上限';
+
+  @override
+  String planUntil(String date) {
+    return '到 $date';
+  }
+
+  @override
+  String get planSettingsHelp => '這台伺服器為你保存的內容';
+
+  @override
+  String get planIntro => '分帳和結清永遠免費。方案只會改變這台伺服器能為你保存多少內容。';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '已使用 $used';
+  }
+
+  @override
+  String get planLimits => '上限';
+
+  @override
+  String get planLimitReceipts => '每個群組的收據照片';
+
+  @override
+  String get planLimitRecurring => '每個群組的定期支出';
+
+  @override
+  String get planLimitJoinedGroups => '你加入的群組';
+
+  @override
+  String get planLimitMembers => '每個群組的人數';
+
+  @override
+  String get planLimitSponsored => '分享你方案的群組';
+
+  @override
+  String get planGet => '取得方案';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => '請把付款代碼貼到 Ko-fi 留言，款項才會進到你的帳號。';
+
+  @override
+  String get planPaymentCodeHelp => '你的付款代碼，點一下複製。';
+
+  @override
+  String get planPaymentCodeCopied => '已複製付款代碼';
+
+  @override
+  String get planPaymentClaim => '忘記留代碼？';
+
+  @override
+  String get planPaymentClaimHelp => '用 Ko-fi 的交易編號加入付款。';
+
+  @override
+  String get planPaymentClaimField => '交易編號或付款連結';
+
+  @override
+  String get planPaymentClaimAction => '加入付款';
+
+  @override
+  String get planPaymentClaimed => '已加入付款';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人數：$members · 收據照片：$receipts · 定期支出：$recurring';
+  }
+
+  @override
+  String get groupSponsor => '與這個群組分享我的方案';
+
+  @override
+  String get groupUnsponsor => '停止分享我的方案';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return '使用 $name 的方案';
+  }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play 訂閱不會隨帳號一起結束，請先到 Google Play 取消。';
+
+  @override
+  String get planPlayManage => '管理訂閱';
+
+  @override
+  String get planPlayManageHelp => '到 Google Play 變更或取消';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 個月', one: '月');
+    return '每 $_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play 無法完成這筆購買。';
+
+  @override
+  String get planPlayPending => '付款仍在處理中，完成後方案才會開始。';
+
+  @override
+  String get planPlayOnHold => '上次付款失敗。請到 Google Play 更新付款方式，以保留這個方案。';
+
+  @override
+  String get planPlayHeldElsewhere => '這個 Google Play 帳號已有訂閱，可能屬於另一個 Balnana 帳號。';
+
+  @override
+  String get planPlayUnavailable => '無法連到 Google Play，請稍後再試。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play 查無這筆購買。';
+
+  @override
+  String get errorPlayOtherAccount => '這份訂閱屬於另一個帳號。請登入該帳號，或到 Google Play 取消。';
+
+  @override
+  String get errorPlayUnavailable => '無法連上 Google Play，請稍後再試。';
+
+  @override
+  String get adminPlayPackage => 'Google Play 套件名稱';
+
+  @override
+  String get adminPlayPackageHelp => 'App 在 Google Play 上的 ID。與下方的服務帳號一起設定後，就會開啟 Google Play 訂閱。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play 服務帳號';
+
+  @override
+  String get adminPlayServiceAccountHelp => '服務帳號的 JSON 金鑰，需在 Play Console 有檢視及管理訂單與訂閱的權限。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub 推送帳號';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub 用來簽署推送的服務帳號 email。沒有設定時，續訂要等有人開啟方案頁才會收到。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub 推送端點，目標對象也填這個網址：$url';
+  }
+
+  @override
+  String get adminProductProvider => '付款方式';
+
+  @override
+  String get adminProductPlayId => '產品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => '與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。';
+
+  @override
+  String get adminProductRemoveBody => '這個商品的付款將不再計入帳號。已持有的方案會保留到結束。';
 }

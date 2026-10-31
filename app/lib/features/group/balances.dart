@@ -465,6 +465,9 @@ class _TransferTile extends ConsumerWidget {
   }
 }
 
+/// Keys of payments whose answer never came, so trying again records one.
+final _paymentKeys = <String, String>{};
+
 /// Confirms a payment (the amount can be changed) and records it.
 Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Transfer suggested) async {
   final l10n = context.l10n;
@@ -474,11 +477,20 @@ Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Tra
     builder: (context) => _PaymentDialog(group: group, transfer: suggested),
   );
   if (amount == null || !context.mounted) return;
+  // The sheet can close during the request, and the ref with it.
+  final container = ProviderScope.containerOf(context, listen: false);
+  final payment = '${group.token}/${suggested.from}/${suggested.to}/$amount';
+  final key = _paymentKeys[payment] ??= newClientKey();
   try {
-    await groupApiOf(ref, group.token).recordPayment(suggested.from, suggested.to, amount, group.minorDigits);
-    refreshGroup(ref, group.token);
+    await groupApiOf(
+      ref,
+      group.token,
+    ).recordPayment(suggested.from, suggested.to, amount, group.minorDigits, key: key);
+    _paymentKeys.remove(payment);
+    refreshGroupIn(container, group.token);
     messenger.showSnackBar(SnackBar(content: Text(l10n.paymentRecorded)));
   } on ApiException catch (e) {
+    if (e.code != ApiException.network) _paymentKeys.remove(payment);
     messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
   }
 }
@@ -529,6 +541,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
     final from = g.member(widget.transfer.from)!, to = g.member(widget.transfer.to)!;
     final locale = Localizations.localeOf(context).toLanguageTag();
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.recordPaymentTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

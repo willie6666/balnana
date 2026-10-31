@@ -103,7 +103,8 @@ class _Pages implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    expect(options.uri.path, '/api/v1/g/tok/expenses');
+    // Not expect: a reload asks for this inside pumpAndSettle's guard.
+    if (options.uri.path != '/api/v1/g/tok/expenses') throw StateError(options.uri.path);
     ResponseBody reply(Object body, int status) => ResponseBody.fromString(
       jsonEncode(body),
       status,
@@ -463,6 +464,31 @@ void main() {
     expect(find.text('Item e1'), findsOneWidget);
     expect(find.text('Item e2'), findsOneWidget);
     expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets('a reload keeps what was scrolled to', (tester) async {
+    final pages = _Pages()..failing = false;
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = pages;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(container.read(expensesProvider('tok')).value?.items, hasLength(2));
+
+    final shown = <int?>[];
+    final sub = container.listen(expensesProvider('tok'), (_, next) {
+      if (!next.isLoading) shown.add(next.value?.items.length);
+    });
+    addTearDown(sub.close);
+    container.invalidate(expensesProvider('tok'));
+    await tester.pumpAndSettle();
+
+    expect(shown, isNotEmpty);
+    expect(shown, everyElement(2));
+    expect(pages.secondPage, 2);
   });
 
   testWidgets('a group catches up whenever its live stream connects', (tester) async {
@@ -940,7 +966,7 @@ void main() {
       // Ana's half came back to Ben for her.
       container.read(settingsProvider.notifier).setMyShare(true);
       await tester.pumpAndSettle();
-      expect(find.text('\$5.00'), findsOneWidget);
+      expect(find.text('+\$5.00'), findsOneWidget);
       expect(find.text('Ben received \$10.00 · $label'), findsOneWidget);
 
       await tester.tap(find.text('Deposit back'));
@@ -984,6 +1010,33 @@ void main() {
     expect(find.byIcon(Icons.event_outlined), findsOneWidget);
     expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new expense can name someone who left, without starting them in it', (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final group = _group('Flat');
+    final container = await _boot(tester, [
+      groupProvider.overrideWith(
+        (ref, token) async => Group(
+          token: group.token,
+          name: group.name,
+          currency: group.currency,
+          minorDigits: group.minorDigits,
+          createdAt: group.createdAt,
+          members: [...group.members, Member(id: 'c', name: 'Cleo', balance: BigInt.zero, left: true)],
+        ),
+      ),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/new');
+    expect(find.widgetWithText(ChoiceChip, 'Cleo'), findsOneWidget);
+    final ticks = tester.widgetList<Checkbox>(find.byType(Checkbox)).map((c) => c.value).toList();
+    expect(ticks, [true, true, false]);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Cleo'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Cleo')).selected, isTrue);
   });
 
   // A small group keeps every list whole; a large one is condensed.
@@ -1087,7 +1140,7 @@ void main() {
 
     container.read(settingsProvider.notifier).setMyShare(true);
     await tester.pumpAndSettle();
-    expect(find.text('\$5.00'), findsOneWidget);
+    expect(find.text('+\$5.00'), findsOneWidget);
     expect(find.text('Ana paid \$10.00'), findsOneWidget);
     // My share still shows everyone the expense was for.
     expect(
@@ -1172,6 +1225,13 @@ void main() {
 /// Keeps every request with its body, and answers saves with an expense.
 class _Saves implements HttpClientAdapter {
   final sent = <(String, Object?)>[];
+  final keys = <Object?>[];
+
+  /// Holds each save until it completes.
+  Completer<void>? hold;
+
+  /// How many saves are lost on the way.
+  var lost = 0;
 
   @override
   Future<ResponseBody> fetch(
@@ -1180,6 +1240,12 @@ class _Saves implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     sent.add(('${options.method} ${options.uri.path}', options.data));
+    keys.add(options.headers['Idempotency-Key']);
+    await hold?.future;
+    if (lost > 0) {
+      lost--;
+      throw DioException.connectionError(requestOptions: options, reason: 'lost');
+    }
     return _GroupServer.reply(_expenseJson('e2'), options.method == 'POST' ? 201 : 200);
   }
 
@@ -1261,6 +1327,87 @@ void foreignTests() {
     expect(find.text('Paid in JPY'), findsOneWidget);
     expect(field(tester, '1 JPY in USD').controller.text, '0.00643');
     expect(field(tester, 'Total in USD').controller.text, '6.43');
+  });
+
+  Future<void> fillIn(WidgetTester tester) async {
+    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'), '12');
+    await tester.enterText(find.widgetWithText(TextFormField, 'What was it for?'), 'Sushi');
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('saving again after a lost answer repeats the same save', (tester) async {
+    final server = _Saves()..lost = 1;
+    final container = await boot(tester, server);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await fillIn(tester);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.keys, hasLength(2));
+    expect(server.keys.first, isNotNull);
+    expect(server.keys.last, server.keys.first);
+    expect(find.byType(ExpenseEditorPage), findsNothing);
+  });
+
+  testWidgets('going back during a save neither asks nor loses it', (tester) async {
+    final server = _Saves()..hold = Completer();
+    final container = await boot(tester, server);
+    await _go(tester, container, '/g/tok');
+    unawaited(container.read(routerProvider).push('/g/tok/expenses/new'));
+    await tester.pumpAndSettle();
+    await fillIn(tester);
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(find.byType(ExpenseEditorPage), findsOneWidget);
+
+    server.hold!.complete();
+    await tester.pumpAndSettle();
+    expect(server.sent, hasLength(1));
+    expect(find.byType(ExpenseEditorPage), findsNothing);
+  });
+
+  testWidgets('an amount follows a currency without decimals', (tester) async {
+    final container = await boot(tester, _Saves());
+    await _go(tester, container, '/g/tok/expenses/new');
+    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'), '12.00');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paid in USD'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.descendant(of: find.byType(BottomSheet), matching: find.byType(TextField)), 'JPY');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Japanese Yen'));
+    await tester.pumpAndSettle();
+
+    final amount = find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0');
+    expect(tester.widget<TextField>(amount).controller?.text, '12');
+    await tester.enterText(amount, '125');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(amount).controller?.text, '125');
+  });
+
+  testWidgets('an entry from a newer version shows but is not changed', (tester) async {
+    final server = _Saves();
+    tester.view.physicalSize = const Size(1200, 3000);
+    addTearDown(tester.view.reset);
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final newer = Expense.fromJson({..._expenseJson('e1'), 'splitMethod': 'percent'}, 2);
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expenseProvider.overrideWith((ref, key) async => newer),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/e1');
+
+    expect(find.text('Made with a newer version'), findsOneWidget);
+    expect(find.text('Save'), findsNothing);
   });
 
   testWidgets('a new expense in yen starts from the last rate and saves what it came to', (tester) async {

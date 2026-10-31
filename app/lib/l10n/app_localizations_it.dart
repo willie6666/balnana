@@ -462,8 +462,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'La persona resterà nelle spese passate, ma non potrà essere inclusa in quelle nuove.';
+  String get memberRemoveBody => 'Le sue spese e il suo saldo resteranno nel gruppo.';
 
   @override
   String get groupLinkCopied => 'Link copiato. Chiunque lo abbia può aprire questo gruppo.';
@@ -955,6 +954,12 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get expenseChangedElsewhere =>
       'Qualcun altro ha modificato questa spesa. Ricaricando vedrai la sua versione e perderai le modifiche apportate qui.';
+
+  @override
+  String get expenseNewerTitle => 'Creato con una versione più recente';
+
+  @override
+  String get expenseNewerBody => 'Aggiorna Balnana per modificare questa voce.';
 
   @override
   String get suggestedPayments => 'Pagamenti suggeriti';
@@ -2232,7 +2237,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Il proprietario di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
+      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Il proprietario di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. I gruppi eliminati e le foto delle spese eliminate vengono cancellati definitivamente dopo 30 giorni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
 
   @override
   String get privacyOperatorPolicy => 'Informativa sulla privacy dell\'operatore';
@@ -2662,6 +2667,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'La spesa verrà aggiunta automaticamente al gruppo alle date previste, a partire dalla data qui sopra. Quando salvi, verranno aggiunte anche le spese con date già passate.';
 
   @override
+  String get repeatCustom => 'Programmazione personalizzata';
+
+  @override
   String get repeatDropReceiptTitle => 'Rimuovere la ricevuta?';
 
   @override
@@ -2789,4 +2797,454 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Aggiunta da una spesa ricorrente';
+
+  @override
+  String get adminPlans => 'Piani';
+
+  @override
+  String get adminPayments => 'Pagamenti';
+
+  @override
+  String get adminSectionBilling => 'Piani e pagamenti';
+
+  @override
+  String get adminSectionBillingBody =>
+      'I piani alzano i limiti di ciò che questo server conserva. Dividere le spese e saldare restano gratuiti.';
+
+  @override
+  String get adminBillingOn => 'Piani e limiti';
+
+  @override
+  String get adminBillingOnHelp => 'Se disattivato, questo server non limita nulla e non mostra piani.';
+
+  @override
+  String get adminBillingNeedsAccounts =>
+      'I piani richiedono gli account: prima imposta la modalità di accesso su account.';
+
+  @override
+  String get adminKofiUrl => 'Pagina Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Dove si effettua il pagamento. Solo le versioni che consentono pagamenti esterni vi rimandano.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL webhook da inserire su Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Token di verifica Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Si trova nella pagina webhook di Ko-fi. Senza di esso, questo server ignora Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan fino al $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Un nuovo limite vale per ciò che viene aggiunto dopo. Quello che c\'è resta. Lascia vuoto per nessun limite.';
+
+  @override
+  String get adminPlanAdd => 'Aggiungi piano';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (predefinito)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Giorni: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Prodotti';
+
+  @override
+  String get adminProductsHelp =>
+      'Un pagamento va al prodotto con il suo nome di livello, altrimenti a quello senza nome di livello di cui raggiunge l\'importo.';
+
+  @override
+  String get adminProductAdd => 'Aggiungi prodotto';
+
+  @override
+  String get adminProductEdit => 'Modifica prodotto';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Qualsiasi pagamento di almeno $amount';
+  }
+
+  @override
+  String get adminProductName => 'Nome del livello';
+
+  @override
+  String get adminProductNameHelp =>
+      'Come scritto su Ko-fi. Lascia vuoto per abbinare per importo i pagamenti singoli o mensili.';
+
+  @override
+  String get adminProductPlan => 'Piano';
+
+  @override
+  String get adminProductDays => 'Giorni';
+
+  @override
+  String get adminProductDaysHelp =>
+      'Quanto dura un pagamento. Un nuovo pagamento si aggiunge al tempo rimasto.';
+
+  @override
+  String get adminProductMinAmount => 'Importo minimo';
+
+  @override
+  String get adminProductCurrency => 'Codice valuta';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Lettere minuscole, cifre e trattini. Non si può cambiare in seguito.';
+
+  @override
+  String get adminPlanName => 'Nome';
+
+  @override
+  String get adminPlanRank => 'Grado';
+
+  @override
+  String get adminPlanRankHelp => 'Un account con più piani ottiene quello con il grado più alto.';
+
+  @override
+  String get adminPlanDefault => 'Piano predefinito';
+
+  @override
+  String get adminPlanDefaultHelp => 'Per ogni account senza un altro piano.';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Rimuovere $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'I suoi prodotti vengono rimossi insieme e non si potranno più acquistare: $products';
+  }
+
+  @override
+  String get adminEntitlementGranted => 'Assegnato da un amministratore';
+
+  @override
+  String get adminEntitlementRevoked => 'Revocato';
+
+  @override
+  String get adminEntitlementForever => 'Nessuna data di fine';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Fino al $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Terminato il $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Questo account non ha ancora piani.';
+
+  @override
+  String get adminEntitlementRevoke => 'Revoca';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Revocare $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user perde subito questo piano. L\'azione non può essere annullata.';
+  }
+
+  @override
+  String get adminEntitlementNote => 'Nota';
+
+  @override
+  String get adminEntitlementGrant => 'Assegna piano';
+
+  @override
+  String get adminPaymentApplied => 'Applicato';
+
+  @override
+  String get adminPaymentUnclaimed => 'Non rivendicato';
+
+  @override
+  String get adminPaymentUnmatched => 'Non abbinato';
+
+  @override
+  String get adminPaymentsAll => 'Tutti';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pagamenti',
+      one: '1 pagamento',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Nessun pagamento.';
+
+  @override
+  String get adminPaymentAssigned => 'Piano assegnato all\'account.';
+
+  @override
+  String get adminPaymentAssign => 'Assegna a un account';
+
+  @override
+  String get adminPaymentPickUser => 'Scegli un account.';
+
+  @override
+  String get errorBillingOff => 'Questo server non ha piani.';
+
+  @override
+  String get errorAlreadySponsored => 'Il piano di un altro membro copre già questo gruppo.';
+
+  @override
+  String get errorPlanInUse => 'Account o prodotti usano ancora questo piano.';
+
+  @override
+  String get errorPaymentApplied => 'Questo pagamento è già stato applicato.';
+
+  @override
+  String get errorPaymentNotFound =>
+      'Ancora nessun pagamento con questo ID. Se hai appena pagato, riprova tra un minuto.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Questo pagamento non corrisponde a nessun piano. Chiedi all\'amministratore del server di applicarlo.';
+
+  @override
+  String get errorInvalidPlan => 'Controlla le impostazioni del piano: qualcosa non è valido.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Questo gruppo ha raggiunto il limite di $max foto di ricevute.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Questo gruppo ha raggiunto il limite di $max spese ricorrenti.';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return 'Hai raggiunto il limite di $max gruppi.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Questo gruppo ha raggiunto il limite di $max persone.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Il tuo piano non può essere condiviso con più di $max gruppi.';
+  }
+
+  @override
+  String get errorLimitOther => 'Hai raggiunto un limite di questo server.';
+
+  @override
+  String get planTitle => 'Piano';
+
+  @override
+  String get planUnlimited => 'Nessun limite';
+
+  @override
+  String planUntil(String date) {
+    return 'Fino al $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Ciò che questo server conserva per te';
+
+  @override
+  String get planIntro =>
+      'Dividere e saldare sono sempre gratuiti. Un piano cambia solo quanto questo server conserva per te.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used di $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used in uso';
+  }
+
+  @override
+  String get planLimits => 'Limiti';
+
+  @override
+  String get planLimitReceipts => 'Foto di ricevute per gruppo';
+
+  @override
+  String get planLimitRecurring => 'Spese ricorrenti per gruppo';
+
+  @override
+  String get planLimitJoinedGroups => 'Gruppi di cui fai parte';
+
+  @override
+  String get planLimitMembers => 'Persone per gruppo';
+
+  @override
+  String get planLimitSponsored => 'Gruppi che condividono il tuo piano';
+
+  @override
+  String get planGet => 'Ottieni un piano';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp =>
+      'Incolla il tuo codice di pagamento nel messaggio di Ko-fi perché il pagamento arrivi al tuo account.';
+
+  @override
+  String get planPaymentCodeHelp => 'Il tuo codice di pagamento. Tocca per copiarlo.';
+
+  @override
+  String get planPaymentCodeCopied => 'Codice di pagamento copiato';
+
+  @override
+  String get planPaymentClaim => 'Hai dimenticato il codice?';
+
+  @override
+  String get planPaymentClaimHelp => 'Aggiungi un pagamento con il suo ID transazione Ko-fi.';
+
+  @override
+  String get planPaymentClaimField => 'ID transazione o link del pagamento';
+
+  @override
+  String get planPaymentClaimAction => 'Aggiungi pagamento';
+
+  @override
+  String get planPaymentClaimed => 'Pagamento aggiunto';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Persone: $members · Foto di ricevute: $receipts · Ricorrenti: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Condividi il mio piano con questo gruppo';
+
+  @override
+  String get groupUnsponsor => 'Smetti di condividere il mio piano';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Usa il piano di $name';
+  }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Un abbonamento Google Play non termina con il tuo account. Annullalo prima su Google Play.';
+
+  @override
+  String get planPlayManage => 'Gestisci abbonamento';
+
+  @override
+  String get planPlayManageHelp => 'Modificalo o annullalo su Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'ogni $months mesi',
+      one: 'al mese',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play non è riuscito a completare l\'acquisto.';
+
+  @override
+  String get planPlayPending =>
+      'Il pagamento è ancora in elaborazione. Il piano inizierà appena andrà a buon fine.';
+
+  @override
+  String get planPlayOnHold =>
+      'L\'ultimo pagamento non è andato a buon fine. Aggiorna il metodo di pagamento su Google Play per mantenere questo piano.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Questo account Google Play ha già un abbonamento, che potrebbe appartenere a un altro account Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'Impossibile raggiungere Google Play. Riprova più tardi.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play non riconosce questo acquisto.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Questo abbonamento appartiene a un altro account. Accedi a quello o annullalo su Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Impossibile raggiungere Google Play. Riprova tra poco.';
+
+  @override
+  String get adminPlayPackage => 'Nome del pacchetto Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'L\'ID dell\'app su Google Play. Insieme all\'account di servizio qui sotto, attiva gli abbonamenti Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Account di servizio Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'La chiave JSON di un account di servizio che può vedere e gestire ordini e abbonamenti in Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Account push Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'L\'email dell\'account di servizio con cui Pub/Sub firma i suoi invii. Senza, i rinnovi arrivano solo quando qualcuno apre la pagina del piano.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Endpoint push Pub/Sub, e anche il suo pubblico: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Pagato con';
+
+  @override
+  String get adminProductPlayId => 'ID prodotto';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Come scritto in Play Console. Google Play indica quando termina ogni pagamento, quindi non ci sono giorni da impostare.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'I pagamenti per questo prodotto non verranno più applicati agli account. I piani già attivi restano fino alla scadenza.';
 }

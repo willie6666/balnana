@@ -6,10 +6,15 @@ package config
 import (
 	"cmp"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/http"
 	"net/mail"
 	"net/url"
 	"os"
@@ -138,9 +143,12 @@ type Config struct {
 	CORSOrigins []string
 	// RateLimit caps API requests per client per minute (0: no cap).
 	RateLimit int
-	// TrustProxy takes the client address from X-Forwarded-For / X-Real-IP,
-	// for servers behind a reverse proxy.
+	// TrustProxy takes the client address from ProxyHeader, for servers
+	// behind a reverse proxy.
 	TrustProxy bool
+	// ProxyHeader is the header the proxy puts the client's address in, empty
+	// without TrustProxy. Only one: a client can send any the proxy leaves alone.
+	ProxyHeader string
 
 	AuthMode AuthMode
 	Password bool
@@ -163,9 +171,35 @@ type Config struct {
 	// on a private address, such as a ntfy server on the same network.
 	PushPrivateEndpoints bool
 
+	// Billing charges for what the server stores: plans and their limits
+	// apply. It needs accounts, as a plan belongs to one.
+	Billing bool
+	// KofiToken is the verification token Ko-fi sends with its webhooks;
+	// empty turns the webhook off.
+	KofiToken string
+	// KofiURL is the page people pay at; nil offers no way there.
+	KofiURL *url.URL
+	// PaymentKeepDays is how long the email and name on a payment are kept (0:
+	// for good). The rest of the record stays.
+	PaymentKeepDays int
+	// PlayPackage is the Android app's package on Google Play. With
+	// PlayServiceAccount, it turns on Google Play subscriptions.
+	PlayPackage string
+	// PlayServiceAccount is the key the server reads purchases with.
+	PlayServiceAccount *ServiceAccount
+	// PlayPushAccount is the service account Pub/Sub signs Google Play's
+	// notifications as; empty turns them away.
+	PlayPushAccount string
+
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
 	AndroidCertSHA256 []string
+}
+
+// ServiceAccount is what a Google Cloud service account's JSON key holds.
+type ServiceAccount struct {
+	Email      string `json:"client_email"`
+	PrivateKey string `json:"private_key"`
 }
 
 // Setting is one setting an administrator can change at /admin.
@@ -203,6 +237,12 @@ var Managed = []Setting{
 	{Key: "BALNANA_OAUTH_GOOGLE_TRUST_EMAIL", Default: "true"},
 	// Each provider listed has the settings in oidcFields; see OIDCKey.
 	{Key: "BALNANA_OAUTH_OIDC_PROVIDERS"},
+	{Key: "BALNANA_BILLING_ENABLED", Default: "false"},
+	{Key: "BALNANA_KOFI_URL"},
+	{Key: "BALNANA_KOFI_TOKEN", Secret: true},
+	{Key: "BALNANA_PLAY_PACKAGE"},
+	{Key: "BALNANA_PLAY_SERVICE_ACCOUNT", Secret: true},
+	{Key: "BALNANA_PLAY_PUSH_ACCOUNT"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
@@ -322,6 +362,9 @@ func Startup() (*Config, error) {
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
 	}
+	if c.PublicURL == nil { // only until LoadWith turns the value down
+		c.PublicURL = &url.URL{Scheme: "http", Host: "localhost:8080"}
+	}
 	return c, nil
 }
 
@@ -344,6 +387,7 @@ func load(getenv func(string) string) (*Config, error) {
 		WebDir:          e.str("BALNANA_WEB_DIR", ""),
 		CORSOrigins:     e.list("BALNANA_CORS_ORIGINS"),
 		RateLimit:       e.int("BALNANA_RATE_LIMIT", 600),
+		PaymentKeepDays: e.int("BALNANA_PAYMENT_KEEP_DAYS", 0),
 		TrustProxy:      e.bool("BALNANA_TRUST_PROXY", false),
 		Push:            e.bool("BALNANA_PUSH", true),
 		AuthMode:        AuthMode(e.managed("BALNANA_AUTH_MODE")),
@@ -352,6 +396,10 @@ func load(getenv func(string) string) (*Config, error) {
 		RequireVerified: e.managedBool("BALNANA_AUTH_REQUIRE_VERIFIED"),
 		Signup:          Signup(e.managed("BALNANA_AUTH_SIGNUP")),
 		LinkGroups:      e.managedBool("BALNANA_LINK_GROUPS"),
+		Billing:         e.managedBool("BALNANA_BILLING_ENABLED"),
+		KofiToken:       e.managed("BALNANA_KOFI_TOKEN"),
+		PlayPackage:     e.managed("BALNANA_PLAY_PACKAGE"),
+		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.int("BALNANA_SMTP_PORT", 587),
@@ -397,6 +445,31 @@ func load(getenv func(string) string) (*Config, error) {
 			e.fail("BALNANA_PRIVACY_URL", "BALNANA_PRIVACY_URL must be an absolute http(s) URL, got %q", privacyURL)
 		} else {
 			c.PrivacyURL = u
+		}
+	}
+
+	kofiURL := e.managed("BALNANA_KOFI_URL")
+	if kofiURL != "" {
+		if u, err := url.Parse(kofiURL); err != nil || u.Scheme != "https" || u.Host == "" {
+			e.fail("BALNANA_KOFI_URL", "BALNANA_KOFI_URL must be an absolute https URL, got %q", kofiURL)
+		} else {
+			c.KofiURL = u
+		}
+	}
+	// A page to pay at with no webhook takes money the server never hears of.
+	switch {
+	case kofiURL != "" && c.KofiToken == "":
+		e.fail("BALNANA_KOFI_TOKEN", "BALNANA_KOFI_TOKEN is required when BALNANA_KOFI_URL is set")
+	case kofiURL == "" && c.KofiToken != "":
+		e.fail("BALNANA_KOFI_URL", "BALNANA_KOFI_URL is required when BALNANA_KOFI_TOKEN is set")
+	}
+
+	if key := e.managed("BALNANA_PLAY_SERVICE_ACCOUNT"); key != "" {
+		var account ServiceAccount
+		if err := json.Unmarshal([]byte(key), &account); err != nil || account.Email == "" || !validPrivateKey(account.PrivateKey) {
+			e.fail("BALNANA_PLAY_SERVICE_ACCOUNT", "BALNANA_PLAY_SERVICE_ACCOUNT must be a service account's JSON key")
+		} else {
+			c.PlayServiceAccount = &account
 		}
 	}
 
@@ -446,6 +519,20 @@ func load(getenv func(string) string) (*Config, error) {
 	case SignupOpen, SignupInviteOnly, SignupClosed:
 	default:
 		e.fail("BALNANA_AUTH_SIGNUP", "BALNANA_AUTH_SIGNUP must be open, invite_only or closed, got %q", c.Signup)
+	}
+
+	if c.Billing && c.AuthMode != AuthModeAccounts {
+		e.fail("BALNANA_BILLING_ENABLED", "BALNANA_BILLING_ENABLED needs BALNANA_AUTH_MODE=accounts")
+	}
+
+	// Payment providers call back, and Google's notifications are signed for
+	// this address, so a server still on its default would lose them.
+	if c.Billing && (c.KofiToken != "" || c.PlayPackage != "") && c.PublicURL != nil && !publicHTTPS(c.PublicURL) {
+		e.fail("BALNANA_PUBLIC_URL", "BALNANA_PUBLIC_URL must be the server's public https address to take payments, got %q", publicURL)
+	}
+
+	if c.TrustProxy {
+		c.ProxyHeader = http.CanonicalHeaderKey(e.str("BALNANA_PROXY_HEADER", "X-Forwarded-For"))
 	}
 
 	if c.RateLimit < 0 {
@@ -527,6 +614,30 @@ func load(getenv func(string) string) (*Config, error) {
 		return c, errors.Join(e.errs...)
 	}
 	return c, nil
+}
+
+// validPrivateKey reports whether s is a PEM private key, in either form a
+// service account's JSON key can hold it.
+func validPrivateKey(s string) bool {
+	block, _ := pem.Decode([]byte(s))
+	if block == nil {
+		return false
+	}
+	if _, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
+		return true
+	}
+	_, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	return err == nil
+}
+
+// publicHTTPS reports whether u is an https address outside this machine.
+func publicHTTPS(u *url.URL) bool {
+	host := strings.ToLower(u.Hostname())
+	if u.Scheme != "https" || host == "localhost" || strings.HasSuffix(host, ".localhost") {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip == nil || !ip.IsLoopback() && !ip.IsUnspecified()
 }
 
 // fingerprint normalizes a SHA-256 certificate fingerprint to AB:CD:...,

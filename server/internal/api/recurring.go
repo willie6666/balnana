@@ -182,7 +182,7 @@ func validateRecurring(ctx context.Context, q querier, g *group, in RecurringExp
 		Payers:      in.Payers,
 		SplitMethod: in.SplitMethod,
 		Splits:      in.Splits,
-	}, nil, nil)
+	}, nil)
 	if err != nil {
 		return nil, schedule{}, err
 	}
@@ -322,7 +322,7 @@ func addDue(ctx context.Context, tx pgx.Tx, g *group, r *RecurringExpense, now t
 	}
 	// Every occurrence is the same expense on another day: it is checked
 	// once, and the group's total is kept up as they are added.
-	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil, nil)
+	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -388,6 +388,9 @@ func failureCode(err error) string {
 	return ""
 }
 
+// recurringBatch is how many repeating expenses are looked up at a time.
+var recurringBatch = 100
+
 // RunRecurring adds the occurrences that are due now and then every minute
 // until ctx ends. Several servers sharing the database may each run it.
 func (s *Server) RunRecurring(ctx context.Context) {
@@ -409,27 +412,35 @@ func (s *Server) RunRecurring(ctx context.Context) {
 
 // runRecurring adds what is due by now, returning how many expenses it added.
 func (s *Server) runRecurring(ctx context.Context, now time.Time) (int, error) {
-	rows, err := s.db.Query(ctx, `
-		select r.id::text from recurring_expenses r join groups g on g.id = r.group_id
-		where r.next_at <= $1 and r.paused_at is null and g.archived_at is null
-		order by r.next_at limit 100`, now)
-	if err != nil {
-		return 0, err
-	}
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
-	if err != nil {
-		return 0, err
-	}
 	total := 0
 	var first error
-	for _, id := range ids {
-		n, err := s.runOneRecurring(ctx, id, now)
-		total += n
-		if err != nil && first == nil {
-			first = err
+	for {
+		rows, err := s.db.Query(ctx, `
+			select r.id::text from recurring_expenses r join groups g on g.id = r.group_id
+			where r.next_at <= $1 and r.paused_at is null and g.archived_at is null
+			order by r.next_at limit $2`, now, recurringBatch)
+		if err != nil {
+			return total, err
+		}
+		ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+		if err != nil {
+			return total, err
+		}
+		added := 0
+		for _, id := range ids {
+			n, err := s.runOneRecurring(ctx, id, now)
+			added += n
+			if err != nil && first == nil {
+				first = err
+			}
+		}
+		total += added
+		// A full batch means more are waiting. One that added nothing is stuck
+		// on what is busy or failing, which the next round tries again.
+		if len(ids) < recurringBatch || added == 0 {
+			return total, first
 		}
 	}
-	return total, first
 }
 
 func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) (int, error) {
@@ -459,8 +470,8 @@ func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) 
 		if code == "" {
 			return err
 		}
-		// It cannot go on as it is, such as when someone in it left: it
-		// waits for someone to change it and resume it.
+		// It cannot go on as it is: it waits for someone to change it and
+		// resume it.
 		if _, err := tx.Exec(ctx, `
 			update recurring_expenses set paused_at = $2, updated_at = now(), version = version + 1
 			where id = $1`, id, now); err != nil {
@@ -523,6 +534,17 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 		if err != nil {
 			return err
 		}
+		id, err := sentBefore(ctx, tx, "recurring_expenses", g.id, req.Params.IdempotencyKey)
+		if err != nil {
+			return err
+		}
+		if id != "" {
+			out, err = loadOneRecurring(ctx, tx, g, id, false)
+			return err
+		}
+		if err := s.checkRecurringLimit(ctx, tx, g); err != nil {
+			return err
+		}
 		d, sched, err := validateRecurring(ctx, tx, g, *req.Body)
 		if err != nil {
 			return err
@@ -539,15 +561,14 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 		if sched.end != "" {
 			end = &sched.end
 		}
-		var id string
 		place, lat, lng := locationColumns(d.location)
 		err = tx.QueryRow(ctx, `
 			insert into recurring_expenses (group_id, title, category_id, amount, split_method, note, location_name,
-				latitude, longitude, unit, every, starts_at, time_zone, ends_on, next_at, created_by_member)
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::text::date, $15, $16)
+				latitude, longitude, unit, every, starts_at, time_zone, ends_on, next_at, created_by_member, client_key)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::text::date, $15, $16, $17)
 			returning id::text`,
 			g.id, d.title, d.category, d.amount, string(d.method), d.note, place, lat, lng, string(sched.unit),
-			sched.every, sched.start, sched.loc.String(), end, next, who).Scan(&id)
+			sched.every, sched.start, sched.loc.String(), end, next, who, req.Params.IdempotencyKey).Scan(&id)
 		if err != nil {
 			return err
 		}
@@ -744,9 +765,8 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 			if added, err = addDue(ctx, tx, g, r, pausedAt); err != nil {
 				return err
 			}
-			// What it adds from now on must still work, such as everyone in
-			// it still being in the group.
-			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil, nil)
+			// What it adds from now on must still work.
+			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil)
 			if err != nil {
 				return err
 			}

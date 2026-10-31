@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -102,8 +103,9 @@ class LinkPage extends ConsumerWidget {
                 FilledButton(onPressed: () => context.go('/groups'), child: Text(l10n.linkGoHome)),
                 // A page of this server's web app that this app lacks. A
                 // browser tab of the app's own, since Android would hand
-                // the link straight back here.
-                if (web != null && (web.isScheme('https') || web.isScheme('http')))
+                // the link straight back here. Not from the Play build: the
+                // web app sells plans outside Google Play.
+                if (appFlavor != 'play' && web != null && (web.isScheme('https') || web.isScheme('http')))
                   OutlinedButton(
                     onPressed: () => launchUrl(web, mode: LaunchMode.inAppBrowserView),
                     child: Text(l10n.linkOpenInBrowser),

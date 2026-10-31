@@ -456,8 +456,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Orang ini tetap tercatat di pengeluaran lama, tetapi tidak dapat ditambahkan ke pengeluaran baru.';
+  String get memberRemoveBody => 'Pengeluaran dan saldo orang ini tetap ada di grup.';
 
   @override
   String get groupLinkCopied => 'Tautan disalin. Siapa pun yang memilikinya dapat membuka grup ini.';
@@ -953,6 +952,12 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get expenseChangedElsewhere =>
       'Orang lain mengubah pengeluaran ini. Muat ulang untuk melihat versi mereka dan membuang perubahan Anda di sini.';
+
+  @override
+  String get expenseNewerTitle => 'Dibuat dengan versi yang lebih baru';
+
+  @override
+  String get expenseNewerBody => 'Perbarui Balnana untuk mengubah entri ini.';
 
   @override
   String get suggestedPayments => 'Pembayaran yang disarankan';
@@ -2224,7 +2229,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Pemilik grup dapat menghapus seluruh grup dari setelannya. Untuk hal lain, hubungi pengelola server.';
+      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Pemilik grup dapat menghapus seluruh grup dari setelannya. Grup yang dihapus dan foto pengeluaran yang dihapus akan dihapus permanen setelah 30 hari. Untuk hal lain, hubungi pengelola server.';
 
   @override
   String get privacyOperatorPolicy => 'Kebijakan privasi pengelola';
@@ -2640,6 +2645,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Pengeluaran ditambahkan ke grup secara otomatis pada setiap tanggal, mulai dari tanggal di atas. Tanggal yang sudah lewat akan ditambahkan saat Anda menyimpan.';
 
   @override
+  String get repeatCustom => 'Jadwal khusus';
+
+  @override
   String get repeatDropReceiptTitle => 'Hapus struk?';
 
   @override
@@ -2767,4 +2775,446 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Ditambahkan oleh pengeluaran berulang';
+
+  @override
+  String get adminPlans => 'Paket';
+
+  @override
+  String get adminPayments => 'Pembayaran';
+
+  @override
+  String get adminSectionBilling => 'Paket dan pembayaran';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Paket menaikkan batas hal yang disimpan server ini. Membagi pengeluaran dan melunasi tetap gratis.';
+
+  @override
+  String get adminBillingOn => 'Paket dan batas';
+
+  @override
+  String get adminBillingOnHelp =>
+      'Jika nonaktif, server ini tidak membatasi apa pun dan tidak menampilkan paket.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'Paket memerlukan akun: ubah dulu mode akses ke akun.';
+
+  @override
+  String get adminKofiUrl => 'Halaman Ko-fi';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Tempat orang membayar. Hanya versi yang mengizinkan pembayaran luar yang menautkannya.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'URL webhook untuk Ko-fi: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Token verifikasi Ko-fi';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Tertera di halaman webhook Ko-fi. Tanpa token ini, server mengabaikan Ko-fi.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan hingga $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Batas baru berlaku untuk hal yang ditambahkan berikutnya. Yang sudah ada tetap tersimpan. Kosongkan jika tanpa batas.';
+
+  @override
+  String get adminPlanAdd => 'Tambah paket';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (default)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Hari: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Produk';
+
+  @override
+  String get adminProductsHelp =>
+      'Pembayaran masuk ke produk dengan nama tingkatnya, atau ke produk tanpa nama tingkat yang jumlahnya tercapai.';
+
+  @override
+  String get adminProductAdd => 'Tambah produk';
+
+  @override
+  String get adminProductEdit => 'Edit produk';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'Pembayaran apa pun minimal $amount';
+  }
+
+  @override
+  String get adminProductName => 'Nama tingkat';
+
+  @override
+  String get adminProductNameHelp =>
+      'Sesuai tulisan di Ko-fi. Kosongkan untuk mencocokkan pembayaran sekali atau bulanan berdasarkan jumlah.';
+
+  @override
+  String get adminProductPlan => 'Paket';
+
+  @override
+  String get adminProductDays => 'Hari';
+
+  @override
+  String get adminProductDaysHelp => 'Lama satu pembayaran berlaku. Pembayaran lagi menambah sisa waktu.';
+
+  @override
+  String get adminProductMinAmount => 'Jumlah minimum';
+
+  @override
+  String get adminProductCurrency => 'Kode mata uang';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => 'Huruf kecil, angka, dan tanda hubung. Tidak dapat diubah nanti.';
+
+  @override
+  String get adminPlanName => 'Nama';
+
+  @override
+  String get adminPlanRank => 'Peringkat';
+
+  @override
+  String get adminPlanRankHelp => 'Akun dengan beberapa paket mendapat paket berperingkat tertinggi.';
+
+  @override
+  String get adminPlanDefault => 'Paket default';
+
+  @override
+  String get adminPlanDefaultHelp => 'Untuk setiap akun tanpa paket lain.';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Hapus $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Produknya ikut terhapus dan tidak dapat dibeli lagi: $products';
+  }
+
+  @override
+  String get adminEntitlementGranted => 'Diberikan oleh administrator';
+
+  @override
+  String get adminEntitlementRevoked => 'Dicabut';
+
+  @override
+  String get adminEntitlementForever => 'Tanpa tanggal akhir';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Hingga $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return 'Berakhir $date';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Akun ini belum memiliki paket.';
+
+  @override
+  String get adminEntitlementRevoke => 'Cabut';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Cabut $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user langsung kehilangan paket ini. Tindakan ini tidak dapat dibatalkan.';
+  }
+
+  @override
+  String get adminEntitlementNote => 'Catatan';
+
+  @override
+  String get adminEntitlementGrant => 'Beri paket';
+
+  @override
+  String get adminPaymentApplied => 'Diterapkan';
+
+  @override
+  String get adminPaymentUnclaimed => 'Belum diklaim';
+
+  @override
+  String get adminPaymentUnmatched => 'Tidak cocok';
+
+  @override
+  String get adminPaymentsAll => 'Semua';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count pembayaran');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Tidak ada pembayaran.';
+
+  @override
+  String get adminPaymentAssigned => 'Paket diberikan ke akun.';
+
+  @override
+  String get adminPaymentAssign => 'Beri ke akun';
+
+  @override
+  String get adminPaymentPickUser => 'Pilih akun.';
+
+  @override
+  String get errorBillingOff => 'Server ini tidak memiliki paket.';
+
+  @override
+  String get errorAlreadySponsored => 'Paket anggota lain sudah mencakup grup ini.';
+
+  @override
+  String get errorPlanInUse => 'Akun atau produk masih menggunakan paket ini.';
+
+  @override
+  String get errorPaymentApplied => 'Pembayaran ini sudah diterapkan.';
+
+  @override
+  String get errorPaymentNotFound =>
+      'Belum ada pembayaran dengan ID itu. Jika baru saja membayar, coba lagi dalam satu menit.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Pembayaran ini tidak cocok dengan paket mana pun. Minta administrator server untuk menerapkannya.';
+
+  @override
+  String get errorInvalidPlan => 'Periksa setelan paket: ada yang tidak valid.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Grup ini telah mencapai batas $max foto struk.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Grup ini telah mencapai batas $max pengeluaran berulang.';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return 'Anda telah mencapai batas $max grup.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Grup ini telah mencapai batas $max orang.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Paket Anda tidak dapat dibagikan ke lebih dari $max grup.';
+  }
+
+  @override
+  String get errorLimitOther => 'Anda telah mencapai batas server ini.';
+
+  @override
+  String get planTitle => 'Paket';
+
+  @override
+  String get planUnlimited => 'Tanpa batas';
+
+  @override
+  String planUntil(String date) {
+    return 'Hingga $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Hal yang disimpan server ini untuk Anda';
+
+  @override
+  String get planIntro =>
+      'Membagi dan melunasi selalu gratis. Paket hanya mengubah seberapa banyak yang disimpan server ini untuk Anda.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used dari $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used digunakan';
+  }
+
+  @override
+  String get planLimits => 'Batas';
+
+  @override
+  String get planLimitReceipts => 'Foto struk per grup';
+
+  @override
+  String get planLimitRecurring => 'Pengeluaran berulang per grup';
+
+  @override
+  String get planLimitJoinedGroups => 'Grup yang Anda ikuti';
+
+  @override
+  String get planLimitMembers => 'Orang per grup';
+
+  @override
+  String get planLimitSponsored => 'Grup yang memakai paket Anda';
+
+  @override
+  String get planGet => 'Dapatkan paket';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => 'Tempel kode pembayaran Anda di pesan Ko-fi agar pembayaran masuk ke akun Anda.';
+
+  @override
+  String get planPaymentCodeHelp => 'Kode pembayaran Anda. Ketuk untuk menyalin.';
+
+  @override
+  String get planPaymentCodeCopied => 'Kode pembayaran disalin';
+
+  @override
+  String get planPaymentClaim => 'Lupa kodenya?';
+
+  @override
+  String get planPaymentClaimHelp => 'Tambahkan pembayaran dengan ID transaksi Ko-fi.';
+
+  @override
+  String get planPaymentClaimField => 'ID transaksi atau tautan pembayaran';
+
+  @override
+  String get planPaymentClaimAction => 'Tambahkan pembayaran';
+
+  @override
+  String get planPaymentClaimed => 'Pembayaran ditambahkan';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Orang: $members · Foto struk: $receipts · Berulang: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Bagikan paket saya ke grup ini';
+
+  @override
+  String get groupUnsponsor => 'Berhenti membagikan paket saya';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Memakai paket $name';
+  }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Langganan Google Play tidak berakhir bersama akun Anda. Batalkan dulu di Google Play.';
+
+  @override
+  String get planPlayManage => 'Kelola langganan';
+
+  @override
+  String get planPlayManageHelp => 'Ubah atau batalkan di Google Play';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'setiap $months bulan',
+      one: 'per bulan',
+    );
+    return '$price $_temp0';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play tidak dapat menyelesaikan pembelian.';
+
+  @override
+  String get planPlayPending => 'Pembayaran Anda masih diproses. Paket dimulai setelah selesai.';
+
+  @override
+  String get planPlayOnHold =>
+      'Pembayaran terakhir Anda gagal. Perbarui metode pembayaran di Google Play agar paket ini tetap aktif.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Akun Google Play ini sudah memiliki langganan, yang mungkin milik akun Balnana lain.';
+
+  @override
+  String get planPlayUnavailable => 'Tidak dapat menghubungi Google Play. Coba lagi nanti.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play tidak mengenali pembelian ini.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Langganan ini milik akun lain. Masuk ke akun itu, atau batalkan di Google Play.';
+
+  @override
+  String get errorPlayUnavailable => 'Tidak dapat menghubungi Google Play. Coba lagi sebentar lagi.';
+
+  @override
+  String get adminPlayPackage => 'Nama paket Google Play';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'ID aplikasi di Google Play. Bersama akun layanan di bawah, ini mengaktifkan langganan Google Play.';
+
+  @override
+  String get adminPlayServiceAccount => 'Akun layanan Google Play';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Kunci JSON akun layanan yang dapat melihat dan mengelola pesanan serta langganan di Play Console.';
+
+  @override
+  String get adminPlayPushAccount => 'Akun push Pub/Sub';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Email akun layanan yang dipakai Pub/Sub untuk menandatangani pengiriman. Tanpanya, perpanjangan baru tiba saat seseorang membuka halaman paket.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Endpoint push Pub/Sub, sekaligus audiensnya: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Dibayar lewat';
+
+  @override
+  String get adminProductPlayId => 'ID produk';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.';
 }

@@ -41,13 +41,24 @@ var receiptWait = 30 * time.Second
 // receiptConnKey carries the upload's connection, for its read deadline.
 type receiptConnKey struct{}
 
+// receiptUploads bounds the photos held in memory at once, from reading the
+// body until they are stored.
+var receiptUploads = make(chan struct{}, 8)
+
 // One conversion at a time bounds the decoded frame (up to 8 bytes per
 // pixel), resize buffers and the optional orientation copy across all server
 // instances in this process. Acquire after reading the body, so an upload
 // that sends slowly keeps no one else waiting.
 var receiptWorkers = make(chan struct{}, 1)
 
-var errBadImage = &apiError{status: http.StatusUnsupportedMediaType, code: "bad_image"}
+// maxJPEGScans is far past what cameras write. Decoding takes time for every
+// scan, and it cannot be interrupted.
+const maxJPEGScans = 32
+
+var (
+	errBadImage    = &apiError{status: http.StatusUnsupportedMediaType, code: "bad_image"}
+	errReceiptBusy = &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+)
 
 func (s *Server) GetReceipt(ctx context.Context, req GetReceiptRequestObject) (GetReceiptResponseObject, error) {
 	g, err := s.groupByToken(ctx, s.db, req.Token, false)
@@ -60,7 +71,7 @@ func (s *Server) GetReceipt(ctx context.Context, req GetReceiptRequestObject) (G
 	var data []byte
 	err = s.db.QueryRow(ctx, `
 		select r.data from receipts r join expenses e on e.id = r.expense_id
-		where r.expense_id = $1 and e.group_id = $2`, req.ExpenseId, g.id).Scan(&data)
+		where r.expense_id = $1 and e.group_id = $2 and e.deleted_at is null`, req.ExpenseId, g.id).Scan(&data)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
@@ -88,8 +99,18 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	if !exists {
 		return nil, errNotFound
 	}
+	// Before the upload, so a full group doesn't send the photo for nothing.
+	if err := s.checkReceiptLimit(ctx, s.db, g, req.ExpenseId); err != nil {
+		return nil, err
+	}
 	if t, _, err := mime.ParseMediaType(req.ContentType); err != nil || !strings.HasPrefix(t, "image/") {
 		return nil, errBadImage
+	}
+	select {
+	case receiptUploads <- struct{}{}:
+		defer func() { <-receiptUploads }()
+	default:
+		return nil, errReceiptBusy
 	}
 	if rc, ok := ctx.Value(receiptConnKey{}).(*http.ResponseController); ok {
 		_ = rc.SetReadDeadline(time.Now().Add(receiptReadTime))
@@ -113,7 +134,7 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	select {
 	case receiptWorkers <- struct{}{}:
 	case <-wait.C:
-		return nil, &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+		return nil, errReceiptBusy
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
@@ -137,6 +158,9 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 		}
 		if deleted {
 			return errNotFound
+		}
+		if err := s.checkReceiptLimit(ctx, tx, g, req.ExpenseId); err != nil {
+			return err
 		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
@@ -193,12 +217,15 @@ func (s *Server) DeleteReceipt(ctx context.Context, req DeleteReceiptRequestObje
 // receiptSide pixels a side, and a fresh JPEG, so nothing of the original
 // file but its pixels is kept.
 func receiptJPEG(raw []byte) ([]byte, error) {
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
+	cfg, format, err := image.DecodeConfig(bytes.NewReader(raw))
 	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width > maxReceiptDimension || cfg.Height > maxReceiptDimension ||
 		cfg.Width > maxReceiptPixels/cfg.Height {
 		return nil, errBadImage
 	}
-	img, format, err := image.Decode(bytes.NewReader(raw))
+	if format == "jpeg" && jpegScans(raw) > maxJPEGScans {
+		return nil, errBadImage
+	}
+	img, _, err := image.Decode(bytes.NewReader(raw))
 	if err != nil {
 		return nil, errBadImage
 	}
@@ -225,6 +252,29 @@ func receiptJPEG(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// jpegScans counts the scans of a JPEG. Up to the first one it follows the
+// segments, so a thumbnail in the metadata doesn't count. From there on it
+// takes every marker it sees: scan data cannot hold one, and counting a stray
+// one too many is safer than a scan going unseen.
+func jpegScans(raw []byte) int {
+	i := 2
+	for i+4 <= len(raw) {
+		marker := raw[i+1]
+		switch {
+		case raw[i] != 0xff, marker == 0xff:
+			i++
+			continue
+		case marker == 0xda:
+			return bytes.Count(raw[i:], []byte{0xff, 0xda})
+		case marker == 0x00, marker >= 0xd0 && marker <= 0xd9: // no length
+			i += 2
+			continue
+		}
+		i += 2 + int(binary.BigEndian.Uint16(raw[i+2:]))
+	}
+	return 0
 }
 
 // upright turns img by its EXIF orientation (1 to 8), so it shows the way the

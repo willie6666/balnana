@@ -215,7 +215,10 @@ class OfflineCache extends Interceptor {
     final options = response.requestOptions;
     final key = _key(options);
     if (key != null && response.statusCode == 200 && response.data != null) {
-      unawaited(_db.save(_server, _account, key, jsonEncode(response.data)).catchError((Object _) {}));
+      // Anything else is not this API: a captive portal's page, answered 200.
+      if (response.data is Map || response.data is List) {
+        unawaited(_db.save(_server, _account, key, jsonEncode(response.data)).catchError((Object _) {}));
+      }
     } else if (key == null && options.method != 'GET') {
       // A change to a group: what was saved of it is out of date. This is
       // done before the caller hears back, and so before it reloads.

@@ -445,7 +445,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => '過去の支出には残りますが、新しい支出には追加できなくなります。';
+  String get memberRemoveBody => 'この人の支出と残高はグループに残ります。';
 
   @override
   String get groupLinkCopied => 'リンクをコピーしました。このリンクを知っている人は誰でもグループを開けます。';
@@ -930,6 +930,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get expenseChangedElsewhere => '別の人がこの支出を変更しました。再読み込みすると、その人の変更が表示され、ここでの変更は破棄されます。';
+
+  @override
+  String get expenseNewerTitle => '新しいバージョンで作成されました';
+
+  @override
+  String get expenseNewerBody => 'この項目を変更するには Balnana を更新してください。';
 
   @override
   String get suggestedPayments => 'おすすめの支払い';
@@ -2156,7 +2162,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのオーナーは、設定からグループ全体を削除できます。それ以外については、サーバーの運営者にお問い合わせください。';
+      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのオーナーは、設定からグループ全体を削除できます。削除したグループと、削除した支出の写真は、30日後に完全に消去されます。それ以外については、サーバーの運営者にお問い合わせください。';
 
   @override
   String get privacyOperatorPolicy => '運営者のプライバシーポリシー';
@@ -2543,6 +2549,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repeatHelp => '上の日付から、予定日にグループへ自動追加されます。過去の日付分も保存時に追加されます。';
 
   @override
+  String get repeatCustom => 'カスタムスケジュール';
+
+  @override
   String get repeatDropReceiptTitle => 'レシートを削除しますか？';
 
   @override
@@ -2666,4 +2675,422 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get expenseRecurring => '定期支出から追加';
+
+  @override
+  String get adminPlans => 'プラン';
+
+  @override
+  String get adminPayments => '支払い';
+
+  @override
+  String get adminSectionBilling => 'プランと支払い';
+
+  @override
+  String get adminSectionBillingBody => 'プランはこのサーバーに保存できる量の上限を引き上げます。割り勘と精算はずっと無料です。';
+
+  @override
+  String get adminBillingOn => 'プランと上限';
+
+  @override
+  String get adminBillingOnHelp => 'オフの場合、このサーバーは何も制限せず、プランも表示しません。';
+
+  @override
+  String get adminBillingNeedsAccounts => 'プランにはアカウントが必要です。先にアクセス方法をアカウントに変更してください。';
+
+  @override
+  String get adminKofiUrl => 'Ko-fiページ';
+
+  @override
+  String get adminKofiUrlHelp => '支払いに進むページです。外部支払いを許可したビルドだけがリンクします。';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Ko-fiに入力するWebhook URL：$url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi検証トークン';
+
+  @override
+  String get adminKofiTokenHelp => 'Ko-fiのWebhookページに表示されています。未設定の場合、このサーバーはKo-fiを無視します。';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan（$dateまで）';
+  }
+
+  @override
+  String get adminPlansHelp => '新しい上限は今後の追加分に適用され、既存のものは残ります。空欄にすると上限なしになります。';
+
+  @override
+  String get adminPlanAdd => 'プランを追加';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name（デフォルト）';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label：$value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return '日数：$count';
+  }
+
+  @override
+  String get adminProductsSection => '商品';
+
+  @override
+  String get adminProductsHelp => '支払いはまず同じティア名の商品に、なければティア名なしで金額を満たす商品に対応します。';
+
+  @override
+  String get adminProductAdd => '商品を追加';
+
+  @override
+  String get adminProductEdit => '商品を編集';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return '$amount以上の支払い';
+  }
+
+  @override
+  String get adminProductName => 'ティア名';
+
+  @override
+  String get adminProductNameHelp => 'Ko-fiの表記と同じにします。空欄の場合、単発・月額の支払いを金額で判定します。';
+
+  @override
+  String get adminProductPlan => 'プラン';
+
+  @override
+  String get adminProductDays => '日数';
+
+  @override
+  String get adminProductDaysHelp => '1回の支払いの有効日数です。再度支払うと残り日数に加算されます。';
+
+  @override
+  String get adminProductMinAmount => '最低金額';
+
+  @override
+  String get adminProductCurrency => '通貨コード';
+
+  @override
+  String get adminPlanId => 'ID';
+
+  @override
+  String get adminPlanIdHelp => '小文字の英字、数字、ハイフンを使用できます。後から変更できません。';
+
+  @override
+  String get adminPlanName => '名前';
+
+  @override
+  String get adminPlanRank => 'ランク';
+
+  @override
+  String get adminPlanRankHelp => '複数のプランを持つアカウントには、最も高いランクのプランが適用されます。';
+
+  @override
+  String get adminPlanDefault => 'デフォルトプラン';
+
+  @override
+  String get adminPlanDefaultHelp => '他のプランがないすべてのアカウントに適用されます。';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name を削除しますか？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '関連する商品も一緒に削除され、購入できなくなります：$products';
+  }
+
+  @override
+  String get adminEntitlementGranted => '管理者が付与';
+
+  @override
+  String get adminEntitlementRevoked => '取り消し済み';
+
+  @override
+  String get adminEntitlementForever => '終了日なし';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return '$dateまで';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '$dateに終了';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'このアカウントにはまだプランがありません。';
+
+  @override
+  String get adminEntitlementRevoke => '取り消す';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan を取り消しますか？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user はこのプランをすぐに失います。この操作は元に戻せません。';
+  }
+
+  @override
+  String get adminEntitlementNote => 'メモ';
+
+  @override
+  String get adminEntitlementGrant => 'プランを付与';
+
+  @override
+  String get adminPaymentApplied => '適用済み';
+
+  @override
+  String get adminPaymentUnclaimed => '未確認';
+
+  @override
+  String get adminPaymentUnmatched => '未対応';
+
+  @override
+  String get adminPaymentsAll => 'すべて';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '支払い$count件');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => '支払いはありません。';
+
+  @override
+  String get adminPaymentAssigned => 'アカウントにプランを付与しました。';
+
+  @override
+  String get adminPaymentAssign => 'アカウントに付与';
+
+  @override
+  String get adminPaymentPickUser => 'アカウントを選択してください。';
+
+  @override
+  String get errorBillingOff => 'このサーバーにはプランがありません。';
+
+  @override
+  String get errorAlreadySponsored => 'このグループには別のメンバーのプランが適用されています。';
+
+  @override
+  String get errorPlanInUse => 'このプランを使っているアカウントまたは商品があります。';
+
+  @override
+  String get errorPaymentApplied => 'この支払いはすでに適用されています。';
+
+  @override
+  String get errorPaymentNotFound => 'その ID の支払いはまだ届いていません。支払った直後なら、1 分ほどしてからもう一度お試しください。';
+
+  @override
+  String get errorPaymentNoPlan => 'この支払いに対応するプランがありません。サーバー管理者に適用を依頼してください。';
+
+  @override
+  String get errorInvalidPlan => 'プランの設定を確認してください。無効な内容があります。';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'このグループのレシート写真は上限の$max枚に達しました。';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'このグループの定期支出は上限の$max件に達しました。';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return 'グループ数が上限の$max件に達しました。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'このグループは上限の$max人に達しました。';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'プランを共有できるグループは$max件までです。';
+  }
+
+  @override
+  String get errorLimitOther => 'このサーバーの上限に達しました。';
+
+  @override
+  String get planTitle => 'プラン';
+
+  @override
+  String get planUnlimited => '上限なし';
+
+  @override
+  String planUntil(String date) {
+    return '$dateまで';
+  }
+
+  @override
+  String get planSettingsHelp => 'このサーバーが保存する内容';
+
+  @override
+  String get planIntro => '割り勘と精算はずっと無料です。プランで変わるのは、このサーバーに保存できる量だけです。';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used件使用中';
+  }
+
+  @override
+  String get planLimits => '上限';
+
+  @override
+  String get planLimitReceipts => 'グループごとのレシート写真';
+
+  @override
+  String get planLimitRecurring => 'グループごとの定期支出';
+
+  @override
+  String get planLimitJoinedGroups => '参加中のグループ';
+
+  @override
+  String get planLimitMembers => 'グループあたりの人数';
+
+  @override
+  String get planLimitSponsored => 'プランを共有するグループ';
+
+  @override
+  String get planGet => 'プランを入手';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => '支払いをアカウントに反映するには、Ko-fi のメッセージに支払いコードを貼り付けてください。';
+
+  @override
+  String get planPaymentCodeHelp => 'あなたの支払いコード。タップしてコピー。';
+
+  @override
+  String get planPaymentCodeCopied => '支払いコードをコピーしました';
+
+  @override
+  String get planPaymentClaim => 'コードを書き忘れましたか？';
+
+  @override
+  String get planPaymentClaimHelp => 'Ko-fi の取引 ID で支払いを追加します。';
+
+  @override
+  String get planPaymentClaimField => '取引 ID または支払いリンク';
+
+  @override
+  String get planPaymentClaimAction => '支払いを追加';
+
+  @override
+  String get planPaymentClaimed => '支払いを追加しました';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人数：$members · レシート写真：$receipts · 定期支出：$recurring';
+  }
+
+  @override
+  String get groupSponsor => 'このグループにプランを共有';
+
+  @override
+  String get groupUnsponsor => 'プランの共有を停止';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return '$nameのプランを使用';
+  }
+
+  @override
+  String get accountDeletePlayNote => 'Google Play の定期購入はアカウントを削除しても終了しません。先に Google Play で解約してください。';
+
+  @override
+  String get planPlayManage => '定期購入を管理';
+
+  @override
+  String get planPlayManageHelp => 'Google Play で変更または解約';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months か月ごと', one: '毎月');
+    return '$_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play で購入を完了できませんでした。';
+
+  @override
+  String get planPlayPending => 'お支払いを処理中です。完了するとプランが始まります。';
+
+  @override
+  String get planPlayOnHold => '前回のお支払いに失敗しました。このプランを続けるには、Google Play でお支払い方法を更新してください。';
+
+  @override
+  String get planPlayHeldElsewhere => 'この Google Play アカウントにはすでにサブスクリプションがあります。別の Balnana アカウントのものかもしれません。';
+
+  @override
+  String get planPlayUnavailable => 'Google Play に接続できませんでした。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play でこの購入を確認できません。';
+
+  @override
+  String get errorPlayOtherAccount => 'この定期購入は別のアカウントのものです。そのアカウントでログインするか、Google Play で解約してください。';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play に接続できません。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get adminPlayPackage => 'Google Play のパッケージ名';
+
+  @override
+  String get adminPlayPackageHelp => 'Google Play でのアプリの ID。下のサービスアカウントと合わせて設定すると Google Play の定期購入が有効になります。';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play サービスアカウント';
+
+  @override
+  String get adminPlayServiceAccountHelp => 'Play Console で注文と定期購入の表示・管理ができるサービスアカウントの JSON キー。';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub プッシュアカウント';
+
+  @override
+  String get adminPlayPushAccountHelp => 'Pub/Sub が配信の署名に使うサービスアカウントのメールアドレス。未設定だと、更新は誰かがプランページを開くまで届きません。';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub のプッシュエンドポイント（オーディエンスも同じ）：$url';
+  }
+
+  @override
+  String get adminProductProvider => '支払い方法';
+
+  @override
+  String get adminProductPlayId => '商品 ID';
+
+  @override
+  String get adminProductPlayIdHelp => 'Play Console の表記のとおりに入力します。各支払いの終了日は Google Play が決めるため、日数の設定はありません。';
+
+  @override
+  String get adminProductRemoveBody => 'この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。';
 }

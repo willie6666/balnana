@@ -57,6 +57,16 @@ val dartDefines: Map<String, String> =
                 ?.let { it[0] to it[1] }
         }
         ?.toMap() ?: emptyMap()
+
+// Google Play doesn't allow sending people to pay elsewhere, so a Play build
+// with the flag that shows such links is a mistake, not a choice.
+gradle.taskGraph.whenReady {
+    if (dartDefines["BALNANA_EXTERNAL_PAYMENTS"] != "true") return@whenReady
+    if (allTasks.any { it.project == project && Regex("^(assemble|bundle)Play").containsMatchIn(it.name) }) {
+        throw GradleException("BALNANA_EXTERNAL_PAYMENTS=true is not allowed in the play flavor.")
+    }
+}
+
 val linkServer: URI? =
     dartDefines["BALNANA_SERVER_URL"]?.trim()?.takeIf { it.isNotEmpty() }
         ?.let { URI(if ("://" in it) it else "https://$it") }
@@ -91,6 +101,15 @@ android {
         manifestPlaceholders["balnanaLinkScheme"] = linkServer?.scheme ?: ""
         manifestPlaceholders["balnanaLinkHost"] = linkServer?.host ?: ""
         manifestPlaceholders["balnanaLinkPath"] = linkServer?.path?.trimEnd('/') ?: ""
+    }
+
+    // One app, built for each of the places it comes from. Google Play wants
+    // its own billing, whose library is proprietary; F-Droid won't carry that.
+    // Plain flutter commands build foss (default-flavor in pubspec.yaml).
+    flavorDimensions += "store"
+    productFlavors {
+        create("play") { dimension = "store" }
+        create("foss") { dimension = "store" }
     }
 
     signingConfigs {
@@ -133,5 +152,7 @@ dependencies {
     // Firebase SDK in the app. Phones with a distributor such as ntfy use it
     // instead.
     implementation("org.unifiedpush.android:embedded-fcm-distributor:3.1.0")
+    // Spelled as a flavor's own: F-Droid's scanner accepts it only that way.
+    "playImplementation"("com.android.billingclient:billing:9.1.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

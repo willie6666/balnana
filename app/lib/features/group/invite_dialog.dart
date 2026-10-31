@@ -66,6 +66,7 @@ class _InviteDialogState extends ConsumerState<_InviteDialog> {
         if (!m.claimed) m,
     ];
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.inviteByEmail),
       content: Form(
         key: _form,

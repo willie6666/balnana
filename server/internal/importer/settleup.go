@@ -15,6 +15,13 @@ import (
 // MaxRows bounds an import.
 const MaxRows = 20_000
 
+// MaxRowParts bounds the names in one column of a row, and MaxParts those in
+// a file. A name costs far more in memory than its few bytes in the file.
+const (
+	MaxRowParts = 500
+	MaxParts    = 400_000
+)
+
 // Part is one person on a row, with an amount as written in the file.
 type Part struct {
 	Name   string
@@ -66,7 +73,7 @@ const (
 // Row problems.
 const (
 	ProblemNames  = "names"  // a row without payers or people it is for
-	ProblemCounts = "counts" // the numbers of names and amounts differ
+	ProblemCounts = "counts" // the numbers of names and amounts differ, or are too large
 	ProblemDate   = "date"
 	ProblemType   = "type"
 	ProblemCSV    = "csv"
@@ -137,6 +144,7 @@ func SettleUp(data []byte) (*File, error) {
 		f.People = append(f.People, name)
 		return name
 	}
+	names := 0
 	for {
 		record, err := r.Read()
 		if errors.Is(err, io.EOF) {
@@ -184,6 +192,9 @@ func SettleUp(data []byte) (*File, error) {
 		if e.ForWhom, err = parts(field("for"), field("splits"), line); err != nil {
 			return nil, err
 		}
+		if names += len(e.Payers) + len(e.ForWhom); names > MaxParts {
+			return nil, &Error{Problem: ProblemTooManyRows}
+		}
 		for _, list := range [][]Part{e.Payers, e.ForWhom} {
 			for i := range list {
 				list[i].Name = person(list[i].Name)
@@ -205,6 +216,9 @@ func SettleUp(data []byte) (*File, error) {
 
 // parts pairs "a;b" names with "1;2" amounts.
 func parts(names, amounts string, line int) ([]Part, error) {
+	if strings.Count(names, ";") >= MaxRowParts {
+		return nil, &Error{Line: line, Problem: ProblemCounts}
+	}
 	ns, as := split(names), split(amounts)
 	if len(ns) == 0 {
 		return nil, &Error{Line: line, Problem: ProblemNames}

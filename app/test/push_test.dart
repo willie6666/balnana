@@ -88,13 +88,16 @@ void main() {
     Future<void>? permission,
     String? device = 'device-1',
     String? address = 'https://push.example.com/1',
+    bool groups = true,
   }) async {
     SharedPreferences.setMockInitialValues({
       'settings.server': _server,
       'push.device': ?device,
       'groups.known': jsonEncode([
-        {'server': _server, 'token': 'tok', 'memberId': 'a', 'addedAt': '2026-01-01T00:00:00Z'},
-        {'server': _server, 'token': 'unpicked', 'addedAt': '2026-01-01T00:00:00Z'},
+        if (groups) ...[
+          {'server': _server, 'token': 'tok', 'memberId': 'a', 'addedAt': '2026-01-01T00:00:00Z'},
+          {'server': _server, 'token': 'unpicked', 'addedAt': '2026-01-01T00:00:00Z'},
+        ],
       ]),
     });
     final prefs = await SharedPreferences.getInstance();
@@ -199,6 +202,18 @@ void main() {
     container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
     await _settle();
     expect(server.requests, hasLength(1));
+  });
+
+  test('signing out with no groups left tells the server to forget the device', () async {
+    await boot(groups: false);
+    container.read(sessionProvider.notifier).set('b', from: container.read(identityProvider));
+    await _settle();
+    expect(server.requests.single, startsWith('PUT '));
+
+    server.requests.clear();
+    container.read(sessionProvider.notifier).set(null, from: container.read(identityProvider));
+    await _settle();
+    expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
   });
 
   test('a server without push is left alone', () async {

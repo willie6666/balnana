@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'core/l10n.dart';
 import 'core/prefs.dart';
 import 'core/push.dart';
 import 'core/settings.dart';
@@ -29,6 +30,7 @@ Future<void> main(List<String> args) async {
   // find and automated tests see an empty page until someone turns on
   // accessibility by hand.
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
+  useLatinDigits();
   final prefs = await SharedPreferences.getInstance();
   final launched = await launchedFromNotification();
   // Also for a choice made before the splash screen followed it.

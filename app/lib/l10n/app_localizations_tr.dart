@@ -455,7 +455,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => 'Geçmiş harcamalarda kalır ama yeni harcamalara eklenemez.';
+  String get memberRemoveBody => 'Harcamaları ve bakiyesi grupta kalır.';
 
   @override
   String get groupLinkCopied => 'Bağlantı kopyalandı. Bu bağlantıya sahip herkes grubu açabilir.';
@@ -950,6 +950,12 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get expenseChangedElsewhere =>
       'Başka biri bu harcamayı değiştirdi. Yenileyince onun sürümü gösterilir ve buradaki değişiklikleriniz silinir.';
+
+  @override
+  String get expenseNewerTitle => 'Daha yeni bir sürümle oluşturuldu';
+
+  @override
+  String get expenseNewerBody => 'Bu kaydı değiştirmek için Balnana\'yı güncelleyin.';
 
   @override
   String get suggestedPayments => 'Önerilen ödemeler';
@@ -2216,7 +2222,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grup sahibi, grubun tamamını ayarlarından silebilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
+      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grup sahibi, grubun tamamını ayarlarından silebilir. Silinen gruplar ve silinen harcamaların fotoğrafları 30 gün sonra kalıcı olarak yok edilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
 
   @override
   String get privacyOperatorPolicy => 'İşletmecinin gizlilik politikası';
@@ -2642,6 +2648,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Harcamalar, yukarıdaki tarihten başlayarak belirlenen her tarihte gruba otomatik eklenir. Geçmiş tarihli harcamalar siz kaydedince eklenir.';
 
   @override
+  String get repeatCustom => 'Özel program';
+
+  @override
   String get repeatDropReceiptTitle => 'Fiş kaldırılsın mı?';
 
   @override
@@ -2768,4 +2777,445 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get expenseRecurring => 'Tekrarlayan harcama tarafından eklendi';
+
+  @override
+  String get adminPlans => 'Planlar';
+
+  @override
+  String get adminPayments => 'Ödemeler';
+
+  @override
+  String get adminSectionBilling => 'Planlar ve ödemeler';
+
+  @override
+  String get adminSectionBillingBody =>
+      'Planlar bu sunucunun sakladıklarına ait sınırları yükseltir. Harcama bölüşme ve hesaplaşma ücretsiz kalır.';
+
+  @override
+  String get adminBillingOn => 'Planlar ve sınırlar';
+
+  @override
+  String get adminBillingOnHelp => 'Kapalıyken bu sunucu hiçbir şeyi sınırlamaz ve plan göstermez.';
+
+  @override
+  String get adminBillingNeedsAccounts => 'Planlar için hesap gerekir: önce erişim modunu hesaplara çevirin.';
+
+  @override
+  String get adminKofiUrl => 'Ko-fi sayfası';
+
+  @override
+  String get adminKofiUrlHelp =>
+      'Ödemenin yapıldığı yer. Yalnızca harici ödemelere izin veren sürümler buraya bağlantı verir.';
+
+  @override
+  String adminKofiWebhook(String url) {
+    return 'Ko-fi\'ye girilecek webhook URL\'si: $url';
+  }
+
+  @override
+  String get adminKofiToken => 'Ko-fi doğrulama jetonu';
+
+  @override
+  String get adminKofiTokenHelp =>
+      'Ko-fi\'nin webhook sayfasında gösterilir. Bu olmadan sunucu Ko-fi\'yi yok sayar.';
+
+  @override
+  String adminUserPlanUntil(String plan, String date) {
+    return '$plan, bitiş: $date';
+  }
+
+  @override
+  String get adminPlansHelp =>
+      'Yeni sınır, bundan sonra eklenenler için geçerlidir. Mevcut içerik kalır. Sınır olmaması için boş bırakın.';
+
+  @override
+  String get adminPlanAdd => 'Plan ekle';
+
+  @override
+  String adminPlanDefaultName(String name) {
+    return '$name (varsayılan)';
+  }
+
+  @override
+  String adminPlanLimit(String label, String value) {
+    return '$label: $value';
+  }
+
+  @override
+  String adminPlanDays(int count) {
+    return 'Gün: $count';
+  }
+
+  @override
+  String get adminProductsSection => 'Ürünler';
+
+  @override
+  String get adminProductsHelp =>
+      'Ödeme önce kendi kademe adına sahip ürüne, yoksa kademe adı olmayan ve tutarına ulaştığı ürüne gider.';
+
+  @override
+  String get adminProductAdd => 'Ürün ekle';
+
+  @override
+  String get adminProductEdit => 'Ürünü düzenle';
+
+  @override
+  String adminProductAnyPayment(String amount) {
+    return 'En az $amount tutarında her ödeme';
+  }
+
+  @override
+  String get adminProductName => 'Kademe adı';
+
+  @override
+  String get adminProductNameHelp =>
+      'Ko-fi\'de yazdığı gibi. Tek seferlik veya aylık ödemeleri tutara göre eşleştirmek için boş bırakın.';
+
+  @override
+  String get adminProductPlan => 'Plan';
+
+  @override
+  String get adminProductDays => 'Gün';
+
+  @override
+  String get adminProductDaysHelp => 'Bir ödemenin ne kadar süreceği. Yeniden ödeme kalan süreye eklenir.';
+
+  @override
+  String get adminProductMinAmount => 'En düşük tutar';
+
+  @override
+  String get adminProductCurrency => 'Para birimi kodu';
+
+  @override
+  String get adminPlanId => 'Kimlik';
+
+  @override
+  String get adminPlanIdHelp => 'Küçük harfler, rakamlar ve tireler. Sonradan değiştirilemez.';
+
+  @override
+  String get adminPlanName => 'Ad';
+
+  @override
+  String get adminPlanRank => 'Sıra';
+
+  @override
+  String get adminPlanRankHelp => 'Birden çok planı olan hesap, sırası en yüksek planı alır.';
+
+  @override
+  String get adminPlanDefault => 'Varsayılan plan';
+
+  @override
+  String get adminPlanDefaultHelp => 'Başka planı olmayan her hesap için.';
+
+  @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name kaldırılsın mı?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Ürünleri de onunla birlikte kaldırılır ve artık satın alınamaz: $products';
+  }
+
+  @override
+  String get adminEntitlementGranted => 'Yönetici tarafından verildi';
+
+  @override
+  String get adminEntitlementRevoked => 'İptal edildi';
+
+  @override
+  String get adminEntitlementForever => 'Bitiş tarihi yok';
+
+  @override
+  String adminEntitlementUntil(String date) {
+    return 'Bitiş: $date';
+  }
+
+  @override
+  String adminEntitlementEnded(String date) {
+    return '$date tarihinde bitti';
+  }
+
+  @override
+  String get adminEntitlementsEmpty => 'Bu hesabın henüz planı yok.';
+
+  @override
+  String get adminEntitlementRevoke => 'İptal et';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan iptal edilsin mi?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user bu planı hemen kaybeder. Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String get adminEntitlementNote => 'Not';
+
+  @override
+  String get adminEntitlementGrant => 'Plan ver';
+
+  @override
+  String get adminPaymentApplied => 'Uygulandı';
+
+  @override
+  String get adminPaymentUnclaimed => 'Sahiplenilmedi';
+
+  @override
+  String get adminPaymentUnmatched => 'Eşleşmedi';
+
+  @override
+  String get adminPaymentsAll => 'Tümü';
+
+  @override
+  String adminPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count ödeme', one: '1 ödeme');
+    return '$_temp0';
+  }
+
+  @override
+  String get adminPaymentsEmpty => 'Ödeme yok.';
+
+  @override
+  String get adminPaymentAssigned => 'Plan hesaba verildi.';
+
+  @override
+  String get adminPaymentAssign => 'Bir hesaba ver';
+
+  @override
+  String get adminPaymentPickUser => 'Bir hesap seçin.';
+
+  @override
+  String get errorBillingOff => 'Bu sunucuda plan yok.';
+
+  @override
+  String get errorAlreadySponsored => 'Bu grup zaten başka bir üyenin planı kapsamında.';
+
+  @override
+  String get errorPlanInUse => 'Hesaplar veya ürünler bu planı hâlâ kullanıyor.';
+
+  @override
+  String get errorPaymentApplied => 'Bu ödeme zaten uygulandı.';
+
+  @override
+  String get errorPaymentNotFound =>
+      'Bu kimlikle henüz ödeme yok. Az önce ödediyseniz bir dakika sonra tekrar deneyin.';
+
+  @override
+  String get errorPaymentNoPlan =>
+      'Bu ödeme hiçbir planla eşleşmiyor. Sunucu yöneticisinden uygulamasını isteyin.';
+
+  @override
+  String get errorInvalidPlan => 'Plan ayarlarını kontrol edin: geçersiz bir değer var.';
+
+  @override
+  String errorLimitReceipts(int max) {
+    return 'Bu grup $max fiş fotoğrafı sınırına ulaştı.';
+  }
+
+  @override
+  String errorLimitRecurring(int max) {
+    return 'Bu grup $max tekrarlayan harcama sınırına ulaştı.';
+  }
+
+  @override
+  String errorLimitJoinedGroups(int max) {
+    return '$max grup sınırınıza ulaştınız.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Bu grup $max kişi sınırına ulaştı.';
+  }
+
+  @override
+  String errorLimitSponsored(int max) {
+    return 'Planınız en fazla $max grupla paylaşılabilir.';
+  }
+
+  @override
+  String get errorLimitOther => 'Bu sunucunun bir sınırına ulaştınız.';
+
+  @override
+  String get planTitle => 'Plan';
+
+  @override
+  String get planUnlimited => 'Sınır yok';
+
+  @override
+  String planUntil(String date) {
+    return 'Bitiş: $date';
+  }
+
+  @override
+  String get planSettingsHelp => 'Bu sunucunun sizin için sakladıkları';
+
+  @override
+  String get planIntro =>
+      'Bölüşme ve hesaplaşma her zaman ücretsizdir. Plan yalnızca bu sunucunun sizin için ne kadar sakladığını değiştirir.';
+
+  @override
+  String planUsage(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String planUsed(int used) {
+    return '$used kullanılıyor';
+  }
+
+  @override
+  String get planLimits => 'Sınırlar';
+
+  @override
+  String get planLimitReceipts => 'Grup başına fiş fotoğrafı';
+
+  @override
+  String get planLimitRecurring => 'Grup başına tekrarlayan harcama';
+
+  @override
+  String get planLimitJoinedGroups => 'Bulunduğunuz gruplar';
+
+  @override
+  String get planLimitMembers => 'Grup başına kişi';
+
+  @override
+  String get planLimitSponsored => 'Planınızı paylaşan gruplar';
+
+  @override
+  String get planGet => 'Plan edinin';
+
+  @override
+  String get planKofi => 'Ko-fi';
+
+  @override
+  String get planKofiHelp => 'Ödemenin hesabınıza ulaşması için ödeme kodunuzu Ko-fi mesajına yapıştırın.';
+
+  @override
+  String get planPaymentCodeHelp => 'Ödeme kodunuz. Kopyalamak için dokunun.';
+
+  @override
+  String get planPaymentCodeCopied => 'Ödeme kodu kopyalandı';
+
+  @override
+  String get planPaymentClaim => 'Kodu mu unuttunuz?';
+
+  @override
+  String get planPaymentClaimHelp => 'Ko-fi işlem kimliğiyle bir ödeme ekleyin.';
+
+  @override
+  String get planPaymentClaimField => 'İşlem kimliği veya ödeme bağlantısı';
+
+  @override
+  String get planPaymentClaimAction => 'Ödemeyi ekle';
+
+  @override
+  String get planPaymentClaimed => 'Ödeme eklendi';
+
+  @override
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Kişiler: $members · Fiş fotoğrafları: $receipts · Tekrarlayan: $recurring';
+  }
+
+  @override
+  String get groupSponsor => 'Planımı bu grupla paylaş';
+
+  @override
+  String get groupUnsponsor => 'Planımı paylaşmayı durdur';
+
+  @override
+  String groupSponsoredBy(String name) {
+    return 'Planı kullanılan üye: $name';
+  }
+
+  @override
+  String get accountDeletePlayNote =>
+      'Google Play aboneliği hesabınızla birlikte bitmez. Önce Google Play\'den iptal edin.';
+
+  @override
+  String get planPlayManage => 'Aboneliği yönet';
+
+  @override
+  String get planPlayManageHelp => 'Google Play\'de değiştirin veya iptal edin';
+
+  @override
+  String planPlayPrice(int months, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months ayda bir',
+      one: 'aylık',
+    );
+    return '$_temp0 $price';
+  }
+
+  @override
+  String get planPlayFailed => 'Google Play satın alma işlemini tamamlayamadı.';
+
+  @override
+  String get planPlayPending => 'Ödemeniz hâlâ işleniyor. Plan, ödeme tamamlanınca başlar.';
+
+  @override
+  String get planPlayOnHold =>
+      'Son ödemeniz başarısız oldu. Bu planı korumak için Google Play\'de ödeme yönteminizi güncelleyin.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Bu Google Play hesabının zaten bir aboneliği var ve bu abonelik başka bir Balnana hesabına ait olabilir.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play\'e ulaşılamadı. Daha sonra tekrar deneyin.';
+
+  @override
+  String get errorInvalidPurchase => 'Google Play bu satın alma işlemini tanımıyor.';
+
+  @override
+  String get errorPlayOtherAccount =>
+      'Bu abonelik başka bir hesaba ait. O hesapla giriş yapın veya Google Play\'den iptal edin.';
+
+  @override
+  String get errorPlayUnavailable => 'Google Play\'e ulaşılamadı. Birazdan tekrar deneyin.';
+
+  @override
+  String get adminPlayPackage => 'Google Play paket adı';
+
+  @override
+  String get adminPlayPackageHelp =>
+      'Uygulamanın Google Play\'deki kimliği. Aşağıdaki hizmet hesabıyla birlikte Google Play aboneliklerini açar.';
+
+  @override
+  String get adminPlayServiceAccount => 'Google Play hizmet hesabı';
+
+  @override
+  String get adminPlayServiceAccountHelp =>
+      'Play Console\'da siparişleri ve abonelikleri görüp yönetebilen bir hizmet hesabının JSON anahtarı.';
+
+  @override
+  String get adminPlayPushAccount => 'Pub/Sub push hesabı';
+
+  @override
+  String get adminPlayPushAccountHelp =>
+      'Pub/Sub\'ın teslimatlarını imzaladığı hizmet hesabının e-postası. Olmazsa yenilemeler ancak biri plan sayfasını açtığında gelir.';
+
+  @override
+  String adminPlayWebhook(String url) {
+    return 'Pub/Sub push uç noktası, aynı zamanda hedef kitlesi: $url';
+  }
+
+  @override
+  String get adminProductProvider => 'Ödeme yolu';
+
+  @override
+  String get adminProductPlayId => 'Ürün kimliği';
+
+  @override
+  String get adminProductPlayIdHelp =>
+      'Play Console\'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.';
 }

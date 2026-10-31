@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf16"
 
 	"balnana/internal/domain"
@@ -135,6 +137,38 @@ func TestImportLeftoverCent(t *testing.T) {
 	}
 }
 
+// A preview reads the file and touches nothing.
+func TestImportDryRunWritesNothing(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	c.must(200, "POST", "/groups/import", importInputFor(settleUpFile(settleUpRows...), true), nil)
+	var groups, members, expenses int
+	err := pool.QueryRow(context.Background(), `select (select count(*) from groups),
+		(select count(*) from members), (select count(*) from expenses)`).Scan(&groups, &members, &expenses)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if groups+members+expenses != 0 {
+		t.Fatalf("%d groups, %d members, %d expenses", groups, members, expenses)
+	}
+}
+
+func TestImportBusy(t *testing.T) {
+	old := importWait
+	importWait = 50 * time.Millisecond
+	t.Cleanup(func() { importWait = old })
+	c := newClient(t)
+	for range cap(importSlots) {
+		importSlots <- struct{}{}
+	}
+	code := c.errorCode(503, "POST", "/groups/import", importInputFor(settleUpFile(settleUpRows...), true))
+	for range cap(importSlots) {
+		<-importSlots
+	}
+	if code != "busy" {
+		t.Fatal(code)
+	}
+}
+
 func TestImportErrors(t *testing.T) {
 	c := newClient(t)
 	importError := func(file []byte, wantCode string, wantParams map[string]any) {
@@ -206,6 +240,31 @@ func TestImportWithAccounts(t *testing.T) {
 
 // Refunds use negative spending and original payer/share roles in reports,
 // while the balance ledger keeps the imported incoming-money effects.
+func TestImportMemberLimit(t *testing.T) {
+	c, _, s := billingServer(t)
+	exec(t, s, `update plans set members_per_group = 1 where is_default`)
+	u := register(c, "ana@example.test", "Ana")
+	file := settleUpFile(settleUpRows...)
+	in := importInputFor(file, false)
+	in.Me = ptr("Ana")
+
+	if code := c.errorCode(402, "POST", "/groups/import", importInputFor(file, true)); code != "plan_limit" {
+		t.Fatal(code)
+	}
+	c.errorCode(402, "POST", "/groups/import", in)
+
+	// With a plan the whole group comes in, and that plan covers it.
+	grant(t, s, u.Id, "plus")
+	c.must(200, "POST", "/groups/import", importInputFor(file, true), nil)
+	var g Group
+	c.must(201, "POST", "/groups/import", in, &g)
+	var plan GroupPlan
+	c.must(200, "GET", "/g/"+g.Token+"/plan", nil, &plan)
+	if plan.PlanName != "Plus" || plan.SponsorMemberId == nil {
+		t.Fatalf("%+v", plan)
+	}
+}
+
 func TestImportIncomingStats(t *testing.T) {
 	for _, tc := range []struct {
 		refund    int
