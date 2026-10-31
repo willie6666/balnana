@@ -932,6 +932,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get expenseChangedElsewhere => '別の人がこの支出を変更しました。再読み込みすると、その人の変更が表示され、ここでの変更は破棄されます。';
 
   @override
+  String get expenseNewerTitle => '新しいバージョンで作成されました';
+
+  @override
+  String get expenseNewerBody => 'この項目を変更するには Balnana を更新してください。';
+
+  @override
   String get suggestedPayments => 'おすすめの支払い';
 
   @override
@@ -2156,7 +2162,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのオーナーは、設定からグループ全体を削除できます。それ以外については、サーバーの運営者にお問い合わせください。';
+      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのオーナーは、設定からグループ全体を削除できます。削除したグループと、削除した支出の写真は、30日後に完全に消去されます。それ以外については、サーバーの運営者にお問い合わせください。';
 
   @override
   String get privacyOperatorPolicy => '運営者のプライバシーポリシー';
@@ -2543,6 +2549,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repeatHelp => '上の日付から、予定日にグループへ自動追加されます。過去の日付分も保存時に追加されます。';
 
   @override
+  String get repeatCustom => 'カスタムスケジュール';
+
+  @override
   String get repeatDropReceiptTitle => 'レシートを削除しますか？';
 
   @override
@@ -2791,6 +2800,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminPlanDefaultHelp => '他のプランがないすべてのアカウントに適用されます。';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name を削除しますか？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '関連する商品も一緒に削除され、購入できなくなります：$products';
+  }
+
+  @override
   String get adminEntitlementGranted => '管理者が付与';
 
   @override
@@ -2814,6 +2833,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => '取り消す';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan を取り消しますか？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user はこのプランをすぐに失います。この操作は元に戻せません。';
+  }
 
   @override
   String get adminEntitlementNote => 'メモ';
@@ -3005,6 +3034,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planPlayPending => 'お支払いを処理中です。完了するとプランが始まります。';
 
   @override
+  String get planPlayOnHold => '前回のお支払いに失敗しました。このプランを続けるには、Google Play でお支払い方法を更新してください。';
+
+  @override
+  String get planPlayHeldElsewhere => 'この Google Play アカウントにはすでにサブスクリプションがあります。別の Balnana アカウントのものかもしれません。';
+
+  @override
+  String get planPlayUnavailable => 'Google Play に接続できませんでした。しばらくしてからもう一度お試しください。';
+
+  @override
   String get errorInvalidPurchase => 'Google Play でこの購入を確認できません。';
 
   @override
@@ -3044,4 +3082,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminProductPlayIdHelp => 'Play Console の表記のとおりに入力します。各支払いの終了日は Google Play が決めるため、日数の設定はありません。';
+
+  @override
+  String get adminProductRemoveBody => 'この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。';
 }

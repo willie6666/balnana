@@ -1,11 +1,15 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"net/http/httptest"
 	"net/url"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // statsGroup makes a group with a few expenses and a payment:
@@ -194,5 +198,14 @@ func TestStatsAndExportFollowDaylightSaving(t *testing.T) {
 		if code := c.errorCode(400, "GET", path, nil); code != "invalid_time_zone" {
 			t.Errorf("%s: %q", zone, code)
 		}
+	}
+}
+
+func TestUnknownZone(t *testing.T) {
+	if !unknownZone(fmt.Errorf("stats: %w", &pgconn.PgError{Code: "22023"})) {
+		t.Fatal("not recognized")
+	}
+	if unknownZone(&pgconn.PgError{Code: "23505"}) || unknownZone(errors.New("22023")) || unknownZone(nil) {
+		t.Fatal("something else")
 	}
 }

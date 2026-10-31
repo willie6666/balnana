@@ -238,7 +238,8 @@ class GroupSummary {
   final DateTime updatedAt;
 }
 
-enum ExpenseKind { expense, payment }
+/// [unknown] is one a newer server sent: shown, but not edited.
+enum ExpenseKind { expense, payment, unknown }
 
 @immutable
 class ExpensePart {
@@ -349,9 +350,8 @@ class Expense {
     BigInt? inForeign(Map<String, Object?> part) => foreign == null || part['foreignAmount'] == null
         ? null
         : _money(part, 'foreignAmount', foreign.digits);
-    final kind = ExpenseKind.values.asNameMap()[_req<String>(json, 'kind')];
-    final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')];
-    if (kind == null || method == null) throw const FormatException('unknown kind or split method');
+    final kind = ExpenseKind.values.asNameMap()[_req<String>(json, 'kind')] ?? ExpenseKind.unknown;
+    final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')] ?? SplitMethod.unknown;
     final deleted = _opt<String>(json, 'deletedAt');
     return Expense(
       id: _req(json, 'id'),
@@ -421,6 +421,9 @@ class Expense {
 
   bool get isPayment => kind == ExpenseKind.payment;
 
+  /// Whether the form can hold it without losing what a newer server sent.
+  bool get editable => kind != ExpenseKind.unknown && splitMethod != SplitMethod.unknown;
+
   /// Money that came in, a refund or income. Its ledger roles are reversed:
   /// whom it is for "paid" it, and whoever received it owes it to them.
   bool get isReceived => !isPayment && transactionType != 'expense';
@@ -435,7 +438,8 @@ class Expense {
   BigInt effectOn(String memberId) => paidBy(memberId) - owedBy(memberId);
 }
 
-enum RepeatUnit { day, week, month, year }
+/// [unknown] is one a newer server sent: shown, but not edited.
+enum RepeatUnit { day, week, month, year, unknown }
 
 /// How often a recurring expense comes back: every [every] [unit]s.
 typedef Repeat = ({RepeatUnit unit, int every});
@@ -468,10 +472,9 @@ class RecurringExpense {
 
   factory RecurringExpense.fromJson(Object? data, int digits) {
     final json = _object(data);
-    final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')];
+    final method = SplitMethod.values.asNameMap()[_req<String>(json, 'splitMethod')] ?? SplitMethod.unknown;
     final repeat = _object(json['repeat']);
-    final unit = RepeatUnit.values.asNameMap()[_req<String>(repeat, 'unit')];
-    if (method == null || unit == null) throw const FormatException('unknown split method or repeat');
+    final unit = RepeatUnit.values.asNameMap()[_req<String>(repeat, 'unit')] ?? RepeatUnit.unknown;
     final endsOn = _opt<String>(json, 'endsOn');
     return RecurringExpense(
       id: _req(json, 'id'),
@@ -513,6 +516,9 @@ class RecurringExpense {
   final List<ExpensePart> payers;
   final List<ExpensePart> splits;
   final Repeat repeat;
+
+  /// Whether the form can hold it without losing what a newer server sent.
+  bool get editable => splitMethod != SplitMethod.unknown && repeat.unit != RepeatUnit.unknown;
 
   /// The first occurrence.
   final DateTime startsAt;
@@ -1075,6 +1081,7 @@ class PlayBilling {
     required this.packageName,
     this.products = const [],
     this.subscribed = const [],
+    this.onHold = const [],
   });
 
   factory PlayBilling.fromJson(Object? data) {
@@ -1084,6 +1091,7 @@ class PlayBilling {
       packageName: _req(json, 'packageName'),
       products: [...?_opt<List<Object?>>(json, 'products')?.whereType<String>()],
       subscribed: [...?_opt<List<Object?>>(json, 'subscribed')?.whereType<String>()],
+      onHold: [...?_opt<List<Object?>>(json, 'onHold')?.whereType<String>()],
     );
   }
 
@@ -1094,6 +1102,13 @@ class PlayBilling {
 
   /// The products the account has a running subscription to.
   final List<String> subscribed;
+
+  /// The products the account still holds but Google stopped charging for
+  /// after a failed payment. Buying again would pay twice once it is fixed.
+  final List<String> onHold;
+
+  /// The products the account holds, whether or not they give a plan now.
+  List<String> get held => [...subscribed, ...onHold];
 }
 
 /// The signed-in account's plan and how much of it is used.

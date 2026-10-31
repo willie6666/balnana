@@ -957,6 +957,12 @@ class AppLocalizationsIt extends AppLocalizations {
       'Qualcun altro ha modificato questa spesa. Ricaricando vedrai la sua versione e perderai le modifiche apportate qui.';
 
   @override
+  String get expenseNewerTitle => 'Creato con una versione più recente';
+
+  @override
+  String get expenseNewerBody => 'Aggiorna Balnana per modificare questa voce.';
+
+  @override
   String get suggestedPayments => 'Pagamenti suggeriti';
 
   @override
@@ -2232,7 +2238,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Il proprietario di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
+      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Il proprietario di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. I gruppi eliminati e le foto delle spese eliminate vengono cancellati definitivamente dopo 30 giorni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
 
   @override
   String get privacyOperatorPolicy => 'Informativa sulla privacy dell\'operatore';
@@ -2662,6 +2668,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'La spesa verrà aggiunta automaticamente al gruppo alle date previste, a partire dalla data qui sopra. Quando salvi, verranno aggiunte anche le spese con date già passate.';
 
   @override
+  String get repeatCustom => 'Programmazione personalizzata';
+
+  @override
   String get repeatDropReceiptTitle => 'Rimuovere la ricevuta?';
 
   @override
@@ -2922,6 +2931,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Per ogni account senza un altro piano.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Rimuovere $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'I suoi prodotti vengono rimossi insieme e non si potranno più acquistare: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Assegnato da un amministratore';
 
   @override
@@ -2945,6 +2964,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Revoca';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Revocare $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user perde subito questo piano. L\'azione non può essere annullata.';
+  }
 
   @override
   String get adminEntitlementNote => 'Nota';
@@ -3152,6 +3181,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il pagamento è ancora in elaborazione. Il piano inizierà appena andrà a buon fine.';
 
   @override
+  String get planPlayOnHold =>
+      'L\'ultimo pagamento non è andato a buon fine. Aggiorna il metodo di pagamento su Google Play per mantenere questo piano.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Questo account Google Play ha già un abbonamento, che potrebbe appartenere a un altro account Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'Impossibile raggiungere Google Play. Riprova più tardi.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play non riconosce questo acquisto.';
 
   @override
@@ -3196,4 +3236,8 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Come scritto in Play Console. Google Play indica quando termina ogni pagamento, quindi non ci sono giorni da impostare.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'I pagamenti per questo prodotto non verranno più applicati agli account. I piani già attivi restano fino alla scadenza.';
 }

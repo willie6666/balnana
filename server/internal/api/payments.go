@@ -140,6 +140,7 @@ func (s *Server) KofiWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	if subtle.ConstantTimeCompare([]byte(ev.VerificationToken), []byte(token)) != 1 {
 		noteMiss(r.Context())
+		s.warnRejected("kofi")
 		writeError(w, http.StatusForbidden, "invalid_token")
 		return
 	}
@@ -175,6 +176,15 @@ func (s *Server) KofiWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+// warnRejected tells the operator a provider's notification was turned away:
+// with a wrong token every payment is, and nobody would know until someone
+// complains. Anyone can send these, so the log hears of it now and then.
+func (s *Server) warnRejected(provider string) {
+	if s.rejected.take(provider, 1, time.Now()) {
+		s.log.Warn("turned away a payment notification: check its token or account", "provider", provider)
+	}
 }
 
 // recordPayment keeps p, once, and gives it to its account if it can tell
@@ -277,7 +287,8 @@ func matchProduct(ctx context.Context, q querier, p payment) (planID *string, da
 
 // applyPayment turns the payment into time on its plan. A membership's
 // payment runs from when it was paid, so that renewing a little early adds
-// nothing; a one-off adds to what is left. It needs the account held, so that
+// nothing; a one-off adds to what is left, and memberships keep that time on
+// top of theirs (paid_through is where theirs ends). It needs the account held, so that
 // two payments can't both start an entitlement, and gives a payment only once.
 // One whose plan was deleted gives nothing until an administrator picks another.
 // With byHand, someone placed it after the fact: a membership's payment whose
@@ -312,20 +323,31 @@ func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string, byHa
 			start = paidAt
 		}
 		err = tx.QueryRow(ctx, `
-			insert into entitlements (user_id, plan_id, source, starts_at, expires_at)
-			values ($1, $2, $3, least($4::timestamptz, now()), $4::timestamptz + make_interval(days => $5))
-			returning id::text`, userID, planID, provider, start, days).Scan(&entitlement)
+			insert into entitlements (user_id, plan_id, source, starts_at, expires_at, paid_through)
+			values ($1, $2, $3, least($4::timestamptz, now()), $4::timestamptz + make_interval(days => $5),
+			        case when $6 then $4::timestamptz + make_interval(days => $5) end)
+			returning id::text`, userID, planID, provider, start, days, recurring).Scan(&entitlement)
 		if err != nil {
 			return err
 		}
 	case err != nil:
 		return err
+	case recurring:
+		// One-off time counts down only once the membership's has run out.
+		_, err = tx.Exec(ctx, `
+			with now_paid as (
+				select id, greatest(paid_through, $2::timestamptz + make_interval(days => $3)) as through,
+				       greatest(expires_at - greatest(paid_through, $2::timestamptz), interval '0') as extra
+				from entitlements where id = $1 and expires_at is not null)
+			update entitlements e set paid_through = n.through, expires_at = n.through + n.extra
+			from now_paid n where e.id = n.id`, entitlement, paidAt, days)
+		if err != nil {
+			return err
+		}
 	default:
 		_, err = tx.Exec(ctx, `
-			update entitlements set expires_at = case
-				when $2 then greatest(expires_at, $3::timestamptz + make_interval(days => $4))
-				else expires_at + make_interval(days => $4) end
-			where id = $1 and expires_at is not null`, entitlement, recurring, paidAt, days)
+			update entitlements set expires_at = expires_at + make_interval(days => $2)
+			where id = $1 and expires_at is not null`, entitlement, days)
 		if err != nil {
 			return err
 		}

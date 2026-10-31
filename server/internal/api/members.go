@@ -188,6 +188,13 @@ func (s *Server) RemoveMember(ctx context.Context, req RemoveMemberRequestObject
 		if _, err := tx.Exec(ctx, `delete from invites where member_id = $1`, m.id); err != nil {
 			return err
 		}
+		// Their plan stops paying for the group, and coming back does not start
+		// it again: that takes sponsoring the group anew, within their limits.
+		if m.userID != nil {
+			if _, err := tx.Exec(ctx, `update groups set sponsor_user_id = null where id = $1 and sponsor_user_id = $2`, g.id, *m.userID); err != nil {
+				return err
+			}
+		}
 		// The last owner leaving hands the group on, as deleting the account
 		// does, to whoever joined with an account first.
 		_, err = tx.Exec(ctx, `

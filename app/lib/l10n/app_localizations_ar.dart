@@ -959,6 +959,12 @@ class AppLocalizationsAr extends AppLocalizations {
       'غيّر شخص آخر هذا المصروف. ستعرض إعادة التحميل نسخته وتتجاهل تغييراتك هنا.';
 
   @override
+  String get expenseNewerTitle => 'أُنشئ بإصدار أحدث';
+
+  @override
+  String get expenseNewerBody => 'حدّث Balnana لتغيير هذا الإدخال.';
+
+  @override
   String get suggestedPayments => 'الدفعات المقترحة';
 
   @override
@@ -2240,7 +2246,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'يمكنك حذف حسابك من الإعدادات. سيبقى اسمك في مجموعاتك كعضو لم يتولّه أحد، لتظل الأرصدة صحيحة، وستُحذف معه المجموعات التي لا يستطيع أحد سواك الوصول إليها. ويمكن لمالك المجموعة حذفها بالكامل من إعداداتها. لأي أمر آخر، تواصل مع مشغّل الخادم.';
+      'يمكنك حذف حسابك من الإعدادات. سيبقى اسمك في مجموعاتك كعضو لم يتولّه أحد، لتظل الأرصدة صحيحة، وستُحذف معه المجموعات التي لا يستطيع أحد سواك الوصول إليها. ويمكن لمالك المجموعة حذفها بالكامل من إعداداتها. تُمحى المجموعات المحذوفة وصور المصروفات المحذوفة نهائيًا بعد 30 يومًا. لأي أمر آخر، تواصل مع مشغّل الخادم.';
 
   @override
   String get privacyOperatorPolicy => 'سياسة الخصوصية الخاصة بالمشغّل';
@@ -2731,6 +2737,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'يُضاف المصروف تلقائيًا إلى المجموعة في كل تاريخ، بدءًا من التاريخ أعلاه. تُضاف التواريخ الماضية عند الحفظ.';
 
   @override
+  String get repeatCustom => 'جدول مخصص';
+
+  @override
   String get repeatDropReceiptTitle => 'إزالة الإيصال؟';
 
   @override
@@ -2986,6 +2995,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get adminPlanDefaultHelp => 'لكل حساب ليس لديه خطة أخرى.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'إزالة $name؟';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'ستُزال منتجاتها معها ولن يمكن شراؤها بعد ذلك: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'منحها مسؤول';
 
   @override
@@ -3009,6 +3028,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'إلغاء';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'إلغاء $plan؟';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return 'سيفقد $user هذه الخطة فورًا. لا يمكن التراجع عن ذلك.';
+  }
 
   @override
   String get adminEntitlementNote => 'ملاحظة';
@@ -3217,6 +3246,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planPlayPending => 'لا تزال دفعتك قيد المعالجة. ستبدأ الخطة عند اكتمالها.';
 
   @override
+  String get planPlayOnHold => 'فشلت آخر عملية دفع. حدّث طريقة الدفع في Google Play للإبقاء على هذه الخطة.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'حساب Google Play هذا لديه اشتراك بالفعل، وقد يكون تابعًا لحساب Balnana آخر.';
+
+  @override
+  String get planPlayUnavailable => 'تعذّر الوصول إلى Google Play. حاول مرة أخرى لاحقًا.';
+
+  @override
   String get errorInvalidPurchase => 'لا يتعرّف Google Play على عملية الشراء هذه.';
 
   @override
@@ -3261,4 +3300,8 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'كما هو مكتوب في Play Console. يحدد Google Play موعد انتهاء كل دفعة، لذا لا توجد أيام لضبطها.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'لن تُطبَّق المدفوعات الخاصة به على الحسابات بعد الآن. وتبقى الخطط الحالية حتى تنتهي.';
 }

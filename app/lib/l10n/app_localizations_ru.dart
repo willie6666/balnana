@@ -966,6 +966,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Кто-то другой изменил этот расход. Обновите страницу, чтобы увидеть его версию и отменить свои изменения.';
 
   @override
+  String get expenseNewerTitle => 'Создано в более новой версии';
+
+  @override
+  String get expenseNewerBody => 'Обновите Balnana, чтобы изменить эту запись.';
+
+  @override
   String get suggestedPayments => 'Рекомендуемые платежи';
 
   @override
@@ -2253,7 +2259,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Аккаунт можно удалить в настройках. ваше имя останется в группах как имя участника, за которым никто не закреплён, чтобы баланс продолжал сходиться. Группы, к которым больше никто не имеет доступа, будут удалены. Владелец группы может удалить её целиком в настройках группы. По другим вопросам обратитесь к администратору сервера.';
+      'Аккаунт можно удалить в настройках. ваше имя останется в группах как имя участника, за которым никто не закреплён, чтобы баланс продолжал сходиться. Группы, к которым больше никто не имеет доступа, будут удалены. Владелец группы может удалить её целиком в настройках группы. Удалённые группы и фото удалённых расходов стираются безвозвратно через 30 дней. По другим вопросам обратитесь к администратору сервера.';
 
   @override
   String get privacyOperatorPolicy => 'Политика конфиденциальности администратора сервера';
@@ -2737,6 +2743,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Расход будет автоматически добавляться в группу в каждую указанную дату, начиная с даты выше. Пропущенные даты будут добавлены при сохранении.';
 
   @override
+  String get repeatCustom => 'Особое расписание';
+
+  @override
   String get repeatDropReceiptTitle => 'Удалить чек?';
 
   @override
@@ -2995,6 +3004,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Для всех аккаунтов без другого тарифа.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Удалить $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Его продукты будут удалены вместе с ним, и их больше нельзя будет купить: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Выдан администратором';
 
   @override
@@ -3018,6 +3037,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Отозвать';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Отозвать $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user сразу потеряет этот тариф. Это действие нельзя отменить.';
+  }
 
   @override
   String get adminEntitlementNote => 'Заметка';
@@ -3228,6 +3257,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planPlayPending => 'Платёж ещё обрабатывается. Тариф начнёт действовать после его завершения.';
 
   @override
+  String get planPlayOnHold =>
+      'Последний платёж не прошёл. Обновите способ оплаты в Google Play, чтобы сохранить этот тариф.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'У этого аккаунта Google Play уже есть подписка. Возможно, она относится к другому аккаунту Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'Не удалось подключиться к Google Play. Повторите попытку позже.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play не распознаёт эту покупку.';
 
   @override
@@ -3272,4 +3312,8 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Как указано в Play Console. Google Play сам сообщает, когда заканчивается каждый платёж, поэтому дни задавать не нужно.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Платежи за этот продукт больше не будут зачисляться на аккаунты. Действующие тарифы сохранятся до окончания срока.';
 }

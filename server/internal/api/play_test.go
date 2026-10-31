@@ -5,10 +5,13 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -34,9 +37,18 @@ type fakePlay struct {
 	down     bool
 	key      *rsa.PrivateKey
 	audience string
+	reached  chan struct{} // told of each purchase asked about, if not nil
+	block    chan struct{} // held up until closed, if not nil
 }
 
 func (f *fakePlay) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f.mu.Lock()
+	reached, block := f.reached, f.block
+	f.mu.Unlock()
+	if block != nil && r.Method == "GET" {
+		reached <- struct{}{}
+		<-block
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.down {
@@ -500,4 +512,183 @@ func TestPlayOff(t *testing.T) {
 		t.Fatalf("status %d", got)
 	}
 	c.must(404, "POST", "/me/play/purchases", PlayPurchaseRequest{PurchaseToken: "x"}, nil)
+}
+
+// Two accounts can share a Google account. A purchase that names one of them
+// is theirs, even if it follows a purchase of the other's.
+func TestPlayNamedAccountOutranksTheLinkedPurchase(t *testing.T) {
+	c, f, _ := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	bob := &client{t: t, h: c.h}
+	bu := register(bob, "bob@example.test", "Bob")
+	f.buy("anas", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+	c.notify(f, "anas", 200)
+
+	f.buy("bobs", "plus_monthly", "GPA.2", &[]string{playAccountID(bu.Id)}[0], map[string]any{"linkedPurchaseToken": "anas"})
+	c.notify(f, "bobs", 200)
+	if p := myPlanOf(bob); !p.Paid {
+		t.Fatal("the purchase went past the account it names")
+	}
+}
+
+// A held subscription has lost its benefits, but it is not over: the app must
+// not sell it again.
+func TestPlayShowsHeldSubscriptions(t *testing.T) {
+	c, f, _ := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	f.buy("held", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+	c.notify(f, "held", 200)
+	f.set("held", map[string]any{"subscriptionState": "SUBSCRIPTION_STATE_ON_HOLD"})
+	c.notify(f, "held", 200)
+	p := myPlanOf(c)
+	if p.Paid || p.Play == nil || len(p.Play.Subscribed) != 0 || len(p.Play.OnHold) != 1 || p.Play.OnHold[0] != "plus_monthly" {
+		t.Fatalf("%+v %+v", p, p.Play)
+	}
+	f.set("held", map[string]any{"subscriptionState": "SUBSCRIPTION_STATE_ACTIVE"})
+	c.notify(f, "held", 200)
+	if p := myPlanOf(c); !p.Paid || len(p.Play.OnHold) != 0 {
+		t.Fatalf("%+v %+v", p, p.Play)
+	}
+}
+
+// Two notifications for one purchase take turns, so the older answer can't be
+// the last one written.
+func TestPlayNotificationsForOnePurchaseTakeTurns(t *testing.T) {
+	c, f, s := playServer(t)
+	ana := register(c, "ana@example.test", "Ana")
+	f.buy("once", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+	f.mu.Lock()
+	f.block = make(chan struct{})
+	f.reached = make(chan struct{}, 2)
+	f.mu.Unlock()
+	done := make(chan error, 2)
+	for range 2 {
+		go func() { done <- s.syncPlay(context.Background(), s.settings.Load().play, "once", nil) }()
+	}
+	<-f.reached
+	select {
+	case <-f.reached:
+		t.Fatal("both asked Google at once")
+	case <-time.After(200 * time.Millisecond):
+	}
+	close(f.block)
+	for range 2 {
+		if err := <-done; err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// fakeGoogle stands in for Google at the addresses the server really uses, so
+// the real client runs: the other tests here swap it for one of their own.
+type fakeGoogle struct {
+	t       *testing.T
+	play    *fakePlay
+	account string
+	next    http.RoundTripper
+}
+
+const googleTestAccess = "access-1"
+
+func (g *fakeGoogle) RoundTrip(r *http.Request) (*http.Response, error) {
+	rec := httptest.NewRecorder()
+	switch to := r.URL.String(); {
+	case to == playTokenURL:
+		g.token(rec, r)
+	case to == googleCerts:
+		writeJSON(rec, 200, jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+			Key: g.play.key.Public(), KeyID: "1", Algorithm: "RS256", Use: "sig",
+		}}})
+	case strings.HasPrefix(to, playAPI):
+		if got := r.Header.Get("Authorization"); got != "Bearer "+googleTestAccess {
+			g.t.Errorf("asked Play with %q", got)
+			http.Error(rec, "who", http.StatusUnauthorized)
+			break
+		}
+		path, err := url.Parse("/" + strings.TrimPrefix(to, playAPI))
+		if err != nil {
+			return nil, err
+		}
+		inner := r.Clone(r.Context())
+		inner.URL = path
+		g.play.ServeHTTP(rec, inner)
+	default:
+		return g.next.RoundTrip(r)
+	}
+	return rec.Result(), nil
+}
+
+// token checks the JWT the service account signs for an access token.
+func (g *fakeGoogle) token(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		g.t.Error(err)
+	}
+	signed, err := jwt.ParseSigned(r.PostForm.Get("assertion"), []jose.SignatureAlgorithm{jose.RS256})
+	if err != nil {
+		g.t.Errorf("assertion: %v", err)
+		http.Error(w, "bad", http.StatusBadRequest)
+		return
+	}
+	var claims struct {
+		Issuer   string `json:"iss"`
+		Scope    string `json:"scope"`
+		Audience string `json:"aud"`
+	}
+	if err := signed.Claims(g.play.key.Public(), &claims); err != nil {
+		g.t.Errorf("signature: %v", err)
+		http.Error(w, "bad", http.StatusBadRequest)
+		return
+	}
+	if grant := r.PostForm.Get("grant_type"); grant != "urn:ietf:params:oauth:grant-type:jwt-bearer" ||
+		claims.Issuer != g.account || claims.Scope != playScope || claims.Audience != playTokenURL {
+		g.t.Errorf("token asked for by %q: %+v", grant, claims)
+	}
+	writeJSON(w, 200, map[string]any{"access_token": googleTestAccess, "token_type": "Bearer", "expires_in": 3600})
+}
+
+// The way main sets it up, from the JSON key to what Google is asked.
+func TestPlayClientFromConfig(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const account = "reader@balnana.iam.gserviceaccount.com"
+	serviceAccount, err := json.Marshal(map[string]string{
+		"client_email": account,
+		"private_key":  string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := &fakePlay{subs: map[string]map[string]any{}, key: key, audience: "https://balnana.test" + playPath}
+	next := http.DefaultTransport
+	http.DefaultTransport = &fakeGoogle{t: t, play: f, account: account, next: next}
+	t.Cleanup(func() { http.DefaultTransport = next })
+
+	c, _, s := mailServer(t, map[string]string{
+		"BALNANA_BILLING_ENABLED":      "true",
+		"BALNANA_PUBLIC_URL":           "https://balnana.test/",
+		"BALNANA_PLAY_PACKAGE":         playTestPackage,
+		"BALNANA_PLAY_SERVICE_ACCOUNT": string(serviceAccount),
+		"BALNANA_PLAY_PUSH_ACCOUNT":    playTestPusher,
+	})
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('play', 'plus_monthly', 'plus', 30)`)
+	ana := register(c, "ana@example.test", "Ana")
+	f.buy("token-1", "plus_monthly", "GPA.1", &[]string{playAccountID(ana.Id)}[0], nil)
+
+	if p := c.reportPlay("token-1"); !p.Paid {
+		t.Fatalf("after buying: %+v", p)
+	}
+	if got := f.acked(); len(got) != 1 || got[0] != "token-1" {
+		t.Fatalf("acknowledged %v", got)
+	}
+	// Signed for the address the public URL gives, by keys fetched from Google.
+	c.notify(f, "token-1", 200)
+	if got := c.push(f.sign(t, f.key, "https://elsewhere.test"+playPath, playTestPusher), map[string]any{}); got != 403 {
+		t.Fatalf("for another address: status %d", got)
+	}
 }

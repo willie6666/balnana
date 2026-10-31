@@ -114,11 +114,14 @@ class _Settings extends ConsumerWidget {
     )) {
       return;
     }
+    if (!context.mounted) return;
+    // The page can go during the request, and its ref with it.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       final updated = await groupApiOf(ref, group.token).resetLink();
-      ref.read(knownGroupsProvider.notifier).replaceToken(group.token, updated.token);
-      ref.invalidate(summariesProvider);
-      ref.invalidate(activityFeedProvider);
+      container.read(knownGroupsProvider.notifier).replaceToken(group.token, updated.token);
+      container.invalidate(summariesProvider);
+      container.invalidate(activityFeedProvider);
       if (!context.mounted) return;
       _snack(context, l10n.resetLinkDone);
       context.go('/g/${updated.token}');
@@ -210,10 +213,11 @@ class _Settings extends ConsumerWidget {
       action: l10n.leaveAction,
     );
     if (!ok || !context.mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await groupApiOf(ref, group.token).removeMember(me.id);
-      refreshGroup(ref, group.token);
-      ref.read(currentGroupProvider.notifier).set(null);
+      refreshGroupIn(container, group.token);
+      container.read(currentGroupProvider.notifier).set(null);
       if (context.mounted) context.go('/groups');
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
@@ -229,22 +233,23 @@ class _Settings extends ConsumerWidget {
       action: l10n.commonRemove,
     );
     if (!ok || !context.mounted) return;
-    _dropLocally(ref);
+    _dropLocally(ProviderScope.containerOf(context, listen: false));
     context.go('/groups');
   }
 
   /// Takes the group off this device's list and out of what shows it.
-  void _dropLocally(WidgetRef ref) {
-    ref.read(knownGroupsProvider.notifier).remove(group.token);
-    ref.invalidate(summariesProvider);
-    ref.invalidate(activityFeedProvider);
-    ref.read(currentGroupProvider.notifier).set(null);
+  void _dropLocally(ProviderContainer container) {
+    container.read(knownGroupsProvider.notifier).remove(group.token);
+    container.invalidate(summariesProvider);
+    container.invalidate(activityFeedProvider);
+    container.read(currentGroupProvider.notifier).set(null);
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final ok = await showDialog<bool>(context: context, builder: (_) => _DeleteGroupDialog(name: group.name));
     if (ok != true || !context.mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await groupApiOf(ref, group.token).delete();
     } on ApiException catch (e) {
@@ -252,7 +257,7 @@ class _Settings extends ConsumerWidget {
       _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
       return;
     }
-    _dropLocally(ref);
+    _dropLocally(container);
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     context.go('/groups');
@@ -590,6 +595,7 @@ class _DeleteGroupDialogState extends State<_DeleteGroupDialog> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
+      scrollable: true,
       icon: const Icon(Icons.delete_forever_outlined),
       title: Text(l10n.groupDeleteTitle(widget.name)),
       content: Column(

@@ -290,7 +290,7 @@ func TestDeleteAccountWaitsForJoin(t *testing.T) {
 		}
 	}
 	// What JoinGroup does, on the group it holds.
-	if err := join(ctx, tx, &group{id: id}, &user{id: bu.Id, name: "Ben"}, &JoinInput{ClaimMemberId: &g.Members[1].Id}); err != nil {
+	if err := (&Server{}).join(ctx, tx, &group{id: id}, &user{id: bu.Id, name: "Ben"}, &JoinInput{ClaimMemberId: &g.Members[1].Id}); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Commit(ctx); err != nil {

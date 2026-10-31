@@ -1846,6 +1846,18 @@ abstract class AppLocalizations {
   /// **'Someone else changed this expense. Reloading shows their version and drops your changes here.'**
   String get expenseChangedElsewhere;
 
+  /// Title of the read-only page for an expense made by a newer version of the app, which this version cannot edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with a newer version'**
+  String get expenseNewerTitle;
+
+  /// Body of the read-only page for an expense made by a newer version of the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Balnana to change this entry.'**
+  String get expenseNewerBody;
+
   /// Label or control text for suggested payments in the application interface.
   ///
   /// In en, this message translates to:
@@ -3991,7 +4003,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy delete body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.'**
+  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.'**
   String get privacyDeleteBody;
 
   /// Label or control text for privacy operator policy in the built-in privacy notice.
@@ -4624,6 +4636,12 @@ abstract class AppLocalizations {
   /// **'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.'**
   String get repeatHelp;
 
+  /// Label for a repeat schedule this version of the app does not recognise.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom schedule'**
+  String get repeatCustom;
+
   /// Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it.
   ///
   /// In en, this message translates to:
@@ -5056,6 +5074,18 @@ abstract class AppLocalizations {
   /// **'For every account without another plan.'**
   String get adminPlanDefaultHelp;
 
+  /// Title of the confirmation before an administrator removes a plan or a product.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String adminPlanRemoveTitle(String name);
+
+  /// Body of the confirmation before removing a plan. {products} is a comma-separated list of product names.
+  ///
+  /// In en, this message translates to:
+  /// **'Its products go with it and can no longer be bought: {products}'**
+  String adminPlanRemoveBody(String products);
+
   /// Label or control text for admin entitlement granted in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -5097,6 +5127,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Revoke'**
   String get adminEntitlementRevoke;
+
+  /// Title of the confirmation before an administrator revokes a plan a user holds.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke {plan}?'**
+  String adminEntitlementRevokeTitle(String plan);
+
+  /// Body of the confirmation before revoking a plan. {user} is the name of the user.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} loses this plan right away. This can\'t be undone.'**
+  String adminEntitlementRevokeBody(String user);
 
   /// Label or control text for admin entitlement note in the server administrator interface.
   ///
@@ -5428,6 +5470,24 @@ abstract class AppLocalizations {
   /// **'Your payment is still being processed. The plan starts once it goes through.'**
   String get planPlayPending;
 
+  /// Shown on the plan page when the Google Play subscription payment failed and is on hold.
+  ///
+  /// In en, this message translates to:
+  /// **'Your last payment failed. Update your payment method on Google Play to keep this plan.'**
+  String get planPlayOnHold;
+
+  /// Error when this Google Play account already holds a subscription that may belong to a different Balnana account.
+  ///
+  /// In en, this message translates to:
+  /// **'This Google Play account already has a subscription, which may belong to another Balnana account.'**
+  String get planPlayHeldElsewhere;
+
+  /// Error when the app could not reach Google Play billing.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Google Play. Try again later.'**
+  String get planPlayUnavailable;
+
   /// Label or control text for error invalid purchase in an error message.
   ///
   /// In en, this message translates to:
@@ -5505,6 +5565,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'As written in Play Console. Google Play says when each payment ends, so there are no days to set.'**
   String get adminProductPlayIdHelp;
+
+  /// Body of the confirmation before an administrator removes a product.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments for it stop being applied to accounts. Plans already held stay until they end.'**
+  String get adminProductRemoveBody;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

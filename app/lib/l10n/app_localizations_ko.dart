@@ -932,6 +932,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get expenseChangedElsewhere => '다른 사람이 이 지출을 변경했어요. 새로고침하면 상대방의 변경 내용이 적용되고 여기서 수정한 내용은 사라져요.';
 
   @override
+  String get expenseNewerTitle => '최신 버전에서 만들어졌어요';
+
+  @override
+  String get expenseNewerBody => '이 항목을 변경하려면 Balnana를 업데이트해 주세요.';
+
+  @override
   String get suggestedPayments => '추천 송금';
 
   @override
@@ -2156,7 +2162,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '설정에서 계정을 삭제할 수 있어요. 그룹의 잔액 계산이 맞도록 내 이름은 미확인 멤버로 남고, 다른 사람이 접근할 수 없는 그룹은 함께 삭제돼요. 그룹 소유자는 그룹 설정에서 그룹 전체를 삭제할 수 있어요. 그 외 문의는 서버 운영자에게 해 주세요.';
+      '설정에서 계정을 삭제할 수 있어요. 그룹의 잔액 계산이 맞도록 내 이름은 미확인 멤버로 남고, 다른 사람이 접근할 수 없는 그룹은 함께 삭제돼요. 그룹 소유자는 그룹 설정에서 그룹 전체를 삭제할 수 있어요. 삭제한 그룹과 삭제한 지출의 사진은 30일 후 완전히 지워져요. 그 외 문의는 서버 운영자에게 해 주세요.';
 
   @override
   String get privacyOperatorPolicy => '운영자의 개인정보 처리방침';
@@ -2544,6 +2550,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repeatHelp => '위 날짜부터 설정한 날짜마다 그룹에 자동으로 추가돼요. 지난 날짜의 지출도 저장하면 추가돼요.';
 
   @override
+  String get repeatCustom => '맞춤 일정';
+
+  @override
   String get repeatDropReceiptTitle => '영수증을 삭제할까요?';
 
   @override
@@ -2792,6 +2801,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminPlanDefaultHelp => '다른 요금제가 없는 모든 계정에 적용돼요.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name을(를) 제거할까요?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '연결된 상품도 함께 제거되어 더 이상 구매할 수 없어요: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => '관리자가 제공';
 
   @override
@@ -2815,6 +2834,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => '취소';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan을(를) 철회할까요?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user님은 이 요금제를 바로 잃게 돼요. 되돌릴 수 없어요.';
+  }
 
   @override
   String get adminEntitlementNote => '메모';
@@ -3006,6 +3035,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planPlayPending => '결제를 처리 중입니다. 완료되면 요금제가 시작됩니다.';
 
   @override
+  String get planPlayOnHold => '마지막 결제에 실패했어요. 이 요금제를 유지하려면 Google Play에서 결제 수단을 업데이트해 주세요.';
+
+  @override
+  String get planPlayHeldElsewhere => '이 Google Play 계정에는 이미 구독이 있어요. 다른 Balnana 계정의 구독일 수 있어요.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play에 연결할 수 없어요. 나중에 다시 시도해 주세요.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play에서 이 구매를 확인할 수 없습니다.';
 
   @override
@@ -3047,4 +3085,7 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Play Console에 적힌 그대로 입력하세요. 각 결제의 종료일은 Google Play가 정하므로 일수는 설정하지 않습니다.';
+
+  @override
+  String get adminProductRemoveBody => '이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요.';
 }

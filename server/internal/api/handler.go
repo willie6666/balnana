@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"mime"
 	"net/http"
@@ -55,7 +56,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	var h http.Handler = mux
 	h = s.sessions(h)
 	h = checkBodies(h)
-	h = rateLimit(s.conf().RateLimit, s.conf().TrustProxy, h)
+	h = rateLimit(s.conf().RateLimit, s.conf().ProxyHeader, h)
 	h = cors(s.conf().CORSOrigins, h)
 	h = securityHeaders(h)
 	h = recoverer(s.log, h)
@@ -69,6 +70,26 @@ const (
 	maxImportBody  = 16 << 20
 	maxReceiptBody = 10 << 20
 )
+
+// bodyReadTime is how long a request may take to send its body. The server
+// has no overall read timeout, as event streams stay open.
+var bodyReadTime = 30 * time.Second
+
+// deadlineBody lifts the read deadline once the body is in. The server goes
+// on reading to notice a client leaving, and a deadline passing there would
+// cancel a request still being worked on.
+type deadlineBody struct {
+	io.ReadCloser
+	rc *http.ResponseController
+}
+
+func (b deadlineBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	if err == io.EOF {
+		_ = b.rc.SetReadDeadline(time.Time{})
+	}
+	return n, err
+}
 
 // checkBodies limits the size of request bodies and, for the API, wants them
 // to be JSON, or an image for a receipt: a page on another site can post a
@@ -99,9 +120,14 @@ func checkBodies(next http.Handler) http.Handler {
 			return
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		rc := http.NewResponseController(w)
+		if !safeMethod(r.Method) && r.ContentLength != 0 {
+			_ = rc.SetReadDeadline(time.Now().Add(bodyReadTime))
+			r.Body = deadlineBody{r.Body, rc}
+		}
 		if receipt {
-			// PutReceipt sets a deadline on the photo once its turn comes.
-			r = r.WithContext(context.WithValue(r.Context(), receiptConnKey{}, http.NewResponseController(w)))
+			// PutReceipt gives the photo longer, once its turn comes.
+			r = r.WithContext(context.WithValue(r.Context(), receiptConnKey{}, rc))
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -144,7 +170,7 @@ func cors(origins []string, next http.Handler) http.Handler {
 		h.Set("Access-Control-Expose-Headers", "Retry-After, Content-Disposition")
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
-			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Balnana-Member, X-Balnana-Admin")
+			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key, X-Balnana-Member, X-Balnana-Admin")
 			h.Set("Access-Control-Max-Age", "600")
 			w.WriteHeader(http.StatusNoContent)
 			return

@@ -237,6 +237,7 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.forgotPasswordTitle),
       content: Form(
         key: _form,

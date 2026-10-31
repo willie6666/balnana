@@ -182,18 +182,31 @@ func playAccountID(userID string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// playOwner finds whose purchase this is: the account of the token or of the
-// one it follows, or else the account the app named when buying it.
+// playOwner finds whose purchase this is: the account already on record for
+// the token, or else the one the app named when buying it, then the account of
+// the purchase it follows, then the one named on that. Two accounts can share
+// a Google account, so what follows one account's purchase can be the other's.
 func playOwner(ctx context.Context, q querier, token string, sub *playSubscription) (*string, error) {
 	var owner *string
-	err := q.QueryRow(ctx, `select user_id::text from play_subscriptions where purchase_token = any($1) limit 1`,
-		[]string{token, sub.LinkedToken, sub.OutOfApp.ExpiredToken}).Scan(&owner)
+	err := q.QueryRow(ctx, `select user_id::text from play_subscriptions where purchase_token = $1`, token).Scan(&owner)
 	if err == nil || !errors.Is(err, pgx.ErrNoRows) {
 		return owner, err
 	}
-	err = q.QueryRow(ctx, `
-		select id::text from users where encode(sha256(convert_to(id::text, 'UTF8')), 'hex') = any($1) limit 1`,
-		[]string{sub.Account.Obfuscated, sub.OutOfApp.Account.Obfuscated}).Scan(&owner)
+	if owner, err = playAccountOwner(ctx, q, sub.Account.Obfuscated); owner != nil || err != nil {
+		return owner, err
+	}
+	err = q.QueryRow(ctx, `select user_id::text from play_subscriptions where purchase_token = any($1) limit 1`,
+		[]string{sub.LinkedToken, sub.OutOfApp.ExpiredToken}).Scan(&owner)
+	if err == nil || !errors.Is(err, pgx.ErrNoRows) {
+		return owner, err
+	}
+	return playAccountOwner(ctx, q, sub.OutOfApp.Account.Obfuscated)
+}
+
+// playAccountOwner is the account playAccountID gave id, if any.
+func playAccountOwner(ctx context.Context, q querier, id string) (*string, error) {
+	var owner *string
+	err := q.QueryRow(ctx, `select id::text from users where play_account_id = $1`, id).Scan(&owner)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -202,14 +215,18 @@ func playOwner(ctx context.Context, q querier, token string, sub *playSubscripti
 
 // syncPlay brings the account in line with what Google says of the purchase.
 // reporter is the account that says it bought it, if any: with no sign of
-// whose it is, the token shows it holds the purchase.
+// whose it is, the token shows it holds the purchase. Asking and applying go
+// under one lock per token, or an older answer could overwrite a newer one.
 func (s *Server) syncPlay(ctx context.Context, play *playClient, token string, reporter *string) error {
-	sub, err := play.subscription(ctx, token)
-	if err != nil {
-		return err
-	}
+	var sub *playSubscription
 	var keep bool
-	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, token); err != nil {
+			return err
+		}
+		if sub, err = play.subscription(ctx, token); err != nil {
+			return err
+		}
 		keep, err = applyPlay(ctx, tx, token, sub, reporter)
 		return err
 	})
@@ -283,9 +300,10 @@ func applyPlay(ctx context.Context, tx pgx.Tx, token string, sub *playSubscripti
 		}
 	}
 	_, err = tx.Exec(ctx, `
-		insert into play_subscriptions (purchase_token, user_id, product_id, entitlement_id) values ($1, $2, $3, $4)
-		on conflict (purchase_token) do update set product_id = excluded.product_id, entitlement_id = excluded.entitlement_id`,
-		token, *owner, line.ProductID, entitlement)
+		insert into play_subscriptions (purchase_token, user_id, product_id, entitlement_id, state) values ($1, $2, $3, $4, $5)
+		on conflict (purchase_token) do update
+		set product_id = excluded.product_id, entitlement_id = excluded.entitlement_id, state = excluded.state`,
+		token, *owner, line.ProductID, entitlement, sub.State)
 	if err != nil {
 		return false, err
 	}
@@ -335,11 +353,27 @@ func (s *Server) playOffer(ctx context.Context, q querier, userID string) (*Play
 	if subscribed == nil {
 		subscribed = []string{}
 	}
+	// Held back by Google, not ended: buying again could mean paying twice.
+	rows, err = q.Query(ctx, `
+		select distinct product_id from play_subscriptions
+		where user_id = $1 and state = any($2) order by product_id`,
+		userID, []string{"SUBSCRIPTION_STATE_ON_HOLD", "SUBSCRIPTION_STATE_PAUSED"})
+	if err != nil {
+		return nil, err
+	}
+	onHold, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	if onHold == nil {
+		onHold = []string{}
+	}
 	return &PlayBilling{
 		AccountId:   playAccountID(userID),
 		PackageName: play.packageName,
 		Products:    products,
 		Subscribed:  subscribed,
+		OnHold:      onHold,
 	}, nil
 }
 
@@ -427,6 +461,7 @@ func (s *Server) PlayWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	if !play.playPushed(r) {
 		noteMiss(r.Context())
+		s.warnRejected("play")
 		writeError(w, http.StatusForbidden, "invalid_token")
 		return
 	}

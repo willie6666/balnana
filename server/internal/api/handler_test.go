@@ -3,12 +3,15 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -212,5 +215,69 @@ func TestBodyLimits(t *testing.T) {
 	accounts := testHandler(t, baseConfig(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"}))
 	if code := send(accounts, strings.NewReader(big), http.Header{"Authorization": {"Bearer some-session"}}); code != http.StatusRequestEntityTooLarge {
 		t.Errorf("signed in: %d", code)
+	}
+}
+
+// sendPartly starts a request that says more body is coming than it sends.
+func sendPartly(t *testing.T, ts *httptest.Server) net.Conn {
+	t.Helper()
+	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.Close() })
+	_, err = fmt.Fprint(conn, "POST "+BasePath+"/groups HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\nContent-Length: 100\r\n\r\n{")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return conn
+}
+
+// A client that stops halfway through its body doesn't keep the connection.
+func TestSlowBodyIsCut(t *testing.T) {
+	old := bodyReadTime
+	bodyReadTime = 100 * time.Millisecond
+	t.Cleanup(func() { bodyReadTime = old })
+	read := make(chan error, 1)
+	ts := httptest.NewServer(checkBodies(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		_, err := io.ReadAll(r.Body)
+		read <- err
+	})))
+	defer ts.Close()
+	sendPartly(t, ts)
+	select {
+	case err := <-read:
+		if err == nil {
+			t.Fatal("read a body that never came")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("still waiting for the body")
+	}
+}
+
+// The limit is on sending the body, not on the work that follows it.
+func TestLongWorkOutlivesBodyDeadline(t *testing.T) {
+	old := bodyReadTime
+	bodyReadTime = 100 * time.Millisecond
+	t.Cleanup(func() { bodyReadTime = old })
+	ts := httptest.NewServer(checkBodies(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := io.ReadAll(r.Body); err != nil {
+			t.Error(err)
+		}
+		select {
+		case <-time.After(3 * bodyReadTime):
+			w.WriteHeader(http.StatusNoContent)
+		case <-r.Context().Done():
+			t.Error("cancelled by the deadline for the body")
+		}
+	})))
+	defer ts.Close()
+	res, err := http.Post(ts.URL+BasePath+"/groups", "application/json", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusNoContent {
+		t.Fatal(res.Status)
 	}
 }

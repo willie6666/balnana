@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,14 +52,25 @@ class GooglePlay {
   const GooglePlay();
 
   static const _channel = MethodChannel('balnana/play_billing');
+  static final _bought = StreamController<List<String>>.broadcast();
 
-  /// What of [products] can be bought here; none when Play can't be reached.
+  /// The tokens of purchases finished outside the app's purchase screen, such
+  /// as a pending payment that went through later.
+  Stream<List<String>> get bought {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'purchased') _bought.add([...(call.arguments as List<Object?>).whereType<String>()]);
+    });
+    return _bought.stream;
+  }
+
+  /// What of [products] can be bought here: none in a build without Play.
+  /// Throws [PlayException] when Play can't be reached.
   Future<List<PlayOffer>> offers(List<String> products) async {
     try {
       final found = await _channel.invokeListMethod<Map<Object?, Object?>>('products', {'products': products});
       return [...?found?.map(PlayOffer.fromMap)];
     } on PlatformException {
-      return const [];
+      throw const PlayException();
     } on MissingPluginException {
       return const [];
     }
@@ -80,12 +93,13 @@ class GooglePlay {
     }
   }
 
-  /// The tokens of the subscriptions this Play account holds.
+  /// The tokens of the subscriptions this Play account holds: none in a build
+  /// without Play. Throws [PlayException] when Play can't be reached.
   Future<List<String>> purchases() async {
     try {
       return await _channel.invokeListMethod<String>('purchases') ?? const [];
     } on PlatformException {
-      return const [];
+      throw const PlayException();
     } on MissingPluginException {
       return const [];
     }

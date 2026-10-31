@@ -1,6 +1,11 @@
 package config
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -306,5 +311,85 @@ func TestManagedForListsEachProvider(t *testing.T) {
 	}
 	if _, ok := ManagedSetting("BALNANA_OAUTH_OIDC_WORK_COLOR"); ok {
 		t.Fatal("an unknown provider field is managed")
+	}
+}
+
+func TestKofiNeedsBothSettings(t *testing.T) {
+	base := map[string]string{"BALNANA_DATABASE_URL": "postgres:///x"}
+	with := func(extra map[string]string) error {
+		env := maps.Clone(base)
+		maps.Copy(env, extra)
+		_, err := load(envMap(env))
+		return err
+	}
+	if err := with(map[string]string{"BALNANA_KOFI_URL": "https://ko-fi.com/x"}); err == nil || !strings.Contains(err.Error(), "BALNANA_KOFI_TOKEN") {
+		t.Fatalf("a page with no webhook: %v", err)
+	}
+	if err := with(map[string]string{"BALNANA_KOFI_TOKEN": "secret"}); err == nil || !strings.Contains(err.Error(), "BALNANA_KOFI_URL") {
+		t.Fatalf("a webhook with no page: %v", err)
+	}
+	if err := with(map[string]string{"BALNANA_KOFI_URL": "https://ko-fi.com/x", "BALNANA_KOFI_TOKEN": "secret"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPaymentsNeedAPublicAddress(t *testing.T) {
+	env := func(public string) map[string]string {
+		return map[string]string{
+			"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true",
+			"BALNANA_KOFI_URL": "https://ko-fi.com/x", "BALNANA_KOFI_TOKEN": "secret", "BALNANA_PUBLIC_URL": public,
+		}
+	}
+	for _, public := range []string{"http://localhost:8080/", "https://localhost/", "http://split.example.com/", "https://127.0.0.1/"} {
+		if _, err := load(envMap(env(public))); err == nil || !strings.Contains(err.Error(), "BALNANA_PUBLIC_URL") {
+			t.Fatalf("%s: %v", public, err)
+		}
+	}
+	if _, err := load(envMap(env("https://split.example.com/"))); err != nil {
+		t.Fatal(err)
+	}
+	// With no payments to take, billing can be tried out locally.
+	local := env("http://localhost:8080/")
+	delete(local, "BALNANA_KOFI_URL")
+	delete(local, "BALNANA_KOFI_TOKEN")
+	if _, err := load(envMap(local)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPlayKeyMustParse(t *testing.T) {
+	if validPrivateKey("-----BEGIN PRIVATE KEY-----\nnot a key\n-----END PRIVATE KEY-----\n") || validPrivateKey("not pem") {
+		t.Fatal("took a broken key")
+	}
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkcs8, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !validPrivateKey(string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8}))) {
+		t.Fatal("refused a PKCS#8 key")
+	}
+	if !validPrivateKey(string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}))) {
+		t.Fatal("refused a PKCS#1 key")
+	}
+}
+
+// A bad address is for LoadSettings to report: until then the server has to
+// start, to be able to.
+func TestStartupKeepsAnAddress(t *testing.T) {
+	t.Setenv("BALNANA_DATABASE_URL", "postgres:///x")
+	t.Setenv("BALNANA_PUBLIC_URL", "://nope")
+	c, err := Startup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.PublicURL == nil {
+		t.Fatal("no address")
+	}
+	if _, err := Load(); err == nil {
+		t.Fatal("the address was not checked")
 	}
 }

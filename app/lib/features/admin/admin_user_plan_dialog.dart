@@ -91,6 +91,23 @@ class _AdminUserPlanDialogState extends State<AdminUserPlanDialog> {
     });
   }
 
+  /// Revoked for good: nothing here brings it back.
+  Future<void> _revoke(Entitlement e) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.adminEntitlementRevokeTitle(e.planName)),
+        content: Text(l10n.adminEntitlementRevokeBody(widget.user.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.adminEntitlementRevoke)),
+        ],
+      ),
+    );
+    if (ok == true && mounted) await _do(() => widget.api.revokeEntitlement(widget.token, e.id));
+  }
+
   String _describe(AppLocalizations l10n, DateFormat date, Entitlement e, DateTime now) {
     final source = e.source == 'admin' ? l10n.adminEntitlementGranted : providerName(e.source);
     return [
@@ -139,7 +156,7 @@ class _AdminUserPlanDialogState extends State<AdminUserPlanDialog> {
                             icon: const Icon(Icons.block),
                             onPressed: _busy
                                 ? null
-                                : () => _do(() => widget.api.revokeEntitlement(widget.token, e.id)),
+                                : () => _revoke(e),
                           )
                         : null,
                   ),

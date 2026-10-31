@@ -93,19 +93,22 @@ String formatAmount(BigInt minor, int digits) {
 /// symbol. The digits are produced from the integer, never through a double.
 String formatAmountLocalized(BigInt minor, int digits, String locale) {
   final symbols = NumberFormat.decimalPattern(locale).symbols;
+  // The digits stay Latin, so separators meant for native digits don't fit.
+  final latin = symbols.ZERO_DIGIT == '0';
   final plain = formatAmount(minor.abs(), digits);
   final dot = plain.indexOf('.');
   final whole = dot < 0 ? plain : plain.substring(0, dot);
   final grouped = StringBuffer();
   for (var i = 0; i < whole.length; i++) {
-    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write(symbols.GROUP_SEP);
+    if (i > 0 && (whole.length - i) % 3 == 0) grouped.write(latin ? symbols.GROUP_SEP : ',');
     grouped.write(whole[i]);
   }
-  final frac = dot < 0 ? '' : '${symbols.DECIMAL_SEP}${plain.substring(dot + 1)}';
+  final frac = dot < 0 ? '' : '${latin ? symbols.DECIMAL_SEP : '.'}${plain.substring(dot + 1)}';
   return '${minor.isNegative ? symbols.MINUS_SIGN : ''}$grouped$frac';
 }
 
-enum SplitMethod { equal, exact, shares }
+/// [unknown] is one a newer server sent: never split here.
+enum SplitMethod { equal, exact, shares, unknown }
 
 /// One participant of a split. [value] is ignored for equal splits; otherwise
 /// it is a decimal string: an amount (exact) or a weight (shares). Weights
@@ -158,6 +161,9 @@ Map<String, BigInt> split(BigInt total, int digits, SplitMethod method, List<Spl
       final sum = weights.fold(BigInt.zero, (a, b) => a + b);
       if (sum == BigInt.zero) throw const MoneyException(MoneyError.noShares);
       return _weighted(total, parts, weights);
+
+    case SplitMethod.unknown:
+      throw const MoneyException(MoneyError.invalidShare);
   }
 }
 

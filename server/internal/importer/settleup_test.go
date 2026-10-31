@@ -2,6 +2,7 @@ package importer
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf16"
@@ -84,5 +85,25 @@ func TestSettleUpErrors(t *testing.T) {
 		if !errors.As(err, &e) || e.Line != tc.line || e.Problem != tc.problem {
 			t.Errorf("%s: got %v, want line %d %s", tc.name, err, tc.line, tc.problem)
 		}
+	}
+}
+
+func TestNameLimits(t *testing.T) {
+	row := func(names int) string {
+		return `"Ana","1","USD","` + strings.Repeat("Ana;", names-1) + `Ana","` + strings.Repeat("0;", names-1) + `1","","","2026-01-02 10:00:00","","","","expense",""` + "\n"
+	}
+	if _, err := SettleUp(utf16LE(header + row(MaxRowParts))); err != nil {
+		t.Fatal(err)
+	}
+	var e *Error
+	if _, err := SettleUp(utf16LE(header + row(MaxRowParts+1))); !errors.As(err, &e) || e.Problem != ProblemCounts || e.Line != 2 {
+		t.Fatalf("one row: %v", err)
+	}
+	file := header
+	for range MaxParts/MaxRowParts + 1 {
+		file += row(MaxRowParts)
+	}
+	if _, err := SettleUp(utf16LE(file)); !errors.As(err, &e) || e.Problem != ProblemTooManyRows {
+		t.Fatalf("whole file: %v", err)
 	}
 }

@@ -14,6 +14,9 @@ import (
 	"balnana/internal/mail"
 )
 
+// mailRetry is how long a failed email waits for its second try.
+var mailRetry = 5 * time.Second
+
 const (
 	verifyLifetime = 48 * time.Hour
 	resetLifetime  = time.Hour
@@ -27,14 +30,28 @@ func (s *Server) sendMail(m mail.Message) {
 	if mailer == nil {
 		return
 	}
+	s.mailing.Add(1)
 	go func() {
+		defer s.mailing.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		if err := mailer.Send(ctx, m); err != nil {
+		err := mailer.Send(ctx, m)
+		if err != nil {
+			// Mail servers often turn away a first try for a moment.
+			select {
+			case <-time.After(mailRetry):
+				err = mailer.Send(ctx, m)
+			case <-ctx.Done():
+			}
+		}
+		if err != nil {
 			s.log.Warn("sending email failed", "err", err)
 		}
 	}()
 }
+
+// FinishMail waits for the emails still being sent.
+func (s *Server) FinishMail() { s.mailing.Wait() }
 
 func (s *Server) requireEmail() error {
 	if s.mailer() == nil {
@@ -164,13 +181,20 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 	if err := s.requireAccounts(); err != nil {
 		return nil, err
 	}
+	var notice *mail.Message
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		userID, _, pending, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
+		userID, verified, pending, err := useEmailToken(ctx, tx, req.Body.Token, "verify")
 		if err != nil {
 			return err
 		}
 		if !pending {
 			_, err = tx.Exec(ctx, `update users set email_verified = true where id = $1`, userID)
+			return err
+		}
+		var old *string
+		var name, next string
+		err = tx.QueryRow(ctx, `select email::text, display_name, pending_email::text from users where id = $1`, userID).Scan(&old, &name, &next)
+		if err != nil {
 			return err
 		}
 		// A new address takes the old one's place only now, once its owner
@@ -180,10 +204,21 @@ func (s *Server) VerifyEmail(ctx context.Context, req VerifyEmailRequestObject) 
 		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return conflict("email_taken")
 		}
-		return err
+		if err != nil {
+			return err
+		}
+		if old != nil && verified {
+			m := emailChangedMail(*old, name, next)
+			notice = &m
+		}
+		// The account may be changing hands: everything signed in signs in again.
+		return signOut(ctx, tx, userID, false)
 	})
 	if err != nil {
 		return nil, err
+	}
+	if notice != nil {
+		s.sendMail(*notice)
 	}
 	return VerifyEmail204Response{}, nil
 }
@@ -198,6 +233,13 @@ func (s *Server) RequestPasswordReset(ctx context.Context, req RequestPasswordRe
 	email, err := cleanEmail(req.Body.Email)
 	if err != nil {
 		return nil, err
+	}
+	if err := s.limitResets(ctx); err != nil {
+		return nil, err
+	}
+	// Nothing tells the sender: the answer must not show who has an account.
+	if !s.mayMailReset(ctx, email) {
+		return RequestPasswordReset204Response{}, nil
 	}
 	var name, token string
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -236,13 +278,14 @@ func (s *Server) ResetPassword(ctx context.Context, req ResetPasswordRequestObje
 		if err != nil {
 			return err
 		}
-		// The email reached its owner, so the address is verified too.
-		// Taken back, the account's maker no longer changes its address either.
+		// The email reached its owner, so the address is verified too. Whoever
+		// had the old password no longer changes the address either.
 		_, err = tx.Exec(ctx, `
-			update users set password_hash = $2, email_verified = true,
-			                 pending_email = case when email_verified then pending_email end
-			where id = $1`, userID, hash)
+			update users set password_hash = $2, email_verified = true, pending_email = null where id = $1`, userID, hash)
 		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `delete from email_tokens where user_id = $1`, userID); err != nil {
 			return err
 		}
 		// Unverified, the account may have been made by someone else with
@@ -395,6 +438,32 @@ Confirm that this is your email address by opening this link:
 
 The link works for 48 hours. If you didn't create a Balnana account, you can ignore this email.
 `, name, link),
+	}
+}
+
+func emailChangingMail(to, name, next string) mail.Message {
+	return mail.Message{
+		To:      to,
+		Subject: "Your Balnana email is about to change",
+		Body: fmt.Sprintf(`Hi %s,
+
+Someone asked to change the email of your Balnana account to %s. It changes once the link sent there is opened.
+
+If it wasn't you, change your password now: that cancels the change.
+`, name, next),
+	}
+}
+
+func emailChangedMail(to, name, next string) mail.Message {
+	return mail.Message{
+		To:      to,
+		Subject: "Your Balnana email has changed",
+		Body: fmt.Sprintf(`Hi %s,
+
+The email of your Balnana account is now %s, and every device was signed out. This address no longer signs in to the account.
+
+If it wasn't you, contact the administrator of this server.
+`, name, next),
 	}
 }
 

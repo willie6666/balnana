@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable, ProviderOrFamily;
 
@@ -267,10 +269,26 @@ class ExpensesNotifier extends AsyncNotifier<ExpenseList> {
     _build++;
     _who = ref.watch(identityProvider);
     final filter = ref.watch(expenseFilterProvider(token));
+    final before = state.value;
     final group = await ref.watch(groupProvider(token).future);
     _digits = group.minorDigits;
-    final page = await groupApi(ref, token).expenses(_digits, filter: filter);
-    return _mark(_who, ExpenseList(page.items, page.nextCursor, filter: filter));
+    final api = groupApi(ref, token);
+    final page = await api.expenses(_digits, filter: filter);
+    final items = page.items.toList();
+    var next = page.nextCursor;
+    // Every live change lands here: what was scrolled to stays. The first
+    // page is asked for as always, so it can still come from the offline cache.
+    final keep = before != null && mapEquals(before.filter.query, filter.query) ? before.items.length : 0;
+    try {
+      while (next != null && items.length < keep) {
+        final more = await api.expenses(_digits, cursor: next, limit: min(keep - items.length, 200), filter: filter);
+        items.addAll(more.items);
+        next = more.nextCursor;
+      }
+    } on ApiException {
+      // Scrolling asks for the rest again.
+    }
+    return _mark(_who, ExpenseList(items, next, filter: filter));
   }
 
   /// Loads the next page, unless the last try failed and this is no [retry].

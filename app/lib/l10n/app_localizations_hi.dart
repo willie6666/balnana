@@ -960,6 +960,12 @@ class AppLocalizationsHi extends AppLocalizations {
       'किसी और ने यह खर्च बदल दिया। फिर से लोड करने पर उनके बदलाव दिखेंगे और आपके बदलाव हट जाएँगे।';
 
   @override
+  String get expenseNewerTitle => 'नए संस्करण से बनाया गया';
+
+  @override
+  String get expenseNewerBody => 'इस प्रविष्टि को बदलने के लिए Balnana अपडेट करें।';
+
+  @override
   String get suggestedPayments => 'सुझाए गए भुगतान';
 
   @override
@@ -2231,7 +2237,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'आप सेटिंग में अपना खाता मिटा सकते हैं। आपके समूहों में आपका नाम ऐसे सदस्य के रूप में बना रहेगा जिसका दावा किसी ने नहीं किया, ताकि बैलेंस का जोड़ सही रहे। जिन समूहों तक कोई और नहीं पहुँच सकता, वे भी मिट जाएँगे। समूह का मालिक उसकी सेटिंग में पूरा समूह मिटा सकता है। बाकी किसी बात के लिए सर्वर ऑपरेटर से संपर्क करें।';
+      'आप सेटिंग में अपना खाता मिटा सकते हैं। आपके समूहों में आपका नाम ऐसे सदस्य के रूप में बना रहेगा जिसका दावा किसी ने नहीं किया, ताकि बैलेंस का जोड़ सही रहे। जिन समूहों तक कोई और नहीं पहुँच सकता, वे भी मिट जाएँगे। समूह का मालिक उसकी सेटिंग में पूरा समूह मिटा सकता है। मिटाए गए समूह और मिटाए गए खर्चों की तस्वीरें 30 दिनों के बाद हमेशा के लिए हटा दी जाती हैं। बाकी किसी बात के लिए सर्वर ऑपरेटर से संपर्क करें।';
 
   @override
   String get privacyOperatorPolicy => 'ऑपरेटर की गोपनीयता नीति';
@@ -2677,6 +2683,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'ऊपर दी गई तारीख से शुरू करके, हर तारीख पर खर्च अपने आप समूह में जुड़ जाएगा। पिछली तारीखों के खर्च सेव करते समय जुड़ेंगे।';
 
   @override
+  String get repeatCustom => 'कस्टम शेड्यूल';
+
+  @override
   String get repeatDropReceiptTitle => 'रसीद हटाएँ?';
 
   @override
@@ -2934,6 +2943,16 @@ class AppLocalizationsHi extends AppLocalizations {
   String get adminPlanDefaultHelp => 'बिना किसी और प्लान वाले हर खाते के लिए।';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name हटाएँ?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'इसके उत्पाद भी साथ में हट जाएँगे और फिर खरीदे नहीं जा सकेंगे: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'व्यवस्थापक ने दिया';
 
   @override
@@ -2957,6 +2976,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'वापस लें';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan वापस लें?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user यह प्लान तुरंत खो देंगे। इसे पूर्ववत नहीं किया जा सकता।';
+  }
 
   @override
   String get adminEntitlementNote => 'नोट';
@@ -3162,6 +3191,17 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planPlayPending => 'आपका भुगतान अभी प्रोसेस हो रहा है। पूरा होने पर प्लान शुरू होगा।';
 
   @override
+  String get planPlayOnHold =>
+      'आपका पिछला भुगतान विफल रहा। यह प्लान बनाए रखने के लिए Google Play पर अपना भुगतान तरीका अपडेट करें।';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'इस Google Play खाते में पहले से एक सदस्यता है, जो शायद किसी दूसरे Balnana खाते की हो।';
+
+  @override
+  String get planPlayUnavailable => 'Google Play से कनेक्ट नहीं हो सका। बाद में फिर कोशिश करें।';
+
+  @override
   String get errorInvalidPurchase => 'Google Play इस खरीदारी को नहीं पहचानता।';
 
   @override
@@ -3206,4 +3246,8 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'जैसा Play Console में लिखा है। हर भुगतान कब खत्म होगा यह Google Play बताता है, इसलिए दिन सेट नहीं करने होते।';
+
+  @override
+  String get adminProductRemoveBody =>
+      'इसके भुगतान अब खातों पर लागू नहीं होंगे। पहले से चल रहे प्लान खत्म होने तक बने रहेंगे।';
 }

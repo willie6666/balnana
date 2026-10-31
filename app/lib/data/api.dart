@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,18 @@ import '../core/server.dart';
 import '../core/session.dart';
 import 'models.dart';
 import 'providers.dart';
+
+/// A random UUID (v4) for the Idempotency-Key header: the server keeps one
+/// expense per key, so a request whose answer was lost can be sent again.
+String newClientKey() {
+  final random = Random.secure();
+  final bytes = [for (var i = 0; i < 16; i++) random.nextInt(256)];
+  bytes[6] = bytes[6] & 0x0f | 0x40;
+  bytes[8] = bytes[8] & 0x3f | 0x80;
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-'
+      '${hex.substring(16, 20)}-${hex.substring(20)}';
+}
 
 /// A failed request. [code] is the server's error code (see api/openapi.yaml),
 /// or [network] when no answer came back.
@@ -447,6 +460,7 @@ class GroupApi {
   Dio get _dio => _api._dio;
   String get _base => '/g/${Uri.encodeComponent(token)}';
   Options get _as => Options(headers: {'X-Balnana-Member': ?memberId});
+  Options _once(String? key) => Options(headers: {'X-Balnana-Member': ?memberId, 'Idempotency-Key': ?key});
 
   Future<T> _send<T>(Future<Response<Object?>> Function() request, T Function(Object? data) parse) =>
       _api._send(request, parse);
@@ -554,8 +568,9 @@ class GroupApi {
   Future<Expense> expense(String id, int digits) =>
       _send(() => _dio.get<Object?>('$_base/expenses/$id'), (data) => Expense.fromJson(data, digits));
 
-  Future<Expense> createExpense(ExpenseDraft draft, int digits) => _send(
-    () => _dio.post<Object?>('$_base/expenses', data: draft.toJson(digits), options: _as),
+  /// [key] makes sending it again safe: see [newClientKey].
+  Future<Expense> createExpense(ExpenseDraft draft, int digits, {String? key}) => _send(
+    () => _dio.post<Object?>('$_base/expenses', data: draft.toJson(digits), options: _once(key)),
     (data) => Expense.fromJson(data, digits),
   );
 
@@ -597,11 +612,11 @@ class GroupApi {
     (data) => Expense.fromJson(data, digits),
   );
 
-  Future<Expense> recordPayment(String from, String to, BigInt amount, int digits) => _send(
+  Future<Expense> recordPayment(String from, String to, BigInt amount, int digits, {String? key}) => _send(
     () => _dio.post<Object?>(
       '$_base/payments',
       data: {'fromMemberId': from, 'toMemberId': to, 'amount': formatAmount(amount, digits)},
-      options: _as,
+      options: _once(key),
     ),
     (data) => Expense.fromJson(data, digits),
   );
@@ -619,10 +634,10 @@ class GroupApi {
 
   /// Occurrences already due are added at once. Without a time zone, the
   /// schedule follows this device's.
-  Future<RecurringExpense> createRecurring(RecurringDraft draft, int digits) => _inZone(
+  Future<RecurringExpense> createRecurring(RecurringDraft draft, int digits, {String? key}) => _inZone(
     draft,
     (json) => _send(
-      () => _dio.post<Object?>('$_base/recurring', data: json(digits), options: _as),
+      () => _dio.post<Object?>('$_base/recurring', data: json(digits), options: _once(key)),
       (data) => RecurringExpense.fromJson(data, digits),
     ),
   );

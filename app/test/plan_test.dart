@@ -9,6 +9,7 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/settings/plan_page.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
+import 'package:balnana/ui/widgets/play_purchases.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,20 +31,24 @@ const _offer = PlayOffer(productId: 'plus_monthly', offerToken: 'offer', name: '
 const _play = PlayBilling(accountId: 'hash', packageName: 'me.devvillie.balnana', products: ['plus_monthly']);
 
 class _FakePlay extends GooglePlay {
-  _FakePlay({this.held = const [], this.bought = const [], this.owned = false, this.paying});
+  _FakePlay({this.held = const [], this.tokens = const [], this.owned = false, this.paying, this.unreachable = false});
 
   final List<String> held;
-  final List<String> bought;
+  final List<String> tokens;
   final bool owned;
+
+  /// Play can't be reached, until this is turned off.
+  bool unreachable;
 
   /// Holds a purchase in Play's own sheet until it completes.
   final Completer<void>? paying;
   String? boughtFor;
 
   @override
-  Future<List<PlayOffer>> offers(List<String> products) async => [
-    if (products.contains(_offer.productId)) _offer,
-  ];
+  Future<List<PlayOffer>> offers(List<String> products) async {
+    if (unreachable) throw const PlayException();
+    return [if (products.contains(_offer.productId)) _offer];
+  }
 
   @override
   Future<List<String>> purchases() async => held;
@@ -53,7 +58,7 @@ class _FakePlay extends GooglePlay {
     if (owned) throw const PlayException(owned: true);
     boughtFor = account;
     await paying?.future;
-    return bought;
+    return tokens;
   }
 }
 
@@ -65,6 +70,9 @@ class _FakeApi extends BalnanaApi {
   /// Holds a claim on its way to the server until it completes.
   final Completer<void>? claiming;
   final reported = <String>[];
+
+  /// Tokens the server turns down, for all others to go through.
+  final refused = <String>{};
   final claimed = <String>[];
 
   @override
@@ -78,6 +86,7 @@ class _FakeApi extends BalnanaApi {
   @override
   Future<MyPlan> reportPlayPurchase(String token) async {
     reported.add(token);
+    if (refused.contains(token)) throw const ApiException('play_other_account');
     if (failure case final failure?) throw failure;
     return _plan;
   }
@@ -353,7 +362,7 @@ void main() {
     });
 
     testWidgets('buying reports the purchase under the account it was made for', (tester) async {
-      final store = _FakePlay(bought: ['token']);
+      final store = _FakePlay(tokens: ['token']);
       final api = _FakeApi();
       await _pump(tester, withPlay(_play), store: store, api: api);
 
@@ -367,7 +376,7 @@ void main() {
     testWidgets('a purchase is reported after the page has closed', (tester) async {
       final paying = Completer<void>();
       final api = _FakeApi();
-      await _pump(tester, withPlay(_play), store: _FakePlay(bought: ['token'], paying: paying), api: api);
+      await _pump(tester, withPlay(_play), store: _FakePlay(tokens: ['token'], paying: paying), api: api);
 
       await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
       await tester.pump();
@@ -423,6 +432,41 @@ void main() {
 
       expect(find.text(l10n.planPlayManage), findsOneWidget);
       expect(find.text(l10n.planGet), findsNothing);
+    });
+
+    testWidgets('a subscription that stopped being charged says how to fix it', (tester) async {
+      const play = PlayBilling(
+        accountId: 'hash',
+        packageName: 'me.devvillie.balnana',
+        products: ['plus_monthly'],
+        onHold: ['plus_monthly'],
+      );
+      await _pump(tester, withPlay(play), store: _FakePlay());
+
+      expect(find.text(l10n.planPlayOnHold), findsOneWidget);
+      expect(find.text(l10n.planPlayManage), findsOneWidget);
+      expect(find.text(l10n.planGet), findsNothing);
+    });
+
+    testWidgets('Play out of reach can be tried again', (tester) async {
+      final store = _FakePlay(unreachable: true);
+      await _pump(tester, withPlay(_play), store: store, api: _FakeApi());
+      expect(find.text(l10n.planPlayUnavailable), findsOneWidget);
+
+      store.unreachable = false;
+      await tester.tap(find.text(l10n.planPlayUnavailable));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.planPlayUnavailable), findsNothing);
+      expect(find.text(l10n.planPlayPrice(3, r'$3')), findsOneWidget);
+    });
+
+    test('one purchase the server refuses does not stop the rest', () async {
+      final api = _FakeApi()..refused.add('theirs');
+      expect(await reportPlayPurchases(api, ['theirs', 'mine']), isTrue);
+      expect(api.reported, ['theirs', 'mine']);
+
+      api.refused.add('mine');
+      await expectLater(reportPlayPurchases(api, ['theirs', 'mine']), throwsA(isA<ApiException>()));
     });
 
     testWidgets('a server without it asks nothing of Play', (tester) async {

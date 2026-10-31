@@ -44,7 +44,7 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 }
 
 // groupSponsor finds who sponsors the group: their account and member, while
-// they are still in it. Leaving it ends the sponsorship without a word.
+// they are still in it.
 func groupSponsor(ctx context.Context, q querier, g *group) (userID, memberID *string, err error) {
 	err = q.QueryRow(ctx, `
 		select m.user_id::text, m.id::text from groups g
@@ -83,7 +83,7 @@ func planLimit(limit string, max int) error {
 func countReceipts(ctx context.Context, q querier, groupID string) (n int, err error) {
 	err = q.QueryRow(ctx, `
 		select count(*) from receipts r join expenses e on e.id = r.expense_id
-		where e.group_id = $1 and e.deleted_at is null`, groupID).Scan(&n)
+		where e.group_id = $1`, groupID).Scan(&n)
 	return n, err
 }
 
@@ -115,12 +115,6 @@ func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, exp
 	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
 		return err
 	}
-	return s.checkReceiptRoom(ctx, q, g)
-}
-
-// checkReceiptRoom refuses one more counted photo: a new one, or that of a
-// deleted expense coming back. In a write it needs the group locked.
-func (s *Server) checkReceiptRoom(ctx context.Context, q querier, g *group) error {
 	if !s.conf().Billing {
 		return nil
 	}

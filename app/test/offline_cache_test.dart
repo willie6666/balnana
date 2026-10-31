@@ -24,6 +24,7 @@ class _Server implements HttpClientAdapter {
   var down = false;
   var status = 200;
   var calls = 0;
+  var plain = false;
   Future<void>? hold;
 
   @override
@@ -36,6 +37,15 @@ class _Server implements HttpClientAdapter {
     if (down) throw DioException.connectionError(requestOptions: options, reason: 'down');
     final who = options.headers['Authorization'];
     await hold;
+    if (plain) {
+      return ResponseBody.fromString(
+        '<html>',
+        status,
+        headers: {
+          'content-type': ['text/html'],
+        },
+      );
+    }
     return ResponseBody.fromString(
       jsonEncode(
         status == 401 ? {'code': 'sign_in_required'} : {'path': options.uri.path, 'call': calls, 'who': who},
@@ -191,6 +201,14 @@ void main() {
     );
     // Other groups keep theirs.
     await dio.get<Object?>('/g/other');
+  });
+
+  test('a page from a proxy is not saved as an answer', () async {
+    server.plain = true;
+    await dio.get<Object?>('/g/tok');
+    await saved();
+    server.down = true;
+    await expectLater(dio.get<Object?>('/g/tok'), throwsA(isA<DioException>()));
   });
 
   test('an error from the server is not covered up', () async {

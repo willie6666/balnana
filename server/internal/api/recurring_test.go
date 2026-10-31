@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"slices"
 	"sync"
 	"testing"
@@ -292,8 +293,9 @@ func TestRecurringResumeAfterFailure(t *testing.T) {
 	}
 	c.must(200, "PATCH", base+"/recurring/"+r.Id, RecurringPause{Paused: false}, &r)
 	got := recurringAdded(c, base, r.Id)
+	next := schedule{start: r.StartsAt.UTC(), loc: time.UTC, unit: Month, every: 1}.at(1)
 	if len(got) != 1 || !got[0].OccurredAt.Equal(r.StartsAt) || r.LastAt == nil || !r.LastAt.Equal(r.StartsAt) ||
-		r.NextAt == nil || !r.NextAt.Equal(r.StartsAt.AddDate(0, 1, 0)) {
+		r.NextAt == nil || !r.NextAt.Equal(next) {
 		t.Fatalf("resumed: %+v, added %+v", r, got)
 	}
 }
@@ -691,4 +693,90 @@ func TestRecurringValidation(t *testing.T) {
 		t.Fatalf("ended: %+v", r)
 	}
 	c.must(404, "GET", base+"/recurring/not-an-id", nil, nil)
+}
+
+// A backlog larger than a batch is added in one round, not one batch a minute.
+func TestRecurringCatchesUpInOneRound(t *testing.T) {
+	old := recurringBatch
+	recurringBatch = 2
+	t.Cleanup(func() { recurringBatch = old })
+	c, s, _ := adminClient(t, map[string]string{})
+	start := time.Now().UTC().Truncate(time.Second).Add(time.Hour)
+	g := createGroup(c, "Ana")
+	c.member = g.Members[0].Id
+	for range 5 {
+		c.must(201, "POST", "/g/"+g.Token+"/recurring", RecurringExpenseInput{
+			Title: "Bread", Amount: "2.00", StartsAt: start,
+			Payers:      []PayerInput{{MemberId: c.member, Amount: "2.00"}},
+			SplitMethod: "equal", Splits: []Share{{MemberId: c.member}},
+			Repeat: Repeat{Unit: Day, Every: 1},
+		}, nil)
+	}
+	if n, err := s.runRecurring(context.Background(), start.Add(time.Minute)); err != nil || n != 5 {
+		t.Fatalf("added %d, err %v", n, err)
+	}
+}
+
+// A request sent again after its answer got lost adds nothing.
+func TestCreateTwiceWithOneKey(t *testing.T) {
+	c := newClient(t)
+	g := createGroup(c, "Ana", "Ben")
+	other := createGroup(c, "Ana")
+	ana, ben := g.Members[0].Id, g.Members[1].Id
+	c.member = ana
+	base := "/g/" + g.Token
+	when := mustTime(t, "2026-01-01T00:00:00Z")
+	key := http.Header{"Idempotency-Key": {"7c0f8f8e-6d3f-4a43-9a3b-0d1f0a5c2b11"}}
+	expense := ExpenseInput{
+		Title: "Lunch", Amount: "1", OccurredAt: when, SplitMethod: "equal",
+		Payers: []PayerInput{{MemberId: ana, Amount: "1"}}, Splits: []Share{{MemberId: ana}},
+	}
+	payment := PaymentInput{FromMemberId: ana, ToMemberId: ben, Amount: "5", OccurredAt: &when}
+	repeating := RecurringExpenseInput{
+		Title: "Rent", Amount: "3.00", StartsAt: time.Now().Add(24 * time.Hour).UTC().Truncate(time.Second),
+		Payers:      []PayerInput{{MemberId: ana, Amount: "3.00"}},
+		SplitMethod: "equal", Splits: []Share{{MemberId: ana}},
+		Repeat: Repeat{Unit: Month, Every: 1},
+	}
+
+	c.header = key
+	var first, again Expense
+	c.must(201, "POST", base+"/expenses", expense, &first)
+	c.must(201, "POST", base+"/expenses", expense, &again)
+	if again.Id != first.Id {
+		t.Fatalf("expense added twice: %s, %s", first.Id, again.Id)
+	}
+	var r1, r2 RecurringExpense
+	c.must(201, "POST", base+"/recurring", repeating, &r1)
+	c.must(201, "POST", base+"/recurring", repeating, &r2)
+	if r2.Id != r1.Id {
+		t.Fatalf("recurring added twice: %s, %s", r1.Id, r2.Id)
+	}
+	// A payment is a new one under a key of its own.
+	c.header = http.Header{"Idempotency-Key": {"2b9d1f54-1c55-4d0e-8a6e-3c7f4d7f9a10"}}
+	var p1, p2 Expense
+	c.must(201, "POST", base+"/payments", payment, &p1)
+	c.must(201, "POST", base+"/payments", payment, &p2)
+	if p2.Id != p1.Id {
+		t.Fatalf("payment added twice: %s, %s", p1.Id, p2.Id)
+	}
+
+	// Keys are per group, and a request without one is always new.
+	c.header = key
+	c.member = other.Members[0].Id
+	var elsewhere Expense
+	c.must(201, "POST", "/g/"+other.Token+"/expenses", ExpenseInput{
+		Title: "Lunch", Amount: "1", OccurredAt: when, SplitMethod: "equal",
+		Payers: []PayerInput{{MemberId: c.member, Amount: "1"}}, Splits: []Share{{MemberId: c.member}},
+	}, &elsewhere)
+	if elsewhere.Id == first.Id {
+		t.Fatal("keys are per group")
+	}
+	c.header = nil
+	c.member = ana
+	var third Expense
+	c.must(201, "POST", base+"/expenses", expense, &third)
+	if third.Id == first.Id {
+		t.Fatal("no key, no repeat")
+	}
 }

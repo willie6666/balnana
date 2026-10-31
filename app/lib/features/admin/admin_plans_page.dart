@@ -86,8 +86,31 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     );
   }
 
+  Future<bool> _confirmRemove(String title, String? body) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: body == null ? null : Text(body),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.commonRemove)),
+        ],
+      ),
+    );
+    return ok == true && mounted;
+  }
+
   Future<void> _removePlan(Plan plan) async {
+    final l10n = context.l10n;
     final catalog = _catalog!;
+    final products = [
+      for (final p in catalog.products)
+        if (p.planId == plan.id) _productName(l10n, p),
+    ];
+    final body = products.isEmpty ? null : l10n.adminPlanRemoveBody(products.join(', '));
+    if (!await _confirmRemove(l10n.adminPlanRemoveTitle(plan.name), body)) return;
     await _save(
       PlanCatalog(
         plans: [...catalog.plans.where((p) => p.id != plan.id)],
@@ -114,9 +137,13 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     );
   }
 
-  Future<void> _removeProduct(PlanProduct product) {
+  Future<void> _removeProduct(PlanProduct product) async {
+    final l10n = context.l10n;
     final catalog = _catalog!;
-    return _save(
+    if (!await _confirmRemove(l10n.adminPlanRemoveTitle(_productName(l10n, product)), l10n.adminProductRemoveBody)) {
+      return;
+    }
+    await _save(
       PlanCatalog(plans: catalog.plans, products: [...catalog.products.where((p) => !identical(p, product))]),
     );
   }

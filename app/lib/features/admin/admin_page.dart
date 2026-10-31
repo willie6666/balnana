@@ -154,6 +154,10 @@ class _PasswordPageState extends ConsumerState<_PasswordPage> {
                 icon: const Icon(Icons.home_outlined),
                 onPressed: () => context.go('/'),
               ),
+        actions: [
+          if (setup && canChooseServer)
+            TextButton(onPressed: () => context.go('/settings/server'), child: Text(l10n.serverTitle)),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

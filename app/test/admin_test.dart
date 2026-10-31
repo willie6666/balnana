@@ -120,6 +120,18 @@ void main() {
     expect(seen.last.headers['X-Balnana-Admin'], 'admin-token');
   });
 
+  testWidgets('a new server can be left for another', (tester) async {
+    await _boot(
+      tester,
+      info: const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server, setupRequired: true),
+      api: _api([], (r) => (404, {'code': 'not_found'})),
+    );
+
+    await tester.tap(find.text('Server'));
+    await tester.pumpAndSettle();
+    expect(find.text('Set up this server'), findsNothing);
+  });
+
   testWidgets('an upgraded server also asks for the setup code', (tester) async {
     final seen = <RequestOptions>[];
     final api = _api(seen, (r) => (403, {'code': 'invalid_setup_code'}));

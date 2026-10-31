@@ -130,11 +130,17 @@ class PlayBilling(private val activity: Activity, messenger: BinaryMessenger) : 
         }
     }
 
-    // A purchase that didn't come from this screen has nobody waiting. The
-    // server hears of it from Google, or from the app on the plan page.
+    // A purchase that didn't come from the purchase screen, such as a pending
+    // one going through, has nobody waiting: the app is told on its own.
     override fun onPurchasesUpdated(billing: BillingResult, purchases: MutableList<Purchase>?) {
         activity.runOnUiThread {
-            val result = buying ?: return@runOnUiThread
+            val result = buying
+            if (result == null) {
+                if (billing.responseCode == BillingClient.BillingResponseCode.OK && !purchases.isNullOrEmpty()) {
+                    channel.invokeMethod("purchased", purchases.map { it.purchaseToken })
+                }
+                return@runOnUiThread
+            }
             buying = null
             when (billing.responseCode) {
                 BillingClient.BillingResponseCode.OK -> result.success(purchases.orEmpty().map { it.purchaseToken })

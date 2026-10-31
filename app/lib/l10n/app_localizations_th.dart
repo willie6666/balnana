@@ -947,6 +947,12 @@ class AppLocalizationsTh extends AppLocalizations {
       'มีคนอื่นแก้ไขค่าใช้จ่ายนี้ โหลดใหม่เพื่อดูฉบับของเขา และทิ้งการเปลี่ยนแปลงของคุณ';
 
   @override
+  String get expenseNewerTitle => 'สร้างด้วยเวอร์ชันที่ใหม่กว่า';
+
+  @override
+  String get expenseNewerBody => 'อัปเดต Balnana เพื่อแก้ไขรายการนี้';
+
+  @override
   String get suggestedPayments => 'แนะนำการชำระเงิน';
 
   @override
@@ -2202,7 +2208,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'คุณลบบัญชีได้ในการตั้งค่า จากนั้นชื่อของคุณจะยังอยู่ในกลุ่มในฐานะสมาชิกที่ยังไม่มีใครรับช่วง เพื่อให้ยอดคงเหลือยังรวมกันได้ และกลุ่มที่ไม่มีคนอื่นเข้าถึงจะถูกลบไปด้วย เจ้าของกลุ่มลบทั้งกลุ่มได้ในการตั้งค่ากลุ่ม หากต้องการทำอย่างอื่น โปรดติดต่อผู้ดูแลเซิร์ฟเวอร์';
+      'คุณลบบัญชีได้ในการตั้งค่า จากนั้นชื่อของคุณจะยังอยู่ในกลุ่มในฐานะสมาชิกที่ยังไม่มีใครรับช่วง เพื่อให้ยอดคงเหลือยังรวมกันได้ และกลุ่มที่ไม่มีคนอื่นเข้าถึงจะถูกลบไปด้วย เจ้าของกลุ่มลบทั้งกลุ่มได้ในการตั้งค่ากลุ่ม กลุ่มที่ลบและรูปถ่ายของค่าใช้จ่ายที่ลบจะถูกลบถาวรหลังจาก 30 วัน หากต้องการทำอย่างอื่น โปรดติดต่อผู้ดูแลเซิร์ฟเวอร์';
 
   @override
   String get privacyOperatorPolicy => 'นโยบายความเป็นส่วนตัวของผู้ดูแล';
@@ -2607,6 +2613,9 @@ class AppLocalizationsTh extends AppLocalizations {
       'เพิ่มเข้ากลุ่มโดยอัตโนมัติในแต่ละวันที่เริ่มจากวันที่ด้านบน รายการที่เลยกำหนดแล้วจะถูกเพิ่มเมื่อบันทึก';
 
   @override
+  String get repeatCustom => 'กำหนดการแบบกำหนดเอง';
+
+  @override
   String get repeatDropReceiptTitle => 'นำใบเสร็จออกไหม?';
 
   @override
@@ -2864,6 +2873,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPlanDefaultHelp => 'สำหรับทุกบัญชีที่ไม่มีแพ็กเกจอื่น';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'ลบ $name หรือไม่';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'ผลิตภัณฑ์ของแพ็กเกจนี้จะถูกลบไปด้วยและซื้อไม่ได้อีก: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'ผู้ดูแลเป็นผู้ให้';
 
   @override
@@ -2887,6 +2906,16 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'เพิกถอน';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'เพิกถอน $plan หรือไม่';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user จะเสียแพ็กเกจนี้ทันที และย้อนกลับไม่ได้';
+  }
 
   @override
   String get adminEntitlementNote => 'หมายเหตุ';
@@ -3086,6 +3115,17 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planPlayPending => 'กำลังดำเนินการชำระเงินของคุณ แพ็กเกจจะเริ่มเมื่อเสร็จสิ้น';
 
   @override
+  String get planPlayOnHold =>
+      'การชำระเงินครั้งล่าสุดไม่สำเร็จ โปรดอัปเดตวิธีการชำระเงินใน Google Play เพื่อใช้แพ็กเกจนี้ต่อ';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'บัญชี Google Play นี้มีการสมัครสมาชิกอยู่แล้ว ซึ่งอาจเป็นของบัญชี Balnana อื่น';
+
+  @override
+  String get planPlayUnavailable => 'เชื่อมต่อ Google Play ไม่ได้ โปรดลองอีกครั้งภายหลัง';
+
+  @override
   String get errorInvalidPurchase => 'Google Play ไม่รู้จักการซื้อนี้';
 
   @override
@@ -3130,4 +3170,8 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'ตามที่เขียนใน Play Console Google Play เป็นผู้บอกว่าการชำระเงินแต่ละครั้งสิ้นสุดเมื่อใด จึงไม่ต้องตั้งจำนวนวัน';
+
+  @override
+  String get adminProductRemoveBody =>
+      'การชำระเงินสำหรับผลิตภัณฑ์นี้จะไม่ถูกนำไปใช้กับบัญชีอีก แพ็กเกจที่มีอยู่แล้วจะยังใช้ได้จนกว่าจะหมดอายุ';
 }

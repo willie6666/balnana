@@ -954,6 +954,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Alguien ha cambiado este gasto. Al recargar verás su versión y se descartarán tus cambios.';
 
   @override
+  String get expenseNewerTitle => 'Creado con una versión más reciente';
+
+  @override
+  String get expenseNewerBody => 'Actualiza Balnana para cambiar esta entrada.';
+
+  @override
   String get suggestedPayments => 'Pagos sugeridos';
 
   @override
@@ -2235,7 +2241,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Puedes eliminar tu cuenta desde Ajustes. Tu nombre seguirá en tus grupos como integrante sin cuenta vinculada, para que los saldos sigan cuadrando. También se eliminarán los grupos a los que nadie más pueda acceder. El propietario de un grupo puede eliminarlo entero desde sus ajustes. Para cualquier otra cosa, contacta con quien administra el servidor.';
+      'Puedes eliminar tu cuenta desde Ajustes. Tu nombre seguirá en tus grupos como integrante sin cuenta vinculada, para que los saldos sigan cuadrando. También se eliminarán los grupos a los que nadie más pueda acceder. El propietario de un grupo puede eliminarlo entero desde sus ajustes. Los grupos eliminados y las fotos de los gastos eliminados se borran definitivamente a los 30 días. Para cualquier otra cosa, contacta con quien administra el servidor.';
 
   @override
   String get privacyOperatorPolicy => 'Política de privacidad del servidor';
@@ -2659,6 +2665,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Se añade automáticamente al grupo en cada fecha a partir de la indicada arriba. Las fechas pasadas se añadirán al guardar.';
 
   @override
+  String get repeatCustom => 'Programación personalizada';
+
+  @override
   String get repeatDropReceiptTitle => '¿Quitar el recibo?';
 
   @override
@@ -2918,6 +2927,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Para todas las cuentas sin otro plan.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '¿Eliminar $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Sus productos se eliminan con él y ya no se podrán comprar: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Otorgado por un administrador';
 
   @override
@@ -2941,6 +2960,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Revocar';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '¿Revocar $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user pierde este plan de inmediato. Esto no se puede deshacer.';
+  }
 
   @override
   String get adminEntitlementNote => 'Nota';
@@ -3142,6 +3171,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planPlayPending => 'Tu pago aún se está procesando. El plan empezará cuando se complete.';
 
   @override
+  String get planPlayOnHold =>
+      'Tu último pago ha fallado. Actualiza tu método de pago en Google Play para conservar este plan.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Esta cuenta de Google Play ya tiene una suscripción, que puede pertenecer a otra cuenta de Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'No se pudo conectar con Google Play. Inténtalo de nuevo más tarde.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play no reconoce esta compra.';
 
   @override
@@ -3186,4 +3226,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Tal como aparece en Play Console. Google Play indica cuándo termina cada pago, así que no hay días que configurar.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Los pagos de este producto dejarán de aplicarse a las cuentas. Los planes ya activos se mantienen hasta que terminen.';
 }

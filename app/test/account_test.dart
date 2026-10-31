@@ -10,6 +10,7 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/account/account_section.dart';
 import 'package:balnana/features/account/oauth.dart';
 import 'package:balnana/l10n/app_localizations.dart';
+import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -60,18 +61,20 @@ ProviderContainer answering(
   List<RequestOptions> sent,
   (int, Object?) Function(RequestOptions) answer, {
   List<Override> overrides = const [],
+  bool billing = false,
 }) => ProviderContainer(
   overrides: [
     prefsProvider.overrideWithValue(prefs),
     cacheDbProvider.overrideWithValue(null),
     serverInfoProvider.overrideWithValue(
-      const AsyncData(
+      AsyncData(
         ServerInfo(
           version: 'test',
           authMode: AuthMode.accounts,
           password: true,
+          billing: billing,
           publicUrl: 'https://a.example',
-          oauthProviders: [
+          oauthProviders: const [
             OAuthProvider(id: 'google', name: 'Google'),
             OAuthProvider(id: 'authentik', name: 'Authentik'),
           ],
@@ -152,6 +155,48 @@ void main() {
     expect(sent.where((r) => r.path == '/auth/oauth/exchange'), isEmpty);
     expect(prefs.getString('oauth.verifier'), isNull);
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('deleting an account mentions Google Play only to who holds it', (tester) async {
+    SharedPreferences.setMockInitialValues({'settings.server': 'https://a.example'});
+    final prefs = await SharedPreferences.getInstance();
+    for (final (play, held, note) in [
+      (const {'accountId': 'x', 'packageName': 'p', 'subscribed': ['plus']}, 200, true),
+      (const {'accountId': 'x', 'packageName': 'p'}, 200, false),
+      (null, 200, false),
+      (null, 500, true),
+    ]) {
+      final container = answering(
+        prefs,
+        [],
+        (o) => held == 200
+            ? (
+                200,
+                {
+                  'planName': 'Free',
+                  'paid': false,
+                  'ownGroups': {'used': 0},
+                  'sponsoredGroups': {'used': 0},
+                  'play': ?play,
+                },
+              )
+            : (500, {'code': 'internal', 'message': 'boom'}),
+        billing: true,
+        overrides: [
+          currentAccountProvider.overrideWithValue(const AsyncData(User(id: 'ana', name: 'Ana', hasPassword: true))),
+        ],
+      );
+      await tester.pumpWidget(host(container, const Scaffold(body: SingleChildScrollView(child: AccountSection()))));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Delete account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete account'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppLocalizationsEn().accountDeletePlayNote), note ? findsOneWidget : findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      container.dispose();
+    }
   });
 
   testWidgets('an account without a password can set one', (tester) async {

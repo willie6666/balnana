@@ -967,6 +967,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Une autre personne a modifié cette dépense. Rechargez la page pour voir sa version et abandonner vos modifications.';
 
   @override
+  String get expenseNewerTitle => 'Créé avec une version plus récente';
+
+  @override
+  String get expenseNewerBody => 'Mettez à jour Balnana pour modifier cette entrée.';
+
+  @override
   String get suggestedPayments => 'Règlements suggérés';
 
   @override
@@ -2258,7 +2264,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Vous pouvez supprimer votre compte dans les paramètres. Votre nom restera alors dans vos groupes comme membre non revendiqué, afin que les soldes restent justes. Les groupes auxquels personne d’autre n’a accès seront supprimés. Le propriétaire d’un groupe peut supprimer tout le groupe dans ses paramètres. Pour toute autre demande, contactez la personne qui gère le serveur.';
+      'Vous pouvez supprimer votre compte dans les paramètres. Votre nom restera alors dans vos groupes comme membre non revendiqué, afin que les soldes restent justes. Les groupes auxquels personne d’autre n’a accès seront supprimés. Le propriétaire d’un groupe peut supprimer tout le groupe dans ses paramètres. Les groupes supprimés et les photos des dépenses supprimées sont effacés définitivement au bout de 30 jours. Pour toute autre demande, contactez la personne qui gère le serveur.';
 
   @override
   String get privacyOperatorPolicy => 'Politique de confidentialité du serveur';
@@ -2714,6 +2720,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'La dépense est ajoutée automatiquement au groupe à chaque date, à partir de la date ci-dessus. Les dates déjà passées sont ajoutées à l’enregistrement.';
 
   @override
+  String get repeatCustom => 'Calendrier personnalisé';
+
+  @override
   String get repeatDropReceiptTitle => 'Supprimer le justificatif ?';
 
   @override
@@ -2973,6 +2982,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Pour tous les comptes sans autre formule.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Retirer $name ?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Ses produits sont retirés avec lui et ne pourront plus être achetés : $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Attribuée par un administrateur';
 
   @override
@@ -2996,6 +3015,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Révoquer';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Révoquer $plan ?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user perd cette offre immédiatement. Cette action est irréversible.';
+  }
 
   @override
   String get adminEntitlementNote => 'Note';
@@ -3204,6 +3233,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Votre paiement est en cours de traitement. Le forfait commencera une fois celui-ci validé.';
 
   @override
+  String get planPlayOnHold =>
+      'Votre dernier paiement a échoué. Mettez à jour votre moyen de paiement sur Google Play pour conserver cette offre.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Ce compte Google Play a déjà un abonnement, qui appartient peut-être à un autre compte Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'Impossible de joindre Google Play. Réessayez plus tard.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play ne reconnaît pas cet achat.';
 
   @override
@@ -3248,4 +3288,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Tel qu\'écrit dans la Play Console. Google Play indique la fin de chaque paiement, il n\'y a donc pas de jours à définir.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Les paiements pour ce produit ne seront plus appliqués aux comptes. Les offres déjà actives restent valables jusqu\'à leur fin.';
 }

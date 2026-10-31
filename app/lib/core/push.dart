@@ -473,7 +473,10 @@ class _PushReconciler {
     final device = await _deviceId(_prefs);
     final server = want.server;
     final before = _prefs.getString(_registeredOn);
-    if (before != null && (before != server || !want.on)) {
+    // Nobody left: a sign-out that could not reach the server left this device
+    // on the account. A server's key still loading says nothing either way.
+    final nobody = !want.signedIn && want.groups.isEmpty;
+    if (before != null && (before != server || !want.on || nobody)) {
       // A server left behind is let go even when it cannot be reached.
       final api = want.api;
       final forgotten = before == server && api != null

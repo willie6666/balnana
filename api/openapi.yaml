@@ -1383,6 +1383,7 @@ paths:
         it (400 `unknown_member` or `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1537,6 +1538,7 @@ paths:
       description: Both members must not have left the group (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1581,6 +1583,7 @@ paths:
         it (400 `unknown_member` or `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1880,6 +1883,17 @@ components:
       schema:
         type: string
         maxLength: 64
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >-
+        A UUID the client makes up once for what it is creating and sends
+        again with every retry. A key this group has seen returns what it
+        created then, whatever else the request says, and creates nothing.
+      schema:
+        type: string
+        format: uuid
     ActingMember:
       name: X-Balnana-Member
       in: header
@@ -3356,7 +3370,7 @@ components:
     PlayBilling:
       type: object
       description: What can be bought through Google Play. Left out when nothing can.
-      required: [accountId, packageName, products, subscribed]
+      required: [accountId, packageName, products, subscribed, onHold]
       properties:
         accountId:
           type: string
@@ -3371,6 +3385,11 @@ components:
         subscribed:
           type: array
           description: The products the account has a subscription to.
+          items:
+            type: string
+        onHold:
+          type: array
+          description: Products whose subscription Google has held back or paused. They are still the account's, and buying again could charge twice.
           items:
             type: string
     PlayPurchaseRequest:

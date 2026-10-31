@@ -437,3 +437,13 @@ func TestUpdateMeChangesOnlyWhatWasSent(t *testing.T) {
 		t.Fatalf("after clearing the language: %+v", cleared)
 	}
 }
+
+// Apps read these as lists, so none may be null.
+func TestMyGroupsEmptyLists(t *testing.T) {
+	ana := accountsClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	rec := ana.do("GET", "/me/groups", nil)
+	if !strings.Contains(rec.Body.String(), `"missing":[]`) || !strings.Contains(rec.Body.String(), `"locked":[]`) {
+		t.Fatal(rec.Body)
+	}
+}

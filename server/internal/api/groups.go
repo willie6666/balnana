@@ -193,7 +193,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	if err != nil {
 		return nil, err
 	}
-	out := GroupSummaryList{Missing: []string{}}
+	out := GroupSummaryList{Missing: []string{}, Locked: []string{}}
 	if out.Groups, err = summarize(ctx, s.db, groups); err != nil {
 		return nil, err
 	}

@@ -970,6 +970,12 @@ class AppLocalizationsDe extends AppLocalizations {
       'Jemand anderes hat diese Ausgabe geändert. Beim Neuladen wird die andere Version angezeigt und deine Änderungen hier werden verworfen.';
 
   @override
+  String get expenseNewerTitle => 'Mit einer neueren Version erstellt';
+
+  @override
+  String get expenseNewerBody => 'Aktualisiere Balnana, um diesen Eintrag zu ändern.';
+
+  @override
   String get suggestedPayments => 'Vorgeschlagene Zahlungen';
 
   @override
@@ -2251,7 +2257,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Der Inhaber einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Bei allem anderen wende dich an die betreibende Person des Servers.';
+      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Der Inhaber einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Gelöschte Gruppen und die Fotos gelöschter Ausgaben werden nach 30 Tagen endgültig entfernt. Bei allem anderen wende dich an die betreibende Person des Servers.';
 
   @override
   String get privacyOperatorPolicy => 'Datenschutzerklärung der betreibenden Person';
@@ -2677,6 +2683,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wird an jedem Datum automatisch zur Gruppe hinzugefügt, beginnend mit dem Datum oben. Bereits vergangene Termine werden beim Speichern hinzugefügt.';
 
   @override
+  String get repeatCustom => 'Eigener Zeitplan';
+
+  @override
   String get repeatDropReceiptTitle => 'Beleg entfernen?';
 
   @override
@@ -2937,6 +2946,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Für jedes Konto ohne anderen Tarif.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name entfernen?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Die zugehörigen Produkte werden mit entfernt und können nicht mehr gekauft werden: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Von einem Administrator vergeben';
 
   @override
@@ -2960,6 +2979,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Widerrufen';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan widerrufen?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user verliert diesen Tarif sofort. Das lässt sich nicht rückgängig machen.';
+  }
 
   @override
   String get adminEntitlementNote => 'Notiz';
@@ -3167,6 +3196,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Deine Zahlung wird noch verarbeitet. Der Tarif beginnt, sobald sie durch ist.';
 
   @override
+  String get planPlayOnHold =>
+      'Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere deine Zahlungsmethode bei Google Play, um diesen Tarif zu behalten.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Dieses Google-Play-Konto hat bereits ein Abo, das eventuell zu einem anderen Balnana-Konto gehört.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play ist nicht erreichbar. Versuch es später noch einmal.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play kennt diesen Kauf nicht.';
 
   @override
@@ -3211,4 +3251,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Wie in der Play Console geschrieben. Google Play bestimmt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.';
 }

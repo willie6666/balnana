@@ -136,6 +136,7 @@ class _ImportGroupsDialogState extends ConsumerState<_ImportGroupsDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.myGroupsImport),
       content: SizedBox(
         width: 480,

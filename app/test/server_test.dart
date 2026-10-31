@@ -106,6 +106,10 @@ void main() {
       expect([for (final p in providers) '${p.id}:${p.name}'], ['google:Google', 'oidc:Company SSO']);
     });
 
+    test('takes an auth mode from a newer server for the one that asks most', () {
+      expect(ServerInfo.fromJson(json({'authMode': 'passkeys'})).authMode, AuthMode.accounts);
+    });
+
     test('rejects other servers', () {
       expect(() => ServerInfo.fromJson(json({'name': 'other'})), throwsFormatException);
     });

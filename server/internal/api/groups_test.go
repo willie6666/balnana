@@ -25,6 +25,16 @@ import (
 	"balnana/internal/domain"
 )
 
+// noDB skips a test that can't get its database. With REQUIRE_DB set, as in CI,
+// it fails instead: go test prints ok for a run of skips.
+func noDB(t *testing.T, format string, args ...any) {
+	t.Helper()
+	if os.Getenv("REQUIRE_DB") != "" {
+		t.Fatalf(format, args...)
+	}
+	t.Skipf(format, args...)
+}
+
 // These tests need PostgreSQL: they run when DATABASE_URL is set (for
 // example postgres:///balnana?host=$PGHOST) and create a throwaway database
 // for each test.
@@ -39,12 +49,12 @@ func testDBConns(t *testing.T, maxConns int32) *pgxpool.Pool {
 	t.Helper()
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
-		t.Skip("DATABASE_URL not set")
+		noDB(t, "DATABASE_URL not set")
 	}
 	ctx := context.Background()
 	admin, err := pgx.Connect(ctx, url)
 	if err != nil {
-		t.Skipf("no database: %v", err)
+		noDB(t, "no database: %v", err)
 	}
 	b := make([]byte, 6)
 	_, _ = rand.Read(b)

@@ -52,6 +52,12 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		// The account before the group, in the order its deletion locks them.
+		// Joining can make it an owner, which a plan's limit counts.
+		if s.conf().Billing {
+			if err := holdAccount(ctx, tx, u.id); err != nil {
+				return err
+			}
+		}
 		err := tx.QueryRow(ctx, `select 1 from users where id = $1 for key share`, u.id).Scan(new(int))
 		if errors.Is(err, pgx.ErrNoRows) {
 			return &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
@@ -63,7 +69,7 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 			return err
 		}
 		if g.me == nil {
-			if err := join(ctx, tx, g, u, in); err != nil {
+			if err := s.join(ctx, tx, g, u, in); err != nil {
 				return err
 			}
 			if err := s.resolveAccess(ctx, tx, g); err != nil {
@@ -81,7 +87,7 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 
 // join makes u a member of g: the claimed member, the member u left behind
 // before, or a new one.
-func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) error {
+func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) error {
 	members, err := groupMembers(ctx, tx, g.id)
 	if err != nil {
 		return err
@@ -148,12 +154,20 @@ func join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *JoinInput) erro
 	}
 	// The only account in a group whose owner is gone, as when the last one
 	// deleted theirs while the group stayed open by link, owns it.
-	_, err = tx.Exec(ctx, `
-		update members set is_owner = true where id = $1 and not exists (
-			select 1 from members where group_id = $2 and id <> $1 and user_id is not null and left_at is null)`,
-		m.id, g.id)
+	var alone bool
+	err = tx.QueryRow(ctx, `
+		select not exists (select 1 from members where group_id = $2 and id <> $1 and user_id is not null and left_at is null)`,
+		m.id, g.id).Scan(&alone)
 	if err != nil {
 		return err
+	}
+	if alone {
+		if err := s.checkOwnGroups(ctx, tx, u.id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `update members set is_owner = true where id = $1`, m.id); err != nil {
+			return err
+		}
 	}
 	if u.email != nil {
 		if _, err := tx.Exec(ctx, `delete from invites where group_id = $1 and email = $2`, g.id, *u.email); err != nil {

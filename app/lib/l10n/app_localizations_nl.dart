@@ -958,6 +958,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Iemand anders heeft deze uitgave gewijzigd. Laad opnieuw om hun versie te zien; je wijzigingen hier gaan verloren.';
 
   @override
+  String get expenseNewerTitle => 'Gemaakt met een nieuwere versie';
+
+  @override
+  String get expenseNewerBody => 'Werk Balnana bij om dit item te wijzigen.';
+
+  @override
   String get suggestedPayments => 'Voorgestelde betalingen';
 
   @override
@@ -2227,7 +2233,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Je kunt je account verwijderen via Instellingen. Je naam blijft dan in je groepen staan als lid dat niemand heeft geclaimd, zodat de saldi blijven kloppen. Groepen waar verder niemand bij kan, worden ook verwijderd. De eigenaar van een groep kan de hele groep verwijderen via de groepsinstellingen. Neem voor andere verzoeken contact op met de serverbeheerder.';
+      'Je kunt je account verwijderen via Instellingen. Je naam blijft dan in je groepen staan als lid dat niemand heeft geclaimd, zodat de saldi blijven kloppen. Groepen waar verder niemand bij kan, worden ook verwijderd. De eigenaar van een groep kan de hele groep verwijderen via de groepsinstellingen. Verwijderde groepen en de foto\'s van verwijderde uitgaven worden na 30 dagen definitief gewist. Neem voor andere verzoeken contact op met de serverbeheerder.';
 
   @override
   String get privacyOperatorPolicy => 'Privacybeleid van de beheerder';
@@ -2655,6 +2661,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Wordt vanaf de bovenstaande datum automatisch op elke datum aan de groep toegevoegd. Datums in het verleden worden bij het opslaan ook toegevoegd.';
 
   @override
+  String get repeatCustom => 'Aangepast schema';
+
+  @override
   String get repeatDropReceiptTitle => 'Bon verwijderen?';
 
   @override
@@ -2917,6 +2926,16 @@ class AppLocalizationsNl extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Voor elk account zonder ander abonnement.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name verwijderen?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'De bijbehorende producten verdwijnen ook en kunnen niet meer worden gekocht: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Gegeven door een beheerder';
 
   @override
@@ -2940,6 +2959,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Intrekken';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan intrekken?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user verliest dit abonnement meteen. Dit kan niet ongedaan worden gemaakt.';
+  }
 
   @override
   String get adminEntitlementNote => 'Notitie';
@@ -3145,6 +3174,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planPlayPending => 'Je betaling wordt nog verwerkt. Het abonnement begint zodra die rond is.';
 
   @override
+  String get planPlayOnHold =>
+      'Je laatste betaling is mislukt. Werk je betaalmethode bij in Google Play om dit abonnement te houden.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Dit Google Play-account heeft al een abonnement, dat mogelijk bij een ander Balnana-account hoort.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play is niet bereikbaar. Probeer het later opnieuw.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play herkent deze aankoop niet.';
 
   @override
@@ -3189,4 +3229,8 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Zoals in Play Console staat. Google Play bepaalt wanneer elke betaling afloopt, dus er zijn geen dagen in te stellen.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Betalingen hiervoor worden niet meer aan accounts toegekend. Lopende abonnementen blijven gelden tot ze eindigen.';
 }

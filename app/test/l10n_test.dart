@@ -16,6 +16,9 @@ void main() {
     ('zh-TW', 'zh-Hant-TW'),
     ('zh-HK', 'zh-Hant-HK'),
     ('zh-Hant-TW', 'zh-Hant-TW'),
+    ('zh-Hant-HK', 'zh-Hant-HK'),
+    // Without a region, intl would take it for mainland China.
+    ('zh-Hant', 'zh-Hant-TW'),
     ('zh-Hans-TW', 'zh-TW'),
     ('zh-CN', 'zh-CN'),
     ('zh', 'zh'),

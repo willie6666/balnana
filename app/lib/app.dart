@@ -7,6 +7,7 @@ import 'core/router.dart';
 import 'core/settings.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/offline_bar.dart';
+import 'ui/widgets/play_purchases.dart';
 import 'ui/widgets/push_handler.dart';
 
 class BalnanaApp extends ConsumerWidget {
@@ -37,7 +38,9 @@ class BalnanaApp extends ConsumerWidget {
           routerConfig: router,
           builder: (context, child) => WallpaperColors(
             on: wallpaper && settings.wallpaperGroups,
-            child: PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
+            child: PlayPurchases(
+              child: PushHandler(child: OfflineBar(child: child ?? const SizedBox())),
+            ),
           ),
         );
       },

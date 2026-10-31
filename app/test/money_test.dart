@@ -2,10 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:balnana/core/currencies.dart';
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/money.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/ui/money.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 /// api/testdata/money.json is shared with the Go tests in server/internal/domain.
 final Map<String, dynamic> vectors =
@@ -192,6 +197,31 @@ void main() {
     expect(formatAmountLocalized(BigInt.parse('99999999999999999'), 2, 'en'), '999,999,999,999,999.99');
     expect(formatAmountLocalized(BigInt.from(-123456), 2, 'en'), '-1,234.56');
     expect(formatAmountLocalized(BigInt.from(5), 0, 'en'), '5');
+  });
+
+  test('Arabic shows the Latin digits people type, with separators to match', () async {
+    expect(formatAmountLocalized(BigInt.from(123456), 2, 'ar-EG'), '1,234.56');
+    expect(formatAmountLocalized(BigInt.from(123456), 2, 'ar-SA'), '1,234.56');
+    await initializeDateFormatting('ar');
+    useLatinDigits();
+    expect(DateFormat.yMd('ar-EG').format(DateTime(2026, 10, 31)), matches(RegExp(r'^[^٠-٩]*$')));
+    expect(DateFormat.yMd('ar').format(DateTime(2026, 10, 31)), contains('2026'));
+  });
+
+  test('the local currency comes from the region', () {
+    expect(localCurrency(const Locale('ar', 'SA')), 'SAR');
+    expect(localCurrency(const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant', countryCode: 'TW')), 'TWD');
+    expect(localCurrency(const Locale('fr', 'SN')), 'XOF');
+    expect(localCurrency(const Locale('ar')), isNull);
+    expect(localCurrency(const Locale('pt')), isNull);
+    expect(regionCurrencies.values.where((c) => !currencies.containsKey(c)), isEmpty);
+  });
+
+  test('a split method from a newer version is not guessed at', () {
+    expect(
+      () => split(BigInt.from(100), 2, SplitMethod.unknown, const [SplitPart('a')]),
+      throwsA(isA<MoneyException>()),
+    );
   });
 
   // One transaction holds at most maxMinor, but a balance or a total is a sum

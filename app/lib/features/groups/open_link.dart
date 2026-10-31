@@ -102,6 +102,7 @@ class _OpenLinkDialogState extends ConsumerState<_OpenLinkDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.openLinkTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

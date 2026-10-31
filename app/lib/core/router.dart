@@ -36,7 +36,11 @@ final _root = GlobalKey<NavigatorState>();
 /// anyone). Home is a group: the one opened last, when there is one.
 String? _redirect(Ref ref, GoRouterState state) {
   final path = state.matchedLocation;
-  if (ref.read(setupRequiredProvider)) return path == '/admin' ? null : '/admin';
+  if (ref.read(setupRequiredProvider)) {
+    // The way out for someone who typed the wrong server.
+    if (canChooseServer && path == '/settings/server') return null;
+    return path == '/admin' ? null : '/admin';
+  }
   if (ref.read(accountsModeProvider)) {
     final account = ref.read(currentAccountProvider);
     if (account.isLoading || account.hasError) return null;

@@ -999,6 +999,12 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ktoś inny zmienił ten wydatek. Po odświeżeniu zobaczysz jego wersję, a Twoje zmiany zostaną odrzucone.';
 
   @override
+  String get expenseNewerTitle => 'Utworzono w nowszej wersji';
+
+  @override
+  String get expenseNewerBody => 'Zaktualizuj Balnanę, aby zmienić ten wpis.';
+
+  @override
   String get suggestedPayments => 'Proponowane przelewy';
 
   @override
@@ -2291,7 +2297,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Możesz usunąć konto w Ustawieniach. Twoje imię pozostanie w grupach jako osoba bez przypisanego konta, dzięki czemu salda nadal będą się zgadzać. Usunięte zostaną też grupy, do których nikt inny nie ma dostępu. Właściciel grupy może usunąć całą grupę w jej ustawieniach. W innych sprawach skontaktuj się z administratorem serwera.';
+      'Możesz usunąć konto w Ustawieniach. Twoje imię pozostanie w grupach jako osoba bez przypisanego konta, dzięki czemu salda nadal będą się zgadzać. Usunięte zostaną też grupy, do których nikt inny nie ma dostępu. Właściciel grupy może usunąć całą grupę w jej ustawieniach. Usunięte grupy i zdjęcia usuniętych wydatków są trwale kasowane po 30 dniach. W innych sprawach skontaktuj się z administratorem serwera.';
 
   @override
   String get privacyOperatorPolicy => 'Polityka prywatności administratora';
@@ -2776,6 +2782,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wydatek będzie automatycznie dodawany do grupy w wyznaczonych terminach, począwszy od daty powyżej. Zaległe wydatki zostaną dodane po zapisaniu.';
 
   @override
+  String get repeatCustom => 'Harmonogram niestandardowy';
+
+  @override
   String get repeatDropReceiptTitle => 'Usunąć paragon?';
 
   @override
@@ -3035,6 +3044,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Dla każdego konta bez innego planu.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Usunąć $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Jego produkty zostaną usunięte razem z nim i nie będzie można ich kupić: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Przyznany przez administratora';
 
   @override
@@ -3058,6 +3077,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Cofnij';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Cofnąć $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user od razu straci ten plan. Tego nie można cofnąć.';
+  }
 
   @override
   String get adminEntitlementNote => 'Notatka';
@@ -3269,6 +3298,17 @@ class AppLocalizationsPl extends AppLocalizations {
       'Płatność jest wciąż przetwarzana. Plan zacznie się, gdy zostanie zakończona.';
 
   @override
+  String get planPlayOnHold =>
+      'Ostatnia płatność się nie powiodła. Zaktualizuj metodę płatności w Google Play, aby zachować ten plan.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'To konto Google Play ma już subskrypcję, która może należeć do innego konta Balnana.';
+
+  @override
+  String get planPlayUnavailable => 'Nie udało się połączyć z Google Play. Spróbuj ponownie później.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play nie rozpoznaje tego zakupu.';
 
   @override
@@ -3313,4 +3353,8 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Tak jak w Play Console. Google Play określa, kiedy kończy się każda płatność, więc nie ma dni do ustawienia.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu.';
 }

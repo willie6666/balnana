@@ -951,6 +951,12 @@ class AppLocalizationsVi extends AppLocalizations {
       'Có người khác đã sửa khoản chi này. Tải lại để xem phiên bản của họ và bỏ thay đổi của bạn tại đây.';
 
   @override
+  String get expenseNewerTitle => 'Được tạo bằng phiên bản mới hơn';
+
+  @override
+  String get expenseNewerBody => 'Hãy cập nhật Balnana để thay đổi mục này.';
+
+  @override
   String get suggestedPayments => 'Khoản thanh toán đề xuất';
 
   @override
@@ -2210,7 +2216,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Bạn có thể xóa tài khoản trong Cài đặt. Tên bạn vẫn ở trong nhóm với tư cách thành viên chưa có ai nhận là mình, để số dư vẫn khớp; các nhóm không ai khác truy cập được sẽ bị xóa. Chủ nhóm có thể xóa toàn bộ nhóm trong phần cài đặt. Với yêu cầu khác, hãy liên hệ người quản lý máy chủ.';
+      'Bạn có thể xóa tài khoản trong Cài đặt. Tên bạn vẫn ở trong nhóm với tư cách thành viên chưa có ai nhận là mình, để số dư vẫn khớp; các nhóm không ai khác truy cập được sẽ bị xóa. Chủ nhóm có thể xóa toàn bộ nhóm trong phần cài đặt. Nhóm đã xóa và ảnh của các khoản chi đã xóa sẽ bị xóa vĩnh viễn sau 30 ngày. Với yêu cầu khác, hãy liên hệ người quản lý máy chủ.';
 
   @override
   String get privacyOperatorPolicy => 'Chính sách quyền riêng tư của người quản lý';
@@ -2631,6 +2637,9 @@ class AppLocalizationsVi extends AppLocalizations {
       'Khoản chi sẽ tự động được thêm vào nhóm theo lịch, bắt đầu từ ngày ở trên. Khi bạn lưu, các ngày đã qua cũng sẽ được thêm.';
 
   @override
+  String get repeatCustom => 'Lịch tùy chỉnh';
+
+  @override
   String get repeatDropReceiptTitle => 'Gỡ hóa đơn?';
 
   @override
@@ -2890,6 +2899,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Dành cho mọi tài khoản không có gói khác.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Xóa $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Các sản phẩm của gói cũng bị xóa theo và không thể mua nữa: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Do quản trị viên cấp';
 
   @override
@@ -2913,6 +2932,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Thu hồi';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Thu hồi $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user sẽ mất gói này ngay lập tức. Không thể hoàn tác.';
+  }
 
   @override
   String get adminEntitlementNote => 'Ghi chú';
@@ -3114,6 +3143,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planPlayPending => 'Thanh toán của bạn vẫn đang được xử lý. Gói sẽ bắt đầu khi hoàn tất.';
 
   @override
+  String get planPlayOnHold =>
+      'Lần thanh toán gần nhất của bạn không thành công. Hãy cập nhật phương thức thanh toán trên Google Play để giữ gói này.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Tài khoản Google Play này đã có gói đăng ký, có thể thuộc về một tài khoản Balnana khác.';
+
+  @override
+  String get planPlayUnavailable => 'Không thể kết nối Google Play. Hãy thử lại sau.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play không nhận ra giao dịch này.';
 
   @override
@@ -3158,4 +3198,8 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Như ghi trong Play Console. Google Play cho biết khi nào mỗi khoản thanh toán kết thúc nên không cần đặt số ngày.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn.';
 }

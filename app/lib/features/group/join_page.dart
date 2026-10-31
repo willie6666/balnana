@@ -52,9 +52,11 @@ class _JoinPageState extends ConsumerState<JoinPage> {
   Future<void> _join({String? claim, String? name}) async {
     final l10n = context.l10n;
     setState(() => _busy = true);
+    // The page can go during the request, and its ref with it.
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       await groupApiOf(ref, widget.token).join(claim: claim, name: name);
-      refreshGroup(ref, widget.token);
+      refreshGroupIn(container, widget.token);
       if (mounted) _open();
     } on ApiException catch (e) {
       if (!mounted) return;

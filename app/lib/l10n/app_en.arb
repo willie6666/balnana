@@ -1357,6 +1357,14 @@
   "@expenseChangedElsewhere": {
     "description": "Label or control text for expense changed elsewhere in the expense editor or expense list."
   },
+  "expenseNewerTitle": "Made with a newer version",
+  "@expenseNewerTitle": {
+    "description": "Title of the read-only page for an expense made by a newer version of the app, which this version cannot edit."
+  },
+  "expenseNewerBody": "Update Balnana to change this entry.",
+  "@expenseNewerBody": {
+    "description": "Body of the read-only page for an expense made by a newer version of the app."
+  },
   "suggestedPayments": "Suggested payments",
   "@suggestedPayments": {
     "description": "Label or control text for suggested payments in the application interface."
@@ -3329,7 +3337,7 @@
   "@privacyDeleteTitle": {
     "description": "Heading for privacy delete title in the built-in privacy notice."
   },
-  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. For anything else, contact the server's operator.",
+  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server's operator.",
   "@privacyDeleteBody": {
     "description": "Explanatory text for privacy delete body in the built-in privacy notice."
   },
@@ -3883,6 +3891,10 @@
   "@repeatHelp": {
     "description": "Help text under the repeat settings in the expense editor."
   },
+  "repeatCustom": "Custom schedule",
+  "@repeatCustom": {
+    "description": "Label for a repeat schedule this version of the app does not recognise."
+  },
   "repeatDropReceiptTitle": "Remove the receipt?",
   "@repeatDropReceiptTitle": {
     "description": "Title of the dialog shown when the user makes an expense repeat after picking a receipt photo for it."
@@ -4292,6 +4304,24 @@
   "@adminPlanDefaultHelp": {
     "description": "Label or control text for admin plan default help in the server administrator interface."
   },
+  "adminPlanRemoveTitle": "Remove {name}?",
+  "@adminPlanRemoveTitle": {
+    "description": "Title of the confirmation before an administrator removes a plan or a product.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPlanRemoveBody": "Its products go with it and can no longer be bought: {products}",
+  "@adminPlanRemoveBody": {
+    "description": "Body of the confirmation before removing a plan. {products} is a comma-separated list of product names.",
+    "placeholders": {
+      "products": {
+        "type": "String"
+      }
+    }
+  },
   "adminEntitlementGranted": "Given by an administrator",
   "@adminEntitlementGranted": {
     "description": "Label or control text for admin entitlement granted in the server administrator interface."
@@ -4329,6 +4359,24 @@
   "adminEntitlementRevoke": "Revoke",
   "@adminEntitlementRevoke": {
     "description": "Label or control text for admin entitlement revoke in the server administrator interface."
+  },
+  "adminEntitlementRevokeTitle": "Revoke {plan}?",
+  "@adminEntitlementRevokeTitle": {
+    "description": "Title of the confirmation before an administrator revokes a plan a user holds.",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "adminEntitlementRevokeBody": "{user} loses this plan right away. This can't be undone.",
+  "@adminEntitlementRevokeBody": {
+    "description": "Body of the confirmation before revoking a plan. {user} is the name of the user.",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
   },
   "adminEntitlementNote": "Note",
   "@adminEntitlementNote": {
@@ -4622,6 +4670,18 @@
   "@planPlayPending": {
     "description": "Label or control text for plan play pending in the plan screens."
   },
+  "planPlayOnHold": "Your last payment failed. Update your payment method on Google Play to keep this plan.",
+  "@planPlayOnHold": {
+    "description": "Shown on the plan page when the Google Play subscription payment failed and is on hold."
+  },
+  "planPlayHeldElsewhere": "This Google Play account already has a subscription, which may belong to another Balnana account.",
+  "@planPlayHeldElsewhere": {
+    "description": "Error when this Google Play account already holds a subscription that may belong to a different Balnana account."
+  },
+  "planPlayUnavailable": "Couldn't reach Google Play. Try again later.",
+  "@planPlayUnavailable": {
+    "description": "Error when the app could not reach Google Play billing."
+  },
   "errorInvalidPurchase": "Google Play doesn't recognize this purchase.",
   "@errorInvalidPurchase": {
     "description": "Label or control text for error invalid purchase in an error message."
@@ -4678,5 +4738,9 @@
   "adminProductPlayIdHelp": "As written in Play Console. Google Play says when each payment ends, so there are no days to set.",
   "@adminProductPlayIdHelp": {
     "description": "Label or control text for admin product play id help in the server administrator interface."
+  },
+  "adminProductRemoveBody": "Payments for it stop being applied to accounts. Plans already held stay until they end.",
+  "@adminProductRemoveBody": {
+    "description": "Body of the confirmation before an administrator removes a product."
   }
 }

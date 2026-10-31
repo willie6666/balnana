@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf16"
 
 	"balnana/internal/domain"
@@ -132,6 +134,38 @@ func TestImportLeftoverCent(t *testing.T) {
 				t.Fatalf("import %s: %s, want %s", m.Name, m.Balance, want[m.Name])
 			}
 		}
+	}
+}
+
+// A preview reads the file and touches nothing.
+func TestImportDryRunWritesNothing(t *testing.T) {
+	c, _, pool := adminClient(t, map[string]string{})
+	c.must(200, "POST", "/groups/import", importInputFor(settleUpFile(settleUpRows...), true), nil)
+	var groups, members, expenses int
+	err := pool.QueryRow(context.Background(), `select (select count(*) from groups),
+		(select count(*) from members), (select count(*) from expenses)`).Scan(&groups, &members, &expenses)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if groups+members+expenses != 0 {
+		t.Fatalf("%d groups, %d members, %d expenses", groups, members, expenses)
+	}
+}
+
+func TestImportBusy(t *testing.T) {
+	old := importWait
+	importWait = 50 * time.Millisecond
+	t.Cleanup(func() { importWait = old })
+	c := newClient(t)
+	for range cap(importSlots) {
+		importSlots <- struct{}{}
+	}
+	code := c.errorCode(503, "POST", "/groups/import", importInputFor(settleUpFile(settleUpRows...), true))
+	for range cap(importSlots) {
+		<-importSlots
+	}
+	if code != "busy" {
+		t.Fatal(code)
 	}
 }
 

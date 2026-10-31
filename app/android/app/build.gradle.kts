@@ -57,6 +57,16 @@ val dartDefines: Map<String, String> =
                 ?.let { it[0] to it[1] }
         }
         ?.toMap() ?: emptyMap()
+
+// Google Play doesn't allow sending people to pay elsewhere, so a Play build
+// with the flag that shows such links is a mistake, not a choice.
+gradle.taskGraph.whenReady {
+    if (dartDefines["BALNANA_EXTERNAL_PAYMENTS"] != "true") return@whenReady
+    if (allTasks.any { it.project == project && Regex("^(assemble|bundle)Play").containsMatchIn(it.name) }) {
+        throw GradleException("BALNANA_EXTERNAL_PAYMENTS=true is not allowed in the play flavor.")
+    }
+}
+
 val linkServer: URI? =
     dartDefines["BALNANA_SERVER_URL"]?.trim()?.takeIf { it.isNotEmpty() }
         ?.let { URI(if ("://" in it) it else "https://$it") }

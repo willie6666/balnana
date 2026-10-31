@@ -15,6 +15,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
+import '../../ui/widgets/play_purchases.dart';
 
 /// "3 of 20", or just what is used when there is no limit.
 String planUsage(AppLocalizations l10n, PlanUsage usage) {
@@ -34,47 +35,58 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   List<PlayOffer> _offers = const [];
   bool _buying = false;
 
+  /// Whether Google Play has been asked since the plan first came, so
+  /// reloading the plan after a report doesn't ask again.
+  bool _askedPlay = false;
+  bool _playFailed = false;
+
   @override
   void initState() {
     super.initState();
-    _loadPlay();
+    // Listened to, as the plan may only load on a retry.
+    ref.listenManual(myPlanProvider, fireImmediately: true, (_, next) {
+      final play = next.value?.play;
+      if (play != null && !_askedPlay) _loadPlay(play);
+    });
   }
 
-  Future<void> _loadPlay() async {
-    final PlayBilling? play;
-    try {
-      play = (await ref.read(myPlanProvider.future)).play;
-    } on ApiException {
-      return;
-    }
-    if (play == null || !mounted) return;
+  Future<void> _loadPlay(PlayBilling play) async {
+    _askedPlay = true;
     final store = ref.read(googlePlayProvider);
     final api = ref.read(balnanaApiProvider);
-    final offers = await store.offers(play.products);
-    if (!mounted) return;
-    setState(() => _offers = offers);
-    // For a purchase that never reached the server, or a renewal on a server
-    // without Google's notifications. What fails is tried on the next visit.
-    final held = await store.purchases();
-    if (!mounted) return;
     try {
-      await _report(api, held);
+      final offers = await store.offers(play.products);
+      if (mounted) {
+        setState(() {
+          _offers = offers;
+          _playFailed = false;
+        });
+      }
+      // For a purchase that never reached the server, or a renewal on a server
+      // without Google's notifications. What fails is tried on the next visit.
+      await _report(api, await store.purchases());
+    } on PlayException {
+      if (mounted) setState(() => _playFailed = true);
     } on ApiException {
       return;
     }
   }
 
-  /// Tells the server about purchases, and returns whether they gave a plan.
+  void _retryPlay(PlayBilling play) {
+    setState(() => _playFailed = false);
+    _loadPlay(play);
+  }
+
+  /// Tells the server about purchases, and returns whether any gave a plan.
   /// [api] is read before waiting for Play: the page may close meanwhile, and
   /// what was bought still has to be reported.
   Future<bool> _report(BalnanaApi? api, List<String> tokens) async {
     if (tokens.isEmpty || api == null) return false;
-    var paid = false;
-    for (final token in tokens) {
-      paid = (await api.reportPlayPurchase(token)).paid;
+    try {
+      return await reportPlayPurchases(api, tokens);
+    } finally {
+      if (mounted) ref.invalidate(myPlanProvider);
     }
-    if (mounted) ref.invalidate(myPlanProvider);
-    return paid;
   }
 
   Future<void> _buy(PlayOffer offer, PlayBilling play) async {
@@ -91,9 +103,12 @@ class _PlanPageState extends ConsumerState<PlanPage> {
       if (e.owned) {
         // Held but not known here: likely another account's, which the server says.
         try {
-          await _report(api, await store.purchases());
+          final held = await store.purchases();
+          if (!await _report(api, held)) tell(l10n.planPlayHeldElsewhere);
         } on ApiException catch (e) {
           tell(errorMessage(l10n, e));
+        } on PlayException {
+          tell(l10n.planPlayFailed);
         }
       } else {
         tell(l10n.planPlayFailed);
@@ -147,8 +162,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final kofi = externalPayments ? info?.kofiUrl : null;
     final expires = plan.expiresAt;
     final play = plan.play;
+    final held = play?.held ?? const <String>[];
     // A second subscription would pay twice for one plan.
-    final offers = play == null || play.subscribed.isNotEmpty ? const <PlayOffer>[] : _offers;
+    final offers = held.isNotEmpty ? const <PlayOffer>[] : _offers;
     String limit(int? n) => n?.toString() ?? l10n.planUnlimited;
     return BPage(
       title: l10n.planTitle,
@@ -165,15 +181,15 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                           .format(expires.toLocal()),
                     ),
             ),
-            if (play != null && play.subscribed.isNotEmpty)
+            if (play != null && held.isNotEmpty)
               GroupedTile(
                 icon: Icons.manage_accounts_outlined,
                 title: l10n.planPlayManage,
-                subtitle: l10n.planPlayManageHelp,
+                subtitle: play.subscribed.isEmpty ? l10n.planPlayOnHold : l10n.planPlayManageHelp,
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () => _open(
                   Uri.https('play.google.com', '/store/account/subscriptions', {
-                    'sku': play.subscribed.first,
+                    'sku': held.first,
                     'package': play.packageName,
                   }),
                 ),
@@ -205,10 +221,17 @@ class _PlanPageState extends ConsumerState<PlanPage> {
             ),
           ],
         ),
-        if (offers.isNotEmpty || kofi != null)
+        if (offers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))
           GroupedList(
             title: l10n.planGet,
             children: [
+              if (_playFailed && held.isEmpty)
+                GroupedTile(
+                  icon: Icons.cloud_off_outlined,
+                  title: l10n.planPlayUnavailable,
+                  subtitle: l10n.commonRetry,
+                  onTap: () => _retryPlay(play!),
+                ),
               for (final offer in offers)
                 GroupedTile(
                   icon: Icons.shop_outlined,
@@ -301,6 +324,7 @@ class _PaymentClaimDialogState extends ConsumerState<PaymentClaimDialog> {
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
       title: Text(l10n.planPaymentClaim),
+      scrollable: true,
       content: Form(
         key: _form,
         child: Column(

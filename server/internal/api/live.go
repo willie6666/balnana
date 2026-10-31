@@ -25,6 +25,8 @@ const (
 	streamPing = 25 * time.Second
 	// How long apps wait before connecting again after losing the stream.
 	streamRetry = 3 * time.Second
+	// streamWrite is how long one event may take to reach a client.
+	streamWrite = 15 * time.Second
 )
 
 // hub fans change notices out to the open event streams.
@@ -198,14 +200,16 @@ type eventStream struct {
 func (e eventStream) VisitGroupEventsResponse(w http.ResponseWriter) error {
 	defer e.s.hub.unsubscribe(e.groupID, e.client, e.changes)
 	rc := http.NewResponseController(w)
-	_ = rc.SetWriteDeadline(time.Time{}) // the stream stays open
 	h := w.Header()
 	h.Set("Content-Type", "text/event-stream")
 	h.Set("Cache-Control", "no-store")
 	h.Set("X-Accel-Buffering", "no") // nginx: do not hold events back
 	w.WriteHeader(http.StatusOK)
 
+	// The stream stays open, but a reader that stopped reading must not keep
+	// its place.
 	send := func(msg string) bool {
+		_ = rc.SetWriteDeadline(time.Now().Add(streamWrite))
 		if _, err := w.Write([]byte(msg)); err != nil {
 			return false
 		}

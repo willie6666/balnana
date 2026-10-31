@@ -127,8 +127,10 @@ func noteMiss(ctx context.Context) {
 
 // holdGuess counts a password guess before it is checked: as misses against
 // the client, so a burst of concurrent guesses cannot all pass before the
-// first is counted, and against account, so guesses spread over many clients
-// still slow down. The returned func gives both back once the guess was right.
+// first is counted, against the account from this client, and against the
+// account from anywhere, so guesses spread over many clients still slow down.
+// A client out of guesses spends none of the account's, or it could keep the
+// owner out. The returned func gives all back once the guess was right.
 func (s *Server) holdGuess(ctx context.Context, account string) (func(), error) {
 	now := time.Now()
 	m, _ := ctx.Value(missesKey{}).(*missCount)
@@ -139,11 +141,19 @@ func (s *Server) holdGuess(ctx context.Context, account string) (func(), error) 
 		return nil, limited(m.b, m.key, now)
 	}
 	held := s.conf().RateLimit != 0
-	if held && !s.guesses.take(account, 1, now) {
+	pair := account + "|" + requestClient(ctx)
+	if held && !s.guesses.take(pair, 1, now) {
 		if m != nil {
 			m.b.give(m.key, loginMissWeight, now)
 		}
-		return nil, limited(s.guesses, account, now)
+		return nil, limited(s.guesses, pair, now)
+	}
+	if held && !s.allGuesses.take(account, 1, now) {
+		if m != nil {
+			m.b.give(m.key, loginMissWeight, now)
+		}
+		s.guesses.give(pair, 1, now)
+		return nil, limited(s.allGuesses, account, now)
 	}
 	return func() {
 		now := time.Now()
@@ -151,7 +161,8 @@ func (s *Server) holdGuess(ctx context.Context, account string) (func(), error) 
 			m.b.give(m.key, loginMissWeight, now)
 		}
 		if held {
-			s.guesses.give(account, 1, now)
+			s.guesses.give(pair, 1, now)
+			s.allGuesses.give(account, 1, now)
 		}
 	}, nil
 }
@@ -176,10 +187,22 @@ const (
 	claimBurst   = 10
 	claimPerHour = 10
 	// Wrong passwords an account (or the administrator) may be sent in a row
-	// from anywhere, and how many an hour after. Someone who keeps guessing
-	// also slows the owner down, so this stays loose.
-	guessBurst   = 20
-	guessPerHour = 30
+	// from one client, and how many an hour after; then from anywhere, which
+	// stays loose, since using it up keeps the owner out as well.
+	guessBurst      = 20
+	guessPerHour    = 30
+	allGuessBurst   = 200
+	allGuessPerHour = 300
+	// Password reset emails a client may ask for in a row, and how many an
+	// hour after; and how many an address gets from one client and from
+	// anywhere, in a row and a day after, so it is not a way to flood a
+	// mailbox nor to use up what the owner needs.
+	resetBurst         = 10
+	resetPerHour       = 10
+	resetMailBurst     = 3
+	resetMailPerDay    = 4
+	allResetMailBurst  = 10
+	allResetMailPerDay = 24
 	// Phones a client may register for push in a row, and how many a day
 	// after. Phones register again under the ID they have, which is free.
 	deviceBurst  = 20
@@ -212,6 +235,24 @@ func (s *Server) limitSignups(ctx context.Context) error {
 	return nil
 }
 
+// limitResets counts a password reset request against the client's allowance.
+// Off when BALNANA_RATE_LIMIT is 0.
+func (s *Server) limitResets(ctx context.Context) error {
+	if s.conf().RateLimit == 0 {
+		return nil
+	}
+	if now := time.Now(); !s.resets.take(requestClient(ctx), 1, now) {
+		return limited(s.resets, requestClient(ctx), now)
+	}
+	return nil
+}
+
+// mayMailReset counts a reset email to address, by whoever asked and in all.
+func (s *Server) mayMailReset(ctx context.Context, address string) bool {
+	now := time.Now()
+	return s.resetMails.take(address+"|"+requestClient(ctx), 1, now) && s.allResetMails.take(address, 1, now)
+}
+
 // limitDevices counts a newly registered phone against the client's
 // allowance. Off when BALNANA_RATE_LIMIT is 0.
 func (s *Server) limitDevices(ctx context.Context) error {
@@ -226,7 +267,7 @@ func (s *Server) limitDevices(ctx context.Context) error {
 
 // rateLimit caps API requests per client (perMinute, 0 for no cap) and blocks
 // clients that keep asking for group tokens that do not exist.
-func rateLimit(perMinute int, trustProxy bool, next http.Handler) http.Handler {
+func rateLimit(perMinute int, proxyHeader string, next http.Handler) http.Handler {
 	var requests *buckets
 	if perMinute > 0 {
 		// Allow a short burst: opening the app fetches a few things at once.
@@ -238,7 +279,7 @@ func rateLimit(perMinute int, trustProxy bool, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		key := clientKey(r, trustProxy)
+		key := clientKey(r, proxyHeader)
 		now := time.Now()
 		if requests != nil && !requests.take(key, 1, now) {
 			tooMany(w, requests.retryAfter(key, now))
@@ -272,19 +313,16 @@ func limited(b *buckets, key string, now time.Time) error {
 }
 
 // clientKey identifies the client: its IP address, or its /64 network for
-// IPv6, where one client often has a whole /64. Behind a reverse proxy
-// (trustProxy) the address comes from the last X-Forwarded-For entry, the one
-// the proxy itself added, or X-Real-IP.
-func clientKey(r *http.Request, trustProxy bool) string {
+// IPv6, where one client often has a whole /64. Behind a reverse proxy the
+// address comes from proxyHeader, whose last entry is the one the proxy
+// itself added: anything before it, and on earlier lines, the client can send.
+func clientKey(r *http.Request, proxyHeader string) string {
 	raw := ""
-	if trustProxy {
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			raw = strings.TrimSpace(xff[strings.LastIndexByte(xff, ',')+1:])
-		} else {
-			raw = strings.TrimSpace(r.Header.Get("X-Real-IP"))
-		}
+	if values := r.Header.Values(proxyHeader); proxyHeader != "" && len(values) > 0 {
+		last := values[len(values)-1]
+		raw = strings.TrimSpace(last[strings.LastIndexByte(last, ',')+1:])
 	}
-	if raw == "" {
+	if _, err := netip.ParseAddr(raw); err != nil {
 		raw = r.RemoteAddr
 		if host, _, err := net.SplitHostPort(raw); err == nil {
 			raw = host

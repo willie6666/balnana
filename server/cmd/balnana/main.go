@@ -120,6 +120,7 @@ func run() error {
 	defer cancel()
 	err = httpServer.Shutdown(shutdownCtx)
 	srv.FinishPushes()
+	srv.FinishMail()
 	return err
 }
 

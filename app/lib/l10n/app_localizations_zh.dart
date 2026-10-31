@@ -932,6 +932,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseChangedElsewhere => '其他人修改了此支出。重新加载会显示对方的版本，并丢弃你在此处的更改。';
 
   @override
+  String get expenseNewerTitle => '由较新版本创建';
+
+  @override
+  String get expenseNewerBody => '请更新 Balnana 后再修改此项。';
+
+  @override
   String get suggestedPayments => '建议转账';
 
   @override
@@ -2147,7 +2153,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组所有者可以在群组设置中删除整个群组。其他数据相关问题，请联系服务器运营者。';
+      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组所有者可以在群组设置中删除整个群组。已删除的群组和已删除费用的照片会在 30 天后彻底清除。其他数据相关问题，请联系服务器运营者。';
 
   @override
   String get privacyOperatorPolicy => '运营者的隐私政策';
@@ -2531,6 +2537,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repeatHelp => '从上方日期开始，按设定日期自动添加到群组。保存时也会添加已经过去的日期。';
 
   @override
+  String get repeatCustom => '自定义周期';
+
+  @override
   String get repeatDropReceiptTitle => '移除收据？';
 
   @override
@@ -2779,6 +2788,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPlanDefaultHelp => '用于没有其他方案的所有账号。';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '要移除 $name 吗？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '其商品也会一并移除，且无法再购买：$products';
+  }
+
+  @override
   String get adminEntitlementGranted => '由管理员提供';
 
   @override
@@ -2802,6 +2821,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => '撤销';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '要撤销 $plan 吗？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user 会立即失去此方案，且无法恢复。';
+  }
 
   @override
   String get adminEntitlementNote => '备注';
@@ -2993,6 +3022,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planPlayPending => '付款仍在处理中，完成后方案才会开始。';
 
   @override
+  String get planPlayOnHold => '上次付款失败。请到 Google Play 更新付款方式，以保留此方案。';
+
+  @override
+  String get planPlayHeldElsewhere => '这个 Google Play 账号已有订阅，可能属于另一个 Balnana 账号。';
+
+  @override
+  String get planPlayUnavailable => '无法连接 Google Play，请稍后再试。';
+
+  @override
   String get errorInvalidPurchase => 'Google Play 查不到这笔购买。';
 
   @override
@@ -3032,6 +3070,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminProductPlayIdHelp => '与 Play Console 中填写的相同。每笔付款的到期时间由 Google Play 决定，因此无需设置天数。';
+
+  @override
+  String get adminProductRemoveBody => '此商品的付款将不再计入账号。已持有的方案会保留到结束。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3959,6 +4000,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get expenseChangedElsewhere => '其他人已修改這筆支出。重新載入會顯示對方的版本，並捨棄你在此處的變更。';
+
+  @override
+  String get expenseNewerTitle => '由較新的版本建立';
+
+  @override
+  String get expenseNewerBody => '請更新 Balnana 後再修改這筆資料。';
 
   @override
   String get suggestedPayments => '建議轉帳方式';
@@ -5176,7 +5223,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組擁有者可以在群組設定中刪除整個群組。其他資料刪除需求請聯絡伺服器管理者。';
+      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組擁有者可以在群組設定中刪除整個群組。已刪除的群組和已刪除費用的照片會在 30 天後徹底清除。其他資料刪除需求請聯絡伺服器管理者。';
 
   @override
   String get privacyOperatorPolicy => '管理者的隱私權政策';
@@ -5559,6 +5606,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get repeatHelp => '從上方日期開始，在每個指定日期自動新增至群組。儲存時也會新增已過去日期的支出。';
 
   @override
+  String get repeatCustom => '自訂週期';
+
+  @override
   String get repeatDropReceiptTitle => '要移除收據嗎？';
 
   @override
@@ -5807,6 +5857,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminPlanDefaultHelp => '用於沒有其他方案的所有帳戶。';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '要移除 $name 嗎？';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return '它的商品也會一併移除，且無法再購買：$products';
+  }
+
+  @override
   String get adminEntitlementGranted => '由管理員提供';
 
   @override
@@ -5830,6 +5890,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminEntitlementRevoke => '撤銷';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '要撤銷 $plan 嗎？';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user 會立即失去這個方案，且無法復原。';
+  }
 
   @override
   String get adminEntitlementNote => '備註';
@@ -6021,6 +6091,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planPlayPending => '付款仍在處理中，完成後方案才會開始。';
 
   @override
+  String get planPlayOnHold => '上次付款失敗。請到 Google Play 更新付款方式，以保留這個方案。';
+
+  @override
+  String get planPlayHeldElsewhere => '這個 Google Play 帳號已有訂閱，可能屬於另一個 Balnana 帳號。';
+
+  @override
+  String get planPlayUnavailable => '無法連到 Google Play，請稍後再試。';
+
+  @override
   String get errorInvalidPurchase => 'Google Play 查無這筆購買。';
 
   @override
@@ -6060,4 +6139,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminProductPlayIdHelp => '與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。';
+
+  @override
+  String get adminProductRemoveBody => '這個商品的付款將不再計入帳號。已持有的方案會保留到結束。';
 }

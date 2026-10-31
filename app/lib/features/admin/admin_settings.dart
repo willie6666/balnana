@@ -1005,6 +1005,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.adminChangePassword),
       content: Form(
         key: _form,

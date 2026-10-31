@@ -952,6 +952,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Başka biri bu harcamayı değiştirdi. Yenileyince onun sürümü gösterilir ve buradaki değişiklikleriniz silinir.';
 
   @override
+  String get expenseNewerTitle => 'Daha yeni bir sürümle oluşturuldu';
+
+  @override
+  String get expenseNewerBody => 'Bu kaydı değiştirmek için Balnana\'yı güncelleyin.';
+
+  @override
   String get suggestedPayments => 'Önerilen ödemeler';
 
   @override
@@ -2216,7 +2222,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grup sahibi, grubun tamamını ayarlarından silebilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
+      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grup sahibi, grubun tamamını ayarlarından silebilir. Silinen gruplar ve silinen harcamaların fotoğrafları 30 gün sonra kalıcı olarak yok edilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
 
   @override
   String get privacyOperatorPolicy => 'İşletmecinin gizlilik politikası';
@@ -2642,6 +2648,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Harcamalar, yukarıdaki tarihten başlayarak belirlenen her tarihte gruba otomatik eklenir. Geçmiş tarihli harcamalar siz kaydedince eklenir.';
 
   @override
+  String get repeatCustom => 'Özel program';
+
+  @override
   String get repeatDropReceiptTitle => 'Fiş kaldırılsın mı?';
 
   @override
@@ -2899,6 +2908,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Başka planı olmayan her hesap için.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return '$name kaldırılsın mı?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Ürünleri de onunla birlikte kaldırılır ve artık satın alınamaz: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Yönetici tarafından verildi';
 
   @override
@@ -2922,6 +2941,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'İptal et';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return '$plan iptal edilsin mi?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user bu planı hemen kaybeder. Bu işlem geri alınamaz.';
+  }
 
   @override
   String get adminEntitlementNote => 'Not';
@@ -3122,6 +3151,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPlayPending => 'Ödemeniz hâlâ işleniyor. Plan, ödeme tamamlanınca başlar.';
 
   @override
+  String get planPlayOnHold =>
+      'Son ödemeniz başarısız oldu. Bu planı korumak için Google Play\'de ödeme yönteminizi güncelleyin.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Bu Google Play hesabının zaten bir aboneliği var ve bu abonelik başka bir Balnana hesabına ait olabilir.';
+
+  @override
+  String get planPlayUnavailable => 'Google Play\'e ulaşılamadı. Daha sonra tekrar deneyin.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play bu satın alma işlemini tanımıyor.';
 
   @override
@@ -3166,4 +3206,8 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Play Console\'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.';
 }

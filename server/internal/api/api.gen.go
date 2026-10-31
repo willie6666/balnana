@@ -15,6 +15,7 @@ import (
 
 	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -943,8 +944,11 @@ type PlanProductProvider string
 // PlayBilling What can be bought through Google Play. Left out when nothing can.
 type PlayBilling struct {
 	// AccountId Give Google this with a purchase, so that it reaches this account.
-	AccountId   string `json:"accountId"`
-	PackageName string `json:"packageName"`
+	AccountId string `json:"accountId"`
+
+	// OnHold Products whose subscription Google has held back or paused. They are still the account's, and buying again could charge twice.
+	OnHold      []string `json:"onHold"`
+	PackageName string   `json:"packageName"`
 
 	// Products Subscription product ids.
 	Products []string `json:"products"`
@@ -1231,6 +1235,9 @@ type ExpenseId = string
 // From defines model for From.
 type From = time.Time
 
+// IdempotencyKey defines model for IdempotencyKey.
+type IdempotencyKey = openapi_types.UUID
+
 // MemberId defines model for MemberId.
 type MemberId = string
 
@@ -1431,6 +1438,9 @@ type ListExpensesParamsKind string
 type CreateExpenseParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+
+	// IdempotencyKey A UUID the client makes up once for what it is creating and sends again with every retry. A key this group has seen returns what it created then, whatever else the request says, and creates nothing.
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
 // DeleteExpenseParams defines parameters for DeleteExpense.
@@ -1494,12 +1504,18 @@ type UpdateMemberParams struct {
 type CreatePaymentParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+
+	// IdempotencyKey A UUID the client makes up once for what it is creating and sends again with every retry. A key this group has seen returns what it created then, whatever else the request says, and creates nothing.
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
 // CreateRecurringExpenseParams defines parameters for CreateRecurringExpense.
 type CreateRecurringExpenseParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+
+	// IdempotencyKey A UUID the client makes up once for what it is creating and sends again with every retry. A key this group has seen returns what it created then, whatever else the request says, and creates nothing.
+	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
 // DeleteRecurringExpenseParams defines parameters for DeleteRecurringExpense.
@@ -3658,6 +3674,25 @@ func (siw *ServerInterfaceWrapper) CreateExpense(w http.ResponseWriter, r *http.
 
 	}
 
+	// ------------- Optional header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = &IdempotencyKey
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateExpense(w, r, token, params)
 	}))
@@ -4469,6 +4504,25 @@ func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.
 
 	}
 
+	// ------------- Optional header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = &IdempotencyKey
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreatePayment(w, r, token, params)
 	}))
@@ -4589,6 +4643,25 @@ func (siw *ServerInterfaceWrapper) CreateRecurringExpense(w http.ResponseWriter,
 		}
 
 		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	// ------------- Optional header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = &IdempotencyKey
 
 	}
 

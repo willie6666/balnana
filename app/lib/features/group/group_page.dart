@@ -243,7 +243,8 @@ class _GroupPageState extends ConsumerState<GroupPage> {
             ),
           );
         }
-        final missing = error is ApiException && error.isNotFound;
+        // The server's own answer: a 404 from a proxy says nothing of the group.
+        final missing = error is ApiException && error.code == 'not_found';
         body = EmptyState(
           icon: missing ? Icons.link_off : Icons.cloud_off_outlined,
           title: missing ? l10n.groupMissingTitle : l10n.groupsUnreachableTitle,

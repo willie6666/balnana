@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'offline_cache.dart';
@@ -22,8 +23,10 @@ String? get defaultServerUrl {
 
 /// Whether this build may send people to pay outside an app store. Google
 /// Play doesn't allow it, so an app shows no such link unless it is built
-/// with `--dart-define=BALNANA_EXTERNAL_PAYMENTS=true`. The web has no store.
-bool get externalPayments => kIsWeb || const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS');
+/// with `--dart-define=BALNANA_EXTERNAL_PAYMENTS=true`, and the Play build
+/// never does, whatever it is built with. The web has no store.
+bool get externalPayments =>
+    kIsWeb || (const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS') && appFlavor != 'play');
 
 /// Whether the session lives in [serverUrl]'s cookie: only in the web app it
 /// serves. A web app on another origin cannot use that cookie, so it keeps a
@@ -126,8 +129,8 @@ class ServerInfo {
       throw const FormatException('server-info is missing fields');
     }
     if (name != 'balnana') throw const FormatException('not a Balnana server');
-    final authMode = AuthMode.values.asNameMap()[mode];
-    if (authMode == null) throw FormatException('unknown authMode $mode');
+    // A mode a newer server added still has accounts to sign in to.
+    final authMode = AuthMode.values.asNameMap()[mode] ?? AuthMode.accounts;
     return ServerInfo(
       version: version,
       authMode: authMode,

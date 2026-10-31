@@ -34,6 +34,7 @@ type expenseData struct {
 	splits          map[string]int64
 	shares          map[string]string // entered weight, 4 decimals
 	foreign         *foreignData
+	clientKey       *IdempotencyKey
 }
 
 // foreignData is what an expense paid in another currency came to in it.
@@ -500,10 +501,10 @@ func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expe
 	err := tx.QueryRow(ctx, `
 		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note,
 			created_by_member, transaction_type, location_name, latitude, longitude,
-			foreign_currency, foreign_digits, foreign_amount)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) returning id::text`,
+			client_key, foreign_currency, foreign_digits, foreign_amount)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) returning id::text`,
 		append([]any{g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who,
-			d.transactionType, place, lat, lng}, foreignColumns(d.foreign)...)...).Scan(&id)
+			d.transactionType, place, lat, lng, d.clientKey}, foreignColumns(d.foreign)...)...).Scan(&id)
 	if err != nil {
 		return "", err
 	}
@@ -683,9 +684,18 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 	var out Expense
 	var g *group
 	var who *string
+	var again bool
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
 		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
+			return err
+		}
+		id, err := sentBefore(ctx, tx, "expenses", g.id, req.Params.IdempotencyKey)
+		if err != nil {
+			return err
+		}
+		if again = id != ""; again {
+			out, err = loadExpense(ctx, tx, g, id)
 			return err
 		}
 		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil, nil)
@@ -699,7 +709,8 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		id, err := insertExpense(ctx, tx, g, who, d, d.payload(g.digits))
+		d.clientKey = req.Params.IdempotencyKey
+		id, err = insertExpense(ctx, tx, g, who, d, d.payload(g.digits))
 		if err != nil {
 			return err
 		}
@@ -709,7 +720,9 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 	if err != nil {
 		return nil, err
 	}
-	s.notifyExpense(g, who, "added", out)
+	if !again {
+		s.notifyExpense(g, who, "added", out)
+	}
 	return CreateExpense201JSONResponse(out), nil
 }
 
@@ -722,9 +735,18 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 	var out Expense
 	var g *group
 	var who *string
+	var again bool
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
 		g, err = s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
+			return err
+		}
+		id, err := sentBefore(ctx, tx, "expenses", g.id, req.Params.IdempotencyKey)
+		if err != nil {
+			return err
+		}
+		if again = id != ""; again {
+			out, err = loadExpense(ctx, tx, g, id)
 			return err
 		}
 		d, err := validateExpense(ctx, tx, g, kindPayment, ExpenseInput{
@@ -751,7 +773,8 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 		}
 		payload["from"] = findMember(members, in.FromMemberId).name
 		payload["to"] = findMember(members, in.ToMemberId).name
-		id, err := insertExpense(ctx, tx, g, who, d, payload)
+		d.clientKey = req.Params.IdempotencyKey
+		id, err = insertExpense(ctx, tx, g, who, d, payload)
 		if err != nil {
 			return err
 		}
@@ -761,8 +784,25 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 	if err != nil {
 		return nil, err
 	}
-	s.notifyExpense(g, who, "added", out)
+	if !again {
+		s.notifyExpense(g, who, "added", out)
+	}
 	return CreatePayment201JSONResponse(out), nil
+}
+
+// sentBefore finds what an earlier try of a create request added, or "" when
+// there is none. The caller holds the group's lock, so two tries cannot both
+// miss it.
+func sentBefore(ctx context.Context, tx pgx.Tx, table, groupID string, key *IdempotencyKey) (string, error) {
+	if key == nil {
+		return "", nil
+	}
+	var id string
+	err := tx.QueryRow(ctx, `select id::text from `+table+` where group_id = $1 and client_key = $2`, groupID, *key).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	return id, err
 }
 
 func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (GetExpenseResponseObject, error) {
@@ -973,22 +1013,11 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 					return err
 				}
 				var amount int64
-				var photo bool
-				err := tx.QueryRow(ctx, `
-					select amount, exists (select 1 from receipts where expense_id = $1)
-					from expenses where id = $1`, id).Scan(&amount, &photo)
-				if err != nil {
+				if err := tx.QueryRow(ctx, `select amount from expenses where id = $1`, id).Scan(&amount); err != nil {
 					return err
 				}
 				if err := checkGroupTotal(ctx, tx, g.id, amount, nil); err != nil {
 					return err
-				}
-				// Deleting took its photo off the count, and something may have
-				// taken the room since.
-				if photo {
-					if err := s.checkReceiptRoom(ctx, tx, g); err != nil {
-						return err
-					}
 				}
 			}
 			changed = true

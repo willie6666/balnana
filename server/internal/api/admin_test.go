@@ -113,6 +113,21 @@ func TestAdminSetup(t *testing.T) {
 	second.errorCode(401, "GET", "/admin/settings", nil)
 }
 
+// Asking an administrator that is set up costs the server nothing.
+func TestAdminSetupDoneIsCheap(t *testing.T) {
+	c, _, _ := adminClient(t, map[string]string{})
+	setUp(c)
+	start := time.Now()
+	for range 50 {
+		if code := c.errorCode(409, "POST", "/admin/setup", AdminSetupInput{Password: "another long password"}); code != "already_set_up" {
+			t.Fatal(code)
+		}
+	}
+	if elapsed := time.Since(start); elapsed > 2*time.Second {
+		t.Fatalf("took %v: it hashed the passwords", elapsed)
+	}
+}
+
 func TestAdminSetupCodeOnUpgrade(t *testing.T) {
 	c, s, _ := adminClient(t, map[string]string{})
 	createGroup(c, "Ana") // a server that was in use before administration existed
@@ -355,4 +370,69 @@ func TestSweepExpired(t *testing.T) {
 		t.Fatalf("swept %d rows, err %v", n, err)
 	}
 	c.asAdmin(token).must(200, "GET", "/admin/settings", nil, nil)
+}
+
+func TestSweepForgetsOldPayers(t *testing.T) {
+	_, s, pool := adminClient(t, map[string]string{"BALNANA_PAYMENT_KEEP_DAYS": "30"})
+	ctx := context.Background()
+	for id, age := range map[string]string{"old": "31 days", "new": "29 days"} {
+		_, err := pool.Exec(ctx, `insert into payment_events (provider, event_id, kind, email, payer_name, amount, state, paid_at, created_at)
+			values ('kofi', $1, 'Donation', 'pay@example.test', 'Ana', 5, 'unmatched', now(), now() - $2::interval)`, id, age)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	var oldEmail, oldName, newEmail *string
+	var amount string
+	err := pool.QueryRow(ctx, `select email::text, payer_name, amount::text from payment_events where event_id = 'old'`).
+		Scan(&oldEmail, &oldName, &amount)
+	if err != nil || oldEmail != nil || oldName != nil || amount != "5.00" {
+		t.Fatalf("old payment: %v %v %q, %v", oldEmail, oldName, amount, err)
+	}
+	if err := pool.QueryRow(ctx, `select email::text from payment_events where event_id = 'new'`).Scan(&newEmail); err != nil || newEmail == nil {
+		t.Fatalf("new payment lost its email: %v", err)
+	}
+}
+
+func TestSweepKeepsPayersByDefault(t *testing.T) {
+	_, s, pool := adminClient(t, map[string]string{})
+	ctx := context.Background()
+	_, err := pool.Exec(ctx, `insert into payment_events (provider, event_id, kind, email, state, paid_at, created_at)
+		values ('kofi', 'old', 'Donation', 'pay@example.test', 'unmatched', now(), now() - interval '10 years')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	var email *string
+	if err := pool.QueryRow(ctx, `select email::text from payment_events`).Scan(&email); err != nil || email == nil {
+		t.Fatalf("email %v, %v", email, err)
+	}
+}
+
+func TestSweepTakesBatches(t *testing.T) {
+	old := sweepBatch
+	sweepBatch = 2
+	t.Cleanup(func() { sweepBatch = old })
+	_, s, pool := adminClient(t, map[string]string{})
+	ctx := context.Background()
+	for i := range 5 {
+		if _, err := pool.Exec(ctx, `insert into admin_sessions (token_hash, expires_at) values ($1, now() - interval '1 second')`, []byte{byte(i)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for range 3 {
+		_, err := pool.Exec(ctx, `insert into groups (token, name, currency, archived_at)
+			values (gen_random_uuid()::text, 'Old', 'USD', now() - interval '1 year')`)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n, err := s.sweepExpired(ctx); err != nil || n != 8 {
+		t.Fatalf("swept %d rows, err %v", n, err)
+	}
 }

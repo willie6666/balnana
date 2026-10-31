@@ -23,6 +23,7 @@ func billingServer(t *testing.T) (*client, fakeMail, *Server) {
 		"BALNANA_BILLING_ENABLED": "true",
 		"BALNANA_KOFI_TOKEN":      kofiTestToken,
 		"BALNANA_KOFI_URL":        "https://ko-fi.com/balnana",
+		"BALNANA_PUBLIC_URL":      "https://balnana.test/",
 	})
 }
 
@@ -150,9 +151,10 @@ func TestReceiptLimit(t *testing.T) {
 		(*body.Params)["limit"] != "receipts" || (*body.Params)["max"] != float64(1) {
 		t.Fatalf("%d %s", rec.Code, rec.Body)
 	}
-	// Removing one makes room, and a deleted expense's photo doesn't count.
+	// A deleted expense keeps its photo, and the photo its place: otherwise
+	// deleting and restoring would go past the limit for free.
 	c.must(204, "DELETE", "/g/"+g.Token+"/expenses/"+first.Id, nil, nil)
-	if rec := c.upload(path(second), "image/png", photo); rec.Code != http.StatusOK {
+	if rec := c.upload(path(second), "image/png", photo); rec.Code != http.StatusPaymentRequired {
 		t.Fatalf("%d %s", rec.Code, rec.Body)
 	}
 	var plan GroupPlan
@@ -160,12 +162,34 @@ func TestReceiptLimit(t *testing.T) {
 	if plan.Receipts.Used != 1 || *plan.Receipts.Limit != 1 {
 		t.Fatalf("%+v", plan)
 	}
-	// Bringing the deleted one back would be one too many, until there's room.
-	if code := c.errorCode(402, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil); code != "plan_limit" {
-		t.Fatal(code)
+	if rec := c.do("GET", "/g/"+g.Token+"/expenses/"+first.Id+"/receipt", nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("a deleted expense's photo: %d", rec.Code)
 	}
-	c.must(204, "DELETE", "/g/"+g.Token+"/expenses/"+second.Id, nil, nil)
-	c.must(200, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil, nil)
+	var back Expense
+	c.must(200, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil, &back)
+	if !back.HasReceipt {
+		t.Fatal("the photo stays with the expense")
+	}
+
+	// Once the photo is gone for good there is room again.
+	c.must(204, "DELETE", "/g/"+g.Token+"/expenses/"+first.Id, nil, nil)
+	if _, err := s.sweepExpired(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if rec := c.upload(path(second), "image/png", photo); rec.Code != http.StatusPaymentRequired {
+		t.Fatalf("too soon: %d %s", rec.Code, rec.Body)
+	}
+	exec(t, s, `update expenses set deleted_at = $2 where id = $1`, first.Id, time.Now().Add(-receiptKeep-time.Hour))
+	if _, err := s.sweepExpired(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if rec := c.upload(path(second), "image/png", photo); rec.Code != http.StatusOK {
+		t.Fatalf("%d %s", rec.Code, rec.Body)
+	}
+	c.must(200, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil, &back)
+	if back.HasReceipt {
+		t.Fatal("the photo was swept")
+	}
 }
 
 func TestRecurringLimit(t *testing.T) {
@@ -280,7 +304,7 @@ func TestSponsor(t *testing.T) {
 		t.Fatalf("%+v", plan)
 	}
 
-	// Leaving ends it, without anything to clean up.
+	// A member gone without the sponsor being cleared counts for nothing.
 	var ended GroupPlan
 	ben.must(200, "DELETE", base+"/sponsor", nil, &ended)
 	if ended.SponsorMemberId != nil {
@@ -651,7 +675,8 @@ func TestKofiPaymentOutlivesItsPlan(t *testing.T) {
 
 func TestDeletingAPlanShowsItsWaitingPayments(t *testing.T) {
 	c, s, _ := adminClient(t, map[string]string{
-		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_KOFI_TOKEN": kofiTestToken,
+		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_PUBLIC_URL": "https://balnana.test/",
+		"BALNANA_KOFI_TOKEN": kofiTestToken, "BALNANA_KOFI_URL": "https://ko-fi.com/balnana",
 	})
 	admin := c.asAdmin(setUp(c))
 	kofiProducts(t, s)
@@ -772,7 +797,8 @@ func TestAdminPlans(t *testing.T) {
 
 func TestAdminAssignsPayment(t *testing.T) {
 	c, s, _ := adminClient(t, map[string]string{
-		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_KOFI_TOKEN": kofiTestToken,
+		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_PUBLIC_URL": "https://balnana.test/",
+		"BALNANA_KOFI_TOKEN": kofiTestToken, "BALNANA_KOFI_URL": "https://ko-fi.com/balnana",
 	})
 	admin := c.asAdmin(setUp(c))
 	u := register(c, "ana@example.test", "Ana")
@@ -817,5 +843,77 @@ func TestDeletedAccountKeepsPayments(t *testing.T) {
 	state, who := paymentState(t, s, "a")
 	if state != "applied" || who != nil {
 		t.Fatal(state, who)
+	}
+}
+
+// Leaving a group ends sponsoring it for good: coming back by the link would
+// otherwise pay for it again past the plan's limit.
+func TestSponsorDoesNotComeBackWithItsMember(t *testing.T) {
+	c, _, s := billingServer(t)
+	register(c, "ana@example.test", "Ana")
+	ben := c.another()
+	bu := register(ben, "ben@example.test", "Ben")
+	grant(t, s, bu.Id, "plus")
+	var g Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	base := "/g/" + g.Token
+	ben.must(200, "POST", base+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+	ben.must(200, "PUT", base+"/sponsor", nil, nil)
+
+	ben.must(204, "DELETE", base+"/members/"+g.Members[1].Id, nil, nil)
+	ben.must(200, "POST", base+"/join", JoinInput{}, nil)
+	var plan GroupPlan
+	c.must(200, "GET", base+"/plan", nil, &plan)
+	if plan.PlanName != "Free" || plan.SponsorMemberId != nil {
+		t.Fatalf("%+v", plan)
+	}
+	if p := myPlanOf(ben); p.SponsoredGroups.Used != 0 {
+		t.Fatalf("%+v", p)
+	}
+}
+
+// Taking over a group nobody with an account is left in makes the joiner its
+// owner, which counts against their plan as creating one does.
+func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
+	c, _, s := billingServer(t)
+	register(c, "ana@example.test", "Ana")
+	var g Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	path := "/g/" + g.Token
+	c.must(204, "DELETE", path+"/members/"+g.Members[0].Id, nil, nil)
+
+	exec(t, s, `update plans set own_groups = 1 where is_default`)
+	ben := c.another()
+	register(ben, "ben@example.test", "Ben")
+	ben.must(201, "POST", "/groups", GroupCreate{Name: "Mine", Currency: "EUR", Members: []string{"Ben"}}, nil)
+	if code := ben.errorCode(402, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}); code != "plan_limit" {
+		t.Fatalf("code %q", code)
+	}
+
+	// Below the limit it joins, and owns it.
+	exec(t, s, `update plans set own_groups = 2 where is_default`)
+	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+	if p := myPlanOf(ben); p.OwnGroups.Used != 2 {
+		t.Fatalf("%+v", p)
+	}
+}
+
+// Time paid for once stays on top of a membership that renews on schedule.
+func TestMembershipKeepsOneOffTime(t *testing.T) {
+	c, _, s := billingServer(t)
+	kofiProducts(t, s)
+	register(c, "ana@example.test", "Ana")
+	code := *myPlanOf(c).PaymentCode
+	ago := func(days int) string {
+		return time.Now().AddDate(0, 0, -days).UTC().Truncate(time.Second).Format(time.RFC3339)
+	}
+	// Paid up to tomorrow, then 30 days on top of that by a one-off.
+	c.kofiMonth("first", map[string]any{"timestamp": ago(34), "message": code})
+	c.kofiOK(map[string]any{"message_id": "gift", "amount": "4.00", "message": code})
+	c.kofiMonth("second", map[string]any{"timestamp": ago(0)})
+	p := myPlanOf(c)
+	want := time.Now().AddDate(0, 0, 65)
+	if p.ExpiresAt == nil || p.ExpiresAt.Sub(want).Abs() > time.Minute {
+		t.Fatalf("%v, want %v", p.ExpiresAt, want)
 	}
 }

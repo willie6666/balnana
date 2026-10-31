@@ -955,6 +955,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Orang lain mengubah pengeluaran ini. Muat ulang untuk melihat versi mereka dan membuang perubahan Anda di sini.';
 
   @override
+  String get expenseNewerTitle => 'Dibuat dengan versi yang lebih baru';
+
+  @override
+  String get expenseNewerBody => 'Perbarui Balnana untuk mengubah entri ini.';
+
+  @override
   String get suggestedPayments => 'Pembayaran yang disarankan';
 
   @override
@@ -2224,7 +2230,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Pemilik grup dapat menghapus seluruh grup dari setelannya. Untuk hal lain, hubungi pengelola server.';
+      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Pemilik grup dapat menghapus seluruh grup dari setelannya. Grup yang dihapus dan foto pengeluaran yang dihapus akan dihapus permanen setelah 30 hari. Untuk hal lain, hubungi pengelola server.';
 
   @override
   String get privacyOperatorPolicy => 'Kebijakan privasi pengelola';
@@ -2640,6 +2646,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Pengeluaran ditambahkan ke grup secara otomatis pada setiap tanggal, mulai dari tanggal di atas. Tanggal yang sudah lewat akan ditambahkan saat Anda menyimpan.';
 
   @override
+  String get repeatCustom => 'Jadwal khusus';
+
+  @override
   String get repeatDropReceiptTitle => 'Hapus struk?';
 
   @override
@@ -2899,6 +2908,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Untuk setiap akun tanpa paket lain.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Hapus $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Produknya ikut terhapus dan tidak dapat dibeli lagi: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Diberikan oleh administrator';
 
   @override
@@ -2922,6 +2941,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Cabut';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Cabut $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user langsung kehilangan paket ini. Tindakan ini tidak dapat dibatalkan.';
+  }
 
   @override
   String get adminEntitlementNote => 'Catatan';
@@ -3122,6 +3151,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get planPlayPending => 'Pembayaran Anda masih diproses. Paket dimulai setelah selesai.';
 
   @override
+  String get planPlayOnHold =>
+      'Pembayaran terakhir Anda gagal. Perbarui metode pembayaran di Google Play agar paket ini tetap aktif.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'Akun Google Play ini sudah memiliki langganan, yang mungkin milik akun Balnana lain.';
+
+  @override
+  String get planPlayUnavailable => 'Tidak dapat menghubungi Google Play. Coba lagi nanti.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play tidak mengenali pembelian ini.';
 
   @override
@@ -3166,4 +3206,8 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.';
 }

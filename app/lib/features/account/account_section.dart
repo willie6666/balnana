@@ -199,12 +199,19 @@ Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   final account = ref.read(currentAccountProvider).value;
   if (account == null) return;
   final who = ref.read(identityProvider);
+  // Only someone paying through Google Play has to cancel there.
+  var play = false;
+  if (ref.read(serverInfoProvider).value?.billing ?? false) {
+    try {
+      play = (await ref.read(balnanaApiProvider)?.myPlan())?.play?.held.isNotEmpty ?? false;
+    } on ApiException {
+      play = true; // Better said once too often than missed.
+    }
+    if (!context.mounted) return;
+  }
   final deleted = await showDialog<bool>(
     context: context,
-    builder: (_) => _DeleteAccountDialog(
-      askPassword: account.hasPassword,
-      billing: ref.read(serverInfoProvider).value?.billing ?? false,
-    ),
+    builder: (_) => _DeleteAccountDialog(askPassword: account.hasPassword, play: play),
   );
   if (deleted != true || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -263,6 +270,7 @@ class _LinkDialogState extends ConsumerState<_LinkDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(l10n.accountOAuthAddTitle(widget.provider.name)),
       content: Form(
         key: _form,
@@ -306,10 +314,10 @@ class _ConfirmPassword extends StatelessWidget {
 }
 
 class _DeleteAccountDialog extends ConsumerStatefulWidget {
-  const _DeleteAccountDialog({required this.askPassword, required this.billing});
+  const _DeleteAccountDialog({required this.askPassword, required this.play});
 
   final bool askPassword;
-  final bool billing;
+  final bool play;
 
   @override
   ConsumerState<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -351,6 +359,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
+      scrollable: true,
       icon: const Icon(Icons.delete_forever_outlined),
       title: Text(l10n.accountDeleteTitle),
       content: Form(
@@ -360,7 +369,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.accountDeleteBody),
-            if (widget.billing) ...[
+            if (widget.play) ...[
               const SizedBox(height: BSpace.s16),
               Text(l10n.accountDeletePlayNote),
             ],
@@ -453,6 +462,7 @@ class _EmailDialogState extends ConsumerState<_EmailDialog> {
     final l10n = context.l10n;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     return AlertDialog(
+      scrollable: true,
       title: Text(widget.account.email == null ? l10n.accountEmailAdd : l10n.accountEmailChange),
       content: AutofillGroup(
         child: Form(
@@ -553,6 +563,7 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
+      scrollable: true,
       title: Text(widget.first ? l10n.passwordSet : l10n.passwordChange),
       content: AutofillGroup(
         child: Form(

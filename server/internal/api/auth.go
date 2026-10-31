@@ -639,8 +639,14 @@ func (s *Server) ChangePassword(ctx context.Context, req ChangePasswordRequestOb
 		if err := lockAccount(ctx, tx, u, checked); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `update users set password_hash = $2 where id = $1`, u.id, hash); err != nil {
+		// Whoever had the old password may have set something going with it.
+		if _, err := tx.Exec(ctx, `update users set password_hash = $2, pending_email = null where id = $1`, u.id, hash); err != nil {
 			return err
+		}
+		for _, table := range []string{"email_tokens", "oauth_codes", "oauth_link_tickets", "oauth_logins"} {
+			if _, err := tx.Exec(ctx, `delete from `+table+` where user_id = $1`, u.id); err != nil {
+				return err
+			}
 		}
 		_, err := tx.Exec(ctx, `delete from sessions where user_id = $1 and id <> $2`, u.id, u.sessionID)
 		return err

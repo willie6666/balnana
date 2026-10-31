@@ -15,6 +15,13 @@ void main() {
     expect(AmountFormatter(0).formatEditUpdate(_v('12'), _v('12.')).text, '12');
   });
 
+  test('AmountFormatter takes the digits of an Arabic keyboard', () {
+    final f = AmountFormatter(2);
+    expect(f.formatEditUpdate(_v(''), _v('١٢٫٥')).text, '12.5');
+    expect(f.formatEditUpdate(_v(''), _v('۱۲')).text, '12');
+    expect(f.formatEditUpdate(_v('1.23'), _v('1.23٤')).text, '1.23');
+  });
+
   test('parseInput reads partial and localized input', () {
     expect(parseInput('', 2), isNull);
     expect(parseInput('.', 2), isNull);

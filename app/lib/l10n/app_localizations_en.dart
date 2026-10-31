@@ -949,6 +949,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Someone else changed this expense. Reloading shows their version and drops your changes here.';
 
   @override
+  String get expenseNewerTitle => 'Made with a newer version';
+
+  @override
+  String get expenseNewerBody => 'Update Balnana to change this entry.';
+
+  @override
   String get suggestedPayments => 'Suggested payments';
 
   @override
@@ -2207,7 +2213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. For anything else, contact the server\'s operator.';
+      'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.';
 
   @override
   String get privacyOperatorPolicy => 'The operator\'s privacy policy';
@@ -2628,6 +2634,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Added to the group automatically on each date, starting from the date above. Dates already past are added when you save.';
 
   @override
+  String get repeatCustom => 'Custom schedule';
+
+  @override
   String get repeatDropReceiptTitle => 'Remove the receipt?';
 
   @override
@@ -2885,6 +2894,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPlanDefaultHelp => 'For every account without another plan.';
 
   @override
+  String adminPlanRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String adminPlanRemoveBody(String products) {
+    return 'Its products go with it and can no longer be bought: $products';
+  }
+
+  @override
   String get adminEntitlementGranted => 'Given by an administrator';
 
   @override
@@ -2908,6 +2927,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminEntitlementRevoke => 'Revoke';
+
+  @override
+  String adminEntitlementRevokeTitle(String plan) {
+    return 'Revoke $plan?';
+  }
+
+  @override
+  String adminEntitlementRevokeBody(String user) {
+    return '$user loses this plan right away. This can\'t be undone.';
+  }
 
   @override
   String get adminEntitlementNote => 'Note';
@@ -3109,6 +3138,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your payment is still being processed. The plan starts once it goes through.';
 
   @override
+  String get planPlayOnHold =>
+      'Your last payment failed. Update your payment method on Google Play to keep this plan.';
+
+  @override
+  String get planPlayHeldElsewhere =>
+      'This Google Play account already has a subscription, which may belong to another Balnana account.';
+
+  @override
+  String get planPlayUnavailable => 'Couldn\'t reach Google Play. Try again later.';
+
+  @override
   String get errorInvalidPurchase => 'Google Play doesn\'t recognize this purchase.';
 
   @override
@@ -3153,4 +3193,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'As written in Play Console. Google Play says when each payment ends, so there are no days to set.';
+
+  @override
+  String get adminProductRemoveBody =>
+      'Payments for it stop being applied to accounts. Plans already held stay until they end.';
 }

@@ -168,11 +168,20 @@ func (s *Server) AdminSetup(ctx context.Context, req AdminSetupRequestObject) (A
 	if err := validPassword(in.Password); err != nil {
 		return nil, err
 	}
-	hash := hashPassword(in.Password)
+	// Asked before anything is hashed: on a server long set up, this would
+	// otherwise be free slow work for anyone.
+	var done bool
+	if err := s.db.QueryRow(ctx, `select password_hash is not null from admin`).Scan(&done); err != nil {
+		return nil, err
+	}
+	if done {
+		return nil, conflict("already_set_up")
+	}
 	release, err := s.holdGuess(ctx, "admin")
 	if err != nil {
 		return nil, err
 	}
+	hash := hashPassword(in.Password)
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return nil, err
