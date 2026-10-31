@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
@@ -129,6 +130,13 @@ class _GroupPageState extends ConsumerState<GroupPage> {
         });
       }
     }, fireImmediately: true);
+    _warnRefresh(groupProvider(widget.token));
+    _warnRefresh(balancesProvider(widget.token));
+    // A list for another filter says so in its place.
+    _warnRefresh(
+      expensesProvider(widget.token),
+      only: (list) => list.filter == ref.read(expenseFilterProvider(widget.token)),
+    );
     // A new session reloads everything already; follow the group as that account.
     ref.listenManual(apiProvider, (_, _) {
       _stopLive();
@@ -145,6 +153,27 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     _stopLive();
     _reload?.cancel();
     super.dispose();
+  }
+
+  /// Tells when a reload of [provider] failed and what it had stays shown. The
+  /// offline bar tells of a lost connection.
+  void _warnRefresh<T>(ProviderListenable<AsyncValue<T>> provider, {bool Function(T value)? only}) {
+    ref.listenManual(provider, (_, next) {
+      final shown = next.current(ref.read(identityProvider));
+      final error = shown.error;
+      if (!_here || next.isLoading || !shown.hasValue || error == null) return;
+      if (error is ApiException && error.code == ApiException.network) return;
+      if (only?.call(shown.requireValue) == false) return;
+      final l10n = context.l10n;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.refreshFailed),
+            action: SnackBarAction(label: l10n.commonRetry, onPressed: () => refreshGroup(ref, widget.token)),
+          ),
+        );
+    });
   }
 
   StreamSubscription<LiveEvent>? _live;

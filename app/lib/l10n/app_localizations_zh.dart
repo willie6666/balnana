@@ -3081,6 +3081,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminProductRemoveBody => '此商品的付款将不再计入账号。已持有的方案会保留到结束。';
+
+  @override
+  String get errorRecentSignIn => '为了安全，请先退出登录再重新登录，然后再试一次。';
+
+  @override
+  String get errorTooManyGroups => '一次的群组太多了。';
+
+  @override
+  String get errorInvalidTimeZone => '无法识别此设备的时区。';
+
+  @override
+  String get errorInvalidColor => '无法使用这个颜色。';
+
+  @override
+  String get errorPushOff => '此服务器不发送通知。';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return '之前的尝试已记录 $amount，这次没有新增。';
+  }
+
+  @override
+  String get refreshFailed => '无法更新，显示的内容可能不是最新的。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6158,4 +6181,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminProductRemoveBody => '這個商品的付款將不再計入帳號。已持有的方案會保留到結束。';
+
+  @override
+  String get errorRecentSignIn => '為了安全，請先登出再重新登入，然後再試一次。';
+
+  @override
+  String get errorTooManyGroups => '一次的群組太多了。';
+
+  @override
+  String get errorInvalidTimeZone => '無法辨識此裝置的時區。';
+
+  @override
+  String get errorInvalidColor => '無法使用這個顏色。';
+
+  @override
+  String get errorPushOff => '此伺服器不傳送通知。';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return '之前的嘗試已記錄 $amount，這次沒有新增。';
+  }
+
+  @override
+  String get refreshFailed => '無法更新，顯示的內容可能不是最新的。';
 }

@@ -38,6 +38,10 @@ jobs:
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
+      # The generated API must be what the OpenAPI file says.
+      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1
+      - run: go generate ./internal/api
+      - run: git diff --exit-code internal/api/api.gen.go
       - run: go vet ./...
       - run: go test -race ./...
 

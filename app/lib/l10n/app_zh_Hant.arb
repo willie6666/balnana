@@ -908,5 +908,12 @@
   "adminProductProvider": "付款方式",
   "adminProductPlayId": "產品 ID",
   "adminProductPlayIdHelp": "與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。",
-  "adminProductRemoveBody": "這個商品的付款將不再計入帳號。已持有的方案會保留到結束。"
+  "adminProductRemoveBody": "這個商品的付款將不再計入帳號。已持有的方案會保留到結束。",
+  "errorRecentSignIn": "為了安全，請先登出再重新登入，然後再試一次。",
+  "errorTooManyGroups": "一次的群組太多了。",
+  "errorInvalidTimeZone": "無法辨識此裝置的時區。",
+  "errorInvalidColor": "無法使用這個顏色。",
+  "errorPushOff": "此伺服器不傳送通知。",
+  "paymentRecordedEarlier": "之前的嘗試已記錄 {amount}，這次沒有新增。",
+  "refreshFailed": "無法更新，顯示的內容可能不是最新的。"
 }

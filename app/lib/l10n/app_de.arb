@@ -908,5 +908,12 @@
   "adminProductProvider": "Bezahlt über",
   "adminProductPlayId": "Produkt-ID",
   "adminProductPlayIdHelp": "Wie in der Play Console geschrieben. Google Play bestimmt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.",
-  "adminProductRemoveBody": "Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv."
+  "adminProductRemoveBody": "Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.",
+  "errorRecentSignIn": "Melde dich zu deiner Sicherheit ab und wieder an und versuche es dann noch einmal.",
+  "errorTooManyGroups": "Das sind zu viele Gruppen auf einmal.",
+  "errorInvalidTimeZone": "Die Zeitzone dieses Geräts wird nicht erkannt.",
+  "errorInvalidColor": "Diese Farbe kann nicht verwendet werden.",
+  "errorPushOff": "Dieser Server sendet keine Benachrichtigungen.",
+  "paymentRecordedEarlier": "Ein früherer Versuch hat bereits {amount} erfasst. Es wurde nichts Neues hinzugefügt.",
+  "refreshFailed": "Aktualisierung fehlgeschlagen. Die Angaben sind möglicherweise veraltet."
 }

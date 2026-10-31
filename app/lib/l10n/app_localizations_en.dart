@@ -3205,4 +3205,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Payments for it stop being applied to accounts. Plans already held stay until they end.';
+
+  @override
+  String get errorRecentSignIn => 'For your security, sign out and sign in again, then try once more.';
+
+  @override
+  String get errorTooManyGroups => 'That\'s too many groups at once.';
+
+  @override
+  String get errorInvalidTimeZone => 'This device\'s time zone isn\'t recognized.';
+
+  @override
+  String get errorInvalidColor => 'That color can\'t be used.';
+
+  @override
+  String get errorPushOff => 'This server doesn\'t send notifications.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'An earlier try had already recorded $amount. Nothing new was added.';
+  }
+
+  @override
+  String get refreshFailed => 'Couldn\'t update. This may be out of date.';
 }

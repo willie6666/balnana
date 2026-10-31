@@ -71,27 +71,15 @@ class AccountSection extends ConsumerWidget {
     await startOAuth(ref, provider, '/settings', link: ticket);
   }
 
-  Future<void> _unlink(BuildContext context, WidgetRef ref, OAuthProvider provider) async {
+  Future<void> _unlink(BuildContext context, WidgetRef ref, OAuthProvider provider, User account) async {
     final l10n = context.l10n;
-    final remove = await showDialog<bool>(
+    final removed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.accountOAuthRemoveTitle(provider.name)),
-        content: Text(l10n.accountOAuthRemoveBody(provider.name)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.commonCancel)),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.accountOAuthRemove)),
-        ],
-      ),
+      builder: (context) => _UnlinkDialog(provider: provider, askPassword: account.hasPassword),
     );
-    if (remove != true || !context.mounted) return;
-    try {
-      await ref.read(balnanaApiProvider)!.unlinkOAuth(provider.id);
-      ref.invalidate(myOAuthProvider);
-      if (context.mounted) _snack(context, l10n.accountOAuthRemoved(provider.name));
-    } on ApiException catch (e) {
-      if (context.mounted) _snack(context, errorMessage(l10n, e));
-    }
+    if (removed != true) return;
+    ref.invalidate(myOAuthProvider);
+    if (context.mounted) _snack(context, l10n.accountOAuthRemoved(provider.name));
   }
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
@@ -172,7 +160,7 @@ class AccountSection extends ConsumerWidget {
                       title: provider.name,
                       subtitle: l10n.accountOAuthLinked,
                       trailing: const Icon(Icons.link_off),
-                      onTap: () => _unlink(context, ref, provider),
+                      onTap: () => _unlink(context, ref, provider, account),
                     )
                   : GroupedTile(
                       icon: Icons.add_link,
@@ -390,6 +378,81 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
           onPressed: _busy ? null : _delete,
           child: Text(l10n.accountDeleteAction),
         ),
+      ],
+    );
+  }
+}
+
+class _UnlinkDialog extends ConsumerStatefulWidget {
+  const _UnlinkDialog({required this.provider, required this.askPassword});
+
+  final OAuthProvider provider;
+  final bool askPassword;
+
+  @override
+  ConsumerState<_UnlinkDialog> createState() => _UnlinkDialogState();
+}
+
+class _UnlinkDialogState extends ConsumerState<_UnlinkDialog> {
+  final _form = GlobalKey<FormState>();
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _remove() async {
+    if (_busy || !_form.currentState!.validate()) return;
+    final l10n = context.l10n;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(balnanaApiProvider)!
+          .unlinkOAuth(widget.provider.id, password: widget.askPassword ? _password.text : null);
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = errorMessage(l10n, e);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final name = widget.provider.name;
+    return AlertDialog(
+      scrollable: true,
+      title: Text(l10n.accountOAuthRemoveTitle(name)),
+      content: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.accountOAuthRemoveBody(name)),
+            if (widget.askPassword) ...[
+              const SizedBox(height: BSpace.s16),
+              _ConfirmPassword(controller: _password, error: _error, onSubmitted: _remove, autofocus: true),
+            ] else if (_error case final error?) ...[
+              const SizedBox(height: BSpace.s16),
+              Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+        TextButton(onPressed: _busy ? null : _remove, child: Text(l10n.accountOAuthRemove)),
       ],
     );
   }

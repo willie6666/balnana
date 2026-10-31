@@ -383,3 +383,45 @@ func TestImportInputLimits(t *testing.T) {
 		t.Fatalf("large weights: %q %+v", problem, in)
 	}
 }
+
+// The sign of a row says which way its money went.
+func TestImportSigns(t *testing.T) {
+	ids := map[string]string{"Ana": "a", "Ben": "b"}
+	entry := func(kind string, payers, split []importer.Part) importer.Entry {
+		return importer.Entry{Type: kind, Currency: "USD", Payers: payers, ForWhom: split}
+	}
+	ana := func(amount string) importer.Part { return importer.Part{Name: "Ana", Amount: amount} }
+	ben := func(amount string) importer.Part { return importer.Part{Name: "Ben", Amount: amount} }
+
+	// Both signs in a split say nothing a split can: no weights fit them.
+	e := entry("expense", []importer.Part{ana("100")}, []importer.Part{ana("-20"), ben("120")})
+	if _, in, problem := importInput(e, "USD", 2, "Untitled", ids, nil); problem != "amount" {
+		t.Errorf("mixed split: %q %+v", problem, in)
+	}
+
+	// A whole row of negatives is a refund.
+	e = entry("expense", []importer.Part{ana("-12")}, []importer.Part{ana("-6"), ben("-6")})
+	_, in, problem := importInput(e, "USD", 2, "Untitled", ids, nil)
+	if problem != "" || !importReceived(e, "USD", 2) || len(in.Payers) != 2 || in.Splits[0].MemberId != "a" {
+		t.Errorf("refund: %q %+v", problem, in)
+	}
+
+	// Income came in, and a negative income went back out.
+	e = entry("income", []importer.Part{ana("12")}, []importer.Part{ana("6"), ben("6")})
+	_, in, problem = importInput(e, "USD", 2, "Untitled", ids, nil)
+	if problem != "" || !importReceived(e, "USD", 2) || len(in.Payers) != 2 || in.Splits[0].MemberId != "a" {
+		t.Errorf("income: %q %+v", problem, in)
+	}
+	e = entry("income", []importer.Part{ana("-12")}, []importer.Part{ana("-6"), ben("-6")})
+	_, in, problem = importInput(e, "USD", 2, "Untitled", ids, nil)
+	if problem != "" || importReceived(e, "USD", 2) || len(in.Payers) != 1 || in.Payers[0].MemberId != "a" || len(in.Splits) != 2 {
+		t.Errorf("negative income: %q %+v", problem, in)
+	}
+
+	// What one person paid is what the amounts of their name come to.
+	e = entry("expense", []importer.Part{ana("150"), ana("-50")}, []importer.Part{ben("100")})
+	_, in, problem = importInput(e, "USD", 2, "Untitled", ids, nil)
+	if problem != "" || importReceived(e, "USD", 2) || in.Payers[0].Amount != "100.00" {
+		t.Errorf("repeated name: %q %+v", problem, in)
+	}
+}

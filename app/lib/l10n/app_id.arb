@@ -908,5 +908,12 @@
   "adminProductProvider": "Dibayar lewat",
   "adminProductPlayId": "ID produk",
   "adminProductPlayIdHelp": "Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.",
-  "adminProductRemoveBody": "Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir."
+  "adminProductRemoveBody": "Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.",
+  "errorRecentSignIn": "Demi keamanan, keluar lalu masuk lagi, kemudian coba sekali lagi.",
+  "errorTooManyGroups": "Terlalu banyak grup sekaligus.",
+  "errorInvalidTimeZone": "Zona waktu perangkat ini tidak dikenali.",
+  "errorInvalidColor": "Warna itu tidak dapat digunakan.",
+  "errorPushOff": "Server ini tidak mengirim notifikasi.",
+  "paymentRecordedEarlier": "Percobaan sebelumnya sudah mencatat {amount}. Tidak ada yang ditambahkan.",
+  "refreshFailed": "Tidak dapat memperbarui. Ini mungkin sudah tidak terbaru."
 }

@@ -3262,4 +3262,28 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.';
+
+  @override
+  String get errorRecentSignIn =>
+      'Melde dich zu deiner Sicherheit ab und wieder an und versuche es dann noch einmal.';
+
+  @override
+  String get errorTooManyGroups => 'Das sind zu viele Gruppen auf einmal.';
+
+  @override
+  String get errorInvalidTimeZone => 'Die Zeitzone dieses Geräts wird nicht erkannt.';
+
+  @override
+  String get errorInvalidColor => 'Diese Farbe kann nicht verwendet werden.';
+
+  @override
+  String get errorPushOff => 'Dieser Server sendet keine Benachrichtigungen.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Ein früherer Versuch hat bereits $amount erfasst. Es wurde nichts Neues hinzugefügt.';
+  }
+
+  @override
+  String get refreshFailed => 'Aktualisierung fehlgeschlagen. Die Angaben sind möglicherweise veraltet.';
 }

@@ -335,8 +335,12 @@ func (s *Server) UnlinkOAuth(ctx context.Context, req UnlinkOAuthRequestObject) 
 			others = append(others, p.ID)
 		}
 	}
+	checked, err := s.confirmPassword(ctx, u, req.Body.Password)
+	if err != nil {
+		return nil, err
+	}
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if err := lockUsersTable(ctx, tx); err != nil {
+		if err := lockAccount(ctx, tx, u, checked); err != nil {
 			return err
 		}
 		// Some way in must be left: a password, while passwords sign in, or
@@ -345,7 +349,7 @@ func (s *Server) UnlinkOAuth(ctx context.Context, req UnlinkOAuthRequestObject) 
 		err := tx.QueryRow(ctx, `
 			select password_hash is not null,
 			       exists (select 1 from oauth_identities where user_id = $1 and provider = any($2))
-			from users where id = $1 for update`, u.id, others).Scan(&password, &other)
+			from users where id = $1`, u.id, others).Scan(&password, &other)
 		if err != nil {
 			return err
 		}

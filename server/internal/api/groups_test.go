@@ -778,3 +778,42 @@ func TestDeleteGroupArchives(t *testing.T) {
 		t.Fatalf("kept %d, err %v", kept, err)
 	}
 }
+
+// A group brought back while the sweep is about to delete it stays.
+func TestSweepSparesRestoredGroup(t *testing.T) {
+	c, s, pool := adminClient(t, map[string]string{})
+	g := createGroup(c, "Ana")
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `update groups set archived_at = now() - $1::interval`, "31 days"); err != nil {
+		t.Fatal(err)
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(ctx)
+	if _, err := tx.Exec(ctx, `update groups set archived_at = null where token = $1`, g.Token); err != nil {
+		t.Fatal(err)
+	}
+	swept := make(chan error, 1)
+	go func() {
+		_, err := s.sweepExpired(ctx)
+		swept <- err
+	}()
+	// The sweep has seen the group as archived and waits for the row.
+	for waiting := 0; waiting == 0; {
+		err := pool.QueryRow(ctx, `
+			select count(*) from pg_stat_activity
+			where datname = current_database() and wait_event_type = 'Lock' and query like '%delete from groups%'`).Scan(&waiting)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-swept; err != nil {
+		t.Fatal(err)
+	}
+	c.must(200, "GET", "/g/"+g.Token, nil, nil)
+}

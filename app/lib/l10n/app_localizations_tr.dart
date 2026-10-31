@@ -3218,4 +3218,28 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.';
+
+  @override
+  String get errorRecentSignIn =>
+      'Güvenliğiniz için çıkış yapıp tekrar giriş yapın, ardından yeniden deneyin.';
+
+  @override
+  String get errorTooManyGroups => 'Bir seferde çok fazla grup var.';
+
+  @override
+  String get errorInvalidTimeZone => 'Bu cihazın saat dilimi tanınmıyor.';
+
+  @override
+  String get errorInvalidColor => 'Bu renk kullanılamıyor.';
+
+  @override
+  String get errorPushOff => 'Bu sunucu bildirim göndermiyor.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Önceki bir deneme $amount tutarını zaten kaydetmişti. Yeni bir şey eklenmedi.';
+  }
+
+  @override
+  String get refreshFailed => 'Güncellenemedi. Bu bilgiler eski olabilir.';
 }

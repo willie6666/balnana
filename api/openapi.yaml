@@ -902,7 +902,8 @@ paths:
         add up; ownership passes to the longest-standing other account. Groups
         no other account can reach afterwards (no other account member, and
         not open by link) are deleted. 403 `wrong_password` when the account
-        has a password and it is not given.
+        has a password and it is not given, `recent_sign_in_required` when it
+        has none and signed in too long ago.
       requestBody:
         required: true
         content:
@@ -948,7 +949,8 @@ paths:
       description: >-
         Returns a ticket for /auth/oauth/{provider}/start's `link`, good for a
         few minutes. 403 `wrong_password` when the account has a password and
-        it is not given.
+        it is not given, `recent_sign_in_required` when it has none and signed
+        in too long ago.
       requestBody:
         required: true
         content:
@@ -969,6 +971,15 @@ paths:
       summary: Stop signing in with a provider
       description: >-
         409 `last_sign_in_method` when the account would have no way in left.
+        403 `wrong_password` when the account has a password and it is not
+        given, `recent_sign_in_required` when it has none and signed in too
+        long ago.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthLinkInput"
       responses:
         "204":
           description: Removed

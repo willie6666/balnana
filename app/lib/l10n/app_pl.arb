@@ -908,5 +908,12 @@
   "adminProductProvider": "Płatność przez",
   "adminProductPlayId": "Identyfikator produktu",
   "adminProductPlayIdHelp": "Tak jak w Play Console. Google Play określa, kiedy kończy się każda płatność, więc nie ma dni do ustawienia.",
-  "adminProductRemoveBody": "Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu."
+  "adminProductRemoveBody": "Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu.",
+  "errorRecentSignIn": "Dla bezpieczeństwa wyloguj się, zaloguj ponownie i spróbuj jeszcze raz.",
+  "errorTooManyGroups": "To zbyt wiele grup naraz.",
+  "errorInvalidTimeZone": "Nie rozpoznano strefy czasowej tego urządzenia.",
+  "errorInvalidColor": "Nie można użyć tego koloru.",
+  "errorPushOff": "Ten serwer nie wysyła powiadomień.",
+  "paymentRecordedEarlier": "Wcześniejsza próba zapisała już {amount}. Nic nowego nie dodano.",
+  "refreshFailed": "Nie udało się zaktualizować. Te dane mogą być nieaktualne."
 }

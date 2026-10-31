@@ -3096,4 +3096,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminProductRemoveBody => '이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요.';
+
+  @override
+  String get errorRecentSignIn => '보안을 위해 로그아웃한 뒤 다시 로그인하고 다시 시도하세요.';
+
+  @override
+  String get errorTooManyGroups => '한 번에 처리할 수 있는 그룹 수를 넘었습니다.';
+
+  @override
+  String get errorInvalidTimeZone => '이 기기의 시간대를 인식할 수 없습니다.';
+
+  @override
+  String get errorInvalidColor => '이 색상은 사용할 수 없습니다.';
+
+  @override
+  String get errorPushOff => '이 서버는 알림을 보내지 않습니다.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return '이전 시도에서 이미 $amount이(가) 기록되었습니다. 새로 추가된 항목은 없습니다.';
+  }
+
+  @override
+  String get refreshFailed => '업데이트하지 못했습니다. 표시된 내용이 오래되었을 수 있습니다.';
 }

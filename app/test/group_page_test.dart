@@ -998,6 +998,75 @@ void main() {
     expect(find.textContaining('too large'), findsNothing);
   });
 
+  testWidgets('a payment tried again for less says what the first try recorded', (tester) async {
+    final server = _Saves()..lost = 1;
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final ten = BigInt.from(1000);
+    final container = await _boot(
+      tester,
+      [
+        apiProvider.overrideWithValue(dio),
+        groupProvider.overrideWith((ref, token) async => _group('Flat')),
+        expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      ],
+      balances: Balances(nets: {'a': ten, 'b': -ten}, transfers: [Transfer('b', 'a', ten)]),
+    );
+    await _go(tester, container, '/g/tok');
+    final dialog = find.byType(AlertDialog);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Record').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: dialog, matching: find.byType(FilledButton)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Record').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.descendant(of: dialog, matching: find.byType(EditableText)), '8.00');
+    await tester.tap(find.descendant(of: dialog, matching: find.byType(FilledButton)));
+    await tester.pumpAndSettle();
+
+    expect(server.keys, hasLength(2));
+    expect(server.keys.first, isNotNull);
+    expect(server.keys.last, server.keys.first);
+    // The message of the first try goes first.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('An earlier try had already recorded \$10.00. Nothing new was added.'), findsOneWidget);
+    expect(find.text('Payment recorded'), findsNothing);
+  });
+
+  testWidgets('a failed refresh says what is shown may be old, unless offline', (tester) async {
+    const warning = "Couldn't update. This may be out of date.";
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.text(warning), findsNothing);
+
+    server.group = () => throw DioException.connectionError(requestOptions: RequestOptions(), reason: 'lost');
+    refreshGroupIn(container, 'tok');
+    await tester.pumpAndSettle();
+    expect(find.text(warning), findsNothing);
+
+    server.group = () async => _GroupServer.reply({'code': 'internal', 'message': 'boom'}, 500);
+    refreshGroupIn(container, 'tok');
+    await tester.pumpAndSettle();
+    expect(find.text('Flat'), findsWidgets);
+    expect(find.text(warning), findsOneWidget);
+
+    // Trying again brings it up to date.
+    server.group = () async => _GroupServer.named('Flat again');
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Flat again'), findsWidgets);
+  });
+
   testWidgets('the expense date and time fit on a narrow phone', (tester) async {
     tester.view.physicalSize = const Size(240, 800);
     tester.view.devicePixelRatio = 1;
@@ -1233,6 +1302,9 @@ class _Saves implements HttpClientAdapter {
   /// How many saves are lost on the way.
   var lost = 0;
 
+  /// How many saves the server refuses.
+  var refused = 0;
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -1245,6 +1317,10 @@ class _Saves implements HttpClientAdapter {
     if (lost > 0) {
       lost--;
       throw DioException.connectionError(requestOptions: options, reason: 'lost');
+    }
+    if (refused > 0) {
+      refused--;
+      return _GroupServer.reply({'code': 'invalid_amount', 'message': 'no'}, 400);
     }
     return _GroupServer.reply(_expenseJson('e2'), options.method == 'POST' ? 201 : 200);
   }
@@ -1348,6 +1424,51 @@ void foreignTests() {
     expect(server.keys, hasLength(2));
     expect(server.keys.first, isNotNull);
     expect(server.keys.last, server.keys.first);
+    expect(find.byType(ExpenseEditorPage), findsNothing);
+  });
+
+  testWidgets('a change after a lost answer gets the save back, then changes it', (tester) async {
+    final server = _Saves()..lost = 1;
+    final container = await boot(tester, server);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await fillIn(tester);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    // What was added may be there already, so it can't turn into a schedule.
+    expect(find.widgetWithText(ChoiceChip, 'Weekly', skipOffstage: false), findsNothing);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Sushi'), 'Sashimi');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.sent.map((s) => s.$1), [
+      'POST /api/v1/g/tok/expenses',
+      'POST /api/v1/g/tok/expenses',
+      'PUT /api/v1/g/tok/expenses/e2',
+    ]);
+    expect(server.keys[1], server.keys[0]);
+    expect(server.sent[1].$2, containsPair('title', 'Sushi'));
+    expect(server.sent[2].$2, containsPair('title', 'Sashimi'));
+    expect(server.sent[2].$2, containsPair('version', 1));
+    expect(find.byType(ExpenseEditorPage), findsNothing);
+  });
+
+  testWidgets('a refused save adds nothing, so the next one sends what the form holds', (tester) async {
+    final server = _Saves()..refused = 1;
+    final container = await boot(tester, server);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await fillIn(tester);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Sushi'), 'Sashimi');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.sent.map((s) => s.$1), ['POST /api/v1/g/tok/expenses', 'POST /api/v1/g/tok/expenses']);
+    expect(server.sent.last.$2, containsPair('title', 'Sashimi'));
     expect(find.byType(ExpenseEditorPage), findsNothing);
   });
 

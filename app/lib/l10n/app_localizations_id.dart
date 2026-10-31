@@ -3217,4 +3217,27 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.';
+
+  @override
+  String get errorRecentSignIn => 'Demi keamanan, keluar lalu masuk lagi, kemudian coba sekali lagi.';
+
+  @override
+  String get errorTooManyGroups => 'Terlalu banyak grup sekaligus.';
+
+  @override
+  String get errorInvalidTimeZone => 'Zona waktu perangkat ini tidak dikenali.';
+
+  @override
+  String get errorInvalidColor => 'Warna itu tidak dapat digunakan.';
+
+  @override
+  String get errorPushOff => 'Server ini tidak mengirim notifikasi.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Percobaan sebelumnya sudah mencatat $amount. Tidak ada yang ditambahkan.';
+  }
+
+  @override
+  String get refreshFailed => 'Tidak dapat memperbarui. Ini mungkin sudah tidak terbaru.';
 }

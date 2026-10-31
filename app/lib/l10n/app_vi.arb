@@ -908,5 +908,12 @@
   "adminProductProvider": "Thanh toán qua",
   "adminProductPlayId": "ID sản phẩm",
   "adminProductPlayIdHelp": "Như ghi trong Play Console. Google Play cho biết khi nào mỗi khoản thanh toán kết thúc nên không cần đặt số ngày.",
-  "adminProductRemoveBody": "Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn."
+  "adminProductRemoveBody": "Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn.",
+  "errorRecentSignIn": "Để bảo mật, hãy đăng xuất rồi đăng nhập lại, sau đó thử lại.",
+  "errorTooManyGroups": "Quá nhiều nhóm cùng lúc.",
+  "errorInvalidTimeZone": "Không nhận dạng được múi giờ của thiết bị này.",
+  "errorInvalidColor": "Không thể dùng màu này.",
+  "errorPushOff": "Máy chủ này không gửi thông báo.",
+  "paymentRecordedEarlier": "Lần thử trước đã ghi nhận {amount}. Không có gì mới được thêm.",
+  "refreshFailed": "Không thể cập nhật. Nội dung này có thể đã cũ."
 }

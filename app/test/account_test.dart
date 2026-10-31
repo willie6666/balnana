@@ -340,10 +340,14 @@ void main() {
     await tester.tap(find.text('Google'));
     await tester.pumpAndSettle();
     expect(find.text('Remove Google?'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'it is me');
     await tester.tap(find.text('Remove'));
     await tester.pumpAndSettle();
     expect(sent.last.method, 'DELETE');
+    expect(sent.last.data, {'password': 'it is me'});
     expect(find.text('This is your only way to sign in. Set a password or add another way first.'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
 
     // Adding one asks for the account's password first.
     await tester.tap(find.text('Authentik'));

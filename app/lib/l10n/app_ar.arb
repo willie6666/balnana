@@ -908,5 +908,12 @@
   "adminProductProvider": "الدفع عبر",
   "adminProductPlayId": "معرّف المنتج",
   "adminProductPlayIdHelp": "كما هو مكتوب في Play Console. يحدد Google Play موعد انتهاء كل دفعة، لذا لا توجد أيام لضبطها.",
-  "adminProductRemoveBody": "لن تُطبَّق المدفوعات الخاصة به على الحسابات بعد الآن. وتبقى الخطط الحالية حتى تنتهي."
+  "adminProductRemoveBody": "لن تُطبَّق المدفوعات الخاصة به على الحسابات بعد الآن. وتبقى الخطط الحالية حتى تنتهي.",
+  "errorRecentSignIn": "لحماية حسابك، سجّل الخروج ثم سجّل الدخول مرة أخرى، وبعدها أعد المحاولة.",
+  "errorTooManyGroups": "هذا عدد كبير جدًا من المجموعات دفعة واحدة.",
+  "errorInvalidTimeZone": "لم يتم التعرف على المنطقة الزمنية لهذا الجهاز.",
+  "errorInvalidColor": "لا يمكن استخدام هذا اللون.",
+  "errorPushOff": "هذا الخادم لا يرسل إشعارات.",
+  "paymentRecordedEarlier": "سبق أن سجّلت محاولة سابقة {amount}. لم تتم إضافة أي شيء جديد.",
+  "refreshFailed": "تعذّر التحديث. قد تكون هذه البيانات قديمة."
 }

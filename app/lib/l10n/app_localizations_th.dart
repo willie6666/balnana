@@ -3182,4 +3182,27 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'การชำระเงินสำหรับผลิตภัณฑ์นี้จะไม่ถูกนำไปใช้กับบัญชีอีก แพ็กเกจที่มีอยู่แล้วจะยังใช้ได้จนกว่าจะหมดอายุ';
+
+  @override
+  String get errorRecentSignIn => 'เพื่อความปลอดภัย โปรดออกจากระบบแล้วลงชื่อเข้าใช้อีกครั้ง จากนั้นลองใหม่';
+
+  @override
+  String get errorTooManyGroups => 'มีกลุ่มมากเกินไปในคราวเดียว';
+
+  @override
+  String get errorInvalidTimeZone => 'ไม่รู้จักเขตเวลาของอุปกรณ์นี้';
+
+  @override
+  String get errorInvalidColor => 'ใช้สีนี้ไม่ได้';
+
+  @override
+  String get errorPushOff => 'เซิร์ฟเวอร์นี้ไม่ส่งการแจ้งเตือน';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'การลองครั้งก่อนบันทึก $amount ไว้แล้ว จึงไม่มีการเพิ่มรายการใหม่';
+  }
+
+  @override
+  String get refreshFailed => 'อัปเดตไม่ได้ ข้อมูลนี้อาจไม่เป็นปัจจุบัน';
 }

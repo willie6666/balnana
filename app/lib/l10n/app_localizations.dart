@@ -5583,6 +5583,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payments for it stop being applied to accounts. Plans already held stay until they end.'**
   String get adminProductRemoveBody;
+
+  /// Message when an account without a password must sign in again before a sensitive change.
+  ///
+  /// In en, this message translates to:
+  /// **'For your security, sign out and sign in again, then try once more.'**
+  String get errorRecentSignIn;
+
+  /// Message for error too many groups in API error feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s too many groups at once.'**
+  String get errorTooManyGroups;
+
+  /// Message for error invalid time zone in API error feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'This device\'s time zone isn\'t recognized.'**
+  String get errorInvalidTimeZone;
+
+  /// Message for error invalid color in API error feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'That color can\'t be used.'**
+  String get errorInvalidColor;
+
+  /// Message when the server has push notifications turned off.
+  ///
+  /// In en, this message translates to:
+  /// **'This server doesn\'t send notifications.'**
+  String get errorPushOff;
+
+  /// Shown when retrying a payment found an earlier try had recorded a different amount.
+  ///
+  /// In en, this message translates to:
+  /// **'An earlier try had already recorded {amount}. Nothing new was added.'**
+  String paymentRecordedEarlier(String amount);
+
+  /// Shown when reloading a group failed and the older data stays on screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update. This may be out of date.'**
+  String get refreshFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

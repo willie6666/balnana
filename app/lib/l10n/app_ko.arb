@@ -908,5 +908,12 @@
   "adminProductProvider": "결제 수단",
   "adminProductPlayId": "상품 ID",
   "adminProductPlayIdHelp": "Play Console에 적힌 그대로 입력하세요. 각 결제의 종료일은 Google Play가 정하므로 일수는 설정하지 않습니다.",
-  "adminProductRemoveBody": "이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요."
+  "adminProductRemoveBody": "이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요.",
+  "errorRecentSignIn": "보안을 위해 로그아웃한 뒤 다시 로그인하고 다시 시도하세요.",
+  "errorTooManyGroups": "한 번에 처리할 수 있는 그룹 수를 넘었습니다.",
+  "errorInvalidTimeZone": "이 기기의 시간대를 인식할 수 없습니다.",
+  "errorInvalidColor": "이 색상은 사용할 수 없습니다.",
+  "errorPushOff": "이 서버는 알림을 보내지 않습니다.",
+  "paymentRecordedEarlier": "이전 시도에서 이미 {amount}이(가) 기록되었습니다. 새로 추가된 항목은 없습니다.",
+  "refreshFailed": "업데이트하지 못했습니다. 표시된 내용이 오래되었을 수 있습니다."
 }

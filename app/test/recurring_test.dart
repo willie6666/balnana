@@ -75,6 +75,9 @@ class _Server implements HttpClientAdapter {
   /// A time zone name this server does not know.
   String? unknownZone;
 
+  /// How many answers to a new recurring expense are lost on the way back.
+  var lost = 0;
+
   static ResponseBody json(Object? data, [int status = 200]) => ResponseBody.fromString(
     jsonEncode(data),
     status,
@@ -108,6 +111,10 @@ class _Server implements HttpClientAdapter {
           ..._recurring(id: 'r2', title: (options.data as Map)['title'] as String),
         };
         items.add(made);
+        if (lost > 0) {
+          lost--;
+          throw DioException.connectionError(requestOptions: options, reason: 'lost');
+        }
         return json(made, 201);
       case (_, _) when index < 0:
         return json({'code': 'not_found', 'message': 'no'}, 404);
@@ -263,6 +270,25 @@ void main() {
     expect(sent.containsKey('startsAt'), isTrue);
     expect(sent.containsKey('occurredAt'), isFalse);
     expect(sent.containsKey('endsOn'), isFalse);
+  });
+
+  testWidgets('a change after a lost answer gets the schedule back, then changes it', (tester) async {
+    final server = _Server([])..lost = 1;
+    final container = await _boot(tester, server);
+    await _saveWeekly(tester, container);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Cleaner'), 'Gardener');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.requests.where((r) => !r.startsWith('GET')), [
+      'POST /api/v1/g/tok/recurring',
+      'POST /api/v1/g/tok/recurring',
+      'PUT /api/v1/g/tok/recurring/r2',
+    ]);
+    expect(server.bodies[1]['title'], 'Cleaner');
+    expect(server.bodies[2]['title'], 'Gardener');
   });
 
   test('a fixed zone is named by its offset', () {

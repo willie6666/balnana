@@ -3323,4 +3323,28 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Платежи за этот продукт больше не будут зачисляться на аккаунты. Действующие тарифы сохранятся до окончания срока.';
+
+  @override
+  String get errorRecentSignIn =>
+      'В целях безопасности выйдите из аккаунта, войдите снова и повторите попытку.';
+
+  @override
+  String get errorTooManyGroups => 'Слишком много групп сразу.';
+
+  @override
+  String get errorInvalidTimeZone => 'Часовой пояс этого устройства не распознан.';
+
+  @override
+  String get errorInvalidColor => 'Этот цвет нельзя использовать.';
+
+  @override
+  String get errorPushOff => 'Этот сервер не отправляет уведомления.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Предыдущая попытка уже записала $amount. Ничего нового не добавлено.';
+  }
+
+  @override
+  String get refreshFailed => 'Не удалось обновить. Эти данные могут быть устаревшими.';
 }

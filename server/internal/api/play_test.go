@@ -692,3 +692,23 @@ func TestPlayClientFromConfig(t *testing.T) {
 		t.Fatalf("for another address: status %d", got)
 	}
 }
+
+// With every slot taken, a purchase waits, then is turned away as busy without
+// taking a database connection.
+func TestPlayBusy(t *testing.T) {
+	old := playWait
+	playWait = 50 * time.Millisecond
+	t.Cleanup(func() { playWait = old })
+	c, _, _ := playServer(t)
+	register(c, "ana@example.test", "Ana")
+	for range cap(playSlots) {
+		playSlots <- struct{}{}
+	}
+	code := c.errorCode(503, "POST", "/me/play/purchases", PlayPurchaseRequest{PurchaseToken: "token-1"})
+	for range cap(playSlots) {
+		<-playSlots
+	}
+	if code != "busy" {
+		t.Fatal(code)
+	}
+}

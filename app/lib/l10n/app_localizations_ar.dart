@@ -3311,4 +3311,27 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'لن تُطبَّق المدفوعات الخاصة به على الحسابات بعد الآن. وتبقى الخطط الحالية حتى تنتهي.';
+
+  @override
+  String get errorRecentSignIn => 'لحماية حسابك، سجّل الخروج ثم سجّل الدخول مرة أخرى، وبعدها أعد المحاولة.';
+
+  @override
+  String get errorTooManyGroups => 'هذا عدد كبير جدًا من المجموعات دفعة واحدة.';
+
+  @override
+  String get errorInvalidTimeZone => 'لم يتم التعرف على المنطقة الزمنية لهذا الجهاز.';
+
+  @override
+  String get errorInvalidColor => 'لا يمكن استخدام هذا اللون.';
+
+  @override
+  String get errorPushOff => 'هذا الخادم لا يرسل إشعارات.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'سبق أن سجّلت محاولة سابقة $amount. لم تتم إضافة أي شيء جديد.';
+  }
+
+  @override
+  String get refreshFailed => 'تعذّر التحديث. قد تكون هذه البيانات قديمة.';
 }

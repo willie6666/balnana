@@ -14,15 +14,30 @@ import (
 	"balnana/internal/config"
 )
 
+// recentSignIn is how long after signing in an account without a password may
+// make the changes confirmPassword guards.
+const recentSignIn = 15 * time.Minute
+
 // confirmPassword checks the password of an account that has one, before a
-// change that a stolen session alone must not make. It returns the hash it
-// checked, nil for an account without a password, for lockAccount.
+// change that a stolen session alone must not make. An account without one
+// has nothing to confirm with, so its session must be new: it signs in again.
+// It returns the hash it checked, nil for an account without a password, for
+// lockAccount.
 func (s *Server) confirmPassword(ctx context.Context, u *user, password *string) (*string, error) {
 	var hash *string
-	if err := s.db.QueryRow(ctx, `select password_hash from users where id = $1`, u.id).Scan(&hash); err != nil {
+	var recent bool
+	err := s.db.QueryRow(ctx, `
+		select password_hash,
+		       exists (select 1 from sessions
+		               where id = $2 and user_id = $1 and created_at > now() - make_interval(secs => $3))
+		from users where id = $1`, u.id, u.sessionID, recentSignIn.Seconds()).Scan(&hash, &recent)
+	if err != nil {
 		return nil, err
 	}
 	if hash == nil {
+		if !recent {
+			return nil, forbidden("recent_sign_in_required")
+		}
 		return nil, nil
 	}
 	release, err := s.holdGuess(ctx, u.id)

@@ -29,7 +29,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _currency = TextEditingController();
-  final _symbol = TextEditingController(text: r'$');
+  final _symbol = TextEditingController();
   final _me = TextEditingController();
   final _others = <TextEditingController>[TextEditingController()];
 

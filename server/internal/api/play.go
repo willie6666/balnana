@@ -47,6 +47,14 @@ var (
 	errPlayUnacknowledged = errors.New("acknowledging a google play purchase failed")
 )
 
+// playSlots bounds the calls to Google under way: each keeps a database
+// connection until it is answered.
+var playSlots = make(chan struct{}, 5)
+
+// playWait is how long a call may wait for its turn before it is turned away
+// as busy.
+var playWait = 30 * time.Second
+
 // playRefusal is an answer from the Developer API other than a success.
 type playRefusal struct{ status int }
 
@@ -218,9 +226,32 @@ func playAccountOwner(ctx context.Context, q querier, id string) (*string, error
 // whose it is, the token shows it holds the purchase. Asking and applying go
 // under one lock per token, or an older answer could overwrite a newer one.
 func (s *Server) syncPlay(ctx context.Context, play *playClient, token string, reporter *string) error {
-	var sub *playSubscription
-	var keep bool
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
+	sub, keep, err := s.askPlay(ctx, play, token, reporter)
+	if err != nil || !keep {
+		return err
+	}
+	if err := play.acknowledge(ctx, sub.LineItems[0].ProductID, token); err != nil {
+		return fmt.Errorf("%w: %w", errPlayUnacknowledged, err)
+	}
+	return nil
+}
+
+// askPlay asks Google about the purchase and applies the answer, in one
+// transaction that keeps a database connection while Google answers. It waits
+// for one of playSlots, so a slow Google can't take the connections from
+// everything else.
+func (s *Server) askPlay(ctx context.Context, play *playClient, token string, reporter *string) (sub *playSubscription, keep bool, err error) {
+	wait := time.NewTimer(playWait)
+	defer wait.Stop()
+	select {
+	case playSlots <- struct{}{}:
+		defer func() { <-playSlots }()
+	case <-wait.C:
+		return nil, false, &apiError{status: http.StatusServiceUnavailable, code: "busy"}
+	case <-ctx.Done():
+		return nil, false, ctx.Err()
+	}
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
 		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, token); err != nil {
 			return err
 		}
@@ -230,13 +261,7 @@ func (s *Server) syncPlay(ctx context.Context, play *playClient, token string, r
 		keep, err = applyPlay(ctx, tx, token, sub, reporter)
 		return err
 	})
-	if err != nil || !keep {
-		return err
-	}
-	if err := play.acknowledge(ctx, sub.LineItems[0].ProductID, token); err != nil {
-		return fmt.Errorf("%w: %w", errPlayUnacknowledged, err)
-	}
-	return nil
+	return sub, keep, err
 }
 
 // applyPlay records the subscription and sets its entitlement. It says

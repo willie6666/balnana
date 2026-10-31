@@ -1667,6 +1667,9 @@ type DeleteMeJSONRequestBody = AccountDelete
 // ChangeEmailJSONRequestBody defines body for ChangeEmail for application/json ContentType.
 type ChangeEmailJSONRequestBody = EmailChange
 
+// UnlinkOAuthJSONRequestBody defines body for UnlinkOAuth for application/json ContentType.
+type UnlinkOAuthJSONRequestBody = OAuthLinkInput
+
 // LinkOAuthJSONRequestBody defines body for LinkOAuth for application/json ContentType.
 type LinkOAuthJSONRequestBody = OAuthLinkInput
 
@@ -8007,6 +8010,7 @@ func (response GetMyOAuthdefaultJSONResponse) VisitGetMyOAuthResponse(w http.Res
 
 type UnlinkOAuthRequestObject struct {
 	Provider OAuthProviderId `json:"provider"`
+	Body     *UnlinkOAuthJSONRequestBody
 }
 
 type UnlinkOAuthResponseObject interface {
@@ -10711,6 +10715,13 @@ func (sh *strictHandler) UnlinkOAuth(w http.ResponseWriter, r *http.Request, pro
 	var request UnlinkOAuthRequestObject
 
 	request.Provider = provider
+
+	var body UnlinkOAuthJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.UnlinkOAuth(ctx, request.(UnlinkOAuthRequestObject))

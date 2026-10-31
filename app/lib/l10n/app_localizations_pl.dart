@@ -3364,4 +3364,27 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu.';
+
+  @override
+  String get errorRecentSignIn => 'Dla bezpieczeństwa wyloguj się, zaloguj ponownie i spróbuj jeszcze raz.';
+
+  @override
+  String get errorTooManyGroups => 'To zbyt wiele grup naraz.';
+
+  @override
+  String get errorInvalidTimeZone => 'Nie rozpoznano strefy czasowej tego urządzenia.';
+
+  @override
+  String get errorInvalidColor => 'Nie można użyć tego koloru.';
+
+  @override
+  String get errorPushOff => 'Ten serwer nie wysyła powiadomień.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Wcześniejsza próba zapisała już $amount. Nic nowego nie dodano.';
+  }
+
+  @override
+  String get refreshFailed => 'Nie udało się zaktualizować. Te dane mogą być nieaktualne.';
 }

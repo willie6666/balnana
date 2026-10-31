@@ -908,5 +908,12 @@
   "adminProductProvider": "Ödeme yolu",
   "adminProductPlayId": "Ürün kimliği",
   "adminProductPlayIdHelp": "Play Console'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.",
-  "adminProductRemoveBody": "Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir."
+  "adminProductRemoveBody": "Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.",
+  "errorRecentSignIn": "Güvenliğiniz için çıkış yapıp tekrar giriş yapın, ardından yeniden deneyin.",
+  "errorTooManyGroups": "Bir seferde çok fazla grup var.",
+  "errorInvalidTimeZone": "Bu cihazın saat dilimi tanınmıyor.",
+  "errorInvalidColor": "Bu renk kullanılamıyor.",
+  "errorPushOff": "Bu sunucu bildirim göndermiyor.",
+  "paymentRecordedEarlier": "Önceki bir deneme {amount} tutarını zaten kaydetmişti. Yeni bir şey eklenmedi.",
+  "refreshFailed": "Güncellenemedi. Bu bilgiler eski olabilir."
 }

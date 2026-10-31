@@ -3240,4 +3240,28 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Betalingen hiervoor worden niet meer aan accounts toegekend. Lopende abonnementen blijven gelden tot ze eindigen.';
+
+  @override
+  String get errorRecentSignIn =>
+      'Log voor je veiligheid uit en opnieuw in, en probeer het dan nog een keer.';
+
+  @override
+  String get errorTooManyGroups => 'Dat zijn te veel groepen tegelijk.';
+
+  @override
+  String get errorInvalidTimeZone => 'De tijdzone van dit apparaat wordt niet herkend.';
+
+  @override
+  String get errorInvalidColor => 'Die kleur kan niet worden gebruikt.';
+
+  @override
+  String get errorPushOff => 'Deze server verstuurt geen meldingen.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Een eerdere poging had $amount al vastgelegd. Er is niets nieuws toegevoegd.';
+  }
+
+  @override
+  String get refreshFailed => 'Bijwerken is mislukt. Dit is mogelijk verouderd.';
 }

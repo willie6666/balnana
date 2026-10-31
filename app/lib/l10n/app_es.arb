@@ -908,5 +908,12 @@
   "adminProductProvider": "Pagado con",
   "adminProductPlayId": "ID del producto",
   "adminProductPlayIdHelp": "Tal como aparece en Play Console. Google Play indica cuándo termina cada pago, así que no hay días que configurar.",
-  "adminProductRemoveBody": "Los pagos de este producto dejarán de aplicarse a las cuentas. Los planes ya activos se mantienen hasta que terminen."
+  "adminProductRemoveBody": "Los pagos de este producto dejarán de aplicarse a las cuentas. Los planes ya activos se mantienen hasta que terminen.",
+  "errorRecentSignIn": "Por tu seguridad, cierra sesión, vuelve a iniciarla e inténtalo de nuevo.",
+  "errorTooManyGroups": "Son demasiados grupos a la vez.",
+  "errorInvalidTimeZone": "No se reconoce la zona horaria de este dispositivo.",
+  "errorInvalidColor": "No se puede usar ese color.",
+  "errorPushOff": "Este servidor no envía notificaciones.",
+  "paymentRecordedEarlier": "Un intento anterior ya había registrado {amount}. No se añadió nada nuevo.",
+  "refreshFailed": "No se pudo actualizar. Esto podría estar desactualizado."
 }

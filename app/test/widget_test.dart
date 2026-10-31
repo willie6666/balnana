@@ -142,9 +142,18 @@ void main() {
     const token = 'AAAAAAAAAAAAAAAAAAAAAA';
     const server = 'http://local.example/balnana';
     const public = 'https://public.example/split/';
-    for (final link in ['$server/g/$token', '${public}g/$token?x=1', token]) {
+    for (final link in ['$server/g/$token', '${public}g/$token?x=1', '$server/g/$token/join', token]) {
       expect(tokenFromLink(link, serverUrl: server, publicUrl: public), token);
     }
+    // An invite has a page of its own, and its token opens no group.
+    expect(pathFromLink('$server/invite/$token', serverUrl: server), '/invite/$token');
+    expect(pathFromLink('$server/g/$token/join', serverUrl: server), '/g/$token');
+    expect(tokenFromLink('$server/invite/$token', serverUrl: server), isNull);
+    expect(pathFromLink('$server/invite/$token/join', serverUrl: server), isNull);
+    expect(
+      () => pathFromLink('https://foreign.example/invite/$token', serverUrl: server),
+      throwsA(isA<ForeignGroupLink>()),
+    );
     for (final link in [
       'https://foreign.example/g/$token',
       'http://local.example/other/g/$token',

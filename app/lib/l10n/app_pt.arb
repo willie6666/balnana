@@ -908,5 +908,12 @@
   "adminProductProvider": "Pago por",
   "adminProductPlayId": "ID do produto",
   "adminProductPlayIdHelp": "Como escrito no Play Console. O Google Play informa quando cada pagamento termina, então não há dias para definir.",
-  "adminProductRemoveBody": "Os pagamentos deste produto deixarão de ser aplicados às contas. Os planos já ativos continuam até terminar."
+  "adminProductRemoveBody": "Os pagamentos deste produto deixarão de ser aplicados às contas. Os planos já ativos continuam até terminar.",
+  "errorRecentSignIn": "Por segurança, saia da conta, entre novamente e tente outra vez.",
+  "errorTooManyGroups": "São grupos demais de uma só vez.",
+  "errorInvalidTimeZone": "O fuso horário deste dispositivo não foi reconhecido.",
+  "errorInvalidColor": "Essa cor não pode ser usada.",
+  "errorPushOff": "Este servidor não envia notificações.",
+  "paymentRecordedEarlier": "Uma tentativa anterior já havia registrado {amount}. Nada novo foi adicionado.",
+  "refreshFailed": "Não foi possível atualizar. Isto pode estar desatualizado."
 }

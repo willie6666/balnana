@@ -3093,4 +3093,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminProductRemoveBody => 'この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。';
+
+  @override
+  String get errorRecentSignIn => 'セキュリティのため、いったんログアウトして再度ログインしてから、もう一度お試しください。';
+
+  @override
+  String get errorTooManyGroups => '一度に扱えるグループ数を超えています。';
+
+  @override
+  String get errorInvalidTimeZone => 'このデバイスのタイムゾーンを認識できません。';
+
+  @override
+  String get errorInvalidColor => 'その色は使用できません。';
+
+  @override
+  String get errorPushOff => 'このサーバーは通知を送信しません。';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return '以前の試行で $amount がすでに記録されていました。新しい記録は追加されていません。';
+  }
+
+  @override
+  String get refreshFailed => '更新できませんでした。表示が古い可能性があります。';
 }

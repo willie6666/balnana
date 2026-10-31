@@ -3209,4 +3209,27 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn.';
+
+  @override
+  String get errorRecentSignIn => 'Để bảo mật, hãy đăng xuất rồi đăng nhập lại, sau đó thử lại.';
+
+  @override
+  String get errorTooManyGroups => 'Quá nhiều nhóm cùng lúc.';
+
+  @override
+  String get errorInvalidTimeZone => 'Không nhận dạng được múi giờ của thiết bị này.';
+
+  @override
+  String get errorInvalidColor => 'Không thể dùng màu này.';
+
+  @override
+  String get errorPushOff => 'Máy chủ này không gửi thông báo.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Lần thử trước đã ghi nhận $amount. Không có gì mới được thêm.';
+  }
+
+  @override
+  String get refreshFailed => 'Không thể cập nhật. Nội dung này có thể đã cũ.';
 }

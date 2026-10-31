@@ -3356,4 +3356,27 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Платежі за цей продукт більше не зараховуватимуться на облікові записи. Наявні тарифи діятимуть до завершення.';
+
+  @override
+  String get errorRecentSignIn => 'Задля безпеки вийдіть з акаунта, увійдіть знову й повторіть спробу.';
+
+  @override
+  String get errorTooManyGroups => 'Забагато груп за один раз.';
+
+  @override
+  String get errorInvalidTimeZone => 'Часовий пояс цього пристрою не розпізнано.';
+
+  @override
+  String get errorInvalidColor => 'Цей колір не можна використати.';
+
+  @override
+  String get errorPushOff => 'Цей сервер не надсилає сповіщень.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Попередня спроба вже записала $amount. Нічого нового не додано.';
+  }
+
+  @override
+  String get refreshFailed => 'Не вдалося оновити. Ці дані можуть бути застарілими.';
 }

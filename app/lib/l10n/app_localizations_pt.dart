@@ -3272,4 +3272,27 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'Os pagamentos deste produto deixarão de ser aplicados às contas. Os planos já ativos continuam até terminar.';
+
+  @override
+  String get errorRecentSignIn => 'Por segurança, saia da conta, entre novamente e tente outra vez.';
+
+  @override
+  String get errorTooManyGroups => 'São grupos demais de uma só vez.';
+
+  @override
+  String get errorInvalidTimeZone => 'O fuso horário deste dispositivo não foi reconhecido.';
+
+  @override
+  String get errorInvalidColor => 'Essa cor não pode ser usada.';
+
+  @override
+  String get errorPushOff => 'Este servidor não envia notificações.';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'Uma tentativa anterior já havia registrado $amount. Nada novo foi adicionado.';
+  }
+
+  @override
+  String get refreshFailed => 'Não foi possível atualizar. Isto pode estar desatualizado.';
 }

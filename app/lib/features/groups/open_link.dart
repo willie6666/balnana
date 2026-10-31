@@ -13,12 +13,14 @@ class ForeignGroupLink implements Exception {
   const ForeignGroupLink();
 }
 
-/// Reads a bare token for the current server or a full link belonging to its
-/// configured or advertised URL. A different server, including a different
-/// subpath on the same origin, is rejected before its token can be used.
-String? tokenFromLink(String input, {required String? serverUrl, String? publicUrl}) {
+/// The page a bare token or a link opens: a group's, also from the link that
+/// joins it, or an invite's, which holds a token of its own. Only links
+/// belonging to the current server's configured or advertised URL count. A
+/// different server, including a different subpath on the same origin, is
+/// rejected before its token can be used.
+String? pathFromLink(String input, {required String? serverUrl, String? publicUrl}) {
   final text = input.trim();
-  if (_token.hasMatch(text)) return serverUrl == null ? null : text;
+  if (_token.hasMatch(text)) return serverUrl == null ? null : '/g/$text';
   final uri = Uri.tryParse(text);
   if (uri == null ||
       !(uri.isScheme('http') || uri.isScheme('https')) ||
@@ -28,7 +30,11 @@ String? tokenFromLink(String input, {required String? serverUrl, String? publicU
   }
   final segments = uri.pathSegments.toList();
   if (segments.isNotEmpty && segments.last.isEmpty) segments.removeLast();
-  if (segments.length < 2 || segments[segments.length - 2] != 'g') return null;
+  final join = segments.isNotEmpty && segments.last == 'join';
+  if (join) segments.removeLast();
+  if (segments.length < 2) return null;
+  final kind = segments[segments.length - 2];
+  if (kind != 'g' && (kind != 'invite' || join)) return null;
   final token = segments.last;
   if (!_token.hasMatch(token)) return null;
   final base = normalizeServerUrl(
@@ -39,7 +45,13 @@ String? tokenFromLink(String input, {required String? serverUrl, String? publicU
     if (publicUrl != null) normalizeServerUrl(publicUrl),
   }..remove(null);
   if (serverUrl == null || !aliases.contains(base)) throw const ForeignGroupLink();
-  return token;
+  return '/$kind/$token';
+}
+
+/// The group token of a bare token or a group link. An invite is not one.
+String? tokenFromLink(String input, {required String? serverUrl, String? publicUrl}) {
+  final path = pathFromLink(input, serverUrl: serverUrl, publicUrl: publicUrl);
+  return path != null && path.startsWith('/g/') ? path.substring('/g/'.length) : null;
 }
 
 /// Validates the whole list before any of its secrets may be saved or sent.
@@ -58,8 +70,8 @@ List<String> tokensFromLinks(String input, {required String? serverUrl, String? 
 
 /// Asks for a group link and opens it.
 Future<void> showOpenLinkDialog(BuildContext context) async {
-  final token = await showDialog<String>(context: context, builder: (context) => const _OpenLinkDialog());
-  if (token != null && context.mounted) context.go('/g/$token');
+  final path = await showDialog<String>(context: context, builder: (context) => const _OpenLinkDialog());
+  if (path != null && context.mounted) context.go(path);
 }
 
 class _OpenLinkDialog extends ConsumerStatefulWidget {
@@ -80,9 +92,9 @@ class _OpenLinkDialogState extends ConsumerState<_OpenLinkDialog> {
   }
 
   void _submit() {
-    final String? token;
+    final String? path;
     try {
-      token = tokenFromLink(
+      path = pathFromLink(
         _controller.text,
         serverUrl: ref.read(serverUrlProvider),
         publicUrl: ref.read(serverPublicUrlProvider),
@@ -91,11 +103,11 @@ class _OpenLinkDialogState extends ConsumerState<_OpenLinkDialog> {
       setState(() => _error = context.l10n.groupLinkOtherServer);
       return;
     }
-    if (token == null) {
+    if (path == null) {
       setState(() => _error = context.l10n.openLinkInvalid);
       return;
     }
-    Navigator.of(context).pop(token);
+    Navigator.of(context).pop(path);
   }
 
   @override

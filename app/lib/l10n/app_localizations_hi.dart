@@ -3258,4 +3258,28 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminProductRemoveBody =>
       'इसके भुगतान अब खातों पर लागू नहीं होंगे। पहले से चल रहे प्लान खत्म होने तक बने रहेंगे।';
+
+  @override
+  String get errorRecentSignIn =>
+      'आपकी सुरक्षा के लिए, साइन आउट करके फिर से साइन इन करें, फिर दोबारा कोशिश करें।';
+
+  @override
+  String get errorTooManyGroups => 'एक साथ बहुत सारे समूह हैं।';
+
+  @override
+  String get errorInvalidTimeZone => 'इस डिवाइस का समय क्षेत्र पहचाना नहीं गया।';
+
+  @override
+  String get errorInvalidColor => 'यह रंग इस्तेमाल नहीं किया जा सकता।';
+
+  @override
+  String get errorPushOff => 'यह सर्वर सूचनाएँ नहीं भेजता।';
+
+  @override
+  String paymentRecordedEarlier(String amount) {
+    return 'पिछली कोशिश में $amount पहले ही दर्ज हो चुका था। कुछ नया नहीं जोड़ा गया।';
+  }
+
+  @override
+  String get refreshFailed => 'अपडेट नहीं हो सका। यह जानकारी पुरानी हो सकती है।';
 }

@@ -908,5 +908,12 @@
   "adminProductProvider": "भुगतान का माध्यम",
   "adminProductPlayId": "प्रोडक्ट ID",
   "adminProductPlayIdHelp": "जैसा Play Console में लिखा है। हर भुगतान कब खत्म होगा यह Google Play बताता है, इसलिए दिन सेट नहीं करने होते।",
-  "adminProductRemoveBody": "इसके भुगतान अब खातों पर लागू नहीं होंगे। पहले से चल रहे प्लान खत्म होने तक बने रहेंगे।"
+  "adminProductRemoveBody": "इसके भुगतान अब खातों पर लागू नहीं होंगे। पहले से चल रहे प्लान खत्म होने तक बने रहेंगे।",
+  "errorRecentSignIn": "आपकी सुरक्षा के लिए, साइन आउट करके फिर से साइन इन करें, फिर दोबारा कोशिश करें।",
+  "errorTooManyGroups": "एक साथ बहुत सारे समूह हैं।",
+  "errorInvalidTimeZone": "इस डिवाइस का समय क्षेत्र पहचाना नहीं गया।",
+  "errorInvalidColor": "यह रंग इस्तेमाल नहीं किया जा सकता।",
+  "errorPushOff": "यह सर्वर सूचनाएँ नहीं भेजता।",
+  "paymentRecordedEarlier": "पिछली कोशिश में {amount} पहले ही दर्ज हो चुका था। कुछ नया नहीं जोड़ा गया।",
+  "refreshFailed": "अपडेट नहीं हो सका। यह जानकारी पुरानी हो सकती है।"
 }

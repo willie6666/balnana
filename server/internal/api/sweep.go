@@ -67,7 +67,7 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 		return total, err
 	}
 	n, err = s.sweepBatches(ctx, groupSweepBatch, `
-		delete from groups where id = any (array(
+		delete from groups where archived_at < $2 and id = any (array(
 			select id from groups where archived_at < $2 limit $1))`, time.Now().Add(-archiveKeep))
 	total += n
 	if err != nil {

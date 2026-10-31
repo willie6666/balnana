@@ -259,8 +259,10 @@ class BalnanaApi {
     },
   );
 
-  Future<void> unlinkOAuth(String provider) =>
-      _send(() => _dio.delete<Object?>('/me/oauth/${Uri.encodeComponent(provider)}'), (_) {});
+  Future<void> unlinkOAuth(String provider, {String? password}) => _send(
+    () => _dio.delete<Object?>('/me/oauth/${Uri.encodeComponent(provider)}', data: {'password': ?password}),
+    (_) {},
+  );
 
   static (String?, User) _session(Object? data) {
     if (data is! Map<String, Object?>) throw const FormatException('expected an object');

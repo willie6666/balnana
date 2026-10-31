@@ -465,7 +465,8 @@ class _TransferTile extends ConsumerWidget {
   }
 }
 
-/// Keys of payments whose answer never came, so trying again records one.
+/// Keys of payments whose answer never came, so trying again records one,
+/// whatever amount the next try asks for.
 final _paymentKeys = <String, String>{};
 
 /// Confirms a payment (the amount can be changed) and records it.
@@ -479,16 +480,23 @@ Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Tra
   if (amount == null || !context.mounted) return;
   // The sheet can close during the request, and the ref with it.
   final container = ProviderScope.containerOf(context, listen: false);
-  final payment = '${group.token}/${suggested.from}/${suggested.to}/$amount';
+  final payment = '${group.token}/${suggested.from}/${suggested.to}';
   final key = _paymentKeys[payment] ??= newClientKey();
   try {
-    await groupApiOf(
+    final recorded = await groupApiOf(
       ref,
       group.token,
     ).recordPayment(suggested.from, suggested.to, amount, group.minorDigits, key: key);
     _paymentKeys.remove(payment);
     refreshGroupIn(container, group.token);
-    messenger.showSnackBar(SnackBar(content: Text(l10n.paymentRecorded)));
+    if (!context.mounted) return;
+    // An earlier try got through, with the amount it asked for.
+    final message = recorded.amount == amount
+        ? l10n.paymentRecorded
+        : l10n.paymentRecordedEarlier(
+            formatMoney(context, recorded.amount, group.minorDigits, group.currency, symbol: group.symbol),
+          );
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   } on ApiException catch (e) {
     if (e.code != ApiException.network) _paymentKeys.remove(payment);
     messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));

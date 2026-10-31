@@ -304,11 +304,10 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 			return 0, preview, importRowError(e.Line, string(domain.ErrAmountTooLarge))
 		}
 		total += d.amount
-		if kind == kindExpense {
+		if kind == kindExpense && importReceived(e, r.currency, r.digits) {
+			d.transactionType = "refund"
 			if e.Type == "income" {
 				d.transactionType = "income"
-			} else if importReceived(e, r.currency, r.digits) {
-				d.transactionType = "refund"
 			}
 		}
 		if err := keep(d); err != nil {
@@ -401,26 +400,23 @@ func toMinor(s string, digits int) (int64, bool) {
 	return q.Int64(), true
 }
 
-// importReceived reads the sign of the amounts importInput uses for payers.
-// That function has already validated their signs and conversion counts.
+// importReceived says whether money came in on the row, as importInput does:
+// income, or a negative total, and a negative income takes money back out.
+// That function has already validated the amounts and conversion counts.
 func importReceived(e importer.Entry, currency string, digits int) bool {
-	if e.Type == "income" {
-		return true
-	}
+	var total int64
 	if e.Currency != currency {
 		for _, amount := range e.Converted {
-			if v, _ := toMinor(amount, digits); v < 0 {
-				return true
-			}
+			v, _ := toMinor(amount, digits)
+			total += v
 		}
 	} else {
 		for _, p := range e.Payers {
-			if v, _ := toMinor(p.Amount, digits); v < 0 {
-				return true
-			}
+			v, _ := toMinor(p.Amount, digits)
+			total += v
 		}
 	}
-	return false
+	return (e.Type == "income") != (total < 0)
 }
 
 // share is one person's amount on a row, summed when a name repeats.
@@ -519,16 +515,23 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		}
 	}
 	// A refund or income: money came in. Whoever it is for "paid" it, and
-	// those who received it are owed nothing more and nothing less.
-	received := e.Type == "income" || total < 0
+	// those who received it are owed nothing more and nothing less. A negative
+	// income undoes one, so it is an expense again.
+	received := (e.Type == "income") != (total < 0)
 	total = abs(total)
 
-	// Who it is for, by weight, and the exact amounts when they add up.
+	// Who it is for, by weight, and the exact amounts when they add up. The
+	// whole row is negative on a refund; one with both signs can't be a split.
 	var weights, exact []share
+	var above, below bool
 	exactOK := e.Currency == currency
 	for _, p := range e.ForWhom {
 		w, ok := toMinor(p.Amount, 4)
 		if !ok {
+			return "", ExpenseInput{}, "amount"
+		}
+		above, below = above || w > 0, below || w < 0
+		if above && below {
 			return "", ExpenseInput{}, "amount"
 		}
 		if weights, ok = addTo(weights, ids[p.Name], abs(w)); !ok {

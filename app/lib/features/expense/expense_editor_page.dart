@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -257,6 +259,12 @@ class _EditorState extends ConsumerState<_Editor> {
 
   /// Sent with the new expense, so saving again after a lost answer adds it once.
   late final _key = newClientKey();
+
+  /// What was sent with [_key] and may be on the server: its answer was lost,
+  /// or changing it to what the form holds failed. Saving again sends this, to
+  /// get back what was added, then changes that to what the form holds now.
+  ExpenseDraft? _sentExpense;
+  RecurringDraft? _sentRecurring;
   bool _tried = false;
 
   Group get _group => widget.group;
@@ -681,7 +689,7 @@ class _EditorState extends ConsumerState<_Editor> {
 
   /// A new expense can be made to repeat, and a recurring one changed; an
   /// expense already added stays as it is.
-  bool get _canRepeat => widget.expense == null || widget.recurring != null;
+  bool get _canRepeat => (widget.expense == null && _sentExpense == null) || widget.recurring != null;
 
   int? get _everyValue => switch (int.tryParse(_every.text)) {
     final n? when n >= 1 && n <= 999 => n,
@@ -772,7 +780,7 @@ class _EditorState extends ConsumerState<_Editor> {
           await api.updateRecurring(r.id, recurring, _group.minorDigits, version: r.version);
           container.invalidate(recurringOneProvider((token: _group.token, id: r.id)));
         } else {
-          await api.createRecurring(recurring, _group.minorDigits, key: _key);
+          await _createRecurring(api, recurring);
         }
         refreshGroupIn(container, _group.token);
         if (mounted) context.pop();
@@ -784,7 +792,7 @@ class _EditorState extends ConsumerState<_Editor> {
         // A new photo alone leaves the expense as it is.
         if (_formDirty) await api.updateExpense(e.id, draft, _group.minorDigits, version: e.version);
       } else {
-        id = (await api.createExpense(draft, _group.minorDigits, key: _key)).id;
+        id = (await _createExpense(api, draft)).id;
       }
       await _saveReceipt(api, id, l10n, messenger);
       container.invalidate(expenseProvider((token: _group.token, id: id)));
@@ -805,6 +813,37 @@ class _EditorState extends ConsumerState<_Editor> {
       }
     }
   }
+
+  Future<Expense> _createExpense(GroupApi api, ExpenseDraft draft) async {
+    final digits = _group.minorDigits;
+    final sent = _sentExpense ??= draft;
+    final Expense added;
+    try {
+      added = await api.createExpense(sent, digits, key: _key);
+    } on ApiException catch (e) {
+      // Any other answer means nothing was added.
+      if (e.code != ApiException.network) _sentExpense = null;
+      rethrow;
+    }
+    if (_same(sent.toJson(digits), draft.toJson(digits))) return added;
+    return api.updateExpense(added.id, draft, digits, version: added.version);
+  }
+
+  Future<RecurringExpense> _createRecurring(GroupApi api, RecurringDraft draft) async {
+    final digits = _group.minorDigits;
+    final sent = _sentRecurring ??= draft;
+    final RecurringExpense added;
+    try {
+      added = await api.createRecurring(sent, digits, key: _key);
+    } on ApiException catch (e) {
+      if (e.code != ApiException.network) _sentRecurring = null;
+      rethrow;
+    }
+    if (_same(sent.toJson(digits), draft.toJson(digits))) return added;
+    return api.updateRecurring(added.id, draft, digits, version: added.version);
+  }
+
+  bool _same(Map<String, Object?> a, Map<String, Object?> b) => jsonEncode(a) == jsonEncode(b);
 
   /// Uploads or removes the photo once the expense is saved. The expense
   /// stays saved when this fails, so it is only told.
@@ -1341,8 +1380,9 @@ class _RepeatField extends StatelessWidget {
           spacing: BSpace.s8,
           runSpacing: BSpace.s8,
           children: [
-            // A recurring expense is stopped from its page instead.
-            if (s.widget.recurring == null)
+            // A recurring expense is stopped from its page instead, and one
+            // that may have been added can't turn into a single expense.
+            if (s.widget.recurring == null && s._sentRecurring == null)
               ChoiceChip(
                 label: Text(l10n.repeatNever),
                 showCheckmark: false,

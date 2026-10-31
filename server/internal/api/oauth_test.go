@@ -507,8 +507,8 @@ func TestOAuthUntrustedProviderAndLinking(t *testing.T) {
 	}
 
 	// Unlinking keeps a way in: the password.
-	c.must(204, "DELETE", "/me/oauth/oidc", nil, nil)
-	c.errorCode(404, "DELETE", "/me/oauth/oidc", nil)
+	c.must(204, "DELETE", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, nil)
+	c.errorCode(404, "DELETE", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")})
 	if e := oauthError(t, f.login(c.another(), "/groups", person("a", "ana@example.com", "Ana"))); e != "email_has_account" {
 		t.Fatal(e)
 	}
@@ -516,7 +516,7 @@ func TestOAuthUntrustedProviderAndLinking(t *testing.T) {
 	// An account with only the provider keeps it.
 	solo := c.another()
 	f.login(solo, "/groups", person("s", "solo@example.com", "Solo"))
-	if code := solo.errorCode(409, "DELETE", "/me/oauth/oidc", nil); code != "last_sign_in_method" {
+	if code := solo.errorCode(409, "DELETE", "/me/oauth/oidc", OAuthLinkInput{}); code != "last_sign_in_method" {
 		t.Fatal(code)
 	}
 }
@@ -873,4 +873,53 @@ func TestCrossOriginWebApp(t *testing.T) {
 	if code := wild.errorCode(400, "GET", "/auth/oauth/oidc/start?"+q.Encode(), nil); code != "invalid_origin" {
 		t.Fatal(code)
 	}
+}
+
+// Without a password, only a new session makes the changes a password guards:
+// a session stolen long ago can't lock its owner out.
+func TestRecentSignIn(t *testing.T) {
+	f := newFakeIdP(t)
+	c, _, pool := adminClient(t, f.env(map[string]string{"BALNANA_AUTH_MODE": "accounts"}))
+	f.login(c, "/groups", person("a", "ana@example.com", "Ana"))
+	var ticket OAuthLinkTicket
+	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{}, &ticket)
+
+	if _, err := pool.Exec(context.Background(), `update sessions set created_at = now() - $1::interval`, "16 minutes"); err != nil {
+		t.Fatal(err)
+	}
+	for path, body := range map[string]any{
+		"/me/delete":     AccountDelete{},
+		"/me/oauth/oidc": OAuthLinkInput{},
+		"/me/email":      ChangeEmailJSONRequestBody{Email: "eve@example.com"},
+		"/me/password":   ChangePasswordJSONRequestBody{NewPassword: "correct horse"},
+	} {
+		if code := c.errorCode(403, "POST", path, body); code != "recent_sign_in_required" {
+			t.Errorf("%s: %s", path, code)
+		}
+	}
+	if code := c.errorCode(403, "DELETE", "/me/oauth/oidc", OAuthLinkInput{}); code != "recent_sign_in_required" {
+		t.Error(code)
+	}
+
+	// Signing in again makes the session new.
+	f.login(c, "/groups", person("a", "ana@example.com", "Ana"))
+	c.must(200, "POST", "/me/oauth/oidc", OAuthLinkInput{}, &ticket)
+}
+
+// Removing a way to sign in takes the password of an account that has one.
+func TestUnlinkOAuthAsksPassword(t *testing.T) {
+	f := newFakeIdP(t)
+	c, _, pool := adminClient(t, f.env(map[string]string{"BALNANA_AUTH_MODE": "accounts"}))
+	ana := register(c, "ana@example.com", "Ana")
+	if _, err := pool.Exec(context.Background(),
+		`insert into oauth_identities (provider, issuer, subject, user_id) values ('oidc', 'issuer', 'a', $1)`, ana.Id); err != nil {
+		t.Fatal(err)
+	}
+	if code := c.errorCode(403, "DELETE", "/me/oauth/oidc", OAuthLinkInput{}); code != "wrong_password" {
+		t.Fatal(code)
+	}
+	if code := c.errorCode(403, "DELETE", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("a guess")}); code != "wrong_password" {
+		t.Fatal(code)
+	}
+	c.must(204, "DELETE", "/me/oauth/oidc", OAuthLinkInput{Password: ptr("correct horse")}, nil)
 }

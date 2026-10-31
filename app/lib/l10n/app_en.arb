@@ -4759,5 +4759,38 @@
   "adminProductRemoveBody": "Payments for it stop being applied to accounts. Plans already held stay until they end.",
   "@adminProductRemoveBody": {
     "description": "Body of the confirmation before an administrator removes a product."
+  },
+  "errorRecentSignIn": "For your security, sign out and sign in again, then try once more.",
+  "@errorRecentSignIn": {
+    "description": "Message when an account without a password must sign in again before a sensitive change."
+  },
+  "errorTooManyGroups": "That's too many groups at once.",
+  "@errorTooManyGroups": {
+    "description": "Message for error too many groups in API error feedback."
+  },
+  "errorInvalidTimeZone": "This device's time zone isn't recognized.",
+  "@errorInvalidTimeZone": {
+    "description": "Message for error invalid time zone in API error feedback."
+  },
+  "errorInvalidColor": "That color can't be used.",
+  "@errorInvalidColor": {
+    "description": "Message for error invalid color in API error feedback."
+  },
+  "errorPushOff": "This server doesn't send notifications.",
+  "@errorPushOff": {
+    "description": "Message when the server has push notifications turned off."
+  },
+  "paymentRecordedEarlier": "An earlier try had already recorded {amount}. Nothing new was added.",
+  "@paymentRecordedEarlier": {
+    "description": "Shown when retrying a payment found an earlier try had recorded a different amount.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "refreshFailed": "Couldn't update. This may be out of date.",
+  "@refreshFailed": {
+    "description": "Shown when reloading a group failed and the older data stays on screen."
   }
 }
