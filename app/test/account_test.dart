@@ -175,7 +175,7 @@ void main() {
                 {
                   'planName': 'Free',
                   'paid': false,
-                  'ownGroups': {'used': 0},
+                  'joinedGroups': {'used': 0},
                   'sponsoredGroups': {'used': 0},
                   'play': ?play,
                 },

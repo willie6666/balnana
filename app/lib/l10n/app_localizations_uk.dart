@@ -463,8 +463,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Ім’я залишиться в минулих витратах, але додати цього учасника до нових не вийде.';
+  String get memberRemoveBody => 'Витрати й баланс цього учасника залишаться в групі.';
 
   @override
   String get groupLinkCopied => 'Посилання скопійовано. Кожен, хто має його, може відкрити цю групу.';
@@ -3159,8 +3158,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'Ви досягли ліміту груп: $max.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'У цій групі досягнуто ліміту людей: $max.';
   }
 
   @override
@@ -3209,7 +3213,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get planLimitRecurring => 'Регулярні витрати на групу';
 
   @override
-  String get planLimitOwnGroups => 'Створені вами групи';
+  String get planLimitJoinedGroups => 'Групи, у яких ви є';
+
+  @override
+  String get planLimitMembers => 'Людей у групі';
 
   @override
   String get planLimitSponsored => 'Групи з вашим тарифом';
@@ -3246,8 +3253,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get planPaymentClaimed => 'Платіж додано';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Фото чеків: $receipts · Регулярні: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Люди: $members · Фото чеків: $receipts · Регулярні: $recurring';
   }
 
   @override

@@ -182,7 +182,7 @@ func validateRecurring(ctx context.Context, q querier, g *group, in RecurringExp
 		Payers:      in.Payers,
 		SplitMethod: in.SplitMethod,
 		Splits:      in.Splits,
-	}, nil, nil)
+	}, nil)
 	if err != nil {
 		return nil, schedule{}, err
 	}
@@ -322,7 +322,7 @@ func addDue(ctx context.Context, tx pgx.Tx, g *group, r *RecurringExpense, now t
 	}
 	// Every occurrence is the same expense on another day: it is checked
 	// once, and the group's total is kept up as they are added.
-	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil, nil)
+	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -470,8 +470,8 @@ func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) 
 		if code == "" {
 			return err
 		}
-		// It cannot go on as it is, such as when someone in it left: it
-		// waits for someone to change it and resume it.
+		// It cannot go on as it is: it waits for someone to change it and
+		// resume it.
 		if _, err := tx.Exec(ctx, `
 			update recurring_expenses set paused_at = $2, updated_at = now(), version = version + 1
 			where id = $1`, id, now); err != nil {
@@ -765,9 +765,8 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 			if added, err = addDue(ctx, tx, g, r, pausedAt); err != nil {
 				return err
 			}
-			// What it adds from now on must still work, such as everyone in
-			// it still being in the group.
-			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil, nil)
+			// What it adds from now on must still work.
+			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil)
 			if err != nil {
 				return err
 			}

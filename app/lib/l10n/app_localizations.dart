@@ -961,7 +961,7 @@ abstract class AppLocalizations {
   /// Explanatory text for member remove body in group member management.
   ///
   /// In en, this message translates to:
-  /// **'They\'ll stay on past expenses but can\'t be added to new ones.'**
+  /// **'Their expenses and balance stay in the group.'**
   String get memberRemoveBody;
 
   /// Label or control text for group link copied in group creation, settings, or switching.
@@ -5260,11 +5260,17 @@ abstract class AppLocalizations {
   /// **'This group has reached its limit of {max} recurring expenses.'**
   String errorLimitRecurring(int max);
 
-  /// Label or control text for error limit own groups in an error message.
+  /// Error when an account is already in as many groups as its plan allows.
   ///
   /// In en, this message translates to:
   /// **'You\'ve reached your limit of {max} groups.'**
-  String errorLimitOwnGroups(int max);
+  String errorLimitJoinedGroups(int max);
+
+  /// Error when a group already has as many people as its plan allows.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has reached its limit of {max} people.'**
+  String errorLimitMembers(int max);
 
   /// Label or control text for error limit sponsored in an error message.
   ///
@@ -5338,11 +5344,17 @@ abstract class AppLocalizations {
   /// **'Recurring expenses per group'**
   String get planLimitRecurring;
 
-  /// Label or control text for plan limit own groups in the plan screens.
+  /// The limit on how many groups an account can be in, in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Groups you created'**
-  String get planLimitOwnGroups;
+  /// **'Groups you\'re in'**
+  String get planLimitJoinedGroups;
+
+  /// The limit on how many people a group can have, in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'People per group'**
+  String get planLimitMembers;
 
   /// Label or control text for plan limit sponsored in the plan screens.
   ///
@@ -5413,8 +5425,8 @@ abstract class AppLocalizations {
   /// Label or control text for group plan usage in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Receipt photos: {receipts} · Recurring: {recurring}'**
-  String groupPlanUsage(String receipts, String recurring);
+  /// **'People: {members} · Receipt photos: {receipts} · Recurring: {recurring}'**
+  String groupPlanUsage(String members, String receipts, String recurring);
 
   /// Label or control text for group sponsor in the plan screens.
   ///

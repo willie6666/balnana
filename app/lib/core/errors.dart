@@ -116,7 +116,8 @@ String _planLimit(AppLocalizations l10n, Map<String, Object?> params) {
   return switch (params['limit']) {
     'receipts' => l10n.errorLimitReceipts(max),
     'recurring' => l10n.errorLimitRecurring(max),
-    'own_groups' => l10n.errorLimitOwnGroups(max),
+    'joined_groups' => l10n.errorLimitJoinedGroups(max),
+    'members' => l10n.errorLimitMembers(max),
     'sponsored_groups' => l10n.errorLimitSponsored(max),
     _ => l10n.errorLimitOther,
   };

@@ -453,8 +453,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Người này vẫn xuất hiện trong các khoản chi cũ nhưng không thể được thêm vào khoản chi mới.';
+  String get memberRemoveBody => 'Khoản chi và số dư của người này vẫn còn trong nhóm.';
 
   @override
   String get groupLinkCopied => 'Đã sao chép liên kết. Ai có liên kết đều có thể mở nhóm này.';
@@ -3013,8 +3012,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'Bạn đã đạt giới hạn $max nhóm.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Nhóm này đã đạt giới hạn $max người.';
   }
 
   @override
@@ -3063,7 +3067,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planLimitRecurring => 'Khoản chi định kỳ mỗi nhóm';
 
   @override
-  String get planLimitOwnGroups => 'Nhóm bạn đã tạo';
+  String get planLimitJoinedGroups => 'Nhóm bạn tham gia';
+
+  @override
+  String get planLimitMembers => 'Số người mỗi nhóm';
 
   @override
   String get planLimitSponsored => 'Nhóm dùng chung gói của bạn';
@@ -3100,8 +3107,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planPaymentClaimed => 'Đã thêm khoản thanh toán';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Ảnh hóa đơn: $receipts · Định kỳ: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Số người: $members · Ảnh hóa đơn: $receipts · Định kỳ: $recurring';
   }
 
   @override

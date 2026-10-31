@@ -445,7 +445,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => '過去の支出には残りますが、新しい支出には追加できなくなります。';
+  String get memberRemoveBody => 'この人の支出と残高はグループに残ります。';
 
   @override
   String get groupLinkCopied => 'リンクをコピーしました。このリンクを知っている人は誰でもグループを開けます。';
@@ -2912,8 +2912,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'グループ数が上限の$max件に達しました。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'このグループは上限の$max人に達しました。';
   }
 
   @override
@@ -2961,7 +2966,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planLimitRecurring => 'グループごとの定期支出';
 
   @override
-  String get planLimitOwnGroups => '作成したグループ';
+  String get planLimitJoinedGroups => '参加中のグループ';
+
+  @override
+  String get planLimitMembers => 'グループあたりの人数';
 
   @override
   String get planLimitSponsored => 'プランを共有するグループ';
@@ -2997,8 +3005,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planPaymentClaimed => '支払いを追加しました';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'レシート写真：$receipts · 定期支出：$recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人数：$members · レシート写真：$receipts · 定期支出：$recurring';
   }
 
   @override

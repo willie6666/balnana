@@ -25,7 +25,8 @@ info:
     signed-in non-member, 403 `not_a_member` (see /g/{token}/join).
 
     Billing: on a server that charges, adding past a plan's limit answers
-    402 `plan_limit`, with the limit in `params` (`limit`, `max`). Ko-fi posts
+    402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
+    already stays as it is, even past a limit. Ko-fi posts
     its payments as a form to /webhooks/kofi, and Google's Pub/Sub pushes
     Google Play's notifications to /webhooks/play. This contract leaves both
     out.
@@ -420,7 +421,9 @@ paths:
       summary: Create a group with its first members
       description: >-
         The response carries the secret token. In accounts mode the creator
-        must be signed in and becomes the first member.
+        must be signed in and becomes the first member. A group with more
+        people than the default plan allows starts sponsored by its creator,
+        whose plan must allow it.
       requestBody:
         required: true
         content:
@@ -448,6 +451,7 @@ paths:
         groups. Amounts in other currencies use the export's converted
         amounts, so the group has one currency. In accounts mode the creator
         must be signed in and say which person in the file they are (`me`).
+        Too many people for the default plan are handled as by createGroup.
       requestBody:
         required: true
         content:
@@ -1117,7 +1121,9 @@ paths:
       summary: Become a member, as a new member or by claiming a placeholder
       description: >-
         Joining again after leaving brings the old member back. Joining when
-        already a member changes nothing.
+        already a member changes nothing. It counts towards the account's
+        `joined_groups` limit; only someone new takes a place in the group's
+        `members` limit, not someone claiming a placeholder.
       requestBody:
         required: true
         content:
@@ -1249,8 +1255,9 @@ paths:
       operationId: removeMember
       summary: Mark a member as having left
       description: >-
-        Only members whose balance is zero can leave. They stay in past
-        expenses; error `member_has_balance` otherwise.
+        Anyone can leave, whatever their balance. They stay in expenses and
+        recurring expenses, and the balances keep them while they owe or are
+        owed anything.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1379,8 +1386,8 @@ paths:
     post:
       operationId: createExpense
       description: >-
-        Every payer and split member must be in the group and not have left
-        it (400 `unknown_member` or `member_left`).
+        Every payer and split member must be in the group, which includes
+        those who left it (400 `unknown_member`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1420,9 +1427,6 @@ paths:
       description: >-
         `version` must be the version that was read; otherwise the expense
         changed meanwhile and the answer is 409 `expense_version_conflict`.
-        A member who left may stay in an expense they were already part of,
-        but not be added to one, nor have what they paid or their share
-        change (400 `member_left`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -1443,9 +1447,6 @@ paths:
     delete:
       operationId: deleteExpense
       summary: Delete (restorable)
-      description: >-
-        409 `member_left` when someone in the expense has left the group and
-        deleting it would change their balance.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1515,9 +1516,6 @@ paths:
     post:
       operationId: restoreExpense
       summary: Undo a delete
-      description: >-
-        409 `member_left` when someone in the expense has left the group
-        since, as restoring it would give them a balance again.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       responses:
@@ -1535,7 +1533,7 @@ paths:
     post:
       operationId: createPayment
       summary: Record that one member paid another
-      description: Both members must not have left the group (400 `member_left`).
+      description: Either member may have left the group.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1579,8 +1577,8 @@ paths:
         The server adds the expense at every occurrence, as made by whoever
         set it up. Occurrences already due, from `startsAt` on, are added
         straight away; 400 `too_many_due` when that would be more than 100.
-        Every payer and split member must be in the group and not have left
-        it (400 `unknown_member` or `member_left`).
+        Every payer and split member must be in the group, which includes
+        those who left it (400 `unknown_member`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1648,8 +1646,8 @@ paths:
         Resuming adds the occurrences that came due before it was paused,
         such as one that could not be added, and skips those that came due
         while it was paused. The server pauses a recurring expense itself
-        when an occurrence cannot be added, such as when someone in it has
-        left the group. 400 when what it would add no longer works.
+        when an occurrence cannot be added. 400 when what it would add no
+        longer works.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -3162,9 +3160,14 @@ components:
         recurringPerGroup:
           type: integer
           minimum: 0
-        ownGroups:
+        joinedGroups:
           type: integer
           minimum: 0
+          description: The groups an account can be in, whoever made them.
+        membersPerGroup:
+          type: integer
+          minimum: 0
+          description: The people a group can have. A server allows 100 at most whatever this says.
         sponsoredGroups:
           type: integer
           minimum: 0
@@ -3341,7 +3344,7 @@ components:
           description: Left out means no limit.
     MyPlan:
       type: object
-      required: [planName, paid, ownGroups, sponsoredGroups]
+      required: [planName, paid, joinedGroups, sponsoredGroups]
       properties:
         planName:
           type: string
@@ -3352,14 +3355,18 @@ components:
           type: string
           format: date-time
           description: When the current plan ends. Left out when it does not.
-        ownGroups:
+        joinedGroups:
           $ref: "#/components/schemas/Usage"
+          description: Groups the account is in, not counting archived ones or those it left.
         sponsoredGroups:
           $ref: "#/components/schemas/Usage"
         receiptsPerGroup:
           type: integer
         recurringPerGroup:
           type: integer
+        membersPerGroup:
+          type: integer
+          description: For groups this account sponsors. Others have the default plan's limit.
         paymentCode:
           type: string
           description: |
@@ -3407,13 +3414,16 @@ components:
           description: The transaction ID, or the link to the payment.
     GroupPlan:
       type: object
-      required: [planName, receipts, recurring, canSponsor]
+      required: [planName, members, receipts, recurring, canSponsor]
       properties:
         planName:
           type: string
         sponsorMemberId:
           type: string
           description: The member who pays for this group's limits.
+        members:
+          $ref: "#/components/schemas/Usage"
+          description: People in the group, with or without accounts, not counting those who left.
         receipts:
           $ref: "#/components/schemas/Usage"
         recurring:

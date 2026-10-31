@@ -152,11 +152,12 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	rows := importRows{file: file, currency: currency, digits: digits, untitled: untitled, ids: ids, categories: categories}
 
 	if dryRun {
-		if creator != nil {
-			err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error { return s.checkOwnGroups(ctx, tx, creator.id) })
-			if err != nil {
-				return nil, err
-			}
+		err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			_, err := s.checkNewGroup(ctx, tx, creator, len(names))
+			return err
+		})
+		if err != nil {
+			return nil, err
 		}
 		members := make([]member, len(names))
 		for i, n := range names {
@@ -187,15 +188,14 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if creator != nil {
-			if err := s.checkOwnGroups(ctx, tx, creator.id); err != nil {
-				return err
-			}
+		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names))
+		if err != nil {
+			return err
 		}
 		g, err := scanGroup(tx.QueryRow(ctx, `
-			insert into groups (token, name, currency, minor_digits, link_access)
-			values ($1, $2, $3, $4, $5)
-			returning `+groupColumns, newToken(), name, currency, digits, creator == nil))
+			insert into groups (token, name, currency, minor_digits, link_access, sponsor_user_id)
+			values ($1, $2, $3, $4, $5, $6)
+			returning `+groupColumns, newToken(), name, currency, digits, creator == nil, sponsor))
 		if err != nil {
 			return err
 		}
@@ -287,7 +287,7 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 		}
 		category := input.CategoryId
 		input.CategoryId = nil
-		d, err := validateExpense(ctx, nil, g, kind, input, nil, members)
+		d, err := validateExpense(ctx, nil, g, kind, input, members)
 		if err != nil {
 			var ae *apiError
 			var dc domain.Code

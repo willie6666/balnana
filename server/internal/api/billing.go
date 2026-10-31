@@ -19,7 +19,8 @@ type plan struct {
 	isDefault bool
 	receipts  *int
 	recurring *int
-	ownGroups *int
+	joined    *int
+	members   *int
 	sponsored *int
 }
 
@@ -29,14 +30,14 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 	var p plan
 	var ends *time.Time
 	err := q.QueryRow(ctx, `
-		select p.name, p.is_default, p.receipts_per_group, p.recurring_per_group, p.own_groups, p.sponsored_groups,
-		       e.expires_at
+		select p.name, p.is_default, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
+		       p.members_per_group, p.sponsored_groups, e.expires_at
 		from plans p
 		left join entitlements e on e.plan_id = p.id and e.user_id = $1 and `+entitlementActive+`
 		where p.is_default or e.id is not null
 		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
 		limit 1`, userID).
-		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.ownGroups, &p.sponsored, &ends)
+		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,10 +94,16 @@ func countRecurring(ctx context.Context, q querier, groupID string) (n int, err 
 	return n, err
 }
 
-func countOwnGroups(ctx context.Context, q querier, userID string) (n int, err error) {
+func countJoinedGroups(ctx context.Context, q querier, userID string) (n int, err error) {
 	err = q.QueryRow(ctx, `
 		select count(*) from members m join groups g on g.id = m.group_id
-		where m.user_id = $1 and m.is_owner and m.left_at is null and g.archived_at is null`, userID).Scan(&n)
+		where m.user_id = $1 and m.left_at is null and g.archived_at is null`, userID).Scan(&n)
+	return n, err
+}
+
+// countMembers counts the people still in the group, with or without accounts.
+func countMembers(ctx context.Context, q querier, groupID string) (n int, err error) {
+	err = q.QueryRow(ctx, `select count(*) from members where group_id = $1 and left_at is null`, groupID).Scan(&n)
 	return n, err
 }
 
@@ -162,8 +169,8 @@ func holdAccount(ctx context.Context, tx pgx.Tx, userID string) error {
 	return err
 }
 
-// checkOwnGroups refuses a new group to an account that owns all it may.
-func (s *Server) checkOwnGroups(ctx context.Context, tx pgx.Tx, userID string) error {
+// checkJoinedGroups refuses one more group to an account in all it may be in.
+func (s *Server) checkJoinedGroups(ctx context.Context, tx pgx.Tx, userID string) error {
 	if !s.conf().Billing {
 		return nil
 	}
@@ -171,17 +178,54 @@ func (s *Server) checkOwnGroups(ctx context.Context, tx pgx.Tx, userID string) e
 		return err
 	}
 	p, _, err := userPlan(ctx, tx, userID)
-	if err != nil || p.ownGroups == nil {
+	if err != nil || p.joined == nil {
 		return err
 	}
-	n, err := countOwnGroups(ctx, tx, userID)
+	n, err := countJoinedGroups(ctx, tx, userID)
 	if err != nil {
 		return err
 	}
-	if n >= *p.ownGroups {
-		return planLimit("own_groups", *p.ownGroups)
+	if n >= *p.joined {
+		return planLimit("joined_groups", *p.joined)
 	}
 	return nil
+}
+
+// checkNewGroup refuses a group of n people that its creator may not start. A
+// group larger than the default plan allows is sponsored from the start, or
+// nobody could import one: it returns who sponsors it, if anyone.
+func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n int) (sponsor *string, err error) {
+	if !s.conf().Billing {
+		return nil, nil
+	}
+	if creator != nil {
+		if err := s.checkJoinedGroups(ctx, tx, creator.id); err != nil {
+			return nil, err
+		}
+	}
+	free, _, err := userPlan(ctx, tx, nilUUID)
+	if err != nil || free.members == nil || n <= *free.members {
+		return nil, err
+	}
+	if creator == nil {
+		return nil, planLimit("members", *free.members)
+	}
+	p, _, err := userPlan(ctx, tx, creator.id)
+	if err != nil {
+		return nil, err
+	}
+	if p.members != nil && n > *p.members {
+		return nil, planLimit("members", *p.members)
+	}
+	if p.sponsored != nil && *p.sponsored == 0 {
+		return nil, planLimit("members", *free.members)
+	}
+	if room, err := hasRoomToSponsor(ctx, tx, creator.id); err != nil {
+		return nil, err
+	} else if !room {
+		return nil, planLimit("sponsored_groups", *p.sponsored)
+	}
+	return &creator.id, nil
 }
 
 func (s *Server) requireBilling() error {
@@ -217,10 +261,11 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 		ExpiresAt:         ends,
 		ReceiptsPerGroup:  p.receipts,
 		RecurringPerGroup: p.recurring,
-		OwnGroups:         Usage{Limit: p.ownGroups},
+		MembersPerGroup:   p.members,
+		JoinedGroups:      Usage{Limit: p.joined},
 		SponsoredGroups:   Usage{Limit: p.sponsored},
 	}
-	if out.OwnGroups.Used, err = countOwnGroups(ctx, q, userID); err != nil {
+	if out.JoinedGroups.Used, err = countJoinedGroups(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
 	if out.SponsoredGroups.Used, err = countSponsored(ctx, q, userID); err != nil {
@@ -364,8 +409,12 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	out := GroupPlan{
 		PlanName:        p.name,
 		SponsorMemberId: sponsor,
+		Members:         Usage{Limit: p.members},
 		Receipts:        Usage{Limit: p.receipts},
 		Recurring:       Usage{Limit: p.recurring},
+	}
+	if out.Members.Used, err = countMembers(ctx, q, g.id); err != nil {
+		return GroupPlan{}, err
 	}
 	if out.Receipts.Used, err = countReceipts(ctx, q, g.id); err != nil {
 		return GroupPlan{}, err

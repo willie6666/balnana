@@ -153,7 +153,8 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     return [
       l10n.adminPlanLimit(l10n.planLimitReceipts, value(limits.receiptsPerGroup)),
       l10n.adminPlanLimit(l10n.planLimitRecurring, value(limits.recurringPerGroup)),
-      l10n.adminPlanLimit(l10n.planLimitOwnGroups, value(limits.ownGroups)),
+      l10n.adminPlanLimit(l10n.planLimitJoinedGroups, value(limits.joinedGroups)),
+      l10n.adminPlanLimit(l10n.planLimitMembers, value(limits.membersPerGroup)),
       l10n.adminPlanLimit(l10n.planLimitSponsored, value(limits.sponsoredGroups)),
     ].join(' · ');
   }
@@ -311,13 +312,14 @@ class _PlanDialogState extends State<_PlanDialog> {
   late final _rank = TextEditingController(text: '${widget.plan?.rank ?? 1}');
   late final _receipts = TextEditingController(text: widget.plan?.limits.receiptsPerGroup?.toString());
   late final _recurring = TextEditingController(text: widget.plan?.limits.recurringPerGroup?.toString());
-  late final _groups = TextEditingController(text: widget.plan?.limits.ownGroups?.toString());
+  late final _groups = TextEditingController(text: widget.plan?.limits.joinedGroups?.toString());
+  late final _members = TextEditingController(text: widget.plan?.limits.membersPerGroup?.toString());
   late final _sponsored = TextEditingController(text: widget.plan?.limits.sponsoredGroups?.toString());
   late bool _default = widget.plan?.isDefault ?? false;
 
   @override
   void dispose() {
-    for (final c in [_idField, _name, _rank, _receipts, _recurring, _groups, _sponsored]) {
+    for (final c in [_idField, _name, _rank, _receipts, _recurring, _groups, _members, _sponsored]) {
       c.dispose();
     }
     super.dispose();
@@ -336,7 +338,8 @@ class _PlanDialogState extends State<_PlanDialog> {
         limits: PlanLimits(
           receiptsPerGroup: number(_receipts),
           recurringPerGroup: number(_recurring),
-          ownGroups: number(_groups),
+          joinedGroups: number(_groups),
+          membersPerGroup: number(_members),
           sponsoredGroups: number(_sponsored),
         ),
       ),
@@ -395,7 +398,9 @@ class _PlanDialogState extends State<_PlanDialog> {
               gap,
               limit(_recurring, l10n.planLimitRecurring),
               gap,
-              limit(_groups, l10n.planLimitOwnGroups),
+              limit(_groups, l10n.planLimitJoinedGroups),
+              gap,
+              limit(_members, l10n.planLimitMembers),
               gap,
               limit(_sponsored, l10n.planLimitSponsored),
               SwitchListTile(

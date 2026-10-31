@@ -458,8 +458,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'سيبقى هذا الشخص في المصروفات السابقة، لكن لن يمكن إضافته إلى مصروفات جديدة.';
+  String get memberRemoveBody => 'ستبقى مصروفات هذا الشخص ورصيده في المجموعة.';
 
   @override
   String get groupLinkCopied => 'نُسخ الرابط. يمكن لأي شخص لديه الرابط فتح هذه المجموعة.';
@@ -3117,8 +3116,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'بلغت حد المجموعات: $max.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'بلغت هذه المجموعة حد $max شخصًا.';
   }
 
   @override
@@ -3167,7 +3171,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planLimitRecurring => 'المصروفات المتكررة لكل مجموعة';
 
   @override
-  String get planLimitOwnGroups => 'المجموعات التي أنشأتها';
+  String get planLimitJoinedGroups => 'المجموعات التي أنت فيها';
+
+  @override
+  String get planLimitMembers => 'الأشخاص في كل مجموعة';
 
   @override
   String get planLimitSponsored => 'المجموعات التي تشارك خطتك';
@@ -3203,8 +3210,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planPaymentClaimed => 'تمت إضافة الدفعة';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'صور الإيصالات: $receipts · المتكررة: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'الأشخاص: $members · صور الإيصالات: $receipts · المتكررة: $recurring';
   }
 
   @override

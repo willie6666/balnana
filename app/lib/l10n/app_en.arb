@@ -616,7 +616,7 @@
     },
     "description": "Heading for member remove title in group member management. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
-  "memberRemoveBody": "They'll stay on past expenses but can't be added to new ones.",
+  "memberRemoveBody": "Their expenses and balance stay in the group.",
   "@memberRemoveBody": {
     "description": "Explanatory text for member remove body in group member management."
   },
@@ -4476,9 +4476,19 @@
       }
     }
   },
-  "errorLimitOwnGroups": "You've reached your limit of {max} groups.",
-  "@errorLimitOwnGroups": {
-    "description": "Label or control text for error limit own groups in an error message.",
+  "errorLimitJoinedGroups": "You've reached your limit of {max} groups.",
+  "@errorLimitJoinedGroups": {
+    "description": "Error when an account is already in as many groups as its plan allows.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "description": "Item count used by this message."
+      }
+    }
+  },
+  "errorLimitMembers": "This group has reached its limit of {max} people.",
+  "@errorLimitMembers": {
+    "description": "Error when a group already has as many people as its plan allows.",
     "placeholders": {
       "max": {
         "type": "int",
@@ -4561,9 +4571,13 @@
   "@planLimitRecurring": {
     "description": "Label or control text for plan limit recurring in the plan screens."
   },
-  "planLimitOwnGroups": "Groups you created",
-  "@planLimitOwnGroups": {
-    "description": "Label or control text for plan limit own groups in the plan screens."
+  "planLimitJoinedGroups": "Groups you're in",
+  "@planLimitJoinedGroups": {
+    "description": "The limit on how many groups an account can be in, in the plan screens."
+  },
+  "planLimitMembers": "People per group",
+  "@planLimitMembers": {
+    "description": "The limit on how many people a group can have, in the plan screens."
   },
   "planLimitSponsored": "Groups sharing your plan",
   "@planLimitSponsored": {
@@ -4609,10 +4623,13 @@
   "@planPaymentClaimed": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "groupPlanUsage": "Receipt photos: {receipts} · Recurring: {recurring}",
+  "groupPlanUsage": "People: {members} · Receipt photos: {receipts} · Recurring: {recurring}",
   "@groupPlanUsage": {
     "description": "Label or control text for group plan usage in the plan screens.",
     "placeholders": {
+      "members": {
+        "type": "String"
+      },
       "receipts": {
         "type": "String"
       },

@@ -451,7 +451,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => 'คนนี้จะยังอยู่ในค่าใช้จ่ายเดิม แต่เพิ่มในรายการใหม่ไม่ได้';
+  String get memberRemoveBody => 'ค่าใช้จ่ายและยอดคงเหลือของคนนี้ยังอยู่ในกลุ่ม';
 
   @override
   String get groupLinkCopied => 'คัดลอกลิงก์แล้ว ทุกคนที่มีลิงก์เปิดกลุ่มนี้ได้';
@@ -2986,8 +2986,13 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'คุณถึงขีดจำกัด $max กลุ่มแล้ว';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'กลุ่มนี้ถึงขีดจำกัด $max คนแล้ว';
   }
 
   @override
@@ -3036,7 +3041,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planLimitRecurring => 'ค่าใช้จ่ายประจำต่อกลุ่ม';
 
   @override
-  String get planLimitOwnGroups => 'กลุ่มที่คุณสร้าง';
+  String get planLimitJoinedGroups => 'กลุ่มที่คุณอยู่';
+
+  @override
+  String get planLimitMembers => 'จำนวนคนต่อกลุ่ม';
 
   @override
   String get planLimitSponsored => 'กลุ่มที่ใช้แพ็กเกจของคุณ';
@@ -3072,8 +3080,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planPaymentClaimed => 'เพิ่มการชำระเงินแล้ว';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'รูปใบเสร็จ: $receipts · ค่าใช้จ่ายประจำ: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'จำนวนคน: $members · รูปใบเสร็จ: $receipts · ค่าใช้จ่ายประจำ: $recurring';
   }
 
   @override

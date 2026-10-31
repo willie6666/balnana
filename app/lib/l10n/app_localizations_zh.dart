@@ -445,7 +445,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => '此成员会保留在以前的支出中，但无法加入新的支出。';
+  String get memberRemoveBody => '此成员的支出和余额仍会保留在群组中。';
 
   @override
   String get groupLinkCopied => '链接已复制。任何拥有链接的人都可以打开此群组。';
@@ -2900,8 +2900,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return '你已达 $max 个群组的上限。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return '此群组已达 $max 人的上限。';
   }
 
   @override
@@ -2949,7 +2954,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planLimitRecurring => '每个群组的周期性支出';
 
   @override
-  String get planLimitOwnGroups => '你创建的群组';
+  String get planLimitJoinedGroups => '你加入的群组';
+
+  @override
+  String get planLimitMembers => '每个群组的人数';
 
   @override
   String get planLimitSponsored => '共享你方案的群组';
@@ -2985,8 +2993,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planPaymentClaimed => '已添加付款';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return '收据照片：$receipts · 周期性支出：$recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人数：$members · 收据照片：$receipts · 周期性支出：$recurring';
   }
 
   @override
@@ -3515,7 +3523,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get memberRemoveBody => '這個人仍會保留在過去的支出中，但無法加入新的支出。';
+  String get memberRemoveBody => '這個人的支出和餘額仍會保留在群組中。';
 
   @override
   String get groupLinkCopied => '已複製連結。任何人都能透過連結開啟這個群組。';
@@ -5969,8 +5977,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return '你已達 $max 個群組的上限。';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return '此群組已達 $max 人的上限。';
   }
 
   @override
@@ -6018,7 +6031,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planLimitRecurring => '每個群組的定期支出';
 
   @override
-  String get planLimitOwnGroups => '你建立的群組';
+  String get planLimitJoinedGroups => '你加入的群組';
+
+  @override
+  String get planLimitMembers => '每個群組的人數';
 
   @override
   String get planLimitSponsored => '分享你方案的群組';
@@ -6054,8 +6070,8 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planPaymentClaimed => '已加入付款';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return '收據照片：$receipts · 定期支出：$recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '人數：$members · 收據照片：$receipts · 定期支出：$recurring';
   }
 
   @override

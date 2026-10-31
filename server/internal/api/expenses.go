@@ -108,11 +108,10 @@ func checkExpenseDate(t time.Time) error {
 
 // validateExpense checks an expense against the group: every member must
 // belong to it, payers must add up to the amount and the split must work.
-// Members who left may only stay in an expense they were already part of
-// (those in already), so no one gains a new balance after leaving. members
-// is the group's, or nil to load them.
+// Members who left still belong: their balance has to stay possible to settle.
+// members is the group's, or nil to load them.
 func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput,
-	already map[string]bool, members []member) (*expenseData, error) {
+	members []member) (*expenseData, error) {
 	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
 
 	minTitle := 1
@@ -194,12 +193,8 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		}
 	}
 	known := func(id string) error {
-		m := findMember(members, id)
-		if m == nil {
+		if findMember(members, id) == nil {
 			return badRequest("unknown_member")
-		}
-		if m.left && !already[id] {
-			return badRequest("member_left")
 		}
 		return nil
 	}
@@ -698,7 +693,7 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 			out, err = loadExpense(ctx, tx, g, id)
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil, nil)
+		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil)
 		if err != nil {
 			return err
 		}
@@ -755,7 +750,7 @@ func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObje
 			Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
 			SplitMethod: SplitMethod(domain.SplitExact),
 			Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
-		}, nil, nil)
+		}, nil)
 		if err != nil {
 			return err
 		}
@@ -877,11 +872,8 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kind, *req.Body, before, nil)
+		d, err := validateExpense(ctx, tx, g, kind, *req.Body, nil)
 		if err != nil {
-			return err
-		}
-		if err := keepsLeftNets(ctx, tx, req.ExpenseId, d); err != nil {
 			return err
 		}
 		if err := checkGroupTotal(ctx, tx, g.id, d.amount, &req.ExpenseId); err != nil {
@@ -923,63 +915,6 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 	return UpdateExpense200JSONResponse(out), nil
 }
 
-// leftNets is what the expense adds to the balance of each member in it who
-// has left: what they paid minus their share.
-func leftNets(ctx context.Context, q querier, id string) (map[string]int64, error) {
-	rows, err := q.Query(ctx, `
-		select t.member_id::text, sum(t.amount)::bigint from (
-			select member_id, amount from expense_payers where expense_id = $1
-			union all
-			select member_id, -amount from expense_splits where expense_id = $1
-		) t join members m on m.id = t.member_id
-		where m.left_at is not null
-		group by t.member_id`, id)
-	if err != nil {
-		return nil, err
-	}
-	nets := map[string]int64{}
-	var member string
-	var net int64
-	_, err = pgx.ForEachRow(rows, []any{&member, &net}, func() error {
-		nets[member] = net
-		return nil
-	})
-	return nets, err
-}
-
-// keepsLeftNets fails with member_left when d would change the balance of
-// someone in the expense who has left, which they could no longer settle.
-func keepsLeftNets(ctx context.Context, q querier, id string, d *expenseData) error {
-	nets, err := leftNets(ctx, q, id)
-	if err != nil {
-		return err
-	}
-	for member, net := range nets {
-		if d.payers[member]-d.splits[member] != net {
-			return badRequest("member_left")
-		}
-	}
-	return nil
-}
-
-// noneLeft fails with member_left when someone in the expense has left.
-func noneLeft(ctx context.Context, q querier, id string) error {
-	var left bool
-	err := q.QueryRow(ctx, `
-		select exists (
-			select 1 from members m
-			where m.left_at is not null and m.id in (
-				select member_id from expense_payers where expense_id = $1
-				union select member_id from expense_splits where expense_id = $1))`, id).Scan(&left)
-	if err != nil {
-		return err
-	}
-	if left {
-		return &apiError{status: 409, code: "member_left"}
-	}
-	return nil
-}
-
 // setDeleted deletes or restores an expense. Doing it twice changes nothing.
 func (s *Server) setDeleted(ctx context.Context, token, id string, header *string, del bool) (Expense, error) {
 	var out Expense
@@ -996,22 +931,7 @@ func (s *Server) setDeleted(ctx context.Context, token, id string, header *strin
 			return err
 		}
 		if deleted != del {
-			if del {
-				// Deleting would take away a balance from whoever left since.
-				nets, err := leftNets(ctx, tx, id)
-				if err != nil {
-					return err
-				}
-				for _, net := range nets {
-					if net != 0 {
-						return &apiError{status: 409, code: "member_left"}
-					}
-				}
-			} else {
-				// Restoring would give back a balance to whoever left since.
-				if err := noneLeft(ctx, tx, id); err != nil {
-					return err
-				}
+			if !del {
 				var amount int64
 				if err := tx.QueryRow(ctx, `select amount from expenses where id = $1`, id).Scan(&amount); err != nil {
 					return err

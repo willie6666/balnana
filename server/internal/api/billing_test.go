@@ -118,11 +118,13 @@ func TestBillingNeedsAccounts(t *testing.T) {
 	}
 	u := register(c, "ana@example.test", "Ana")
 	p := myPlanOf(c)
-	if p.PlanName != "Free" || p.Paid || p.ExpiresAt != nil || p.OwnGroups.Used != 0 || p.OwnGroups.Limit == nil {
+	if p.PlanName != "Free" || p.Paid || p.ExpiresAt != nil || p.JoinedGroups.Used != 0 ||
+		p.JoinedGroups.Limit == nil || *p.JoinedGroups.Limit != 10 || p.MembersPerGroup == nil || *p.MembersPerGroup != 15 {
 		t.Fatalf("%+v", p)
 	}
 	grant(t, s, u.Id, "plus")
-	if p := myPlanOf(c); p.PlanName != "Plus" || !p.Paid {
+	if p := myPlanOf(c); p.PlanName != "Plus" || !p.Paid ||
+		p.JoinedGroups.Limit == nil || *p.JoinedGroups.Limit != 50 || p.MembersPerGroup == nil || *p.MembersPerGroup != 100 {
 		t.Fatalf("%+v", p)
 	}
 }
@@ -217,9 +219,9 @@ func TestRecurringLimit(t *testing.T) {
 	c.must(201, "POST", base+"/recurring", in, nil)
 }
 
-func TestOwnGroupLimit(t *testing.T) {
+func TestJoinedGroupLimit(t *testing.T) {
 	c, _, s := billingServer(t)
-	exec(t, s, `update plans set own_groups = 1 where is_default`)
+	exec(t, s, `update plans set joined_groups = 1 where is_default`)
 	u := register(c, "ana@example.test", "Ana")
 	g := createGroup(c, "Ana")
 	in := GroupCreate{Name: "More", Currency: "EUR", Members: []string{"Ana"}}
@@ -233,7 +235,7 @@ func TestOwnGroupLimit(t *testing.T) {
 	exec(t, s, `update entitlements set expires_at = now() - interval '1 second', starts_at = now() - interval '1 day'`)
 	c.errorCode(402, "POST", "/groups", in)
 	c.must(200, "GET", "/g/"+second.Token, nil, nil)
-	if p := myPlanOf(c); p.Paid || p.OwnGroups.Used != 2 {
+	if p := myPlanOf(c); p.Paid || p.JoinedGroups.Used != 2 {
 		t.Fatalf("%+v", p)
 	}
 	// Archiving makes room.
@@ -882,7 +884,7 @@ func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
 	path := "/g/" + g.Token
 	c.must(204, "DELETE", path+"/members/"+g.Members[0].Id, nil, nil)
 
-	exec(t, s, `update plans set own_groups = 1 where is_default`)
+	exec(t, s, `update plans set joined_groups = 1 where is_default`)
 	ben := c.another()
 	register(ben, "ben@example.test", "Ben")
 	ben.must(201, "POST", "/groups", GroupCreate{Name: "Mine", Currency: "EUR", Members: []string{"Ben"}}, nil)
@@ -891,10 +893,159 @@ func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
 	}
 
 	// Below the limit it joins, and owns it.
-	exec(t, s, `update plans set own_groups = 2 where is_default`)
+	exec(t, s, `update plans set joined_groups = 2 where is_default`)
 	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
-	if p := myPlanOf(ben); p.OwnGroups.Used != 2 {
+	if p := myPlanOf(ben); p.JoinedGroups.Used != 2 {
 		t.Fatalf("%+v", p)
+	}
+}
+
+// Every way into a group counts, not only making one, and leaving makes room.
+func TestJoinedGroupsCountEveryWayIn(t *testing.T) {
+	c, _, s := billingServer(t)
+	register(c, "ana@example.test", "Ana")
+	var claim, plain Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Claim", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &claim)
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Plain", Currency: "EUR", Members: []string{"Ana"}}, &plain)
+	full := func(b *client, path string, in JoinInput) {
+		t.Helper()
+		var refused struct {
+			Code   string         `json:"code"`
+			Params map[string]any `json:"params"`
+		}
+		b.must(402, "POST", path, in, &refused)
+		if refused.Code != "plan_limit" || refused.Params["limit"] != "joined_groups" {
+			t.Fatalf("%+v", refused)
+		}
+	}
+
+	exec(t, s, `update plans set joined_groups = 1 where is_default`)
+	ben := c.another()
+	register(ben, "ben@example.test", "Ben")
+	ben.must(201, "POST", "/groups", GroupCreate{Name: "Mine", Currency: "EUR", Members: []string{"Ben"}}, nil)
+	full(ben, "/g/"+plain.Token+"/join", JoinInput{})
+	full(ben, "/g/"+claim.Token+"/join", JoinInput{ClaimMemberId: &claim.Members[1].Id})
+
+	exec(t, s, `update plans set joined_groups = 2 where is_default`)
+	var joined Group
+	ben.must(200, "POST", "/g/"+plain.Token+"/join", JoinInput{}, &joined)
+	if p := myPlanOf(ben); p.JoinedGroups.Used != 2 {
+		t.Fatalf("%+v", p)
+	}
+	// Someone over a lowered limit keeps their groups and can still open them,
+	// but what they left doesn't come back.
+	exec(t, s, `update plans set joined_groups = 1 where is_default`)
+	ben.must(200, "POST", "/g/"+plain.Token+"/join", JoinInput{}, nil) // already in
+	ben.must(200, "GET", "/g/"+plain.Token, nil, nil)
+	var me string
+	for _, m := range joined.Members {
+		if m.Name == "Ben" {
+			me = m.Id
+		}
+	}
+	ben.must(204, "DELETE", "/g/"+plain.Token+"/members/"+me, nil, nil)
+	full(ben, "/g/"+plain.Token+"/join", JoinInput{})
+	if p := myPlanOf(ben); p.JoinedGroups.Used != 1 {
+		t.Fatalf("%+v", p)
+	}
+}
+
+func TestMemberLimit(t *testing.T) {
+	c, _, s := billingServer(t)
+	exec(t, s, `update plans set members_per_group = 2 where is_default`)
+	exec(t, s, `update plans set members_per_group = 4 where id = 'plus'`)
+	u := register(c, "ana@example.test", "Ana")
+	limited := func(b *client, want string, max float64, method, path string, in any) {
+		t.Helper()
+		var refused struct {
+			Code   string         `json:"code"`
+			Params map[string]any `json:"params"`
+		}
+		b.must(402, method, path, in, &refused)
+		if refused.Code != "plan_limit" || refused.Params["limit"] != want || refused.Params["max"] != max {
+			t.Fatalf("%+v", refused)
+		}
+	}
+	three := GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana", "Ben", "Cy"}}
+	limited(c, "members", 2, "POST", "/groups", three)
+
+	var g Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
+	path := "/g/" + g.Token
+	limited(c, "members", 2, "POST", path+"/members", MemberInput{Name: "Cy"})
+	var gp GroupPlan
+	c.must(200, "GET", path+"/plan", nil, &gp)
+	if gp.Members.Used != 2 || gp.Members.Limit == nil || *gp.Members.Limit != 2 {
+		t.Fatalf("%+v", gp)
+	}
+
+	// A place held by a name is taken: claiming it adds nobody, joining would.
+	ben := c.another()
+	register(ben, "ben@example.test", "Ben")
+	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+	cy := c.another()
+	register(cy, "cy@example.test", "Cy")
+	limited(cy, "members", 2, "POST", path+"/join", JoinInput{})
+
+	// Someone leaving makes room, and someone coming back takes it again.
+	ben.must(204, "DELETE", path+"/members/"+g.Members[1].Id, nil, nil)
+	c.must(201, "POST", path+"/members", MemberInput{Name: "Cy"}, nil)
+	limited(ben, "members", 2, "POST", path+"/join", JoinInput{})
+
+	// A sponsor's plan is the group's.
+	grant(t, s, u.Id, "plus")
+	c.must(200, "PUT", path+"/sponsor", nil, nil)
+	c.must(201, "POST", path+"/members", MemberInput{Name: "Dee"}, nil)
+	c.must(201, "POST", path+"/members", MemberInput{Name: "Eli"}, nil)
+	limited(c, "members", 4, "POST", path+"/members", MemberInput{Name: "Flo"})
+
+	// Past the limit again, it keeps everyone and only adding stops.
+	c.must(200, "DELETE", path+"/sponsor", nil, nil)
+	limited(c, "members", 2, "POST", path+"/members", MemberInput{Name: "Flo"})
+	var after Group
+	c.must(200, "GET", path, nil, &after)
+	if len(after.Members) != 5 {
+		t.Fatalf("%+v", after.Members)
+	}
+}
+
+// A plan that allows a larger group can start one, which then uses a place of
+// the plan: it couldn't be sponsored in time for anything added at once.
+func TestLargeNewGroupStartsSponsored(t *testing.T) {
+	c, _, s := billingServer(t)
+	exec(t, s, `update plans set members_per_group = 2 where is_default`)
+	exec(t, s, `update plans set members_per_group = 4, sponsored_groups = 1 where id = 'plus'`)
+	u := register(c, "ana@example.test", "Ana")
+	grant(t, s, u.Id, "plus")
+
+	three := GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana", "Ben", "Cy"}}
+	var g Group
+	c.must(201, "POST", "/groups", three, &g)
+	var gp GroupPlan
+	c.must(200, "GET", "/g/"+g.Token+"/plan", nil, &gp)
+	if gp.PlanName != "Plus" || gp.SponsorMemberId == nil || *gp.SponsorMemberId != g.Members[0].Id {
+		t.Fatalf("%+v", gp)
+	}
+	// A small group doesn't need the plan, and past its places a large one
+	// can't start.
+	var small Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Small", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &small)
+	var smallPlan GroupPlan
+	c.must(200, "GET", "/g/"+small.Token+"/plan", nil, &smallPlan)
+	if smallPlan.SponsorMemberId != nil {
+		t.Fatalf("%+v", smallPlan)
+	}
+	var refused struct {
+		Params map[string]any `json:"params"`
+	}
+	c.must(402, "POST", "/groups", three, &refused)
+	if refused.Params["limit"] != "sponsored_groups" {
+		t.Fatalf("%+v", refused)
+	}
+	five := GroupCreate{Name: "Big", Currency: "EUR", Members: []string{"Ana", "Ben", "Cy", "Dee", "Eli"}}
+	c.must(402, "POST", "/groups", five, &refused)
+	if refused.Params["limit"] != "members" || refused.Params["max"] != float64(4) {
+		t.Fatalf("%+v", refused)
 	}
 }
 

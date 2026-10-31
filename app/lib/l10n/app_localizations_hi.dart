@@ -461,7 +461,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => 'वे पुराने खर्चों में बने रहेंगे, लेकिन नए खर्चों में नहीं जोड़े जा सकेंगे।';
+  String get memberRemoveBody => 'उनके खर्च और बैलेंस समूह में बने रहेंगे।';
 
   @override
   String get groupLinkCopied => 'लिंक कॉपी हो गया। इसे पाने वाला कोई भी व्यक्ति यह समूह खोल सकता है।';
@@ -3062,8 +3062,13 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'आप $max समूहों की सीमा तक पहुँच गए हैं।';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'यह समूह $max लोगों की सीमा तक पहुँच गया है।';
   }
 
   @override
@@ -3112,7 +3117,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planLimitRecurring => 'प्रति समूह नियमित खर्च';
 
   @override
-  String get planLimitOwnGroups => 'आपके बनाए समूह';
+  String get planLimitJoinedGroups => 'आप जिन समूहों में हैं';
+
+  @override
+  String get planLimitMembers => 'प्रति समूह लोग';
 
   @override
   String get planLimitSponsored => 'आपका प्लान साझा करने वाले समूह';
@@ -3148,8 +3156,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planPaymentClaimed => 'भुगतान जोड़ा गया';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'रसीद फ़ोटो: $receipts · नियमित: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'लोग: $members · रसीद फ़ोटो: $receipts · नियमित: $recurring';
   }
 
   @override

@@ -669,7 +669,11 @@ class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
         .where((m) => m.id == sponsor)
         .map((m) => m.name)
         .firstOrNull;
-    final usage = l10n.groupPlanUsage(planUsage(l10n, plan.receipts), planUsage(l10n, plan.recurring));
+    final usage = l10n.groupPlanUsage(
+      planUsage(l10n, plan.members),
+      planUsage(l10n, plan.receipts),
+      planUsage(l10n, plan.recurring),
+    );
     final mine = sponsor != null && sponsor == widget.me;
     final signedIn = ref.watch(signedInProvider);
     return GroupedTile(

@@ -52,7 +52,7 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		// The account before the group, in the order its deletion locks them.
-		// Joining can make it an owner, which a plan's limit counts.
+		// A plan limits the groups it can be in.
 		if s.conf().Billing {
 			if err := holdAccount(ctx, tx, u.id); err != nil {
 				return err
@@ -69,6 +69,9 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 			return err
 		}
 		if g.me == nil {
+			if err := s.checkJoinedGroups(ctx, tx, u.id); err != nil {
+				return err
+			}
 			if err := s.join(ctx, tx, g, u, in); err != nil {
 				return err
 			}
@@ -125,7 +128,7 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 		if err := checkNameFree(members, m.name, m.id); err != nil {
 			return err
 		}
-		if err := checkRoom(members); err != nil {
+		if err := s.checkRoom(ctx, tx, g, members); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `update members set left_at = null where id = $1`, m.id); err != nil {
@@ -141,7 +144,7 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 		if err := checkNameFree(members, name, ""); err != nil {
 			return err
 		}
-		if err := checkRoom(members); err != nil {
+		if err := s.checkRoom(ctx, tx, g, members); err != nil {
 			return err
 		}
 		m = &member{name: name}
@@ -162,9 +165,6 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 		return err
 	}
 	if alone {
-		if err := s.checkOwnGroups(ctx, tx, u.id); err != nil {
-			return err
-		}
 		if _, err := tx.Exec(ctx, `update members set is_owner = true where id = $1`, m.id); err != nil {
 			return err
 		}

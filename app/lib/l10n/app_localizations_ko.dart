@@ -445,7 +445,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => '이전 지출에는 남아 있지만 새 지출에는 추가할 수 없어요.';
+  String get memberRemoveBody => '이 사람의 지출과 잔액은 그룹에 남아요.';
 
   @override
   String get groupLinkCopied => '링크를 복사했어요. 링크가 있으면 누구나 이 그룹을 열 수 있어요.';
@@ -2913,8 +2913,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return '그룹이 한도인 $max개에 도달했어요.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return '이 그룹은 한도인 $max명에 도달했어요.';
   }
 
   @override
@@ -2962,7 +2967,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planLimitRecurring => '그룹당 반복 지출';
 
   @override
-  String get planLimitOwnGroups => '내가 만든 그룹';
+  String get planLimitJoinedGroups => '참여 중인 그룹';
+
+  @override
+  String get planLimitMembers => '그룹당 인원';
 
   @override
   String get planLimitSponsored => '내 요금제를 공유하는 그룹';
@@ -2998,8 +3006,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planPaymentClaimed => '결제를 추가했습니다';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return '영수증 사진: $receipts · 반복 지출: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return '인원: $members · 영수증 사진: $receipts · 반복 지출: $recurring';
   }
 
   @override

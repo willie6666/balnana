@@ -240,6 +240,31 @@ func TestImportWithAccounts(t *testing.T) {
 
 // Refunds use negative spending and original payer/share roles in reports,
 // while the balance ledger keeps the imported incoming-money effects.
+func TestImportMemberLimit(t *testing.T) {
+	c, _, s := billingServer(t)
+	exec(t, s, `update plans set members_per_group = 1 where is_default`)
+	u := register(c, "ana@example.test", "Ana")
+	file := settleUpFile(settleUpRows...)
+	in := importInputFor(file, false)
+	in.Me = ptr("Ana")
+
+	if code := c.errorCode(402, "POST", "/groups/import", importInputFor(file, true)); code != "plan_limit" {
+		t.Fatal(code)
+	}
+	c.errorCode(402, "POST", "/groups/import", in)
+
+	// With a plan the whole group comes in, and that plan covers it.
+	grant(t, s, u.Id, "plus")
+	c.must(200, "POST", "/groups/import", importInputFor(file, true), nil)
+	var g Group
+	c.must(201, "POST", "/groups/import", in, &g)
+	var plan GroupPlan
+	c.must(200, "GET", "/g/"+g.Token+"/plan", nil, &plan)
+	if plan.PlanName != "Plus" || plan.SponsorMemberId == nil {
+		t.Fatalf("%+v", plan)
+	}
+}
+
 func TestImportIncomingStats(t *testing.T) {
 	for _, tc := range []struct {
 		refund    int

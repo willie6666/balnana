@@ -471,6 +471,7 @@ type GroupCreate struct {
 type GroupPlan struct {
 	// CanSponsor Whether the signed-in account could sponsor the group now.
 	CanSponsor bool   `json:"canSponsor"`
+	Members    Usage  `json:"members"`
 	PlanName   string `json:"planName"`
 	Receipts   Usage  `json:"receipts"`
 	Recurring  Usage  `json:"recurring"`
@@ -714,8 +715,11 @@ type MonthStats struct {
 // MyPlan defines model for MyPlan.
 type MyPlan struct {
 	// ExpiresAt When the current plan ends. Left out when it does not.
-	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
-	OwnGroups Usage      `json:"ownGroups"`
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
+	JoinedGroups Usage      `json:"joinedGroups"`
+
+	// MembersPerGroup For groups this account sponsors. Others have the default plan's limit.
+	MembersPerGroup *int `json:"membersPerGroup,omitempty"`
 
 	// Paid Whether it comes from an entitlement rather than being the default.
 	Paid bool `json:"paid"`
@@ -916,7 +920,11 @@ type PlanCatalog struct {
 
 // PlanLimits How much a plan allows. Left out means no limit.
 type PlanLimits struct {
-	OwnGroups         *int `json:"ownGroups,omitempty"`
+	// JoinedGroups The groups an account can be in, whoever made them.
+	JoinedGroups *int `json:"joinedGroups,omitempty"`
+
+	// MembersPerGroup The people a group can have. A server allows 100 at most whatever this says.
+	MembersPerGroup   *int `json:"membersPerGroup,omitempty"`
 	ReceiptsPerGroup  *int `json:"receiptsPerGroup,omitempty"`
 	RecurringPerGroup *int `json:"recurringPerGroup,omitempty"`
 	SponsoredGroups   *int `json:"sponsoredGroups,omitempty"`

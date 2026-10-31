@@ -267,13 +267,11 @@ class _EditorState extends ConsumerState<_Editor> {
   String get _currency => _foreign ?? _group.currency;
   String? get _symbol => _foreign == null ? _group.symbol : null;
 
-  /// Current members, plus anyone who left but is part of this expense.
+  /// Current members, then anyone who left: an expense can still name them.
   late final List<Member> _people = [
+    ..._group.activeMembers,
     for (final m in _group.members)
-      if (!m.left ||
-          (widget.expense?.payers.any((p) => p.memberId == m.id) ?? false) ||
-          (widget.expense?.splits.any((s) => s.memberId == m.id) ?? false))
-        m,
+      if (m.left) m,
   ];
 
   /// Whether the group is too large to list every payer at once.
@@ -622,10 +620,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final picked = await pickMember(
       context,
       title: title,
-      members: [
-        for (final m in _people)
-          if (!m.left) m,
-      ],
+      members: _people,
       selected: _multiPay ? null : _payer,
     );
     if (picked?.id case final id? when mounted) {
@@ -647,10 +642,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final picked = await pickMembers(
       context,
       title: title,
-      members: [
-        for (final m in _people)
-          if (!m.left || listed.contains(m.id)) m,
-      ],
+      members: _people,
       selected: listed,
     );
     if (picked == null || !mounted) return;
@@ -1162,12 +1154,7 @@ class _PaidBy extends StatelessWidget {
     final title = s._received ? l10n.expenseReceivedForLabel : l10n.expensePaidByLabel;
     // A large group offers the likeliest payers and lists only the payers
     // chosen; anyone else is picked from a list.
-    final offered = s._crowd
-        ? s._likelyPayers()
-        : [
-            for (final m in s._people)
-              if (!m.left || m.id == s._payer) m,
-          ];
+    final offered = s._crowd ? s._likelyPayers() : s._people;
     final listed = s._crowd ? s._payersListed : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1588,7 +1575,7 @@ class _CrowdSplit extends StatelessWidget {
     // Lit once ticks or shares have put the list out of order.
     final stale = !listEquals(sorted, [for (final m in people) m.id]);
     void sort() => s._update(() => s._splitOrder = sorted);
-    // Both act on the people the search shows; people who left can only be taken out.
+    // Both act on the people the search shows; ticking everyone means everyone still here.
     void tickAll(bool on) => s._update(() {
       for (final m in matching) {
         if (!on) {

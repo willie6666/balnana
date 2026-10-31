@@ -28,8 +28,8 @@ func checkNameFree(members []member, name, except string) error {
 }
 
 // checkRoom refuses one more current member when the group is full: a new
-// member, or one who left coming back.
-func checkRoom(members []member) error {
+// member, or one who left coming back. It needs the group locked.
+func (s *Server) checkRoom(ctx context.Context, q querier, g *group, members []member) error {
 	active := 0
 	for _, m := range members {
 		if !m.left {
@@ -38,6 +38,16 @@ func checkRoom(members []member) error {
 	}
 	if active >= maxMembers {
 		return badRequest("too_many_members")
+	}
+	if !s.conf().Billing {
+		return nil
+	}
+	p, _, err := groupPlan(ctx, q, g)
+	if err != nil || p.members == nil {
+		return err
+	}
+	if active >= *p.members {
+		return planLimit("members", *p.members)
 	}
 	return nil
 }
@@ -63,7 +73,7 @@ func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (Add
 		if err := checkNameFree(members, name, ""); err != nil {
 			return err
 		}
-		if err := checkRoom(members); err != nil {
+		if err := s.checkRoom(ctx, tx, g, members); err != nil {
 			return err
 		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
@@ -168,13 +178,6 @@ func (s *Server) RemoveMember(ctx context.Context, req RemoveMemberRequestObject
 		}
 		if err := mayChange(g, m); err != nil {
 			return err
-		}
-		nets, err := groupNets(ctx, tx, g.id)
-		if err != nil {
-			return err
-		}
-		if nets[m.id] != 0 {
-			return conflict("member_has_balance")
 		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {

@@ -21,9 +21,10 @@ const _server = 'https://split.example.com';
 const _plan = MyPlan(
   planName: 'Plus',
   paid: true,
-  ownGroups: PlanUsage(limit: 50, used: 3),
+  joinedGroups: PlanUsage(limit: 50, used: 3),
   sponsoredGroups: PlanUsage(used: 2),
   receiptsPerGroup: 2000,
+  membersPerGroup: 100,
 );
 
 const _offer = PlayOffer(productId: 'plus_monthly', offerToken: 'offer', name: 'Plus', price: r'$3', period: 'P3M');
@@ -165,7 +166,8 @@ void main() {
 
     expect(message({'limit': 'receipts', 'max': 20}), l10n.errorLimitReceipts(20));
     expect(message({'limit': 'recurring', 'max': 2}), l10n.errorLimitRecurring(2));
-    expect(message({'limit': 'own_groups', 'max': 5}), l10n.errorLimitOwnGroups(5));
+    expect(message({'limit': 'joined_groups', 'max': 10}), l10n.errorLimitJoinedGroups(10));
+    expect(message({'limit': 'members', 'max': 15}), l10n.errorLimitMembers(15));
     expect(message({'limit': 'sponsored_groups', 'max': 10}), l10n.errorLimitSponsored(10));
     expect(message({'limit': 'something_new'}), l10n.errorLimitOther);
   });
@@ -178,14 +180,16 @@ void main() {
   test('a plan is read with empty limits as none', () {
     final plan = MyPlan.fromJson({
       'planName': 'Free',
-      'ownGroups': {'used': 1, 'limit': 5},
+      'joinedGroups': {'used': 1, 'limit': 5},
       'sponsoredGroups': {'used': 0, 'limit': 0},
       'receiptsPerGroup': 20,
+      'membersPerGroup': 15,
       'paymentCode': 'BAL-ABCD2345',
     });
     expect(plan.paid, isFalse);
     expect(plan.expiresAt, isNull);
-    expect(plan.ownGroups.limit, 5);
+    expect(plan.joinedGroups.limit, 5);
+    expect(plan.membersPerGroup, 15);
     expect(plan.sponsoredGroups.limit, 0);
     expect(plan.receiptsPerGroup, 20);
     expect(plan.recurringPerGroup, isNull);
@@ -225,7 +229,7 @@ void main() {
       tester,
       const MyPlan(
         planName: 'Free',
-        ownGroups: PlanUsage(used: 0),
+        joinedGroups: PlanUsage(used: 0),
         sponsoredGroups: PlanUsage(used: 0),
         paymentCode: 'BAL-ABCD2345',
       ),
@@ -348,7 +352,7 @@ void main() {
     MyPlan withPlay(PlayBilling? play) => MyPlan(
       planName: _plan.planName,
       paid: false,
-      ownGroups: _plan.ownGroups,
+      joinedGroups: _plan.joinedGroups,
       sponsoredGroups: _plan.sponsoredGroups,
       play: play,
     );

@@ -453,7 +453,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => 'They\'ll stay on past expenses but can\'t be added to new ones.';
+  String get memberRemoveBody => 'Their expenses and balance stay in the group.';
 
   @override
   String get groupLinkCopied => 'Link copied. Anyone with it can open this group.';
@@ -3012,8 +3012,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'You\'ve reached your limit of $max groups.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'This group has reached its limit of $max people.';
   }
 
   @override
@@ -3062,7 +3067,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planLimitRecurring => 'Recurring expenses per group';
 
   @override
-  String get planLimitOwnGroups => 'Groups you created';
+  String get planLimitJoinedGroups => 'Groups you\'re in';
+
+  @override
+  String get planLimitMembers => 'People per group';
 
   @override
   String get planLimitSponsored => 'Groups sharing your plan';
@@ -3099,8 +3107,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planPaymentClaimed => 'Payment added';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Receipt photos: $receipts · Recurring: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'People: $members · Receipt photos: $receipts · Recurring: $recurring';
   }
 
   @override

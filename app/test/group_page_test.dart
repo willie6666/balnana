@@ -1012,6 +1012,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a new expense can name someone who left, without starting them in it', (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final group = _group('Flat');
+    final container = await _boot(tester, [
+      groupProvider.overrideWith(
+        (ref, token) async => Group(
+          token: group.token,
+          name: group.name,
+          currency: group.currency,
+          minorDigits: group.minorDigits,
+          createdAt: group.createdAt,
+          members: [...group.members, Member(id: 'c', name: 'Cleo', balance: BigInt.zero, left: true)],
+        ),
+      ),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/new');
+    expect(find.widgetWithText(ChoiceChip, 'Cleo'), findsOneWidget);
+    final ticks = tester.widgetList<Checkbox>(find.byType(Checkbox)).map((c) => c.value).toList();
+    expect(ticks, [true, true, false]);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Cleo'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Cleo')).selected, isTrue);
+  });
+
   // A small group keeps every list whole; a large one is condensed.
   for (final count in [2, 30]) {
     testWidgets('$count people get the ${count > 2 ? 'condensed' : 'whole'} lists', (tester) async {

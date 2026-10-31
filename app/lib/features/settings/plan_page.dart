@@ -201,13 +201,18 @@ class _PlanPageState extends ConsumerState<PlanPage> {
           children: [
             GroupedTile(
               icon: Icons.group_outlined,
-              title: l10n.planLimitOwnGroups,
-              subtitle: planUsage(l10n, plan.ownGroups),
+              title: l10n.planLimitJoinedGroups,
+              subtitle: planUsage(l10n, plan.joinedGroups),
             ),
             GroupedTile(
               icon: Icons.volunteer_activism_outlined,
               title: l10n.planLimitSponsored,
               subtitle: planUsage(l10n, plan.sponsoredGroups),
+            ),
+            GroupedTile(
+              icon: Icons.groups_outlined,
+              title: l10n.planLimitMembers,
+              subtitle: limit(plan.membersPerGroup),
             ),
             GroupedTile(
               icon: Icons.receipt_outlined,

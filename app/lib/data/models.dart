@@ -1117,11 +1117,12 @@ class MyPlan {
     required this.planName,
     this.paid = false,
     this.expiresAt,
-    required this.ownGroups,
+    required this.joinedGroups,
     required this.sponsoredGroups,
     this.paymentCode,
     this.receiptsPerGroup,
     this.recurringPerGroup,
+    this.membersPerGroup,
     this.play,
   });
 
@@ -1131,11 +1132,12 @@ class MyPlan {
       planName: _req(json, 'planName'),
       paid: _opt<bool>(json, 'paid') ?? false,
       expiresAt: _optTime(json, 'expiresAt'),
-      ownGroups: PlanUsage.fromJson(json['ownGroups']),
+      joinedGroups: PlanUsage.fromJson(json['joinedGroups']),
       sponsoredGroups: PlanUsage.fromJson(json['sponsoredGroups']),
       paymentCode: _opt(json, 'paymentCode'),
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
+      membersPerGroup: _opt<num>(json, 'membersPerGroup')?.toInt(),
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
     );
   }
@@ -1147,7 +1149,7 @@ class MyPlan {
 
   /// When the plan ends; null when it doesn't.
   final DateTime? expiresAt;
-  final PlanUsage ownGroups;
+  final PlanUsage joinedGroups;
   final PlanUsage sponsoredGroups;
 
   /// What to write in a Ko-fi message for the payment to reach this account.
@@ -1160,6 +1162,9 @@ class MyPlan {
   /// Null means no limit.
   final int? recurringPerGroup;
 
+  /// Null means no limit.
+  final int? membersPerGroup;
+
   /// Null when the server doesn't sell on Google Play.
   final PlayBilling? play;
 }
@@ -1169,6 +1174,7 @@ class GroupPlan {
   const GroupPlan({
     required this.planName,
     this.canSponsor = false,
+    required this.members,
     required this.receipts,
     required this.recurring,
     this.sponsorMemberId,
@@ -1179,6 +1185,7 @@ class GroupPlan {
     return GroupPlan(
       planName: _req(json, 'planName'),
       canSponsor: _opt<bool>(json, 'canSponsor') ?? false,
+      members: PlanUsage.fromJson(json['members']),
       receipts: PlanUsage.fromJson(json['receipts']),
       recurring: PlanUsage.fromJson(json['recurring']),
       sponsorMemberId: _opt(json, 'sponsorMemberId'),
@@ -1189,6 +1196,7 @@ class GroupPlan {
 
   /// Whether the signed-in account could share its plan with the group.
   final bool canSponsor;
+  final PlanUsage members;
   final PlanUsage receipts;
   final PlanUsage recurring;
 
@@ -1198,27 +1206,36 @@ class GroupPlan {
 
 /// What a plan allows. Null means no limit.
 class PlanLimits {
-  const PlanLimits({this.receiptsPerGroup, this.recurringPerGroup, this.ownGroups, this.sponsoredGroups});
+  const PlanLimits({
+    this.receiptsPerGroup,
+    this.recurringPerGroup,
+    this.joinedGroups,
+    this.membersPerGroup,
+    this.sponsoredGroups,
+  });
 
   factory PlanLimits.fromJson(Object? data) {
     final json = _object(data);
     return PlanLimits(
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
-      ownGroups: _opt<num>(json, 'ownGroups')?.toInt(),
+      joinedGroups: _opt<num>(json, 'joinedGroups')?.toInt(),
+      membersPerGroup: _opt<num>(json, 'membersPerGroup')?.toInt(),
       sponsoredGroups: _opt<num>(json, 'sponsoredGroups')?.toInt(),
     );
   }
 
   final int? receiptsPerGroup;
   final int? recurringPerGroup;
-  final int? ownGroups;
+  final int? joinedGroups;
+  final int? membersPerGroup;
   final int? sponsoredGroups;
 
   Map<String, Object?> toJson() => {
     'receiptsPerGroup': ?receiptsPerGroup,
     'recurringPerGroup': ?recurringPerGroup,
-    'ownGroups': ?ownGroups,
+    'joinedGroups': ?joinedGroups,
+    'membersPerGroup': ?membersPerGroup,
     'sponsoredGroups': ?sponsoredGroups,
   };
 }

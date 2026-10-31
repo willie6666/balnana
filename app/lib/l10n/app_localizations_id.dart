@@ -456,8 +456,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Orang ini tetap tercatat di pengeluaran lama, tetapi tidak dapat ditambahkan ke pengeluaran baru.';
+  String get memberRemoveBody => 'Pengeluaran dan saldo orang ini tetap ada di grup.';
 
   @override
   String get groupLinkCopied => 'Tautan disalin. Siapa pun yang memilikinya dapat membuka grup ini.';
@@ -3022,8 +3021,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'Anda telah mencapai batas $max grup.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Grup ini telah mencapai batas $max orang.';
   }
 
   @override
@@ -3072,7 +3076,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get planLimitRecurring => 'Pengeluaran berulang per grup';
 
   @override
-  String get planLimitOwnGroups => 'Grup yang Anda buat';
+  String get planLimitJoinedGroups => 'Grup yang Anda ikuti';
+
+  @override
+  String get planLimitMembers => 'Orang per grup';
 
   @override
   String get planLimitSponsored => 'Grup yang memakai paket Anda';
@@ -3108,8 +3115,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get planPaymentClaimed => 'Pembayaran ditambahkan';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Foto struk: $receipts · Berulang: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Orang: $members · Foto struk: $receipts · Berulang: $recurring';
   }
 
   @override

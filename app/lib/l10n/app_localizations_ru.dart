@@ -463,8 +463,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody =>
-      'Участник останется в прошлых расходах, но его нельзя будет добавлять в новые.';
+  String get memberRemoveBody => 'Расходы и баланс участника останутся в группе.';
 
   @override
   String get groupLinkCopied => 'Ссылка скопирована. Открыть эту группу сможет любой, у кого она есть.';
@@ -3126,8 +3125,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return 'Вы достигли лимита групп: $max.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'В этой группе достигнут лимит людей: $max.';
   }
 
   @override
@@ -3176,7 +3180,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planLimitRecurring => 'Регулярные расходы на группу';
 
   @override
-  String get planLimitOwnGroups => 'Созданные вами группы';
+  String get planLimitJoinedGroups => 'Группы, в которых вы состоите';
+
+  @override
+  String get planLimitMembers => 'Людей в группе';
 
   @override
   String get planLimitSponsored => 'Группы с вашим тарифом';
@@ -3213,8 +3220,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planPaymentClaimed => 'Платёж добавлен';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Фото чеков: $receipts · Регулярные: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Люди: $members · Фото чеков: $receipts · Регулярные: $recurring';
   }
 
   @override

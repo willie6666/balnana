@@ -517,9 +517,6 @@ func TestMembersSummariesAndLinkReset(t *testing.T) {
 		Payers: []PayerInput{{MemberId: ana, Amount: "6"}}, SplitMethod: "equal",
 		Splits: []Share{{MemberId: ana}, {MemberId: ben}},
 	}, nil)
-	if code := c.errorCode(409, "DELETE", base+"/members/"+ben, nil); code != "member_has_balance" {
-		t.Fatalf("code %q", code)
-	}
 	c.must(204, "DELETE", base+"/members/"+dan.Id, nil, nil)
 	c.must(200, "GET", base, nil, &g)
 	if !g.Members[2].Left {
@@ -597,9 +594,8 @@ func minor(t *testing.T, s string) int64 {
 	return v
 }
 
-// Someone who left gains no new balance: new expenses and payments may not
-// name them, and a deleted expense with them stays deleted, but expenses they
-// were already in can still be edited as long as their part stays the same.
+// Leaving takes no one out of the books: they can go with a balance, and
+// expenses and payments name them like anyone else, so it can be settled.
 func TestDepartedMembers(t *testing.T) {
 	c := newClient(t)
 	g := createGroup(c, "Ana", "Ben", "Cy")
@@ -620,48 +616,44 @@ func TestDepartedMembers(t *testing.T) {
 	c.must(201, "POST", base+"/expenses", expense("Snacks", "2.00", ana, cy), &gone)
 	c.must(204, "DELETE", base+"/expenses/"+gone.Id, nil, nil)
 	c.must(201, "POST", base+"/expenses", expense("Lunch", "6.00", ana, ben), &lunch)
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: cy, ToMemberId: ana, Amount: "5.00"}, nil)
 	c.must(204, "DELETE", base+"/members/"+cy, nil, nil)
 
-	if code := c.errorCode(400, "POST", base+"/expenses", expense("Dinner", "4.00", ana, cy)); code != "member_left" {
-		t.Fatalf("new expense: %q", code)
-	}
-	for _, p := range []PaymentInput{{FromMemberId: cy, ToMemberId: ana}, {FromMemberId: ana, ToMemberId: cy}} {
-		p.Amount = "1.00"
-		if code := c.errorCode(400, "POST", base+"/payments", p); code != "member_left" {
-			t.Fatalf("payment %+v: %q", p, code)
+	balance := func(want string) {
+		t.Helper()
+		var b Balances
+		c.must(200, "GET", base+"/balances", nil, &b)
+		for _, m := range b.Balances {
+			if m.MemberId == cy {
+				if m.Amount != want {
+					t.Fatalf("cy's balance %s, want %s", m.Amount, want)
+				}
+				return
+			}
+		}
+		if want != "0.00" {
+			t.Fatalf("cy's balance is missing, want %s", want)
 		}
 	}
+	balance("-5.00")
+
+	c.must(201, "POST", base+"/expenses", expense("Dinner", "4.00", ana, cy), nil)
+	balance("-7.00")
+	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: cy, ToMemberId: ana, Amount: "7.00"}, nil)
+	balance("0.00")
+	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: ana, ToMemberId: cy, Amount: "1.00"}, nil)
+	balance("-1.00")
 	add := expense("Lunch", "6.00", ana, ben, cy)
 	add.Version = ptr(lunch.Version)
-	if code := c.errorCode(400, "PUT", base+"/expenses/"+lunch.Id, add); code != "member_left" {
-		t.Fatalf("adding to an expense: %q", code)
-	}
-	if code := c.errorCode(409, "POST", base+"/expenses/"+gone.Id+"/restore", nil); code != "member_left" {
-		t.Fatalf("restore: %q", code)
-	}
-
-	// Neither their share nor what they paid may change, and the expense may
-	// not go away with their part in it.
+	c.must(200, "PUT", base+"/expenses/"+lunch.Id, add, nil)
+	balance("-3.00")
+	c.must(200, "POST", base+"/expenses/"+gone.Id+"/restore", nil, nil)
+	balance("-4.00")
 	more := expense("Taxi", "12.00", ana, cy)
 	more.Version = ptr(taxi.Version)
-	if code := c.errorCode(400, "PUT", base+"/expenses/"+taxi.Id, more); code != "member_left" {
-		t.Fatalf("changing their share: %q", code)
-	}
-	if code := c.errorCode(409, "DELETE", base+"/expenses/"+taxi.Id, nil); code != "member_left" {
-		t.Fatalf("delete: %q", code)
-	}
-
-	edit := expense("Taxi home", "10.00", ana, cy)
-	edit.Version = ptr(taxi.Version)
-	c.must(200, "PUT", base+"/expenses/"+taxi.Id, edit, nil)
-	var b Balances
-	c.must(200, "GET", base+"/balances", nil, &b)
-	for _, m := range b.Balances {
-		if m.MemberId == cy && m.Amount != "0.00" {
-			t.Fatalf("cy's balance %s", m.Amount)
-		}
-	}
+	c.must(200, "PUT", base+"/expenses/"+taxi.Id, more, nil)
+	balance("-5.00")
+	c.must(204, "DELETE", base+"/expenses/"+taxi.Id, nil, nil)
+	balance("1.00")
 }
 
 // Groups a device saved that are gone count once per request, so loading

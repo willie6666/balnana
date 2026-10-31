@@ -455,7 +455,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get memberRemoveBody => 'Geçmiş harcamalarda kalır ama yeni harcamalara eklenemez.';
+  String get memberRemoveBody => 'Harcamaları ve bakiyesi grupta kalır.';
 
   @override
   String get groupLinkCopied => 'Bağlantı kopyalandı. Bu bağlantıya sahip herkes grubu açabilir.';
@@ -3022,8 +3022,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String errorLimitOwnGroups(int max) {
+  String errorLimitJoinedGroups(int max) {
     return '$max grup sınırınıza ulaştınız.';
+  }
+
+  @override
+  String errorLimitMembers(int max) {
+    return 'Bu grup $max kişi sınırına ulaştı.';
   }
 
   @override
@@ -3072,7 +3077,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planLimitRecurring => 'Grup başına tekrarlayan harcama';
 
   @override
-  String get planLimitOwnGroups => 'Oluşturduğunuz gruplar';
+  String get planLimitJoinedGroups => 'Bulunduğunuz gruplar';
+
+  @override
+  String get planLimitMembers => 'Grup başına kişi';
 
   @override
   String get planLimitSponsored => 'Planınızı paylaşan gruplar';
@@ -3108,8 +3116,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPaymentClaimed => 'Ödeme eklendi';
 
   @override
-  String groupPlanUsage(String receipts, String recurring) {
-    return 'Fiş fotoğrafları: $receipts · Tekrarlayan: $recurring';
+  String groupPlanUsage(String members, String receipts, String recurring) {
+    return 'Kişiler: $members · Fiş fotoğrafları: $receipts · Tekrarlayan: $recurring';
   }
 
   @override

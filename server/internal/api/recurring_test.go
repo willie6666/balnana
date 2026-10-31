@@ -267,8 +267,10 @@ func TestRecurringResumeAfterFailure(t *testing.T) {
 	}
 	var r RecurringExpense
 	c.must(201, "POST", base+"/recurring", in, &r)
-	c.must(204, "DELETE", base+"/members/"+ben, nil, nil)
 	// Its first occurrence came due an hour ago, and could not be added.
+	if _, err := pool.Exec(ctx, `delete from recurring_expense_splits where recurring_id = $1`, r.Id); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := pool.Exec(ctx, `
 		update recurring_expenses set starts_at = starts_at - interval '2 hours', next_at = next_at - interval '2 hours'
 		where id = $1`, r.Id); err != nil {
@@ -597,7 +599,7 @@ func TestRecurringExpenses(t *testing.T) {
 	}
 }
 
-func TestRecurringPausesWhenMemberLeaves(t *testing.T) {
+func TestRecurringGoesOnWhenMemberLeaves(t *testing.T) {
 	c, s, _ := adminClient(t, map[string]string{})
 	ctx := context.Background()
 	g := createGroup(c, "Ana", "Ben")
@@ -616,20 +618,19 @@ func TestRecurringPausesWhenMemberLeaves(t *testing.T) {
 	}
 	c.must(204, "DELETE", base+"/members/"+ben, nil, nil)
 
-	if n, err := s.runRecurring(ctx, time.Now().Add(2*time.Hour)); err != nil || n != 0 {
+	if n, err := s.runRecurring(ctx, time.Now().Add(2*time.Hour)); err != nil || n != 1 {
 		t.Fatalf("added %d, err %v", n, err)
 	}
 	c.must(200, "GET", base+"/recurring/"+r.Id, nil, &r)
-	if !r.Paused {
-		t.Fatal("not paused")
+	if r.Paused {
+		t.Fatal("paused")
 	}
-	var page ActivityPage
-	c.must(200, "GET", base+"/activity", nil, &page)
-	if a := page.Items[0]; a.Action != "recurring.paused" || a.Payload["reason"] != "member_left" || a.ActorMemberId != nil {
-		t.Fatalf("activity: %+v", a)
-	}
-	if code := c.errorCode(400, "PATCH", base+"/recurring/"+r.Id, RecurringPause{Paused: false}); code != "member_left" {
-		t.Fatalf("resume: %q", code)
+	var b Balances
+	c.must(200, "GET", base+"/balances", nil, &b)
+	for _, m := range b.Balances {
+		if m.MemberId == ben && m.Amount != "-20.00" {
+			t.Fatalf("ben's balance %s", m.Amount)
+		}
 	}
 }
 
