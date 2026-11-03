@@ -718,9 +718,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsEmptyBody => 'There are no expenses in this period.';
 
   @override
-  String get statsShowExpenses => 'Show these expenses';
-
-  @override
   String get dateToday => 'Today';
 
   @override
@@ -956,9 +953,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Suggested payments';
-
-  @override
-  String get allSettled => 'Everyone is settled up.';
 
   @override
   String transferYouPay(String name) {
@@ -2001,9 +1995,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.';
 
   @override
-  String get adminSectionAdmin => 'Administrator';
-
-  @override
   String get adminPublicUrl => 'Public address';
 
   @override
@@ -2133,9 +2124,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Accounts need a way to sign in: turn on email and password, or set up a provider.';
-
-  @override
-  String get adminLockedChange => 'This is set on the server and can\'t be changed here.';
 
   @override
   String get errorAdminRequired => 'Your administrator session has ended. Sign in again.';
@@ -2681,9 +2669,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringResume => 'Resume';
-
-  @override
-  String get recurringActive => 'Repeating';
 
   @override
   String get recurringDelete => 'Delete';

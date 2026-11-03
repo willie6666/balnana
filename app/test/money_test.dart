@@ -65,23 +65,6 @@ void main() {
     }
   });
 
-  group('spread vectors', () {
-    for (final c in cases('spread')) {
-      test(c['name'] as String, () {
-        final total = BigInt.parse(c['total'] as String);
-        final amounts = (c['amounts'] as Map).cast<String, String>().map((m, v) => MapEntry(m, BigInt.parse(v)));
-        if (c['error'] case final String code) {
-          expect(() => spread(total, amounts), throwsMoney(code));
-          return;
-        }
-        expect(
-          spread(total, amounts).map((m, v) => MapEntry(m, v.toString())),
-          (c['expect'] as Map).cast<String, String>(),
-        );
-      });
-    }
-  });
-
   group('rates', () {
     test('convert rounds half up into the other digits', () {
       // 1,000 yen at 0.21445 is 214.45 dollars... in cents, 21445.
@@ -110,25 +93,6 @@ void main() {
   test('currency digits vectors', () {
     final want = (vectors['currencyDigits'] as Map).cast<String, int>();
     expect({for (final c in want.keys) c: defaultMinorDigits(c)}, want);
-  });
-
-  group('settle vectors', () {
-    for (final c in cases('settle')) {
-      test(c['name'] as String, () {
-        final digits = c['digits'] as int;
-        final nets = (c['nets'] as Map).cast<String, String>().map(
-          (m, v) => MapEntry(m, parseAmount(v, digits)),
-        );
-        if (c['error'] case final String code) {
-          expect(() => simplify(nets), throwsMoney(code));
-          return;
-        }
-        expect(simplify(nets), [
-          for (final t in (c['expect'] as List).cast<Map<String, dynamic>>())
-            Transfer(t['from'] as String, t['to'] as String, parseAmount(t['amount'] as String, digits)),
-        ]);
-      });
-    }
   });
 
   group('properties', () {
@@ -165,30 +129,6 @@ void main() {
           expect(got.values.every((v) => !v.isNegative), isTrue);
           expect(got.values.fold(BigInt.zero, (a, b) => a + b), total);
         }
-      }
-    });
-
-    test('simplify settles everyone in at most n-1 transfers', () {
-      final r = Random(5);
-      for (var i = 0; i < 1000; i++) {
-        final n = r.nextInt(10) + 2;
-        final nets = <String, BigInt>{};
-        var sum = BigInt.zero;
-        for (var j = 0; j < n - 1; j++) {
-          final v = BigInt.from(r.nextInt(2000001) - 1000000);
-          nets['m$j'] = v;
-          sum += v;
-        }
-        nets['m${n - 1}'] = -sum;
-        final transfers = simplify(nets);
-        expect(transfers.length, lessThanOrEqualTo(n - 1));
-        final after = Map.of(nets);
-        for (final t in transfers) {
-          expect(t.amount > BigInt.zero, isTrue);
-          after[t.from] = after[t.from]! + t.amount;
-          after[t.to] = after[t.to]! - t.amount;
-        }
-        expect(after.values.every((v) => v == BigInt.zero), isTrue);
       }
     });
   });

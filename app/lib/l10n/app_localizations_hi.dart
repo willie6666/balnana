@@ -729,9 +729,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get statsEmptyBody => 'इस अवधि में कोई खर्च नहीं है।';
 
   @override
-  String get statsShowExpenses => 'ये खर्च दिखाएँ';
-
-  @override
   String get dateToday => 'आज';
 
   @override
@@ -967,9 +964,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'सुझाए गए भुगतान';
-
-  @override
-  String get allSettled => 'सबका हिसाब चुकता है।';
 
   @override
   String transferYouPay(String name) {
@@ -2024,9 +2018,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'इस सर्वर के लिए बनाए गए Android app इसके लिंक खोलते हैं। बिना पूछे लिंक खोलने के लिए उन प्रमाणपत्रों के SHA-256 फ़िंगरप्रिंट की सूची दें जिनसे ये app साइन किए गए हैं।';
 
   @override
-  String get adminSectionAdmin => 'एडमिन';
-
-  @override
   String get adminPublicUrl => 'सार्वजनिक पता';
 
   @override
@@ -2158,9 +2149,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'खातों के लिए साइन इन का तरीका ज़रूरी है: ईमेल और पासवर्ड चालू करें या प्रदाता सेट अप करें।';
-
-  @override
-  String get adminLockedChange => 'यह सर्वर पर सेट है और यहाँ बदला नहीं जा सकता।';
 
   @override
   String get errorAdminRequired => 'आपका एडमिन सेशन खत्म हो गया है। फिर से साइन इन करें।';
@@ -2730,9 +2718,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get recurringResume => 'फिर शुरू करें';
-
-  @override
-  String get recurringActive => 'दोहराया जा रहा है';
 
   @override
   String get recurringDelete => 'मिटाएँ';

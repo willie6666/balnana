@@ -511,7 +511,7 @@ func TestPaymentCodeIn(t *testing.T) {
 	const want = "BAL-ABCD2345"
 	for _, message := range []string{
 		"BAL-ABCD2345", "thanks! bal-abcd2345.", "BALABCD2345", "BAL ABCD2345", "BAL ABCD2345", "BAL–ABCD2345",
-		"BAL—ABCD2345", "BAL－ABCD2345", "謝謝BAL-ABCD2345感謝",
+		"BAL—ABCD2345", "BAL\uff0dABCD2345", "\u8b1d\u8b1dBAL-ABCD2345\u611f\u8b1d", // fullwidth hyphen, Chinese thanks
 	} {
 		if got := paymentCodeIn(message); got == nil || *got != want {
 			t.Errorf("%q: %v", message, got)

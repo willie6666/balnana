@@ -268,7 +268,7 @@ func TestStartupLeavesManagedSettingsForLater(t *testing.T) {
 	if _, err := Startup(); err != nil {
 		t.Fatalf("a stored OAuth provider may complete this: %v", err)
 	}
-	if _, err := Load(); err == nil {
+	if _, err := LoadWith(nil); err == nil {
 		t.Fatal("the environment alone has no sign-in method")
 	}
 	t.Setenv("BALNANA_RATE_LIMIT", "-1")
@@ -389,7 +389,7 @@ func TestStartupKeepsAnAddress(t *testing.T) {
 	if c.PublicURL == nil {
 		t.Fatal("no address")
 	}
-	if _, err := Load(); err == nil {
+	if _, err := LoadWith(nil); err == nil {
 		t.Fatal("the address was not checked")
 	}
 }

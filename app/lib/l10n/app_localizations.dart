@@ -1456,12 +1456,6 @@ abstract class AppLocalizations {
   /// **'There are no expenses in this period.'**
   String get statsEmptyBody;
 
-  /// Label or control text for stats show expenses in spending statistics.
-  ///
-  /// In en, this message translates to:
-  /// **'Show these expenses'**
-  String get statsShowExpenses;
-
   /// Label or control text for date today in expense date headings.
   ///
   /// In en, this message translates to:
@@ -1863,12 +1857,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Suggested payments'**
   String get suggestedPayments;
-
-  /// Label or control text for all settled in the application interface.
-  ///
-  /// In en, this message translates to:
-  /// **'Everyone is settled up.'**
-  String get allSettled;
 
   /// Label or control text for transfer you pay in a suggested settlement payment. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
@@ -3610,12 +3598,6 @@ abstract class AppLocalizations {
   /// **'Android builds made for this server open its links in the app. To skip asking, list the SHA-256 fingerprints of the certificates those builds are signed with.'**
   String get adminSectionAndroidBody;
 
-  /// Label or control text for admin section admin in the server administrator interface.
-  ///
-  /// In en, this message translates to:
-  /// **'Administrator'**
-  String get adminSectionAdmin;
-
   /// Label or control text for admin public url in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -3861,12 +3843,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accounts need a way to sign in: turn on email and password, or set up a provider.'**
   String get adminNeedsSignIn;
-
-  /// Label or control text for admin locked change in the server administrator interface.
-  ///
-  /// In en, this message translates to:
-  /// **'This is set on the server and can\'t be changed here.'**
-  String get adminLockedChange;
 
   /// Message for error admin required in API error feedback.
   ///
@@ -4725,12 +4701,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resume'**
   String get recurringResume;
-
-  /// Label of the switch that pauses or resumes a recurring expense.
-  ///
-  /// In en, this message translates to:
-  /// **'Repeating'**
-  String get recurringActive;
 
   /// Menu action and button that deletes a recurring expense.
   ///

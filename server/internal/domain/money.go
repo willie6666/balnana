@@ -2,8 +2,10 @@
 // settling. Money is always an int64 count of minor units (cents when the
 // group has 2 decimal places); floats are never used.
 //
-// app/lib/core/money.dart implements the same rules. Both are checked against
-// api/testdata/money.json, so keep them in step.
+// app/lib/core/money.dart implements the same parsing, formatting and
+// splitting, for the editor's preview; settling and spreading foreign amounts
+// happen here alone. Both are checked against api/testdata/money.json, so keep
+// them in step.
 package domain
 
 import (

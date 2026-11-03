@@ -727,9 +727,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statsEmptyBody => 'لا توجد مصروفات خلال هذه الفترة.';
 
   @override
-  String get statsShowExpenses => 'عرض هذه المصروفات';
-
-  @override
   String get dateToday => 'اليوم';
 
   @override
@@ -965,9 +962,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'الدفعات المقترحة';
-
-  @override
-  String get allSettled => 'تمت تسوية حسابات الجميع.';
 
   @override
   String transferYouPay(String name) {
@@ -2032,9 +2026,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'تفتح إصدارات Android المصممة لهذا الخادم روابطه في التطبيق. لتجاوز رسالة التأكيد، أدرج بصمات SHA-256 للشهادات المستخدمة لتوقيع تلك الإصدارات.';
 
   @override
-  String get adminSectionAdmin => 'المشرف';
-
-  @override
   String get adminPublicUrl => 'العنوان العام';
 
   @override
@@ -2166,9 +2157,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'تحتاج الحسابات إلى طريقة لتسجيل الدخول: فعّل البريد الإلكتروني وكلمة المرور أو أعد إعداد موفر.';
-
-  @override
-  String get adminLockedChange => 'هذا الإعداد محدد على الخادم ولا يمكن تغييره هنا.';
 
   @override
   String get errorAdminRequired => 'انتهت جلسة المشرف. سجّل الدخول مجددًا.';
@@ -2783,9 +2771,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recurringResume => 'استئناف';
-
-  @override
-  String get recurringActive => 'متكرر';
 
   @override
   String get recurringDelete => 'حذف';

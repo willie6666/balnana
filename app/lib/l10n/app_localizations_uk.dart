@@ -731,9 +731,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get statsEmptyBody => 'За цей період витрат немає.';
 
   @override
-  String get statsShowExpenses => 'Показати ці витрати';
-
-  @override
   String get dateToday => 'Сьогодні';
 
   @override
@@ -1006,9 +1003,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Рекомендовані платежі';
-
-  @override
-  String get allSettled => 'Усі розрахувалися.';
 
   @override
   String transferYouPay(String name) {
@@ -2078,9 +2072,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Версії Android для цього сервера відкривають його посилання в застосунку. Щоб не питати дозволу, укажіть SHA-256 відбитки сертифікатів, якими підписано ці версії.';
 
   @override
-  String get adminSectionAdmin => 'Адміністратор';
-
-  @override
   String get adminPublicUrl => 'Публічна адреса';
 
   @override
@@ -2212,9 +2203,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Для облікових записів потрібен спосіб входу: увімкніть вхід за електронною поштою й паролем або налаштуйте постачальника.';
-
-  @override
-  String get adminLockedChange => 'Це значення задано на сервері, тож тут його не змінити.';
 
   @override
   String get errorAdminRequired => 'Сеанс адміністратора завершився. Увійдіть знову.';
@@ -2823,9 +2811,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get recurringResume => 'Відновити';
-
-  @override
-  String get recurringActive => 'Повторювати';
 
   @override
   String get recurringDelete => 'Видалити';

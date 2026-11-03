@@ -100,7 +100,7 @@ String moneyErrorMessage(AppLocalizations l10n, MoneyError error) => switch (err
   MoneyError.tooManyDecimals => l10n.errorTooManyDecimals,
   MoneyError.amountTooLarge => l10n.errorAmountTooLarge,
   MoneyError.noMembers || MoneyError.noShares => l10n.errorNoShares,
-  MoneyError.duplicateMember || MoneyError.unbalanced => l10n.errorGeneric,
+  MoneyError.duplicateMember => l10n.errorGeneric,
   MoneyError.invalidShare => l10n.errorInvalidShare,
   MoneyError.exactTotal => l10n.errorExactTotal,
 };

@@ -730,9 +730,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get statsEmptyBody => 'W tym okresie nie ma żadnych wydatków.';
 
   @override
-  String get statsShowExpenses => 'Pokaż te wydatki';
-
-  @override
   String get dateToday => 'Dzisiaj';
 
   @override
@@ -1005,9 +1002,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Proponowane przelewy';
-
-  @override
-  String get allSettled => 'Wszyscy są rozliczeni.';
 
   @override
   String transferYouPay(String name) {
@@ -2083,9 +2077,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Linki serwera otwierają aplikację w wersjach Androida przygotowanych dla tego serwera. Aby pominąć pytanie, wpisz odciski SHA-256 certyfikatów użytych do podpisania tych wersji.';
 
   @override
-  String get adminSectionAdmin => 'Administrator';
-
-  @override
   String get adminPublicUrl => 'Adres publiczny';
 
   @override
@@ -2217,9 +2208,6 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Konta wymagają metody logowania: włącz logowanie e-mailem i hasłem albo skonfiguruj dostawcę.';
-
-  @override
-  String get adminLockedChange => 'Ta wartość jest ustawiona na serwerze i nie można jej tutaj zmienić.';
 
   @override
   String get errorAdminRequired => 'Sesja administratora wygasła. Zaloguj się ponownie.';
@@ -2828,9 +2816,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get recurringResume => 'Wznów';
-
-  @override
-  String get recurringActive => 'Powtarzaj';
 
   @override
   String get recurringDelete => 'Usuń';

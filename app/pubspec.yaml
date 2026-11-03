@@ -29,7 +29,6 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   crypto: ^3.0.8
-  cupertino_icons: ^2.0.0
   dio: ^5.11.1
   drift: ^2.35.3
   drift_flutter: ^0.3.1
@@ -51,7 +50,6 @@ dependencies:
   intl: ^0.20.3
   latlong2: ^0.10.1
   material_ui: ^1.8.0
-  path_provider: ^2.1.6
   qr: ^4.0.0
   share_plus: ^13.3.1
   shared_preferences: ^2.5.6

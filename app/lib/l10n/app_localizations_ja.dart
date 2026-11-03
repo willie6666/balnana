@@ -703,9 +703,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get statsEmptyBody => 'この期間に支出はありません。';
 
   @override
-  String get statsShowExpenses => '支出を表示';
-
-  @override
   String get dateToday => '今日';
 
   @override
@@ -939,9 +936,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'おすすめの支払い';
-
-  @override
-  String get allSettled => '全員の精算が完了しました。';
 
   @override
   String transferYouPay(String name) {
@@ -1959,9 +1953,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'このサーバー向けのAndroidアプリは、サーバーのリンクをアプリで開きます。確認を省略するには、アプリの署名に使う証明書のSHA-256フィンガープリントを登録してください。';
 
   @override
-  String get adminSectionAdmin => '管理者';
-
-  @override
   String get adminPublicUrl => '公開アドレス';
 
   @override
@@ -2084,9 +2075,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminNeedsSignIn => 'アカウントにはサインイン方法が必要です。メールアドレスとパスワードでのサインインを有効にするか、プロバイダーを設定してください。';
-
-  @override
-  String get adminLockedChange => 'サーバーで設定されているため、ここでは変更できません。';
 
   @override
   String get errorAdminRequired => '管理者セッションの有効期限が切れました。もう一度サインインしてください。';
@@ -2594,9 +2582,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get recurringResume => '再開';
-
-  @override
-  String get recurringActive => '繰り返し中';
 
   @override
   String get recurringDelete => '削除';

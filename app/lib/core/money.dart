@@ -25,8 +25,7 @@ enum MoneyError {
   duplicateMember('duplicate_member'),
   invalidShare('invalid_share'),
   exactTotal('exact_total'),
-  noShares('no_shares'),
-  unbalanced('unbalanced');
+  noShares('no_shares');
 
   const MoneyError(this.code);
   final String code;
@@ -184,20 +183,6 @@ Map<String, BigInt> _weighted(BigInt total, List<SplitPart> parts, List<BigInt> 
   return {for (final (i, s) in slots.indexed) s.member: i < leftover ? s.amount + BigInt.one : s.amount};
 }
 
-/// Spreads [total] (minor units, > 0) over members in proportion to
-/// [amounts], which are in another currency's minor units: how an expense
-/// paid in a foreign currency comes to its parts in the group's. Leftovers go
-/// as in [split].
-Map<String, BigInt> spread(BigInt total, Map<String, BigInt> amounts) {
-  if (total <= BigInt.zero || total > maxMinor) throw const MoneyException(MoneyError.invalidAmount);
-  if (amounts.isEmpty) throw const MoneyException(MoneyError.noMembers);
-  if (amounts.values.any((v) => v.isNegative || v > maxMinor) ||
-      amounts.values.fold(BigInt.zero, (a, b) => a + b) == BigInt.zero) {
-    throw const MoneyException(MoneyError.invalidAmount);
-  }
-  return _weighted(total, [for (final m in amounts.keys) SplitPart(m)], amounts.values.toList());
-}
-
 /// How many decimals an exchange rate may be typed with.
 const rateDigits = 8;
 
@@ -254,42 +239,4 @@ class Transfer {
 
   @override
   String toString() => 'Transfer($from -> $to: $amount)';
-}
-
-/// Turns net balances (positive = is owed, negative = owes; they must add up
-/// to zero) into at most n-1 transfers.
-///
-/// Greedy: the largest debtor pays the largest creditor as much as possible,
-/// repeat. Ties are broken by member id so every client gets the same answer.
-/// Member ids are compared by code unit, which matches Go's byte order for the
-/// ASCII ids the server issues.
-List<Transfer> simplify(Map<String, BigInt> nets) {
-  if (nets.values.fold(BigInt.zero, (a, b) => a + b) != BigInt.zero) {
-    throw const MoneyException(MoneyError.unbalanced);
-  }
-  final bal = {
-    for (final MapEntry(:key, :value) in nets.entries)
-      if (value != BigInt.zero) key: value,
-  };
-
-  final transfers = <Transfer>[];
-  while (bal.isNotEmpty) {
-    String? debtor, creditor;
-    for (final MapEntry(key: m, value: v) in bal.entries) {
-      if (v.isNegative &&
-          (debtor == null || v < bal[debtor]! || (v == bal[debtor]! && m.compareTo(debtor) < 0))) {
-        debtor = m;
-      }
-      if (v > BigInt.zero &&
-          (creditor == null || v > bal[creditor]! || (v == bal[creditor]! && m.compareTo(creditor) < 0))) {
-        creditor = m;
-      }
-    }
-    final d = debtor!, c = creditor!;
-    final amount = -bal[d]! < bal[c]! ? -bal[d]! : bal[c]!;
-    transfers.add(Transfer(d, c, amount));
-    if ((bal[d] = bal[d]! + amount) == BigInt.zero) bal.remove(d);
-    if ((bal[c] = bal[c]! - amount) == BigInt.zero) bal.remove(c);
-  }
-  return transfers;
 }

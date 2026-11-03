@@ -433,9 +433,6 @@ class Expense {
 
   BigInt owedBy(String memberId) =>
       splits.where((s) => s.memberId == memberId).fold(BigInt.zero, (a, s) => a + s.amount);
-
-  /// What this expense did to [memberId]'s balance: positive means they lent.
-  BigInt effectOn(String memberId) => paidBy(memberId) - owedBy(memberId);
 }
 
 /// [unknown] is one a newer server sent: shown, but not edited.

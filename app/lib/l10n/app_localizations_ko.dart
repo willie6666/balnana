@@ -703,9 +703,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get statsEmptyBody => '이 기간에는 지출이 없어요.';
 
   @override
-  String get statsShowExpenses => '이 지출 보기';
-
-  @override
   String get dateToday => '오늘';
 
   @override
@@ -939,9 +936,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get suggestedPayments => '추천 송금';
-
-  @override
-  String get allSettled => '모두 정산을 마쳤어요.';
 
   @override
   String transferYouPay(String name) {
@@ -1958,9 +1952,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 서버용으로 만든 Android 앱은 서버 링크를 앱에서 열어요. 확인을 건너뛰려면 앱 서명에 사용한 인증서의 SHA-256 지문을 입력해 주세요.';
 
   @override
-  String get adminSectionAdmin => '관리자';
-
-  @override
   String get adminPublicUrl => '공개 주소';
 
   @override
@@ -2084,9 +2075,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminNeedsSignIn => '계정에 로그인 방법이 필요해요. 이메일 및 비밀번호 로그인을 켜거나 제공자를 설정해 주세요.';
-
-  @override
-  String get adminLockedChange => '서버에서 설정한 값은 여기서 변경할 수 없어요.';
 
   @override
   String get errorAdminRequired => '관리자 세션이 종료됐어요. 다시 로그인해 주세요.';
@@ -2595,9 +2583,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get recurringResume => '다시 시작';
-
-  @override
-  String get recurringActive => '반복 중';
 
   @override
   String get recurringDelete => '삭제';

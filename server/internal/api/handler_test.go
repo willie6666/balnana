@@ -37,7 +37,7 @@ func baseConfig(t *testing.T, env map[string]string) *config.Config {
 	for k, v := range env {
 		t.Setenv(k, v)
 	}
-	cfg, err := config.Load()
+	cfg, err := config.LoadWith(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

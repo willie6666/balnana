@@ -723,9 +723,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get statsEmptyBody => 'Tidak ada pengeluaran dalam periode ini.';
 
   @override
-  String get statsShowExpenses => 'Tampilkan pengeluaran ini';
-
-  @override
   String get dateToday => 'Hari ini';
 
   @override
@@ -961,9 +958,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Pembayaran yang disarankan';
-
-  @override
-  String get allSettled => 'Saldo semua orang sudah lunas.';
 
   @override
   String transferYouPay(String name) {
@@ -2015,9 +2009,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tautan dari versi Android yang dibuat untuk server ini akan terbuka di aplikasi. Agar tidak diminta setiap kali, cantumkan sidik jari SHA-256 sertifikat yang digunakan untuk menandatangani versi tersebut.';
 
   @override
-  String get adminSectionAdmin => 'Administrator';
-
-  @override
   String get adminPublicUrl => 'Alamat publik';
 
   @override
@@ -2150,9 +2141,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Akun memerlukan metode login: aktifkan login dengan email dan kata sandi, atau siapkan penyedia.';
-
-  @override
-  String get adminLockedChange => 'Setelan ini diatur di server dan tidak dapat diubah di sini.';
 
   @override
   String get errorAdminRequired => 'Sesi administrator Anda berakhir. Login lagi.';
@@ -2692,9 +2680,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get recurringResume => 'Lanjutkan';
-
-  @override
-  String get recurringActive => 'Berulang';
 
   @override
   String get recurringDelete => 'Hapus';

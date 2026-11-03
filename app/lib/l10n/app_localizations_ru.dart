@@ -733,9 +733,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statsEmptyBody => 'За этот период расходов нет.';
 
   @override
-  String get statsShowExpenses => 'Показать эти расходы';
-
-  @override
   String get dateToday => 'Сегодня';
 
   @override
@@ -972,9 +969,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Рекомендуемые платежи';
-
-  @override
-  String get allSettled => 'Все рассчитались.';
 
   @override
   String transferYouPay(String name) {
@@ -2046,9 +2040,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сборки Android для этого сервера открывают его ссылки в приложении. Чтобы не спрашивать каждый раз, укажите SHA-256-отпечатки сертификатов, которыми подписаны эти сборки.';
 
   @override
-  String get adminSectionAdmin => 'Администратор';
-
-  @override
   String get adminPublicUrl => 'Публичный адрес';
 
   @override
@@ -2179,9 +2170,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Для аккаунтов нужен способ входа: включите электронную почту и пароль или настройте провайдера.';
-
-  @override
-  String get adminLockedChange => 'Это задано на сервере, здесь изменить нельзя.';
 
   @override
   String get errorAdminRequired => 'Сеанс администратора завершился. Войдите снова.';
@@ -2789,9 +2777,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get recurringResume => 'Возобновить';
-
-  @override
-  String get recurringActive => 'Повторяется';
 
   @override
   String get recurringDelete => 'Удалить';

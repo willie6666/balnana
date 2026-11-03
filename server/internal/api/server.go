@@ -85,7 +85,7 @@ func (s *Server) apply(cfg *config.Config) {
 	if cfg.SMTP.Enabled() {
 		m, err := mail.NewSMTP(cfg.SMTP)
 		if err != nil {
-			s.log.Error("email is off", "err", err) // config.Load checks the address first
+			s.log.Error("email is off", "err", err) // config.LoadWith checks the address first
 		} else {
 			st.mail = m
 		}

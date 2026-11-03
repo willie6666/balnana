@@ -703,9 +703,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statsEmptyBody => '此时间段内没有支出。';
 
   @override
-  String get statsShowExpenses => '查看这些支出';
-
-  @override
   String get dateToday => '今天';
 
   @override
@@ -939,9 +936,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get suggestedPayments => '建议转账';
-
-  @override
-  String get allSettled => '所有人都已结清。';
 
   @override
   String transferYouPay(String name) {
@@ -1951,9 +1945,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminSectionAndroidBody => '为此服务器构建的 Android 应用会在应用中打开服务器链接。如要跳过确认提示，请填写这些应用签名证书的 SHA-256 指纹。';
 
   @override
-  String get adminSectionAdmin => '管理员';
-
-  @override
   String get adminPublicUrl => '公开地址';
 
   @override
@@ -2076,9 +2067,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminNeedsSignIn => '账号需要登录方式：请启用邮箱和密码登录，或设置一个登录提供方。';
-
-  @override
-  String get adminLockedChange => '此项由服务器设置，无法在此更改。';
 
   @override
   String get errorAdminRequired => '管理员会话已结束。请重新登录。';
@@ -2582,9 +2570,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recurringResume => '恢复';
-
-  @override
-  String get recurringActive => '重复中';
 
   @override
   String get recurringDelete => '删除';
@@ -3804,9 +3789,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statsEmptyBody => '這段期間沒有支出。';
 
   @override
-  String get statsShowExpenses => '顯示這些支出';
-
-  @override
   String get dateToday => '今天';
 
   @override
@@ -4040,9 +4022,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get suggestedPayments => '建議轉帳方式';
-
-  @override
-  String get allSettled => '所有人都已結清。';
 
   @override
   String transferYouPay(String name) {
@@ -5052,9 +5031,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminSectionAndroidBody => '為這台伺服器製作的 Android 版本會在應用程式中開啟其連結。若要略過詢問，請列出這些版本簽署憑證的 SHA-256 指紋。';
 
   @override
-  String get adminSectionAdmin => '管理員';
-
-  @override
   String get adminPublicUrl => '公開網址';
 
   @override
@@ -5177,9 +5153,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminNeedsSignIn => '帳戶必須有登入方式：請啟用電子郵件和密碼，或設定登入提供者。';
-
-  @override
-  String get adminLockedChange => '此設定由伺服器設定，無法在這裡變更。';
 
   @override
   String get errorAdminRequired => '管理員工作階段已結束，請重新登入。';
@@ -5682,9 +5655,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get recurringResume => '繼續';
-
-  @override
-  String get recurringActive => '重複';
 
   @override
   String get recurringDelete => '刪除';

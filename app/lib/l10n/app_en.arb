@@ -971,10 +971,6 @@
   "@statsEmptyBody": {
     "description": "Explanatory text for stats empty body in spending statistics."
   },
-  "statsShowExpenses": "Show these expenses",
-  "@statsShowExpenses": {
-    "description": "Label or control text for stats show expenses in spending statistics."
-  },
   "dateToday": "Today",
   "@dateToday": {
     "description": "Label or control text for date today in expense date headings."
@@ -1368,10 +1364,6 @@
   "suggestedPayments": "Suggested payments",
   "@suggestedPayments": {
     "description": "Label or control text for suggested payments in the application interface."
-  },
-  "allSettled": "Everyone is settled up.",
-  "@allSettled": {
-    "description": "Label or control text for all settled in the application interface."
   },
   "transferYouPay": "You pay {name}",
   "@transferYouPay": {
@@ -3070,10 +3062,6 @@
   "@adminSectionAndroidBody": {
     "description": "Explanatory text for admin section android body in the server administrator interface."
   },
-  "adminSectionAdmin": "Administrator",
-  "@adminSectionAdmin": {
-    "description": "Label or control text for admin section admin in the server administrator interface."
-  },
   "adminPublicUrl": "Public address",
   "@adminPublicUrl": {
     "description": "Label or control text for admin public url in the server administrator interface."
@@ -3237,10 +3225,6 @@
   "adminNeedsSignIn": "Accounts need a way to sign in: turn on email and password, or set up a provider.",
   "@adminNeedsSignIn": {
     "description": "Label or control text for admin needs sign in in the server administrator interface."
-  },
-  "adminLockedChange": "This is set on the server and can't be changed here.",
-  "@adminLockedChange": {
-    "description": "Label or control text for admin locked change in the server administrator interface."
   },
   "errorAdminRequired": "Your administrator session has ended. Sign in again.",
   "@errorAdminRequired": {
@@ -3956,10 +3940,6 @@
   "recurringResume": "Resume",
   "@recurringResume": {
     "description": "Menu action that lets a paused recurring expense be added again; dates missed while paused are skipped."
-  },
-  "recurringActive": "Repeating",
-  "@recurringActive": {
-    "description": "Label of the switch that pauses or resumes a recurring expense."
   },
   "recurringDelete": "Delete",
   "@recurringDelete": {

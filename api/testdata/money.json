@@ -1,5 +1,5 @@
 {
-  "_comment": "Shared money test vectors, run by both server/internal/domain (Go) and app/test/money_test.dart (Dart). Amounts are decimal strings; 'minor' is the integer number of minor units. Errors are stable codes. 'spread' amounts are all minor units. 'currencyDigits' is how many decimals a currency usually has, for its default and its amounts paid abroad.",
+  "_comment": "Shared money test vectors, run by server/internal/domain (Go) and, except 'settle' and 'spread', app/test/money_test.dart (Dart). Amounts are decimal strings; 'minor' is the integer number of minor units. Errors are stable codes. 'spread' amounts are all minor units. 'currencyDigits' is how many decimals a currency usually has, for its default and its amounts paid abroad.",
   "parse": [
     { "input": "12.34", "digits": 2, "minor": "1234" },
     { "input": "12.3", "digits": 2, "minor": "1230" },

@@ -716,9 +716,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get statsEmptyBody => 'ช่วงเวลานี้ไม่มีค่าใช้จ่าย';
 
   @override
-  String get statsShowExpenses => 'แสดงค่าใช้จ่ายเหล่านี้';
-
-  @override
   String get dateToday => 'วันนี้';
 
   @override
@@ -954,9 +951,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'แนะนำการชำระเงิน';
-
-  @override
-  String get allSettled => 'ทุกคนเคลียร์ยอดแล้ว';
 
   @override
   String transferYouPay(String name) {
@@ -1998,9 +1992,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'แอป Android ที่สร้างสำหรับเซิร์ฟเวอร์นี้จะเปิดลิงก์ในแอป หากไม่ต้องการให้มีคำถาม ให้ใส่ลายนิ้วมือ SHA-256 ของใบรับรองที่ใช้เซ็นแอป';
 
   @override
-  String get adminSectionAdmin => 'ผู้ดูแลระบบ';
-
-  @override
   String get adminPublicUrl => 'ที่อยู่สาธารณะ';
 
   @override
@@ -2129,9 +2120,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminNeedsSignIn => 'บัญชีต้องมีวิธีลงชื่อเข้าใช้ เปิดอีเมลและรหัสผ่านหรือตั้งค่าผู้ให้บริการ';
-
-  @override
-  String get adminLockedChange => 'ตั้งค่านี้ไว้บนเซิร์ฟเวอร์ จึงเปลี่ยนที่นี่ไม่ได้';
 
   @override
   String get errorAdminRequired => 'เซสชันผู้ดูแลระบบหมดอายุ ลงชื่อเข้าใช้อีกครั้ง';
@@ -2660,9 +2648,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringResume => 'ทำต่อ';
-
-  @override
-  String get recurringActive => 'กำลังทำซ้ำ';
 
   @override
   String get recurringDelete => 'ลบ';

@@ -721,9 +721,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get statsEmptyBody => 'Bu dönemde harcama yok.';
 
   @override
-  String get statsShowExpenses => 'Bu harcamaları göster';
-
-  @override
   String get dateToday => 'Bugün';
 
   @override
@@ -959,9 +956,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Önerilen ödemeler';
-
-  @override
-  String get allSettled => 'Herkesin hesabı kapandı.';
 
   @override
   String transferYouPay(String name) {
@@ -2009,9 +2003,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu sunucu için oluşturulan Android uygulamaları sunucu bağlantılarını uygulamada açar. Soru sormadan açılması için uygulama sertifikalarının SHA-256 parmak izlerini listeleyin.';
 
   @override
-  String get adminSectionAdmin => 'Yönetici';
-
-  @override
   String get adminPublicUrl => 'Herkese açık adres';
 
   @override
@@ -2143,9 +2134,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Hesaplar için oturum açma yöntemi gerekir: e-posta ve parolayı açın veya bir sağlayıcı kurun.';
-
-  @override
-  String get adminLockedChange => 'Bu ayar sunucuda belirlenmiş ve buradan değiştirilemez.';
 
   @override
   String get errorAdminRequired => 'Yönetici oturumunuz sona erdi. Tekrar oturum açın.';
@@ -2695,9 +2683,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get recurringResume => 'Sürdür';
-
-  @override
-  String get recurringActive => 'Tekrarlanıyor';
 
   @override
   String get recurringDelete => 'Sil';

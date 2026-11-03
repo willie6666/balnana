@@ -320,14 +320,10 @@ func Environment(key string) bool {
 	return strings.TrimSpace(os.Getenv(key)) != ""
 }
 
-// Load reads the environment alone. It returns every problem at once so a
-// misconfigured container fails with one complete message.
-func Load() (*Config, error) {
-	return LoadWith(nil)
-}
-
 // LoadWith reads the environment, and stored (the settings an administrator
-// saved) for the Managed settings the environment leaves unset.
+// saved) for the Managed settings the environment leaves unset. It returns
+// every problem at once so a misconfigured container fails with one complete
+// message.
 func LoadWith(stored map[string]string) (*Config, error) {
 	c, err := load(func(key string) string {
 		if v := os.Getenv(key); strings.TrimSpace(v) != "" {

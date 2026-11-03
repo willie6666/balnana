@@ -725,9 +725,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get statsEmptyBody => 'Er zijn geen uitgaven in deze periode.';
 
   @override
-  String get statsShowExpenses => 'Deze uitgaven bekijken';
-
-  @override
   String get dateToday => 'Vandaag';
 
   @override
@@ -964,9 +961,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Voorgestelde betalingen';
-
-  @override
-  String get allSettled => 'Iedereen heeft het saldo verrekend.';
 
   @override
   String transferYouPay(String name) {
@@ -2018,9 +2012,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Android-versies die voor deze server zijn gemaakt, openen links ervan in de app. Als je de bevestigingsvraag wilt overslaan, vul je de SHA-256-vingerafdrukken in van de certificaten waarmee die versies zijn ondertekend.';
 
   @override
-  String get adminSectionAdmin => 'Beheerder';
-
-  @override
   String get adminPublicUrl => 'Openbaar adres';
 
   @override
@@ -2153,9 +2144,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Accounts hebben een aanmeldmethode nodig: schakel aanmelden met e-mailadres en wachtwoord in of stel een provider in.';
-
-  @override
-  String get adminLockedChange => 'Dit is ingesteld op de server en kan hier niet worden gewijzigd.';
 
   @override
   String get errorAdminRequired => 'Je beheerderssessie is verlopen. Meld je opnieuw aan.';
@@ -2707,9 +2695,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get recurringResume => 'Hervatten';
-
-  @override
-  String get recurringActive => 'Herhalen';
 
   @override
   String get recurringDelete => 'Verwijderen';

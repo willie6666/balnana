@@ -719,9 +719,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get statsEmptyBody => 'Không có khoản chi nào trong khoảng thời gian này.';
 
   @override
-  String get statsShowExpenses => 'Xem các khoản chi này';
-
-  @override
   String get dateToday => 'Hôm nay';
 
   @override
@@ -957,9 +954,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get suggestedPayments => 'Khoản thanh toán đề xuất';
-
-  @override
-  String get allSettled => 'Mọi người đã thanh toán xong.';
 
   @override
   String transferYouPay(String name) {
@@ -2003,9 +1997,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bản Android dành cho máy chủ này sẽ mở liên kết trong ứng dụng. Để bỏ qua yêu cầu xác nhận, hãy liệt kê dấu vân tay SHA-256 của chứng chỉ dùng để ký các bản dựng đó.';
 
   @override
-  String get adminSectionAdmin => 'Quản trị viên';
-
-  @override
   String get adminPublicUrl => 'Địa chỉ công khai';
 
   @override
@@ -2136,9 +2127,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminNeedsSignIn =>
       'Tài khoản cần có cách đăng nhập: bật email và mật khẩu hoặc thiết lập nhà cung cấp.';
-
-  @override
-  String get adminLockedChange => 'Mục này được đặt trên máy chủ và không thể thay đổi ở đây.';
 
   @override
   String get errorAdminRequired => 'Phiên quản trị viên của bạn đã kết thúc. Hãy đăng nhập lại.';
@@ -2683,9 +2671,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get recurringResume => 'Tiếp tục';
-
-  @override
-  String get recurringActive => 'Lặp lại';
 
   @override
   String get recurringDelete => 'Xóa';
