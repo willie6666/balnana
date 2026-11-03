@@ -47,9 +47,11 @@ class _Server implements HttpClientAdapter {
       );
     }
     return ResponseBody.fromString(
-      jsonEncode(
-        status == 401 ? {'code': 'sign_in_required'} : {'path': options.uri.path, 'call': calls, 'who': who},
-      ),
+      jsonEncode(switch (status) {
+        401 => {'code': 'sign_in_required'},
+        >= 400 => {'code': 'busy'},
+        _ => {'path': options.uri.path, 'call': calls, 'who': who},
+      }),
       status,
       headers: {
         'content-type': ['application/json'],
@@ -220,6 +222,45 @@ void main() {
       throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 404)),
     );
     expect(offline, everyElement(isFalse));
+  });
+
+  test('a proxy that cannot reach the server shows the last answer', () async {
+    final first = await dio.get<Object?>('/g/tok');
+    await saved();
+    server
+      ..status = 502
+      ..plain = true;
+    expect((await dio.get<Object?>('/g/tok')).data, first.data);
+    expect(offline.last, isTrue);
+  });
+
+  test("the server's own busy answer is not covered up", () async {
+    await dio.get<Object?>('/g/tok');
+    await saved();
+    server.status = 503;
+    await expectLater(
+      dio.get<Object?>('/g/tok'),
+      throwsA(isA<DioException>().having((e) => e.response?.statusCode, 'status', 503)),
+    );
+    expect(offline, everyElement(isFalse));
+  });
+
+  test('an answer asked before a change to its group is not kept', () async {
+    final release = Completer<void>();
+    server.hold = release.future;
+    final before = dio.get<Object?>('/g/tok');
+    final lists = dio.get<Object?>('/me/groups');
+    final other = dio.get<Object?>('/g/other');
+    await saved();
+    server.hold = null;
+    await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
+    release.complete();
+    await (before, lists, other).wait;
+    await saved();
+    server.down = true;
+    await expectLater(dio.get<Object?>('/g/tok'), throwsA(isA<DioException>()));
+    await expectLater(dio.get<Object?>('/me/groups'), throwsA(isA<DioException>()));
+    await dio.get<Object?>('/g/other');
   });
 
   test('an answer expires while the database stays open', () async {

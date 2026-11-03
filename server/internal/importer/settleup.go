@@ -192,16 +192,19 @@ func SettleUp(data []byte) (*File, error) {
 		if e.ForWhom, err = parts(field("for"), field("splits"), line); err != nil {
 			return nil, err
 		}
-		if names += len(e.Payers) + len(e.ForWhom); names > MaxParts {
+		if c := field("converted"); c != "" {
+			if tooMany(c) {
+				return nil, &Error{Line: line, Problem: ProblemCounts}
+			}
+			e.Converted = split(c)
+		}
+		if names += len(e.Payers) + len(e.ForWhom) + len(e.Converted); names > MaxParts {
 			return nil, &Error{Problem: ProblemTooManyRows}
 		}
 		for _, list := range [][]Part{e.Payers, e.ForWhom} {
 			for i := range list {
 				list[i].Name = person(list[i].Name)
 			}
-		}
-		if c := field("converted"); c != "" {
-			e.Converted = split(c)
 		}
 		if e.Time, err = parseTime(field("time")); err != nil {
 			return nil, &Error{Line: line, Problem: ProblemDate}
@@ -214,9 +217,15 @@ func SettleUp(data []byte) (*File, error) {
 	return f, nil
 }
 
+// tooMany reports whether a "a;b" list has more than MaxRowParts items,
+// before it is split: each item costs far more than its byte in the file.
+func tooMany(list string) bool {
+	return strings.Count(list, ";") >= MaxRowParts
+}
+
 // parts pairs "a;b" names with "1;2" amounts.
 func parts(names, amounts string, line int) ([]Part, error) {
-	if strings.Count(names, ";") >= MaxRowParts {
+	if tooMany(names) || tooMany(amounts) {
 		return nil, &Error{Line: line, Problem: ProblemCounts}
 	}
 	ns, as := split(names), split(amounts)

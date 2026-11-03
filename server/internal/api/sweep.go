@@ -27,7 +27,7 @@ var sweepBatch = 1000
 const groupSweepBatch = 10
 
 // expiringTables have an expires_at column.
-var expiringTables = []string{"sessions", "email_tokens", "invites", "oauth_logins", "oauth_codes", "admin_sessions"}
+var expiringTables = []string{"sessions", "email_tokens", "invites", "oauth_logins", "oauth_codes", "oauth_pending", "oauth_link_tickets", "admin_sessions"}
 
 // SweepExpired deletes expired rows now and then every hour until ctx ends.
 // Several servers sharing the database may each run it.

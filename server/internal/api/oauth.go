@@ -313,9 +313,6 @@ func (s *Server) OauthCallback(ctx context.Context, req OauthCallbackRequestObje
 		// verifier, as a code would.
 		pend := func(tx pgx.Tx, userID, email string) error {
 			pending = secretToken()
-			if _, err := tx.Exec(ctx, `delete from oauth_pending where expires_at < now()`); err != nil {
-				return err
-			}
 			_, err := tx.Exec(ctx, `
 				insert into oauth_pending (token_hash, provider, issuer, subject, email, user_id, name, avatar_url,
 				                           challenge, expires_at)

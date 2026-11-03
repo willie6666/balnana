@@ -99,6 +99,17 @@ func TestNameLimits(t *testing.T) {
 	if _, err := SettleUp(utf16LE(header + row(MaxRowParts+1))); !errors.As(err, &e) || e.Problem != ProblemCounts || e.Line != 2 {
 		t.Fatalf("one row: %v", err)
 	}
+	// Amounts and conversions are split only when they are as few.
+	many := strings.Repeat(";", MaxRowParts)
+	for _, bad := range []string{
+		`"Ana","` + many + `","USD","Ana","1","","","2026-01-02 10:00:00","","","","expense",""` + "\n",
+		`"Ana","1","USD","Ana","` + many + `","","","2026-01-02 10:00:00","","","","expense",""` + "\n",
+		`"Ana","1","EUR","Ana","1","","","2026-01-02 10:00:00","","1.1","` + many + `","expense",""` + "\n",
+	} {
+		if _, err := SettleUp(utf16LE(header + bad)); !errors.As(err, &e) || e.Problem != ProblemCounts || e.Line != 2 {
+			t.Fatalf("long list: %v", err)
+		}
+	}
 	file := header
 	for range MaxParts/MaxRowParts + 1 {
 		file += row(MaxRowParts)

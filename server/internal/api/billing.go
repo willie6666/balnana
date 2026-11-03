@@ -118,12 +118,12 @@ func countSponsored(ctx context.Context, q querier, userID string) (n int, err e
 // checkReceiptLimit refuses a photo the group has no room for. One replacing
 // the expense's photo adds nothing. In a write it needs the group locked.
 func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, expenseID string) error {
+	if !s.conf().Billing {
+		return nil
+	}
 	var replaces bool
 	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
 		return err
-	}
-	if !s.conf().Billing {
-		return nil
 	}
 	p, _, err := groupPlan(ctx, q, g)
 	if err != nil || p.receipts == nil {
@@ -220,7 +220,7 @@ func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n 
 	if p.sponsored != nil && *p.sponsored == 0 {
 		return nil, planLimit("members", *free.members)
 	}
-	if room, err := hasRoomToSponsor(ctx, tx, creator.id); err != nil {
+	if room, err := hasRoomToSponsor(ctx, tx, creator.id, p); err != nil {
 		return nil, err
 	} else if !room {
 		return nil, planLimit("sponsored_groups", *p.sponsored)
@@ -426,38 +426,45 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	if sponsor != nil && g.me != nil && *sponsor == *g.me {
 		return out, nil
 	}
-	covered, err := sponsorCovers(ctx, q, g)
-	if err != nil || covered {
-		return out, err
+	// p is the sponsor's plan when there is one.
+	if sponsor != nil && p.sponsors() {
+		return out, nil
 	}
 	out.SponsorMemberId = nil // to everyone else, nobody sponsors it now
 	u, err := s.currentUser(ctx)
 	if err != nil || u == nil || g.me == nil {
 		return out, err
 	}
-	out.CanSponsor, err = hasRoomToSponsor(ctx, q, u.id)
+	mine, _, err := userPlan(ctx, q, u.id)
+	if err != nil {
+		return out, err
+	}
+	out.CanSponsor, err = hasRoomToSponsor(ctx, q, u.id, mine)
 	return out, err
 }
 
-// sponsorCovers reports whether the group's sponsor still has a plan that
-// sponsors groups. One who stopped paying doesn't keep others from it.
-func sponsorCovers(ctx context.Context, q querier, g *group) (bool, error) {
-	userID, _, err := groupSponsor(ctx, q, g)
-	if err != nil || userID == nil {
-		return false, err
+// sponsors reports whether the plan sponsors groups. A sponsor who stopped
+// paying doesn't keep others from sponsoring theirs.
+func (p *plan) sponsors() bool {
+	return p.sponsored == nil || *p.sponsored > 0
+}
+
+// sponsorCovers reports whether userID, the group's sponsor if anyone, still
+// has a plan that sponsors groups.
+func sponsorCovers(ctx context.Context, q querier, userID *string) (bool, error) {
+	if userID == nil {
+		return false, nil
 	}
 	p, _, err := userPlan(ctx, q, *userID)
 	if err != nil {
 		return false, err
 	}
-	return p.sponsored == nil || *p.sponsored > 0, nil
+	return p.sponsors(), nil
 }
 
-func hasRoomToSponsor(ctx context.Context, q querier, userID string) (bool, error) {
-	p, _, err := userPlan(ctx, q, userID)
-	if err != nil {
-		return false, err
-	}
+// hasRoomToSponsor reports whether userID, whose plan is p, may sponsor one
+// more group.
+func hasRoomToSponsor(ctx context.Context, q querier, userID string, p *plan) (bool, error) {
 	if p.sponsored == nil {
 		return true, nil
 	}
@@ -491,7 +498,7 @@ func (s *Server) SponsorGroup(ctx context.Context, req SponsorGroupRequestObject
 			return err
 		}
 		if sponsor == nil || *sponsor != u.id {
-			if covered, err := sponsorCovers(ctx, tx, g); err != nil {
+			if covered, err := sponsorCovers(ctx, tx, sponsor); err != nil {
 				return err
 			} else if covered {
 				return conflict("already_sponsored")
@@ -500,7 +507,7 @@ func (s *Server) SponsorGroup(ctx context.Context, req SponsorGroupRequestObject
 			if err != nil {
 				return err
 			}
-			if room, err := hasRoomToSponsor(ctx, tx, u.id); err != nil {
+			if room, err := hasRoomToSponsor(ctx, tx, u.id, p); err != nil {
 				return err
 			} else if !room {
 				return planLimit("sponsored_groups", *p.sponsored)

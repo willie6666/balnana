@@ -310,9 +310,6 @@ func (s *Server) LinkOAuth(ctx context.Context, req LinkOAuthRequestObject) (Lin
 		if err := lockAccount(ctx, tx, u, checked); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `delete from oauth_link_tickets where expires_at < now()`); err != nil {
-			return err
-		}
 		_, err := tx.Exec(ctx, `insert into oauth_link_tickets (ticket_hash, user_id, expires_at) values ($1, $2, $3)`,
 			hashToken(ticket), u.id, time.Now().Add(oauthLifetime))
 		return err

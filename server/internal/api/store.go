@@ -211,6 +211,10 @@ func validUUID(s string) bool {
 // and the invisible marks that turn text right to left are taken out: in a
 // name they could make an email or notification read as something else.
 func cleanText(s string, min, max int) (string, bool) {
+	// Before strings.Map, which would turn bad bytes into U+FFFD.
+	if !utf8.ValidString(s) {
+		return "", false
+	}
 	s = strings.TrimSpace(strings.Map(func(r rune) rune {
 		if unicode.Is(unicode.Bidi_Control, r) {
 			return -1
@@ -218,7 +222,7 @@ func cleanText(s string, min, max int) (string, bool) {
 		return r
 	}, s))
 	n := utf8.RuneCountInString(s)
-	if n < min || n > max || !utf8.ValidString(s) {
+	if n < min || n > max {
 		return "", false
 	}
 	for _, r := range s {

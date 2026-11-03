@@ -365,8 +365,17 @@ func TestSweepExpired(t *testing.T) {
 	if _, err := pool.Exec(ctx, `insert into admin_sessions (token_hash, expires_at) values ('\x00', now() - interval '1 second')`); err != nil {
 		t.Fatal(err)
 	}
+	// What a provider sign-in leaves waiting goes too.
+	if _, err := pool.Exec(ctx, `
+		with u as (insert into users (email, display_name) values ('pending@example.com', 'P') returning id),
+		t as (insert into oauth_link_tickets (ticket_hash, user_id, expires_at)
+		      select '\x01', id, now() - interval '1 second' from u)
+		insert into oauth_pending (token_hash, provider, issuer, subject, email, user_id, name, expires_at)
+		select '\x02', 'google', 'https://accounts.google.com', 's', 'pending@example.com', id, 'P', now() - interval '1 second' from u`); err != nil {
+		t.Fatal(err)
+	}
 	n, err := s.sweepExpired(ctx)
-	if err != nil || n != 1 {
+	if err != nil || n != 3 {
 		t.Fatalf("swept %d rows, err %v", n, err)
 	}
 	c.asAdmin(token).must(200, "GET", "/admin/settings", nil, nil)

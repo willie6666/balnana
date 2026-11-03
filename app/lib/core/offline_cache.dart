@@ -45,6 +45,15 @@ class CacheDb extends _$CacheDb {
   /// app runs. Answers for any other account are no longer saved.
   final _accounts = <String, String>{};
 
+  /// Counts [forgetGroup] calls. A request notes it when asked, so its
+  /// answer can tell whether a change came after it.
+  int get forgets => _forgets;
+  var _forgets = 0;
+
+  /// When each group, and any group's lists, were last forgotten: the
+  /// [forgets] count just after, keyed by server, account and group.
+  final _forgotten = <String, int>{};
+
   @override
   int get schemaVersion => 2;
 
@@ -63,10 +72,14 @@ class CacheDb extends _$CacheDb {
     },
   );
 
-  Future<void> save(String server, String account, String request, String body) async {
+  /// Keeps [body] as the answer to [request]. [asked] is [forgets] when the
+  /// request was sent: an answer asked before its group changed may show it
+  /// as it was, and is not kept.
+  Future<void> save(String server, String account, String request, String body, {int? asked}) async {
     // An answer still on its way when its account signed out stays unsaved.
     final current = _accounts[server];
     if (account != public && current != null && current != account) return;
+    if (asked != null && asked < (_forgotten[_forgetKey(server, account, request)] ?? 0)) return;
     await into(cachedResponses).insertOnConflictUpdate(
       CachedResponsesCompanion.insert(
         server: server,
@@ -95,6 +108,9 @@ class CacheDb extends _$CacheDb {
   /// lists of groups that sum it up, once it has changed there. Were the
   /// reload after a change to fail, they would show it as it was before.
   Future<void> forgetGroup(String server, String account, String group) {
+    _forgets++;
+    _forgotten['$server $account /g/$group'] = _forgets;
+    _forgotten['$server $account'] = _forgets;
     final stale = delete(cachedResponses)
       ..where(
         (r) =>
@@ -107,6 +123,15 @@ class CacheDb extends _$CacheDb {
                 r.request.like('POST /groups/summaries %')),
       );
     return stale.go();
+  }
+
+  /// Where [save] finds when what [request] asks for was last forgotten:
+  /// its group, or for the lists of groups, any group.
+  static String _forgetKey(String server, String account, String request) {
+    final group = RegExp(r'^GET (/g/[^/?]+)').firstMatch(request)?.group(1);
+    if (group != null) return '$server $account $group';
+    final lists = request == 'GET /me/groups' || request.startsWith('POST /groups/summaries ');
+    return lists ? '$server $account' : '';
   }
 
   /// Makes [account] the one signed in to [server], forgetting what any
@@ -173,6 +198,8 @@ class OfflineCache extends Interceptor {
   /// POSTs that only read, and so may be answered from the cache.
   static const _readingPosts = {'/groups/summaries'};
 
+  static const _askedKey = 'offlineCacheAsked';
+
   /// The cache key for [options], or null when its answer is not kept.
   String? _key(RequestOptions options) {
     if (options.responseType != ResponseType.json) return null;
@@ -203,6 +230,7 @@ class OfflineCache extends Interceptor {
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    options.extra[_askedKey] = _db.forgets;
     final key = probe || !_isOffline() ? null : _key(options);
     final saved = key == null ? null : await _find(key);
     if (saved == null) return handler.next(options);
@@ -217,7 +245,17 @@ class OfflineCache extends Interceptor {
     if (key != null && response.statusCode == 200 && response.data != null) {
       // Anything else is not this API: a captive portal's page, answered 200.
       if (response.data is Map || response.data is List) {
-        unawaited(_db.save(_server, _account, key, jsonEncode(response.data)).catchError((Object _) {}));
+        unawaited(
+          _db
+              .save(
+                _server,
+                _account,
+                key,
+                jsonEncode(response.data),
+                asked: options.extra[_askedKey] as int?,
+              )
+              .catchError((Object _) {}),
+        );
       }
     } else if (key == null && options.method != 'GET') {
       // A change to a group: what was saved of it is out of date. This is
@@ -234,14 +272,23 @@ class OfflineCache extends Interceptor {
     handler.next(response);
   }
 
+  /// Whether [response] is a proxy in front of the server saying it cannot
+  /// reach it. The server's own errors always carry a code.
+  static bool _fromGateway(Response<dynamic> response) {
+    final data = response.data;
+    return const {502, 503, 504}.contains(response.statusCode) && !(data is Map && data['code'] is String);
+  }
+
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response != null) {
+    final response = err.response;
+    if (response != null && !_fromGateway(response)) {
       _offline(false);
       return handler.next(err);
     }
     final key = _key(err.requestOptions);
     final unreachable = switch (err.type) {
+      _ when response != null => true,
       DioExceptionType.connectionError ||
       DioExceptionType.connectionTimeout ||
       DioExceptionType.receiveTimeout ||
