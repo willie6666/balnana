@@ -150,8 +150,10 @@ class SettingsNotifier extends Notifier<Settings> {
   /// Whether the wallpaper palette is on, as [Settings.dynamicColor] says.
   static bool dynamicColorOn(SharedPreferences prefs) => prefs.getBool(_dynamicColor) ?? false;
 
-  /// Whether notifications are on, as [Settings.notifications] says.
-  static bool notificationsOn(SharedPreferences prefs) => prefs.getBool(_notifications) ?? true;
+  /// Whether notifications are on, as [Settings.notifications] says. Off at
+  /// first in a browser, which asks to allow them only when they are turned
+  /// on.
+  static bool notificationsOn(SharedPreferences prefs) => prefs.getBool(_notifications) ?? !kIsWeb;
 
   /// The language picked in settings; null follows the device.
   static Locale? savedLocale(SharedPreferences prefs) => switch (prefs.getString(_locale)) {

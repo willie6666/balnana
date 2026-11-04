@@ -23,7 +23,38 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Brak połączenia. Wyświetlam dane zapisane na tym urządzeniu; zmiany będzie można zapisać po ponownym połączeniu.';
+      'Offline. Wyświetlane są dane zapisane na tym urządzeniu; nowe wydatki i płatności zostaną wysłane po ponownym połączeniu.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pozycji czeka na wysłanie.',
+      many: '$count pozycji czeka na wysłanie.',
+      few: '$count pozycje czekają na wysłanie.',
+      one: '1 pozycja czeka na wysłanie.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Zapisano na tym urządzeniu. Zostanie wysłane, gdy wrócisz do sieci.';
+
+  @override
+  String get pendingWaiting => 'Czeka na wysłanie';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Nie wysłano: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Odrzuć';
+
+  @override
+  String get offlineNoReceipt =>
+      'Zdjęcia paragonu nie można zapisać offline. Usuń zdjęcie, aby zapisać wydatek teraz, lub spróbuj ponownie po powrocie do sieci.';
 
   @override
   String get commonSave => 'Zapisz';
@@ -454,6 +485,47 @@ class AppLocalizationsPl extends AppLocalizations {
   String get memberRename => 'Zmień imię';
 
   @override
+  String get memberPaymentDetails => 'Dane do płatności';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Jak inni w tej grupie mogą zapłacić $name: konto bankowe, aplikacja płatnicza lub link. Wszyscy w grupie mogą je zobaczyć.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Sposób';
+
+  @override
+  String get paymentDetailValue => 'Konto, ID lub link';
+
+  @override
+  String get paymentDetailAdd => 'Dodaj sposób płatności';
+
+  @override
+  String get paymentDetailBank => 'Przelew bankowy';
+
+  @override
+  String get paymentDetailSuggestions => 'Sugestie';
+
+  @override
+  String get paymentDetailCopy => 'Kopiuj';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return 'Skopiowano: $label';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Otwórz link';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Każdy sposób płatności wymaga nazwy oraz konta, ID lub linku, każde w jednym wierszu.';
+
+  @override
+  String get errorNothingOwed => 'Ta osoba nic ci teraz nie jest winna.';
+
+  @override
   String get memberRenameTitle => 'Zmień imię';
 
   @override
@@ -504,6 +576,40 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Pozwól wyświetlać i edytować bez konta';
+
+  @override
+  String get groupFeatures => 'Funkcje';
+
+  @override
+  String get groupFeaturesHelp =>
+      'Po wyłączeniu nie można tego dodawać do wydatków. To, co już jest, zostaje.';
+
+  @override
+  String get groupFeatureForeign => 'Inne waluty';
+
+  @override
+  String get groupFeatureForeignHelp => 'Wydatki zapłacone w innej walucie niż waluta grupy';
+
+  @override
+  String get groupFeatureRecurring => 'Wydatki cykliczne';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Dodawane według harmonogramu. Po wyłączeniu harmonogramy czekają';
+
+  @override
+  String get groupFeaturePlaces => 'Miejsca';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Gdzie powstał wydatek';
+
+  @override
+  String get groupFeatureReceipts => 'Paragony';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Zdjęcie paragonu';
+
+  @override
+  String get errorFeatureOff => 'Ta grupa ma to wyłączone. Można to ponownie włączyć w ustawieniach grupy.';
 
   @override
   String get resetLinkTitle => 'Zresetuj link';
@@ -639,6 +745,17 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Dodaj wydatek';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Wydatek w $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Którą grupę pokazać?';
+
+  @override
+  String get widgetNoGroups => 'Najpierw otwórz Balnana i dodaj grupę.';
 
   @override
   String get expensesEmptyTitle => 'Nie ma jeszcze wydatków';
@@ -875,6 +992,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Kurs z $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Notatka';
 
   @override
@@ -1020,6 +1142,44 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get recordPayment => 'Zapisz';
+
+  @override
+  String get remindAction => 'Przypomnij';
+
+  @override
+  String remindTitle(String name) {
+    return 'Przypomnij: $name';
+  }
+
+  @override
+  String get remindNotify => 'Wyślij powiadomienie';
+
+  @override
+  String get remindNeedsPlan => 'Nie wchodzi w plan tej grupy';
+
+  @override
+  String get remindShare => 'Udostępnij wiadomość';
+
+  @override
+  String remindSent(String name) {
+    return 'Wysłano przypomnienie: $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name nie otrzymuje powiadomień';
+  }
+
+  @override
+  String get remindCopied => 'Skopiowano przypomnienie';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Przypomnienie: jesteś winien(-na) $payee $amount w grupie $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Jak zapłacić:';
 
   @override
   String get recordPaymentTitle => 'Zapisz płatność';
@@ -1342,6 +1502,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Zablokowane w ustawieniach telefonu. Włącz tam powiadomienia Balnana, aby je otrzymywać.';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Niedozwolone w tej przeglądarce: zezwól na powiadomienia z tej witryny w jej ustawieniach, aby je widzieć';
+
+  @override
   String get pushChannel => 'Wydatki';
 
   @override
@@ -1375,6 +1539,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'Usunięto $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who przypomina, że jesteś winien(-na) $amount';
   }
 
   @override
@@ -2256,7 +2425,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'Utworzone lub otwarte przez Ciebie grupy: ich nazwy, imiona członków, wydatki, płatności, notatki, zdjęcia paragonów i miejsca dodane do wydatków. W przypadku konta także Twoje imię, adres e-mail lub nazwa użytkownika, skrót hasła (nigdy samo hasło) oraz informacja o używanej metodzie logowania, na przykład Google. Po włączeniu powiadomień przechowywany jest identyfikator urządzenia i adres otrzymany od usługi powiadomień.';
+      'Utworzone lub otwarte przez Ciebie grupy: ich nazwy, imiona członków i ich dane do płatności, wydatki, płatności, notatki, zdjęcia paragonów i miejsca dodane do wydatków. W przypadku konta także Twoje imię, adres e-mail lub nazwa użytkownika, skrót hasła (nigdy samo hasło) oraz informacja o używanej metodzie logowania, na przykład Google. Po włączeniu powiadomień przechowywany jest identyfikator urządzenia i adres otrzymany od usługi powiadomień.';
 
   @override
   String get privacyUseTitle => 'Jak dane są wykorzystywane';
@@ -2270,14 +2439,14 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Wszyscy członkowie grupy widzą jej osoby, wydatki i historię. Jeśli grupę można otworzyć za pomocą linku, zobaczyć ją może każdy, kto ma link. Logowanie przez Google odbywa się za pośrednictwem Google, a włączone przez administratora powiadomienia przechodzą przez usługę używaną przez telefon: Google Firebase Cloud Messaging lub inną zainstalowaną usługę UnifiedPush, na przykład ntfy. Treść powiadomień jest szyfrowana podczas przesyłania. Mapy pobierają obrazy od wybranego przez administratora dostawcy, domyślnie OpenFreeMap, który widzi Twój adres sieciowy i oglądany obszar. Lokalizacja jest odczytywana tylko po dotknięciu opcji „Użyj bieżącej lokalizacji”; zapisywany jest tylko wybrany punkt.';
+      'Wszyscy członkowie grupy widzą jej osoby, wydatki i historię. Jeśli grupę można otworzyć za pomocą linku, zobaczyć ją może każdy, kto ma link. Logowanie przez Google odbywa się za pośrednictwem Google, a włączone przez administratora powiadomienia przechodzą przez usługę używaną przez telefon: Google Firebase Cloud Messaging lub inną zainstalowaną usługę UnifiedPush, na przykład ntfy. W aplikacji internetowej przechodzą przez usługę powiadomień przeglądarki. Treść powiadomień jest szyfrowana podczas przesyłania. Mapy pobierają obrazy od wybranego przez administratora dostawcy, domyślnie OpenFreeMap, który widzi Twój adres sieciowy i oglądany obszar. Lokalizacja jest odczytywana tylko po dotknięciu opcji „Użyj bieżącej lokalizacji”; zapisywany jest tylko wybrany punkt.';
 
   @override
   String get privacyDeviceTitle => 'Na tym urządzeniu';
 
   @override
   String get privacyDeviceBody =>
-      'Aplikacja przechowuje adres serwera, Twoje ustawienia i kopię grup na wypadek braku połączenia. Odinstalowanie aplikacji usuwa te dane.';
+      'Aplikacja przechowuje adres serwera, Twoje ustawienia i kopię grup na wypadek braku połączenia. Odinstalowanie aplikacji usuwa te dane. Wydatki i płatności dodane bez połączenia czekają tu, aż zostaną wysłane.';
 
   @override
   String get privacyDeleteTitle => 'Usuwanie danych';
@@ -2443,6 +2612,26 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Wyświetlana na każdej mapie zgodnie z wymaganiami dostawcy. Jeśli pole jest puste, styl wyświetla podane w nim źródła, a kafelki — OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Kursy walut';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Gdy wydatek jest opłacony w innej walucie, aplikacja zaczyna od najnowszego kursu. Kursy pochodzą z Frankfurter, czyli bezpłatnych kursów referencyjnych Europejskiego Banku Centralnego, albo z Open Exchange Rates, gdy jest ustawiony identyfikator aplikacji. Serwer pyta najwyżej raz na godzinę.';
+
+  @override
+  String get adminExchangeRates => 'Pobieraj kursy walut';
+
+  @override
+  String get adminExchangeRatesHelp => 'Gdy wyłączone, każdy kurs wpisuje się ręcznie.';
+
+  @override
+  String get adminOxrAppId => 'Identyfikator aplikacji Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Opcjonalne. Z nim kursy pochodzą z Open Exchange Rates, które ma więcej walut; wystarczy darmowy plan. Bez niego z Frankfurter.';
 
   @override
   String get adminInvalidMapTiles =>
@@ -3028,6 +3217,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Dla każdego konta bez innego planu.';
 
   @override
+  String get adminPlanRemindersHelp => 'Grupy w tym planie mogą przypominać o płatności powiadomieniem.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Usunąć $name?';
   }
@@ -3165,6 +3357,9 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Plan tej grupy nie obejmuje przypomnień o płatności.';
+
+  @override
   String get errorLimitOther => 'Osiągnięto limit tego serwera.';
 
   @override
@@ -3212,6 +3407,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Grupy korzystające z Twojego planu';
+
+  @override
+  String get planLimitReminders => 'Przypomnienia o płatności';
+
+  @override
+  String get planIncluded => 'W planie';
+
+  @override
+  String get planNotIncluded => 'Poza planem';
 
   @override
   String get planGet => 'Uzyskaj plan';

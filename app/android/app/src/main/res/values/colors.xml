@@ -4,4 +4,12 @@
     <color name="ic_launcher_background">#FFE8A800</color>
     <!-- Behind the splash logo: the app's light surface color. -->
     <color name="splash_background">#FFFFF8F3</color>
+    <!-- The group widget, in the app's light colors. -->
+    <color name="widget_surface">#FFFFF8F3</color>
+    <color name="widget_on_surface">#FF1F1B13</color>
+    <color name="widget_owed">#FF1E7A46</color>
+    <color name="widget_owe">#FFB42318</color>
+    <color name="widget_settled">#FF6B6559</color>
+    <color name="widget_accent">#FFE8A800</color>
+    <color name="widget_on_accent">#FF261A00</color>
 </resources>

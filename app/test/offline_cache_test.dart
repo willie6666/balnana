@@ -349,6 +349,7 @@ void main() {
     var up = false;
     final container = ProviderContainer(
       overrides: [
+        cacheDbProvider.overrideWithValue(null),
         serverUrlProvider.overrideWithValue(_server),
         serverInfoProvider.overrideWith(
           (ref) async => const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server),
@@ -390,7 +391,7 @@ void main() {
   });
 
   testWidgets('connection changes keep the current form and its draft', (tester) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [cacheDbProvider.overrideWithValue(null)]);
     addTearDown(container.dispose);
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -414,6 +415,7 @@ void main() {
     var infoLoads = 0;
     final container = ProviderContainer(
       overrides: [
+        cacheDbProvider.overrideWithValue(null),
         serverInfoProvider.overrideWith((ref) async {
           infoLoads++;
           return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
@@ -440,7 +442,7 @@ void main() {
     container.read(offlineProvider.notifier).set(true);
     await tester.pump();
     expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
-    expect(find.textContaining('changes cannot be saved until you reconnect'), findsOneWidget);
+    expect(find.textContaining('new expenses and payments upload when you reconnect'), findsOneWidget);
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(infoLoads, 2);

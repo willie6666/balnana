@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,10 +132,19 @@ class SettingsPage extends ConsumerWidget {
                 icon: Icons.notifications_outlined,
                 title: l10n.settingsNotifications,
                 subtitle: settings.notifications && ref.watch(pushBlockedProvider)
-                    ? l10n.settingsNotificationsBlocked
+                    ? (kIsWeb ? l10n.settingsNotificationsBlockedBrowser : l10n.settingsNotificationsBlocked)
                     : l10n.settingsNotificationsSubtitle,
                 value: settings.notifications,
-                onChanged: notifier.setNotifications,
+                onChanged: (on) {
+                  // A browser asks only from the tap itself; Android asks
+                  // when the server is next told.
+                  if (on && kIsWeb) {
+                    final blocked = ref.read(pushBlockedProvider.notifier);
+                    final asked = ref.read(pushServiceProvider)?.requestPermission(tapped: true);
+                    unawaited(asked?.then((allowed) => blocked.set(!allowed)));
+                  }
+                  notifier.setNotifications(on);
+                },
               ),
             ],
           ),

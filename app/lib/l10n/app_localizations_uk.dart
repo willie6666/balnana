@@ -23,7 +23,38 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Немає зв’язку. Показано збережені на цьому пристрої дані; зміни збережуться після відновлення зв’язку.';
+      'Немає мережі. Показано те, що збережено на цьому пристрої; нові витрати й платежі надішлються після підключення.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count запису чекають на надсилання.',
+      many: '$count записів чекають на надсилання.',
+      few: '$count записи чекають на надсилання.',
+      one: '1 запис чекає на надсилання.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Збережено на цьому пристрої. Буде надіслано, коли ви знову будете в мережі.';
+
+  @override
+  String get pendingWaiting => 'Чекає на надсилання';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Не надіслано: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Відкинути';
+
+  @override
+  String get offlineNoReceipt =>
+      'Фото чека не можна зберегти без мережі. Приберіть фото, щоб зберегти витрату зараз, або спробуйте знову, коли будете в мережі.';
 
   @override
   String get commonSave => 'Зберегти';
@@ -455,6 +486,47 @@ class AppLocalizationsUk extends AppLocalizations {
   String get memberRename => 'Змінити ім’я';
 
   @override
+  String get memberPaymentDetails => 'Реквізити для оплати';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Як інші учасники групи можуть заплатити $name: банківський рахунок, платіжний застосунок або посилання. Їх бачать усі в групі.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Спосіб';
+
+  @override
+  String get paymentDetailValue => 'Рахунок, ID або посилання';
+
+  @override
+  String get paymentDetailAdd => 'Додати спосіб оплати';
+
+  @override
+  String get paymentDetailBank => 'Банківський переказ';
+
+  @override
+  String get paymentDetailSuggestions => 'Варіанти';
+
+  @override
+  String get paymentDetailCopy => 'Копіювати';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return 'Скопійовано: $label';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Відкрити посилання';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Для кожного способу оплати потрібні назва і рахунок, ID або посилання, кожне в один рядок.';
+
+  @override
+  String get errorNothingOwed => 'Зараз ця людина вам нічого не винна.';
+
+  @override
   String get memberRenameTitle => 'Змінити ім’я';
 
   @override
@@ -505,6 +577,39 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Дозволити переглядати й редагувати без облікового запису';
+
+  @override
+  String get groupFeatures => 'Функції';
+
+  @override
+  String get groupFeaturesHelp => 'Якщо вимкнути, це не можна буде додати до витрат. Уже додане залишиться.';
+
+  @override
+  String get groupFeatureForeign => 'Інші валюти';
+
+  @override
+  String get groupFeatureForeignHelp => 'Витрати, сплачені не у валюті групи';
+
+  @override
+  String get groupFeatureRecurring => 'Регулярні витрати';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Додаються за розкладом. Якщо вимкнути, розклади чекають';
+
+  @override
+  String get groupFeaturePlaces => 'Місця';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Де зроблено витрату';
+
+  @override
+  String get groupFeatureReceipts => 'Чеки';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Фото чека';
+
+  @override
+  String get errorFeatureOff => 'У цій групі це вимкнено. Це можна знову ввімкнути в налаштуваннях групи.';
 
   @override
   String get resetLinkTitle => 'Скинути посилання';
@@ -640,6 +745,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Додати витрату';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Витрата в $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Яку групу показати?';
+
+  @override
+  String get widgetNoGroups => 'Спершу відкрийте Balnana й додайте групу.';
 
   @override
   String get expensesEmptyTitle => 'Витрат ще немає';
@@ -876,6 +992,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Курс від $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Примітка';
 
   @override
@@ -1021,6 +1142,44 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get recordPayment => 'Записати';
+
+  @override
+  String get remindAction => 'Нагадати';
+
+  @override
+  String remindTitle(String name) {
+    return 'Нагадати: $name';
+  }
+
+  @override
+  String get remindNotify => 'Надіслати сповіщення';
+
+  @override
+  String get remindNeedsPlan => 'Не входить у тариф цієї групи';
+
+  @override
+  String get remindShare => 'Поділитися повідомленням';
+
+  @override
+  String remindSent(String name) {
+    return 'Нагадування надіслано: $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name не отримує сповіщень';
+  }
+
+  @override
+  String get remindCopied => 'Нагадування скопійовано';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Нагадування: ви винні $payee $amount у групі «$group».';
+  }
+
+  @override
+  String get reminderHowToPay => 'Як оплатити:';
 
   @override
   String get recordPaymentTitle => 'Записати платіж';
@@ -1344,6 +1503,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Сповіщення заблоковано в налаштуваннях телефона. Дозвольте сповіщення для Balnana там.';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Не дозволено в цьому браузері: дозвольте сповіщення для цього сайту в його налаштуваннях, щоб їх бачити';
+
+  @override
   String get pushChannel => 'Витрати';
 
   @override
@@ -1378,6 +1541,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'Видалено $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who нагадує, що ви винні $amount';
   }
 
   @override
@@ -2251,7 +2419,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'Створені вами групи й ті, до яких ви приєдналися: їхні назви, імена учасників, витрати, платежі, примітки, фото чеків і місця, додані до витрат. Якщо у вас є обліковий запис, також зберігаються ваше ім’я, адреса електронної пошти або ім’я користувача, хеш пароля (сам пароль ніколи не зберігається) і спосіб входу, наприклад Google. Якщо ввімкнено сповіщення, зберігається ідентифікатор пристрою й адреса, надана службою push-сповіщень.';
+      'Створені вами групи й ті, до яких ви приєдналися: їхні назви, імена та платіжні реквізити учасників, витрати, платежі, примітки, фото чеків і місця, додані до витрат. Якщо у вас є обліковий запис, також зберігаються ваше ім’я, адреса електронної пошти або ім’я користувача, хеш пароля (сам пароль ніколи не зберігається) і спосіб входу, наприклад Google. Якщо ввімкнено сповіщення, зберігається ідентифікатор пристрою й адреса, надана службою push-сповіщень.';
 
   @override
   String get privacyUseTitle => 'Як це використовується';
@@ -2265,14 +2433,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Усі учасники групи бачать її учасників, витрати й історію. Якщо група доступна за посиланням, відкрити її може кожен, хто має посилання. Для входу через Google використовується Google. Якщо оператор увімкнув сповіщення, вони надходять через службу push-сповіщень вашого телефона: Firebase Cloud Messaging від Google або іншу встановлену вами службу UnifiedPush, наприклад ntfy. Вміст сповіщень шифрується під час передавання. Мапи завантажуються від вибраного оператором постачальника — OpenFreeMap, якщо налаштування не змінювали. Він бачить вашу мережеву адресу й область, яку ви переглядаєте. Місце пристрою зчитується лише після натискання «Використати поточне місце», і зберігається лише вибрана вами точка.';
+      'Усі учасники групи бачать її учасників, витрати й історію. Якщо група доступна за посиланням, відкрити її може кожен, хто має посилання. Для входу через Google використовується Google. Якщо оператор увімкнув сповіщення, вони надходять через службу push-сповіщень вашого телефона: Firebase Cloud Messaging від Google або іншу встановлену вами службу UnifiedPush, наприклад ntfy. У вебзастосунку вони надходять через службу push-сповіщень вашого браузера. Вміст сповіщень шифрується під час передавання. Мапи завантажуються від вибраного оператором постачальника — OpenFreeMap, якщо налаштування не змінювали. Він бачить вашу мережеву адресу й область, яку ви переглядаєте. Місце пристрою зчитується лише після натискання «Використати поточне місце», і зберігається лише вибрана вами точка.';
 
   @override
   String get privacyDeviceTitle => 'На цьому пристрої';
 
   @override
   String get privacyDeviceBody =>
-      'Застосунок зберігає адресу сервера, ваші налаштування й копію груп на випадок відсутності зв’язку. Після видалення застосунку ці дані буде видалено.';
+      'Застосунок зберігає адресу сервера, ваші налаштування й копію груп на випадок відсутності зв’язку. Після видалення застосунку ці дані буде видалено. Витрати й платежі, додані без зв’язку, чекають тут, доки їх не буде надіслано.';
 
   @override
   String get privacyDeleteTitle => 'Видалення даних';
@@ -2438,6 +2606,26 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Показується на кожній мапі згідно з вимогами постачальника. Якщо поле порожнє, стиль показує зазначені в ньому джерела, а тайли вказують OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Курси валют';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Коли витрату оплачено в іншій валюті, застосунок підставляє найсвіжіший курс. Курси беруться з Frankfurter — безкоштовних довідкових курсів Європейського центрального банку — або з Open Exchange Rates, якщо задано ID застосунку. Сервер запитує їх не частіше разу на годину.';
+
+  @override
+  String get adminExchangeRates => 'Отримувати курси валют';
+
+  @override
+  String get adminExchangeRatesHelp => 'Якщо вимкнено, курс щоразу вводять вручну.';
+
+  @override
+  String get adminOxrAppId => 'ID застосунку Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Необов\'язково. З ним курси беруться з Open Exchange Rates, де більше валют; вистачить безкоштовного тарифу. Без нього — з Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Введіть шаблон URL http(s) із z, x і y у фігурних дужках.';
@@ -3021,6 +3209,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Для всіх облікових записів без іншого тарифу.';
 
   @override
+  String get adminPlanRemindersHelp => 'Групи на цьому тарифі можуть нагадувати про оплату сповіщенням.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Вилучити $name?';
   }
@@ -3158,6 +3349,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Тариф цієї групи не містить нагадувань про оплату.';
+
+  @override
   String get errorLimitOther => 'Ви досягли ліміту цього сервера.';
 
   @override
@@ -3205,6 +3399,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Групи з вашим тарифом';
+
+  @override
+  String get planLimitReminders => 'Нагадування про оплату';
+
+  @override
+  String get planIncluded => 'Включено';
+
+  @override
+  String get planNotIncluded => 'Не включено';
 
   @override
   String get planGet => 'Отримати тариф';

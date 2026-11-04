@@ -66,9 +66,9 @@ func serve(files fs.FS, tagged bool) http.Handler {
 			return
 		}
 		if info, err := fs.Stat(files, name); err == nil && !info.IsDir() {
-			// Flutter's bootstrap and service worker must be revalidated so
-			// new releases are picked up; hashed assets can be cached.
-			if name == "flutter_bootstrap.js" || name == "flutter_service_worker.js" || name == "version.json" {
+			// The bootstrap and service workers must be revalidated so new
+			// releases are picked up; hashed assets can be cached.
+			if revalidate[name] {
 				w.Header().Set("Cache-Control", "no-cache")
 			}
 			// Embedded files carry no modification time, so without an ETag
@@ -88,6 +88,16 @@ func serve(files fs.FS, tagged bool) http.Handler {
 		}
 		serveIndex(w)
 	})
+}
+
+// revalidate names the files that are not named for their content: Flutter's
+// bootstrap, the push worker and the notification text it shows.
+var revalidate = map[string]bool{
+	"flutter_bootstrap.js":      true,
+	"flutter_service_worker.js": true,
+	"version.json":              true,
+	"push_sw.js":                true,
+	"push_strings.json":         true,
 }
 
 // etag is the ETag of the embedded file name: a hash of its content, worked

@@ -254,15 +254,7 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 		}
 		return ""
 	}
-	amount := e.Amount + " " + g.currency
-	if g.symbol != nil {
-		// As the app shows it: a symbol ending in a letter is spaced from the number.
-		sep := ""
-		if r, _ := utf8.DecodeLastRuneInString(*g.symbol); unicode.IsLetter(r) {
-			sep = " "
-		}
-		amount = *g.symbol + sep + e.Amount
-	}
+	amount := pushAmount(g, e.Amount)
 	if f := e.Foreign; f != nil {
 		amount = f.Amount + " " + f.Currency + " (" + amount + ")"
 	}
@@ -278,9 +270,29 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 	for i := range n.Args {
 		n.Args[i] = clip(n.Args[i])
 	}
+	s.sendAll(ctx, g, devices, n)
+	return nil
+}
+
+// pushAmount is amount in the group's currency, as the app shows it.
+func pushAmount(g *group, amount string) string {
+	if g.symbol == nil {
+		return amount + " " + g.currency
+	}
+	// A symbol ending in a letter is spaced from the number.
+	sep := ""
+	if r, _ := utf8.DecodeLastRuneInString(*g.symbol); unicode.IsLetter(r) {
+		sep = " "
+	}
+	return *g.symbol + sep + amount
+}
+
+// sendAll sends n to every phone in devices.
+func (s *Server) sendAll(ctx context.Context, g *group, devices []pushDevice, n notification) {
 	payload, err := json.Marshal(n)
 	if err != nil {
-		return err
+		s.log.Warn("push failed", "group", g.id, "err", err)
+		return
 	}
 	// Each phone's push service is its own server, which may be slow or
 	// unreachable: one that is must not use up the time the others have.
@@ -291,11 +303,10 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 		wg.Add(1)
 		go func() {
 			defer func() { <-sem; wg.Done() }()
-			s.sendTo(ctx, g, d, payload, e.Id)
+			s.sendTo(ctx, g, d, payload, n.Expense)
 		}()
 	}
 	wg.Wait()
-	return nil
 }
 
 // sendTo sends payload to the phone d, forgetting its subscription if it
@@ -325,7 +336,9 @@ func (s *Server) sendTo(ctx context.Context, g *group, d pushDevice, payload []b
 // notification is what a push message carries. The app shows it in the
 // phone's language: Key names one of its strings and Args fill it in.
 type notification struct {
-	Group   string   `json:"g"`
+	Group string `json:"g"`
+	// Expense is the expense it is about, or the member a reminder is for.
+	// A later message with the same one replaces it.
 	Expense string   `json:"e"`
 	Title   string   `json:"t"`
 	Key     string   `json:"k"`

@@ -16,9 +16,43 @@
   "@commonRetry": {
     "description": "Label or control text for common retry in shared buttons and controls."
   },
-  "offlineBar": "Offline. Showing what this device saved; changes cannot be saved until you reconnect.",
+  "offlineBar": "Offline. Showing what this device saved; new expenses and payments upload when you reconnect.",
   "@offlineBar": {
     "description": "Label or control text for offline bar in the offline cache banner."
+  },
+  "offlinePending": "{count, plural, =1{1 item waiting to upload.} other{{count} items waiting to upload.}}",
+  "@offlinePending": {
+    "description": "Added to the offline banner: how many new expenses and payments made offline wait to be sent to the server.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingSaved": "Saved on this device. It will upload when you're back online.",
+  "@pendingSaved": {
+    "description": "Snackbar after a new expense or payment was saved on the device because the server could not be reached."
+  },
+  "pendingWaiting": "Waiting to upload",
+  "@pendingWaiting": {
+    "description": "Subtitle of an expense or payment in the list that was made offline and has not reached the server yet."
+  },
+  "pendingRefused": "Not uploaded: {error}",
+  "@pendingRefused": {
+    "description": "Subtitle of an expense or payment made offline that the server refused; error is the reason.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingDiscard": "Discard",
+  "@pendingDiscard": {
+    "description": "Action that throws away an expense or payment made offline that has not reached the server."
+  },
+  "offlineNoReceipt": "A receipt photo can't be saved offline. Remove the photo to save the expense now, or try again when you're back online.",
+  "@offlineNoReceipt": {
+    "description": "Snackbar when a new expense with a receipt photo cannot reach the server: only the expense itself can wait on the device."
   },
   "commonSave": "Save",
   "@commonSave": {
@@ -602,6 +636,64 @@
   "@memberRename": {
     "description": "Label or control text for member rename in group member management."
   },
+  "memberPaymentDetails": "Payment details",
+  "@memberPaymentDetails": {
+    "description": "Menu item on a group member, and the title of the sheet where how that member can be paid is entered."
+  },
+  "paymentDetailsHelp": "How others in this group can pay {name}: a bank account, a payment app or a link. Everyone in the group can see them.",
+  "@paymentDetailsHelp": {
+    "description": "Help text in the payment details sheet. {name} is the member whose details they are.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentDetailLabel": "Method",
+  "@paymentDetailLabel": {
+    "description": "Label of the field naming a way to pay, such as a bank or a payment app."
+  },
+  "paymentDetailValue": "Account, ID or link",
+  "@paymentDetailValue": {
+    "description": "Label of the field holding the account number, handle or link of a way to pay."
+  },
+  "paymentDetailAdd": "Add a way to pay",
+  "@paymentDetailAdd": {
+    "description": "Button that adds another way to pay to a member's payment details."
+  },
+  "paymentDetailBank": "Bank transfer",
+  "@paymentDetailBank": {
+    "description": "Suggested name for a way to pay: a transfer to a bank account."
+  },
+  "paymentDetailSuggestions": "Suggestions",
+  "@paymentDetailSuggestions": {
+    "description": "Tooltip of the button listing suggested names for a way to pay."
+  },
+  "paymentDetailCopy": "Copy",
+  "@paymentDetailCopy": {
+    "description": "Tooltip of the button that copies one of a member's payment details."
+  },
+  "paymentDetailCopied": "{label} copied",
+  "@paymentDetailCopied": {
+    "description": "Snackbar after a payment detail was copied. {label} is its name, such as Bank transfer.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentDetailOpen": "Open link",
+  "@paymentDetailOpen": {
+    "description": "Tooltip of the button that opens a payment detail that is a web link."
+  },
+  "errorInvalidPaymentDetails": "Each way to pay needs a method and an account, ID or link, each on one line.",
+  "@errorInvalidPaymentDetails": {
+    "description": "Error when payment details are refused: each needs a method and a value, each on one line, within the length limits."
+  },
+  "errorNothingOwed": "They don't owe you anything now.",
+  "@errorNothingOwed": {
+    "description": "Error when sending a reminder to someone who no longer owes you anything."
+  },
   "memberRenameTitle": "Rename",
   "@memberRenameTitle": {
     "description": "Heading for member rename title in group member management."
@@ -676,6 +768,50 @@
   "linkAccessHelp": "Let people see and edit without an account",
   "@linkAccessHelp": {
     "description": "Help text for link access help in group link-access permissions."
+  },
+  "groupFeatures": "Features",
+  "@groupFeatures": {
+    "description": "Heading for the switches that turn group features (other currencies, recurring expenses, locations, receipts) on or off, in group creation and settings."
+  },
+  "groupFeaturesHelp": "Switched off, it can't be added to expenses. What's there already stays.",
+  "@groupFeaturesHelp": {
+    "description": "Help text under the group feature switches: a feature switched off can't be added to expenses, but what expenses already have stays."
+  },
+  "groupFeatureForeign": "Other currencies",
+  "@groupFeatureForeign": {
+    "description": "Switch title for the group feature that lets expenses be paid in a currency other than the group's."
+  },
+  "groupFeatureForeignHelp": "Expenses paid in a currency other than the group's",
+  "@groupFeatureForeignHelp": {
+    "description": "Help text for the other-currencies group feature switch."
+  },
+  "groupFeatureRecurring": "Recurring expenses",
+  "@groupFeatureRecurring": {
+    "description": "Switch title for the group feature of expenses added on a schedule."
+  },
+  "groupFeatureRecurringHelp": "Added on a schedule. Switched off, the schedules wait",
+  "@groupFeatureRecurringHelp": {
+    "description": "Help text for the recurring-expenses group feature switch: switched off, the schedules add nothing until it is on again."
+  },
+  "groupFeaturePlaces": "Locations",
+  "@groupFeaturePlaces": {
+    "description": "Switch title for the group feature of where expenses happened."
+  },
+  "groupFeaturePlacesHelp": "Where an expense happened",
+  "@groupFeaturePlacesHelp": {
+    "description": "Help text for the locations group feature switch."
+  },
+  "groupFeatureReceipts": "Receipts",
+  "@groupFeatureReceipts": {
+    "description": "Switch title for the group feature of receipt photos on expenses."
+  },
+  "groupFeatureReceiptsHelp": "A photo of the receipt",
+  "@groupFeatureReceiptsHelp": {
+    "description": "Help text for the receipts group feature switch."
+  },
+  "errorFeatureOff": "This group has that switched off. It can be turned on again in the group's settings.",
+  "@errorFeatureOff": {
+    "description": "Message when the group has switched off what was being added: another currency, a location, a receipt or a recurring expense."
   },
   "resetLinkTitle": "Reset link",
   "@resetLinkTitle": {
@@ -860,6 +996,24 @@
   "expenseAdd": "Add expense",
   "@expenseAdd": {
     "description": "Label or control text for expense add in the expense editor or expense list."
+  },
+  "shortcutAddExpense": "Add expense in {group}",
+  "@shortcutAddExpense": {
+    "description": "Android app icon shortcut (long-press the Balnana icon) that opens the expense editor in one group. Keep it short: launchers cut it at about 25 characters.",
+    "placeholders": {
+      "group": {
+        "type": "String",
+        "example": "Tokyo trip"
+      }
+    }
+  },
+  "widgetPickGroup": "Show which group?",
+  "@widgetPickGroup": {
+    "description": "Title of the list shown when someone places the Balnana widget on their Android home screen, asking which group the widget should show."
+  },
+  "widgetNoGroups": "Open Balnana and add a group first.",
+  "@widgetNoGroups": {
+    "description": "Shown when someone places the Balnana widget on their Android home screen before the app has any group to show."
   },
   "expensesEmptyTitle": "No expenses yet",
   "@expensesEmptyTitle": {
@@ -1187,6 +1341,20 @@
     },
     "description": "Help under the exchange rate fields in the expense editor."
   },
+  "expenseRateFrom": "Rate from {source}, {date}.",
+  "@expenseRateFrom": {
+    "description": "Under the exchange rate field, when the rate was filled in from the server. source is a provider name such as Frankfurter or Open Exchange Rates (not translated); date is when it published the rate, such as Nov 3, 2026. Followed by the field's help.",
+    "placeholders": {
+      "source": {
+        "type": "String",
+        "example": "Frankfurter"
+      },
+      "date": {
+        "type": "String",
+        "example": "Nov 3, 2026"
+      }
+    }
+  },
   "expenseNote": "Note",
   "@expenseNote": {
     "description": "Label or control text for expense note in the expense editor or expense list."
@@ -1402,6 +1570,78 @@
   "recordPayment": "Record",
   "@recordPayment": {
     "description": "Label or control text for record payment in the settlement dialog."
+  },
+  "remindAction": "Remind",
+  "@remindAction": {
+    "description": "Tooltip of the button on a suggested payment that reminds the person who owes you to pay."
+  },
+  "remindTitle": "Remind {name}",
+  "@remindTitle": {
+    "description": "Title of the sheet with ways to remind someone to pay.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "The name of the member who owes money."
+      }
+    }
+  },
+  "remindNotify": "Send a notification",
+  "@remindNotify": {
+    "description": "Option in the reminder sheet that sends the person a push notification."
+  },
+  "remindNeedsPlan": "This group's plan doesn't include it",
+  "@remindNeedsPlan": {
+    "description": "Shown under the disabled notification option when the group's plan does not include payment reminders."
+  },
+  "remindShare": "Share a message",
+  "@remindShare": {
+    "description": "Option that shares a reminder message through another app; also the action on the snackbar when nobody would get the notification."
+  },
+  "remindSent": "Reminder sent to {name}",
+  "@remindSent": {
+    "description": "Snackbar after a reminder notification was sent.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "The name of the member who owes money."
+      }
+    }
+  },
+  "remindNoDevices": "{name} doesn't get notifications",
+  "@remindNoDevices": {
+    "description": "Snackbar when a reminder notification reached no device, because the person has notifications off. Followed by a Share a message action.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "description": "The name of the member who owes money."
+      }
+    }
+  },
+  "remindCopied": "Reminder copied",
+  "@remindCopied": {
+    "description": "Snackbar on the web after the reminder message was copied to the clipboard."
+  },
+  "reminderMessage": "Reminder: you owe {payee} {amount} in {group}.",
+  "@reminderMessage": {
+    "description": "First line of the reminder message shared through another app, to the person who owes money.",
+    "placeholders": {
+      "payee": {
+        "type": "String",
+        "description": "The name of the member who is owed."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      },
+      "group": {
+        "type": "String",
+        "description": "The group's name."
+      }
+    }
+  },
+  "reminderHowToPay": "How to pay:",
+  "@reminderHowToPay": {
+    "description": "Heading in the shared reminder message before the payee's ways to pay."
   },
   "recordPaymentTitle": "Record a payment",
   "@recordPaymentTitle": {
@@ -1989,6 +2229,10 @@
   "@settingsNotificationsBlocked": {
     "description": "Subtitle of the notifications switch when the system blocks the app's notifications."
   },
+  "settingsNotificationsBlockedBrowser": "Not allowed in this browser: allow notifications for this site in its settings to see them",
+  "@settingsNotificationsBlockedBrowser": {
+    "description": "Subtitle of the notifications switch in the web app when the browser does not allow the site's notifications, because the person said no or has not answered yet."
+  },
   "pushChannel": "Expenses",
   "@pushChannel": {
     "description": "Message for push channel in Android notification content."
@@ -2092,6 +2336,20 @@
       }
     },
     "description": "Message for push expense deleted anon in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "pushReminder": "{who} reminds you that you owe {amount}",
+  "@pushReminder": {
+    "description": "Android notification content when someone reminds you to pay them.",
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "The name of the member who sent the reminder and is owed."
+      },
+      "amount": {
+        "type": "String",
+        "description": "Preformatted money including its currency symbol."
+      }
+    }
   },
   "pushPaymentAdded": "{payer} paid {payee} {amount}",
   "@pushPaymentAdded": {
@@ -3289,7 +3547,7 @@
   "@privacyStoredTitle": {
     "description": "Heading for privacy stored title in the built-in privacy notice."
   },
-  "privacyStoredBody": "The groups you create or join: their names, the members' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.",
+  "privacyStoredBody": "The groups you create or join: their names, the members' names and payment details, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.",
   "@privacyStoredBody": {
     "description": "Explanatory text for privacy stored body in the built-in privacy notice."
   },
@@ -3305,7 +3563,7 @@
   "@privacySharedTitle": {
     "description": "Heading for privacy shared title in the built-in privacy notice."
   },
-  "privacySharedBody": "Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google's Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification's content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.",
+  "privacySharedBody": "Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google's Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. In the web app, they go through your browser's push service. The notification's content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.",
   "@privacySharedBody": {
     "description": "Explanatory text for privacy shared body in the built-in privacy notice."
   },
@@ -3313,7 +3571,7 @@
   "@privacyDeviceTitle": {
     "description": "Heading for privacy device title in the built-in privacy notice."
   },
-  "privacyDeviceBody": "The app keeps the server's address, your settings and a copy of your groups for when you're offline. Uninstalling the app removes them.",
+  "privacyDeviceBody": "The app keeps the server's address, your settings and a copy of your groups for when you're offline. Uninstalling the app removes them. Expenses and payments added while offline wait here until they upload.",
   "@privacyDeviceBody": {
     "description": "Explanatory text for privacy device body in the built-in privacy notice."
   },
@@ -3529,6 +3787,30 @@
   "adminMapAttributionHelp": "Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.",
   "@adminMapAttributionHelp": {
     "description": "Help text for admin map attribution help in the server administrator interface."
+  },
+  "adminSectionRates": "Exchange rates",
+  "@adminSectionRates": {
+    "description": "Admin settings section heading for looking up currency exchange rates."
+  },
+  "adminSectionRatesBody": "When an expense is paid in another currency, the app starts its rate from the latest one. Rates come from Frankfurter, the European Central Bank's free reference rates, or from Open Exchange Rates when it has an app ID. The server asks at most once an hour.",
+  "@adminSectionRatesBody": {
+    "description": "Explains the admin Exchange rates section. Frankfurter and Open Exchange Rates are service names, not translated."
+  },
+  "adminExchangeRates": "Look up exchange rates",
+  "@adminExchangeRates": {
+    "description": "Admin switch: whether the server looks up exchange rates."
+  },
+  "adminExchangeRatesHelp": "Off, people type every rate themselves.",
+  "@adminExchangeRatesHelp": {
+    "description": "Help under the admin switch for looking up exchange rates."
+  },
+  "adminOxrAppId": "Open Exchange Rates app ID",
+  "@adminOxrAppId": {
+    "description": "Admin field label: the app ID for the Open Exchange Rates service (name not translated)."
+  },
+  "adminOxrAppIdHelp": "Optional. With one, rates come from Open Exchange Rates, which has more currencies; its free plan is enough. Without, from Frankfurter.",
+  "@adminOxrAppIdHelp": {
+    "description": "Help under the Open Exchange Rates app ID field. Frankfurter is a service name, not translated."
   },
   "adminInvalidMapTiles": "Enter an http(s) URL template with z, x and y in braces.",
   "@adminInvalidMapTiles": {
@@ -4284,6 +4566,10 @@
   "@adminPlanDefaultHelp": {
     "description": "Label or control text for admin plan default help in the server administrator interface."
   },
+  "adminPlanRemindersHelp": "Groups on this plan can remind people to pay with a notification.",
+  "@adminPlanRemindersHelp": {
+    "description": "Help under the admin switch that lets a plan's groups send payment reminders."
+  },
   "adminPlanRemoveTitle": "Remove {name}?",
   "@adminPlanRemoveTitle": {
     "description": "Title of the confirmation before an administrator removes a plan or a product.",
@@ -4486,6 +4772,10 @@
       }
     }
   },
+  "errorLimitReminders": "This group's plan doesn't include payment reminders.",
+  "@errorLimitReminders": {
+    "description": "Error when the group's plan does not include payment reminders."
+  },
   "errorLimitOther": "You've reached a limit on this server.",
   "@errorLimitOther": {
     "description": "Label or control text for error limit other in an error message."
@@ -4562,6 +4852,18 @@
   "planLimitSponsored": "Groups sharing your plan",
   "@planLimitSponsored": {
     "description": "Label or control text for plan limit sponsored in the plan screens."
+  },
+  "planLimitReminders": "Payment reminders",
+  "@planLimitReminders": {
+    "description": "Row in the plan's limits: whether groups can send payment reminders as notifications."
+  },
+  "planIncluded": "Included",
+  "@planIncluded": {
+    "description": "Value of a plan feature that the plan has."
+  },
+  "planNotIncluded": "Not included",
+  "@planNotIncluded": {
+    "description": "Value of a plan feature that the plan does not have."
   },
   "planGet": "Get a plan",
   "@planGet": {

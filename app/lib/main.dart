@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'core/home_screen.dart';
 import 'core/l10n.dart';
 import 'core/prefs.dart';
 import 'core/push.dart';
@@ -40,7 +41,12 @@ Future<void> main(List<String> args) async {
     ProviderScope(
       // Requests are retried by the user, not silently in the background.
       retry: (retryCount, error) => null,
-      overrides: [prefsProvider.overrideWithValue(prefs), launchTargetProvider.overrideWithValue(launched)],
+      overrides: [
+        prefsProvider.overrideWithValue(prefs),
+        launchTargetProvider.overrideWithValue(launched),
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          homeScreenProvider.overrideWithValue(const HomeScreen()),
+      ],
       child: const BalnanaApp(),
     ),
   );

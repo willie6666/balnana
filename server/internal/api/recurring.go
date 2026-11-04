@@ -417,7 +417,7 @@ func (s *Server) runRecurring(ctx context.Context, now time.Time) (int, error) {
 	for {
 		rows, err := s.db.Query(ctx, `
 			select r.id::text from recurring_expenses r join groups g on g.id = r.group_id
-			where r.next_at <= $1 and r.paused_at is null and g.archived_at is null
+			where r.next_at <= $1 and r.paused_at is null and g.archived_at is null and g.recurring
 			order by r.next_at limit $2`, now, recurringBatch)
 		if err != nil {
 			return total, err
@@ -461,8 +461,9 @@ func (s *Server) runOneRecurring(ctx context.Context, id string, now time.Time) 
 		if err != nil {
 			return err
 		}
-		// Another server may have added it meanwhile.
-		if r.Paused || r.NextAt == nil || r.NextAt.After(now) {
+		// Another server may have added it meanwhile, or the group stopped
+		// its schedules.
+		if r.Paused || r.NextAt == nil || r.NextAt.After(now) || !g.features.Recurring {
 			return nil
 		}
 		added, err = addDue(ctx, tx, g, r, now)
@@ -542,11 +543,17 @@ func (s *Server) CreateRecurringExpense(ctx context.Context, req CreateRecurring
 			out, err = loadOneRecurring(ctx, tx, g, id, false)
 			return err
 		}
+		if !g.features.Recurring {
+			return featureOff("recurring")
+		}
 		if err := s.checkRecurringLimit(ctx, tx, g); err != nil {
 			return err
 		}
 		d, sched, err := validateRecurring(ctx, tx, g, *req.Body)
 		if err != nil {
+			return err
+		}
+		if err := checkFeatures(g, d, nil, false); err != nil {
 			return err
 		}
 		next := sched.first()
@@ -660,6 +667,9 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 		if err != nil {
 			return err
 		}
+		if err := checkFeatures(g, d, r.Location, false); err != nil {
+			return err
+		}
 		paused, skipped, err := pauseTimes(ctx, tx, r.Id)
 		if err != nil {
 			return err
@@ -705,7 +715,7 @@ func (s *Server) UpdateRecurringExpense(ctx context.Context, req UpdateRecurring
 		if err := logActivity(ctx, tx, g.id, who, "recurring.updated", &r.Id, out.payload()); err != nil {
 			return err
 		}
-		if !out.Paused {
+		if !out.Paused && g.features.Recurring {
 			if added, err = addDue(ctx, tx, g, out, now); err != nil {
 				return err
 			}
@@ -744,6 +754,9 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 		next := r.NextAt
 		action := "recurring.paused"
 		if !req.Body.Paused {
+			if !g.features.Recurring {
+				return featureOff("recurring")
+			}
 			action = "recurring.resumed"
 			var pausedAt time.Time
 			if err := tx.QueryRow(ctx, `select paused_at from recurring_expenses where id = $1`, r.Id).Scan(&pausedAt); err != nil {

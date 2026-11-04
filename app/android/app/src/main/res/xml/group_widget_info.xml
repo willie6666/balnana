@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing is updated on a timer: the app redraws the widgets whenever it
+     loads its groups (HomeScreen.kt). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="me.devvillie.balnana.GroupWidgetPicker"
+    android:initialLayout="@layout/group_widget"
+    android:minWidth="180dp"
+    android:minHeight="56dp"
+    android:minResizeWidth="140dp"
+    android:minResizeHeight="48dp"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable" />

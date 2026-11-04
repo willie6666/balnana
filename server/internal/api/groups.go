@@ -74,6 +74,7 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 		}
 		names = append(names, n)
 	}
+	features := withFeatures(GroupFeatures{ForeignCurrency: true, Recurring: true, Places: true, Receipts: true}, in.Features)
 	if err := s.limitCreates(ctx); err != nil {
 		return nil, err
 	}
@@ -85,9 +86,11 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 			return err
 		}
 		g, err := scanGroup(tx.QueryRow(ctx, `
-			insert into groups (token, name, emoji, color, currency, symbol, minor_digits, link_access, sponsor_user_id)
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, symbol, digits, linkAccess, sponsor))
+			insert into groups (token, name, emoji, color, currency, symbol, minor_digits, link_access, sponsor_user_id,
+				foreign_currency, recurring, places, receipts)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			returning `+groupColumns, newToken(), name, emoji, in.Color, currency, symbol, digits, linkAccess, sponsor,
+			features.ForeignCurrency, features.Recurring, features.Places, features.Receipts))
 		if err != nil {
 			return err
 		}
@@ -185,7 +188,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	groups, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*group, error) {
 		var g group
 		var me string
-		err := row.Scan(&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.symbol, &g.digits, &g.linkAccess, &g.createdAt, &me, &g.owner)
+		err := row.Scan(g.columns(&me, &g.owner)...)
 		g.me = &me
 		return &g, err
 	})
@@ -355,15 +358,24 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 			}
 			linkAccess = in.LinkAccess
 		}
+		features := withFeatures(g.features, in.Features)
+		// What came due while it was off is skipped, as on resuming.
+		if features.Recurring && !g.features.Recurring {
+			if err := skipMissed(ctx, tx, g, time.Now()); err != nil {
+				return err
+			}
+		}
 		g, err = scanGroup(tx.QueryRow(ctx, `
 			update groups set
 				name = coalesce($2, name),
 				emoji = case when $4 then null else coalesce($3, emoji) end,
 				color = coalesce($5, color),
 				link_access = coalesce($6, link_access),
-				symbol = case when $8 then null else coalesce($7, symbol) end
+				symbol = case when $8 then null else coalesce($7, symbol) end,
+				foreign_currency = $9, recurring = $10, places = $11, receipts = $12
 			where id = $1
-			returning `+groupColumns, g.id, name, emoji, clearEmoji, in.Color, linkAccess, symbol, clearSymbol))
+			returning `+groupColumns, g.id, name, emoji, clearEmoji, in.Color, linkAccess, symbol, clearSymbol,
+			features.ForeignCurrency, features.Recurring, features.Places, features.Receipts))
 		if err != nil {
 			return err
 		}

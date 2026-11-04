@@ -38,6 +38,11 @@ class ApiException implements Exception {
 
   bool get isNotFound => status == 404;
 
+  /// Whether the server could not be reached: no answer came, or a proxy in
+  /// front of it answered for it. The server's own errors carry a code.
+  bool get unreachable =>
+      code == network || (const {502, 503, 504}.contains(status) && code.startsWith('http_'));
+
   @override
   String toString() => 'ApiException($status $code)';
 }
@@ -302,6 +307,12 @@ class BalnanaApi {
     MyPlan.fromJson,
   );
 
+  /// What one [from] is worth in [to], from the server's source of rates.
+  Future<ExchangeRate> exchangeRate(String from, String to) => _send(
+    () => _dio.get<Object?>('/exchange-rate', queryParameters: {'from': from, 'to': to}),
+    ExchangeRate.fromJson,
+  );
+
   Future<InviteInfo> invite(String token) =>
       _send(() => _dio.get<Object?>('/auth/invites/${Uri.encodeComponent(token)}'), InviteInfo.fromJson);
 
@@ -344,6 +355,7 @@ class BalnanaApi {
     String? symbol,
     required int minorDigits,
     required List<String> members,
+    GroupFeatures? features,
   }) => _send(
     () => _dio.post<Object?>(
       '/groups',
@@ -355,6 +367,7 @@ class BalnanaApi {
         'symbol': ?symbol,
         'minorDigits': minorDigits,
         'members': members,
+        'features': ?features?.toJson(),
       },
     ),
     Group.fromJson,
@@ -479,10 +492,24 @@ class GroupApi {
 
   /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode.
   /// An empty [emoji] or [symbol] clears it.
-  Future<Group> update({String? name, String? emoji, int? color, String? symbol, bool? linkAccess}) => _send(
+  Future<Group> update({
+    String? name,
+    String? emoji,
+    int? color,
+    String? symbol,
+    bool? linkAccess,
+    GroupFeatures? features,
+  }) => _send(
     () => _dio.patch<Object?>(
       _base,
-      data: {'name': ?name, 'emoji': ?emoji, 'color': ?color, 'symbol': ?symbol, 'linkAccess': ?linkAccess},
+      data: {
+        'name': ?name,
+        'emoji': ?emoji,
+        'color': ?color,
+        'symbol': ?symbol,
+        'linkAccess': ?linkAccess,
+        'features': ?features?.toJson(),
+      },
       options: _as,
     ),
     Group.fromJson,
@@ -517,13 +544,34 @@ class GroupApi {
     (data) => Member.fromJson(data, digits),
   );
 
-  Future<Member> updateMember(String id, String name, {int? color, required int digits}) => _send(
-    () => _dio.patch<Object?>('$_base/members/$id', data: {'name': name, 'color': ?color}, options: _as),
+  /// Leaving out [paymentDetails] keeps the member's as they are.
+  Future<Member> updateMember(
+    String id,
+    String name, {
+    int? color,
+    List<PaymentDetail>? paymentDetails,
+    required int digits,
+  }) => _send(
+    () => _dio.patch<Object?>(
+      '$_base/members/$id',
+      data: {'name': name, 'color': ?color, 'paymentDetails': ?paymentDetails?.map((d) => d.toJson()).toList()},
+      options: _as,
+    ),
     (data) => Member.fromJson(data, digits),
   );
 
   Future<void> removeMember(String id) =>
       _send(() => _dio.delete<Object?>('$_base/members/$id', options: _as), (_) {});
+
+  /// Reminds member [id] of what they owe this device's member. Returns the
+  /// phones it reached.
+  Future<int> remindMember(String id) => _send(
+    () => _dio.post<Object?>('$_base/members/$id/remind', options: _as),
+    (data) => switch (data) {
+      {'devices': final num n} => n.toInt(),
+      _ => throw const FormatException('reminder'),
+    },
+  );
 
   Future<GroupCategory> addCategory({required String name, required String emoji, int? color}) => _send(
     () => _dio.post<Object?>(
@@ -615,13 +663,20 @@ class GroupApi {
   );
 
   Future<Expense> recordPayment(String from, String to, BigInt amount, int digits, {String? key}) => _send(
-    () => _dio.post<Object?>(
-      '$_base/payments',
-      data: {'fromMemberId': from, 'toMemberId': to, 'amount': formatAmount(amount, digits)},
-      options: _once(key),
-    ),
+    () => _dio.post<Object?>('$_base/payments', data: paymentBody(from, to, amount, digits), options: _once(key)),
     (data) => Expense.fromJson(data, digits),
   );
+
+  static Map<String, Object?> paymentBody(String from, String to, BigInt amount, int digits) => {
+    'fromMemberId': from,
+    'toMemberId': to,
+    'amount': formatAmount(amount, digits),
+  };
+
+  /// Sends [body] to [path] in the group as it was kept while offline, with
+  /// the same [key], so it is added once however often it is sent.
+  Future<void> resend(String path, Object? body, {required String key}) =>
+      _send(() => _dio.post<Object?>('$_base$path', data: body, options: _once(key)), (_) {});
 
   Future<List<RecurringExpense>> recurringExpenses(int digits) => _send(
     () => _dio.get<Object?>('$_base/recurring'),

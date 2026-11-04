@@ -25,6 +25,7 @@ import '../features/settings/privacy_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/shell/shell.dart';
+import 'home_screen.dart';
 import 'push.dart';
 import 'server.dart';
 
@@ -82,6 +83,7 @@ const _publicLinks = [
   '/oauth-done',
   '/admin',
   '/link',
+  '/open',
   '/privacy',
 ];
 
@@ -132,6 +134,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       // A link to the server, opened in the Android app.
       GoRoute(path: '/link', builder: (context, state) => LinkPage(url: state.uri.queryParameters['url'])),
+      // A home screen shortcut or widget, on Android.
+      GoRoute(
+        path: '/open',
+        redirect: (context, state) => openPath(state.uri.queryParameters, ref.read(serverUrlProvider)),
+      ),
       GoRoute(
         path: '/invite/:token',
         builder: (context, state) => InvitePage(token: state.pathParameters['token']!),

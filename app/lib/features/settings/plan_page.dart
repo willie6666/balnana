@@ -224,6 +224,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               title: l10n.planLimitRecurring,
               subtitle: limit(plan.recurringPerGroup),
             ),
+            GroupedTile(
+              icon: Icons.notifications_active_outlined,
+              title: l10n.planLimitReminders,
+              subtitle: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
+            ),
           ],
         ),
         if (offers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))

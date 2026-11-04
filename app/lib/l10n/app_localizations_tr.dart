@@ -23,7 +23,35 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Çevrimdışısınız. Bu cihazda kayıtlı olanlar gösteriliyor; yeniden bağlanana kadar değişiklikler kaydedilemez.';
+      'Çevrimdışı. Bu cihazın kaydettikleri gösteriliyor; yeni harcamalar ve ödemeler yeniden bağlanınca yüklenecek.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe yüklenmeyi bekliyor.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Bu cihaza kaydedildi. Tekrar çevrimiçi olduğunuzda yüklenecek.';
+
+  @override
+  String get pendingWaiting => 'Yüklenmeyi bekliyor';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Yüklenmedi: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'At';
+
+  @override
+  String get offlineNoReceipt =>
+      'Fiş fotoğrafı çevrimdışıyken kaydedilemez. Harcamayı şimdi kaydetmek için fotoğrafı kaldırın ya da tekrar çevrimiçi olunca yeniden deneyin.';
 
   @override
   String get commonSave => 'Kaydet';
@@ -447,6 +475,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get memberRename => 'Yeniden adlandır';
 
   @override
+  String get memberPaymentDetails => 'Ödeme bilgileri';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Bu gruptaki diğerlerinin $name kişisine nasıl ödeme yapabileceği: banka hesabı, ödeme uygulaması veya bağlantı. Gruptaki herkes görebilir.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Yöntem';
+
+  @override
+  String get paymentDetailValue => 'Hesap, kimlik veya bağlantı';
+
+  @override
+  String get paymentDetailAdd => 'Ödeme yolu ekle';
+
+  @override
+  String get paymentDetailBank => 'Banka havalesi';
+
+  @override
+  String get paymentDetailSuggestions => 'Öneriler';
+
+  @override
+  String get paymentDetailCopy => 'Kopyala';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label kopyalandı';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Bağlantıyı aç';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Her ödeme yolu için bir yöntem ve bir hesap, kimlik veya bağlantı gerekir; her biri tek satırda olmalı.';
+
+  @override
+  String get errorNothingOwed => 'Şu an sana borcu yok.';
+
+  @override
   String get memberRenameTitle => 'Yeniden adlandır';
 
   @override
@@ -498,6 +567,39 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Hesap olmadan grubu görüp düzenleyebilsinler.';
+
+  @override
+  String get groupFeatures => 'Özellikler';
+
+  @override
+  String get groupFeaturesHelp => 'Kapalıyken harcamalara eklenemez. Zaten olanlar kalır.';
+
+  @override
+  String get groupFeatureForeign => 'Diğer para birimleri';
+
+  @override
+  String get groupFeatureForeignHelp => 'Grubun para birimi dışında ödenen harcamalar';
+
+  @override
+  String get groupFeatureRecurring => 'Tekrarlayan harcamalar';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Bir plana göre eklenir. Kapalıyken planlar bekler';
+
+  @override
+  String get groupFeaturePlaces => 'Konumlar';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Harcamanın yapıldığı yer';
+
+  @override
+  String get groupFeatureReceipts => 'Fişler';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Fişin fotoğrafı';
+
+  @override
+  String get errorFeatureOff => 'Bu grupta bu kapalı. Grup ayarlarından yeniden açılabilir.';
 
   @override
   String get resetLinkTitle => 'Bağlantıyı sıfırla';
@@ -633,6 +735,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Harcama ekle';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '$group için gider ekle';
+  }
+
+  @override
+  String get widgetPickGroup => 'Hangi grup gösterilsin?';
+
+  @override
+  String get widgetNoGroups => 'Önce Balnana\'yı açıp bir grup ekleyin.';
 
   @override
   String get expensesEmptyTitle => 'Henüz harcama yok';
@@ -830,6 +943,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return '$source kuru, $date.';
+  }
+
+  @override
   String get expenseNote => 'Not';
 
   @override
@@ -974,6 +1092,44 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get recordPayment => 'Kaydet';
+
+  @override
+  String get remindAction => 'Hatırlat';
+
+  @override
+  String remindTitle(String name) {
+    return '$name kişisine hatırlat';
+  }
+
+  @override
+  String get remindNotify => 'Bildirim gönder';
+
+  @override
+  String get remindNeedsPlan => 'Bu grubun planında yok';
+
+  @override
+  String get remindShare => 'Mesaj paylaş';
+
+  @override
+  String remindSent(String name) {
+    return '$name kişisine hatırlatma gönderildi';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name bildirim almıyor';
+  }
+
+  @override
+  String get remindCopied => 'Hatırlatma kopyalandı';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Hatırlatma: $group grubunda $payee kişisine $amount borcun var.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Nasıl ödenir:';
 
   @override
   String get recordPaymentTitle => 'Ödeme kaydet';
@@ -1287,6 +1443,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Telefon ayarlarında kapalı: bildirimleri görmek için Balnana’ya izin verin';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Bu tarayıcıda izin verilmedi: görmek için tarayıcı ayarlarından bu sitenin bildirimlerine izin verin';
+
+  @override
   String get pushChannel => 'Harcamalar';
 
   @override
@@ -1321,6 +1481,11 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title silindi · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who sana $amount borcunu hatırlatıyor';
   }
 
   @override
@@ -2182,7 +2347,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'Oluşturduğunuz veya katıldığınız gruplar: adları, üyelerin adları, harcamalar, ödemeler, notlar, fiş fotoğrafları ve harcamalara eklediğiniz yerler. Hesabınız varsa ayrıca adınız, e-posta adresiniz veya kullanıcı adınız, parolanızın özeti (parolanın kendisi asla değil) ve Google gibi kullandığınız oturum açma sağlayıcısı saklanır. Bildirimler açıksa cihaz kimliğiniz ve bildirim hizmetinin verdiği adres saklanır.';
+      'Oluşturduğunuz veya katıldığınız gruplar: adları, üyelerin adları ve ödeme bilgileri, harcamalar, ödemeler, notlar, fiş fotoğrafları ve harcamalara eklediğiniz yerler. Hesabınız varsa ayrıca adınız, e-posta adresiniz veya kullanıcı adınız, parolanızın özeti (parolanın kendisi asla değil) ve Google gibi kullandığınız oturum açma sağlayıcısı saklanır. Bildirimler açıksa cihaz kimliğiniz ve bildirim hizmetinin verdiği adres saklanır.';
 
   @override
   String get privacyUseTitle => 'Nasıl kullanılır?';
@@ -2196,14 +2361,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Bir gruptaki herkes grubun üyelerini, harcamalarını ve geçmişini görür. Grup bağlantıyla açıksa bağlantıya sahip herkes grubu açabilir. Google ile oturum açma Google üzerinden gerçekleşir. İşletmeci bildirimleri açtığında bildirimler telefonunuzun kullandığı hizmetten geçer: Google Firebase Cloud Messaging veya kurduğunuz ntfy gibi başka bir UnifiedPush hizmeti. Bildirim içeriği aktarım sırasında şifrelenir. Harita görselleri işletmecinin seçtiği harita sağlayıcısından yüklenir; değiştirilmediyse bu OpenFreeMap’tir. Sağlayıcı ağ adresinizi ve baktığınız bölgeyi görür. Konumunuz yalnızca “Mevcut konumu kullan” seçeneğine dokunduğunuzda okunur ve yalnızca sonrasında kaydettiğiniz nokta saklanır.';
+      'Bir gruptaki herkes grubun üyelerini, harcamalarını ve geçmişini görür. Grup bağlantıyla açıksa bağlantıya sahip herkes grubu açabilir. Google ile oturum açma Google üzerinden gerçekleşir. İşletmeci bildirimleri açtığında bildirimler telefonunuzun kullandığı hizmetten geçer: Google Firebase Cloud Messaging veya kurduğunuz ntfy gibi başka bir UnifiedPush hizmeti. Web uygulamasında bildirimler tarayıcınızın bildirim hizmetinden geçer. Bildirim içeriği aktarım sırasında şifrelenir. Harita görselleri işletmecinin seçtiği harita sağlayıcısından yüklenir; değiştirilmediyse bu OpenFreeMap’tir. Sağlayıcı ağ adresinizi ve baktığınız bölgeyi görür. Konumunuz yalnızca “Mevcut konumu kullan” seçeneğine dokunduğunuzda okunur ve yalnızca sonrasında kaydettiğiniz nokta saklanır.';
 
   @override
   String get privacyDeviceTitle => 'Bu cihazda';
 
   @override
   String get privacyDeviceBody =>
-      'Uygulama, sunucu adresini, ayarlarınızı ve çevrimdışıyken kullanmanız için gruplarınızın bir kopyasını saklar. Uygulamayı kaldırmak bunları siler.';
+      'Uygulama, sunucu adresini, ayarlarınızı ve çevrimdışıyken kullanmanız için gruplarınızın bir kopyasını saklar. Uygulamayı kaldırmak bunları siler. Çevrimdışıyken eklenen harcamalar ve ödemeler yüklenene kadar burada bekler.';
 
   @override
   String get privacyDeleteTitle => 'Verilerinizi silme';
@@ -2371,6 +2536,26 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Harita sağlayıcısının isteği üzerine her haritada gösterilir. Boş bırakılırsa stil dosyasında belirtilen kaynaklar, döşemelerde ise OpenStreetMap belirtilir.';
+
+  @override
+  String get adminSectionRates => 'Döviz kurları';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Bir harcama başka bir para biriminde ödendiğinde uygulama en güncel kurla başlar. Kurlar Avrupa Merkez Bankası\'nın ücretsiz referans kurları olan Frankfurter\'dan ya da uygulama kimliği varsa Open Exchange Rates\'ten gelir. Sunucu en fazla saatte bir sorar.';
+
+  @override
+  String get adminExchangeRates => 'Döviz kurlarını al';
+
+  @override
+  String get adminExchangeRatesHelp => 'Kapalıyken her kur elle yazılır.';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates uygulama kimliği';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'İsteğe bağlı. Varsa kurlar daha çok para birimi bilen Open Exchange Rates\'ten gelir; ücretsiz planı yeterlidir. Yoksa Frankfurter\'dan.';
 
   @override
   String get adminInvalidMapTiles =>
@@ -2893,6 +3078,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Başka planı olmayan her hesap için.';
 
   @override
+  String get adminPlanRemindersHelp => 'Bu plandaki gruplar ödemeyi bildirimle hatırlatabilir.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '$name kaldırılsın mı?';
   }
@@ -3022,6 +3210,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Bu grubun planı ödeme hatırlatmalarını içermiyor.';
+
+  @override
   String get errorLimitOther => 'Bu sunucunun bir sınırına ulaştınız.';
 
   @override
@@ -3069,6 +3260,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Planınızı paylaşan gruplar';
+
+  @override
+  String get planLimitReminders => 'Ödeme hatırlatmaları';
+
+  @override
+  String get planIncluded => 'Dahil';
+
+  @override
+  String get planNotIncluded => 'Dahil değil';
 
   @override
   String get planGet => 'Plan edinin';

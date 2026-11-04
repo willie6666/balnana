@@ -171,6 +171,13 @@ type Config struct {
 	// on a private address, such as a ntfy server on the same network.
 	PushPrivateEndpoints bool
 
+	// ExchangeRates lets the app ask what a currency is worth, from Open
+	// Exchange Rates with OXRAppID, else from Frankfurter.
+	ExchangeRates bool
+	// OXRAppID is an Open Exchange Rates app ID; empty uses Frankfurter,
+	// which needs none.
+	OXRAppID string
+
 	// Billing charges for what the server stores: plans and their limits
 	// apply. It needs accounts, as a plan belongs to one.
 	Billing bool
@@ -237,6 +244,8 @@ var Managed = []Setting{
 	{Key: "BALNANA_OAUTH_GOOGLE_TRUST_EMAIL", Default: "true"},
 	// Each provider listed has the settings in oidcFields; see OIDCKey.
 	{Key: "BALNANA_OAUTH_OIDC_PROVIDERS"},
+	{Key: "BALNANA_EXCHANGE_RATES", Default: "true"},
+	{Key: "BALNANA_OXR_APP_ID", Secret: true},
 	{Key: "BALNANA_BILLING_ENABLED", Default: "false"},
 	{Key: "BALNANA_KOFI_URL"},
 	{Key: "BALNANA_KOFI_TOKEN", Secret: true},
@@ -392,6 +401,8 @@ func load(getenv func(string) string) (*Config, error) {
 		RequireVerified: e.managedBool("BALNANA_AUTH_REQUIRE_VERIFIED"),
 		Signup:          Signup(e.managed("BALNANA_AUTH_SIGNUP")),
 		LinkGroups:      e.managedBool("BALNANA_LINK_GROUPS"),
+		ExchangeRates:   e.managedBool("BALNANA_EXCHANGE_RATES"),
+		OXRAppID:        e.managed("BALNANA_OXR_APP_ID"),
 		Billing:         e.managedBool("BALNANA_BILLING_ENABLED"),
 		KofiToken:       e.managed("BALNANA_KOFI_TOKEN"),
 		PlayPackage:     e.managed("BALNANA_PLAY_PACKAGE"),

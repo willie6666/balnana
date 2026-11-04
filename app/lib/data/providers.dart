@@ -379,6 +379,20 @@ void refreshGroup(WidgetRef ref, String token) => _refresh(ref.invalidate, token
 /// [refreshGroup] for callbacks that may outlive the widget, such as undo.
 void refreshGroupIn(ProviderContainer container, String token) => _refresh(container.invalidate, token);
 
+/// [refreshGroup] for providers.
+void refreshGroupOf(Ref ref, String token) => _refresh(ref.invalidate, token);
+
+/// [refreshGroup] for a pull to refresh, done once [shown], what the tab
+/// shows, is back. A failure is left to the tab to show.
+Future<void> pullToRefresh(WidgetRef ref, String token, Future<Object?> Function() shown) async {
+  refreshGroup(ref, token);
+  try {
+    await shown();
+  } on Object {
+    // Shown by the tab.
+  }
+}
+
 void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
   invalidate(groupProvider(token));
   invalidate(balancesProvider(token));

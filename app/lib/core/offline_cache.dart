@@ -27,10 +27,46 @@ class CachedResponses extends Table {
   Set<Column<Object>> get primaryKey => {server, account, request};
 }
 
+/// A new expense or payment made while the server was out of reach, sent
+/// once it is back. Only adding waits here: a change to something already
+/// on the server could clash with someone else's.
+@DataClassName('PendingWrite')
+class PendingWrites extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get server => text()();
+
+  /// Whose it is, as in [CachedResponses.account].
+  TextColumn get account => text()();
+  TextColumn get groupToken => text()();
+
+  /// The member it is sent as.
+  TextColumn get member => text().nullable()();
+
+  /// Where in the group it goes: [PendingPath].
+  TextColumn get path => text()();
+
+  /// The JSON sent.
+  TextColumn get body => text()();
+
+  /// The Idempotency-Key it is sent with, so sending it twice adds it once.
+  TextColumn get key => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  /// The error code the server refused it with. It waits for the person
+  /// to try again or let it go.
+  TextColumn get error => text().nullable()();
+}
+
+/// Where a [PendingWrite] is sent, after the group's path.
+abstract final class PendingPath {
+  static const expenses = '/expenses';
+  static const payments = '/payments';
+}
+
 /// What this device remembers of each server, to show while it is out of
 /// reach. Only the Android app keeps one: the web app comes from the server
 /// itself, so it cannot load without it anyway.
-@DriftDatabase(tables: [CachedResponses])
+@DriftDatabase(tables: [CachedResponses, PendingWrites])
 class CacheDb extends _$CacheDb {
   CacheDb(super.executor);
 
@@ -55,7 +91,7 @@ class CacheDb extends _$CacheDb {
   final _forgotten = <String, int>{};
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +101,7 @@ class CacheDb extends _$CacheDb {
         await m.deleteTable(cachedResponses.actualTableName);
         await m.createTable(cachedResponses);
       }
+      if (from < 3) await m.createTable(pendingWrites);
     },
     beforeOpen: (details) async {
       final cutoff = DateTime.now().subtract(keep);
@@ -135,13 +172,57 @@ class CacheDb extends _$CacheDb {
   }
 
   /// Makes [account] the one signed in to [server], forgetting what any
-  /// other account saw there and saving nothing more for them.
-  Future<void> switchAccount(String server, String account) {
+  /// other account saw or left to send there and saving nothing more for
+  /// them.
+  Future<void> switchAccount(String server, String account) async {
     _accounts[server] = account;
     final others = delete(cachedResponses)
       ..where((r) => r.server.equals(server) & r.account.isNotIn([account, public]));
-    return others.go();
+    await others.go();
+    await (delete(pendingWrites)..where((w) => w.server.equals(server) & w.account.equals(account).not())).go();
   }
+
+  /// What [account] has left to send to [server], oldest first.
+  Stream<List<PendingWrite>> watchPending(String server, String account) => _pending(server, account).watch();
+
+  /// What [account] has left to send to [server] now, oldest first.
+  Future<List<PendingWrite>> pending(String server, String account) => _pending(server, account).get();
+
+  SimpleSelectStatement<$PendingWritesTable, PendingWrite> _pending(String server, String account) =>
+      select(pendingWrites)
+        ..where((w) => w.server.equals(server) & w.account.equals(account))
+        ..orderBy([(w) => OrderingTerm.asc(w.id)]);
+
+  Future<void> addPending({
+    required String server,
+    required String account,
+    required String group,
+    required String? member,
+    required String path,
+    required Map<String, Object?> body,
+    required String key,
+  }) => into(pendingWrites).insert(
+    PendingWritesCompanion.insert(
+      server: server,
+      account: account,
+      groupToken: group,
+      member: Value(member),
+      path: path,
+      body: jsonEncode(body),
+      key: key,
+      createdAt: DateTime.now(),
+    ),
+  );
+
+  Future<void> removePending(int id) => (delete(pendingWrites)..where((w) => w.id.equals(id))).go();
+
+  /// Keeps [id] from being sent again until [retryPending].
+  Future<void> parkPending(int id, String error) =>
+      (update(pendingWrites)..where((w) => w.id.equals(id))).write(PendingWritesCompanion(error: Value(error)));
+
+  Future<void> retryPending(int id) => (update(
+    pendingWrites,
+  )..where((w) => w.id.equals(id))).write(const PendingWritesCompanion(error: Value(null)));
 }
 
 /// The cache account of a session: a hash of its [token], so the token

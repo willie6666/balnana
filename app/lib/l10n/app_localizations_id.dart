@@ -23,7 +23,31 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Offline. Menampilkan data yang tersimpan di perangkat ini; perubahan tidak dapat disimpan sampai Anda tersambung kembali.';
+      'Offline. Menampilkan yang disimpan perangkat ini; pengeluaran dan pembayaran baru diunggah saat tersambung kembali.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count item menunggu diunggah.');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Disimpan di perangkat ini. Akan diunggah saat Anda kembali online.';
+
+  @override
+  String get pendingWaiting => 'Menunggu diunggah';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Tidak diunggah: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Buang';
+
+  @override
+  String get offlineNoReceipt =>
+      'Foto struk tidak bisa disimpan saat offline. Hapus foto untuk menyimpan pengeluaran sekarang, atau coba lagi saat kembali online.';
 
   @override
   String get commonSave => 'Simpan';
@@ -448,6 +472,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get memberRename => 'Ganti nama';
 
   @override
+  String get memberPaymentDetails => 'Detail pembayaran';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Cara orang lain di grup ini membayar $name: rekening bank, aplikasi pembayaran, atau tautan. Semua orang di grup dapat melihatnya.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Metode';
+
+  @override
+  String get paymentDetailValue => 'Rekening, ID, atau tautan';
+
+  @override
+  String get paymentDetailAdd => 'Tambah cara bayar';
+
+  @override
+  String get paymentDetailBank => 'Transfer bank';
+
+  @override
+  String get paymentDetailSuggestions => 'Saran';
+
+  @override
+  String get paymentDetailCopy => 'Salin';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label disalin';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Buka tautan';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Setiap cara bayar perlu metode dan rekening, ID, atau tautan, masing-masing dalam satu baris.';
+
+  @override
+  String get errorNothingOwed => 'Saat ini dia tidak berutang apa pun padamu.';
+
+  @override
   String get memberRenameTitle => 'Ganti nama';
 
   @override
@@ -498,6 +563,40 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Izinkan orang melihat dan mengedit tanpa akun';
+
+  @override
+  String get groupFeatures => 'Fitur';
+
+  @override
+  String get groupFeaturesHelp =>
+      'Jika dimatikan, tidak bisa ditambahkan ke pengeluaran. Yang sudah ada tetap disimpan.';
+
+  @override
+  String get groupFeatureForeign => 'Mata uang lain';
+
+  @override
+  String get groupFeatureForeignHelp => 'Pengeluaran yang dibayar dengan mata uang selain mata uang grup';
+
+  @override
+  String get groupFeatureRecurring => 'Pengeluaran berulang';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Ditambahkan sesuai jadwal. Jika dimatikan, jadwal menunggu';
+
+  @override
+  String get groupFeaturePlaces => 'Lokasi';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Tempat pengeluaran terjadi';
+
+  @override
+  String get groupFeatureReceipts => 'Struk';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Foto struk';
+
+  @override
+  String get errorFeatureOff => 'Grup ini mematikannya. Bisa dinyalakan lagi di pengaturan grup.';
 
   @override
   String get resetLinkTitle => 'Reset tautan';
@@ -634,6 +733,17 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Tambah pengeluaran';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Tambah di $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Tampilkan grup mana?';
+
+  @override
+  String get widgetNoGroups => 'Buka Balnana dan tambahkan grup terlebih dahulu.';
 
   @override
   String get expensesEmptyTitle => 'Belum ada pengeluaran';
@@ -832,6 +942,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Kurs dari $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Catatan';
 
   @override
@@ -976,6 +1091,44 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get recordPayment => 'Catat';
+
+  @override
+  String get remindAction => 'Ingatkan';
+
+  @override
+  String remindTitle(String name) {
+    return 'Ingatkan $name';
+  }
+
+  @override
+  String get remindNotify => 'Kirim notifikasi';
+
+  @override
+  String get remindNeedsPlan => 'Tidak termasuk dalam paket grup ini';
+
+  @override
+  String get remindShare => 'Bagikan pesan';
+
+  @override
+  String remindSent(String name) {
+    return 'Pengingat dikirim ke $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name tidak menerima notifikasi';
+  }
+
+  @override
+  String get remindCopied => 'Pengingat disalin';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Pengingat: kamu berutang $amount ke $payee di $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Cara membayar:';
 
   @override
   String get recordPaymentTitle => 'Catat pembayaran';
@@ -1289,6 +1442,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Diblokir di setelan ponsel: izinkan notifikasi Balnana di sana agar Anda dapat melihatnya';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Tidak diizinkan di browser ini: izinkan notifikasi untuk situs ini di pengaturannya agar terlihat';
+
+  @override
   String get pushChannel => 'Pengeluaran';
 
   @override
@@ -1323,6 +1480,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title dihapus · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who mengingatkan bahwa kamu berutang $amount';
   }
 
   @override
@@ -2189,7 +2351,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'Grup yang Anda buat atau ikuti: nama grup, nama anggota, pengeluaran, pembayaran, catatan, foto struk, dan tempat yang Anda tambahkan ke pengeluaran. Jika memiliki akun, data yang disimpan juga mencakup nama, alamat email atau nama pengguna, hash kata sandi (bukan kata sandinya), dan penyedia login yang digunakan, seperti Google. Jika notifikasi aktif, pengenal perangkat dan alamat yang diberikan oleh layanan push perangkat Anda juga disimpan.';
+      'Grup yang Anda buat atau ikuti: nama grup, nama dan info pembayaran anggota, pengeluaran, pembayaran, catatan, foto struk, dan tempat yang Anda tambahkan ke pengeluaran. Jika memiliki akun, data yang disimpan juga mencakup nama, alamat email atau nama pengguna, hash kata sandi (bukan kata sandinya), dan penyedia login yang digunakan, seperti Google. Jika notifikasi aktif, pengenal perangkat dan alamat yang diberikan oleh layanan push perangkat Anda juga disimpan.';
 
   @override
   String get privacyUseTitle => 'Cara data digunakan';
@@ -2203,14 +2365,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Semua anggota grup dapat melihat anggota, pengeluaran, dan riwayat grup. Jika grup dibuka lewat tautan, siapa pun yang memiliki tautan dapat membukanya. Login dengan Google diproses melalui Google. Jika pengelola mengaktifkan notifikasi, notifikasi dikirim melalui layanan push yang digunakan ponsel Anda: Firebase Cloud Messaging milik Google atau layanan UnifiedPush lain yang Anda pasang, seperti ntfy. Isi notifikasi dienkripsi saat dikirim. Peta memuat gambar dari penyedia peta pilihan pengelola, yaitu OpenFreeMap jika belum diubah. Penyedia tersebut dapat melihat alamat jaringan Anda dan area yang Anda lihat. Lokasi Anda hanya dibaca saat Anda mengetuk \"Gunakan lokasi saat ini\", dan hanya titik yang kemudian Anda simpan yang disimpan.';
+      'Semua anggota grup dapat melihat anggota, pengeluaran, dan riwayat grup. Jika grup dibuka lewat tautan, siapa pun yang memiliki tautan dapat membukanya. Login dengan Google diproses melalui Google. Jika pengelola mengaktifkan notifikasi, notifikasi dikirim melalui layanan push yang digunakan ponsel Anda: Firebase Cloud Messaging milik Google atau layanan UnifiedPush lain yang Anda pasang, seperti ntfy. Di aplikasi web, notifikasi dikirim melalui layanan push browser Anda. Isi notifikasi dienkripsi saat dikirim. Peta memuat gambar dari penyedia peta pilihan pengelola, yaitu OpenFreeMap jika belum diubah. Penyedia tersebut dapat melihat alamat jaringan Anda dan area yang Anda lihat. Lokasi Anda hanya dibaca saat Anda mengetuk \"Gunakan lokasi saat ini\", dan hanya titik yang kemudian Anda simpan yang disimpan.';
 
   @override
   String get privacyDeviceTitle => 'Di perangkat ini';
 
   @override
   String get privacyDeviceBody =>
-      'Aplikasi menyimpan alamat server, setelan Anda, dan salinan grup untuk digunakan saat offline. Menghapus aplikasi akan menghapus data tersebut.';
+      'Aplikasi menyimpan alamat server, setelan Anda, dan salinan grup untuk digunakan saat offline. Menghapus aplikasi akan menghapus data tersebut. Pengeluaran dan pembayaran yang ditambahkan saat offline menunggu di sini sampai terunggah.';
 
   @override
   String get privacyDeleteTitle => 'Menghapus data Anda';
@@ -2376,6 +2538,26 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Ditampilkan di setiap peta sesuai permintaan penyedia peta. Jika dikosongkan, gaya peta menampilkan atribusi yang ditentukannya, dan ubin mencantumkan OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Kurs mata uang';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Saat pengeluaran dibayar dengan mata uang lain, aplikasi memulai kursnya dari yang terbaru. Kurs berasal dari Frankfurter, kurs acuan gratis Bank Sentral Eropa, atau dari Open Exchange Rates jika ada ID aplikasi. Server bertanya paling banyak sekali per jam.';
+
+  @override
+  String get adminExchangeRates => 'Cari kurs mata uang';
+
+  @override
+  String get adminExchangeRatesHelp => 'Jika mati, setiap kurs diketik sendiri.';
+
+  @override
+  String get adminOxrAppId => 'ID aplikasi Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Opsional. Jika ada, kurs berasal dari Open Exchange Rates yang punya lebih banyak mata uang; paket gratisnya cukup. Jika tidak, dari Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Masukkan templat URL http(s) dengan z, x, dan y dalam kurung kurawal.';
@@ -2892,6 +3074,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Untuk setiap akun tanpa paket lain.';
 
   @override
+  String get adminPlanRemindersHelp =>
+      'Grup dengan paket ini dapat mengingatkan pembayaran lewat notifikasi.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Hapus $name?';
   }
@@ -3021,6 +3207,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Paket grup ini tidak termasuk pengingat pembayaran.';
+
+  @override
   String get errorLimitOther => 'Anda telah mencapai batas server ini.';
 
   @override
@@ -3068,6 +3257,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Grup yang memakai paket Anda';
+
+  @override
+  String get planLimitReminders => 'Pengingat pembayaran';
+
+  @override
+  String get planIncluded => 'Termasuk';
+
+  @override
+  String get planNotIncluded => 'Tidak termasuk';
 
   @override
   String get planGet => 'Dapatkan paket';

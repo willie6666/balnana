@@ -5,8 +5,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/money.dart';
+import '../../core/offline_cache.dart';
 import '../../data/api.dart';
 import '../../data/models.dart';
+import '../../data/pending_writes.dart';
 import '../../data/providers.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
@@ -16,6 +18,8 @@ import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
+import 'payment_details.dart';
+import 'reminder.dart';
 
 /// The top of a group page: where this device's member stands, everyone's
 /// balance and the payments that would settle them.
@@ -435,28 +439,51 @@ class _TransferTile extends ConsumerWidget {
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(BSpace.s12, BSpace.s8, BSpace.s8, BSpace.s8),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MemberAvatar(member: from, size: 32),
-              Icon(Icons.arrow_forward, size: 18, color: scheme.onSurfaceVariant),
-              MemberAvatar(member: to, size: 32),
-              const SizedBox(width: BSpace.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    Text(
-                      formatMoney(context, transfer.amount, group.minorDigits, group.currency, symbol: group.symbol),
-                      style: text.moneyRow,
+              Row(
+                children: [
+                  MemberAvatar(member: from, size: 32),
+                  Icon(Icons.arrow_forward, size: 18, color: scheme.onSurfaceVariant),
+                  MemberAvatar(member: to, size: 32),
+                  const SizedBox(width: BSpace.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label, style: text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(
+                          formatMoney(
+                            context,
+                            transfer.amount,
+                            group.minorDigits,
+                            group.currency,
+                            symbol: group.symbol,
+                          ),
+                          style: text.moneyRow,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  if (transfer.to == me)
+                    IconButton(
+                      tooltip: l10n.remindAction,
+                      onPressed: () => remind(context, ref, group, transfer),
+                      icon: const Icon(Icons.notifications_active_outlined),
+                    ),
+                  TextButton(
+                    onPressed: () => recordPayment(context, ref, group, transfer),
+                    child: Text(l10n.recordPayment),
+                  ),
+                ],
+              ),
+              // Who pays sees how, without asking.
+              if (transfer.from == me && to.paymentDetails.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: BSpace.s4, start: BSpace.s4),
+                  child: PaymentDetailList(member: to),
                 ),
-              ),
-              TextButton(
-                onPressed: () => recordPayment(context, ref, group, transfer),
-                child: Text(l10n.recordPayment),
-              ),
             ],
           ),
         ),
@@ -498,7 +525,17 @@ Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Tra
           );
     messenger.showSnackBar(SnackBar(content: Text(message)));
   } on ApiException catch (e) {
-    if (e.code != ApiException.network) _paymentKeys.remove(payment);
+    if (!e.unreachable) {
+      _paymentKeys.remove(payment);
+    } else {
+      final body = GroupApi.paymentBody(suggested.from, suggested.to, amount, group.minorDigits);
+      final sender = container.read(pendingSenderProvider.notifier);
+      if (await sender.queue(group.token, PendingPath.payments, body, key)) {
+        _paymentKeys.remove(payment);
+        messenger.showSnackBar(SnackBar(content: Text(l10n.pendingSaved)));
+        return;
+      }
+    }
     messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
   }
 }

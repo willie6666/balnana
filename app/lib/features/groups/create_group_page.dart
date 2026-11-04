@@ -9,6 +9,7 @@ import '../../core/server.dart';
 import '../../core/session.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
+import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/colors.dart';
 import '../../ui/money.dart';
@@ -17,6 +18,7 @@ import '../../ui/widgets/currency_field.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/symbol_field.dart';
+import '../group/feature_switches.dart';
 
 class CreateGroupPage extends ConsumerStatefulWidget {
   const CreateGroupPage({super.key});
@@ -40,6 +42,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   /// Empty for none. Until one is chosen, it follows the name.
   String _icon = '';
   bool _iconChosen = false;
+  GroupFeatures _features = const GroupFeatures();
   bool _busy = false;
 
   @override
@@ -81,6 +84,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
         symbol: symbol.isEmpty ? null : symbol,
         minorDigits: defaultMinorDigits(currency),
         members: names,
+        features: _features,
       );
       // The creator is the first member. A signed-in account keeps its groups
       // on the server instead.
@@ -233,6 +237,8 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                       ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
+              const SizedBox(height: BSpace.s24),
+              FeatureSwitches(features: _features, onChanged: (f) => setState(() => _features = f)),
             ],
           ),
         ),

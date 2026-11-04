@@ -10,6 +10,7 @@ import 'package:balnana/data/api.dart' show deviceTimeZone, fixedZone;
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
+import 'package:balnana/ui/widgets/grouped_list.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -226,8 +227,10 @@ void main() {
     final server = _Server([]);
     final container = await _boot(tester, server);
     await _go(tester, container, '/g/tok/settings');
-    await tester.scrollUntilVisible(find.text('Recurring expenses'), 200, scrollable: find.byType(Scrollable).last);
-    await _tapVisible(tester, find.text('Recurring expenses'));
+    // The link, not the switch that turns the feature off.
+    final link = find.byWidgetPredicate((w) => w is GroupedTile && w.title == 'Recurring expenses' && w.trailing == null);
+    await tester.scrollUntilVisible(link, 200, scrollable: find.byType(Scrollable).last);
+    await _tapVisible(tester, link);
 
     expect(find.text('No recurring expenses'), findsOneWidget);
     await tester.tap(find.text('Add recurring expense'));

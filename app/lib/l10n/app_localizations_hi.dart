@@ -23,7 +23,36 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'ऑफ़लाइन। इस डिवाइस में सेव की गई जानकारी दिख रही है; दोबारा कनेक्ट होने तक बदलाव सेव नहीं होंगे।';
+      'ऑफ़लाइन। इस डिवाइस पर सहेजी गई जानकारी दिख रही है; नए खर्च और भुगतान दोबारा कनेक्ट होने पर अपलोड होंगे।';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count आइटम अपलोड होने का इंतज़ार कर रहे हैं।',
+      one: '1 आइटम अपलोड होने का इंतज़ार कर रहा है।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'इस डिवाइस पर सहेजा गया। ऑनलाइन होने पर अपलोड होगा।';
+
+  @override
+  String get pendingWaiting => 'अपलोड का इंतज़ार';
+
+  @override
+  String pendingRefused(String error) {
+    return 'अपलोड नहीं हुआ: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'हटाएँ';
+
+  @override
+  String get offlineNoReceipt =>
+      'रसीद की फ़ोटो ऑफ़लाइन सहेजी नहीं जा सकती। खर्च अभी सहेजने के लिए फ़ोटो हटाएँ, या ऑनलाइन होने पर फिर कोशिश करें।';
 
   @override
   String get commonSave => 'सेव करें';
@@ -453,6 +482,47 @@ class AppLocalizationsHi extends AppLocalizations {
   String get memberRename => 'नाम बदलें';
 
   @override
+  String get memberPaymentDetails => 'भुगतान विवरण';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'इस समूह के अन्य लोग $name को कैसे भुगतान करें: बैंक खाता, भुगतान ऐप या लिंक। समूह में सभी इन्हें देख सकते हैं।';
+  }
+
+  @override
+  String get paymentDetailLabel => 'तरीका';
+
+  @override
+  String get paymentDetailValue => 'खाता, आईडी या लिंक';
+
+  @override
+  String get paymentDetailAdd => 'भुगतान का तरीका जोड़ें';
+
+  @override
+  String get paymentDetailBank => 'बैंक ट्रांसफ़र';
+
+  @override
+  String get paymentDetailSuggestions => 'सुझाव';
+
+  @override
+  String get paymentDetailCopy => 'कॉपी करें';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label कॉपी हो गया';
+  }
+
+  @override
+  String get paymentDetailOpen => 'लिंक खोलें';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'हर भुगतान तरीके में एक नाम और एक खाता, आईडी या लिंक होना चाहिए, हर एक एक ही पंक्ति में।';
+
+  @override
+  String get errorNothingOwed => 'अब उन पर आपका कुछ बकाया नहीं है।';
+
+  @override
   String get memberRenameTitle => 'नाम बदलें';
 
   @override
@@ -505,6 +575,40 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'लोग बिना खाते के देख सकते हैं और बदलाव कर सकते हैं';
+
+  @override
+  String get groupFeatures => 'सुविधाएँ';
+
+  @override
+  String get groupFeaturesHelp =>
+      'बंद होने पर इसे खर्चों में नहीं जोड़ा जा सकता। जो पहले से है, वह बना रहता है।';
+
+  @override
+  String get groupFeatureForeign => 'अन्य मुद्राएँ';
+
+  @override
+  String get groupFeatureForeignHelp => 'समूह की मुद्रा के अलावा किसी और मुद्रा में किए गए खर्च';
+
+  @override
+  String get groupFeatureRecurring => 'नियमित खर्च';
+
+  @override
+  String get groupFeatureRecurringHelp => 'तय समय पर जोड़े जाते हैं। बंद होने पर शेड्यूल रुके रहते हैं';
+
+  @override
+  String get groupFeaturePlaces => 'जगहें';
+
+  @override
+  String get groupFeaturePlacesHelp => 'खर्च कहाँ हुआ';
+
+  @override
+  String get groupFeatureReceipts => 'रसीदें';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'रसीद की फ़ोटो';
+
+  @override
+  String get errorFeatureOff => 'इस समूह में यह बंद है। इसे समूह की सेटिंग में फिर से चालू किया जा सकता है।';
 
   @override
   String get resetLinkTitle => 'लिंक रीसेट करें';
@@ -640,6 +744,17 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get expenseAdd => 'खर्च जोड़ें';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '$group में खर्च जोड़ें';
+  }
+
+  @override
+  String get widgetPickGroup => 'कौन-सा समूह दिखाएँ?';
+
+  @override
+  String get widgetNoGroups => 'पहले Balnana खोलें और एक समूह जोड़ें।';
 
   @override
   String get expensesEmptyTitle => 'अभी कोई खर्च नहीं';
@@ -838,6 +953,11 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'दर $source से, $date।';
+  }
+
+  @override
   String get expenseNote => 'नोट';
 
   @override
@@ -982,6 +1102,44 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get recordPayment => 'दर्ज करें';
+
+  @override
+  String get remindAction => 'याद दिलाएँ';
+
+  @override
+  String remindTitle(String name) {
+    return '$name को याद दिलाएँ';
+  }
+
+  @override
+  String get remindNotify => 'सूचना भेजें';
+
+  @override
+  String get remindNeedsPlan => 'इस समूह के प्लान में शामिल नहीं';
+
+  @override
+  String get remindShare => 'संदेश साझा करें';
+
+  @override
+  String remindSent(String name) {
+    return '$name को रिमाइंडर भेजा गया';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name को सूचनाएँ नहीं मिलतीं';
+  }
+
+  @override
+  String get remindCopied => 'रिमाइंडर कॉपी किया गया';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'रिमाइंडर: $group में आपको $payee को $amount देने हैं।';
+  }
+
+  @override
+  String get reminderHowToPay => 'भुगतान कैसे करें:';
 
   @override
   String get recordPaymentTitle => 'भुगतान दर्ज करें';
@@ -1298,6 +1456,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'फ़ोन की सेटिंग में बंद है: सूचनाएँ देखने के लिए वहाँ Balnana को अनुमति दें';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'इस ब्राउज़र में अनुमति नहीं है: इन्हें देखने के लिए ब्राउज़र की सेटिंग में इस साइट की सूचनाएँ चालू करें';
+
+  @override
   String get pushChannel => 'खर्च';
 
   @override
@@ -1331,6 +1493,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title मिटाया गया · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who याद दिला रहे हैं कि आपको $amount देने हैं';
   }
 
   @override
@@ -2197,7 +2364,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'आपके बनाए या जिन समूहों में आप शामिल हों, उनकी जानकारी: नाम, सदस्यों के नाम, खर्च, भुगतान, नोट, रसीद की फ़ोटो और खर्चों में जोड़ी गई जगहें। खाते के साथ आपका नाम, ईमेल पता या यूज़रनेम, पासवर्ड का हैश (पासवर्ड खुद कभी नहीं) और आप किस प्रदाता से साइन इन करते हैं, जैसे Google। सूचनाएँ चालू होने पर आपके डिवाइस की पहचान और इसकी पुश सेवा से मिला पता भी सेव होता है।';
+      'आपके बनाए या जिन समूहों में आप शामिल हों, उनकी जानकारी: नाम, सदस्यों के नाम और भुगतान विवरण, खर्च, भुगतान, नोट, रसीद की फ़ोटो और खर्चों में जोड़ी गई जगहें। खाते के साथ आपका नाम, ईमेल पता या यूज़रनेम, पासवर्ड का हैश (पासवर्ड खुद कभी नहीं) और आप किस प्रदाता से साइन इन करते हैं, जैसे Google। सूचनाएँ चालू होने पर आपके डिवाइस की पहचान और इसकी पुश सेवा से मिला पता भी सेव होता है।';
 
   @override
   String get privacyUseTitle => 'इसका इस्तेमाल कैसे होता है';
@@ -2211,14 +2378,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'समूह में हर कोई उसके सदस्यों, खर्चों और इतिहास को देख सकता है। लिंक से खुलने वाले समूह को लिंक पाने वाला कोई भी व्यक्ति खोल सकता है। Google से साइन इन Google के ज़रिए होता है। ऑपरेटर सूचनाएँ चालू करे, तो वे आपके फ़ोन की पुश सेवा से जाती हैं: Google की Firebase Cloud Messaging या आपके इंस्टॉल किए हुए किसी दूसरी UnifiedPush सेवा, जैसे ntfy, से। सूचना की सामग्री रास्ते में एन्क्रिप्टेड रहती है। मैप की तस्वीरें ऑपरेटर के चुने मैप प्रदाता से आती हैं, आमतौर पर OpenFreeMap से; उसे आपका नेटवर्क पता और आप कौन-सा इलाका देख रहे हैं, पता चलता है। आपकी जगह सिर्फ़ तब पढ़ी जाती है जब आप “मौजूदा जगह इस्तेमाल करें” टैप करते हैं, और सेव सिर्फ़ वही बिंदु होता है जिसे आप बाद में रखते हैं।';
+      'समूह में हर कोई उसके सदस्यों, खर्चों और इतिहास को देख सकता है। लिंक से खुलने वाले समूह को लिंक पाने वाला कोई भी व्यक्ति खोल सकता है। Google से साइन इन Google के ज़रिए होता है। ऑपरेटर सूचनाएँ चालू करे, तो वे आपके फ़ोन की पुश सेवा से जाती हैं: Google की Firebase Cloud Messaging या आपके इंस्टॉल किए हुए किसी दूसरी UnifiedPush सेवा, जैसे ntfy, से। वेब app में वे आपके ब्राउज़र की पुश सेवा से जाती हैं। सूचना की सामग्री रास्ते में एन्क्रिप्टेड रहती है। मैप की तस्वीरें ऑपरेटर के चुने मैप प्रदाता से आती हैं, आमतौर पर OpenFreeMap से; उसे आपका नेटवर्क पता और आप कौन-सा इलाका देख रहे हैं, पता चलता है। आपकी जगह सिर्फ़ तब पढ़ी जाती है जब आप “मौजूदा जगह इस्तेमाल करें” टैप करते हैं, और सेव सिर्फ़ वही बिंदु होता है जिसे आप बाद में रखते हैं।';
 
   @override
   String get privacyDeviceTitle => 'इस डिवाइस पर';
 
   @override
   String get privacyDeviceBody =>
-      'app ऑफ़लाइन होने पर काम आए, इसलिए सर्वर का पता, आपकी सेटिंग और समूहों की एक कॉपी इस डिवाइस पर रखता है। app अनइंस्टॉल करने पर ये हट जाते हैं।';
+      'app ऑफ़लाइन होने पर काम आए, इसलिए सर्वर का पता, आपकी सेटिंग और समूहों की एक कॉपी इस डिवाइस पर रखता है। app अनइंस्टॉल करने पर ये हट जाते हैं। ऑफ़लाइन जोड़े गए खर्च और भुगतान अपलोड होने तक यहीं रहते हैं।';
 
   @override
   String get privacyDeleteTitle => 'अपना डेटा मिटाना';
@@ -2384,6 +2551,26 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'मैप प्रदाता के अनुरोध के अनुसार हर मैप पर दिखता है। खाली छोड़ने पर स्टाइल में दिए गए श्रेय दिखते हैं और टाइलों के लिए OpenStreetMap को श्रेय दिया जाता है।';
+
+  @override
+  String get adminSectionRates => 'विनिमय दरें';
+
+  @override
+  String get adminSectionRatesBody =>
+      'जब कोई ख़र्च दूसरी मुद्रा में चुकाया जाता है, तो ऐप सबसे नई दर से शुरू करता है। दरें Frankfurter से आती हैं, जो यूरोपीय सेंट्रल बैंक की मुफ़्त संदर्भ दरें हैं, या ऐप ID होने पर Open Exchange Rates से। सर्वर घंटे में अधिकतम एक बार पूछता है।';
+
+  @override
+  String get adminExchangeRates => 'विनिमय दरें खोजें';
+
+  @override
+  String get adminExchangeRatesHelp => 'बंद होने पर, लोग हर दर ख़ुद लिखते हैं।';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates ऐप ID';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'वैकल्पिक। होने पर दरें Open Exchange Rates से आती हैं, जिसमें ज़्यादा मुद्राएँ हैं; उसका मुफ़्त प्लान काफ़ी है। न होने पर Frankfurter से।';
 
   @override
   String get adminInvalidMapTiles => 'घुंघराले कोष्ठकों में z, x और y वाले http(s) URL टेम्पलेट डालें।';
@@ -2928,6 +3115,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get adminPlanDefaultHelp => 'बिना किसी और प्लान वाले हर खाते के लिए।';
 
   @override
+  String get adminPlanRemindersHelp => 'इस प्लान के समूह सूचना भेजकर भुगतान की याद दिला सकते हैं।';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '$name हटाएँ?';
   }
@@ -3062,6 +3252,9 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'इस समूह के प्लान में भुगतान रिमाइंडर शामिल नहीं हैं।';
+
+  @override
   String get errorLimitOther => 'आप इस सर्वर की एक सीमा तक पहुँच गए हैं।';
 
   @override
@@ -3109,6 +3302,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'आपका प्लान साझा करने वाले समूह';
+
+  @override
+  String get planLimitReminders => 'भुगतान रिमाइंडर';
+
+  @override
+  String get planIncluded => 'शामिल';
+
+  @override
+  String get planNotIncluded => 'शामिल नहीं';
 
   @override
   String get planGet => 'प्लान पाएँ';

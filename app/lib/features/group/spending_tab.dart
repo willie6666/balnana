@@ -76,9 +76,11 @@ class _SpendingTabState extends ConsumerState<SpendingTab> {
       );
     }
 
-    return Builder(
+    final view = Builder(
       builder: (context) => CustomScrollView(
         key: const PageStorageKey('spending'),
+        // Pulls down even when the page is too short to scroll.
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
           SliverPadding(
@@ -106,6 +108,11 @@ class _SpendingTabState extends ConsumerState<SpendingTab> {
           ),
         ],
       ),
+    );
+    return RefreshIndicator(
+      onRefresh: () =>
+          pullToRefresh(ref, group.token, () => ref.read(statsProvider((token: group.token, period: _period)).future)),
+      child: view,
     );
   }
 }

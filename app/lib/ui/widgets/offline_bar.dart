@@ -6,10 +6,12 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/l10n.dart';
 import '../../core/offline_cache.dart';
 import '../../core/server.dart';
+import '../../data/pending_writes.dart';
 import '../tokens.dart';
 
 /// Puts a bar above [child] while the server is out of reach and what is
 /// shown was saved on this device, and reloads everything once it is back.
+/// What was added meanwhile is sent then, and whenever the app is opened.
 ///
 /// While offline, requests are answered from what was saved without asking
 /// the server, so the bar asks every [checkEvery] whether it is back.
@@ -34,7 +36,11 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onShow: () {
-        if (ref.read(offlineProvider)) _retry();
+        if (ref.read(offlineProvider)) {
+          _retry();
+        } else {
+          ref.read(pendingSenderProvider.notifier).send();
+        }
       },
     );
   }
@@ -83,6 +89,9 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
       _keepChecking(now);
     });
     final offline = ref.watch(offlineProvider);
+    // Kept alive here, to send what waits whenever the server is back.
+    ref.watch(pendingSenderProvider);
+    final waiting = ref.watch(pendingWritesProvider).value?.where((w) => w.error == null).length ?? 0;
 
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
@@ -106,7 +115,7 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
                     const SizedBox(width: BSpace.s12),
                     Expanded(
                       child: Text(
-                        l10n.offlineBar,
+                        [l10n.offlineBar, if (waiting > 0) l10n.offlinePending(waiting)].join(' '),
                         style: Theme.of(context).textTheme.bodyMedium
                             ?.copyWith(color: scheme.onSurfaceVariant),
                       ),

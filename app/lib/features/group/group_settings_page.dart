@@ -23,9 +23,11 @@ import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
 import '../../ui/widgets/symbol_field.dart';
 import '../settings/plan_page.dart';
+import 'feature_switches.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
+import 'payment_details.dart';
 import 'share_sheet.dart';
 
 /// [name] made safe to use as a file name.
@@ -198,6 +200,16 @@ class _Settings extends ConsumerWidget {
     final l10n = context.l10n;
     try {
       await groupApiOf(ref, group.token).update(linkAccess: open);
+      refreshGroup(ref, group.token);
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
+  Future<void> _setFeatures(BuildContext context, WidgetRef ref, GroupFeatures features) async {
+    final l10n = context.l10n;
+    try {
+      await groupApiOf(ref, group.token).update(features: features);
       refreshGroup(ref, group.token);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
@@ -384,10 +396,15 @@ class _Settings extends ConsumerWidget {
                 ),
                 onTap: () => _renameMember(context, ref, m),
                 trailing: PopupMenuButton<String>(
-                  onSelected: (action) =>
-                      action == 'rename' ? _renameMember(context, ref, m) : _removeMember(context, ref, m),
+                  onSelected: (action) => switch (action) {
+                    'rename' => _renameMember(context, ref, m),
+                    'pay' => showPaymentDetailsSheet(context, group, m),
+                    _ => _removeMember(context, ref, m),
+                  },
                   itemBuilder: (context) => [
                     PopupMenuItem(value: 'rename', child: Text(l10n.memberRename)),
+                    if (mayEditPayment(m, accounts: accounts, me: me?.id))
+                      PopupMenuItem(value: 'pay', child: Text(l10n.memberPaymentDetails)),
                     PopupMenuItem(value: 'remove', child: Text(l10n.commonRemove)),
                   ],
                 ),
@@ -399,6 +416,8 @@ class _Settings extends ConsumerWidget {
             ),
           ],
         ),
+        if (member)
+          FeatureSwitches(features: group.features, onChanged: (f) => _setFeatures(context, ref, f)),
         GroupedList(
           title: l10n.groupData,
           children: [
@@ -408,12 +427,15 @@ class _Settings extends ConsumerWidget {
               subtitle: l10n.categoriesHelp,
               onTap: () => context.go('/g/${group.token}/settings/categories'),
             ),
-            GroupedTile(
-              icon: Icons.repeat,
-              title: l10n.recurringTitle,
-              subtitle: l10n.recurringHelp,
-              onTap: () => context.go('/g/${group.token}/settings/recurring'),
-            ),
+            // Off, the schedules there still are can be looked at and edited.
+            if (group.features.recurring ||
+                (ref.watch(recurringProvider(group.token)).value?.isNotEmpty ?? false))
+              GroupedTile(
+                icon: Icons.repeat,
+                title: l10n.recurringTitle,
+                subtitle: l10n.recurringHelp,
+                onTap: () => context.go('/g/${group.token}/settings/recurring'),
+              ),
             if (ref.watch(serverInfoProvider).value?.billing ?? false)
               _GroupPlanTile(group: group, me: me?.id),
             GroupedTile(

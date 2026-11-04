@@ -17,6 +17,7 @@ import (
 	"balnana/internal/config"
 	"balnana/internal/mail"
 	"balnana/internal/push"
+	"balnana/internal/rates"
 )
 
 // Server implements StrictServerInterface.
@@ -42,6 +43,8 @@ type Server struct {
 	resetMails    *buckets // password reset emails, by address and client
 	allResetMails *buckets // password reset emails, by address
 	rejected      *buckets // payment notifications logged as turned away, by provider
+	rates         *rates.Cache
+	rateSource    func(*config.Config) rates.Source
 }
 
 // settings are the configuration in force and what it sets up. An
@@ -74,7 +77,9 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		resets:        &buckets{perSecond: resetPerHour / 3600.0, burst: resetBurst, m: map[string]*bucket{}},
 		resetMails:    &buckets{perSecond: resetMailPerDay / 86400.0, burst: resetMailBurst, m: map[string]*bucket{}},
 		allResetMails: &buckets{perSecond: allResetMailPerDay / 86400.0, burst: allResetMailBurst, m: map[string]*bucket{}},
+		rateSource:    rateSource,
 	}
+	s.rates = &rates.Cache{Store: rateStore{db}, Log: log}
 	s.apply(cfg)
 	return s
 }
@@ -116,6 +121,7 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		OauthProviders:   []OAuthProvider{},
 		LinkGroups:       !accounts || cfg.LinkGroups,
 		Push:             s.push != nil,
+		ExchangeRates:    cfg.ExchangeRates,
 		PublicUrl:        cfg.PublicURL.String(),
 		SourceUrl:        cfg.SourceURL.String(),
 	}

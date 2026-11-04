@@ -23,7 +23,31 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Đang ngoại tuyến. Đang hiển thị dữ liệu đã lưu trên thiết bị này; bạn chưa thể lưu thay đổi cho đến khi kết nối lại.';
+      'Ngoại tuyến. Đang hiển thị dữ liệu đã lưu trên thiết bị này; khoản chi và thanh toán mới sẽ tải lên khi kết nối lại.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count mục đang chờ tải lên.');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Đã lưu trên thiết bị này. Sẽ tải lên khi bạn có mạng trở lại.';
+
+  @override
+  String get pendingWaiting => 'Đang chờ tải lên';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Chưa tải lên: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Bỏ';
+
+  @override
+  String get offlineNoReceipt =>
+      'Không thể lưu ảnh hóa đơn khi ngoại tuyến. Hãy bỏ ảnh để lưu khoản chi ngay, hoặc thử lại khi có mạng.';
 
   @override
   String get commonSave => 'Lưu';
@@ -445,6 +469,47 @@ class AppLocalizationsVi extends AppLocalizations {
   String get memberRename => 'Đổi tên';
 
   @override
+  String get memberPaymentDetails => 'Thông tin thanh toán';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Cách những người khác trong nhóm trả tiền cho $name: tài khoản ngân hàng, ứng dụng thanh toán hoặc liên kết. Mọi người trong nhóm đều xem được.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Phương thức';
+
+  @override
+  String get paymentDetailValue => 'Tài khoản, ID hoặc liên kết';
+
+  @override
+  String get paymentDetailAdd => 'Thêm cách thanh toán';
+
+  @override
+  String get paymentDetailBank => 'Chuyển khoản ngân hàng';
+
+  @override
+  String get paymentDetailSuggestions => 'Gợi ý';
+
+  @override
+  String get paymentDetailCopy => 'Sao chép';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return 'Đã sao chép $label';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Mở liên kết';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Mỗi cách thanh toán cần có phương thức và tài khoản, ID hoặc liên kết, mỗi mục trên một dòng.';
+
+  @override
+  String get errorNothingOwed => 'Hiện họ không nợ bạn gì.';
+
+  @override
   String get memberRenameTitle => 'Đổi tên';
 
   @override
@@ -495,6 +560,39 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Cho phép mọi người xem và chỉnh sửa mà không cần tài khoản';
+
+  @override
+  String get groupFeatures => 'Tính năng';
+
+  @override
+  String get groupFeaturesHelp => 'Khi tắt, không thể thêm vào khoản chi. Những gì đã có vẫn được giữ.';
+
+  @override
+  String get groupFeatureForeign => 'Tiền tệ khác';
+
+  @override
+  String get groupFeatureForeignHelp => 'Khoản chi trả bằng tiền tệ khác với tiền tệ của nhóm';
+
+  @override
+  String get groupFeatureRecurring => 'Khoản chi định kỳ';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Được thêm theo lịch. Khi tắt, các lịch sẽ tạm chờ';
+
+  @override
+  String get groupFeaturePlaces => 'Địa điểm';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Nơi phát sinh khoản chi';
+
+  @override
+  String get groupFeatureReceipts => 'Hóa đơn';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Ảnh chụp hóa đơn';
+
+  @override
+  String get errorFeatureOff => 'Nhóm này đã tắt tính năng đó. Có thể bật lại trong cài đặt nhóm.';
 
   @override
   String get resetLinkTitle => 'Đặt lại liên kết';
@@ -631,6 +729,17 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Thêm khoản chi';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Thêm chi tiêu vào $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Hiển thị nhóm nào?';
+
+  @override
+  String get widgetNoGroups => 'Hãy mở Balnana và thêm một nhóm trước.';
 
   @override
   String get expensesEmptyTitle => 'Chưa có khoản chi nào';
@@ -828,6 +937,11 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Tỷ giá từ $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Ghi chú';
 
   @override
@@ -972,6 +1086,44 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get recordPayment => 'Ghi nhận';
+
+  @override
+  String get remindAction => 'Nhắc';
+
+  @override
+  String remindTitle(String name) {
+    return 'Nhắc $name';
+  }
+
+  @override
+  String get remindNotify => 'Gửi thông báo';
+
+  @override
+  String get remindNeedsPlan => 'Gói của nhóm này không có tính năng này';
+
+  @override
+  String get remindShare => 'Chia sẻ tin nhắn';
+
+  @override
+  String remindSent(String name) {
+    return 'Đã gửi lời nhắc cho $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name không nhận thông báo';
+  }
+
+  @override
+  String get remindCopied => 'Đã sao chép lời nhắc';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Nhắc nhở: bạn nợ $payee $amount trong $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Cách thanh toán:';
 
   @override
   String get recordPaymentTitle => 'Ghi nhận khoản thanh toán';
@@ -1282,6 +1434,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đã chặn trong cài đặt điện thoại: bật thông báo cho Balnana ở đó để xem thông báo';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Không được cho phép trong trình duyệt này: cho phép thông báo của trang này trong cài đặt để xem';
+
+  @override
   String get pushChannel => 'Khoản chi';
 
   @override
@@ -1315,6 +1471,11 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'Đã xóa $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who nhắc bạn đang nợ $amount';
   }
 
   @override
@@ -2175,7 +2336,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'Các nhóm bạn tạo hoặc tham gia: tên nhóm, tên thành viên, khoản chi, thanh toán, ghi chú, ảnh hóa đơn và địa điểm bạn thêm vào khoản chi. Nếu có tài khoản, dữ liệu còn gồm tên, địa chỉ email hoặc tên người dùng, mã băm mật khẩu (không bao giờ lưu mật khẩu) và nhà cung cấp đăng nhập bạn dùng, chẳng hạn Google. Nếu bật thông báo, ứng dụng lưu mã định danh thiết bị và địa chỉ do dịch vụ thông báo đẩy cung cấp.';
+      'Các nhóm bạn tạo hoặc tham gia: tên nhóm, tên và thông tin nhận tiền của thành viên, khoản chi, thanh toán, ghi chú, ảnh hóa đơn và địa điểm bạn thêm vào khoản chi. Nếu có tài khoản, dữ liệu còn gồm tên, địa chỉ email hoặc tên người dùng, mã băm mật khẩu (không bao giờ lưu mật khẩu) và nhà cung cấp đăng nhập bạn dùng, chẳng hạn Google. Nếu bật thông báo, ứng dụng lưu mã định danh thiết bị và địa chỉ do dịch vụ thông báo đẩy cung cấp.';
 
   @override
   String get privacyUseTitle => 'Cách dữ liệu được dùng';
@@ -2189,14 +2350,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Mọi người trong nhóm đều xem được thành viên, khoản chi và lịch sử của nhóm. Nếu mở nhóm bằng liên kết, ai có liên kết đều mở được. Đăng nhập bằng Google sẽ thông qua Google. Nếu người quản lý bật thông báo, thông báo sẽ qua dịch vụ đẩy mà điện thoại dùng: Google Firebase Cloud Messaging hoặc dịch vụ UnifiedPush khác bạn đã cài, chẳng hạn ntfy. Nội dung thông báo được mã hóa khi truyền. Bản đồ tải ảnh từ nhà cung cấp do người quản lý chọn, mặc định là OpenFreeMap trừ khi họ đổi; nhà cung cấp này thấy địa chỉ mạng của bạn và khu vực bạn xem. Vị trí của bạn chỉ được đọc khi bạn chạm “Dùng vị trí hiện tại”, và chỉ điểm bạn giữ lại mới được lưu.';
+      'Mọi người trong nhóm đều xem được thành viên, khoản chi và lịch sử của nhóm. Nếu mở nhóm bằng liên kết, ai có liên kết đều mở được. Đăng nhập bằng Google sẽ thông qua Google. Nếu người quản lý bật thông báo, thông báo sẽ qua dịch vụ đẩy mà điện thoại dùng: Google Firebase Cloud Messaging hoặc dịch vụ UnifiedPush khác bạn đã cài, chẳng hạn ntfy. Trên ứng dụng web, thông báo sẽ qua dịch vụ đẩy của trình duyệt. Nội dung thông báo được mã hóa khi truyền. Bản đồ tải ảnh từ nhà cung cấp do người quản lý chọn, mặc định là OpenFreeMap trừ khi họ đổi; nhà cung cấp này thấy địa chỉ mạng của bạn và khu vực bạn xem. Vị trí của bạn chỉ được đọc khi bạn chạm “Dùng vị trí hiện tại”, và chỉ điểm bạn giữ lại mới được lưu.';
 
   @override
   String get privacyDeviceTitle => 'Trên thiết bị này';
 
   @override
   String get privacyDeviceBody =>
-      'Ứng dụng lưu địa chỉ máy chủ, cài đặt và bản sao nhóm để dùng khi ngoại tuyến. Gỡ cài đặt ứng dụng sẽ xóa dữ liệu đó.';
+      'Ứng dụng lưu địa chỉ máy chủ, cài đặt và bản sao nhóm để dùng khi ngoại tuyến. Gỡ cài đặt ứng dụng sẽ xóa dữ liệu đó. Khoản chi và thanh toán thêm khi ngoại tuyến sẽ chờ ở đây cho đến khi được tải lên.';
 
   @override
   String get privacyDeleteTitle => 'Xóa dữ liệu của bạn';
@@ -2362,6 +2523,26 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Hiển thị trên mọi bản đồ theo yêu cầu của nhà cung cấp. Nếu để trống, kiểu bản đồ sẽ hiện nội dung ghi nguồn được chỉ định, còn ô bản đồ sẽ ghi nguồn OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Tỷ giá hối đoái';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Khi một khoản chi được trả bằng tiền tệ khác, ứng dụng bắt đầu từ tỷ giá mới nhất. Tỷ giá lấy từ Frankfurter, tỷ giá tham chiếu miễn phí của Ngân hàng Trung ương châu Âu, hoặc từ Open Exchange Rates khi có App ID. Máy chủ hỏi tối đa mỗi giờ một lần.';
+
+  @override
+  String get adminExchangeRates => 'Tra cứu tỷ giá';
+
+  @override
+  String get adminExchangeRatesHelp => 'Khi tắt, mọi người tự nhập mọi tỷ giá.';
+
+  @override
+  String get adminOxrAppId => 'App ID của Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Không bắt buộc. Nếu có, tỷ giá lấy từ Open Exchange Rates, có nhiều tiền tệ hơn; gói miễn phí là đủ. Nếu không, từ Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Nhập mẫu URL http(s) có z, x và y trong dấu ngoặc nhọn.';
@@ -2883,6 +3064,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Dành cho mọi tài khoản không có gói khác.';
 
   @override
+  String get adminPlanRemindersHelp => 'Nhóm dùng gói này có thể nhắc thanh toán bằng thông báo.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Xóa $name?';
   }
@@ -3012,6 +3196,9 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Gói của nhóm này không có nhắc thanh toán.';
+
+  @override
   String get errorLimitOther => 'Bạn đã đạt giới hạn của máy chủ này.';
 
   @override
@@ -3059,6 +3246,15 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Nhóm dùng chung gói của bạn';
+
+  @override
+  String get planLimitReminders => 'Nhắc thanh toán';
+
+  @override
+  String get planIncluded => 'Có';
+
+  @override
+  String get planNotIncluded => 'Không có';
 
   @override
   String get planGet => 'Nhận gói';

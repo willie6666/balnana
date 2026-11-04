@@ -91,6 +91,9 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 	if err != nil {
 		return nil, err
 	}
+	if !g.features.Receipts {
+		return nil, featureOff("receipts")
+	}
 	var exists bool
 	if err := s.db.QueryRow(ctx, `select exists (select 1 from expenses
 		where id = $1 and group_id = $2 and deleted_at is null)`, req.ExpenseId, g.id).Scan(&exists); err != nil {
@@ -158,6 +161,9 @@ func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (P
 		}
 		if deleted {
 			return errNotFound
+		}
+		if !g.features.Receipts {
+			return featureOff("receipts")
 		}
 		if err := s.checkReceiptLimit(ctx, tx, g, req.ExpenseId); err != nil {
 			return err

@@ -129,11 +129,13 @@ class _Recurring extends ConsumerWidget {
             icon: Icons.repeat,
             title: l10n.recurringEmptyTitle,
             body: l10n.recurringEmptyBody,
-            action: FilledButton.icon(
-              onPressed: () => _add(context),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.recurringAdd),
-            ),
+            action: !group.features.recurring
+                ? null
+                : FilledButton.icon(
+                    onPressed: () => _add(context),
+                    icon: const Icon(Icons.add),
+                    label: Text(l10n.recurringAdd),
+                  ),
           ),
         ],
       );
@@ -144,7 +146,8 @@ class _Recurring extends ConsumerWidget {
         GroupedList(
           children: [
             for (final r in items) _RecurringTile(group: group, recurring: r),
-            GroupedTile(icon: Icons.add, title: l10n.recurringAdd, onTap: () => _add(context)),
+            if (group.features.recurring)
+              GroupedTile(icon: Icons.add, title: l10n.recurringAdd, onTap: () => _add(context)),
           ],
         ),
       ],
@@ -227,7 +230,8 @@ class _RecurringTile extends ConsumerWidget {
                 value: _Action.edit,
                 child: ListTile(leading: const Icon(Icons.edit_outlined), title: Text(l10n.recurringEdit)),
               ),
-              if (!r.ended)
+              // Recurring switched off, schedules can't start again.
+              if (!r.ended && (!r.paused || group.features.recurring))
                 r.paused
                     ? PopupMenuItem(
                         value: _Action.resume,

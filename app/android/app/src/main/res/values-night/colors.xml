@@ -2,4 +2,10 @@
 <resources>
     <!-- Behind the splash logo: the app's dark surface color. -->
     <color name="splash_background">#FF18130A</color>
+    <!-- The group widget, in the app's dark colors. -->
+    <color name="widget_surface">#FF18130A</color>
+    <color name="widget_on_surface">#FFEDE1CF</color>
+    <color name="widget_owed">#FF7FD8A0</color>
+    <color name="widget_owe">#FFFFB4A8</color>
+    <color name="widget_settled">#FFB8B0A2</color>
 </resources>

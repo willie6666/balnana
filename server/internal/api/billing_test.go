@@ -744,11 +744,12 @@ func TestAdminPlans(t *testing.T) {
 	if code := admin.errorCode(400, "PUT", "/admin/plans", bad); code != "invalid_plan" {
 		t.Fatal(code)
 	}
-	gold := Plan{Id: "gold", Name: "Gold", Rank: 20}
+	gold := Plan{Id: "gold", Name: "Gold", Rank: 20, Limits: PlanLimits{Reminders: ptr(true)}}
 	catalog.Plans = append(catalog.Plans, gold)
 	catalog.Products = []PlanProduct{{Provider: Kofi, Product: "Gold tier", PlanId: "gold", Days: 35}}
 	admin.must(200, "PUT", "/admin/plans", catalog, &catalog)
-	if len(catalog.Plans) != 3 || len(catalog.Products) != 1 {
+	if len(catalog.Plans) != 3 || len(catalog.Products) != 1 || catalog.Plans[2].Limits.Reminders == nil ||
+		!*catalog.Plans[2].Limits.Reminders || *catalog.Plans[0].Limits.Reminders {
 		t.Fatalf("%+v", catalog)
 	}
 	// No name needs an amount to go by.

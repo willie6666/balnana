@@ -26,7 +26,8 @@ var errInvalidPlan = badRequest("invalid_plan")
 
 func planCatalog(ctx context.Context, q querier) (PlanCatalog, error) {
 	rows, err := q.Query(ctx, `
-		select id, name, rank, is_default, receipts_per_group, recurring_per_group, joined_groups, members_per_group, sponsored_groups
+		select id, name, rank, is_default, receipts_per_group, recurring_per_group, joined_groups, members_per_group, sponsored_groups,
+		       reminders
 		from plans order by rank, id`)
 	if err != nil {
 		return PlanCatalog{}, err
@@ -34,7 +35,7 @@ func planCatalog(ctx context.Context, q querier) (PlanCatalog, error) {
 	plans, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Plan, error) {
 		var p Plan
 		err := row.Scan(&p.Id, &p.Name, &p.Rank, &p.IsDefault, &p.Limits.ReceiptsPerGroup, &p.Limits.RecurringPerGroup,
-			&p.Limits.JoinedGroups, &p.Limits.MembersPerGroup, &p.Limits.SponsoredGroups)
+			&p.Limits.JoinedGroups, &p.Limits.MembersPerGroup, &p.Limits.SponsoredGroups, &p.Limits.Reminders)
 		return p, err
 	})
 	if err != nil {
@@ -132,14 +133,15 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 		for i, p := range c.Plans {
 			ids[i] = p.Id
 			_, err := tx.Exec(ctx, `
-				insert into plans (id, name, rank, is_default, receipts_per_group, recurring_per_group, joined_groups, members_per_group, sponsored_groups)
-				values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+				insert into plans (id, name, rank, is_default, receipts_per_group, recurring_per_group, joined_groups, members_per_group, sponsored_groups,
+					reminders)
+				values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 				on conflict (id) do update set name = excluded.name, rank = excluded.rank, is_default = excluded.is_default,
 					receipts_per_group = excluded.receipts_per_group, recurring_per_group = excluded.recurring_per_group,
 					joined_groups = excluded.joined_groups, members_per_group = excluded.members_per_group,
-					sponsored_groups = excluded.sponsored_groups`,
+					sponsored_groups = excluded.sponsored_groups, reminders = excluded.reminders`,
 				p.Id, p.Name, p.Rank, p.IsDefault, p.Limits.ReceiptsPerGroup, p.Limits.RecurringPerGroup,
-				p.Limits.JoinedGroups, p.Limits.MembersPerGroup, p.Limits.SponsoredGroups)
+				p.Limits.JoinedGroups, p.Limits.MembersPerGroup, p.Limits.SponsoredGroups, p.Limits.Reminders != nil && *p.Limits.Reminders)
 			if err != nil {
 				return err
 			}

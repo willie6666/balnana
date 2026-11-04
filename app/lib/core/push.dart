@@ -16,6 +16,7 @@ import '../data/known_groups.dart';
 import '../ui/colors.dart';
 import 'l10n.dart';
 import 'prefs.dart';
+import 'push_io.dart' if (dart.library.js_interop) 'push_web.dart';
 import 'server.dart';
 import 'session.dart';
 import 'settings.dart';
@@ -31,8 +32,9 @@ abstract interface class PushService {
   Stream<void> get changes;
 
   /// Asks to show notifications, where the system wants that asked, and
-  /// whether they may be shown.
-  Future<bool> requestPermission();
+  /// whether they may be shown. A browser is asked only when [tapped], from
+  /// the tap itself, as browsers want; otherwise this only says.
+  Future<bool> requestPermission({bool tapped = false});
 
   /// The group of each notification tapped while the app runs.
   Stream<PushTarget> get openedGroups;
@@ -161,7 +163,7 @@ class _UnifiedPush implements PushService {
   Stream<void> get changes => _changes.stream;
 
   @override
-  Future<bool> requestPermission() async {
+  Future<bool> requestPermission({bool tapped = false}) async {
     await _ready;
     final allowed = await _notifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -316,6 +318,7 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message, String instan
       ('push_expense_added_anon', [final what, final amount]) => l10n.pushExpenseAddedAnon(what, amount),
       ('push_expense_edited_anon', [final what, final amount]) => l10n.pushExpenseEditedAnon(what, amount),
       ('push_expense_deleted_anon', [final what, final amount]) => l10n.pushExpenseDeletedAnon(what, amount),
+      ('push_reminder', [final who, final amount]) => l10n.pushReminder(who, amount),
       // From a newer server: say nothing rather than something wrong.
       _ => null,
     };
@@ -342,10 +345,11 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message, String instan
   }
 }
 
-/// The push service of this build, or null when it has none. Only Android
-/// has one; the web app is open only while someone looks at it.
+/// The push service of this build, or null when it has none: Android's, or
+/// the browser's where it has one.
 final pushServiceProvider = Provider<PushService?>((ref) {
-  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return null;
+  if (kIsWeb) return webPushService(ref.watch(prefsProvider));
+  if (defaultTargetPlatform != TargetPlatform.android) return null;
   return _UnifiedPush(ref.watch(prefsProvider));
 });
 
@@ -381,6 +385,10 @@ final pushSyncProvider = Provider<void>((ref) {
         if (g.memberId case final member?) (token: g.token, memberId: member),
     ],
   );
+
+  // The browser's push worker words notifications in the language it was
+  // registered with.
+  if (kIsWeb) ref.watch(settingsProvider.select((s) => s.locale));
 
   final changes = push.changes.listen((_) => ref.invalidateSelf());
   ref.onDispose(changes.cancel);

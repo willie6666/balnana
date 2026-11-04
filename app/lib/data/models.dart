@@ -45,6 +45,7 @@ class Member {
     this.owner = false,
     this.claimed = false,
     required this.balance,
+    this.paymentDetails = const [],
   });
 
   factory Member.fromJson(Object? data, int digits) {
@@ -57,6 +58,9 @@ class Member {
       owner: _opt<bool>(json, 'owner') ?? false,
       claimed: _opt<bool>(json, 'claimed') ?? false,
       balance: _money(json, 'balance', digits),
+      paymentDetails: [
+        for (final d in _opt<List<Object?>>(json, 'paymentDetails') ?? const []) PaymentDetail.fromJson(d),
+      ],
     );
   }
 
@@ -77,6 +81,42 @@ class Member {
 
   /// Positive: is owed. Negative: owes.
   final BigInt balance;
+
+  /// How to pay them in this group, in the order they listed them.
+  final List<PaymentDetail> paymentDetails;
+}
+
+/// One way to pay a member: a bank account, a payment app handle or a link.
+@immutable
+class PaymentDetail {
+  const PaymentDetail({required this.label, required this.value});
+
+  factory PaymentDetail.fromJson(Object? data) {
+    final json = _object(data);
+    return PaymentDetail(label: _req(json, 'label'), value: _req(json, 'value'));
+  }
+
+  /// At most this many per member, as the server allows.
+  static const max = 5;
+  static const maxLabel = 40;
+  static const maxValue = 200;
+
+  final String label;
+  final String value;
+
+  /// A web address, which can be opened as well as copied.
+  Uri? get link {
+    final uri = Uri.tryParse(value);
+    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty ? uri : null;
+  }
+
+  Map<String, Object?> toJson() => {'label': label, 'value': value};
+
+  @override
+  bool operator ==(Object other) => other is PaymentDetail && other.label == label && other.value == value;
+
+  @override
+  int get hashCode => Object.hash(label, value);
 }
 
 @immutable
@@ -94,6 +134,7 @@ class Group {
     this.categories = const [],
     this.linkAccess = true,
     this.myMemberId,
+    this.features = const GroupFeatures(),
   });
 
   factory Group.fromJson(Object? data) {
@@ -112,6 +153,10 @@ class Group {
       categories: [for (final c in _opt<List<Object?>>(json, 'categories') ?? const []) GroupCategory.fromJson(c)],
       linkAccess: _opt<bool>(json, 'linkAccess') ?? true,
       myMemberId: _opt(json, 'myMemberId'),
+      features: switch (json['features']) {
+        null => const GroupFeatures(),
+        final f => GroupFeatures.fromJson(f),
+      },
     );
   }
 
@@ -139,6 +184,9 @@ class Group {
   /// The signed-in account's member (accounts mode).
   final String? myMemberId;
 
+  /// What can be added. All of it from a server that predates the switches.
+  final GroupFeatures features;
+
   List<Member> get activeMembers => [
     for (final m in members)
       if (!m.left) m,
@@ -150,6 +198,66 @@ class Group {
     }
     return null;
   }
+}
+
+/// What a group has switched on. One switched off can't be added to an
+/// expense, but what expenses already have stays.
+@immutable
+class GroupFeatures {
+  const GroupFeatures({
+    this.foreignCurrency = true,
+    this.recurring = true,
+    this.places = true,
+    this.receipts = true,
+  });
+
+  factory GroupFeatures.fromJson(Object? data) {
+    final json = _object(data);
+    return GroupFeatures(
+      foreignCurrency: _req(json, 'foreignCurrency'),
+      recurring: _req(json, 'recurring'),
+      places: _req(json, 'places'),
+      receipts: _req(json, 'receipts'),
+    );
+  }
+
+  /// Paid in another currency than the group's.
+  final bool foreignCurrency;
+
+  /// Expenses added on a schedule. Off, the schedules wait.
+  final bool recurring;
+
+  /// Where an expense happened.
+  final bool places;
+
+  /// A photo of the receipt.
+  final bool receipts;
+
+  GroupFeatures copyWith({bool? foreignCurrency, bool? recurring, bool? places, bool? receipts}) =>
+      GroupFeatures(
+        foreignCurrency: foreignCurrency ?? this.foreignCurrency,
+        recurring: recurring ?? this.recurring,
+        places: places ?? this.places,
+        receipts: receipts ?? this.receipts,
+      );
+
+  Map<String, Object?> toJson() => {
+    'foreignCurrency': foreignCurrency,
+    'recurring': recurring,
+    'places': places,
+    'receipts': receipts,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is GroupFeatures &&
+      other.foreignCurrency == foreignCurrency &&
+      other.recurring == recurring &&
+      other.places == places &&
+      other.receipts == receipts;
+
+  @override
+  int get hashCode => Object.hash(foreignCurrency, recurring, places, receipts);
 }
 
 /// A category expenses can have: a built-in one, which the app names, or one
@@ -1120,6 +1228,7 @@ class MyPlan {
     this.receiptsPerGroup,
     this.recurringPerGroup,
     this.membersPerGroup,
+    this.reminders = false,
     this.play,
   });
 
@@ -1135,6 +1244,7 @@ class MyPlan {
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
       membersPerGroup: _opt<num>(json, 'membersPerGroup')?.toInt(),
+      reminders: _opt<bool>(json, 'reminders') ?? false,
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
     );
   }
@@ -1162,6 +1272,10 @@ class MyPlan {
   /// Null means no limit.
   final int? membersPerGroup;
 
+  /// Whether groups sharing the plan can send payment reminders as
+  /// notifications.
+  final bool reminders;
+
   /// Null when the server doesn't sell on Google Play.
   final PlayBilling? play;
 }
@@ -1174,6 +1288,7 @@ class GroupPlan {
     required this.members,
     required this.receipts,
     required this.recurring,
+    this.reminders = false,
     this.sponsorMemberId,
   });
 
@@ -1185,6 +1300,7 @@ class GroupPlan {
       members: PlanUsage.fromJson(json['members']),
       receipts: PlanUsage.fromJson(json['receipts']),
       recurring: PlanUsage.fromJson(json['recurring']),
+      reminders: _opt<bool>(json, 'reminders') ?? false,
       sponsorMemberId: _opt(json, 'sponsorMemberId'),
     );
   }
@@ -1196,6 +1312,9 @@ class GroupPlan {
   final PlanUsage members;
   final PlanUsage receipts;
   final PlanUsage recurring;
+
+  /// Whether the group can send payment reminders as notifications.
+  final bool reminders;
 
   /// The member whose plan covers the group, if any.
   final String? sponsorMemberId;
@@ -1209,6 +1328,7 @@ class PlanLimits {
     this.joinedGroups,
     this.membersPerGroup,
     this.sponsoredGroups,
+    this.reminders = false,
   });
 
   factory PlanLimits.fromJson(Object? data) {
@@ -1219,6 +1339,7 @@ class PlanLimits {
       joinedGroups: _opt<num>(json, 'joinedGroups')?.toInt(),
       membersPerGroup: _opt<num>(json, 'membersPerGroup')?.toInt(),
       sponsoredGroups: _opt<num>(json, 'sponsoredGroups')?.toInt(),
+      reminders: _opt<bool>(json, 'reminders') ?? false,
     );
   }
 
@@ -1228,12 +1349,16 @@ class PlanLimits {
   final int? membersPerGroup;
   final int? sponsoredGroups;
 
+  /// Whether its groups can send payment reminders as notifications.
+  final bool reminders;
+
   Map<String, Object?> toJson() => {
     'receiptsPerGroup': ?receiptsPerGroup,
     'recurringPerGroup': ?recurringPerGroup,
     'joinedGroups': ?joinedGroups,
     'membersPerGroup': ?membersPerGroup,
     'sponsoredGroups': ?sponsoredGroups,
+    'reminders': reminders,
   };
 }
 
@@ -1456,4 +1581,23 @@ class AdminPayment {
 
   /// The provider's ID for the transaction.
   final String? reference;
+}
+
+/// GET /exchange-rate: what one unit of a currency is worth in another.
+class ExchangeRate {
+  const ExchangeRate({required this.rate, required this.source, required this.updatedAt});
+
+  factory ExchangeRate.fromJson(Object? data) {
+    final json = _object(data);
+    return ExchangeRate(rate: _req(json, 'rate'), source: _req(json, 'source'), updatedAt: _time(json, 'updatedAt'));
+  }
+
+  /// A decimal with a dot, as the rate field takes it.
+  final String rate;
+
+  /// Where it came from: `frankfurter` or `openexchangerates`.
+  final String source;
+
+  /// When the source published it.
+  final DateTime updatedAt;
 }

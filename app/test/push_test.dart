@@ -43,7 +43,7 @@ class _FakePush implements PushService {
   Stream<void> get changes => refreshes.stream;
 
   @override
-  Future<bool> requestPermission() async {
+  Future<bool> requestPermission({bool tapped = false}) async {
     asked++;
     await hold;
     return allowed ?? (throw StateError('no activity'));

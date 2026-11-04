@@ -115,8 +115,8 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 		}
 		if old != nil {
 			// One member per account and group: the old one stays in the
-			// history, unlinked.
-			if _, err := tx.Exec(ctx, `update members set user_id = null where id = $1`, old.id); err != nil {
+			// history, unlinked, without the account's way to be paid.
+			if _, err := tx.Exec(ctx, `update members set user_id = null, payment_details = '[]' where id = $1`, old.id); err != nil {
 				return err
 			}
 		}

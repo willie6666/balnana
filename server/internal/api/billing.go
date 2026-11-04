@@ -22,6 +22,7 @@ type plan struct {
 	joined    *int
 	members   *int
 	sponsored *int
+	reminders bool
 }
 
 // userPlan is the plan userID has now: its best entitlement, or the default
@@ -31,13 +32,13 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 	var ends *time.Time
 	err := q.QueryRow(ctx, `
 		select p.name, p.is_default, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
-		       p.members_per_group, p.sponsored_groups, e.expires_at
+		       p.members_per_group, p.sponsored_groups, p.reminders, e.expires_at
 		from plans p
 		left join entitlements e on e.plan_id = p.id and e.user_id = $1 and `+entitlementActive+`
 		where p.is_default or e.id is not null
 		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
 		limit 1`, userID).
-		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &ends)
+		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -262,6 +263,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 		ReceiptsPerGroup:  p.receipts,
 		RecurringPerGroup: p.recurring,
 		MembersPerGroup:   p.members,
+		Reminders:         p.reminders,
 		JoinedGroups:      Usage{Limit: p.joined},
 		SponsoredGroups:   Usage{Limit: p.sponsored},
 	}
@@ -412,6 +414,7 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 		Members:         Usage{Limit: p.members},
 		Receipts:        Usage{Limit: p.receipts},
 		Recurring:       Usage{Limit: p.recurring},
+		Reminders:       p.reminders,
 	}
 	if out.Members.Used, err = countMembers(ctx, q, g.id); err != nil {
 		return GroupPlan{}, err

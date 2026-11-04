@@ -697,6 +697,9 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err != nil {
 			return err
 		}
+		if err := checkFeatures(g, d, nil, false); err != nil {
+			return err
+		}
 		if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
 			return err
 		}
@@ -875,6 +878,15 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		d, err := validateExpense(ctx, tx, g, kind, *req.Body, nil)
 		if err != nil {
 			return err
+		}
+		if !g.features.ForeignCurrency || !g.features.Places {
+			was, err := loadExpense(ctx, tx, g, req.ExpenseId)
+			if err != nil {
+				return err
+			}
+			if err := checkFeatures(g, d, was.Location, was.Foreign != nil); err != nil {
+				return err
+			}
 		}
 		if err := checkGroupTotal(ctx, tx, g.id, d.amount, &req.ExpenseId); err != nil {
 			return err

@@ -23,7 +23,36 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Offline. We tonen wat op dit apparaat is opgeslagen; wijzigingen worden opgeslagen zodra je weer verbinding hebt.';
+      'Offline. Je ziet wat dit apparaat heeft opgeslagen; nieuwe uitgaven en betalingen worden geüpload zodra je weer verbinding hebt.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items wachten op uploaden.',
+      one: '1 item wacht op uploaden.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Opgeslagen op dit apparaat. Wordt geüpload zodra je weer online bent.';
+
+  @override
+  String get pendingWaiting => 'Wacht op uploaden';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Niet geüpload: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Weggooien';
+
+  @override
+  String get offlineNoReceipt =>
+      'Een bonfoto kan offline niet worden opgeslagen. Verwijder de foto om de uitgave nu op te slaan, of probeer het opnieuw als je weer online bent.';
 
   @override
   String get commonSave => 'Opslaan';
@@ -452,6 +481,47 @@ class AppLocalizationsNl extends AppLocalizations {
   String get memberRename => 'Naam wijzigen';
 
   @override
+  String get memberPaymentDetails => 'Betaalgegevens';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Hoe anderen in deze groep $name kunnen betalen: een bankrekening, een betaalapp of een link. Iedereen in de groep kan ze zien.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Methode';
+
+  @override
+  String get paymentDetailValue => 'Rekening, ID of link';
+
+  @override
+  String get paymentDetailAdd => 'Betaalmethode toevoegen';
+
+  @override
+  String get paymentDetailBank => 'Bankoverschrijving';
+
+  @override
+  String get paymentDetailSuggestions => 'Suggesties';
+
+  @override
+  String get paymentDetailCopy => 'Kopiëren';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label gekopieerd';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Link openen';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Elke betaalmethode heeft een methode en een rekening, ID of link nodig, elk op één regel.';
+
+  @override
+  String get errorNothingOwed => 'Diegene is je nu niets schuldig.';
+
+  @override
   String get memberRenameTitle => 'Naam wijzigen';
 
   @override
@@ -502,6 +572,41 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Laat mensen zonder account de groep bekijken en bewerken.';
+
+  @override
+  String get groupFeatures => 'Functies';
+
+  @override
+  String get groupFeaturesHelp =>
+      'Uitgeschakeld kun je het niet meer aan uitgaven toevoegen. Wat er al is, blijft.';
+
+  @override
+  String get groupFeatureForeign => 'Andere valuta';
+
+  @override
+  String get groupFeatureForeignHelp => 'Uitgaven betaald in een andere valuta dan die van de groep';
+
+  @override
+  String get groupFeatureRecurring => 'Terugkerende uitgaven';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Volgens een schema toegevoegd. Uitgeschakeld wachten de schema\'s';
+
+  @override
+  String get groupFeaturePlaces => 'Locaties';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Waar een uitgave plaatsvond';
+
+  @override
+  String get groupFeatureReceipts => 'Bonnen';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Een foto van de bon';
+
+  @override
+  String get errorFeatureOff =>
+      'Deze groep heeft dat uitgeschakeld. Je kunt het weer inschakelen in de groepsinstellingen.';
 
   @override
   String get resetLinkTitle => 'Link opnieuw instellen';
@@ -637,6 +742,17 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Uitgave toevoegen';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Uitgave in $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Welke groep tonen?';
+
+  @override
+  String get widgetNoGroups => 'Open eerst Balnana en voeg een groep toe.';
 
   @override
   String get expensesEmptyTitle => 'Nog geen uitgaven';
@@ -834,6 +950,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Koers van $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Notitie';
 
   @override
@@ -979,6 +1100,44 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get recordPayment => 'Vastleggen';
+
+  @override
+  String get remindAction => 'Herinneren';
+
+  @override
+  String remindTitle(String name) {
+    return '$name herinneren';
+  }
+
+  @override
+  String get remindNotify => 'Melding sturen';
+
+  @override
+  String get remindNeedsPlan => 'Niet inbegrepen in het abonnement van deze groep';
+
+  @override
+  String get remindShare => 'Bericht delen';
+
+  @override
+  String remindSent(String name) {
+    return 'Herinnering gestuurd naar $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name krijgt geen meldingen';
+  }
+
+  @override
+  String get remindCopied => 'Herinnering gekopieerd';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Herinnering: je bent $payee $amount schuldig in $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Zo kun je betalen:';
 
   @override
   String get recordPaymentTitle => 'Betaling vastleggen';
@@ -1292,6 +1451,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geblokkeerd in de telefooninstellingen. Sta daar meldingen voor Balnana toe om ze te zien.';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Niet toegestaan in deze browser: sta meldingen voor deze site toe in de instellingen om ze te zien';
+
+  @override
   String get pushChannel => 'Uitgaven';
 
   @override
@@ -1326,6 +1489,11 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title is verwijderd · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who herinnert je eraan dat je $amount schuldig bent';
   }
 
   @override
@@ -2192,7 +2360,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'De groepen die je maakt of waarvan je lid wordt: hun namen, de namen van leden, uitgaven, betalingen, notities, eventuele foto’s van bonnen en de plekken die je aan uitgaven toevoegt. Met een account ook je naam, e-mailadres of gebruikersnaam, een hash van je wachtwoord (nooit het wachtwoord zelf) en de aanmeldprovider die je gebruikt, zoals Google. Als meldingen aanstaan, wordt ook een identificatie van je apparaat opgeslagen en het adres dat de pushdienst eraan heeft gegeven.';
+      'De groepen die je maakt of waarvan je lid wordt: hun namen, de namen en betaalgegevens van leden, uitgaven, betalingen, notities, eventuele foto’s van bonnen en de plekken die je aan uitgaven toevoegt. Met een account ook je naam, e-mailadres of gebruikersnaam, een hash van je wachtwoord (nooit het wachtwoord zelf) en de aanmeldprovider die je gebruikt, zoals Google. Als meldingen aanstaan, wordt ook een identificatie van je apparaat opgeslagen en het adres dat de pushdienst eraan heeft gegeven.';
 
   @override
   String get privacyUseTitle => 'Waarvoor wordt het gebruikt';
@@ -2206,14 +2374,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Iedereen in een groep kan de leden, uitgaven en geschiedenis zien. Als een groep via een link toegankelijk is, kan iedereen met de link die openen. Aanmelden met Google verloopt via Google. Meldingen lopen, als de beheerder ze inschakelt, via de pushdienst van je telefoon: Google Firebase Cloud Messaging of een andere UnifiedPush-dienst die je hebt geïnstalleerd, zoals ntfy. De inhoud van meldingen is onderweg versleuteld. Kaarten laden afbeeldingen van de kaartprovider die de beheerder heeft gekozen, standaard OpenFreeMap, tenzij dat is gewijzigd. Die provider ziet je netwerkadres en welk gebied je bekijkt. Je locatie wordt alleen gelezen als je op ‘Huidige locatie gebruiken’ tikt; alleen de locatie die je daarna bewaart, wordt opgeslagen.';
+      'Iedereen in een groep kan de leden, uitgaven en geschiedenis zien. Als een groep via een link toegankelijk is, kan iedereen met de link die openen. Aanmelden met Google verloopt via Google. Meldingen lopen, als de beheerder ze inschakelt, via de pushdienst van je telefoon: Google Firebase Cloud Messaging of een andere UnifiedPush-dienst die je hebt geïnstalleerd, zoals ntfy. In de web-app gaan ze via de pushdienst van je browser. De inhoud van meldingen is onderweg versleuteld. Kaarten laden afbeeldingen van de kaartprovider die de beheerder heeft gekozen, standaard OpenFreeMap, tenzij dat is gewijzigd. Die provider ziet je netwerkadres en welk gebied je bekijkt. Je locatie wordt alleen gelezen als je op ‘Huidige locatie gebruiken’ tikt; alleen de locatie die je daarna bewaart, wordt opgeslagen.';
 
   @override
   String get privacyDeviceTitle => 'Op dit apparaat';
 
   @override
   String get privacyDeviceBody =>
-      'De app bewaart het serveradres, je instellingen en een kopie van je groepen voor als je offline bent. Als je de app verwijdert, worden die gegevens gewist.';
+      'De app bewaart het serveradres, je instellingen en een kopie van je groepen voor als je offline bent. Als je de app verwijdert, worden die gegevens gewist. Uitgaven en betalingen die je offline toevoegt, wachten hier tot ze zijn geüpload.';
 
   @override
   String get privacyDeleteTitle => 'Je gegevens verwijderen';
@@ -2379,6 +2547,26 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Wordt op elke kaart getoond, zoals de kaartprovider vraagt. Als dit leeg is, toont een stijl de eigen bronvermelding en vermelden tegels OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Wisselkoersen';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Als een uitgave in een andere valuta is betaald, begint de app met de nieuwste koers. Koersen komen van Frankfurter, de gratis referentiekoersen van de Europese Centrale Bank, of van Open Exchange Rates als er een app-ID is. De server vraagt hooguit één keer per uur.';
+
+  @override
+  String get adminExchangeRates => 'Wisselkoersen opzoeken';
+
+  @override
+  String get adminExchangeRatesHelp => 'Uit: iedereen typt elke koers zelf.';
+
+  @override
+  String get adminOxrAppId => 'App-ID voor Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Optioneel. Hiermee komen koersen van Open Exchange Rates, dat meer valuta kent; het gratis abonnement volstaat. Zonder, van Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Vul een http(s)-URL-sjabloon in met z, x en y tussen accolades.';
@@ -2910,6 +3098,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Voor elk account zonder ander abonnement.';
 
   @override
+  String get adminPlanRemindersHelp =>
+      'Groepen met dit abonnement kunnen met een melding aan betalen herinneren.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '$name verwijderen?';
   }
@@ -3044,6 +3236,9 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Het abonnement van deze groep bevat geen betalingsherinneringen.';
+
+  @override
   String get errorLimitOther => 'Je hebt een limiet van deze server bereikt.';
 
   @override
@@ -3091,6 +3286,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Groepen die je abonnement delen';
+
+  @override
+  String get planLimitReminders => 'Betalingsherinneringen';
+
+  @override
+  String get planIncluded => 'Inbegrepen';
+
+  @override
+  String get planNotIncluded => 'Niet inbegrepen';
 
   @override
   String get planGet => 'Abonnement nemen';

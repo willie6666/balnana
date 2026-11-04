@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:balnana/app.dart';
 import 'package:balnana/core/money.dart';
@@ -18,10 +17,16 @@ import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/expense/expense_editor_page.dart';
 import 'package:balnana/features/expense/receipt.dart';
 import 'package:balnana/features/group/group_settings_page.dart';
+import 'package:balnana/features/group/pending_tile.dart';
+import 'package:balnana/features/group/reminder.dart';
 import 'package:balnana/features/group/share_sheet.dart';
+import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/colors.dart';
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart' show DatabaseConnection;
+import 'package:drift/native.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -331,7 +336,7 @@ class _Taps implements PushService {
   Stream<void> get changes => const Stream.empty();
 
   @override
-  Future<bool> requestPermission() async => true;
+  Future<bool> requestPermission({bool tapped = false}) async => true;
 
   @override
   Stream<PushTarget> get openedGroups => taps.stream;
@@ -342,19 +347,20 @@ Future<ProviderContainer> _boot(
   WidgetTester tester,
   List<Override> overrides, {
   Balances balances = const Balances(nets: {}, transfers: []),
+  ServerInfo info = const ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server),
+  CacheDb? db,
 }) async {
   SharedPreferences.setMockInitialValues({
     'settings.server': _server,
     'groups.known': '[{"server":"$_server","token":"tok","memberId":"a","addedAt":"2026-01-01T00:00:00Z"}]',
   });
   final prefs = await SharedPreferences.getInstance();
-  final info = ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server);
   await tester.pumpWidget(
     ProviderScope(
       retry: (retryCount, error) => null,
       overrides: [
         prefsProvider.overrideWithValue(prefs),
-        cacheDbProvider.overrideWithValue(null),
+        cacheDbProvider.overrideWithValue(db),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
         summariesProvider.overrideWith((ref) async => const Summaries(groups: [], missing: [])),
         balancesProvider.overrideWith((ref, token) async => balances),
@@ -365,6 +371,14 @@ Future<ProviderContainer> _boot(
   );
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(BalnanaApp)));
+}
+
+/// A cache kept in memory, whose streams close at once, so none leaves a
+/// timer behind when the widget tree goes.
+CacheDb _memoryDb() {
+  final db = CacheDb(DatabaseConnection(NativeDatabase.memory(), closeStreamsSynchronously: true));
+  addTearDown(db.close);
+  return db;
 }
 
 Future<void> _go(WidgetTester tester, ProviderContainer container, String path) async {
@@ -836,6 +850,41 @@ void main() {
     expect(find.text('Private'), findsNothing);
   });
 
+  testWidgets('pulling down the expenses or the spending asks for them again', (tester) async {
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    var stats = 0;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      statsProvider.overrideWith((ref, key) async {
+        stats++;
+        return GroupStats.fromJson({
+          'total': '0.00',
+          'count': 0,
+          'categories': [],
+          'members': [],
+          'months': [],
+        }, 2);
+      }),
+    ]);
+    await _go(tester, container, '/g/tok');
+    int listed() => server.asked.where((p) => p == '/api/v1/g/tok/expenses').length;
+    final before = listed();
+
+    await tester.fling(find.byKey(const PageStorageKey('expenses')), const Offset(0, 400), 1000);
+    await tester.pumpAndSettle();
+    expect(listed(), before + 1);
+
+    await tester.tap(find.widgetWithText(Tab, 'Spending'));
+    await tester.pumpAndSettle();
+    final shown = stats;
+    await tester.fling(find.byKey(const PageStorageKey('spending')), const Offset(0, 400), 1000);
+    await tester.pumpAndSettle();
+    expect(stats, shown + 1);
+  });
+
   testWidgets('the share button and group settings both show the QR code', (tester) async {
     final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
       ..httpClientAdapter = _GroupServer(() async => _GroupServer.named('Flat'));
@@ -976,6 +1025,195 @@ void main() {
       expect(find.text('Paid by'), findsNothing);
     });
   }
+
+  testWidgets('whoever pays sees how, and can copy it', (tester) async {
+    final ten = BigInt.from(1000);
+    final flat = _group('Flat');
+    final group = Group(
+      token: flat.token,
+      name: flat.name,
+      currency: flat.currency,
+      minorDigits: flat.minorDigits,
+      createdAt: flat.createdAt,
+      members: [
+        Member(id: 'a', name: 'Ana', balance: -ten, paymentDetails: const [PaymentDetail(label: 'Bank', value: '111')]),
+        Member(
+          id: 'b',
+          name: 'Ben',
+          balance: ten,
+          paymentDetails: const [
+            PaymentDetail(label: 'LINE Pay', value: 'ben.tw'),
+            PaymentDetail(label: 'PayPal', value: 'https://paypal.me/ben'),
+          ],
+        ),
+      ],
+    );
+    final container = await _boot(
+      tester,
+      [
+        groupProvider.overrideWith((ref, token) async => group),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+      ],
+      balances: Balances(nets: {'a': -ten, 'b': ten}, transfers: [Transfer('a', 'b', ten)]),
+    );
+    await _go(tester, container, '/g/tok');
+    expect(find.textContaining('ben.tw', findRichText: true), findsOneWidget);
+    // Ana's own are no use to her here.
+    expect(find.textContaining('111', findRichText: true), findsNothing);
+    expect(find.byTooltip('Open link'), findsOneWidget);
+    // Reminding is for whoever is owed.
+    expect(find.byTooltip('Remind'), findsNothing);
+
+    String? clipboard;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') clipboard = (call.arguments as Map)['text'] as String;
+      return null;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    await tester.tap(find.byTooltip('Copy').first);
+    await tester.pumpAndSettle();
+    expect(clipboard, 'ben.tw');
+    expect(find.text('LINE Pay copied'), findsOneWidget);
+  });
+
+  group('reminders', () {
+    final ten = BigInt.from(1000);
+    // Ben owes this device's Ana.
+    final owed = Balances(nets: {'a': ten, 'b': -ten}, transfers: [Transfer('b', 'a', ten)]);
+    Group flat() {
+      final flat = _group('Flat');
+      return Group(
+        token: flat.token,
+        name: flat.name,
+        currency: flat.currency,
+        minorDigits: flat.minorDigits,
+        createdAt: flat.createdAt,
+        members: [
+          Member(id: 'a', name: 'Ana', balance: ten, paymentDetails: const [PaymentDetail(label: 'Bank', value: '111')]),
+          Member(id: 'b', name: 'Ben', balance: -ten),
+        ],
+      );
+    }
+
+    Future<_Reminders> open(WidgetTester tester, {int devices = 1, bool billing = false, bool plan = false}) async {
+      final server = _Reminders(devices);
+      final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+        ..httpClientAdapter = server;
+      final container = await _boot(
+        tester,
+        [
+          apiProvider.overrideWithValue(dio),
+          groupProvider.overrideWith((ref, token) async => flat()),
+          groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+          groupPlanProvider.overrideWith(
+            (ref, token) async => GroupPlan(
+              planName: 'Free',
+              members: const PlanUsage(),
+              receipts: const PlanUsage(),
+              recurring: const PlanUsage(),
+              reminders: plan,
+            ),
+          ),
+        ],
+        balances: owed,
+        info: ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server, push: true, billing: billing),
+      );
+      await _go(tester, container, '/g/tok');
+      await tester.tap(find.byTooltip('Remind'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remind Ben'), findsOneWidget);
+      return server;
+    }
+
+    testWidgets('send a notification to whoever owes', (tester) async {
+      final server = await open(tester);
+      await tester.tap(find.text('Send a notification'));
+      await tester.pumpAndSettle();
+      expect(server.sent, ['POST /api/v1/g/tok/members/b/remind']);
+      expect(find.text('Reminder sent to Ben'), findsOneWidget);
+    });
+
+    testWidgets('offer a message when the notification reaches nobody', (tester) async {
+      await open(tester, devices: 0);
+      await tester.tap(find.text('Send a notification'));
+      await tester.pumpAndSettle();
+      expect(find.text("Ben doesn't get notifications"), findsOneWidget);
+      expect(find.widgetWithText(SnackBarAction, 'Share a message'), findsOneWidget);
+    });
+
+    testWidgets('a plan without reminders still lets you share', (tester) async {
+      final server = await open(tester, billing: true);
+      expect(find.text("This group's plan doesn't include it"), findsOneWidget);
+      await tester.tap(find.text('Send a notification'));
+      await tester.pumpAndSettle();
+      expect(server.sent, isEmpty);
+      expect(find.text('Share a message'), findsOneWidget);
+    });
+
+    testWidgets('a plan with reminders sends', (tester) async {
+      final server = await open(tester, billing: true, plan: true);
+      expect(find.text("This group's plan doesn't include it"), findsNothing);
+      await tester.tap(find.text('Send a notification'));
+      await tester.pumpAndSettle();
+      expect(server.sent, ['POST /api/v1/g/tok/members/b/remind']);
+    });
+
+    test('the message says how to pay', () {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      final group = flat();
+      expect(
+        reminderText(l10n, group, group.member('a')!, r'$10.00', 'https://example.test/g/tok'),
+        'Reminder: you owe Ana \$10.00 in Flat.\n\nHow to pay:\nBank: 111\n\nhttps://example.test/g/tok',
+      );
+      expect(
+        reminderText(l10n, group, group.member('b')!, r'$10.00', 'https://example.test/g/tok'),
+        'Reminder: you owe Ben \$10.00 in Flat.\n\nhttps://example.test/g/tok',
+      );
+    });
+  });
+
+  testWidgets('payment details are entered from the member menu', (tester) async {
+    final server = _Members();
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/settings');
+    final menu = find.byType(PopupMenuButton<String>).first;
+    await tester.scrollUntilVisible(
+      menu,
+      200,
+      scrollable: find.descendant(of: find.byType(GroupSettingsPage), matching: find.byType(Scrollable)).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Payment details'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Suggestions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank transfer').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Account, ID or link'), ' 012-345678 ');
+    // A second one left blank is not sent.
+    await tester.tap(find.text('Add a way to pay'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final patch = server.sent.singleWhere((r) => r.$1.startsWith('PATCH'));
+    expect(patch.$1, 'PATCH /api/v1/g/tok/members/a');
+    expect(patch.$2, containsPair('paymentDetails', [
+      {'label': 'Bank transfer', 'value': '012-345678'},
+    ]));
+    expect(find.text('Account, ID or link'), findsNothing);
+  });
 
   testWidgets('a balance beyond one transaction still shows, and pays at most one', (tester) async {
     final big = maxMinor + BigInt.from(500);
@@ -1305,6 +1543,9 @@ class _Saves implements HttpClientAdapter {
   /// How many saves the server refuses.
   var refused = 0;
 
+  /// What GET /exchange-rate answers, when the server looks rates up.
+  Map<String, Object?>? rate;
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -1313,6 +1554,10 @@ class _Saves implements HttpClientAdapter {
   ) async {
     sent.add(('${options.method} ${options.uri.path}', options.data));
     keys.add(options.headers['Idempotency-Key']);
+    if (options.uri.path.endsWith('/exchange-rate')) {
+      expect(options.uri.queryParameters, {'from': 'JPY', 'to': 'USD'});
+      return _GroupServer.reply(rate ?? {'code': 'rates_off', 'message': 'no'}, rate == null ? 404 : 200);
+    }
     await hold?.future;
     if (lost > 0) {
       lost--;
@@ -1323,6 +1568,53 @@ class _Saves implements HttpClientAdapter {
       return _GroupServer.reply({'code': 'invalid_amount', 'message': 'no'}, 400);
     }
     return _GroupServer.reply(_expenseJson('e2'), options.method == 'POST' ? 201 : 200);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Answers every request with Ana as she was, which is all a member change needs.
+class _Members implements HttpClientAdapter {
+  final sent = <(String, Object?)>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    sent.add(('${options.method} ${options.uri.path}', options.data));
+    return _GroupServer.reply({
+      'id': 'a',
+      'name': 'Ana',
+      'left': false,
+      'owner': false,
+      'claimed': false,
+      'balance': '0.00',
+    }, 200);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Answers reminders with how many devices they reached; records only them.
+class _Reminders implements HttpClientAdapter {
+  _Reminders(this.devices);
+
+  final int devices;
+  final sent = <String>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    if (!options.uri.path.endsWith('/remind')) return _GroupServer.reply(const <Object>[], 200);
+    sent.add('${options.method} ${options.uri.path}');
+    return _GroupServer.reply({'devices': devices}, 200);
   }
 
   @override
@@ -1372,7 +1664,14 @@ void foreignTests() {
   });
 
   /// Ana and Ben in Flat, with [_yen] listed, saving through [server].
-  Future<ProviderContainer> boot(WidgetTester tester, _Saves server) {
+  Future<ProviderContainer> boot(
+    WidgetTester tester,
+    _Saves server, {
+    Group? group,
+    bool rates = false,
+    CacheDb? db,
+    List<Override> overrides = const [],
+  }) {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1380,11 +1679,12 @@ void foreignTests() {
       ..httpClientAdapter = server;
     return _boot(tester, [
       apiProvider.overrideWithValue(dio),
-      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupProvider.overrideWith((ref, token) async => group ?? _group('Flat')),
       expensesProvider.overrideWith2((token) => _Listed(token, [_yen])),
       expenseProvider.overrideWith((ref, key) async => _yen),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
-    ]);
+      ...overrides,
+    ], info: ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server, exchangeRates: rates), db: db);
   }
 
   EditableText field(WidgetTester tester, String label) => tester.widget<EditableText>(
@@ -1425,6 +1725,59 @@ void foreignTests() {
     expect(server.keys.first, isNotNull);
     expect(server.keys.last, server.keys.first);
     expect(find.byType(ExpenseEditorPage), findsNothing);
+  });
+
+  testWidgets('a new expense saved offline waits on the device until the server is back', (tester) async {
+    final db = _memoryDb();
+    final server = _Saves()..lost = 1;
+    final container = await boot(
+      tester,
+      server,
+      db: db,
+      overrides: [
+        serverProbeProvider.overrideWithValue((url) async => throw const ProbeException(ProbeError.unreachable)),
+      ],
+    );
+    await _go(tester, container, '/g/tok/expenses/new');
+    await fillIn(tester);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExpenseEditorPage), findsNothing);
+    expect(find.text("Saved on this device. It will upload when you're back online."), findsOneWidget);
+    expect(find.widgetWithText(PendingTile, 'Sushi'), findsOneWidget);
+    expect(find.text('Waiting to upload'), findsOneWidget);
+    expect(find.textContaining('1 item waiting to upload.'), findsOneWidget);
+    final row = (await db.select(db.pendingWrites).get()).single;
+    expect((row.groupToken, row.member, row.path, row.key), ('tok', 'a', '/expenses', server.keys.single));
+
+    // Back online, it goes as the same save, so a lost answer adds it once.
+    container.read(offlineProvider.notifier).set(false);
+    await tester.pumpAndSettle();
+    expect(server.keys, hasLength(2));
+    expect(server.keys.last, server.keys.first);
+    expect(server.sent.last.$1, 'POST /api/v1/g/tok/expenses');
+    expect(await db.select(db.pendingWrites).get(), isEmpty);
+    expect(find.byType(PendingTile), findsNothing);
+  });
+
+  testWidgets('a receipt photo keeps a new expense from waiting offline', (tester) async {
+    final db = _memoryDb();
+    final server = _Saves()..lost = 1;
+    ImagePickerPlatform.instance = _Camera();
+    final container = await boot(tester, server, db: db);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await fillIn(tester);
+    await tester.ensureVisible(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExpenseEditorPage), findsOneWidget);
+    expect(find.textContaining("A receipt photo can't be saved offline."), findsOneWidget);
+    expect(await db.select(db.pendingWrites).get(), isEmpty);
   });
 
   testWidgets('a change after a lost answer gets the save back, then changes it', (tester) async {
@@ -1512,6 +1865,26 @@ void foreignTests() {
     expect(tester.widget<TextField>(amount).controller?.text, '125');
   });
 
+  testWidgets('a group with its features off adds none of them', (tester) async {
+    final flat = _group('Flat');
+    final off = Group(
+      token: flat.token,
+      name: flat.name,
+      currency: flat.currency,
+      minorDigits: flat.minorDigits,
+      createdAt: flat.createdAt,
+      members: flat.members,
+      features: const GroupFeatures(foreignCurrency: false, recurring: false, places: false, receipts: false),
+    );
+    final container = await boot(tester, _Saves(), group: off);
+    await _go(tester, container, '/g/tok/expenses/new');
+
+    expect(find.text('Paid in USD', skipOffstage: false), findsNothing);
+    expect(find.text('Location', skipOffstage: false), findsNothing);
+    expect(find.text('Receipt', skipOffstage: false), findsNothing);
+    expect(find.text('Repeat', skipOffstage: false), findsNothing);
+  });
+
   testWidgets('an entry from a newer version shows but is not changed', (tester) async {
     final server = _Saves();
     tester.view.physicalSize = const Size(1200, 3000);
@@ -1529,6 +1902,43 @@ void foreignTests() {
 
     expect(find.text('Made with a newer version'), findsOneWidget);
     expect(find.text('Save'), findsNothing);
+  });
+
+  testWidgets('a new expense in yen starts from the rate the server looks up', (tester) async {
+    final server = _Saves()
+      ..rate = {'rate': '0.0065', 'source': 'frankfurter', 'updatedAt': '2026-11-03T12:00:00Z'};
+    final container = await boot(tester, server, rates: true);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'), '13');
+    await tester.tap(find.text('Paid in USD'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.descendant(of: find.byType(BottomSheet), matching: find.byType(TextField)), 'JPY');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Japanese Yen'));
+    await tester.pumpAndSettle();
+    expect(server.sent.map((s) => s.$1), contains('GET /api/v1/exchange-rate'));
+    expect(field(tester, '1 JPY in USD').controller.text, '0.0065');
+    expect(field(tester, 'Total in USD').controller.text, '0.08');
+    expect(find.textContaining('Rate from Frankfurter, Nov 3, 2026.'), findsOneWidget);
+
+    // A rate typed over it is no longer the looked-up one.
+    await tester.enterText(find.widgetWithText(TextFormField, '1 JPY in USD'), '0.007');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Rate from Frankfurter'), findsNothing);
+  });
+
+  testWidgets('without the server rate the group\'s last rate stays', (tester) async {
+    final server = _Saves();
+    final container = await boot(tester, server, rates: true);
+    await _go(tester, container, '/g/tok/expenses/new');
+    await tester.tap(find.text('Paid in USD'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.descendant(of: find.byType(BottomSheet), matching: find.byType(TextField)), 'JPY');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Japanese Yen'));
+    await tester.pumpAndSettle();
+    expect(field(tester, '1 JPY in USD').controller.text, '0.00643');
+    expect(find.textContaining('Rate from'), findsNothing);
   });
 
   testWidgets('a new expense in yen starts from the last rate and saves what it came to', (tester) async {

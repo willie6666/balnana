@@ -119,6 +119,7 @@ class ServerInfo {
     this.mapAttribution = '',
     this.setupRequired = false,
     this.setupCode = false,
+    this.exchangeRates = false,
   });
 
   factory ServerInfo.fromJson(Object? json) {
@@ -171,6 +172,7 @@ class ServerInfo {
       },
       setupRequired: json['setupRequired'] == true,
       setupCode: json['setupCode'] == true,
+      exchangeRates: json['exchangeRates'] == true,
     );
   }
 
@@ -244,6 +246,9 @@ class ServerInfo {
 
   /// Setting it up also needs the code the server printed in its log.
   final bool setupCode;
+
+  /// The server looks up exchange rates for paying in another currency.
+  final bool exchangeRates;
 }
 
 @immutable

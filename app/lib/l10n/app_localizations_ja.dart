@@ -22,7 +22,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
-  String get offlineBar => 'オフラインです。このデバイスに保存された内容を表示しています。再接続するまで変更は保存されません。';
+  String get offlineBar => 'オフラインです。このデバイスに保存された内容を表示しています。新しい支出と支払いは再接続するとアップロードされます。';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 件がアップロード待ちです。');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'この端末に保存しました。オンラインに戻るとアップロードされます。';
+
+  @override
+  String get pendingWaiting => 'アップロード待ち';
+
+  @override
+  String pendingRefused(String error) {
+    return 'アップロードされませんでした: $error';
+  }
+
+  @override
+  String get pendingDiscard => '破棄';
+
+  @override
+  String get offlineNoReceipt => 'レシートの写真はオフラインでは保存できません。写真を外して今すぐ支出を保存するか、オンラインに戻ってからもう一度お試しください。';
 
   @override
   String get commonSave => '保存';
@@ -437,6 +460,46 @@ class AppLocalizationsJa extends AppLocalizations {
   String get memberRename => '名前を変更';
 
   @override
+  String get memberPaymentDetails => '支払い先情報';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'このグループのほかの人が$nameさんに支払う方法（銀行口座、決済アプリ、リンクなど）。グループの全員が見られます。';
+  }
+
+  @override
+  String get paymentDetailLabel => '方法';
+
+  @override
+  String get paymentDetailValue => '口座・ID・リンク';
+
+  @override
+  String get paymentDetailAdd => '支払い方法を追加';
+
+  @override
+  String get paymentDetailBank => '銀行振込';
+
+  @override
+  String get paymentDetailSuggestions => '候補';
+
+  @override
+  String get paymentDetailCopy => 'コピー';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$labelをコピーしました';
+  }
+
+  @override
+  String get paymentDetailOpen => 'リンクを開く';
+
+  @override
+  String get errorInvalidPaymentDetails => '支払い方法ごとに、方法と口座・ID・リンクをそれぞれ1行で入力してください。';
+
+  @override
+  String get errorNothingOwed => '今は支払いがありません。';
+
+  @override
   String get memberRenameTitle => '名前を変更';
 
   @override
@@ -487,6 +550,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'アカウントなしで表示・編集できるようにする';
+
+  @override
+  String get groupFeatures => '機能';
+
+  @override
+  String get groupFeaturesHelp => 'オフにすると支出に追加できなくなります。既存のデータはそのまま残ります。';
+
+  @override
+  String get groupFeatureForeign => '他の通貨';
+
+  @override
+  String get groupFeatureForeignHelp => 'グループの通貨以外で支払った支出';
+
+  @override
+  String get groupFeatureRecurring => '定期支出';
+
+  @override
+  String get groupFeatureRecurringHelp => 'スケジュールに沿って追加されます。オフの間は追加されません';
+
+  @override
+  String get groupFeaturePlaces => '場所';
+
+  @override
+  String get groupFeaturePlacesHelp => '支出があった場所';
+
+  @override
+  String get groupFeatureReceipts => 'レシート';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'レシートの写真';
+
+  @override
+  String get errorFeatureOff => 'このグループではオフになっています。グループの設定でオンに戻せます。';
 
   @override
   String get resetLinkTitle => 'リンクをリセット';
@@ -620,6 +716,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get expenseAdd => '支出を追加';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '$groupに支出を追加';
+  }
+
+  @override
+  String get widgetPickGroup => 'どのグループを表示しますか？';
+
+  @override
+  String get widgetNoGroups => '先に Balnana を開いてグループを追加してください。';
 
   @override
   String get expensesEmptyTitle => '支出はまだありません';
@@ -812,6 +919,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return '$source のレート（$date）。';
+  }
+
+  @override
   String get expenseNote => 'メモ';
 
   @override
@@ -954,6 +1066,44 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get recordPayment => '記録';
+
+  @override
+  String get remindAction => 'リマインド';
+
+  @override
+  String remindTitle(String name) {
+    return '$nameさんにリマインド';
+  }
+
+  @override
+  String get remindNotify => '通知を送る';
+
+  @override
+  String get remindNeedsPlan => 'このグループのプランには含まれていません';
+
+  @override
+  String get remindShare => 'メッセージを共有';
+
+  @override
+  String remindSent(String name) {
+    return '$nameさんにリマインドを送りました';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$nameさんは通知を受け取っていません';
+  }
+
+  @override
+  String get remindCopied => 'リマインドをコピーしました';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'リマインド：$groupで$payeeさんに$amountの支払いがあります。';
+  }
+
+  @override
+  String get reminderHowToPay => '支払い方法：';
 
   @override
   String get recordPaymentTitle => '支払いを記録';
@@ -1262,6 +1412,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsNotificationsBlocked => 'スマートフォンの設定で通知がブロックされています。Balnanaの通知を許可してください';
 
   @override
+  String get settingsNotificationsBlockedBrowser => 'このブラウザでは許可されていません。表示するには、ブラウザの設定でこのサイトの通知を許可してください';
+
+  @override
   String get pushChannel => '支出';
 
   @override
@@ -1295,6 +1448,11 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$titleを削除 · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$whoさんから：$amountの支払いのリマインドです';
   }
 
   @override
@@ -2123,7 +2281,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      '作成または参加したグループの名前、メンバーの名前、支出、支払い、メモ、レシート写真、支出に追加した場所を保存します。アカウントを使う場合は、名前、メールアドレスまたはユーザー名、パスワードそのものではなくパスワードのハッシュ、Googleなどのサインインプロバイダーも保存します。通知がオンの場合は、デバイス識別子とプッシュ通知サービスから割り当てられたアドレスも保存します。';
+      '作成または参加したグループの名前、メンバーの名前と支払い先情報、支出、支払い、メモ、レシート写真、支出に追加した場所を保存します。アカウントを使う場合は、名前、メールアドレスまたはユーザー名、パスワードそのものではなくパスワードのハッシュ、Googleなどのサインインプロバイダーも保存します。通知がオンの場合は、デバイス識別子とプッシュ通知サービスから割り当てられたアドレスも保存します。';
 
   @override
   String get privacyUseTitle => '情報の使い方';
@@ -2137,13 +2295,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'グループのメンバーは、そのグループのメンバー、支出、履歴を確認できます。リンクで公開されたグループは、リンクを知っている人なら誰でも開けます。GoogleでのサインインはGoogleを経由します。運営者が通知を有効にした場合、通知はスマートフォンで使っているプッシュ通知サービス（GoogleのFirebase Cloud Messaging、またはインストール済みのntfyなどのUnifiedPushサービス）を経由します。通知の内容は送信中に暗号化されます。地図は運営者が選んだ地図プロバイダー（変更されていなければOpenFreeMap）から画像を読み込みます。地図プロバイダーにはネットワークアドレスと閲覧した地域が伝わります。「現在地を使う」をタップしたときだけ現在地を読み取り、その後に保存した地点だけを記録します。';
+      'グループのメンバーは、そのグループのメンバー、支出、履歴を確認できます。リンクで公開されたグループは、リンクを知っている人なら誰でも開けます。GoogleでのサインインはGoogleを経由します。運営者が通知を有効にした場合、通知はスマートフォンで使っているプッシュ通知サービス（GoogleのFirebase Cloud Messaging、またはインストール済みのntfyなどのUnifiedPushサービス）を経由します。ウェブ版では、ブラウザのプッシュ通知サービスを経由します。通知の内容は送信中に暗号化されます。地図は運営者が選んだ地図プロバイダー（変更されていなければOpenFreeMap）から画像を読み込みます。地図プロバイダーにはネットワークアドレスと閲覧した地域が伝わります。「現在地を使う」をタップしたときだけ現在地を読み取り、その後に保存した地点だけを記録します。';
 
   @override
   String get privacyDeviceTitle => 'このデバイス上の情報';
 
   @override
-  String get privacyDeviceBody => 'オフラインで使えるように、サーバーアドレス、設定、グループのコピーを保存します。アプリをアンインストールすると削除されます。';
+  String get privacyDeviceBody =>
+      'オフラインで使えるように、サーバーアドレス、設定、グループのコピーを保存します。アプリをアンインストールすると削除されます。オフライン中に追加した支出と支払いは、アップロードされるまでここに保存されます。';
 
   @override
   String get privacyDeleteTitle => 'データの削除';
@@ -2303,6 +2462,26 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       '地図プロバイダーの指定に従い、各地図に表示します。空欄の場合、スタイルでは指定されたクレジットを表示し、タイルではOpenStreetMapを表示します。';
+
+  @override
+  String get adminSectionRates => '為替レート';
+
+  @override
+  String get adminSectionRatesBody =>
+      '支出を別の通貨で支払ったとき、アプリは最新のレートを初期値にします。レートは欧州中央銀行の無料参照レートである Frankfurter から、またはアプリ ID がある場合は Open Exchange Rates から取得します。サーバーが問い合わせるのは最大で 1 時間に 1 回です。';
+
+  @override
+  String get adminExchangeRates => '為替レートを取得';
+
+  @override
+  String get adminExchangeRatesHelp => 'オフの場合、レートは毎回手入力します。';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates のアプリ ID';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      '任意。設定すると、より多くの通貨に対応する Open Exchange Rates からレートを取得します（無料プランで十分です）。未設定なら Frankfurter から取得します。';
 
   @override
   String get adminInvalidMapTiles => 'z、x、yを波括弧で示したhttp(s) URLテンプレートを入力してください。';
@@ -2785,6 +2964,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminPlanDefaultHelp => '他のプランがないすべてのアカウントに適用されます。';
 
   @override
+  String get adminPlanRemindersHelp => 'このプランのグループは通知で支払いをリマインドできます。';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '$name を削除しますか？';
   }
@@ -2912,6 +3094,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'このグループのプランには支払いリマインドが含まれていません。';
+
+  @override
   String get errorLimitOther => 'このサーバーの上限に達しました。';
 
   @override
@@ -2958,6 +3143,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'プランを共有するグループ';
+
+  @override
+  String get planLimitReminders => '支払いリマインド';
+
+  @override
+  String get planIncluded => '含まれる';
+
+  @override
+  String get planNotIncluded => '含まれない';
 
   @override
   String get planGet => 'プランを入手';

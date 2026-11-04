@@ -23,7 +23,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Offline. Showing what this device saved; changes cannot be saved until you reconnect.';
+      'Offline. Showing what this device saved; new expenses and payments upload when you reconnect.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items waiting to upload.',
+      one: '1 item waiting to upload.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Saved on this device. It will upload when you\'re back online.';
+
+  @override
+  String get pendingWaiting => 'Waiting to upload';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Not uploaded: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Discard';
+
+  @override
+  String get offlineNoReceipt =>
+      'A receipt photo can\'t be saved offline. Remove the photo to save the expense now, or try again when you\'re back online.';
 
   @override
   String get commonSave => 'Save';
@@ -445,6 +474,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memberRename => 'Rename';
 
   @override
+  String get memberPaymentDetails => 'Payment details';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'How others in this group can pay $name: a bank account, a payment app or a link. Everyone in the group can see them.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Method';
+
+  @override
+  String get paymentDetailValue => 'Account, ID or link';
+
+  @override
+  String get paymentDetailAdd => 'Add a way to pay';
+
+  @override
+  String get paymentDetailBank => 'Bank transfer';
+
+  @override
+  String get paymentDetailSuggestions => 'Suggestions';
+
+  @override
+  String get paymentDetailCopy => 'Copy';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label copied';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Open link';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Each way to pay needs a method and an account, ID or link, each on one line.';
+
+  @override
+  String get errorNothingOwed => 'They don\'t owe you anything now.';
+
+  @override
   String get memberRenameTitle => 'Rename';
 
   @override
@@ -495,6 +565,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Let people see and edit without an account';
+
+  @override
+  String get groupFeatures => 'Features';
+
+  @override
+  String get groupFeaturesHelp =>
+      'Switched off, it can\'t be added to expenses. What\'s there already stays.';
+
+  @override
+  String get groupFeatureForeign => 'Other currencies';
+
+  @override
+  String get groupFeatureForeignHelp => 'Expenses paid in a currency other than the group\'s';
+
+  @override
+  String get groupFeatureRecurring => 'Recurring expenses';
+
+  @override
+  String get groupFeatureRecurringHelp => 'Added on a schedule. Switched off, the schedules wait';
+
+  @override
+  String get groupFeaturePlaces => 'Locations';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Where an expense happened';
+
+  @override
+  String get groupFeatureReceipts => 'Receipts';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'A photo of the receipt';
+
+  @override
+  String get errorFeatureOff =>
+      'This group has that switched off. It can be turned on again in the group\'s settings.';
 
   @override
   String get resetLinkTitle => 'Reset link';
@@ -630,6 +735,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Add expense';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Add expense in $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Show which group?';
+
+  @override
+  String get widgetNoGroups => 'Open Balnana and add a group first.';
 
   @override
   String get expensesEmptyTitle => 'No expenses yet';
@@ -827,6 +943,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Rate from $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Note';
 
   @override
@@ -971,6 +1092,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordPayment => 'Record';
+
+  @override
+  String get remindAction => 'Remind';
+
+  @override
+  String remindTitle(String name) {
+    return 'Remind $name';
+  }
+
+  @override
+  String get remindNotify => 'Send a notification';
+
+  @override
+  String get remindNeedsPlan => 'This group\'s plan doesn\'t include it';
+
+  @override
+  String get remindShare => 'Share a message';
+
+  @override
+  String remindSent(String name) {
+    return 'Reminder sent to $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name doesn\'t get notifications';
+  }
+
+  @override
+  String get remindCopied => 'Reminder copied';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Reminder: you owe $payee $amount in $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'How to pay:';
 
   @override
   String get recordPaymentTitle => 'Record a payment';
@@ -1281,6 +1440,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Blocked in the phone\'s settings: allow notifications for Balnana there to see them';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Not allowed in this browser: allow notifications for this site in its settings to see them';
+
+  @override
   String get pushChannel => 'Expenses';
 
   @override
@@ -1314,6 +1477,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title was deleted · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who reminds you that you owe $amount';
   }
 
   @override
@@ -2173,7 +2341,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'The groups you create or join: their names, the members\' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.';
+      'The groups you create or join: their names, the members\' names and payment details, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.';
 
   @override
   String get privacyUseTitle => 'How it is used';
@@ -2187,14 +2355,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.';
+      'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. In the web app, they go through your browser\'s push service. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.';
 
   @override
   String get privacyDeviceTitle => 'On this device';
 
   @override
   String get privacyDeviceBody =>
-      'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them.';
+      'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them. Expenses and payments added while offline wait here until they upload.';
 
   @override
   String get privacyDeleteTitle => 'Deleting your data';
@@ -2360,6 +2528,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Exchange rates';
+
+  @override
+  String get adminSectionRatesBody =>
+      'When an expense is paid in another currency, the app starts its rate from the latest one. Rates come from Frankfurter, the European Central Bank\'s free reference rates, or from Open Exchange Rates when it has an app ID. The server asks at most once an hour.';
+
+  @override
+  String get adminExchangeRates => 'Look up exchange rates';
+
+  @override
+  String get adminExchangeRatesHelp => 'Off, people type every rate themselves.';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates app ID';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Optional. With one, rates come from Open Exchange Rates, which has more currencies; its free plan is enough. Without, from Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Enter an http(s) URL template with z, x and y in braces.';
@@ -2879,6 +3067,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPlanDefaultHelp => 'For every account without another plan.';
 
   @override
+  String get adminPlanRemindersHelp => 'Groups on this plan can remind people to pay with a notification.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Remove $name?';
   }
@@ -3012,6 +3203,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'This group\'s plan doesn\'t include payment reminders.';
+
+  @override
   String get errorLimitOther => 'You\'ve reached a limit on this server.';
 
   @override
@@ -3059,6 +3253,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Groups sharing your plan';
+
+  @override
+  String get planLimitReminders => 'Payment reminders';
+
+  @override
+  String get planIncluded => 'Included';
+
+  @override
+  String get planNotIncluded => 'Not included';
 
   @override
   String get planGet => 'Get a plan';

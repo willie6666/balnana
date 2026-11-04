@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One group on the home screen; HomeScreen.render fills it in. Of the three
+     balance lines, only the one for owed, owing or settled shows. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/open"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="8dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/balance_owed"
+            style="@style/WidgetBalance"
+            android:textColor="@color/widget_owed" />
+
+        <TextView
+            android:id="@+id/balance_owe"
+            style="@style/WidgetBalance"
+            android:textColor="@color/widget_owe" />
+
+        <TextView
+            android:id="@+id/balance_settled"
+            style="@style/WidgetBalance"
+            android:textColor="@color/widget_settled" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/add"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/widget_add_background"
+        android:src="@drawable/ic_add" />
+</LinearLayout>

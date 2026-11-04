@@ -23,7 +23,36 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'Offline. Mostriamo i dati salvati su questo dispositivo; non puoi salvare le modifiche finché non ti riconnetti.';
+      'Offline. Mostra ciò che questo dispositivo ha salvato; nuove spese e pagamenti verranno caricati alla riconnessione.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count elementi in attesa di caricamento.',
+      one: '1 elemento in attesa di caricamento.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'Salvato su questo dispositivo. Verrà caricato quando tornerai online.';
+
+  @override
+  String get pendingWaiting => 'In attesa di caricamento';
+
+  @override
+  String pendingRefused(String error) {
+    return 'Non caricato: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'Elimina';
+
+  @override
+  String get offlineNoReceipt =>
+      'Una foto della ricevuta non può essere salvata offline. Rimuovi la foto per salvare la spesa ora, o riprova quando sarai di nuovo online.';
 
   @override
   String get commonSave => 'Salva';
@@ -454,6 +483,47 @@ class AppLocalizationsIt extends AppLocalizations {
   String get memberRename => 'Rinomina';
 
   @override
+  String get memberPaymentDetails => 'Dati di pagamento';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'Come gli altri nel gruppo possono pagare $name: un conto bancario, un\'app di pagamento o un link. Tutti nel gruppo possono vederli.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'Metodo';
+
+  @override
+  String get paymentDetailValue => 'Conto, ID o link';
+
+  @override
+  String get paymentDetailAdd => 'Aggiungi un metodo di pagamento';
+
+  @override
+  String get paymentDetailBank => 'Bonifico bancario';
+
+  @override
+  String get paymentDetailSuggestions => 'Suggerimenti';
+
+  @override
+  String get paymentDetailCopy => 'Copia';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label copiato';
+  }
+
+  @override
+  String get paymentDetailOpen => 'Apri link';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'Ogni metodo di pagamento richiede un nome e un conto, ID o link, ciascuno su una sola riga.';
+
+  @override
+  String get errorNothingOwed => 'Ora non ti deve niente.';
+
+  @override
   String get memberRenameTitle => 'Rinomina';
 
   @override
@@ -505,6 +575,42 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'Consenti di vedere e modificare senza un account';
+
+  @override
+  String get groupFeatures => 'Funzioni';
+
+  @override
+  String get groupFeaturesHelp =>
+      'Se disattivato, non si può aggiungere alle spese. Quello che c\'è già resta.';
+
+  @override
+  String get groupFeatureForeign => 'Altre valute';
+
+  @override
+  String get groupFeatureForeignHelp => 'Spese pagate in una valuta diversa da quella del gruppo';
+
+  @override
+  String get groupFeatureRecurring => 'Spese ricorrenti';
+
+  @override
+  String get groupFeatureRecurringHelp =>
+      'Aggiunte secondo una programmazione. Se disattivato, le programmazioni aspettano';
+
+  @override
+  String get groupFeaturePlaces => 'Luoghi';
+
+  @override
+  String get groupFeaturePlacesHelp => 'Dove è stata fatta una spesa';
+
+  @override
+  String get groupFeatureReceipts => 'Ricevute';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'Una foto della ricevuta';
+
+  @override
+  String get errorFeatureOff =>
+      'Questo gruppo l\'ha disattivato. Si può riattivare nelle impostazioni del gruppo.';
 
   @override
   String get resetLinkTitle => 'Reimposta link';
@@ -641,6 +747,17 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get expenseAdd => 'Aggiungi spesa';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'Spesa in $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'Quale gruppo mostrare?';
+
+  @override
+  String get widgetNoGroups => 'Apri Balnana e aggiungi prima un gruppo.';
 
   @override
   String get expensesEmptyTitle => 'Ancora nessuna spesa';
@@ -833,6 +950,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'Tasso da $source, $date.';
+  }
+
+  @override
   String get expenseNote => 'Nota';
 
   @override
@@ -978,6 +1100,44 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get recordPayment => 'Registra';
+
+  @override
+  String get remindAction => 'Ricorda';
+
+  @override
+  String remindTitle(String name) {
+    return 'Ricorda a $name';
+  }
+
+  @override
+  String get remindNotify => 'Invia una notifica';
+
+  @override
+  String get remindNeedsPlan => 'Non incluso nel piano di questo gruppo';
+
+  @override
+  String get remindShare => 'Condividi un messaggio';
+
+  @override
+  String remindSent(String name) {
+    return 'Promemoria inviato a $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name non riceve notifiche';
+  }
+
+  @override
+  String get remindCopied => 'Promemoria copiato';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'Promemoria: devi $amount a $payee in $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'Come pagare:';
 
   @override
   String get recordPaymentTitle => 'Registra un pagamento';
@@ -1293,6 +1453,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Bloccate nelle impostazioni del telefono: consenti le notifiche di Balnana per visualizzarle';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'Non consentite in questo browser: consenti le notifiche di questo sito nelle sue impostazioni per vederle';
+
+  @override
   String get pushChannel => 'Spese';
 
   @override
@@ -1327,6 +1491,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'Spesa eliminata: $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who ti ricorda che gli devi $amount';
   }
 
   @override
@@ -2197,7 +2366,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'I gruppi che crei o a cui ti unisci: i loro nomi, i nomi dei membri, le spese, i pagamenti, le note, le eventuali foto delle ricevute e i luoghi aggiunti alle spese. Con un account vengono conservati anche il tuo nome, il tuo indirizzo email o nome utente, l\'hash della tua password (mai la password stessa) e il provider di accesso che usi, come Google. Se le notifiche sono attive, vengono conservati un identificativo del dispositivo e l\'indirizzo fornito dal suo servizio di notifiche push.';
+      'I gruppi che crei o a cui ti unisci: i loro nomi, i nomi dei membri e i loro dati di pagamento, le spese, i pagamenti, le note, le eventuali foto delle ricevute e i luoghi aggiunti alle spese. Con un account vengono conservati anche il tuo nome, il tuo indirizzo email o nome utente, l\'hash della tua password (mai la password stessa) e il provider di accesso che usi, come Google. Se le notifiche sono attive, vengono conservati un identificativo del dispositivo e l\'indirizzo fornito dal suo servizio di notifiche push.';
 
   @override
   String get privacyUseTitle => 'Come vengono usati';
@@ -2211,14 +2380,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'Tutti i membri di un gruppo vedono i suoi membri, le spese e la cronologia. Se un gruppo è accessibile tramite link, chiunque abbia il link può aprirlo. L\'accesso con Google passa da Google; le notifiche, se attivate dall\'operatore, passano dal servizio push usato dal telefono: Firebase Cloud Messaging di Google o un servizio UnifiedPush installato da te, come ntfy. Il contenuto delle notifiche è crittografato durante l\'invio. Le mappe caricano le immagini dal provider scelto dall\'operatore, OpenFreeMap se non è stato cambiato: il provider vede il tuo indirizzo di rete e l\'area che visualizzi. La posizione viene rilevata solo quando tocchi “Usa la posizione attuale” e viene salvato solo il punto che scegli di mantenere.';
+      'Tutti i membri di un gruppo vedono i suoi membri, le spese e la cronologia. Se un gruppo è accessibile tramite link, chiunque abbia il link può aprirlo. L\'accesso con Google passa da Google; le notifiche, se attivate dall\'operatore, passano dal servizio push usato dal telefono: Firebase Cloud Messaging di Google o un servizio UnifiedPush installato da te, come ntfy. Nell\'app web passano dal servizio push del browser. Il contenuto delle notifiche è crittografato durante l\'invio. Le mappe caricano le immagini dal provider scelto dall\'operatore, OpenFreeMap se non è stato cambiato: il provider vede il tuo indirizzo di rete e l\'area che visualizzi. La posizione viene rilevata solo quando tocchi “Usa la posizione attuale” e viene salvato solo il punto che scegli di mantenere.';
 
   @override
   String get privacyDeviceTitle => 'Su questo dispositivo';
 
   @override
   String get privacyDeviceBody =>
-      'L\'app conserva l\'indirizzo del server, le tue impostazioni e una copia dei gruppi per quando sei offline. Disinstallando l\'app, questi dati vengono rimossi.';
+      'L\'app conserva l\'indirizzo del server, le tue impostazioni e una copia dei gruppi per quando sei offline. Disinstallando l\'app, questi dati vengono rimossi. Le spese e i pagamenti aggiunti offline restano qui finché non vengono caricati.';
 
   @override
   String get privacyDeleteTitle => 'Eliminazione dei dati';
@@ -2386,6 +2555,26 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'Mostrata su ogni mappa, come richiesto dal provider. Se il campo è vuoto, uno stile mostra i crediti specificati e i tasselli riportano OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'Tassi di cambio';
+
+  @override
+  String get adminSectionRatesBody =>
+      'Quando una spesa è pagata in un\'altra valuta, l\'app parte dal tasso più recente. I tassi vengono da Frankfurter, i tassi di riferimento gratuiti della Banca centrale europea, o da Open Exchange Rates se c\'è un ID app. Il server chiede al massimo una volta all\'ora.';
+
+  @override
+  String get adminExchangeRates => 'Cerca i tassi di cambio';
+
+  @override
+  String get adminExchangeRatesHelp => 'Se disattivato, ogni tasso si scrive a mano.';
+
+  @override
+  String get adminOxrAppId => 'ID app di Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'Facoltativo. Con un ID, i tassi vengono da Open Exchange Rates, che ha più valute; basta il piano gratuito. Senza, da Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'Inserisci un modello di URL http(s) con z, x e y tra parentesi graffe.';
@@ -2915,6 +3104,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get adminPlanDefaultHelp => 'Per ogni account senza un altro piano.';
 
   @override
+  String get adminPlanRemindersHelp =>
+      'I gruppi con questo piano possono ricordare i pagamenti con una notifica.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'Rimuovere $name?';
   }
@@ -3049,6 +3242,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'Il piano di questo gruppo non include i promemoria di pagamento.';
+
+  @override
   String get errorLimitOther => 'Hai raggiunto un limite di questo server.';
 
   @override
@@ -3096,6 +3292,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'Gruppi che condividono il tuo piano';
+
+  @override
+  String get planLimitReminders => 'Promemoria di pagamento';
+
+  @override
+  String get planIncluded => 'Incluso';
+
+  @override
+  String get planNotIncluded => 'Non incluso';
 
   @override
   String get planGet => 'Ottieni un piano';

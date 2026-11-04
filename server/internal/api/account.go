@@ -258,7 +258,7 @@ func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) er
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `update members set user_id = null, is_owner = false where user_id = $1`, userID); err != nil {
+	if _, err := tx.Exec(ctx, `update members set user_id = null, is_owner = false, payment_details = '[]' where user_id = $1`, userID); err != nil {
 		return err
 	}
 	tag, err := tx.Exec(ctx, `delete from users where id = $1`, userID)

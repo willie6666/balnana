@@ -22,7 +22,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commonRetry => '다시 시도';
 
   @override
-  String get offlineBar => '오프라인 상태예요. 이 기기에 저장된 내용을 표시하고 있어요. 다시 연결될 때까지 변경사항을 저장할 수 없어요.';
+  String get offlineBar => '오프라인입니다. 이 기기에 저장된 내용을 표시합니다. 새 지출과 결제는 다시 연결되면 업로드됩니다.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count개 항목이 업로드를 기다리고 있습니다.');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => '이 기기에 저장했습니다. 다시 온라인이 되면 업로드됩니다.';
+
+  @override
+  String get pendingWaiting => '업로드 대기 중';
+
+  @override
+  String pendingRefused(String error) {
+    return '업로드되지 않음: $error';
+  }
+
+  @override
+  String get pendingDiscard => '버리기';
+
+  @override
+  String get offlineNoReceipt => '영수증 사진은 오프라인에서 저장할 수 없습니다. 사진을 빼고 지금 지출을 저장하거나, 다시 온라인이 되면 다시 시도하세요.';
 
   @override
   String get commonSave => '저장';
@@ -437,6 +460,46 @@ class AppLocalizationsKo extends AppLocalizations {
   String get memberRename => '이름 변경';
 
   @override
+  String get memberPaymentDetails => '결제 정보';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return '이 그룹의 다른 사람들이 $name님에게 돈을 보내는 방법: 은행 계좌, 결제 앱 또는 링크. 그룹의 모두가 볼 수 있어요.';
+  }
+
+  @override
+  String get paymentDetailLabel => '방법';
+
+  @override
+  String get paymentDetailValue => '계좌, ID 또는 링크';
+
+  @override
+  String get paymentDetailAdd => '결제 방법 추가';
+
+  @override
+  String get paymentDetailBank => '계좌 이체';
+
+  @override
+  String get paymentDetailSuggestions => '추천';
+
+  @override
+  String get paymentDetailCopy => '복사';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '$label 복사됨';
+  }
+
+  @override
+  String get paymentDetailOpen => '링크 열기';
+
+  @override
+  String get errorInvalidPaymentDetails => '결제 방법마다 방법과 계좌·ID·링크가 필요하며, 각각 한 줄이어야 해요.';
+
+  @override
+  String get errorNothingOwed => '지금은 갚을 금액이 없습니다.';
+
+  @override
   String get memberRenameTitle => '이름 변경';
 
   @override
@@ -487,6 +550,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get linkAccessHelp => '계정 없이도 그룹을 보고 수정할 수 있게 해요';
+
+  @override
+  String get groupFeatures => '기능';
+
+  @override
+  String get groupFeaturesHelp => '끄면 지출에 추가할 수 없어요. 이미 있는 내용은 그대로 남아요.';
+
+  @override
+  String get groupFeatureForeign => '다른 통화';
+
+  @override
+  String get groupFeatureForeignHelp => '그룹 통화가 아닌 통화로 결제한 지출';
+
+  @override
+  String get groupFeatureRecurring => '반복 지출';
+
+  @override
+  String get groupFeatureRecurringHelp => '일정에 따라 추가돼요. 끄면 일정이 멈춰요';
+
+  @override
+  String get groupFeaturePlaces => '장소';
+
+  @override
+  String get groupFeaturePlacesHelp => '지출한 장소';
+
+  @override
+  String get groupFeatureReceipts => '영수증';
+
+  @override
+  String get groupFeatureReceiptsHelp => '영수증 사진';
+
+  @override
+  String get errorFeatureOff => '이 그룹에서는 꺼져 있어요. 그룹 설정에서 다시 켤 수 있어요.';
 
   @override
   String get resetLinkTitle => '링크 재설정';
@@ -620,6 +716,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get expenseAdd => '지출 추가';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '$group에 지출 추가';
+  }
+
+  @override
+  String get widgetPickGroup => '어떤 그룹을 표시할까요?';
+
+  @override
+  String get widgetNoGroups => '먼저 Balnana를 열고 그룹을 추가하세요.';
 
   @override
   String get expensesEmptyTitle => '아직 지출이 없어요';
@@ -812,6 +919,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return '$source 환율($date).';
+  }
+
+  @override
   String get expenseNote => '메모';
 
   @override
@@ -954,6 +1066,44 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get recordPayment => '기록';
+
+  @override
+  String get remindAction => '알림 보내기';
+
+  @override
+  String remindTitle(String name) {
+    return '$name님에게 알림 보내기';
+  }
+
+  @override
+  String get remindNotify => '알림 보내기';
+
+  @override
+  String get remindNeedsPlan => '이 그룹의 요금제에 포함되지 않음';
+
+  @override
+  String get remindShare => '메시지 공유';
+
+  @override
+  String remindSent(String name) {
+    return '$name님에게 알림을 보냈습니다';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name님은 알림을 받지 않습니다';
+  }
+
+  @override
+  String get remindCopied => '알림 메시지를 복사했습니다';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return '알림: $group에서 $payee님에게 $amount을(를) 갚아야 합니다.';
+  }
+
+  @override
+  String get reminderHowToPay => '결제 방법:';
 
   @override
   String get recordPaymentTitle => '송금 기록';
@@ -1262,6 +1412,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsNotificationsBlocked => '휴대폰 설정에서 차단됐어요. Balnana 알림을 허용하면 알림을 받을 수 있어요.';
 
   @override
+  String get settingsNotificationsBlockedBrowser => '이 브라우저에서 허용되지 않았습니다. 알림을 보려면 브라우저 설정에서 이 사이트의 알림을 허용하세요';
+
+  @override
   String get pushChannel => '지출';
 
   @override
@@ -1295,6 +1448,11 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '$title 지출이 삭제됐어요 · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who님이 $amount을(를) 갚으라고 알림을 보냈습니다';
   }
 
   @override
@@ -2123,7 +2281,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      '만들거나 참여한 그룹의 이름, 멤버 이름, 지출, 송금, 메모, 영수증 사진, 지출에 추가한 장소가 저장돼요. 계정을 사용하면 이름, 이메일 주소 또는 사용자 이름, 비밀번호 해시(비밀번호 자체는 저장하지 않음), Google 같은 로그인 제공자도 저장돼요. 알림을 켜면 기기 식별자와 푸시 서비스에서 제공한 주소도 저장돼요.';
+      '만들거나 참여한 그룹의 이름, 멤버 이름과 송금 정보, 지출, 송금, 메모, 영수증 사진, 지출에 추가한 장소가 저장돼요. 계정을 사용하면 이름, 이메일 주소 또는 사용자 이름, 비밀번호 해시(비밀번호 자체는 저장하지 않음), Google 같은 로그인 제공자도 저장돼요. 알림을 켜면 기기 식별자와 푸시 서비스에서 제공한 주소도 저장돼요.';
 
   @override
   String get privacyUseTitle => '정보 사용 방법';
@@ -2137,13 +2295,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      '그룹 멤버는 그룹의 멤버, 지출, 내역을 볼 수 있어요. 링크로 공개된 그룹은 링크가 있는 누구나 열 수 있어요. Google 로그인은 Google을 통해 처리돼요. 운영자가 알림을 켜면 휴대폰에서 사용하는 푸시 서비스인 Google Firebase Cloud Messaging 또는 설치한 ntfy 같은 UnifiedPush 서비스로 알림이 전송돼요. 알림 내용은 전송 중 암호화돼요. 지도는 운영자가 선택한 지도 제공업체에서 이미지를 불러와요. 기본값은 OpenFreeMap이며, 제공업체는 네트워크 주소와 조회한 지역을 알 수 있어요. 내 위치는 “현재 위치 사용”을 탭할 때만 읽고, 이후 저장하기로 한 위치만 저장해요.';
+      '그룹 멤버는 그룹의 멤버, 지출, 내역을 볼 수 있어요. 링크로 공개된 그룹은 링크가 있는 누구나 열 수 있어요. Google 로그인은 Google을 통해 처리돼요. 운영자가 알림을 켜면 휴대폰에서 사용하는 푸시 서비스인 Google Firebase Cloud Messaging 또는 설치한 ntfy 같은 UnifiedPush 서비스로 알림이 전송돼요. 웹 앱에서는 브라우저의 푸시 서비스로 알림이 전달돼요. 알림 내용은 전송 중 암호화돼요. 지도는 운영자가 선택한 지도 제공업체에서 이미지를 불러와요. 기본값은 OpenFreeMap이며, 제공업체는 네트워크 주소와 조회한 지역을 알 수 있어요. 내 위치는 “현재 위치 사용”을 탭할 때만 읽고, 이후 저장하기로 한 위치만 저장해요.';
 
   @override
   String get privacyDeviceTitle => '이 기기에서';
 
   @override
-  String get privacyDeviceBody => '앱은 오프라인에서 사용할 수 있도록 서버 주소, 설정, 그룹 사본을 보관해요. 앱을 삭제하면 이 정보도 삭제돼요.';
+  String get privacyDeviceBody =>
+      '앱은 오프라인에서 사용할 수 있도록 서버 주소, 설정, 그룹 사본을 보관해요. 앱을 삭제하면 이 정보도 삭제돼요. 오프라인에서 추가한 지출과 송금은 업로드될 때까지 여기에 보관돼요.';
 
   @override
   String get privacyDeleteTitle => '데이터 삭제';
@@ -2304,6 +2463,26 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       '지도 제공업체의 요청에 따라 모든 지도에 표시돼요. 비워 두면 스타일에 지정된 출처가 표시되고 타일에는 OpenStreetMap 출처가 표시돼요.';
+
+  @override
+  String get adminSectionRates => '환율';
+
+  @override
+  String get adminSectionRatesBody =>
+      '다른 통화로 결제한 지출이면 앱이 최신 환율로 시작합니다. 환율은 유럽중앙은행의 무료 기준 환율인 Frankfurter에서, 앱 ID가 있으면 Open Exchange Rates에서 가져옵니다. 서버는 최대 1시간에 한 번 요청합니다.';
+
+  @override
+  String get adminExchangeRates => '환율 조회';
+
+  @override
+  String get adminExchangeRatesHelp => '끄면 환율을 매번 직접 입력합니다.';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates 앱 ID';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      '선택 사항. 입력하면 더 많은 통화를 지원하는 Open Exchange Rates에서 환율을 가져오며, 무료 요금제로 충분합니다. 없으면 Frankfurter에서 가져옵니다.';
 
   @override
   String get adminInvalidMapTiles => 'z, x, y가 중괄호로 표시된 http(s) URL 템플릿을 입력해 주세요.';
@@ -2786,6 +2965,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminPlanDefaultHelp => '다른 요금제가 없는 모든 계정에 적용돼요.';
 
   @override
+  String get adminPlanRemindersHelp => '이 요금제의 그룹은 알림으로 결제를 요청할 수 있습니다.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '$name을(를) 제거할까요?';
   }
@@ -2913,6 +3095,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => '이 그룹의 요금제에는 결제 알림이 포함되어 있지 않습니다.';
+
+  @override
   String get errorLimitOther => '이 서버의 한도에 도달했어요.';
 
   @override
@@ -2959,6 +3144,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get planLimitSponsored => '내 요금제를 공유하는 그룹';
+
+  @override
+  String get planLimitReminders => '결제 알림';
+
+  @override
+  String get planIncluded => '포함';
+
+  @override
+  String get planNotIncluded => '미포함';
 
   @override
   String get planGet => '요금제 받기';

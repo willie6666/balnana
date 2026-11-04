@@ -22,7 +22,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonRetry => '重试';
 
   @override
-  String get offlineBar => '当前离线。正在显示此设备保存的内容；重新连接后才能保存更改。';
+  String get offlineBar => '当前离线。显示此设备保存的内容；新的支出和付款会在重新联网后上传。';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 项等待上传。');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => '已保存在此设备上，恢复联网后会自动上传。';
+
+  @override
+  String get pendingWaiting => '等待上传';
+
+  @override
+  String pendingRefused(String error) {
+    return '未上传：$error';
+  }
+
+  @override
+  String get pendingDiscard => '丢弃';
+
+  @override
+  String get offlineNoReceipt => '离线时无法保存收据照片。移除照片即可先保存这笔支出，或恢复联网后再试。';
 
   @override
   String get commonSave => '保存';
@@ -437,6 +460,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memberRename => '重命名';
 
   @override
+  String get memberPaymentDetails => '收款信息';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return '群组里的其他人如何付款给$name：银行账户、支付应用或链接。群组里的每个人都能看到。';
+  }
+
+  @override
+  String get paymentDetailLabel => '方式';
+
+  @override
+  String get paymentDetailValue => '账号、ID 或链接';
+
+  @override
+  String get paymentDetailAdd => '添加收款方式';
+
+  @override
+  String get paymentDetailBank => '银行转账';
+
+  @override
+  String get paymentDetailSuggestions => '建议';
+
+  @override
+  String get paymentDetailCopy => '复制';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '已复制$label';
+  }
+
+  @override
+  String get paymentDetailOpen => '打开链接';
+
+  @override
+  String get errorInvalidPaymentDetails => '每种收款方式都需要填写方式和账号、ID 或链接，且各占一行。';
+
+  @override
+  String get errorNothingOwed => '对方目前没有欠你。';
+
+  @override
   String get memberRenameTitle => '重命名';
 
   @override
@@ -487,6 +550,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get linkAccessHelp => '允许他人无需账号即可查看和编辑';
+
+  @override
+  String get groupFeatures => '功能';
+
+  @override
+  String get groupFeaturesHelp => '关闭后无法再添加到支出中，已有的内容会保留。';
+
+  @override
+  String get groupFeatureForeign => '其他货币';
+
+  @override
+  String get groupFeatureForeignHelp => '以群组货币以外的货币支付的支出';
+
+  @override
+  String get groupFeatureRecurring => '周期性支出';
+
+  @override
+  String get groupFeatureRecurringHelp => '按计划自动添加。关闭后，计划会暂停';
+
+  @override
+  String get groupFeaturePlaces => '地点';
+
+  @override
+  String get groupFeaturePlacesHelp => '支出发生的地点';
+
+  @override
+  String get groupFeatureReceipts => '收据';
+
+  @override
+  String get groupFeatureReceiptsHelp => '收据照片';
+
+  @override
+  String get errorFeatureOff => '此群组已关闭该功能，可在群组设置中重新开启。';
 
   @override
   String get resetLinkTitle => '重置链接';
@@ -620,6 +716,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseAdd => '添加支出';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '在$group添加支出';
+  }
+
+  @override
+  String get widgetPickGroup => '显示哪个群组？';
+
+  @override
+  String get widgetNoGroups => '请先打开 Balnana 并添加群组。';
 
   @override
   String get expensesEmptyTitle => '还没有支出';
@@ -812,6 +919,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return '汇率来自 $source，$date。';
+  }
+
+  @override
   String get expenseNote => '备注';
 
   @override
@@ -954,6 +1066,44 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recordPayment => '记录';
+
+  @override
+  String get remindAction => '提醒';
+
+  @override
+  String remindTitle(String name) {
+    return '提醒 $name';
+  }
+
+  @override
+  String get remindNotify => '发送通知';
+
+  @override
+  String get remindNeedsPlan => '此群组的方案不包含此功能';
+
+  @override
+  String get remindShare => '分享消息';
+
+  @override
+  String remindSent(String name) {
+    return '已向 $name 发送提醒';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name 没有开启通知';
+  }
+
+  @override
+  String get remindCopied => '已复制提醒';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return '提醒：你在「$group」中欠 $payee $amount。';
+  }
+
+  @override
+  String get reminderHowToPay => '付款方式：';
 
   @override
   String get recordPaymentTitle => '记录转账';
@@ -1262,6 +1412,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsNotificationsBlocked => '已在手机设置中禁止：请在那里允许 Balnana 发送通知';
 
   @override
+  String get settingsNotificationsBlockedBrowser => '此浏览器未允许：请在浏览器设置中允许此网站的通知，才能看到通知';
+
+  @override
   String get pushChannel => '支出';
 
   @override
@@ -1295,6 +1448,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '已删除 $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who 提醒你还款 $amount';
   }
 
   @override
@@ -2114,7 +2272,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      '你创建或加入的群组：群组名称、成员姓名、支出、转账、备注、收据照片，以及你添加到支出中的地点。使用账号时，还会存储你的姓名、邮箱地址或用户名、密码的哈希值（绝不会存储密码本身），以及你使用的登录提供方（例如 Google）。如果启用了通知，还会存储设备标识符和推送服务提供的地址。';
+      '你创建或加入的群组：群组名称、成员姓名和收款信息、支出、转账、备注、收据照片，以及你添加到支出中的地点。使用账号时，还会存储你的姓名、邮箱地址或用户名、密码的哈希值（绝不会存储密码本身），以及你使用的登录提供方（例如 Google）。如果启用了通知，还会存储设备标识符和推送服务提供的地址。';
 
   @override
   String get privacyUseTitle => '数据用途';
@@ -2128,13 +2286,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      '群组中的所有人都可以查看成员、支出和历史记录。通过链接开放的群组，任何拥有链接的人都可以打开。使用 Google 登录时会通过 Google 处理；运营者启用通知后，通知会通过手机使用的推送服务发送：Google Firebase Cloud Messaging，或你安装的其他 UnifiedPush 服务，例如 ntfy。通知内容在传输过程中会加密。地图会从运营者选择的地图服务加载图片；默认使用 OpenFreeMap，除非运营者更改设置。地图服务会看到你的网络地址和你查看的区域。只有当你轻点“使用当前位置”时，应用才会读取你的位置，并且只会保存你随后确认的位置。';
+      '群组中的所有人都可以查看成员、支出和历史记录。通过链接开放的群组，任何拥有链接的人都可以打开。使用 Google 登录时会通过 Google 处理；运营者启用通知后，通知会通过手机使用的推送服务发送：Google Firebase Cloud Messaging，或你安装的其他 UnifiedPush 服务，例如 ntfy。在网页版中，通知会通过浏览器的推送服务发送。通知内容在传输过程中会加密。地图会从运营者选择的地图服务加载图片；默认使用 OpenFreeMap，除非运营者更改设置。地图服务会看到你的网络地址和你查看的区域。只有当你轻点“使用当前位置”时，应用才会读取你的位置，并且只会保存你随后确认的位置。';
 
   @override
   String get privacyDeviceTitle => '此设备上的数据';
 
   @override
-  String get privacyDeviceBody => '应用会在此设备上保存服务器地址、你的设置和群组副本，以便离线使用。卸载应用会删除这些数据。';
+  String get privacyDeviceBody => '应用会在此设备上保存服务器地址、你的设置和群组副本，以便离线使用。卸载应用会删除这些数据。离线时添加的支出和转账会保存在这里，直到上传。';
 
   @override
   String get privacyDeleteTitle => '删除你的数据';
@@ -2292,6 +2450,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminMapAttributionHelp => '按照地图服务的要求显示在每张地图上。留空时，样式会显示其标注的版权信息，瓦片会标注 OpenStreetMap。';
+
+  @override
+  String get adminSectionRates => '汇率';
+
+  @override
+  String get adminSectionRatesBody =>
+      '支出以其他货币支付时，应用会以最新汇率作为起始值。汇率来自欧洲中央银行的免费参考汇率 Frankfurter，设置了应用 ID 时则来自 Open Exchange Rates。服务器最多每小时查询一次。';
+
+  @override
+  String get adminExchangeRates => '查询汇率';
+
+  @override
+  String get adminExchangeRatesHelp => '关闭时，每个汇率都需手动输入。';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates 应用 ID';
+
+  @override
+  String get adminOxrAppIdHelp => '可选。填写后，汇率来自支持更多货币的 Open Exchange Rates，免费方案即可。不填则来自 Frankfurter。';
 
   @override
   String get adminInvalidMapTiles => '请输入包含 z、x 和 y 占位符（大括号括起）的 http(s) URL 模板。';
@@ -2773,6 +2950,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPlanDefaultHelp => '用于没有其他方案的所有账号。';
 
   @override
+  String get adminPlanRemindersHelp => '此方案的群组可以用通知提醒付款。';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '要移除 $name 吗？';
   }
@@ -2900,6 +3080,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => '此群组的方案不包含付款提醒。';
+
+  @override
   String get errorLimitOther => '你已达此服务器的上限。';
 
   @override
@@ -2946,6 +3129,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planLimitSponsored => '共享你方案的群组';
+
+  @override
+  String get planLimitReminders => '付款提醒';
+
+  @override
+  String get planIncluded => '已包含';
+
+  @override
+  String get planNotIncluded => '未包含';
 
   @override
   String get planGet => '获取方案';
@@ -3108,7 +3300,30 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get commonRetry => '重試';
 
   @override
-  String get offlineBar => '目前離線。顯示此裝置儲存的內容；重新連線前無法儲存變更。';
+  String get offlineBar => '目前離線。顯示此裝置儲存的內容；新的支出和付款會在重新連線後上傳。';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count 項等待上傳。');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => '已儲存在此裝置上，恢復連線後會自動上傳。';
+
+  @override
+  String get pendingWaiting => '等待上傳';
+
+  @override
+  String pendingRefused(String error) {
+    return '未上傳：$error';
+  }
+
+  @override
+  String get pendingDiscard => '捨棄';
+
+  @override
+  String get offlineNoReceipt => '離線時無法儲存收據照片。移除照片即可先儲存這筆支出，或恢復連線後再試。';
 
   @override
   String get commonSave => '儲存';
@@ -3523,6 +3738,46 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get memberRename => '重新命名';
 
   @override
+  String get memberPaymentDetails => '收款資訊';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return '群組裡的其他人如何付款給$name：銀行帳戶、支付 App 或連結。群組裡的每個人都看得到。';
+  }
+
+  @override
+  String get paymentDetailLabel => '方式';
+
+  @override
+  String get paymentDetailValue => '帳號、ID 或連結';
+
+  @override
+  String get paymentDetailAdd => '新增收款方式';
+
+  @override
+  String get paymentDetailBank => '銀行轉帳';
+
+  @override
+  String get paymentDetailSuggestions => '建議';
+
+  @override
+  String get paymentDetailCopy => '複製';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return '已複製$label';
+  }
+
+  @override
+  String get paymentDetailOpen => '開啟連結';
+
+  @override
+  String get errorInvalidPaymentDetails => '每種收款方式都需要填寫方式和帳號、ID 或連結，且各占一行。';
+
+  @override
+  String get errorNothingOwed => '對方目前沒有欠你。';
+
+  @override
   String get memberRenameTitle => '重新命名';
 
   @override
@@ -3573,6 +3828,39 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get linkAccessHelp => '讓大家不必建立帳戶也能查看及編輯';
+
+  @override
+  String get groupFeatures => '功能';
+
+  @override
+  String get groupFeaturesHelp => '關閉後就無法再加到支出中，已有的內容會保留。';
+
+  @override
+  String get groupFeatureForeign => '其他貨幣';
+
+  @override
+  String get groupFeatureForeignHelp => '以群組貨幣以外的貨幣支付的支出';
+
+  @override
+  String get groupFeatureRecurring => '定期支出';
+
+  @override
+  String get groupFeatureRecurringHelp => '依排程自動新增。關閉後，排程會暫停';
+
+  @override
+  String get groupFeaturePlaces => '地點';
+
+  @override
+  String get groupFeaturePlacesHelp => '支出發生的地點';
+
+  @override
+  String get groupFeatureReceipts => '收據';
+
+  @override
+  String get groupFeatureReceiptsHelp => '收據照片';
+
+  @override
+  String get errorFeatureOff => '這個群組已關閉此功能，可在群組設定中重新開啟。';
 
   @override
   String get resetLinkTitle => '重設連結';
@@ -3706,6 +3994,17 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get expenseAdd => '新增支出';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return '在$group新增支出';
+  }
+
+  @override
+  String get widgetPickGroup => '要顯示哪個群組？';
+
+  @override
+  String get widgetNoGroups => '請先開啟 Balnana 並新增群組。';
 
   @override
   String get expensesEmptyTitle => '還沒有支出';
@@ -3898,6 +4197,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return '匯率來自 $source，$date。';
+  }
+
+  @override
   String get expenseNote => '備註';
 
   @override
@@ -4040,6 +4344,44 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get recordPayment => '記錄';
+
+  @override
+  String get remindAction => '提醒';
+
+  @override
+  String remindTitle(String name) {
+    return '提醒 $name';
+  }
+
+  @override
+  String get remindNotify => '傳送通知';
+
+  @override
+  String get remindNeedsPlan => '此群組的方案不包含此功能';
+
+  @override
+  String get remindShare => '分享訊息';
+
+  @override
+  String remindSent(String name) {
+    return '已向 $name 傳送提醒';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name 沒有開啟通知';
+  }
+
+  @override
+  String get remindCopied => '已複製提醒';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return '提醒：你在「$group」中欠 $payee $amount。';
+  }
+
+  @override
+  String get reminderHowToPay => '付款方式：';
 
   @override
   String get recordPaymentTitle => '記錄轉帳';
@@ -4348,6 +4690,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get settingsNotificationsBlocked => '已在手機設定中封鎖通知。請在手機設定中允許 Balnana 傳送通知。';
 
   @override
+  String get settingsNotificationsBlockedBrowser => '此瀏覽器未允許：請在瀏覽器設定中允許此網站的通知，才能看到通知';
+
+  @override
   String get pushChannel => '支出';
 
   @override
@@ -4381,6 +4726,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return '刪除了 $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who 提醒你欠款 $amount';
   }
 
   @override
@@ -5200,7 +5550,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacyStoredBody =>
-      '你建立或加入的群組：群組名稱、成員名稱、支出、轉帳、備註、收據照片，以及你新增到支出中的地點。若使用帳戶，也會儲存你的名稱、電子郵件地址或使用者名稱、密碼雜湊（不會儲存密碼本身），以及你使用的登入提供者，例如 Google。若開啟通知，也會儲存裝置識別碼和推播服務提供的地址。';
+      '你建立或加入的群組：群組名稱、成員名稱和收款資訊、支出、轉帳、備註、收據照片，以及你新增到支出中的地點。若使用帳戶，也會儲存你的名稱、電子郵件地址或使用者名稱、密碼雜湊（不會儲存密碼本身），以及你使用的登入提供者，例如 Google。若開啟通知，也會儲存裝置識別碼和推播服務提供的地址。';
 
   @override
   String get privacyUseTitle => '資料用途';
@@ -5214,13 +5564,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacySharedBody =>
-      '群組中的所有人都能查看成員、支出和動態。若群組開放透過連結存取，任何取得連結的人都能開啟群組。使用 Google 登入時會連線至 Google；管理者啟用通知後，通知會透過手機使用的推播服務傳送：Google Firebase Cloud Messaging，或你安裝的其他 UnifiedPush 服務，例如 ntfy。通知內容在傳送途中會加密。地圖會從管理者選擇的地圖服務載入圖片，預設為 OpenFreeMap，除非管理者另行設定。地圖服務會看到你的網路位址和你查看的區域。只有在你點選「使用目前位置」時，應用程式才會讀取你的位置，並且只會儲存你接著選定的地點。';
+      '群組中的所有人都能查看成員、支出和動態。若群組開放透過連結存取，任何取得連結的人都能開啟群組。使用 Google 登入時會連線至 Google；管理者啟用通知後，通知會透過手機使用的推播服務傳送：Google Firebase Cloud Messaging，或你安裝的其他 UnifiedPush 服務，例如 ntfy。在網頁版中，通知會透過瀏覽器的推播服務傳送。通知內容在傳送途中會加密。地圖會從管理者選擇的地圖服務載入圖片，預設為 OpenFreeMap，除非管理者另行設定。地圖服務會看到你的網路位址和你查看的區域。只有在你點選「使用目前位置」時，應用程式才會讀取你的位置，並且只會儲存你接著選定的地點。';
 
   @override
   String get privacyDeviceTitle => '這部裝置上的資料';
 
   @override
-  String get privacyDeviceBody => '應用程式會在此裝置儲存伺服器網址、你的設定，以及一份群組資料副本，供離線時使用。解除安裝應用程式會移除這些資料。';
+  String get privacyDeviceBody =>
+      '應用程式會在此裝置儲存伺服器網址、你的設定，以及一份群組資料副本，供離線時使用。解除安裝應用程式會移除這些資料。離線時新增的支出和轉帳會保存在這裡，直到上傳。';
 
   @override
   String get privacyDeleteTitle => '刪除資料';
@@ -5377,6 +5728,25 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminMapAttributionHelp => '依地圖服務提供者的要求顯示於每張地圖。留空時，樣式會顯示其指定的來源標示，圖磚則會標示 OpenStreetMap。';
+
+  @override
+  String get adminSectionRates => '匯率';
+
+  @override
+  String get adminSectionRatesBody =>
+      '支出以其他貨幣支付時，應用程式會以最新匯率作為起始值。匯率來自歐洲中央銀行的免費參考匯率 Frankfurter，設定了應用程式 ID 時則來自 Open Exchange Rates。伺服器最多每小時查詢一次。';
+
+  @override
+  String get adminExchangeRates => '查詢匯率';
+
+  @override
+  String get adminExchangeRatesHelp => '關閉時，每個匯率都需手動輸入。';
+
+  @override
+  String get adminOxrAppId => 'Open Exchange Rates 應用程式 ID';
+
+  @override
+  String get adminOxrAppIdHelp => '選填。填寫後，匯率來自支援更多貨幣的 Open Exchange Rates，免費方案即可。不填則來自 Frankfurter。';
 
   @override
   String get adminInvalidMapTiles => '請輸入包含 z、x 和 y 大括號欄位的 http(s) URL 範本。';
@@ -5858,6 +6228,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminPlanDefaultHelp => '用於沒有其他方案的所有帳戶。';
 
   @override
+  String get adminPlanRemindersHelp => '此方案的群組可以用通知提醒付款。';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return '要移除 $name 嗎？';
   }
@@ -5985,6 +6358,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
+  String get errorLimitReminders => '此群組的方案不包含付款提醒。';
+
+  @override
   String get errorLimitOther => '你已達這台伺服器的上限。';
 
   @override
@@ -6031,6 +6407,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get planLimitSponsored => '分享你方案的群組';
+
+  @override
+  String get planLimitReminders => '付款提醒';
+
+  @override
+  String get planIncluded => '已包含';
+
+  @override
+  String get planNotIncluded => '未包含';
 
   @override
   String get planGet => '取得方案';

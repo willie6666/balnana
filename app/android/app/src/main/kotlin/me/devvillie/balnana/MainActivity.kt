@@ -65,6 +65,7 @@ class MainActivity : FlutterActivity() {
         // free of proprietary libraries.
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         billing = PlayBilling(this, messenger)
+        HomeScreen.listen(applicationContext, messenger)
         MethodChannel(messenger, "balnana/location").setMethodCallHandler { call, result ->
             if (call.method != "current") return@setMethodCallHandler result.notImplemented()
             locationResults.add(result)

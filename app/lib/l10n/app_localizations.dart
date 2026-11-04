@@ -157,8 +157,44 @@ abstract class AppLocalizations {
   /// Label or control text for offline bar in the offline cache banner.
   ///
   /// In en, this message translates to:
-  /// **'Offline. Showing what this device saved; changes cannot be saved until you reconnect.'**
+  /// **'Offline. Showing what this device saved; new expenses and payments upload when you reconnect.'**
   String get offlineBar;
+
+  /// Added to the offline banner: how many new expenses and payments made offline wait to be sent to the server.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item waiting to upload.} other{{count} items waiting to upload.}}'**
+  String offlinePending(int count);
+
+  /// Snackbar after a new expense or payment was saved on the device because the server could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device. It will upload when you\'re back online.'**
+  String get pendingSaved;
+
+  /// Subtitle of an expense or payment in the list that was made offline and has not reached the server yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to upload'**
+  String get pendingWaiting;
+
+  /// Subtitle of an expense or payment made offline that the server refused; error is the reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Not uploaded: {error}'**
+  String pendingRefused(String error);
+
+  /// Action that throws away an expense or payment made offline that has not reached the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get pendingDiscard;
+
+  /// Snackbar when a new expense with a receipt photo cannot reach the server: only the expense itself can wait on the device.
+  ///
+  /// In en, this message translates to:
+  /// **'A receipt photo can\'t be saved offline. Remove the photo to save the expense now, or try again when you\'re back online.'**
+  String get offlineNoReceipt;
 
   /// Label or control text for common save in shared buttons and controls.
   ///
@@ -946,6 +982,78 @@ abstract class AppLocalizations {
   /// **'Rename'**
   String get memberRename;
 
+  /// Menu item on a group member, and the title of the sheet where how that member can be paid is entered.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment details'**
+  String get memberPaymentDetails;
+
+  /// Help text in the payment details sheet. {name} is the member whose details they are.
+  ///
+  /// In en, this message translates to:
+  /// **'How others in this group can pay {name}: a bank account, a payment app or a link. Everyone in the group can see them.'**
+  String paymentDetailsHelp(String name);
+
+  /// Label of the field naming a way to pay, such as a bank or a payment app.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get paymentDetailLabel;
+
+  /// Label of the field holding the account number, handle or link of a way to pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Account, ID or link'**
+  String get paymentDetailValue;
+
+  /// Button that adds another way to pay to a member's payment details.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a way to pay'**
+  String get paymentDetailAdd;
+
+  /// Suggested name for a way to pay: a transfer to a bank account.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get paymentDetailBank;
+
+  /// Tooltip of the button listing suggested names for a way to pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get paymentDetailSuggestions;
+
+  /// Tooltip of the button that copies one of a member's payment details.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get paymentDetailCopy;
+
+  /// Snackbar after a payment detail was copied. {label} is its name, such as Bank transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} copied'**
+  String paymentDetailCopied(String label);
+
+  /// Tooltip of the button that opens a payment detail that is a web link.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get paymentDetailOpen;
+
+  /// Error when payment details are refused: each needs a method and a value, each on one line, within the length limits.
+  ///
+  /// In en, this message translates to:
+  /// **'Each way to pay needs a method and an account, ID or link, each on one line.'**
+  String get errorInvalidPaymentDetails;
+
+  /// Error when sending a reminder to someone who no longer owes you anything.
+  ///
+  /// In en, this message translates to:
+  /// **'They don\'t owe you anything now.'**
+  String get errorNothingOwed;
+
   /// Heading for member rename title in group member management.
   ///
   /// In en, this message translates to:
@@ -1041,6 +1149,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Let people see and edit without an account'**
   String get linkAccessHelp;
+
+  /// Heading for the switches that turn group features (other currencies, recurring expenses, locations, receipts) on or off, in group creation and settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get groupFeatures;
+
+  /// Help text under the group feature switches: a feature switched off can't be added to expenses, but what expenses already have stays.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched off, it can\'t be added to expenses. What\'s there already stays.'**
+  String get groupFeaturesHelp;
+
+  /// Switch title for the group feature that lets expenses be paid in a currency other than the group's.
+  ///
+  /// In en, this message translates to:
+  /// **'Other currencies'**
+  String get groupFeatureForeign;
+
+  /// Help text for the other-currencies group feature switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses paid in a currency other than the group\'s'**
+  String get groupFeatureForeignHelp;
+
+  /// Switch title for the group feature of expenses added on a schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expenses'**
+  String get groupFeatureRecurring;
+
+  /// Help text for the recurring-expenses group feature switch: switched off, the schedules add nothing until it is on again.
+  ///
+  /// In en, this message translates to:
+  /// **'Added on a schedule. Switched off, the schedules wait'**
+  String get groupFeatureRecurringHelp;
+
+  /// Switch title for the group feature of where expenses happened.
+  ///
+  /// In en, this message translates to:
+  /// **'Locations'**
+  String get groupFeaturePlaces;
+
+  /// Help text for the locations group feature switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Where an expense happened'**
+  String get groupFeaturePlacesHelp;
+
+  /// Switch title for the group feature of receipt photos on expenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipts'**
+  String get groupFeatureReceipts;
+
+  /// Help text for the receipts group feature switch.
+  ///
+  /// In en, this message translates to:
+  /// **'A photo of the receipt'**
+  String get groupFeatureReceiptsHelp;
+
+  /// Message when the group has switched off what was being added: another currency, a location, a receipt or a recurring expense.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has that switched off. It can be turned on again in the group\'s settings.'**
+  String get errorFeatureOff;
 
   /// Heading for reset link title in group-link rotation.
   ///
@@ -1299,6 +1473,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add expense'**
   String get expenseAdd;
+
+  /// Android app icon shortcut (long-press the Balnana icon) that opens the expense editor in one group. Keep it short: launchers cut it at about 25 characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense in {group}'**
+  String shortcutAddExpense(String group);
+
+  /// Title of the list shown when someone places the Balnana widget on their Android home screen, asking which group the widget should show.
+  ///
+  /// In en, this message translates to:
+  /// **'Show which group?'**
+  String get widgetPickGroup;
+
+  /// Shown when someone places the Balnana widget on their Android home screen before the app has any group to show.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Balnana and add a group first.'**
+  String get widgetNoGroups;
 
   /// Heading for expenses empty title in expense search and empty states.
   ///
@@ -1618,6 +1810,12 @@ abstract class AppLocalizations {
   /// **'Balances stay in {currency}. Type the rate, or what it came to, such as from a card statement.'**
   String expenseForeignHelp(String currency);
 
+  /// Under the exchange rate field, when the rate was filled in from the server. source is a provider name such as Frankfurter or Open Exchange Rates (not translated); date is when it published the rate, such as Nov 3, 2026. Followed by the field's help.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate from {source}, {date}.'**
+  String expenseRateFrom(String source, String date);
+
   /// Label or control text for expense note in the expense editor or expense list.
   ///
   /// In en, this message translates to:
@@ -1881,6 +2079,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record'**
   String get recordPayment;
+
+  /// Tooltip of the button on a suggested payment that reminds the person who owes you to pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind'**
+  String get remindAction;
+
+  /// Title of the sheet with ways to remind someone to pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind {name}'**
+  String remindTitle(String name);
+
+  /// Option in the reminder sheet that sends the person a push notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a notification'**
+  String get remindNotify;
+
+  /// Shown under the disabled notification option when the group's plan does not include payment reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'This group\'s plan doesn\'t include it'**
+  String get remindNeedsPlan;
+
+  /// Option that shares a reminder message through another app; also the action on the snackbar when nobody would get the notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a message'**
+  String get remindShare;
+
+  /// Snackbar after a reminder notification was sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder sent to {name}'**
+  String remindSent(String name);
+
+  /// Snackbar when a reminder notification reached no device, because the person has notifications off. Followed by a Share a message action.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} doesn\'t get notifications'**
+  String remindNoDevices(String name);
+
+  /// Snackbar on the web after the reminder message was copied to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder copied'**
+  String get remindCopied;
+
+  /// First line of the reminder message shared through another app, to the person who owes money.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder: you owe {payee} {amount} in {group}.'**
+  String reminderMessage(String payee, String amount, String group);
+
+  /// Heading in the shared reminder message before the payee's ways to pay.
+  ///
+  /// In en, this message translates to:
+  /// **'How to pay:'**
+  String get reminderHowToPay;
 
   /// Heading for record payment title in the settlement dialog.
   ///
@@ -2368,6 +2626,12 @@ abstract class AppLocalizations {
   /// **'Blocked in the phone\'s settings: allow notifications for Balnana there to see them'**
   String get settingsNotificationsBlocked;
 
+  /// Subtitle of the notifications switch in the web app when the browser does not allow the site's notifications, because the person said no or has not answered yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed in this browser: allow notifications for this site in its settings to see them'**
+  String get settingsNotificationsBlockedBrowser;
+
   /// Message for push channel in Android notification content.
   ///
   /// In en, this message translates to:
@@ -2415,6 +2679,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{title} was deleted · {amount}'**
   String pushExpenseDeletedAnon(String title, String amount);
+
+  /// Android notification content when someone reminds you to pay them.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} reminds you that you owe {amount}'**
+  String pushReminder(String who, String amount);
 
   /// Message for push payment added in Android notification content. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
@@ -3931,7 +4201,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy stored body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'The groups you create or join: their names, the members\' names, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
+  /// **'The groups you create or join: their names, the members\' names and payment details, expenses, payments, notes, any receipt photos and the places you add to expenses. With an account, also your name, your email address or username, a hash of your password (never the password itself) and which sign-in provider you use, such as Google. If notifications are on, an identifier for your device and the address its push service gave it.'**
   String get privacyStoredBody;
 
   /// Heading for privacy use title in the built-in privacy notice.
@@ -3955,7 +4225,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy shared body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
+  /// **'Everyone in a group sees its members, expenses and history. When a group is open by link, anyone with the link can open it. Sign-in with Google goes through Google, and notifications, when the operator turns them on, go through the push service your phone uses: Google\'s Firebase Cloud Messaging, or another UnifiedPush service you installed, such as ntfy. In the web app, they go through your browser\'s push service. The notification\'s content is encrypted on the way. Maps load their pictures from the map provider the operator chose, OpenFreeMap unless they changed it, which sees your network address and which area you look at. Your own location is read only when you tap \"Use current location\", and only the point you then keep is saved.'**
   String get privacySharedBody;
 
   /// Heading for privacy device title in the built-in privacy notice.
@@ -3967,7 +4237,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy device body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them.'**
+  /// **'The app keeps the server\'s address, your settings and a copy of your groups for when you\'re offline. Uninstalling the app removes them. Expenses and payments added while offline wait here until they upload.'**
   String get privacyDeviceBody;
 
   /// Heading for privacy delete title in the built-in privacy notice.
@@ -4269,6 +4539,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shown on every map, as the map provider asks. When empty, a style shows the credits it names, and tiles credit OpenStreetMap.'**
   String get adminMapAttributionHelp;
+
+  /// Admin settings section heading for looking up currency exchange rates.
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange rates'**
+  String get adminSectionRates;
+
+  /// Explains the admin Exchange rates section. Frankfurter and Open Exchange Rates are service names, not translated.
+  ///
+  /// In en, this message translates to:
+  /// **'When an expense is paid in another currency, the app starts its rate from the latest one. Rates come from Frankfurter, the European Central Bank\'s free reference rates, or from Open Exchange Rates when it has an app ID. The server asks at most once an hour.'**
+  String get adminSectionRatesBody;
+
+  /// Admin switch: whether the server looks up exchange rates.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up exchange rates'**
+  String get adminExchangeRates;
+
+  /// Help under the admin switch for looking up exchange rates.
+  ///
+  /// In en, this message translates to:
+  /// **'Off, people type every rate themselves.'**
+  String get adminExchangeRatesHelp;
+
+  /// Admin field label: the app ID for the Open Exchange Rates service (name not translated).
+  ///
+  /// In en, this message translates to:
+  /// **'Open Exchange Rates app ID'**
+  String get adminOxrAppId;
+
+  /// Help under the Open Exchange Rates app ID field. Frankfurter is a service name, not translated.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. With one, rates come from Open Exchange Rates, which has more currencies; its free plan is enough. Without, from Frankfurter.'**
+  String get adminOxrAppIdHelp;
 
   /// Label or control text for admin invalid map tiles in the server administrator interface.
   ///
@@ -5044,6 +5350,12 @@ abstract class AppLocalizations {
   /// **'For every account without another plan.'**
   String get adminPlanDefaultHelp;
 
+  /// Help under the admin switch that lets a plan's groups send payment reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups on this plan can remind people to pay with a notification.'**
+  String get adminPlanRemindersHelp;
+
   /// Title of the confirmation before an administrator removes a plan or a product.
   ///
   /// In en, this message translates to:
@@ -5248,6 +5560,12 @@ abstract class AppLocalizations {
   /// **'Your plan can\'t be shared with more than {max} groups.'**
   String errorLimitSponsored(int max);
 
+  /// Error when the group's plan does not include payment reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'This group\'s plan doesn\'t include payment reminders.'**
+  String get errorLimitReminders;
+
   /// Label or control text for error limit other in an error message.
   ///
   /// In en, this message translates to:
@@ -5331,6 +5649,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Groups sharing your plan'**
   String get planLimitSponsored;
+
+  /// Row in the plan's limits: whether groups can send payment reminders as notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment reminders'**
+  String get planLimitReminders;
+
+  /// Value of a plan feature that the plan has.
+  ///
+  /// In en, this message translates to:
+  /// **'Included'**
+  String get planIncluded;
+
+  /// Value of a plan feature that the plan does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'Not included'**
+  String get planNotIncluded;
 
   /// Label or control text for plan get in the plan screens.
   ///

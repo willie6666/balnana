@@ -53,6 +53,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServerInfo"
+  /exchange-rate:
+    get:
+      operationId: getExchangeRate
+      summary: What one unit of a currency is worth in another, to start a rate from
+      description: >-
+        From Open Exchange Rates when the server has an app ID, else from
+        Frankfurter (the European Central Bank's reference rates). At most an
+        hour old; the server asks its source at most once an hour. 404
+        `rates_off` when the server does not fetch rates (server-info
+        `exchangeRates`), `unknown_currency` for one the source has no rate
+        for; 503 `rates_unavailable` while the source is out of reach.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Z]{3}$"
+          example: JPY
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Z]{3}$"
+          example: USD
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRate"
+        default:
+          $ref: "#/components/responses/Error"
   /admin/setup:
     post:
       operationId: adminSetup
@@ -1276,6 +1311,29 @@ paths:
           description: Removed
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/members/{memberId}/remind:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+      - $ref: "#/components/parameters/MemberId"
+    post:
+      operationId: remindMember
+      summary: Remind a member of what they owe you
+      description: >-
+        Sends a notification to the phones of the member, who owes the acting
+        member under the suggested payments (error `nothing_owed` otherwise).
+        With billing on, the group's plan must allow it (402 `plan_limit` with
+        limit `reminders`).
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/categories:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -1971,6 +2029,38 @@ components:
           description: >-
             Accounts mode: let anyone with the link in, as in link mode.
             Ignored unless the server allows it (`linkGroups`).
+        features:
+          $ref: "#/components/schemas/GroupFeaturesInput"
+    GroupFeatures:
+      type: object
+      description: >-
+        What the group offers when adding expenses. One that is off is
+        refused for new expenses (409 `feature_off`, with the `feature`);
+        what is there already stays, and an edit may keep it. With
+        `recurring` off no schedule adds anything, and switching it on again
+        skips what came due meanwhile.
+      required: [foreignCurrency, recurring, places, receipts]
+      properties:
+        foreignCurrency:
+          type: boolean
+        recurring:
+          type: boolean
+        places:
+          type: boolean
+        receipts:
+          type: boolean
+    GroupFeaturesInput:
+      type: object
+      description: Those left out stay as they are, or on for a new group.
+      properties:
+        foreignCurrency:
+          type: boolean
+        recurring:
+          type: boolean
+        places:
+          type: boolean
+        receipts:
+          type: boolean
     ImportInput:
       type: object
       required: [format, file]
@@ -2048,9 +2138,11 @@ components:
           description: >-
             Accounts mode, owners only, when the server allows it
             (`linkGroups`).
+        features:
+          $ref: "#/components/schemas/GroupFeaturesInput"
     Group:
       type: object
-      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess]
+      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess, features]
       properties:
         token:
           type: string
@@ -2086,6 +2178,8 @@ components:
         myMemberId:
           type: string
           description: 'Accounts mode: the signed-in account''s member, if any.'
+        features:
+          $ref: "#/components/schemas/GroupFeatures"
     Category:
       type: object
       required: [id, emoji, color, builtIn, hidden]
@@ -2127,7 +2221,7 @@ components:
           type: boolean
     Member:
       type: object
-      required: [id, name, left, balance, owner, claimed]
+      required: [id, name, left, balance, owner, claimed, paymentDetails]
       properties:
         id:
           type: string
@@ -2144,6 +2238,23 @@ components:
           description: 'Accounts mode: an account is linked to this member.'
         balance:
           $ref: "#/components/schemas/Money"
+        paymentDetails:
+          type: array
+          description: How to pay this member, in the order they listed them.
+          items:
+            $ref: "#/components/schemas/PaymentDetail"
+    PaymentDetail:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+          maxLength: 40
+          description: What it is, such as a bank or a payment app.
+        value:
+          type: string
+          maxLength: 200
+          description: The account number, handle or link.
     MemberInput:
       type: object
       required: [name]
@@ -2152,6 +2263,15 @@ components:
           type: string
         color:
           type: integer
+        paymentDetails:
+          type: array
+          maxItems: 5
+          description: >-
+            Replaces the member's payment details; left out, they stay as they
+            are. In accounts mode only the member's own account may change
+            them, so nobody else can send their debtors to another account.
+          items:
+            $ref: "#/components/schemas/PaymentDetail"
     GroupSummaryRequest:
       type: object
       required: [groups]
@@ -2963,7 +3083,7 @@ components:
           description: Name for a new member; defaults to the account name.
     ServerInfo:
       type: object
-      required: [name, version, authMode, password, signup, firstAccount, email, emailRequired, verifiedRequired, oauthProviders, linkGroups, push, publicUrl, sourceUrl, setupRequired, setupCode]
+      required: [name, version, authMode, password, signup, firstAccount, email, emailRequired, verifiedRequired, oauthProviders, linkGroups, push, exchangeRates, publicUrl, sourceUrl, setupRequired, setupCode]
       properties:
         name:
           type: string
@@ -3013,6 +3133,9 @@ components:
           description: >-
             The server sends Web Push notifications (RFC 8030), which the app
             receives through UnifiedPush.
+        exchangeRates:
+          type: boolean
+          description: The server can say what a currency is worth (/exchange-rate).
         vapidPublicKey:
           type: string
           description: >-
@@ -3182,6 +3305,9 @@ components:
         sponsoredGroups:
           type: integer
           minimum: 0
+        reminders:
+          type: boolean
+          description: Whether its groups can send payment reminders as notifications. Left out means not.
     Plan:
       type: object
       required: [id, name, rank, isDefault, limits]
@@ -3355,7 +3481,7 @@ components:
           description: Left out means no limit.
     MyPlan:
       type: object
-      required: [planName, paid, joinedGroups, sponsoredGroups]
+      required: [planName, paid, joinedGroups, sponsoredGroups, reminders]
       properties:
         planName:
           type: string
@@ -3378,6 +3504,9 @@ components:
         membersPerGroup:
           type: integer
           description: For groups this account sponsors. Others have the default plan's limit.
+        reminders:
+          type: boolean
+          description: Whether groups this account sponsors can send payment reminders as notifications.
         paymentCode:
           type: string
           description: |
@@ -3425,7 +3554,7 @@ components:
           description: The transaction ID, or the link to the payment.
     GroupPlan:
       type: object
-      required: [planName, members, receipts, recurring, canSponsor]
+      required: [planName, members, receipts, recurring, reminders, canSponsor]
       properties:
         planName:
           type: string
@@ -3439,9 +3568,38 @@ components:
           $ref: "#/components/schemas/Usage"
         recurring:
           $ref: "#/components/schemas/Usage"
+        reminders:
+          type: boolean
+          description: Whether the group can send payment reminders as notifications.
         canSponsor:
           type: boolean
           description: Whether the signed-in account could sponsor the group now.
+    ExchangeRate:
+      type: object
+      required: [rate, source, updatedAt]
+      properties:
+        rate:
+          type: string
+          description: >-
+            Units of `to` per unit of `from`, with six significant digits and
+            at most eight decimals.
+          example: "0.00653083"
+        source:
+          type: string
+          enum: [frankfurter, openexchangerates]
+        updatedAt:
+          type: string
+          format: date-time
+          description: >-
+            When the source last changed it. Frankfurter's rates are for a
+            day, given as that day at midnight UTC.
+    Reminder:
+      type: object
+      required: [devices]
+      properties:
+        devices:
+          type: integer
+          description: The phones it was sent to. None means the member will not see it.
     ServerBilling:
       type: object
       description: Present when the server charges for what it stores.

@@ -30,6 +30,12 @@ const (
 	EntitlementSourcePlay  EntitlementSource = "play"
 )
 
+// Defines values for ExchangeRateSource.
+const (
+	Frankfurter       ExchangeRateSource = "frankfurter"
+	Openexchangerates ExchangeRateSource = "openexchangerates"
+)
+
 // Defines values for ExpenseKind.
 const (
 	ExpenseKindExpense ExpenseKind = "expense"
@@ -316,6 +322,19 @@ type Error struct {
 	Params *map[string]interface{} `json:"params,omitempty"`
 }
 
+// ExchangeRate defines model for ExchangeRate.
+type ExchangeRate struct {
+	// Rate Units of `to` per unit of `from`, with six significant digits and at most eight decimals.
+	Rate   string             `json:"rate"`
+	Source ExchangeRateSource `json:"source"`
+
+	// UpdatedAt When the source last changed it. Frankfurter's rates are for a day, given as that day at midnight UTC.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// ExchangeRateSource defines model for ExchangeRate.Source.
+type ExchangeRateSource string
+
 // Expense defines model for Expense.
 type Expense struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
@@ -430,6 +449,9 @@ type Group struct {
 	Currency   string     `json:"currency"`
 	Emoji      *string    `json:"emoji,omitempty"`
 
+	// Features What the group offers when adding expenses. One that is off is refused for new expenses (409 `feature_off`, with the `feature`); what is there already stays, and an edit may keep it. With `recurring` off no schedule adds anything, and switching it on again skips what came due meanwhile.
+	Features GroupFeatures `json:"features"`
+
 	// LinkAccess Whether the link alone opens the group (always in link mode).
 	LinkAccess bool `json:"linkAccess"`
 
@@ -455,6 +477,9 @@ type GroupCreate struct {
 	Currency string  `json:"currency"`
 	Emoji    *string `json:"emoji,omitempty"`
 
+	// Features Those left out stay as they are, or on for a new group.
+	Features *GroupFeaturesInput `json:"features,omitempty"`
+
 	// LinkAccess Accounts mode: let anyone with the link in, as in link mode. Ignored unless the server allows it (`linkGroups`).
 	LinkAccess *bool `json:"linkAccess,omitempty"`
 
@@ -467,6 +492,22 @@ type GroupCreate struct {
 	Symbol *string `json:"symbol,omitempty"`
 }
 
+// GroupFeatures What the group offers when adding expenses. One that is off is refused for new expenses (409 `feature_off`, with the `feature`); what is there already stays, and an edit may keep it. With `recurring` off no schedule adds anything, and switching it on again skips what came due meanwhile.
+type GroupFeatures struct {
+	ForeignCurrency bool `json:"foreignCurrency"`
+	Places          bool `json:"places"`
+	Receipts        bool `json:"receipts"`
+	Recurring       bool `json:"recurring"`
+}
+
+// GroupFeaturesInput Those left out stay as they are, or on for a new group.
+type GroupFeaturesInput struct {
+	ForeignCurrency *bool `json:"foreignCurrency,omitempty"`
+	Places          *bool `json:"places,omitempty"`
+	Receipts        *bool `json:"receipts,omitempty"`
+	Recurring       *bool `json:"recurring,omitempty"`
+}
+
 // GroupPlan defines model for GroupPlan.
 type GroupPlan struct {
 	// CanSponsor Whether the signed-in account could sponsor the group now.
@@ -475,6 +516,9 @@ type GroupPlan struct {
 	PlanName   string `json:"planName"`
 	Receipts   Usage  `json:"receipts"`
 	Recurring  Usage  `json:"recurring"`
+
+	// Reminders Whether the group can send payment reminders as notifications.
+	Reminders bool `json:"reminders"`
 
 	// SponsorMemberId The member who pays for this group's limits.
 	SponsorMemberId *string `json:"sponsorMemberId,omitempty"`
@@ -541,6 +585,9 @@ type GroupUpdate struct {
 
 	// Emoji Empty string clears it.
 	Emoji *string `json:"emoji,omitempty"`
+
+	// Features Those left out stay as they are, or on for a new group.
+	Features *GroupFeaturesInput `json:"features,omitempty"`
 
 	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`).
 	LinkAccess *bool   `json:"linkAccess,omitempty"`
@@ -674,6 +721,9 @@ type Member struct {
 	Left    bool   `json:"left"`
 	Name    string `json:"name"`
 	Owner   bool   `json:"owner"`
+
+	// PaymentDetails How to pay this member, in the order they listed them.
+	PaymentDetails []PaymentDetail `json:"paymentDetails"`
 }
 
 // MemberBalance defines model for MemberBalance.
@@ -687,6 +737,9 @@ type MemberBalance struct {
 type MemberInput struct {
 	Color *int   `json:"color,omitempty"`
 	Name  string `json:"name"`
+
+	// PaymentDetails Replaces the member's payment details; left out, they stay as they are. In accounts mode only the member's own account may change them, so nobody else can send their debtors to another account.
+	PaymentDetails *[]PaymentDetail `json:"paymentDetails,omitempty"`
 }
 
 // MemberStats defines model for MemberStats.
@@ -733,7 +786,10 @@ type MyPlan struct {
 	Play              *PlayBilling `json:"play,omitempty"`
 	ReceiptsPerGroup  *int         `json:"receiptsPerGroup,omitempty"`
 	RecurringPerGroup *int         `json:"recurringPerGroup,omitempty"`
-	SponsoredGroups   Usage        `json:"sponsoredGroups"`
+
+	// Reminders Whether groups this account sponsors can send payment reminders as notifications.
+	Reminders       bool  `json:"reminders"`
+	SponsoredGroups Usage `json:"sponsoredGroups"`
 }
 
 // OAuthExchange defines model for OAuthExchange.
@@ -877,6 +933,15 @@ type PaymentClaim struct {
 	Reference string `json:"reference"`
 }
 
+// PaymentDetail defines model for PaymentDetail.
+type PaymentDetail struct {
+	// Label What it is, such as a bank or a payment app.
+	Label string `json:"label"`
+
+	// Value The account number, handle or link.
+	Value string `json:"value"`
+}
+
 // PaymentInput defines model for PaymentInput.
 type PaymentInput struct {
 	// Amount Decimal amount with up to the group's `minorDigits` decimals.
@@ -927,7 +992,10 @@ type PlanLimits struct {
 	MembersPerGroup   *int `json:"membersPerGroup,omitempty"`
 	ReceiptsPerGroup  *int `json:"receiptsPerGroup,omitempty"`
 	RecurringPerGroup *int `json:"recurringPerGroup,omitempty"`
-	SponsoredGroups   *int `json:"sponsoredGroups,omitempty"`
+
+	// Reminders Whether its groups can send payment reminders as notifications. Left out means not.
+	Reminders       *bool `json:"reminders,omitempty"`
+	SponsoredGroups *int  `json:"sponsoredGroups,omitempty"`
 }
 
 // PlanProduct defines model for PlanProduct.
@@ -1076,6 +1144,12 @@ type RegisterInput struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// Reminder defines model for Reminder.
+type Reminder struct {
+	// Devices The phones it was sent to. None means the member will not see it.
+	Devices int `json:"devices"`
+}
+
 // Repeat defines model for Repeat.
 type Repeat struct {
 	// Every How many units apart occurrences are. A month or year from the 31st falls on the last day of shorter months.
@@ -1103,6 +1177,9 @@ type ServerInfo struct {
 
 	// EmailRequired Password accounts sign up with an email address. When false they sign up with a username instead, and the address is optional.
 	EmailRequired bool `json:"emailRequired"`
+
+	// ExchangeRates The server can say what a currency is worth (/exchange-rate).
+	ExchangeRates bool `json:"exchangeRates"`
 
 	// FirstAccount No account exists yet, so the first one may sign up with a password even though signup is not open. Only ever true then.
 	FirstAccount bool `json:"firstAccount"`
@@ -1381,6 +1458,12 @@ type StartOAuthParams struct {
 // StartOAuthParamsApp defines parameters for StartOAuth.
 type StartOAuthParamsApp string
 
+// GetExchangeRateParams defines parameters for GetExchangeRate.
+type GetExchangeRateParams struct {
+	From string `form:"from" json:"from"`
+	To   string `form:"to" json:"to"`
+}
+
 // DeleteGroupParams defines parameters for DeleteGroup.
 type DeleteGroupParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
@@ -1504,6 +1587,12 @@ type RemoveMemberParams struct {
 
 // UpdateMemberParams defines parameters for UpdateMember.
 type UpdateMemberParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// RemindMemberParams defines parameters for RemindMember.
+type RemindMemberParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
@@ -1768,6 +1857,9 @@ type ServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(w http.ResponseWriter, r *http.Request)
+	// What one unit of a currency is worth in another, to start a rate from
+	// (GET /exchange-rate)
+	GetExchangeRate(w http.ResponseWriter, r *http.Request, params GetExchangeRateParams)
 	// Delete the group with everything in it
 	// (DELETE /g/{token})
 	DeleteGroup(w http.ResponseWriter, r *http.Request, token Token, params DeleteGroupParams)
@@ -1843,6 +1935,9 @@ type ServerInterface interface {
 
 	// (PATCH /g/{token}/members/{memberId})
 	UpdateMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params UpdateMemberParams)
+	// Remind a member of what they owe you
+	// (POST /g/{token}/members/{memberId}/remind)
+	RemindMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params RemindMemberParams)
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams)
@@ -3076,6 +3171,63 @@ func (siw *ServerInterfaceWrapper) VerifyEmail(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.VerifyEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExchangeRate operation middleware
+func (siw *ServerInterfaceWrapper) GetExchangeRate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetExchangeRateParams
+
+	// ------------- Required query parameter "from" -------------
+
+	if paramValue := r.URL.Query().Get("from"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "to" -------------
+
+	if paramValue := r.URL.Query().Get("to"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExchangeRate(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4469,6 +4621,72 @@ func (siw *ServerInterfaceWrapper) UpdateMember(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// RemindMember operation middleware
+func (siw *ServerInterfaceWrapper) RemindMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "memberId" -------------
+	var memberId MemberId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "memberId", r.PathValue("memberId"), &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "memberId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RemindMemberParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemindMember(w, r, token, memberId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreatePayment operation middleware
 func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.Request) {
 
@@ -5727,6 +5945,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/auth/password-reset/confirm", wrapper.ResetPassword)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/verify-email", wrapper.VerifyEmail)
+	m.HandleFunc("GET "+options.BaseURL+"/exchange-rate", wrapper.GetExchangeRate)
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}", wrapper.DeleteGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}", wrapper.GetGroup)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}", wrapper.UpdateGroup)
@@ -5752,6 +5971,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members", wrapper.AddMember)
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.RemoveMember)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members/{memberId}/remind", wrapper.RemindMember)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/plan", wrapper.GetGroupPlan)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/recurring", wrapper.ListRecurringExpenses)
@@ -6586,6 +6806,35 @@ func (response VerifyEmaildefaultJSONResponse) VisitVerifyEmailResponse(w http.R
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetExchangeRateRequestObject struct {
+	Params GetExchangeRateParams
+}
+
+type GetExchangeRateResponseObject interface {
+	VisitGetExchangeRateResponse(w http.ResponseWriter) error
+}
+
+type GetExchangeRate200JSONResponse ExchangeRate
+
+func (response GetExchangeRate200JSONResponse) VisitGetExchangeRateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetExchangeRatedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetExchangeRatedefaultJSONResponse) VisitGetExchangeRateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type DeleteGroupRequestObject struct {
 	Token  Token `json:"token"`
 	Params DeleteGroupParams
@@ -7374,6 +7623,37 @@ type UpdateMemberdefaultJSONResponse struct {
 }
 
 func (response UpdateMemberdefaultJSONResponse) VisitUpdateMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type RemindMemberRequestObject struct {
+	Token    Token    `json:"token"`
+	MemberId MemberId `json:"memberId"`
+	Params   RemindMemberParams
+}
+
+type RemindMemberResponseObject interface {
+	VisitRemindMemberResponse(w http.ResponseWriter) error
+}
+
+type RemindMember200JSONResponse Reminder
+
+func (response RemindMember200JSONResponse) VisitRemindMemberResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemindMemberdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RemindMemberdefaultJSONResponse) VisitRemindMemberResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -8364,6 +8644,9 @@ type StrictServerInterface interface {
 	// Confirm an email address with the token from a verification email
 	// (POST /auth/verify-email)
 	VerifyEmail(ctx context.Context, request VerifyEmailRequestObject) (VerifyEmailResponseObject, error)
+	// What one unit of a currency is worth in another, to start a rate from
+	// (GET /exchange-rate)
+	GetExchangeRate(ctx context.Context, request GetExchangeRateRequestObject) (GetExchangeRateResponseObject, error)
 	// Delete the group with everything in it
 	// (DELETE /g/{token})
 	DeleteGroup(ctx context.Context, request DeleteGroupRequestObject) (DeleteGroupResponseObject, error)
@@ -8439,6 +8722,9 @@ type StrictServerInterface interface {
 
 	// (PATCH /g/{token}/members/{memberId})
 	UpdateMember(ctx context.Context, request UpdateMemberRequestObject) (UpdateMemberResponseObject, error)
+	// Remind a member of what they owe you
+	// (POST /g/{token}/members/{memberId}/remind)
+	RemindMember(ctx context.Context, request RemindMemberRequestObject) (RemindMemberResponseObject, error)
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(ctx context.Context, request CreatePaymentRequestObject) (CreatePaymentResponseObject, error)
@@ -9357,6 +9643,32 @@ func (sh *strictHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetExchangeRate operation middleware
+func (sh *strictHandler) GetExchangeRate(w http.ResponseWriter, r *http.Request, params GetExchangeRateParams) {
+	var request GetExchangeRateRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExchangeRate(ctx, request.(GetExchangeRateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExchangeRate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetExchangeRateResponseObject); ok {
+		if err := validResponse.VisitGetExchangeRateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteGroup operation middleware
 func (sh *strictHandler) DeleteGroup(w http.ResponseWriter, r *http.Request, token Token, params DeleteGroupParams) {
 	var request DeleteGroupRequestObject
@@ -10094,6 +10406,34 @@ func (sh *strictHandler) UpdateMember(w http.ResponseWriter, r *http.Request, to
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMemberResponseObject); ok {
 		if err := validResponse.VisitUpdateMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemindMember operation middleware
+func (sh *strictHandler) RemindMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params RemindMemberParams) {
+	var request RemindMemberRequestObject
+
+	request.Token = token
+	request.MemberId = memberId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemindMember(ctx, request.(RemindMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemindMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemindMemberResponseObject); ok {
+		if err := validResponse.VisitRemindMemberResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

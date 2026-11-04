@@ -95,7 +95,7 @@ class _FakeApi extends BalnanaApi {
 
 Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, BalnanaApi? api}) async {
   // Tall enough for the whole page: its lists only build what is on screen.
-  tester.view.physicalSize = const Size(1200, 3000);
+  tester.view.physicalSize = const Size(1200, 3600);
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(

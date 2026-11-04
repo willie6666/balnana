@@ -76,3 +76,20 @@ func TestEmbeddedETag(t *testing.T) {
 		t.Fatalf("revalidation: status %d", rec.Code)
 	}
 }
+
+// Files named the same in every release are revalidated, so a new push
+// worker reaches browsers; the rest may be cached.
+func TestRevalidate(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"index.html", "push_sw.js", "push_strings.json", "main.dart.js"} {
+		must(t, os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o644))
+	}
+	h := Handler(dir)
+	for path, want := range map[string]string{"/push_sw.js": "no-cache", "/push_strings.json": "no-cache", "/main.dart.js": ""} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if got := rec.Header().Get("Cache-Control"); got != want {
+			t.Errorf("%s: Cache-Control %q, want %q", path, got, want)
+		}
+	}
+}

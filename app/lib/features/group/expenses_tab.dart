@@ -8,10 +8,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/offline_cache.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/categories.dart';
 import '../../data/models.dart';
+import '../../data/pending_writes.dart';
 import '../../data/providers.dart';
 import '../../ui/colors.dart';
 import '../../ui/layout.dart';
@@ -24,6 +26,7 @@ import '../../ui/widgets/member_picker.dart';
 import '../../ui/widgets/menu_chip.dart';
 import 'categories_page.dart';
 import 'group_page.dart';
+import 'pending_tile.dart';
 
 class ExpensesTab extends ConsumerWidget {
   const ExpensesTab({super.key, required this.group, required this.sidePadding});
@@ -38,6 +41,10 @@ class ExpensesTab extends ConsumerWidget {
     final filter = ref.watch(expenseFilterProvider(group.token));
     final list = async.value;
     final me = myMemberId(ref, group.token);
+    final pending = [
+      for (final w in ref.watch(pendingWritesProvider).value ?? const <PendingWrite>[])
+        if (w.groupToken == group.token) w,
+    ];
     // Shown while the list for a new filter loads, or failed to.
     final stale = list != null && list.filter != filter;
 
@@ -73,7 +80,7 @@ class ExpensesTab extends ConsumerWidget {
       slivers = [
         fill(async.hasError && !async.isLoading ? retry(async.error!) : const CircularProgressIndicator()),
       ];
-    } else if (list.items.isEmpty && list.filter.isEmpty && filter.isEmpty) {
+    } else if (list.items.isEmpty && list.filter.isEmpty && filter.isEmpty && pending.isEmpty) {
       slivers = [
         fill(
           EmptyState(
@@ -91,6 +98,12 @@ class ExpensesTab extends ConsumerWidget {
       final rows = _rows(list.items);
       slivers = [
         bar,
+        // Made offline: not on the server, so in no filter or day yet.
+        if (pending.isNotEmpty)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s8, sidePadding, 0),
+            sliver: SliverList.list(children: [for (final w in pending) PendingTile(write: w, group: group)]),
+          ),
         if (stale && async.isLoading)
           SliverPadding(
             padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s8, sidePadding, 0),
@@ -98,7 +111,7 @@ class ExpensesTab extends ConsumerWidget {
           ),
         if (stale && async.hasError && !async.isLoading)
           fill(retry(async.error!))
-        else if (list.items.isEmpty)
+        else if (list.items.isEmpty && (pending.isEmpty || !filter.isEmpty || !list.filter.isEmpty))
           fill(
             EmptyState(
               icon: Icons.search_off,
@@ -165,11 +178,17 @@ class ExpensesTab extends ConsumerWidget {
       ];
     }
 
-    return Builder(
+    final view = Builder(
       builder: (context) => CustomScrollView(
         key: const PageStorageKey('expenses'),
+        // Pulls down even when the list is too short to scroll.
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)), ...slivers],
       ),
+    );
+    return RefreshIndicator(
+      onRefresh: () => pullToRefresh(ref, group.token, () => ref.read(expensesProvider(group.token).future)),
+      child: view,
     );
   }
 

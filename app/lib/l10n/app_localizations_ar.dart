@@ -22,7 +22,41 @@ class AppLocalizationsAr extends AppLocalizations {
   String get commonRetry => 'إعادة المحاولة';
 
   @override
-  String get offlineBar => 'غير متصل. نعرض ما حفظه هذا الجهاز؛ لن تُحفظ التغييرات حتى تعود إلى الاتصال.';
+  String get offlineBar =>
+      'غير متصل. يُعرض ما حفظه هذا الجهاز؛ تُرفع المصروفات والمدفوعات الجديدة عند عودة الاتصال.';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عنصر بانتظار الرفع.',
+      many: '$count عنصرًا بانتظار الرفع.',
+      few: '$count عناصر بانتظار الرفع.',
+      two: 'عنصران بانتظار الرفع.',
+      one: 'عنصر واحد بانتظار الرفع.',
+      zero: 'لا عناصر بانتظار الرفع.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'حُفظ على هذا الجهاز. سيُرفع عند عودة الاتصال.';
+
+  @override
+  String get pendingWaiting => 'بانتظار الرفع';
+
+  @override
+  String pendingRefused(String error) {
+    return 'لم يُرفع: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'تجاهل';
+
+  @override
+  String get offlineNoReceipt =>
+      'لا يمكن حفظ صورة الإيصال دون اتصال. أزل الصورة لحفظ المصروف الآن، أو حاول مجددًا عند عودة الاتصال.';
 
   @override
   String get commonSave => 'حفظ';
@@ -450,6 +484,47 @@ class AppLocalizationsAr extends AppLocalizations {
   String get memberRename => 'إعادة تسمية';
 
   @override
+  String get memberPaymentDetails => 'تفاصيل الدفع';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'كيف يمكن للآخرين في هذه المجموعة الدفع إلى $name: حساب بنكي أو تطبيق دفع أو رابط. يمكن لجميع أعضاء المجموعة رؤيتها.';
+  }
+
+  @override
+  String get paymentDetailLabel => 'الطريقة';
+
+  @override
+  String get paymentDetailValue => 'الحساب أو المعرّف أو الرابط';
+
+  @override
+  String get paymentDetailAdd => 'إضافة طريقة دفع';
+
+  @override
+  String get paymentDetailBank => 'تحويل بنكي';
+
+  @override
+  String get paymentDetailSuggestions => 'اقتراحات';
+
+  @override
+  String get paymentDetailCopy => 'نسخ';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return 'تم نسخ $label';
+  }
+
+  @override
+  String get paymentDetailOpen => 'فتح الرابط';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'تحتاج كل طريقة دفع إلى اسم الطريقة وحساب أو معرّف أو رابط، كل منهما في سطر واحد.';
+
+  @override
+  String get errorNothingOwed => 'لا يدين لك بشيء الآن.';
+
+  @override
   String get memberRenameTitle => 'إعادة تسمية';
 
   @override
@@ -500,6 +575,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'السماح للآخرين بالعرض والتعديل دون حساب';
+
+  @override
+  String get groupFeatures => 'الميزات';
+
+  @override
+  String get groupFeaturesHelp => 'عند إيقافها، لا يمكن إضافتها إلى المصروفات. يبقى ما هو موجود بالفعل.';
+
+  @override
+  String get groupFeatureForeign => 'عملات أخرى';
+
+  @override
+  String get groupFeatureForeignHelp => 'مصروفات مدفوعة بعملة غير عملة المجموعة';
+
+  @override
+  String get groupFeatureRecurring => 'المصروفات المتكررة';
+
+  @override
+  String get groupFeatureRecurringHelp => 'تُضاف وفق جدول. عند الإيقاف، تتوقف الجداول مؤقتًا';
+
+  @override
+  String get groupFeaturePlaces => 'المواقع';
+
+  @override
+  String get groupFeaturePlacesHelp => 'مكان حدوث المصروف';
+
+  @override
+  String get groupFeatureReceipts => 'الإيصالات';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'صورة للإيصال';
+
+  @override
+  String get errorFeatureOff => 'هذه الميزة متوقفة في هذه المجموعة. يمكن تشغيلها مجددًا من إعدادات المجموعة.';
 
   @override
   String get resetLinkTitle => 'إعادة تعيين الرابط';
@@ -635,6 +743,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get expenseAdd => 'إضافة مصروف';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'إضافة مصروف في $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'أي مجموعة تريد عرضها؟';
+
+  @override
+  String get widgetNoGroups => 'افتح Balnana وأضف مجموعة أولاً.';
 
   @override
   String get expensesEmptyTitle => 'لا توجد مصروفات بعد';
@@ -836,6 +955,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'السعر من $source، $date.';
+  }
+
+  @override
   String get expenseNote => 'ملاحظة';
 
   @override
@@ -980,6 +1104,44 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recordPayment => 'تسجيل';
+
+  @override
+  String get remindAction => 'تذكير';
+
+  @override
+  String remindTitle(String name) {
+    return 'تذكير $name';
+  }
+
+  @override
+  String get remindNotify => 'إرسال إشعار';
+
+  @override
+  String get remindNeedsPlan => 'خطة هذه المجموعة لا تتضمنه';
+
+  @override
+  String get remindShare => 'مشاركة رسالة';
+
+  @override
+  String remindSent(String name) {
+    return 'تم إرسال التذكير إلى $name';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name لا يتلقى الإشعارات';
+  }
+
+  @override
+  String get remindCopied => 'تم نسخ التذكير';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'تذكير: عليك $amount لـ $payee في $group.';
+  }
+
+  @override
+  String get reminderHowToPay => 'طريقة الدفع:';
 
   @override
   String get recordPaymentTitle => 'تسجيل دفعة';
@@ -1301,6 +1463,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsNotificationsBlocked => 'محظورة في إعدادات الهاتف: اسمح بإشعارات Balnana هناك لتراها';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'غير مسموح بها في هذا المتصفح: اسمح بالإشعارات لهذا الموقع في إعداداته لتراها';
+
+  @override
   String get pushChannel => 'المصروفات';
 
   @override
@@ -1334,6 +1500,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'حُذف $title · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who يذكّرك بأن عليك $amount';
   }
 
   @override
@@ -2205,7 +2376,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'المجموعات التي تنشئها أو تنضم إليها: أسماؤها، وأسماء أعضائها، والمصروفات، والدفعات، والملاحظات، وصور الإيصالات إن وُجدت، والأماكن التي تضيفها إلى المصروفات. وعند استخدام حساب، يُخزن أيضًا اسمك وعنوان بريدك الإلكتروني أو اسم المستخدم وبصمة كلمة مرورك (لا كلمة المرور نفسها) وموفر تسجيل الدخول الذي تستخدمه، مثل Google. وعند تفعيل الإشعارات، يُخزن معرّف لجهازك والعنوان الذي تمنحه له خدمة الإشعارات.';
+      'المجموعات التي تنشئها أو تنضم إليها: أسماؤها، وأسماء أعضائها، ومعلومات الدفع التي يضيفونها، والمصروفات، والدفعات، والملاحظات، وصور الإيصالات إن وُجدت، والأماكن التي تضيفها إلى المصروفات. وعند استخدام حساب، يُخزن أيضًا اسمك وعنوان بريدك الإلكتروني أو اسم المستخدم وبصمة كلمة مرورك (لا كلمة المرور نفسها) وموفر تسجيل الدخول الذي تستخدمه، مثل Google. وعند تفعيل الإشعارات، يُخزن معرّف لجهازك والعنوان الذي تمنحه له خدمة الإشعارات.';
 
   @override
   String get privacyUseTitle => 'كيفية استخدامها';
@@ -2219,14 +2390,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'يرى كل فرد في المجموعة أعضاءها ومصروفاتها وسجلها. وعندما تكون المجموعة متاحة عبر رابط، يمكن لأي شخص لديه الرابط فتحها. يتم تسجيل الدخول إلى الحسابات عبر Google، وتمر الإشعارات، عند تفعيلها من المشغّل، عبر خدمة الإشعارات التي يستخدمها هاتفك: Google Firebase Cloud Messaging أو خدمة UnifiedPush أخرى ثبّتها، مثل ntfy. يُشفّر محتوى الإشعار أثناء إرساله. تُحمّل الخرائط صورها من موفر الخرائط الذي اختاره المشغّل، وهو OpenFreeMap ما لم يغيّره؛ ويرى هذا الموفر عنوان شبكتك والمنطقة التي تطالعها. لا يُقرأ موقعك إلا عند الضغط على «استخدم موقعي الحالي»، ولا يُحفظ إلا الموقع الذي تختار الاحتفاظ به.';
+      'يرى كل فرد في المجموعة أعضاءها ومصروفاتها وسجلها. وعندما تكون المجموعة متاحة عبر رابط، يمكن لأي شخص لديه الرابط فتحها. يتم تسجيل الدخول إلى الحسابات عبر Google، وتمر الإشعارات، عند تفعيلها من المشغّل، عبر خدمة الإشعارات التي يستخدمها هاتفك: Google Firebase Cloud Messaging أو خدمة UnifiedPush أخرى ثبّتها، مثل ntfy. وفي تطبيق الويب، تمر عبر خدمة الإشعارات في متصفحك. يُشفّر محتوى الإشعار أثناء إرساله. تُحمّل الخرائط صورها من موفر الخرائط الذي اختاره المشغّل، وهو OpenFreeMap ما لم يغيّره؛ ويرى هذا الموفر عنوان شبكتك والمنطقة التي تطالعها. لا يُقرأ موقعك إلا عند الضغط على «استخدم موقعي الحالي»، ولا يُحفظ إلا الموقع الذي تختار الاحتفاظ به.';
 
   @override
   String get privacyDeviceTitle => 'على هذا الجهاز';
 
   @override
   String get privacyDeviceBody =>
-      'يحتفظ التطبيق بعنوان الخادم وإعداداتك ونسخة من مجموعاتك لاستخدامها عند انقطاع الاتصال. يؤدي إلغاء تثبيت التطبيق إلى حذف هذه البيانات.';
+      'يحتفظ التطبيق بعنوان الخادم وإعداداتك ونسخة من مجموعاتك لاستخدامها عند انقطاع الاتصال. يؤدي إلغاء تثبيت التطبيق إلى حذف هذه البيانات. وتبقى المصروفات والدفعات المضافة دون اتصال هنا حتى تُرفع.';
 
   @override
   String get privacyDeleteTitle => 'حذف بياناتك';
@@ -2392,6 +2563,26 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'يظهر على كل خريطة وفق طلب موفرها. عند ترك الحقل فارغًا، يعرض النمط أسماء الجهات التي يذكرها، وتُنسب المربعات إلى OpenStreetMap.';
+
+  @override
+  String get adminSectionRates => 'أسعار الصرف';
+
+  @override
+  String get adminSectionRatesBody =>
+      'عندما تُدفع نفقة بعملة أخرى، يبدأ التطبيق سعرها من أحدث سعر. تأتي الأسعار من Frankfurter، وهي الأسعار المرجعية المجانية للبنك المركزي الأوروبي، أو من Open Exchange Rates عند وجود معرّف تطبيق. يسأل الخادم مرة واحدة في الساعة على الأكثر.';
+
+  @override
+  String get adminExchangeRates => 'البحث عن أسعار الصرف';
+
+  @override
+  String get adminExchangeRatesHelp => 'عند الإيقاف، يكتب الناس كل سعر بأنفسهم.';
+
+  @override
+  String get adminOxrAppId => 'معرّف تطبيق Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'اختياري. مع المعرّف، تأتي الأسعار من Open Exchange Rates التي تشمل عملات أكثر، وتكفي خطتها المجانية. بدونه، من Frankfurter.';
 
   @override
   String get adminInvalidMapTiles => 'أدخل قالب رابط http(s) يتضمن z وx وy بين أقواس معقوفة.';
@@ -2979,6 +3170,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get adminPlanDefaultHelp => 'لكل حساب ليس لديه خطة أخرى.';
 
   @override
+  String get adminPlanRemindersHelp => 'يمكن لمجموعات هذه الخطة تذكير الأشخاص بالدفع بإشعار.';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'إزالة $name؟';
   }
@@ -3116,6 +3310,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'خطة هذه المجموعة لا تتضمن تذكيرات الدفع.';
+
+  @override
   String get errorLimitOther => 'بلغت أحد حدود هذا الخادم.';
 
   @override
@@ -3163,6 +3360,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'المجموعات التي تشارك خطتك';
+
+  @override
+  String get planLimitReminders => 'تذكيرات الدفع';
+
+  @override
+  String get planIncluded => 'مضمّن';
+
+  @override
+  String get planNotIncluded => 'غير مضمّن';
 
   @override
   String get planGet => 'الحصول على خطة';

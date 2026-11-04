@@ -19,9 +19,12 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_location' => l10n.errorInvalidLocation,
     'invalid_symbol' => l10n.errorInvalidSymbol,
     'invalid_emoji' => l10n.errorInvalidEmoji,
+    'invalid_payment_details' => l10n.errorInvalidPaymentDetails,
+    'nothing_owed' => l10n.errorNothingOwed,
     'invalid_color' => l10n.errorInvalidColor,
     'invalid_time_zone' => l10n.errorInvalidTimeZone,
     'push_off' => l10n.errorPushOff,
+    'feature_off' => l10n.errorFeatureOff,
     'member_has_balance' => l10n.errorMemberHasBalance,
     'expense_version_conflict' || 'version_required' => l10n.errorVersionConflict,
     'recurring_version_conflict' => l10n.errorRecurringConflict,
@@ -124,6 +127,7 @@ String _planLimit(AppLocalizations l10n, Map<String, Object?> params) {
     'joined_groups' => l10n.errorLimitJoinedGroups(max),
     'members' => l10n.errorLimitMembers(max),
     'sponsored_groups' => l10n.errorLimitSponsored(max),
+    'reminders' => l10n.errorLimitReminders,
     _ => l10n.errorLimitOther,
   };
 }

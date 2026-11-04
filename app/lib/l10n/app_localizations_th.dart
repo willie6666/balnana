@@ -23,7 +23,31 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get offlineBar =>
-      'ออฟไลน์ กำลังแสดงข้อมูลที่บันทึกไว้ในอุปกรณ์นี้ จะบันทึกการเปลี่ยนแปลงได้เมื่อเชื่อมต่ออีกครั้ง';
+      'ออฟไลน์ กำลังแสดงข้อมูลที่บันทึกในอุปกรณ์นี้ รายจ่ายและการชำระเงินใหม่จะอัปโหลดเมื่อเชื่อมต่ออีกครั้ง';
+
+  @override
+  String offlinePending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'มี $count รายการรออัปโหลด');
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSaved => 'บันทึกไว้ในอุปกรณ์นี้แล้ว จะอัปโหลดเมื่อกลับมาออนไลน์';
+
+  @override
+  String get pendingWaiting => 'รออัปโหลด';
+
+  @override
+  String pendingRefused(String error) {
+    return 'ไม่ได้อัปโหลด: $error';
+  }
+
+  @override
+  String get pendingDiscard => 'ทิ้ง';
+
+  @override
+  String get offlineNoReceipt =>
+      'บันทึกรูปใบเสร็จขณะออฟไลน์ไม่ได้ ลบรูปออกเพื่อบันทึกรายจ่ายตอนนี้ หรือลองอีกครั้งเมื่อกลับมาออนไลน์';
 
   @override
   String get commonSave => 'บันทึก';
@@ -443,6 +467,47 @@ class AppLocalizationsTh extends AppLocalizations {
   String get memberRename => 'เปลี่ยนชื่อ';
 
   @override
+  String get memberPaymentDetails => 'ข้อมูลการชำระเงิน';
+
+  @override
+  String paymentDetailsHelp(String name) {
+    return 'วิธีที่คนอื่นในกลุ่มนี้จ่ายเงินให้ $name: บัญชีธนาคาร แอปชำระเงิน หรือลิงก์ ทุกคนในกลุ่มมองเห็นได้';
+  }
+
+  @override
+  String get paymentDetailLabel => 'วิธี';
+
+  @override
+  String get paymentDetailValue => 'บัญชี ไอดี หรือลิงก์';
+
+  @override
+  String get paymentDetailAdd => 'เพิ่มวิธีชำระเงิน';
+
+  @override
+  String get paymentDetailBank => 'โอนผ่านธนาคาร';
+
+  @override
+  String get paymentDetailSuggestions => 'คำแนะนำ';
+
+  @override
+  String get paymentDetailCopy => 'คัดลอก';
+
+  @override
+  String paymentDetailCopied(String label) {
+    return 'คัดลอก $label แล้ว';
+  }
+
+  @override
+  String get paymentDetailOpen => 'เปิดลิงก์';
+
+  @override
+  String get errorInvalidPaymentDetails =>
+      'แต่ละวิธีชำระเงินต้องมีชื่อวิธีและบัญชี ไอดี หรือลิงก์ โดยแต่ละอย่างอยู่ในบรรทัดเดียว';
+
+  @override
+  String get errorNothingOwed => 'ตอนนี้เขาไม่ได้ค้างจ่ายคุณ';
+
+  @override
   String get memberRenameTitle => 'เปลี่ยนชื่อ';
 
   @override
@@ -493,6 +558,39 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get linkAccessHelp => 'ให้คนอื่นดูและแก้ไขได้โดยไม่ต้องมีบัญชี';
+
+  @override
+  String get groupFeatures => 'ฟีเจอร์';
+
+  @override
+  String get groupFeaturesHelp => 'เมื่อปิด จะเพิ่มลงในค่าใช้จ่ายไม่ได้ ส่วนที่มีอยู่แล้วยังคงอยู่';
+
+  @override
+  String get groupFeatureForeign => 'สกุลเงินอื่น';
+
+  @override
+  String get groupFeatureForeignHelp => 'ค่าใช้จ่ายที่จ่ายด้วยสกุลเงินอื่นที่ไม่ใช่ของกลุ่ม';
+
+  @override
+  String get groupFeatureRecurring => 'ค่าใช้จ่ายประจำ';
+
+  @override
+  String get groupFeatureRecurringHelp => 'เพิ่มตามกำหนดเวลา เมื่อปิด กำหนดเวลาจะหยุดรอ';
+
+  @override
+  String get groupFeaturePlaces => 'สถานที่';
+
+  @override
+  String get groupFeaturePlacesHelp => 'สถานที่ที่เกิดค่าใช้จ่าย';
+
+  @override
+  String get groupFeatureReceipts => 'ใบเสร็จ';
+
+  @override
+  String get groupFeatureReceiptsHelp => 'รูปถ่ายใบเสร็จ';
+
+  @override
+  String get errorFeatureOff => 'กลุ่มนี้ปิดส่วนนี้ไว้ เปิดอีกครั้งได้ในการตั้งค่ากลุ่ม';
 
   @override
   String get resetLinkTitle => 'รีเซ็ตลิงก์';
@@ -628,6 +726,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get expenseAdd => 'เพิ่มค่าใช้จ่าย';
+
+  @override
+  String shortcutAddExpense(String group) {
+    return 'เพิ่มรายจ่ายใน $group';
+  }
+
+  @override
+  String get widgetPickGroup => 'แสดงกลุ่มไหน';
+
+  @override
+  String get widgetNoGroups => 'เปิด Balnana และเพิ่มกลุ่มก่อน';
 
   @override
   String get expensesEmptyTitle => 'ยังไม่มีค่าใช้จ่าย';
@@ -825,6 +934,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String expenseRateFrom(String source, String date) {
+    return 'อัตราจาก $source วันที่ $date';
+  }
+
+  @override
   String get expenseNote => 'บันทึก';
 
   @override
@@ -969,6 +1083,44 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recordPayment => 'บันทึก';
+
+  @override
+  String get remindAction => 'เตือน';
+
+  @override
+  String remindTitle(String name) {
+    return 'เตือน $name';
+  }
+
+  @override
+  String get remindNotify => 'ส่งการแจ้งเตือน';
+
+  @override
+  String get remindNeedsPlan => 'แพ็กเกจของกลุ่มนี้ไม่มีฟีเจอร์นี้';
+
+  @override
+  String get remindShare => 'แชร์ข้อความ';
+
+  @override
+  String remindSent(String name) {
+    return 'ส่งการเตือนถึง $name แล้ว';
+  }
+
+  @override
+  String remindNoDevices(String name) {
+    return '$name ไม่ได้รับการแจ้งเตือน';
+  }
+
+  @override
+  String get remindCopied => 'คัดลอกการเตือนแล้ว';
+
+  @override
+  String reminderMessage(String payee, String amount, String group) {
+    return 'เตือน: คุณค้างจ่าย $payee $amount ในกลุ่ม $group';
+  }
+
+  @override
+  String get reminderHowToPay => 'วิธีชำระ:';
 
   @override
   String get recordPaymentTitle => 'บันทึกการชำระเงิน';
@@ -1279,6 +1431,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ถูกปิดในการตั้งค่าโทรศัพท์ อนุญาตการแจ้งเตือนของ Balnana ที่นั่นเพื่อดูการแจ้งเตือน';
 
   @override
+  String get settingsNotificationsBlockedBrowser =>
+      'ไม่ได้รับอนุญาตในเบราว์เซอร์นี้: อนุญาตการแจ้งเตือนของเว็บไซต์นี้ในการตั้งค่าเบราว์เซอร์เพื่อดู';
+
+  @override
   String get pushChannel => 'ค่าใช้จ่าย';
 
   @override
@@ -1312,6 +1468,11 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String pushExpenseDeletedAnon(String title, String amount) {
     return 'ลบ $title แล้ว · $amount';
+  }
+
+  @override
+  String pushReminder(String who, String amount) {
+    return '$who เตือนว่าคุณค้างจ่าย $amount';
   }
 
   @override
@@ -2168,7 +2329,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get privacyStoredBody =>
-      'กลุ่มที่คุณสร้างหรือเข้าร่วม ได้แก่ ชื่อกลุ่ม ชื่อสมาชิก ค่าใช้จ่าย การชำระเงิน บันทึก รูปใบเสร็จ และสถานที่ที่เพิ่มในค่าใช้จ่าย หากมีบัญชี จะจัดเก็บชื่อ อีเมลหรือชื่อผู้ใช้ ค่าแฮชของรหัสผ่าน (ไม่จัดเก็บรหัสผ่านจริง) และผู้ให้บริการที่ใช้ลงชื่อเข้าใช้ เช่น Google หากเปิดการแจ้งเตือน จะจัดเก็บตัวระบุอุปกรณ์และที่อยู่ที่บริการแจ้งเตือนส่งมาให้';
+      'กลุ่มที่คุณสร้างหรือเข้าร่วม ได้แก่ ชื่อกลุ่ม ชื่อและข้อมูลการรับเงินของสมาชิก ค่าใช้จ่าย การชำระเงิน บันทึก รูปใบเสร็จ และสถานที่ที่เพิ่มในค่าใช้จ่าย หากมีบัญชี จะจัดเก็บชื่อ อีเมลหรือชื่อผู้ใช้ ค่าแฮชของรหัสผ่าน (ไม่จัดเก็บรหัสผ่านจริง) และผู้ให้บริการที่ใช้ลงชื่อเข้าใช้ เช่น Google หากเปิดการแจ้งเตือน จะจัดเก็บตัวระบุอุปกรณ์และที่อยู่ที่บริการแจ้งเตือนส่งมาให้';
 
   @override
   String get privacyUseTitle => 'นำไปใช้อย่างไร';
@@ -2182,14 +2343,14 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get privacySharedBody =>
-      'ทุกคนในกลุ่มเห็นสมาชิก ค่าใช้จ่าย และประวัติของกลุ่ม หากเปิดกลุ่มด้วยลิงก์ ทุกคนที่มีลิงก์ก็เปิดได้ การลงชื่อเข้าใช้ด้วย Google จะผ่าน Google ส่วนการแจ้งเตือน (เมื่อผู้ดูแลเปิดใช้) จะผ่านบริการแจ้งเตือนที่โทรศัพท์ใช้ ได้แก่ Google\'s Firebase Cloud Messaging หรือบริการ UnifiedPush ที่คุณติดตั้ง เช่น ntfy เนื้อหาการแจ้งเตือนจะถูกเข้ารหัสระหว่างส่ง แผนที่จะโหลดภาพจากผู้ให้บริการแผนที่ที่ผู้ดูแลเลือก ซึ่งคือ OpenFreeMap เว้นแต่จะเปลี่ยน ผู้ให้บริการจะเห็นที่อยู่เครือข่ายและบริเวณที่คุณดู แอปจะอ่านตำแหน่งของคุณเมื่อแตะ “ใช้ตำแหน่งปัจจุบัน” เท่านั้น และบันทึกเฉพาะจุดที่คุณเลือกเก็บ';
+      'ทุกคนในกลุ่มเห็นสมาชิก ค่าใช้จ่าย และประวัติของกลุ่ม หากเปิดกลุ่มด้วยลิงก์ ทุกคนที่มีลิงก์ก็เปิดได้ การลงชื่อเข้าใช้ด้วย Google จะผ่าน Google ส่วนการแจ้งเตือน (เมื่อผู้ดูแลเปิดใช้) จะผ่านบริการแจ้งเตือนที่โทรศัพท์ใช้ ได้แก่ Google\'s Firebase Cloud Messaging หรือบริการ UnifiedPush ที่คุณติดตั้ง เช่น ntfy ในเว็บแอป การแจ้งเตือนจะผ่านบริการแจ้งเตือนของเบราว์เซอร์ เนื้อหาการแจ้งเตือนจะถูกเข้ารหัสระหว่างส่ง แผนที่จะโหลดภาพจากผู้ให้บริการแผนที่ที่ผู้ดูแลเลือก ซึ่งคือ OpenFreeMap เว้นแต่จะเปลี่ยน ผู้ให้บริการจะเห็นที่อยู่เครือข่ายและบริเวณที่คุณดู แอปจะอ่านตำแหน่งของคุณเมื่อแตะ “ใช้ตำแหน่งปัจจุบัน” เท่านั้น และบันทึกเฉพาะจุดที่คุณเลือกเก็บ';
 
   @override
   String get privacyDeviceTitle => 'บนอุปกรณ์นี้';
 
   @override
   String get privacyDeviceBody =>
-      'แอปเก็บที่อยู่เซิร์ฟเวอร์ การตั้งค่า และสำเนากลุ่มของคุณไว้ใช้ตอนออฟไลน์ การถอนการติดตั้งแอปจะลบข้อมูลเหล่านี้';
+      'แอปเก็บที่อยู่เซิร์ฟเวอร์ การตั้งค่า และสำเนากลุ่มของคุณไว้ใช้ตอนออฟไลน์ การถอนการติดตั้งแอปจะลบข้อมูลเหล่านี้ ค่าใช้จ่ายและการชำระเงินที่เพิ่มตอนออฟไลน์จะรออยู่ที่นี่จนกว่าจะอัปโหลด';
 
   @override
   String get privacyDeleteTitle => 'การลบข้อมูล';
@@ -2354,6 +2515,26 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminMapAttributionHelp =>
       'แสดงบนทุกแผนที่ตามข้อกำหนดของผู้ให้บริการ หากเว้นว่าง รูปแบบแผนที่จะแสดงเครดิตที่กำหนดไว้ ส่วนไทล์จะแสดงเครดิต OpenStreetMap';
+
+  @override
+  String get adminSectionRates => 'อัตราแลกเปลี่ยน';
+
+  @override
+  String get adminSectionRatesBody =>
+      'เมื่อรายจ่ายจ่ายด้วยสกุลเงินอื่น แอปจะเริ่มจากอัตราล่าสุด อัตรามาจาก Frankfurter ซึ่งเป็นอัตราอ้างอิงฟรีของธนาคารกลางยุโรป หรือจาก Open Exchange Rates เมื่อมี App ID เซิร์ฟเวอร์จะถามไม่เกินชั่วโมงละครั้ง';
+
+  @override
+  String get adminExchangeRates => 'ค้นหาอัตราแลกเปลี่ยน';
+
+  @override
+  String get adminExchangeRatesHelp => 'เมื่อปิด ผู้ใช้ต้องพิมพ์อัตราเองทุกครั้ง';
+
+  @override
+  String get adminOxrAppId => 'App ID ของ Open Exchange Rates';
+
+  @override
+  String get adminOxrAppIdHelp =>
+      'ไม่บังคับ หากมี อัตราจะมาจาก Open Exchange Rates ซึ่งมีสกุลเงินมากกว่า แผนฟรีก็เพียงพอ หากไม่มี จะมาจาก Frankfurter';
 
   @override
   String get adminInvalidMapTiles => 'ใส่เทมเพลต URL แบบ http(s) ที่มี z, x และ y ในวงเล็บปีกกา';
@@ -2858,6 +3039,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPlanDefaultHelp => 'สำหรับทุกบัญชีที่ไม่มีแพ็กเกจอื่น';
 
   @override
+  String get adminPlanRemindersHelp => 'กลุ่มในแพ็กเกจนี้เตือนให้ชำระเงินผ่านการแจ้งเตือนได้';
+
+  @override
   String adminPlanRemoveTitle(String name) {
     return 'ลบ $name หรือไม่';
   }
@@ -2986,6 +3170,9 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get errorLimitReminders => 'แพ็กเกจของกลุ่มนี้ไม่มีการเตือนชำระเงิน';
+
+  @override
   String get errorLimitOther => 'คุณถึงขีดจำกัดของเซิร์ฟเวอร์นี้แล้ว';
 
   @override
@@ -3033,6 +3220,15 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planLimitSponsored => 'กลุ่มที่ใช้แพ็กเกจของคุณ';
+
+  @override
+  String get planLimitReminders => 'การเตือนชำระเงิน';
+
+  @override
+  String get planIncluded => 'มี';
+
+  @override
+  String get planNotIncluded => 'ไม่มี';
 
   @override
   String get planGet => 'รับแพ็กเกจ';
