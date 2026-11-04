@@ -7,13 +7,16 @@ usage() {
   cat <<'EOF'
 Usage: sudo ./scripts/deploy-debian.sh
 
-Installs build dependencies and local PostgreSQL, builds the Flutter web app
-and Go server, and enables/restarts balnana.service. Run again after git pull
+Installs build dependencies and the PostgreSQL major version in docker-compose.yml,
+builds the Flutter web app and Go server, and enables/restarts balnana.service.
+Run again after git pull
 to update. Existing /etc/balnana/balnana.env and database contents are preserved.
 The checkout's .env is NOT loaded (it may contain Docker/development settings).
 Copy scripts/.env.example to scripts/.env to configure POSTGRES_DATA_DIR.
 Leave it empty to keep PostgreSQL's current/default data directory.
 Custom directories are initialized only when empty; existing data is not moved.
+Optionally set POSTGRES_VOLUME_MOUNT to require a mounted filesystem containing
+the data directory. The filesystem must already be mounted before deployment.
 
 Optional environment variables (pass with sudo env NAME=value ...):
   GO_VERSION       Default: the go directive in server/go.mod
@@ -42,34 +45,68 @@ case " ${ID:-} ${ID_LIKE:-} " in
   *) die "This script requires a Debian-family system." ;;
 esac
 [[ -d /run/systemd/system ]] || die "systemd must be running as PID 1."
-for command in apt-get systemctl runuser flock tar; do
+for command in apt-get systemctl runuser flock tar mountpoint; do
   command -v "$command" >/dev/null || die "Required command not found: $command"
 done
 
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+validate_postgres_volume() {
+  [[ -n $POSTGRES_VOLUME_MOUNT ]] || return 0
+  mountpoint --quiet -- "$POSTGRES_VOLUME_MOUNT" \
+    || die "POSTGRES_VOLUME_MOUNT is not mounted: $POSTGRES_VOLUME_MOUNT"
+  local data_dir="${1:-$POSTGRES_DATA_DIR}"
+  if [[ -n $data_dir ]]; then
+    [[ $data_dir == "$POSTGRES_VOLUME_MOUNT" || $data_dir == "$POSTGRES_VOLUME_MOUNT/"* ]] \
+      || die "PostgreSQL's data directory must be inside POSTGRES_VOLUME_MOUNT."
+  fi
+}
+
 load_deploy_config() {
   POSTGRES_DATA_DIR=''
+  POSTGRES_VOLUME_MOUNT=''
   [[ -f $PROJECT_ROOT/scripts/.env ]] || return 0
-  local line value
-  # Read the single supported dotenv key without executing shell expressions.
+  local line key value
+  # Read the supported dotenv keys without executing shell expressions.
   while IFS= read -r line || [[ -n $line ]]; do
     line="${line%$'\r'}"
     line="${line#"${line%%[![:space:]]*}"}"
     [[ -z $line || $line == \#* ]] && continue
-    [[ $line == POSTGRES_DATA_DIR=* ]] || die "Unknown setting in scripts/.env: expected POSTGRES_DATA_DIR=value"
+    key="${line%%=*}"
+    case "$key" in
+      POSTGRES_DATA_DIR|POSTGRES_VOLUME_MOUNT)
+        [[ $line == *=* ]] || die "Expected KEY=value in scripts/.env."
+        ;;
+      *) die "Unknown setting in scripts/.env: $key" ;;
+    esac
     value="${line#*=}"
     value="${value#"${value%%[![:space:]]*}"}"
     value="${value%"${value##*[![:space:]]}"}"
     if [[ $value == \"*\" || $value == \'*\' ]]; then value="${value:1:${#value}-2}"; fi
-    POSTGRES_DATA_DIR="$value"
+    printf -v "$key" '%s' "$value"
   done < "$PROJECT_ROOT/scripts/.env"
-  if [[ -n $POSTGRES_DATA_DIR ]]; then
-    [[ $POSTGRES_DATA_DIR == /* && $POSTGRES_DATA_DIR != *[[:cntrl:]]* ]] || die "POSTGRES_DATA_DIR must be an absolute path without control characters."
-    POSTGRES_DATA_DIR="$(realpath -m -- "$POSTGRES_DATA_DIR")"
-    [[ $POSTGRES_DATA_DIR != / ]] || die "POSTGRES_DATA_DIR must not be the filesystem root."
-  fi
+  for key in POSTGRES_DATA_DIR POSTGRES_VOLUME_MOUNT; do
+    value="${!key}"
+    [[ -n $value ]] || continue
+    [[ $value == /* && $value != *[[:cntrl:]]* ]] || die "$key must be an absolute path without control characters."
+    value="$(realpath -m -- "$value")"
+    [[ $value != / ]] || die "$key must not be the filesystem root."
+    printf -v "$key" '%s' "$value"
+  done
+  validate_postgres_volume
 }
 load_deploy_config
+# Match the server major version selected by the Docker deployment.
+POSTGRES_MAJOR="$(sed -nE 's/^[[:space:]]*image:[[:space:]]*postgres:([0-9]+)([.-].*)?$/\1/p' "$PROJECT_ROOT/docker-compose.yml" | head -n 1)"
+[[ $POSTGRES_MAJOR =~ ^[0-9]+$ ]] || die "Cannot read the PostgreSQL major version from docker-compose.yml."
+check_postgres_version() {
+  local existing_version
+  if command -v pg_lsclusters >/dev/null; then
+    existing_version="$(pg_lsclusters --no-header | awk '$3 == 5432 {print $1; exit}')"
+    [[ -z $existing_version || $existing_version == "$POSTGRES_MAJOR" ]] \
+      || die "Port 5432 uses PostgreSQL $existing_version; this deployment requires PostgreSQL $POSTGRES_MAJOR. Existing clusters are not upgraded or migrated."
+  fi
+}
+check_postgres_version
 GO_VERSION="${GO_VERSION:-$(awk '$1 == "go" {print $2; exit}' "$PROJECT_ROOT/server/go.mod")}"
 FLUTTER_VERSION="${FLUTTER_VERSION:-$(sed -n 's/^ARG FLUTTER_VERSION=//p' "$PROJECT_ROOT/Dockerfile" | head -n 1)}"
 [[ $GO_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Invalid GO_VERSION: $GO_VERSION"
@@ -94,7 +131,13 @@ log "Installing Debian packages"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   ca-certificates curl git unzip xz-utils zip file libglu1-mesa libstdc++6 \
-  python3 postgresql postgresql-client
+  python3 postgresql-common
+log "Installing PostgreSQL $POSTGRES_MAJOR from the official PGDG repository"
+# The distribution's default PostgreSQL package may have a different major version.
+# This helper is shipped by postgresql-common and configures the signed PGDG repo.
+/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  "postgresql-$POSTGRES_MAJOR" "postgresql-client-$POSTGRES_MAJOR"
 
 log "Preparing service and build accounts"
 if ! getent passwd balnana >/dev/null; then
@@ -186,43 +229,55 @@ as_builder bash -c '
 ' -- "$BUILD_DIR" "$(git -C "$PROJECT_ROOT" describe --always --dirty 2>/dev/null || echo local)"
 
 configure_postgres_data_dir() {
-  [[ -n $POSTGRES_DATA_DIR ]] || return 0
-  local pg_version pg_cluster pg_unit current_dir mount_path
+  local pg_version pg_cluster pg_unit current_dir data_dir mount_path volume_path
   # The service uses port 5432. Do not reconfigure unrelated clusters/ports.
   read -r pg_version pg_cluster < <(pg_lsclusters --no-header | awk '$3 == 5432 {print $1, $2; exit}') \
     || die "No Debian PostgreSQL cluster is configured on port 5432."
+  [[ $pg_version == "$POSTGRES_MAJOR" ]] || die "Expected PostgreSQL $POSTGRES_MAJOR on port 5432; found $pg_version."
   pg_unit="postgresql@$pg_version-$pg_cluster.service"
+  POSTGRES_UNIT="$pg_unit"
   current_dir="$(pg_conftool -s "$pg_version" "$pg_cluster" show data_directory)"
-  if [[ -f $POSTGRES_DATA_DIR/PG_VERSION ]]; then
-    [[ $(cat "$POSTGRES_DATA_DIR/PG_VERSION") == "$pg_version" ]] \
+  data_dir="$(realpath -m -- "${POSTGRES_DATA_DIR:-$current_dir}")"
+  # Recheck after the potentially long build, before creating any data directory.
+  validate_postgres_volume "$data_dir"
+  if [[ -f $data_dir/PG_VERSION ]]; then
+    [[ $(cat "$data_dir/PG_VERSION") == "$pg_version" ]] \
       || die "POSTGRES_DATA_DIR contains a different PostgreSQL major version."
   else
-    if [[ -e $POSTGRES_DATA_DIR ]]; then
-      [[ -d $POSTGRES_DATA_DIR ]] || die "POSTGRES_DATA_DIR must be a directory."
-      [[ -z $(find "$POSTGRES_DATA_DIR" -mindepth 1 -maxdepth 1 -print -quit) ]] \
+    if [[ -e $data_dir ]]; then
+      [[ -d $data_dir ]] || die "POSTGRES_DATA_DIR must be a directory."
+      [[ -z $(find "$data_dir" -mindepth 1 -maxdepth 1 -print -quit) ]] \
         || die "POSTGRES_DATA_DIR is nonempty and is not a PostgreSQL data directory."
     fi
-    install -d -o postgres -g postgres -m 0700 "$POSTGRES_DATA_DIR"
-    log "Initializing PostgreSQL data in $POSTGRES_DATA_DIR (no existing data is moved)"
+    install -d -o postgres -g postgres -m 0700 "$data_dir"
+    log "Initializing PostgreSQL data in $data_dir (no existing data is moved)"
     runuser -u postgres -- "/usr/lib/postgresql/$pg_version/bin/initdb" \
-      --pgdata="$POSTGRES_DATA_DIR" --encoding=UTF8 --locale=C.UTF-8 \
+      --pgdata="$data_dir" --encoding=UTF8 --locale=C.UTF-8 \
       --auth-local=peer --auth-host=scram-sha-256
   fi
 
   # Wait for the configured filesystem mount before starting this cluster at boot.
   # Quote paths for systemd, including literal percent signs and backslashes.
-  mount_path="${POSTGRES_DATA_DIR//\\/\\\\}"
+  mount_path="${data_dir//\\/\\\\}"
   mount_path="${mount_path//\"/\\\"}"
   mount_path="${mount_path//%/%%}"
   install -d -o root -g root -m 0755 "/etc/systemd/system/$pg_unit.d"
   printf '[Unit]\nRequiresMountsFor="%s"\n' "$mount_path" \
     > "/etc/systemd/system/$pg_unit.d/balnana-data.conf"
+  if [[ -n $POSTGRES_VOLUME_MOUNT ]]; then
+    volume_path="${POSTGRES_VOLUME_MOUNT//\\/\\\\}"
+    volume_path="${volume_path//\"/\\\"}"
+    volume_path="${volume_path//%/%%}"
+    printf 'RequiresMountsFor="%s"\nAssertPathIsMountPoint=%s\n' \
+      "$volume_path" "${POSTGRES_VOLUME_MOUNT//%/%%}" \
+      >> "/etc/systemd/system/$pg_unit.d/balnana-data.conf"
+  fi
   chmod 0644 "/etc/systemd/system/$pg_unit.d/balnana-data.conf"
   systemctl daemon-reload
-  if [[ $current_dir != "$POSTGRES_DATA_DIR" ]]; then
-    log "Using PostgreSQL data directory $POSTGRES_DATA_DIR"
+  if [[ $current_dir != "$data_dir" ]]; then
+    log "Using PostgreSQL data directory $data_dir"
     systemctl stop "$pg_unit"
-    pg_conftool "$pg_version" "$pg_cluster" set data_directory "$POSTGRES_DATA_DIR"
+    pg_conftool "$pg_version" "$pg_cluster" set data_directory "$data_dir"
   fi
   # Start explicitly: postgresql.service may already be active after apt install.
   systemctl start "$pg_unit"
@@ -275,11 +330,12 @@ done
 echo "Balnana did not become healthy before the startup deadline." >&2
 exit 1
 EOF
-cat > "$BUILD_DIR/balnana.service" <<'EOF'
+cat > "$BUILD_DIR/balnana.service" <<EOF
 [Unit]
 Description=Balnana expense splitting server
-Wants=network-online.target postgresql.service
-After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=$POSTGRES_UNIT
+After=network-online.target $POSTGRES_UNIT
 
 [Service]
 Type=exec
