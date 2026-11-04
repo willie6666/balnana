@@ -11,6 +11,9 @@ Installs build dependencies and local PostgreSQL, builds the Flutter web app
 and Go server, and enables/restarts balnana.service. Run again after git pull
 to update. Existing /etc/balnana/balnana.env and database contents are preserved.
 The checkout's .env is NOT loaded (it may contain Docker/development settings).
+Copy scripts/.env.example to scripts/.env to configure POSTGRES_DATA_DIR.
+Leave it empty to keep PostgreSQL's current/default data directory.
+Custom directories are initialized only when empty; existing data is not moved.
 
 Optional environment variables (pass with sudo env NAME=value ...):
   GO_VERSION       Default: the go directive in server/go.mod
@@ -44,6 +47,29 @@ for command in apt-get systemctl runuser flock tar; do
 done
 
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+load_deploy_config() {
+  POSTGRES_DATA_DIR=''
+  [[ -f $PROJECT_ROOT/scripts/.env ]] || return 0
+  local line value
+  # Read the single supported dotenv key without executing shell expressions.
+  while IFS= read -r line || [[ -n $line ]]; do
+    line="${line%$'\r'}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ -z $line || $line == \#* ]] && continue
+    [[ $line == POSTGRES_DATA_DIR=* ]] || die "Unknown setting in scripts/.env: expected POSTGRES_DATA_DIR=value"
+    value="${line#*=}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    if [[ $value == \"*\" || $value == \'*\' ]]; then value="${value:1:${#value}-2}"; fi
+    POSTGRES_DATA_DIR="$value"
+  done < "$PROJECT_ROOT/scripts/.env"
+  if [[ -n $POSTGRES_DATA_DIR ]]; then
+    [[ $POSTGRES_DATA_DIR == /* && $POSTGRES_DATA_DIR != *[[:cntrl:]]* ]] || die "POSTGRES_DATA_DIR must be an absolute path without control characters."
+    POSTGRES_DATA_DIR="$(realpath -m -- "$POSTGRES_DATA_DIR")"
+    [[ $POSTGRES_DATA_DIR != / ]] || die "POSTGRES_DATA_DIR must not be the filesystem root."
+  fi
+}
+load_deploy_config
 GO_VERSION="${GO_VERSION:-$(awk '$1 == "go" {print $2; exit}' "$PROJECT_ROOT/server/go.mod")}"
 FLUTTER_VERSION="${FLUTTER_VERSION:-$(sed -n 's/^ARG FLUTTER_VERSION=//p' "$PROJECT_ROOT/Dockerfile" | head -n 1)}"
 [[ $GO_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Invalid GO_VERSION: $GO_VERSION"
@@ -159,7 +185,51 @@ as_builder bash -c '
     -ldflags "-s -w -X main.version=$2" -o balnana ./cmd/balnana
 ' -- "$BUILD_DIR" "$(git -C "$PROJECT_ROOT" describe --always --dirty 2>/dev/null || echo local)"
 
-log "Preparing local PostgreSQL (existing roles and databases are kept)"
+configure_postgres_data_dir() {
+  [[ -n $POSTGRES_DATA_DIR ]] || return 0
+  local pg_version pg_cluster pg_unit current_dir mount_path
+  # The service uses port 5432. Do not reconfigure unrelated clusters/ports.
+  read -r pg_version pg_cluster < <(pg_lsclusters --no-header | awk '$3 == 5432 {print $1, $2; exit}') \
+    || die "No Debian PostgreSQL cluster is configured on port 5432."
+  pg_unit="postgresql@$pg_version-$pg_cluster.service"
+  current_dir="$(pg_conftool -s "$pg_version" "$pg_cluster" show data_directory)"
+  if [[ -f $POSTGRES_DATA_DIR/PG_VERSION ]]; then
+    [[ $(cat "$POSTGRES_DATA_DIR/PG_VERSION") == "$pg_version" ]] \
+      || die "POSTGRES_DATA_DIR contains a different PostgreSQL major version."
+  else
+    if [[ -e $POSTGRES_DATA_DIR ]]; then
+      [[ -d $POSTGRES_DATA_DIR ]] || die "POSTGRES_DATA_DIR must be a directory."
+      [[ -z $(find "$POSTGRES_DATA_DIR" -mindepth 1 -maxdepth 1 -print -quit) ]] \
+        || die "POSTGRES_DATA_DIR is nonempty and is not a PostgreSQL data directory."
+    fi
+    install -d -o postgres -g postgres -m 0700 "$POSTGRES_DATA_DIR"
+    log "Initializing PostgreSQL data in $POSTGRES_DATA_DIR (no existing data is moved)"
+    runuser -u postgres -- "/usr/lib/postgresql/$pg_version/bin/initdb" \
+      --pgdata="$POSTGRES_DATA_DIR" --encoding=UTF8 --locale=C.UTF-8 \
+      --auth-local=peer --auth-host=scram-sha-256
+  fi
+
+  # Wait for the configured filesystem mount before starting this cluster at boot.
+  # Quote paths for systemd, including literal percent signs and backslashes.
+  mount_path="${POSTGRES_DATA_DIR//\\/\\\\}"
+  mount_path="${mount_path//\"/\\\"}"
+  mount_path="${mount_path//%/%%}"
+  install -d -o root -g root -m 0755 "/etc/systemd/system/$pg_unit.d"
+  printf '[Unit]\nRequiresMountsFor="%s"\n' "$mount_path" \
+    > "/etc/systemd/system/$pg_unit.d/balnana-data.conf"
+  chmod 0644 "/etc/systemd/system/$pg_unit.d/balnana-data.conf"
+  systemctl daemon-reload
+  if [[ $current_dir != "$POSTGRES_DATA_DIR" ]]; then
+    log "Using PostgreSQL data directory $POSTGRES_DATA_DIR"
+    systemctl stop "$pg_unit"
+    pg_conftool "$pg_version" "$pg_cluster" set data_directory "$POSTGRES_DATA_DIR"
+  fi
+  # Start explicitly: postgresql.service may already be active after apt install.
+  systemctl start "$pg_unit"
+}
+
+log "Preparing local PostgreSQL (existing data in the selected directory is kept)"
+configure_postgres_data_dir
 systemctl enable --now postgresql.service
 pg_admin() {
   runuser -u postgres -- psql -X -h /var/run/postgresql -p 5432 \

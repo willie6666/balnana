@@ -15,6 +15,7 @@ skills-lock.json
 /.pgsocket/
 /scripts/*
 !/scripts/deploy-debian.sh
+!/scripts/.env.example
 
 # Nix (each developer keeps their own environment)
 *.nix
