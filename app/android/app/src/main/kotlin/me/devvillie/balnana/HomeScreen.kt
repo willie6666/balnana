@@ -35,6 +35,15 @@ object HomeScreen {
 
     fun listen(context: Context, messenger: BinaryMessenger) {
         MethodChannel(messenger, "balnana/home").setMethodCallHandler { call, result ->
+            if (call.method == "clear") {
+                val saved = prefs(context)
+                val edit = saved.edit().remove("server")
+                for (key in saved.all.keys) if (key.startsWith("groups.")) edit.remove(key)
+                edit.apply()
+                renderAll(context)
+                setShortcuts(context, "", emptyList())
+                return@setMethodCallHandler result.success(null)
+            }
             if (call.method != "update") return@setMethodCallHandler result.notImplemented()
             val server = call.argument<String>("server") ?: return@setMethodCallHandler result.error("server", null, null)
             val list = JSONArray(call.argument<List<Map<String, Any>>>("groups") ?: emptyList<Map<String, Any>>())
@@ -97,10 +106,10 @@ object HomeScreen {
         val target = prefs(context).getString("widget.$id", null)?.let(::JSONObject) ?: return
         val server = target.getString("server")
         val token = target.getString("token")
-        // Still shown under the name it had when the group is gone from the app.
+        // A previous account's group must not keep showing on the launcher.
         val group = groups(context, server).firstOrNull { it.token == token }
         val views = RemoteViews(context.packageName, R.layout.group_widget)
-        views.setTextViewText(R.id.name, group?.name ?: target.optString("name"))
+        views.setTextViewText(R.id.name, group?.name ?: label(context, "empty", "Open Balnana and add a group first."))
         val tones = mapOf(1 to R.id.balance_owed, -1 to R.id.balance_owe, 0 to R.id.balance_settled)
         for ((tone, view) in tones) {
             val shown = group != null && group.tone == tone

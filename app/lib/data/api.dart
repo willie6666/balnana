@@ -343,7 +343,9 @@ class BalnanaApi {
 
   /// The signed-in account's groups, most recently changed first.
   Future<List<GroupSummary>> myGroups() => _send(() => _dio.get<Object?>('/me/groups'), (data) {
-    if (data is! Map<String, Object?> || data['groups'] is! List<Object?>) throw const FormatException('bad groups');
+    if (data is! Map<String, Object?> || data['groups'] is! List<Object?>) {
+      throw const FormatException('bad groups');
+    }
     return [for (final g in data['groups'] as List<Object?>) GroupSummary.fromJson(g)];
   });
 
@@ -662,15 +664,33 @@ class GroupApi {
     (data) => Expense.fromJson(data, digits),
   );
 
-  Future<Expense> recordPayment(String from, String to, BigInt amount, int digits, {String? key}) => _send(
-    () => _dio.post<Object?>('$_base/payments', data: paymentBody(from, to, amount, digits), options: _once(key)),
+  Future<Expense> recordPayment(
+    String from,
+    String to,
+    BigInt amount,
+    int digits, {
+    String? key,
+    DateTime? occurredAt,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '$_base/payments',
+      data: paymentBody(from, to, amount, digits, occurredAt: occurredAt ?? DateTime.now()),
+      options: _once(key),
+    ),
     (data) => Expense.fromJson(data, digits),
   );
 
-  static Map<String, Object?> paymentBody(String from, String to, BigInt amount, int digits) => {
+  static Map<String, Object?> paymentBody(
+    String from,
+    String to,
+    BigInt amount,
+    int digits, {
+    required DateTime occurredAt,
+  }) => {
     'fromMemberId': from,
     'toMemberId': to,
     'amount': formatAmount(amount, digits),
+    'occurredAt': occurredAt.toUtc().toIso8601String(),
   };
 
   /// Sends [body] to [path] in the group as it was kept while offline, with

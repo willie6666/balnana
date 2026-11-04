@@ -10,6 +10,7 @@ import 'package:balnana/core/session.dart';
 import 'package:balnana/core/settings.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/data/known_groups.dart';
+import 'package:balnana/data/providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,20 +76,27 @@ class _Recorder implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<void> _settle() => Future<void>.delayed(const Duration(milliseconds: 600));
+Future<void> _settle(WidgetTester tester) async {
+  // Deliver provider/stream changes before advancing the debounce timer.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pump();
+}
 
 void main() {
   late _FakePush push;
   late _Recorder server;
   late ProviderContainer container;
 
-  Future<void> boot({
+  Future<void> boot(
+    WidgetTester tester, {
     bool serverPush = true,
     Future<void>? hold,
     Future<void>? permission,
     String? device = 'device-1',
     String? address = 'https://push.example.com/1',
     bool groups = true,
+    bool cookie = false,
   }) async {
     SharedPreferences.setMockInitialValues({
       'settings.server': _server,
@@ -116,6 +124,7 @@ void main() {
       overrides: [
         prefsProvider.overrideWithValue(prefs),
         cacheDbProvider.overrideWithValue(null),
+        signedInProvider.overrideWith((ref) => cookie && ref.watch(sessionProvider).generation == 0),
         pushServiceProvider.overrideWithValue(push),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
         apiProvider.overrideWith((ref) {
@@ -127,11 +136,11 @@ void main() {
     );
     addTearDown(container.dispose);
     container.listen(pushSyncProvider, (_, _) {});
-    await _settle();
+    await _settle(tester);
   }
 
-  test('registers the groups with a member picked, once things settle', () async {
-    await boot();
+  testWidgets('registers the groups with a member picked, once things settle', (tester) async {
+    await boot(tester);
     expect(server.requests, [
       'PUT /api/v1/push/devices/device-1 {"endpoint":"https://push.example.com/1","p256dh":"pub","auth":"auth",'
           '"groups":[{"token":"tok","memberId":"a"}]}',
@@ -140,7 +149,7 @@ void main() {
     expect(push.keys, ['vapid-key']);
 
     container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
-    await _settle();
+    await _settle(tester);
     expect(
       server.requests.last,
       contains('{"token":"tok","memberId":"a"},{"token":"unpicked","memberId":"b"}'),
@@ -148,76 +157,76 @@ void main() {
 
     push.address = 'https://push.example.com/2';
     push.refreshes.add(null);
-    await _settle();
+    await _settle(tester);
     expect(
       server.requests.last,
       startsWith('PUT /api/v1/push/devices/device-1 {"endpoint":"https://push.example.com/2"'),
     );
   });
 
-  test('a refused or failed permission request still registers, and is shown', () async {
-    await boot();
+  testWidgets('a refused or failed permission request still registers, and is shown', (tester) async {
+    await boot(tester);
     expect(container.read(pushBlockedProvider), isFalse);
 
     push.allowed = false;
     container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
-    await _settle();
+    await _settle(tester);
     expect(server.requests, hasLength(2));
     expect(container.read(pushBlockedProvider), isTrue);
 
     push.allowed = null;
     push.address = 'https://push.example.com/2';
     push.refreshes.add(null);
-    await _settle();
+    await _settle(tester);
     expect(server.requests.last, contains('push.example.com/2'));
   });
 
-  test('a device makes up its own ID and keeps it', () async {
-    await boot(device: null);
+  testWidgets('a device makes up its own ID and keeps it', (tester) async {
+    await boot(tester, device: null);
     final id = container.read(prefsProvider).getString('push.device');
     expect(id, matches(RegExp(r'^[A-Za-z0-9_-]{43}$')));
     expect(server.requests, [startsWith('PUT /api/v1/push/devices/$id ')]);
   });
 
-  test('a phone without a push service registers nothing, and can still be forgotten', () async {
-    await boot(address: null);
+  testWidgets('a phone without a push service registers nothing, and can still be forgotten', (tester) async {
+    await boot(tester, address: null);
     expect(server.requests, isEmpty);
     expect(push.keys, ['vapid-key']);
 
     // Registered before, when the phone had a push service.
     await container.read(prefsProvider).setString('push.server', _server);
     container.read(settingsProvider.notifier).setNotifications(false);
-    await _settle();
+    await _settle(tester);
     expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
   });
 
-  test('turning notifications off tells the server to forget the device', () async {
-    await boot();
+  testWidgets('turning notifications off tells the server to forget the device', (tester) async {
+    await boot(tester);
     server.requests.clear();
     container.read(settingsProvider.notifier).setNotifications(false);
-    await _settle();
+    await _settle(tester);
     expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
 
     // Nothing more to forget.
     container.read(knownGroupsProvider.notifier).setMember('unpicked', 'b');
-    await _settle();
+    await _settle(tester);
     expect(server.requests, hasLength(1));
   });
 
-  test('signing out with no groups left tells the server to forget the device', () async {
-    await boot(groups: false);
+  testWidgets('signing out with no groups left tells the server to forget the device', (tester) async {
+    await boot(tester, groups: false);
     container.read(sessionProvider.notifier).set('b', from: container.read(identityProvider));
-    await _settle();
+    await _settle(tester);
     expect(server.requests.single, startsWith('PUT '));
 
     server.requests.clear();
     container.read(sessionProvider.notifier).set(null, from: container.read(identityProvider));
-    await _settle();
+    await _settle(tester);
     expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
   });
 
-  test('a server without push is left alone', () async {
-    await boot(serverPush: false);
+  testWidgets('a server without push is left alone', (tester) async {
+    await boot(tester, serverPush: false);
     expect(server.requests, isEmpty);
     expect(push.asked, 0);
     expect(push.keys, isEmpty);
@@ -225,38 +234,38 @@ void main() {
   });
 
   // Whatever order the work finishes in, the server ends up told the latest.
-  test('turning notifications off during a registration undoes it', () async {
+  testWidgets('turning notifications off during a registration undoes it', (tester) async {
     final put = Completer<void>();
-    await boot(hold: put.future);
+    await boot(tester, hold: put.future);
     expect(server.requests, hasLength(1));
     container.read(settingsProvider.notifier).setNotifications(false);
-    await _settle();
+    await _settle(tester);
     expect(server.requests, hasLength(1));
     put.complete();
-    await _settle();
+    await _settle(tester);
     expect(server.requests, [startsWith('PUT '), 'DELETE /api/v1/push/devices/device-1']);
     expect(container.read(prefsProvider).getString('push.server'), isNull);
   });
 
-  test('turning notifications off while permission is asked registers nothing', () async {
+  testWidgets('turning notifications off while permission is asked registers nothing', (tester) async {
     final asked = Completer<void>();
-    await boot(permission: asked.future);
+    await boot(tester, permission: asked.future);
     container.read(settingsProvider.notifier).setNotifications(false);
-    await _settle();
+    await _settle(tester);
     asked.complete();
-    await _settle();
+    await _settle(tester);
     expect(server.requests, isEmpty);
     expect(container.read(prefsProvider).getString('push.server'), isNull);
   });
 
-  test('signing in during a registration registers again as the account', () async {
+  testWidgets('signing in during a registration registers again as the account', (tester) async {
     final put = Completer<void>();
-    await boot(hold: put.future);
+    await boot(tester, hold: put.future);
     container.read(sessionProvider.notifier).set('b', from: container.read(identityProvider));
-    await _settle();
+    await _settle(tester);
     server.hold = null;
     put.complete();
-    await _settle();
+    await _settle(tester);
     expect(server.requests, hasLength(2));
     expect(server.requests.last, endsWith(' as b'));
   });
@@ -270,5 +279,15 @@ void main() {
     for (final id in [notificationId(a), notificationId(b), notificationId('')]) {
       expect(id, inInclusiveRange(0, 0x7fffffff));
     }
+  });
+  testWidgets('cookie accounts register without known links and unregister on sign-out', (tester) async {
+    await boot(tester, groups: false, cookie: true);
+    expect(container.read(sessionProvider).token, isNull);
+    expect(server.requests.single, startsWith('PUT /api/v1/push/devices/device-1 '));
+    expect(push.keys, ['vapid-key']);
+    server.requests.clear();
+    container.read(sessionProvider.notifier).set(null, from: container.read(identityProvider));
+    await _settle(tester);
+    expect(server.requests, ['DELETE /api/v1/push/devices/device-1']);
   });
 }

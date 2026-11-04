@@ -13,6 +13,7 @@ import 'package:unifiedpush/unifiedpush.dart';
 
 import '../data/api.dart';
 import '../data/known_groups.dart';
+import '../data/providers.dart';
 import '../ui/colors.dart';
 import 'l10n.dart';
 import 'prefs.dart';
@@ -379,7 +380,7 @@ final pushSyncProvider = Provider<void>((ref) {
     server: ref.watch(serverUrlProvider),
     vapid: ref.watch(_pushKeyProvider),
     api: ref.watch(balnanaApiProvider),
-    signedIn: ref.watch(sessionProvider).token != null,
+    signedIn: ref.watch(sessionProvider).token != null || ref.watch(signedInProvider),
     groups: [
       for (final g in ref.watch(knownGroupsProvider))
         if (g.memberId case final member?) (token: g.token, memberId: member),

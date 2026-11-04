@@ -131,11 +131,14 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
       return (token: token, info: await api.oauthPending(token), verifier: verifier);
     }
     String? token;
+    User? user;
     if (widget.code case final code?) {
-      (token, _) = await api.exchangeOAuthCode(code: code, verifier: (await _verifier())!);
+      (token, user) = await api.exchangeOAuthCode(code: code, verifier: (await _verifier())!);
     }
     // The web app on its own server already has the session cookie.
-    if (startSession(ref, token, from: who) && mounted) context.go(safeNext(widget.next) ?? '/groups');
+    if (startSession(ref, token, from: who, userId: user?.id) && mounted) {
+      context.go(safeNext(widget.next) ?? '/groups');
+    }
     return null;
   }
 
@@ -214,7 +217,7 @@ class _PendingChoiceState extends ConsumerState<_PendingChoice> {
       _error = null;
     });
     try {
-      final (token, _) = await ref
+      final (token, user) = await ref
           .read(balnanaApiProvider)!
           .finishOAuthPending(
             token: widget.pending.token,
@@ -226,7 +229,7 @@ class _PendingChoiceState extends ConsumerState<_PendingChoice> {
             password: _choice == _Choice.link ? _password.text : null,
             verifier: widget.pending.verifier,
           );
-      if (startSession(ref, token, from: who) && mounted) context.go(widget.next);
+      if (startSession(ref, token, from: who, userId: user.id) && mounted) context.go(widget.next);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {

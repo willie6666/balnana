@@ -172,15 +172,20 @@ class CacheDb extends _$CacheDb {
   }
 
   /// Makes [account] the one signed in to [server], forgetting what any
-  /// other account saw or left to send there and saving nothing more for
-  /// them.
+  /// other account saw and saving nothing more for them. Unsent writes stay
+  /// with their owner until that account returns or discards them.
   Future<void> switchAccount(String server, String account) async {
     _accounts[server] = account;
     final others = delete(cachedResponses)
       ..where((r) => r.server.equals(server) & r.account.isNotIn([account, public]));
     await others.go();
-    await (delete(pendingWrites)..where((w) => w.server.equals(server) & w.account.equals(account).not())).go();
   }
+
+  /// Moves session-keyed writes to their verified account, for older caches.
+  Future<void> identifyPending(String server, String session, String account) =>
+      (update(pendingWrites)..where((w) => w.server.equals(server) & w.account.equals(session))).write(
+        PendingWritesCompanion(account: Value(account)),
+      );
 
   /// What [account] has left to send to [server], oldest first.
   Stream<List<PendingWrite>> watchPending(String server, String account) => _pending(server, account).watch();

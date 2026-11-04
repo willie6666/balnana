@@ -91,7 +91,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       _error = null;
     });
     try {
-      final (token, _) = _register
+      final (token, user) = _register
           ? await api.register(
               email: email.isEmpty ? null : email,
               username: emailRequired ? null : _username.text.trim(),
@@ -105,7 +105,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       TextInput.finishAutofillContext();
       // Whether a first account may still sign up has changed.
       if (_register) ref.invalidate(serverInfoProvider);
-      if (!startSession(ref, token, from: who)) {
+      if (!startSession(ref, token, from: who, userId: user.id)) {
         setState(() => _busy = false);
         return;
       }

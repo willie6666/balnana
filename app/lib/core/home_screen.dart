@@ -13,6 +13,17 @@ class HomeScreen {
   /// Launchers show four or five.
   static const shortcuts = 4;
 
+  /// Removes the previous identity's groups before loading another's.
+  Future<void> clear() async {
+    try {
+      await _channel.invokeMethod<void>('clear');
+    } on MissingPluginException {
+      // Builds without the channel.
+    } on PlatformException {
+      // Some launchers refuse shortcut updates.
+    }
+  }
+
   /// Shows [groups] of [server] in the widgets placed for them, and the
   /// first [shortcuts] on the app icon. [labels] words what Android itself
   /// shows: `pick` and `empty` when a widget is placed, `add` for its "+".
@@ -54,6 +65,8 @@ final _token = RegExp(r'^[A-Za-z0-9_-]{22}$');
 /// opens home, since its token is not this server's to see.
 String openPath(Map<String, String> query, String? server) {
   final token = query['token'];
-  if (server == null || query['server'] != server || token == null || !_token.hasMatch(token)) return '/groups';
+  if (server == null || query['server'] != server || token == null || !_token.hasMatch(token)) {
+    return '/groups';
+  }
   return query['add'] == '1' ? '/g/$token/expenses/new' : '/g/$token';
 }

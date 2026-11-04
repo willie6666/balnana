@@ -109,6 +109,7 @@ final accountProvider = FutureProvider<User?>((ref) async {
   try {
     final user = await _load(ref, (api) => api.me());
     if (ref.mounted && ref.read(identityProvider) == who) {
+      ref.read(sessionProvider.notifier).identify(who, user.id);
       ref.read(settingsProvider.notifier).applyAccountLocale(user.locale);
     }
     return user;
@@ -134,8 +135,8 @@ final signedInProvider = Provider<bool>(
 /// Keeps a new session and reloads everything as that account, unless the
 /// app is no longer [from], whom it was when it asked for the session: see
 /// [SessionNotifier.set]. Returns whether it did.
-bool startSession(WidgetRef ref, String? token, {required Identity from}) =>
-    ref.read(sessionProvider.notifier).set(token, from: from);
+bool startSession(WidgetRef ref, String? token, {required Identity from, String? userId}) =>
+    ref.read(sessionProvider.notifier).set(token, from: from, userId: userId);
 
 /// Ends the session here and on the server.
 Future<void> signOut(WidgetRef ref) async {

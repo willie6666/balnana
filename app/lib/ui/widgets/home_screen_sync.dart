@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/home_screen.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/providers.dart';
 import '../money.dart';
 
@@ -22,14 +23,20 @@ class HomeScreenSync extends ConsumerStatefulWidget {
 
 class _HomeScreenSyncState extends ConsumerState<HomeScreenSync> {
   String? _sent;
+  Identity? _who;
 
   @override
   Widget build(BuildContext context) {
     final home = ref.watch(homeScreenProvider);
     if (home == null) return widget.child;
     final server = ref.watch(serverUrlProvider);
-    // Kept from the last answer while a new one loads, so nothing flickers.
-    final summaries = ref.watch(summariesProvider).value;
+    final who = ref.watch(identityProvider);
+    if (_who != who) {
+      _who = who;
+      _sent = null;
+      home.clear();
+    }
+    final summaries = ref.watchCurrent(summariesProvider).value;
     if (server == null || summaries == null) return widget.child;
 
     final l10n = context.l10n;

@@ -15,10 +15,14 @@ import 'server.dart';
 /// [generation] marks a sign-in or sign-out even when the cookie is unseen.
 @immutable
 class SessionKey {
-  const SessionKey(this.token, this.generation);
+  const SessionKey(this.token, this.generation, {this.userId});
 
   final String? token;
   final int generation;
+  final String? userId;
+
+  /// Pending writes belong to an account across renewed sessions.
+  String get pendingAccount => userId == null ? cacheAccount(token) : 'user:$userId';
 }
 
 final sessionProvider = NotifierProvider<SessionNotifier, SessionKey>(SessionNotifier.new);
@@ -29,23 +33,25 @@ typedef Identity = ({String? server, String? token, int generation});
 /// What was loaded as one [Identity] is never shown as another's: see
 /// `current` in data/providers.dart.
 final identityProvider = Provider<Identity>((ref) {
-  final session = ref.watch(sessionProvider);
-  return (server: ref.watch(serverUrlProvider), token: session.token, generation: session.generation);
+  final (token, generation) = ref.watch(sessionProvider.select((s) => (s.token, s.generation)));
+  return (server: ref.watch(serverUrlProvider), token: token, generation: generation);
 });
 
 class SessionNotifier extends Notifier<SessionKey> {
   static const _key = 'session.tokens';
+  static const _usersKey = 'session.users';
 
   String? _server;
 
   @override
   SessionKey build() {
     _server = ref.watch(serverUrlProvider);
-    return SessionKey(_tokens()[_server], 0);
+    final token = _tokens()[_server];
+    return SessionKey(token, 0, userId: token == null ? null : _tokens(_usersKey)[_userKey(_server!, token)]);
   }
 
-  Map<String, String> _tokens() {
-    final raw = ref.read(prefsProvider).getString(_key);
+  Map<String, String> _tokens([String key = _key]) {
+    final raw = ref.read(prefsProvider).getString(key);
     if (raw == null) return {};
     try {
       final map = jsonDecode(raw);
@@ -65,7 +71,7 @@ class SessionNotifier extends Notifier<SessionKey> {
   /// the server that gave it, and an answer that comes after another server
   /// was chosen, or another session started, is not for now: nothing changes
   /// and false is returned.
-  bool set(String? token, {required Identity from}) {
+  bool set(String? token, {required Identity from, String? userId}) {
     final server = _server;
     if (server == null || from.server != server || from.generation != state.generation) return false;
     final tokens = _tokens();
@@ -77,8 +83,33 @@ class SessionNotifier extends Notifier<SessionKey> {
     ref.read(prefsProvider).setString(_key, jsonEncode(tokens));
     // What the last account saw is not for the next one.
     ref.read(cacheDbProvider)?.switchAccount(server, cacheAccount(token)).ignore();
-    state = SessionKey(token, state.generation + 1);
+    if (token != null && userId != null) _rememberUser(server, token, userId);
+    state = SessionKey(
+      token,
+      state.generation + 1,
+      userId: token == null ? null : userId ?? _tokens(_usersKey)[_userKey(server, token)],
+    );
     return true;
+  }
+
+  static String _userKey(String server, String token) => jsonEncode([server, cacheAccount(token)]);
+
+  void _rememberUser(String server, String token, String userId) {
+    final users = _tokens(_usersKey)..[_userKey(server, token)] = userId;
+    ref.read(prefsProvider).setString(_usersKey, jsonEncode(users));
+  }
+
+  /// Remembers a verified account so its offline work survives signing in again.
+  void identify(Identity from, String userId) {
+    if (_server != from.server ||
+        state.token != from.token ||
+        state.generation != from.generation ||
+        from.token == null ||
+        state.userId == userId) {
+      return;
+    }
+    _rememberUser(from.server!, from.token!, userId);
+    state = SessionKey(state.token, state.generation, userId: userId);
   }
 
   /// The server said a call made as [from] needs signing in. A token it

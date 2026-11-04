@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:balnana/core/home_screen.dart';
+import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/core/session.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/l10n/app_localizations.dart';
@@ -16,6 +20,13 @@ const _token = 'AAAAAAAAAAAAAAAAAAAAAA';
 /// Keeps what the app hands the home screen.
 class _Home extends HomeScreen {
   _Home();
+
+  var clears = 0;
+
+  @override
+  Future<void> clear() async {
+    clears++;
+  }
 
   final updates = <({String server, List<HomeScreenGroup> groups, Map<String, String> labels})>[];
 
@@ -114,5 +125,68 @@ void main() {
     );
     await tester.pump();
     expect(home.updates, hasLength(1));
+  });
+  testWidgets('clears old groups while another server or session loads or fails', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final home = _Home();
+    var server = _server;
+    var answer = Completer<Summaries>();
+    late ProviderContainer container;
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (count, error) => null,
+        overrides: [
+          cacheDbProvider.overrideWithValue(null),
+          prefsProvider.overrideWithValue(prefs),
+          serverUrlProvider.overrideWith((ref) => server),
+          homeScreenProvider.overrideWithValue(home),
+          summariesProvider.overrideWith((ref) {
+            ref.watch(identityProvider);
+            return answer.future;
+          }),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              container = ProviderScope.containerOf(context);
+              return const HomeScreenSync(child: SizedBox());
+            },
+          ),
+        ),
+      ),
+    );
+    answer.complete(Summaries(groups: [_group(_token, 'Private group', BigInt.from(100))], missing: []));
+    await tester.pump();
+    expect(home.updates.single.server, _server);
+    final clears = home.clears;
+
+    server = 'https://other.example';
+    answer = Completer<Summaries>();
+    container.invalidate(serverUrlProvider);
+    await tester.pump();
+    expect(home.clears, clears + 1);
+    expect(home.updates, hasLength(1));
+    answer.completeError(StateError('offline'));
+    await tester.pump();
+    expect(home.updates, hasLength(1));
+
+    answer = Completer<Summaries>();
+    container.invalidate(summariesProvider);
+    answer.complete(Summaries(groups: [_group('B' * 22, 'New group', BigInt.zero)], missing: []));
+    await tester.pumpAndSettle();
+    expect(home.updates.last.server, server);
+    expect(home.updates.last.groups.single.token, 'B' * 22);
+
+    answer = Completer<Summaries>();
+    container.read(sessionProvider.notifier).set('another-account', from: container.read(identityProvider));
+    await tester.pump();
+    expect(home.clears, clears + 2);
+    expect(home.updates, hasLength(2));
+    answer.completeError(StateError('offline'));
+    await tester.pump();
+    expect(home.updates, hasLength(2));
   });
 }

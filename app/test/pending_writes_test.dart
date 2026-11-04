@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
+import 'package:balnana/core/session.dart';
 import 'package:balnana/data/pending_writes.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
@@ -36,7 +38,17 @@ class _Server implements HttpClientAdapter {
     ));
     final status = statuses[path] ?? 201;
     return ResponseBody.fromString(
-      jsonEncode(status >= 400 ? {'code': status >= 500 ? 'busy' : 'validation_failed'} : {'id': 'e1'}),
+      jsonEncode(
+        status >= 400
+            ? {
+                'code': status == 401
+                    ? 'sign_in_required'
+                    : status >= 500
+                    ? 'busy'
+                    : 'validation_failed',
+              }
+            : {'id': 'e1'},
+      ),
       status,
       headers: {
         'content-type': ['application/json'],
@@ -52,8 +64,10 @@ void main() {
   late CacheDb db;
   late _Server server;
   late ProviderContainer container;
+  late String chosenServer;
 
   setUp(() async {
+    chosenServer = _server;
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     db = CacheDb(NativeDatabase.memory());
@@ -62,9 +76,11 @@ void main() {
     container = ProviderContainer(
       overrides: [
         prefsProvider.overrideWithValue(prefs),
-        serverUrlProvider.overrideWithValue(_server),
+        serverUrlProvider.overrideWith((ref) => chosenServer),
         cacheDbProvider.overrideWithValue(db),
-        apiProvider.overrideWithValue(Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server),
+        apiProvider.overrideWithValue(
+          Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server,
+        ),
         serverInfoProvider.overrideWithValue(
           const AsyncData(ServerInfo(version: 'test', authMode: AuthMode.link, publicUrl: _server)),
         ),
@@ -76,10 +92,16 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 20));
   });
 
+  PendingTarget target() => (
+    identity: container.read(identityProvider),
+    account: container.read(sessionProvider).pendingAccount,
+    member: 'ana',
+  );
+
   PendingSender sender() => container.read(pendingSenderProvider.notifier);
   Future<List<PendingWrite>> rows() => db.select(db.pendingWrites).get();
   Future<bool> queue(String title, String key) =>
-      sender().queue('tok', PendingPath.expenses, {'title': title}, key);
+      sender().queue('tok', PendingPath.expenses, {'title': title}, key, target: target());
 
   test('keeps a write on the device and says the app is offline', () async {
     expect(await queue('Sushi', 'k1'), isTrue);
@@ -117,7 +139,7 @@ void main() {
   });
 
   test('keeps one the server refuses with why, and still sends the rest', () async {
-    await sender().queue('tok', PendingPath.payments, {'amount': '1'}, 'k1');
+    await sender().queue('tok', PendingPath.payments, {'amount': '1'}, 'k1', target: target());
     await queue('Ramen', 'k2');
     server.statuses['/api/v1/g/tok/payments'] = 422;
 
@@ -185,5 +207,81 @@ void main() {
     await sender().discard((await rows()).single);
 
     expect(await rows(), isEmpty);
+  });
+  test('a late failure keeps its original server, account and member', () async {
+    final session = container.read(sessionProvider.notifier);
+    session.set('a-token', from: container.read(identityProvider), userId: 'ana');
+    final original = target();
+    chosenServer = 'https://other.example';
+    container.invalidate(serverUrlProvider);
+    await sender().queue('tok', PendingPath.expenses, {'title': 'Sushi'}, 'original', target: original);
+    final row = (await rows()).single;
+    expect((row.server, row.account, row.member), (_server, 'user:ana', 'ana'));
+    await sender().send();
+    expect(server.sent, isEmpty);
+    expect(container.read(offlineProvider), isFalse);
+  });
+
+  test('expired authentication keeps all drafts until their owner signs in again', () async {
+    final session = container.read(sessionProvider.notifier);
+    session.set('expired', from: container.read(identityProvider), userId: 'ana');
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await queue('Sushi', 'k1');
+    await queue('Ramen', 'k2');
+    server.statuses['/api/v1/g/tok/expenses'] = 401;
+    await sender().send();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(container.read(sessionProvider).token, isNull);
+    expect(await rows(), hasLength(2));
+    expect((await rows()).every((w) => w.error == null && w.account == 'user:ana'), isTrue);
+
+    session.set('ben-token', from: container.read(identityProvider), userId: 'ben');
+    await sender().send();
+    expect(await rows(), hasLength(2));
+    server.statuses.clear();
+    server.sent.clear();
+    session.set('renewed', from: container.read(identityProvider), userId: 'ana');
+    await sender().send();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(await rows(), isEmpty);
+    expect(server.sent.map((s) => s.key), ['k1', 'k2']);
+  });
+
+  test('session-keyed drafts migrate only when their account is identified', () async {
+    final session = container.read(sessionProvider.notifier);
+    session.set('legacy', from: container.read(identityProvider));
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await queue('Sushi', 'legacy-key');
+    expect((await rows()).single.account, cacheAccount('legacy'));
+    server.down = true;
+    session.identify(container.read(identityProvider), 'ana');
+    await sender().send();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect((await rows()).single.account, 'user:ana');
+    // The association is persisted across application restarts.
+    final prefs = container.read(prefsProvider);
+    final reopened = ProviderContainer(
+      overrides: [prefsProvider.overrideWithValue(prefs), serverUrlProvider.overrideWithValue(_server)],
+    );
+    addTearDown(reopened.dispose);
+    expect(reopened.read(sessionProvider).pendingAccount, 'user:ana');
+  });
+
+  test('429 and 503 retry automatically without changing keys or order', () async {
+    for (final status in [429, 503]) {
+      server.sent.clear();
+      await queue('Sushi', 'k1');
+      await queue('Ramen', 'k2');
+      server.statuses['/api/v1/g/tok/expenses'] = status;
+      await sender().send();
+      expect(server.sent.map((s) => s.key), ['k1']);
+      server.statuses.clear();
+      final deadline = DateTime.now().add(const Duration(seconds: 4));
+      while ((await rows()).isNotEmpty && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+      expect(await rows(), isEmpty);
+      expect(server.sent.map((s) => s.key), ['k1', 'k1', 'k2']);
+    }
   });
 }

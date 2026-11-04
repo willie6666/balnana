@@ -509,11 +509,17 @@ Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Tra
   final container = ProviderScope.containerOf(context, listen: false);
   final payment = '${group.token}/${suggested.from}/${suggested.to}';
   final key = _paymentKeys[payment] ??= newClientKey();
+  final target = pendingTarget(ref, group.token);
+  final occurredAt = DateTime.now();
   try {
-    final recorded = await groupApiOf(
-      ref,
-      group.token,
-    ).recordPayment(suggested.from, suggested.to, amount, group.minorDigits, key: key);
+    final recorded = await groupApiOf(ref, group.token).recordPayment(
+      suggested.from,
+      suggested.to,
+      amount,
+      group.minorDigits,
+      key: key,
+      occurredAt: occurredAt,
+    );
     _paymentKeys.remove(payment);
     refreshGroupIn(container, group.token);
     if (!context.mounted) return;
@@ -528,9 +534,15 @@ Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Tra
     if (!e.unreachable) {
       _paymentKeys.remove(payment);
     } else {
-      final body = GroupApi.paymentBody(suggested.from, suggested.to, amount, group.minorDigits);
+      final body = GroupApi.paymentBody(
+        suggested.from,
+        suggested.to,
+        amount,
+        group.minorDigits,
+        occurredAt: occurredAt,
+      );
       final sender = container.read(pendingSenderProvider.notifier);
-      if (await sender.queue(group.token, PendingPath.payments, body, key)) {
+      if (await sender.queue(group.token, PendingPath.payments, body, key, target: target)) {
         _paymentKeys.remove(payment);
         messenger.showSnackBar(SnackBar(content: Text(l10n.pendingSaved)));
         return;

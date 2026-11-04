@@ -329,6 +329,7 @@ class _EditorState extends ConsumerState<_Editor> {
     }
     setState(() => _busy = true);
     final api = groupApiOf(ref, _group.token);
+    final target = pendingTarget(ref, _group.token);
     // The page can go while this waits, and its ref with it.
     final container = ProviderScope.containerOf(context, listen: false);
     try {
@@ -371,7 +372,7 @@ class _EditorState extends ConsumerState<_Editor> {
         }
         final sender = container.read(pendingSenderProvider.notifier);
         final body = draft.toJson(_group.minorDigits);
-        if (await sender.queue(_group.token, PendingPath.expenses, body, _key)) {
+        if (await sender.queue(_group.token, PendingPath.expenses, body, _key, target: target)) {
           messenger.showSnackBar(SnackBar(content: Text(l10n.pendingSaved)));
           if (mounted) context.pop();
           return;

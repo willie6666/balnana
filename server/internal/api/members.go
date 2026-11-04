@@ -190,11 +190,12 @@ func (s *Server) UpdateMember(ctx context.Context, req UpdateMemberRequestObject
 		if req.Body.Color != nil {
 			color = req.Body.Color
 		}
+		oldName := m.name
 		m.name, m.color, m.pay = name, color, pay
 		if _, err := tx.Exec(ctx, `update members set display_name = $2, color = $3, payment_details = $4 where id = $1`, m.id, name, color, listed(pay)); err != nil {
 			return err
 		}
-		if err := logActivity(ctx, tx, g.id, who, "member.updated", &m.id, map[string]any{"name": name, "oldName": m.name}); err != nil {
+		if err := logActivity(ctx, tx, g.id, who, "member.updated", &m.id, map[string]any{"name": name, "oldName": oldName}); err != nil {
 			return err
 		}
 		nets, err := groupNets(ctx, tx, g.id)

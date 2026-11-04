@@ -293,9 +293,9 @@ Dio _newDio(String serverUrl) => Dio(
 final apiProvider = Provider<Dio?>((ref) {
   final url = ref.watch(serverUrlProvider);
   if (url == null) return null;
-  final session = ref.watch(sessionProvider);
-  final dio = _cachedDio(ref, url, cacheAccount(session.token));
-  if (session.token case final token?) dio.options.headers['Authorization'] = 'Bearer $token';
+  final (token, _) = ref.watch(sessionProvider.select((s) => (s.token, s.generation)));
+  final dio = _cachedDio(ref, url, cacheAccount(token));
+  if (token != null) dio.options.headers['Authorization'] = 'Bearer $token';
   ref.onDispose(dio.close);
   return dio;
 });
