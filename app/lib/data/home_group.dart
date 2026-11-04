@@ -52,6 +52,13 @@ class CurrentGroupNotifier extends Notifier<String?> {
     }
     ref.read(prefsProvider).setString(_key, jsonEncode(map));
   }
+
+  /// A deleted group is no longer home for any account on this server.
+  void removeOn(String server, String token) {
+    final map = _read()..removeWhere((owner, value) => owner.startsWith('$server ') && value == token);
+    ref.read(prefsProvider).setString(_key, jsonEncode(map));
+    if ((_for?.startsWith('$server ') ?? false) && state == token) state = null;
+  }
 }
 
 /// The order a signed-in account put its groups in on this device, by token.
@@ -84,6 +91,18 @@ class GroupOrderNotifier extends Notifier<List<String>> {
     if (owner == null) return;
     state = tokens;
     ref.read(prefsProvider).setString(_key, jsonEncode({..._read(), owner: tokens}));
+  }
+
+  void removeOn(String server, String token) {
+    final map = _read();
+    for (final owner in map.keys.toList()) {
+      final tokens = map[owner];
+      if (owner.startsWith('$server ') && tokens is List) {
+        map[owner] = tokens.where((t) => t != token).toList();
+      }
+    }
+    ref.read(prefsProvider).setString(_key, jsonEncode(map));
+    if (_for?.startsWith('$server ') ?? false) state = state.where((t) => t != token).toList();
   }
 }
 

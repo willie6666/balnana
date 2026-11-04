@@ -107,6 +107,7 @@ class GroupPage extends ConsumerStatefulWidget {
 
 class _GroupPageState extends ConsumerState<GroupPage> {
   bool _askedIdentity = false;
+  bool _removing = false;
   late final AppLifecycleListener _lifecycle;
 
   /// The server the group is on. Once another is chosen this page is left
@@ -120,13 +121,29 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     super.initState();
     _server = openGroup(ref, widget.token);
     ref.listenManual(groupProvider(widget.token), (_, next) {
-      final group = next.value;
-      if (group != null && _here) {
+      if (next.error case ApiException(code: 'not_found') when _here && !next.isLoading) {
+        if (!_removing && _server != null) {
+          _removing = true;
+          _stopLive();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!_here) return;
+            final container = ProviderScope.containerOf(context, listen: false);
+            removeDeletedGroup(container, _server, widget.token);
+            final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
+            if (path == '/g/${widget.token}' || path.startsWith('/g/${widget.token}/')) context.go('/groups');
+          });
+        }
+        return;
+      }
+      final group = next.current(ref.read(identityProvider)).value;
+      if (group != null && _here && !ref.read(removedGroupsProvider(_server!)).contains(widget.token)) {
         _opened(group);
         _goLive();
         // Home opens this group next time.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_here) ref.read(currentGroupProvider.notifier).set(widget.token);
+          if (_here && !ref.read(removedGroupsProvider(_server)).contains(widget.token)) {
+            ref.read(currentGroupProvider.notifier).set(widget.token);
+          }
         });
       }
     }, fireImmediately: true);
@@ -209,7 +226,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     // for the account to load before deciding.
     if (group.myMemberId != null) return;
     final account = await ref.read(accountProvider.future).catchError((_) => null);
-    if (!_here || account != null) return;
+    if (!_here || account != null || ref.read(removedGroupsProvider(_server!)).contains(group.token)) return;
     final known = ref.read(knownGroupsProvider.notifier);
     if (known.byToken(group.token) == null) {
       known.add(group.token);
@@ -253,7 +270,9 @@ class _GroupPageState extends ConsumerState<GroupPage> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
               // Not home any more, or closing the join page would come back here.
-              if (ref.read(currentGroupProvider) == widget.token) ref.read(currentGroupProvider.notifier).set(null);
+              if (ref.read(currentGroupProvider) == widget.token) {
+                ref.read(currentGroupProvider.notifier).set(null);
+              }
               context.go('/g/${widget.token}/join');
             });
           }

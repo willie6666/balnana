@@ -160,6 +160,18 @@ class KnownGroupsNotifier extends Notifier<List<KnownGroup>> {
     ],
   );
 
+  /// Forgets a deleted group on its original server, even after switching.
+  void removeOn(String server, String token) {
+    final all = _all().where((g) => g.server != server || g.token != token).toList();
+    ref.read(prefsProvider).setString(_key, jsonEncode([for (final g in all) g.toJson()]));
+    if (_server == server) {
+      state = [
+        for (final g in state)
+          if (g.token != token) g,
+      ];
+    }
+  }
+
   /// Puts the groups in the order of [tokens]; others keep their place at the end.
   void reorder(List<String> tokens) => _update((mine) {
     final index = {for (final (i, t) in tokens.indexed) t: i};

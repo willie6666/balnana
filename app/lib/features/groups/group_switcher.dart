@@ -5,7 +5,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../data/home_group.dart';
-import '../../data/known_groups.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/colors.dart';
@@ -17,20 +16,23 @@ import 'open_link.dart';
 
 /// The title of a group page: the group's badge and name, which opens the
 /// list of groups to switch to.
-class GroupSwitcher extends StatelessWidget {
+class GroupSwitcher extends ConsumerWidget {
   const GroupSwitcher({super.key, this.group});
 
   /// Null while the group loads or cannot be shown.
   final Group? group;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final g = group;
     return Tooltip(
       message: l10n.groupSwitch,
       child: InkWell(
-        onTap: () => showGroupsSheet(context, current: g?.token),
+        onTap: () {
+          ref.invalidate(summariesProvider);
+          showGroupsSheet(context, current: g?.token);
+        },
         borderRadius: const BorderRadius.all(Radius.circular(BShape.md)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: BSpace.s8, vertical: BSpace.s4),
@@ -78,8 +80,9 @@ class _GroupsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final summaries = ref.watchCurrent(summariesProvider);
-    final data = summaries.value;
+    final view = ref.watch(visibleSummariesProvider);
+    final summaries = view.state;
+    final data = summaries.isLoading ? null : view.value;
 
     final Widget list;
     if (data == null) {
@@ -115,16 +118,6 @@ class _GroupsSheet extends ConsumerWidget {
         ),
         footer: Column(
           children: [
-            for (final token in data.missing)
-              ListTile(
-                leading: const Icon(Icons.link_off),
-                title: Text(l10n.groupMissingTitle),
-                subtitle: Text(l10n.groupMissingBody),
-                trailing: TextButton(
-                  onPressed: () => ref.read(knownGroupsProvider.notifier).remove(token),
-                  child: Text(l10n.commonRemove),
-                ),
-              ),
             for (final token in data.locked)
               ListTile(
                 leading: const Icon(Icons.lock_outline),

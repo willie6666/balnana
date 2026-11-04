@@ -539,6 +539,7 @@ class _EditorState extends ConsumerState<_Editor> {
     final symbol = moneySymbol(locale, _currency, _symbol);
     final preview = _preview();
     final editing = widget.expense != null;
+    final categories = _group.offeredCategories(_category);
 
     return PopScope(
       canPop: !_dirty && !_busy,
@@ -631,27 +632,29 @@ class _EditorState extends ConsumerState<_Editor> {
                   decoration: InputDecoration(labelText: l10n.expenseTitle, hintText: l10n.expenseTitleHint),
                   validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
                 ),
-                const SizedBox(height: BSpace.s12),
-                SizedBox(
-                  // The chips grow with the text size.
-                  height: MediaQuery.textScalerOf(context).scale(40),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      for (final c in _group.offeredCategories(_category))
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(end: BSpace.s8),
-                          child: ChoiceChip(
-                            avatar: Text(c.emoji),
-                            label: Text(c.label(l10n)),
-                            showCheckmark: false,
-                            selected: _category == c.id,
-                            onSelected: (on) => setState(() => _category = on ? c.id : null),
+                if (categories.isNotEmpty) ...[
+                  const SizedBox(height: BSpace.s12),
+                  SizedBox(
+                    // The chips grow with the text size.
+                    height: MediaQuery.textScalerOf(context).scale(40),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final c in categories)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: BSpace.s8),
+                            child: ChoiceChip(
+                              avatar: Text(c.emoji),
+                              label: Text(c.label(l10n)),
+                              showCheckmark: false,
+                              selected: _category == c.id,
+                              onSelected: (on) => setState(() => _category = on ? c.id : null),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: BSpace.s12),
                 LayoutBuilder(
                   builder: (context, constraints) {

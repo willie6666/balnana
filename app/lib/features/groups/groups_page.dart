@@ -38,7 +38,8 @@ class GroupsPage extends ConsumerWidget {
     }
 
     final known = ref.watch(knownGroupsProvider);
-    final summaries = ref.watchCurrent(summariesProvider);
+    final view = ref.watch(visibleSummariesProvider);
+    final summaries = view.state;
     final unreachable = (info.hasError && !info.isLoading) || (summaries.hasError && !summaries.isLoading);
     if (unreachable) {
       return _empty(
@@ -67,7 +68,7 @@ class GroupsPage extends ConsumerWidget {
     ];
 
     // A signed-in account's groups live on the server, not on this device.
-    final data = summaries.value;
+    final data = view.value;
     final empty = ref.watch(signedInProvider) ? data?.groups.isEmpty ?? false : known.isEmpty;
     if (empty) {
       return _empty(

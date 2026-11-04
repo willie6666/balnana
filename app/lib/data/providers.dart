@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable, ProviderOrFamily;
 
+import '../core/offline_cache.dart';
 import '../core/server.dart';
 import '../core/session.dart';
 import '../core/settings.dart';
@@ -162,6 +164,62 @@ class Summaries {
   final List<String> locked;
 }
 
+/// Confirmed deletions must disappear even while a list retains old data.
+final removedGroupsProvider = NotifierProvider.family<RemovedGroups, Set<String>, String>(RemovedGroups.new);
+
+class RemovedGroups extends Notifier<Set<String>> {
+  RemovedGroups(this.server);
+  final String server;
+
+  @override
+  Set<String> build() => {};
+
+  void add(String token) => state = {...state, token};
+}
+
+/// The current identity's list, without groups already confirmed gone.
+final visibleSummariesProvider = Provider<({AsyncValue<Summaries> state, Summaries? value})>((ref) {
+  final who = ref.watch(identityProvider);
+  final summaries = ref.watch(summariesProvider).current(who);
+  final server = who.server;
+  if (server == null) return (state: summaries, value: summaries.value);
+  final removed = ref.watch(removedGroupsProvider(server));
+  final missing = summaries.value?.missing.where((t) => !removed.contains(t)).toList() ?? [];
+  if (missing.isNotEmpty) {
+    scheduleMicrotask(() {
+      if (!ref.mounted || ref.read(identityProvider) != who) return;
+      for (final token in missing) {
+        removeDeletedGroup(ref.container, server, token);
+      }
+    });
+  }
+  final data = summaries.value;
+  return (
+    state: summaries,
+    value: data == null
+        ? null
+        : _mark(
+            who,
+            Summaries(
+              groups: data.groups.where((g) => !removed.contains(g.token)).toList(),
+              missing: [],
+              locked: data.locked.where((t) => !removed.contains(t)).toList(),
+            ),
+          ),
+  );
+});
+
+/// Removes a confirmed deletion from every local account on its server.
+void removeDeletedGroup(ProviderContainer container, String server, String token) {
+  if (container.read(removedGroupsProvider(server)).contains(token)) return;
+  container.read(removedGroupsProvider(server).notifier).add(token);
+  container.read(knownGroupsProvider.notifier).removeOn(server, token);
+  container.read(currentGroupProvider.notifier).removeOn(server, token);
+  container.read(groupOrderProvider.notifier).removeOn(server, token);
+  container.read(cacheDbProvider)?.forgetDeletedGroup(server, token).ignore();
+  if (container.read(serverUrlProvider) == server) _refresh(container.invalidate, token);
+}
+
 /// How many links one summaries request may carry: the server's `maxPageSize`
 /// (server/internal/api/store.go), past which it answers `too_many_groups`.
 const summariesBatch = 200;
@@ -191,9 +249,13 @@ final summariesProvider = FutureProvider<Summaries>((ref) async {
   return _mark(who, Summaries(groups: groups, missing: missing, locked: locked));
 });
 
-final groupProvider = FutureProvider.family<Group, String>(
-  (ref, token) => _load(ref, (_) => groupApi(ref, token).get()),
-);
+final groupProvider = FutureProvider.family<Group, String>((ref, token) {
+  final server = ref.watch(serverUrlProvider);
+  if (server != null && ref.watch(removedGroupsProvider(server)).contains(token)) {
+    throw const ApiException('not_found', status: 404);
+  }
+  return _load(ref, (_) => groupApi(ref, token).get());
+});
 
 /// The signed-in account's plan.
 final myPlanProvider = FutureProvider.autoDispose<MyPlan>((ref) {
@@ -337,10 +399,11 @@ final activityFeedProvider = FutureProvider<ActivityFeed>((ref) async {
   final who = ref.watch(identityProvider);
   final api = _api(ref);
   final home = await ref.watch(summariesProvider.future);
+  final removed = ref.watch(removedGroupsProvider(who.server ?? ''));
   Object? error;
   var failed = 0, gone = false;
   final perGroup = await Future.wait(
-    home.groups.map((g) async {
+    home.groups.where((g) => !removed.contains(g.token)).map((g) async {
       try {
         final group = await ref.watch(groupProvider(g.token).future);
         final page = await api.group(g.token).activity(limit: 30);

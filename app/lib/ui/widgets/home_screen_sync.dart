@@ -36,7 +36,7 @@ class _HomeScreenSyncState extends ConsumerState<HomeScreenSync> {
       _sent = null;
       home.clear();
     }
-    final summaries = ref.watchCurrent(summariesProvider).value;
+    final summaries = ref.watch(visibleSummariesProvider).value;
     if (server == null || summaries == null) return widget.child;
 
     final l10n = context.l10n;

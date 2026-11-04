@@ -116,7 +116,11 @@ class CacheDb extends _$CacheDb {
     // An answer still on its way when its account signed out stays unsaved.
     final current = _accounts[server];
     if (account != public && current != null && current != account) return;
-    if (asked != null && asked < (_forgotten[_forgetKey(server, account, request)] ?? 0)) return;
+    if (asked != null &&
+        (asked < (_forgotten[_forgetKey(server, account, request)] ?? 0) ||
+            asked < (_forgotten[_forgetKey(server, public, request)] ?? 0))) {
+      return;
+    }
     await into(cachedResponses).insertOnConflictUpdate(
       CachedResponsesCompanion.insert(
         server: server,
@@ -160,6 +164,23 @@ class CacheDb extends _$CacheDb {
                 r.request.like('POST /groups/summaries %')),
       );
     return stale.go();
+  }
+
+  /// Deletion applies to every account. Late answers must not restore it.
+  Future<void> forgetDeletedGroup(String server, String group) {
+    _forgets++;
+    _forgotten['$server $public /g/$group'] = _forgets;
+    _forgotten['$server $public'] = _forgets;
+    return (delete(cachedResponses)..where(
+          (r) =>
+              r.server.equals(server) &
+              (r.request.equals('GET /g/$group') |
+                  r.request.like('GET /g/$group/%') |
+                  r.request.like('GET /g/$group?%') |
+                  r.request.equals('GET /me/groups') |
+                  r.request.like('POST /groups/summaries %')),
+        ))
+        .go();
   }
 
   /// Where [save] finds when what [request] asks for was last forgotten:

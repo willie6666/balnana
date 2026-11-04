@@ -259,9 +259,13 @@ class _Settings extends ConsumerWidget {
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(context: context, builder: (_) => _DeleteGroupDialog(name: group.name));
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => _DeleteGroupDialog(name: group.name),
+    );
     if (ok != true || !context.mounted) return;
     final container = ProviderScope.containerOf(context, listen: false);
+    final server = ref.read(serverUrlProvider)!;
     try {
       await groupApiOf(ref, group.token).delete();
     } on ApiException catch (e) {
@@ -269,8 +273,8 @@ class _Settings extends ConsumerWidget {
       _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
       return;
     }
-    _dropLocally(container);
-    if (!context.mounted) return;
+    removeDeletedGroup(container, server, group.token);
+    if (!context.mounted || container.read(serverUrlProvider) != server) return;
     final messenger = ScaffoldMessenger.of(context);
     context.go('/groups');
     messenger.showSnackBar(SnackBar(content: Text(l10n.groupDeleted)));

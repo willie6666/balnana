@@ -10,12 +10,15 @@ import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
 import 'package:balnana/core/settings.dart';
-import 'package:balnana/data/api.dart' show PushSubscription, deviceTimeZone;
+import 'package:balnana/data/api.dart' show ApiException, PushSubscription, deviceTimeZone;
+import 'package:balnana/data/home_group.dart';
+import 'package:balnana/data/known_groups.dart';
 import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/expense/expense_editor_page.dart';
 import 'package:balnana/features/expense/receipt.dart';
+import 'package:balnana/features/group/group_page.dart';
 import 'package:balnana/features/group/group_settings_page.dart';
 import 'package:balnana/features/group/pending_tile.dart';
 import 'package:balnana/features/group/reminder.dart';
@@ -212,7 +215,9 @@ class _Receipts implements HttpClientAdapter {
     final path = options.uri.path;
     final body = requestStream == null ? <int>[] : await requestStream.expand((b) => b).toList();
     // The group page below the editor lists expenses whenever it likes.
-    if (path != '/api/v1/g/tok/expenses') requests.add('${options.method} $path${body.isEmpty ? '' : ' ${options.contentType} ${body.length}'}');
+    if (path != '/api/v1/g/tok/expenses') {
+      requests.add('${options.method} $path${body.isEmpty ? '' : ' ${options.contentType} ${body.length}'}');
+    }
     ResponseBody json(Object data) => ResponseBody.fromString(
       jsonEncode(data),
       200,
@@ -413,6 +418,72 @@ Expense _received(String type) => Expense(
 );
 
 void main() {
+  testWidgets('deleting a group returns home without reopening cached group data', (tester) async {
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (o, h) {
+            expect((o.method, o.path), ('DELETE', '/g/tok'));
+            h.resolve(Response(requestOptions: o, statusCode: 204));
+          },
+        ),
+      );
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/settings');
+    await tester.scrollUntilVisible(
+      find.text('Delete group'),
+      300,
+      scrollable: find
+          .descendant(of: find.byType(GroupSettingsPage), matching: find.byType(Scrollable))
+          .first,
+    );
+    await tester.ensureVisible(find.text('Delete group'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete group'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)),
+      'Flat',
+    );
+    await tester.pump();
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byType(FilledButton)));
+    await tester.pumpAndSettle();
+    expect(container.read(knownGroupsProvider), isEmpty);
+    expect(container.read(currentGroupProvider), isNull);
+    expect(container.read(routerProvider).routeInformationProvider.value.uri.path, '/groups');
+    expect(find.text('Flat'), findsNothing);
+    expect(find.byType(GroupPage), findsNothing);
+  });
+
+  testWidgets('a remote deletion removes the open group automatically', (tester) async {
+    var exists = true;
+    final events = StreamController<LiveEvent>.broadcast();
+    addTearDown(events.close);
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async {
+        if (!exists) throw const ApiException('not_found', status: 404);
+        return _group('Flat');
+      }),
+      expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+      groupEventsProvider.overrideWithValue((dio, token) => events.stream),
+    ]);
+    await _go(tester, container, '/g/tok');
+    exists = false;
+    events.add(LiveEvent.gone);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(container.read(knownGroupsProvider), isEmpty);
+    expect(container.read(currentGroupProvider), isNull);
+    expect(container.read(routerProvider).routeInformationProvider.value.uri.path, '/groups');
+    expect(find.text('Flat'), findsNothing);
+  });
+
   testWidgets('a live update keeps an edited draft until asked to reload', (tester) async {
     var remote = _expense(1, 'Lunch');
     final container = await _boot(tester, [
@@ -818,7 +889,8 @@ void main() {
     answer.complete(_GroupServer.reply({'code': 'not_found', 'message': 'no'}, 404));
     await tester.pumpAndSettle();
     expect(find.text('Private'), findsNothing);
-    expect(find.text('Group not found'), findsOneWidget);
+    expect(container.read(knownGroupsProvider), isEmpty);
+    expect(container.read(routerProvider).routeInformationProvider.value.uri.path, '/groups');
   });
 
   testWidgets('a refresh keeps the group shown until the server refuses it', (tester) async {
@@ -1706,10 +1778,62 @@ void foreignTests() {
   });
 
   Future<void> fillIn(WidgetTester tester) async {
-    await tester.enterText(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'), '12');
+    await tester.enterText(
+      find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '0.00'),
+      '12',
+    );
     await tester.enterText(find.widgetWithText(TextFormField, 'What was it for?'), 'Sushi');
     await tester.pumpAndSettle();
   }
+
+  testWidgets('hiding every category collapses the category row', (tester) async {
+    final group = Group(
+      token: 'tok',
+      name: 'Flat',
+      currency: 'USD',
+      minorDigits: 2,
+      createdAt: DateTime.utc(2026),
+      members: _group('Flat').members,
+      categories: const [GroupCategory(id: 'food', emoji: '🍔', rgb: 0xF07C2E, builtIn: true, hidden: true)],
+    );
+    final container = await boot(tester, _Saves(), group: group);
+    await _go(tester, container, '/g/tok/expenses/new');
+    expect(
+      find.byWidgetPredicate((w) => w is ListView && w.scrollDirection == Axis.horizontal),
+      findsNothing,
+    );
+    final title = find.widgetWithText(TextFormField, 'What was it for?');
+    final date = find
+        .ancestor(
+          of: find.byIcon(Icons.event_outlined),
+          matching: find.byWidgetPredicate((w) => w is OutlinedButton),
+        )
+        .first;
+    expect(tester.getTopLeft(date).dy - tester.getBottomLeft(title).dy, closeTo(12, 1));
+  });
+
+  testWidgets('an existing expense keeps its selected hidden category', (tester) async {
+    final group = Group(
+      token: 'tok',
+      name: 'Flat',
+      currency: 'USD',
+      minorDigits: 2,
+      createdAt: DateTime.utc(2026),
+      members: _group('Flat').members,
+      categories: const [GroupCategory(id: 'food', emoji: '🍔', rgb: 0xF07C2E, builtIn: true, hidden: true)],
+    );
+    final expense = Expense.fromJson({..._expenseJson('e1'), 'categoryId': 'food'}, 2);
+    final container = await _boot(tester, [
+      groupProvider.overrideWith((ref, token) async => group),
+      expenseProvider.overrideWith((ref, key) async => expense),
+      expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok/expenses/e1');
+    final chip = find.widgetWithText(ChoiceChip, 'Food & drink');
+    expect(chip, findsOneWidget);
+    expect(tester.widget<ChoiceChip>(chip).selected, isTrue);
+  });
 
   testWidgets('saving again after a lost answer repeats the same save', (tester) async {
     final server = _Saves()..lost = 1;
