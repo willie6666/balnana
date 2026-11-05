@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Tal como aparece en Play Console. Google Play indica cuándo termina cada pago, así que no hay días que configurar.",
   "adminProductPayPalId": "ID de plan o nombre",
   "adminProductPayPalIdHelp": "El ID de un plan de suscripción de PayPal, que empieza por P-. Cualquier otro nombre es un pago único del importe de abajo.",
+  "adminProductWithoutTrial": "ID del plan sin prueba",
+  "adminProductWithoutTrialHelp": "Opcional. PayPal da la prueba gratuita de un plan a cada suscripción, así que las cuentas que ya tuvieron una se suscriben a este plan: el mismo plan sin prueba, que empieza por P-.",
   "adminProductRemoveBody": "Los pagos de este producto dejarán de aplicarse a las cuentas. Los planes ya activos se mantienen hasta que terminen.",
   "errorRecentSignIn": "Por tu seguridad, cierra sesión, vuelve a iniciarla e inténtalo de nuevo.",
   "errorTooManyGroups": "Son demasiados grupos a la vez.",

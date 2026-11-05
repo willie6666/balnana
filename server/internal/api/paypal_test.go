@@ -590,6 +590,14 @@ func TestPayPalCatalog(t *testing.T) {
 		{{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90}},                                                // no price
 		{{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("99.50"), Currency: ptr("TWD")}}, // TWD has no cents
 		{{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30}, {Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30}},
+		{{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("300.00"), Currency: ptr("TWD"), WithoutTrial: ptr("P-3ML4271244454362WXNWU5NQ")}},
+		{{Provider: Kofi, Product: "plus", PlanId: "plus", Days: 30, WithoutTrial: ptr("P-3ML4271244454362WXNWU5NQ")}},
+		{{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30, WithoutTrial: ptr("P-SHORT")}},
+		{{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30, WithoutTrial: ptr("P-5ML4271244454362WXNWU5NQ")}},
+		{
+			{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30, WithoutTrial: ptr("P-3ML4271244454362WXNWU5NQ")},
+			{Provider: Paypal, Product: "P-3ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30},
+		},
 	} {
 		catalog.Products = bad
 		if code := admin.errorCode(400, "PUT", "/admin/plans", catalog); code != "invalid_plan" {
@@ -597,13 +605,20 @@ func TestPayPalCatalog(t *testing.T) {
 		}
 	}
 	catalog.Products = []PlanProduct{
-		{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30},
-		{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("300.00"), Currency: ptr("TWD")},
+		{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30, WithoutTrial: ptr(" P-3ML4271244454362WXNWU5NQ ")},
+		{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("300.00"), Currency: ptr("TWD"), WithoutTrial: ptr("")},
 		{Provider: Paypal, Product: "plus-usd", PlanId: "plus", Days: 90, MinAmount: ptr("9.99"), Currency: ptr("USD")},
 	}
-	admin.must(200, "PUT", "/admin/plans", catalog, &catalog)
-	if len(catalog.Products) != 3 {
-		t.Fatalf("%+v", catalog.Products)
+	var saved PlanCatalog
+	admin.must(200, "PUT", "/admin/plans", catalog, &saved)
+	if len(saved.Products) != 3 {
+		t.Fatalf("%+v", saved.Products)
+	}
+	for _, p := range saved.Products {
+		if want := p.Product == "P-5ML4271244454362WXNWU5NQ"; want != (p.WithoutTrial != nil && *p.WithoutTrial == "P-3ML4271244454362WXNWU5NQ") ||
+			!want && p.WithoutTrial != nil {
+			t.Fatalf("%+v", p)
+		}
 	}
 }
 
@@ -1228,4 +1243,42 @@ func TestPayPalTrialOncePerAccount(t *testing.T) {
 	if p := myPlanOf(c); !p.ExpiresAt.Equal(end.Add(paypalGrace)) {
 		t.Fatal(p.ExpiresAt)
 	}
+}
+
+func TestPayPalPlanWithoutTrialAfterTrial(t *testing.T) {
+	c, s, f := paypalServer(t)
+	f.plans = append(f.plans, "P-3ML4271244454362WXNWU5NQ")
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, without_trial)
+		values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30, 'P-3ML4271244454362WXNWU5NQ')`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	if plan := f.subs["I-SUB1"].PlanID; plan != "P-5ML4271244454362WXNWU5NQ" {
+		t.Fatal(plan)
+	}
+	end := time.Now().AddDate(0, 0, 7).UTC().Truncate(time.Second)
+	f.trial("I-SUB1", end)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	f.sub("I-SUB1", func(sub *paypalSubscription) { sub.Status = "CANCELLED" })
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.CANCELLED"); code != 200 {
+		t.Fatal(code)
+	}
+	// Having had the trial, the account subscribes to the plan without one.
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	if plan := f.subs["I-SUB2"].PlanID; plan != "P-3ML4271244454362WXNWU5NQ" {
+		t.Fatal(plan)
+	}
+	paid := time.Now().UTC().Truncate(time.Second)
+	f.pay("I-SUB2", paid, paid.AddDate(0, 0, 30))
+	if got := paypalBack(c, "subscription_id=I-SUB2&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
+		t.Fatal(got)
+	}
+	p := myPlanOf(c)
+	if !p.Paid || p.PlanName != "Plus" || !p.ExpiresAt.Equal(paid.AddDate(0, 0, 30).Add(paypalGrace)) {
+		t.Fatalf("%+v", p)
+	}
+	// It counts as a subscription to the product the app offers.
+	if !slices.Equal(p.Paypal.Subscribed, []string{"P-5ML4271244454362WXNWU5NQ"}) {
+		t.Fatal(p.Paypal.Subscribed)
+	}
+	c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-5ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb})
 }

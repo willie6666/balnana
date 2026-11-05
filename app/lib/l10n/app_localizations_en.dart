@@ -3482,6 +3482,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'A subscription plan\'s ID from PayPal, starting with P-. Any other name is a one-off payment of the amount below.';
 
   @override
+  String get adminProductWithoutTrial => 'Plan ID without the trial';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Optional. PayPal gives a plan\'s free trial to every subscription, so accounts that have had a trial subscribe to this plan instead: the same plan with no trial, starting with P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Payments for it stop being applied to accounts. Plans already held stay until they end.';
 

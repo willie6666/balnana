@@ -3643,6 +3643,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Identyfikator planu subskrypcji PayPal, zaczynający się od P-. Każda inna nazwa to jednorazowa płatność kwoty poniżej.';
 
   @override
+  String get adminProductWithoutTrial => 'Identyfikator planu bez okresu próbnego';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Opcjonalne. PayPal daje bezpłatny okres próbny planu każdej subskrypcji, więc konta, które już go miały, subskrybują zamiast tego ten plan: ten sam plan bez okresu próbnego, zaczynający się od P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu.';
 

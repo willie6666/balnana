@@ -3450,6 +3450,13 @@ class AppLocalizationsTh extends AppLocalizations {
       'รหัสแผนการสมัครสมาชิกของ PayPal ที่ขึ้นต้นด้วย P- ชื่ออื่นใดคือการชำระครั้งเดียวตามยอดเงินด้านล่าง';
 
   @override
+  String get adminProductWithoutTrial => 'รหัสแผนที่ไม่มีช่วงทดลองใช้';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'ไม่บังคับ PayPal ให้ช่วงทดลองใช้ฟรีของแผนกับทุกการสมัครสมาชิก บัญชีที่เคยทดลองใช้แล้วจึงสมัครแผนนี้แทน คือแผนเดียวกันที่ไม่มีช่วงทดลองใช้ ขึ้นต้นด้วย P-';
+
+  @override
   String get adminProductRemoveBody =>
       'การชำระเงินสำหรับผลิตภัณฑ์นี้จะไม่ถูกนำไปใช้กับบัญชีอีก แพ็กเกจที่มีอยู่แล้วจะยังใช้ได้จนกว่าจะหมดอายุ';
 

@@ -3540,6 +3540,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die ID eines PayPal-Abo-Plans, beginnend mit P-. Jeder andere Name ist eine Einmalzahlung des Betrags unten.';
 
   @override
+  String get adminProductWithoutTrial => 'Plan-ID ohne Testphase';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Optional. PayPal gibt die kostenlose Testphase eines Plans jedem Abo, daher abonnieren Konten, die schon eine hatten, stattdessen diesen Plan: denselben Plan ohne Testphase, beginnend mit P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.';
 

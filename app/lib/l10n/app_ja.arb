@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Play Console の表記のとおりに入力します。各支払いの終了日は Google Play が決めるため、日数の設定はありません。",
   "adminProductPayPalId": "プラン ID または名前",
   "adminProductPayPalIdHelp": "P- で始まる PayPal のサブスクリプションプラン ID。それ以外の名前は下の金額の一回払いになります。",
+  "adminProductWithoutTrial": "トライアルなしのプラン ID",
+  "adminProductWithoutTrialHelp": "任意。PayPal はプランの無料トライアルをすべてのサブスクリプションに付けるため、トライアル済みのアカウントは代わりにこのプランを購読します。トライアルのない同じプランで、P- で始まります。",
   "adminProductRemoveBody": "この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。",
   "errorRecentSignIn": "セキュリティのため、いったんログアウトして再度ログインしてから、もう一度お試しください。",
   "errorTooManyGroups": "一度に扱えるグループ数を超えています。",

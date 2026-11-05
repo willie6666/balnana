@@ -261,7 +261,7 @@ func matchProduct(ctx context.Context, q querier, p payment) (planID *string, da
 	}
 	err = q.QueryRow(ctx, `
 		select plan_id, days from plan_products
-		where provider = $1 and product <> '' and lower(product) = lower($2) limit 1`,
+		where provider = $1 and product <> '' and (lower(product) = lower($2) or lower(without_trial) = lower($2)) limit 1`,
 		p.provider, *p.product).Scan(&planID, &days)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil, nil

@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Tak jak w Play Console. Google Play określa, kiedy kończy się każda płatność, więc nie ma dni do ustawienia.",
   "adminProductPayPalId": "Identyfikator planu lub nazwa",
   "adminProductPayPalIdHelp": "Identyfikator planu subskrypcji PayPal, zaczynający się od P-. Każda inna nazwa to jednorazowa płatność kwoty poniżej.",
+  "adminProductWithoutTrial": "Identyfikator planu bez okresu próbnego",
+  "adminProductWithoutTrialHelp": "Opcjonalne. PayPal daje bezpłatny okres próbny planu każdej subskrypcji, więc konta, które już go miały, subskrybują zamiast tego ten plan: ten sam plan bez okresu próbnego, zaczynający się od P-.",
   "adminProductRemoveBody": "Płatności za ten produkt przestaną być przypisywane do kont. Posiadane plany pozostają ważne do końca okresu.",
   "errorRecentSignIn": "Dla bezpieczeństwa wyloguj się, zaloguj ponownie i spróbuj jeszcze raz.",
   "errorTooManyGroups": "To zbyt wiele grup naraz.",

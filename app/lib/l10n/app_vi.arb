@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Như ghi trong Play Console. Google Play cho biết khi nào mỗi khoản thanh toán kết thúc nên không cần đặt số ngày.",
   "adminProductPayPalId": "Mã gói hoặc tên",
   "adminProductPayPalIdHelp": "Mã gói đăng ký PayPal, bắt đầu bằng P-. Mọi tên khác là thanh toán một lần với số tiền bên dưới.",
+  "adminProductWithoutTrial": "Mã gói không có dùng thử",
+  "adminProductWithoutTrialHelp": "Không bắt buộc. PayPal cho mọi gói đăng ký hưởng thời gian dùng thử miễn phí của gói, nên các tài khoản đã dùng thử sẽ đăng ký gói này thay thế: cùng gói nhưng không có dùng thử, bắt đầu bằng P-.",
   "adminProductRemoveBody": "Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn.",
   "errorRecentSignIn": "Để bảo mật, hãy đăng xuất rồi đăng nhập lại, sau đó thử lại.",
   "errorTooManyGroups": "Quá nhiều nhóm cùng lúc.",

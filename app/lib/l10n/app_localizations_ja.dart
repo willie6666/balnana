@@ -3359,6 +3359,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminProductPayPalIdHelp => 'P- で始まる PayPal のサブスクリプションプラン ID。それ以外の名前は下の金額の一回払いになります。';
 
   @override
+  String get adminProductWithoutTrial => 'トライアルなしのプラン ID';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      '任意。PayPal はプランの無料トライアルをすべてのサブスクリプションに付けるため、トライアル済みのアカウントは代わりにこのプランを購読します。トライアルのない同じプランで、P- で始まります。';
+
+  @override
   String get adminProductRemoveBody => 'この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。';
 
   @override

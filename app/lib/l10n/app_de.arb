@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Wie in der Play Console geschrieben. Google Play bestimmt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.",
   "adminProductPayPalId": "Plan-ID oder Name",
   "adminProductPayPalIdHelp": "Die ID eines PayPal-Abo-Plans, beginnend mit P-. Jeder andere Name ist eine Einmalzahlung des Betrags unten.",
+  "adminProductWithoutTrial": "Plan-ID ohne Testphase",
+  "adminProductWithoutTrialHelp": "Optional. PayPal gibt die kostenlose Testphase eines Plans jedem Abo, daher abonnieren Konten, die schon eine hatten, stattdessen diesen Plan: denselben Plan ohne Testphase, beginnend mit P-.",
   "adminProductRemoveBody": "Zahlungen dafür werden Konten nicht mehr gutgeschrieben. Bestehende Tarife bleiben bis zu ihrem Ende aktiv.",
   "errorRecentSignIn": "Melde dich zu deiner Sicherheit ab und wieder an und versuche es dann noch einmal.",
   "errorTooManyGroups": "Das sind zu viele Gruppen auf einmal.",

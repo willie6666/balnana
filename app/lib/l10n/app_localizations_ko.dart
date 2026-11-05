@@ -3362,6 +3362,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminProductPayPalIdHelp => 'P-로 시작하는 PayPal 구독 플랜 ID. 다른 이름은 아래 금액의 일회성 결제입니다.';
 
   @override
+  String get adminProductWithoutTrial => '체험 기간 없는 플랜 ID';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      '선택 사항. PayPal은 플랜의 무료 체험을 모든 구독에 주므로, 체험을 이미 받은 계정은 대신 이 플랜을 구독합니다. 체험 기간이 없는 같은 플랜이며 P-로 시작합니다.';
+
+  @override
   String get adminProductRemoveBody => '이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요.';
 
   @override

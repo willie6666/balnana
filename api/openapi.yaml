@@ -3378,6 +3378,13 @@ components:
           description: A decimal number, such as "3.00". What a one-off PayPal payment costs.
         currency:
           type: string
+        withoutTrial:
+          type: string
+          description: >-
+            For a PayPal subscription plan with a free trial, the ID of the
+            same plan without one ("P-..."). PayPal gives the trial to every
+            subscription on a plan, so accounts that have had one subscribe
+            to this plan instead.
     PlanCatalog:
       type: object
       required: [plans, products]

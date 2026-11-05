@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.",
   "adminProductPayPalId": "ID paket atau nama",
   "adminProductPayPalIdHelp": "ID paket langganan PayPal, diawali P-. Nama lain apa pun adalah pembayaran sekali sebesar jumlah di bawah.",
+  "adminProductWithoutTrial": "ID paket tanpa uji coba",
+  "adminProductWithoutTrialHelp": "Opsional. PayPal memberi uji coba gratis paket ke setiap langganan, jadi akun yang sudah pernah mendapatkannya berlangganan paket ini sebagai gantinya: paket yang sama tanpa uji coba, diawali P-.",
   "adminProductRemoveBody": "Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.",
   "errorRecentSignIn": "Demi keamanan, keluar lalu masuk lagi, kemudian coba sekali lagi.",
   "errorTooManyGroups": "Terlalu banyak grup sekaligus.",

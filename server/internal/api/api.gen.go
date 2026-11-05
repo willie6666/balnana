@@ -1073,6 +1073,9 @@ type PlanProduct struct {
 	// Product A Ko-fi shop item's code (the end of its link), a Google Play product id, or for PayPal a name for a one-off payment or a subscription plan's ID ("P-..."). Empty for Ko-fi: any tip of at least `minAmount` in `currency`.
 	Product  string              `json:"product"`
 	Provider PlanProductProvider `json:"provider"`
+
+	// WithoutTrial For a PayPal subscription plan with a free trial, the ID of the same plan without one ("P-..."). PayPal gives the trial to every subscription on a plan, so accounts that have had one subscribe to this plan instead.
+	WithoutTrial *string `json:"withoutTrial,omitempty"`
 }
 
 // PlanProductProvider defines model for PlanProduct.Provider.

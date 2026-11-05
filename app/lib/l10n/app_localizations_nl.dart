@@ -3519,6 +3519,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'De ID van een PayPal-abonnementsplan, beginnend met P-. Elke andere naam is een eenmalige betaling van het bedrag hieronder.';
 
   @override
+  String get adminProductWithoutTrial => 'Plan-ID zonder proefperiode';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Optioneel. PayPal geeft de gratis proefperiode van een plan aan elk abonnement, dus accounts die er al een hadden, nemen in plaats daarvan dit plan: hetzelfde plan zonder proefperiode, beginnend met P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Betalingen hiervoor worden niet meer aan accounts toegekend. Lopende abonnementen blijven gelden tot ze eindigen.';
 

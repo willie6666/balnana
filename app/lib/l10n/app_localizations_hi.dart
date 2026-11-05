@@ -3533,6 +3533,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'PayPal सदस्यता प्लान की ID, जो P- से शुरू होती है। कोई भी दूसरा नाम नीचे दी गई राशि का एक बार का भुगतान है।';
 
   @override
+  String get adminProductWithoutTrial => 'बिना ट्रायल वाली प्लान ID';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'वैकल्पिक। PayPal हर सदस्यता को प्लान का मुफ़्त ट्रायल देता है, इसलिए जिन खातों को ट्रायल मिल चुका है वे इसकी जगह इस प्लान की सदस्यता लेते हैं: बिना ट्रायल वाला वही प्लान, जो P- से शुरू होता है।';
+
+  @override
   String get adminProductRemoveBody =>
       'इसके भुगतान अब खातों पर लागू नहीं होंगे। पहले से चल रहे प्लान खत्म होने तक बने रहेंगे।';
 

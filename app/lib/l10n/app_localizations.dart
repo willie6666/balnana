@@ -6040,6 +6040,18 @@ abstract class AppLocalizations {
   /// **'A subscription plan\'s ID from PayPal, starting with P-. Any other name is a one-off payment of the amount below.'**
   String get adminProductPayPalIdHelp;
 
+  /// Label for the PayPal plan ID that accounts which already had a free trial subscribe to, in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan ID without the trial'**
+  String get adminProductWithoutTrial;
+
+  /// Help text under the PayPal plan ID without a free trial, in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. PayPal gives a plan\'s free trial to every subscription, so accounts that have had a trial subscribe to this plan instead: the same plan with no trial, starting with P-.'**
+  String get adminProductWithoutTrialHelp;
+
   /// Body of the confirmation before an administrator removes a product.
   ///
   /// In en, this message translates to:

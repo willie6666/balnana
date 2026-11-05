@@ -337,11 +337,13 @@ func (s *Server) paypalOffer(ctx context.Context, q querier, userID string) (*Pa
 }
 
 // paypalSubscribed are the products the account has a subscription to that
-// still runs, or would if its payments came through.
+// still runs, or would if its payments came through. One to a plan without
+// the trial is to the product with it.
 func paypalSubscribed(ctx context.Context, q querier, userID string) ([]string, error) {
 	rows, err := q.Query(ctx, `
-		select distinct product from paypal_subscriptions
-		where user_id = $1 and state = any($2) order by product`,
+		select distinct coalesce(p.product, s.product) from paypal_subscriptions s
+		left join plan_products p on p.provider = 'paypal' and p.without_trial = s.product
+		where s.user_id = $1 and s.state = any($2) order by 1`,
 		userID, []string{"APPROVED", "ACTIVE", "SUSPENDED"})
 	if err != nil {
 		return nil, err
@@ -369,13 +371,13 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 	if app != PayPalCheckoutRequestAppWeb && app != PayPalCheckoutRequestAppAndroid {
 		return nil, badRequest("bad_request")
 	}
-	var planID, planName, amount, currency *string
+	var planID, planName, amount, currency, withoutTrial *string
 	var days int
 	err = s.db.QueryRow(ctx, `
-		select p.plan_id, pl.name, p.days, p.min_amount::text, p.currency
+		select p.plan_id, pl.name, p.days, p.min_amount::text, p.currency, p.without_trial
 		from plan_products p join plans pl on pl.id = p.plan_id
 		where p.provider = 'paypal' and p.product = $1`, req.Body.Product).
-		Scan(&planID, &planName, &days, &amount, &currency)
+		Scan(&planID, &planName, &days, &amount, &currency, &withoutTrial)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
@@ -401,7 +403,7 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 	if subscription {
 		// The payer may have approved an earlier one whose return and events
 		// haven't come yet; a second would be charged as well.
-		subscribed, err := s.refreshPayPalApprovals(ctx, pp, u.id, req.Body.Product)
+		subscribed, err := s.refreshPayPalApprovals(ctx, pp, u.id, req.Body.Product, withoutTrial)
 		if err != nil {
 			return nil, err
 		}
@@ -412,7 +414,20 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 	back := strings.TrimSuffix(s.conf().PublicURL.String(), "/") + paypalReturnPath + "?app=" + string(app)
 	var href string
 	if subscription {
-		href, err = s.startPayPalSubscription(ctx, pp, u.id, req.Body.Product, back)
+		plan := req.Body.Product
+		// PayPal would give the trial again; access is given once an account.
+		if withoutTrial != nil {
+			var trialled bool
+			err = s.db.QueryRow(ctx, `select exists (select 1 from paypal_subscriptions
+				where user_id = $1 and trial_until is not null)`, u.id).Scan(&trialled)
+			if err != nil {
+				return nil, err
+			}
+			if trialled {
+				plan = *withoutTrial
+			}
+		}
+		href, err = s.startPayPalSubscription(ctx, pp, u.id, plan, back)
 	} else {
 		href, err = s.startPayPalOrder(ctx, pp, u.id, req.Body.Product, *planID, *planName, days, *amount, *currency, back)
 	}
@@ -428,12 +443,17 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 }
 
 // refreshPayPalApprovals asks PayPal about the account's recent subscriptions
-// to product that were waiting for approval, and says whether one now runs.
-func (s *Server) refreshPayPalApprovals(ctx context.Context, pp *paypalClient, userID, product string) (bool, error) {
+// to product, or its plan without the trial, that were waiting for approval,
+// and says whether one now runs.
+func (s *Server) refreshPayPalApprovals(ctx context.Context, pp *paypalClient, userID, product string, withoutTrial *string) (bool, error) {
+	plans := []string{product}
+	if withoutTrial != nil {
+		plans = append(plans, *withoutTrial)
+	}
 	rows, err := s.db.Query(ctx, `
 		select subscription_id from paypal_subscriptions
-		where user_id = $1 and product = $2 and state = 'APPROVAL_PENDING' and created_at > $3
-		order by created_at desc limit $4`, userID, product, time.Now().Add(-paypalApprovalWindow), paypalApprovalsAsked)
+		where user_id = $1 and product = any($2) and state = 'APPROVAL_PENDING' and created_at > $3
+		order by created_at desc limit $4`, userID, plans, time.Now().Add(-paypalApprovalWindow), paypalApprovalsAsked)
 	if err != nil {
 		return false, err
 	}

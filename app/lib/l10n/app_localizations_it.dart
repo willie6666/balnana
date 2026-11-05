@@ -3526,6 +3526,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'ID di un piano di abbonamento PayPal, che inizia con P-. Qualsiasi altro nome è un pagamento singolo dell\'importo qui sotto.';
 
   @override
+  String get adminProductWithoutTrial => 'ID piano senza prova';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Facoltativo. PayPal dà la prova gratuita di un piano a ogni abbonamento, quindi gli account che ne hanno già avuta una si abbonano invece a questo piano: lo stesso piano senza prova, che inizia con P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'I pagamenti per questo prodotto non verranno più applicati agli account. I piani già attivi restano fino alla scadenza.';
 

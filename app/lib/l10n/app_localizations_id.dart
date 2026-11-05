@@ -3489,6 +3489,13 @@ class AppLocalizationsId extends AppLocalizations {
       'ID paket langganan PayPal, diawali P-. Nama lain apa pun adalah pembayaran sekali sebesar jumlah di bawah.';
 
   @override
+  String get adminProductWithoutTrial => 'ID paket tanpa uji coba';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Opsional. PayPal memberi uji coba gratis paket ke setiap langganan, jadi akun yang sudah pernah mendapatkannya berlangganan paket ini sebagai gantinya: paket yang sama tanpa uji coba, diawali P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Pembayaran untuk produk ini tidak lagi diterapkan ke akun. Paket yang sudah dimiliki tetap berlaku hingga berakhir.';
 

@@ -43,14 +43,14 @@ func planCatalog(ctx context.Context, q querier) (PlanCatalog, error) {
 		return PlanCatalog{}, err
 	}
 	rows, err = q.Query(ctx, `
-		select provider, product, plan_id, days, min_amount::text, currency
+		select provider, product, plan_id, days, min_amount::text, currency, without_trial
 		from plan_products order by provider, product, min_amount`)
 	if err != nil {
 		return PlanCatalog{}, err
 	}
 	products, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (PlanProduct, error) {
 		var p PlanProduct
-		err := row.Scan(&p.Provider, &p.Product, &p.PlanId, &p.Days, &p.MinAmount, &p.Currency)
+		err := row.Scan(&p.Provider, &p.Product, &p.PlanId, &p.Days, &p.MinAmount, &p.Currency, &p.WithoutTrial)
 		return p, err
 	})
 	if err != nil {
@@ -107,8 +107,15 @@ func validateCatalog(c *PlanCatalog) error {
 		if p.Provider == Kofi {
 			p.Product = kofiItemCode(p.Product)
 		}
+		if p.WithoutTrial != nil {
+			if t := strings.TrimSpace(*p.WithoutTrial); t != "" {
+				p.WithoutTrial = &t
+			} else {
+				p.WithoutTrial = nil
+			}
+		}
 		if !slices.Contains(ids, p.PlanId) || p.Days < 1 || p.Days > maxPlanDays ||
-			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal {
+			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal || p.WithoutTrial != nil && p.Provider != Paypal {
 			return errInvalidPlan
 		}
 		if p.MinAmount != nil && !decimalAmount.MatchString(*p.MinAmount) || p.Currency != nil && !currencyCode.MatchString(*p.Currency) {
@@ -127,6 +134,13 @@ func validateCatalog(c *PlanCatalog) error {
 				return errInvalidPlan
 			}
 			paypal = append(paypal, p.Product)
+			// A plan without the trial stands for the one with it.
+			if t := p.WithoutTrial; t != nil {
+				if !paypalPlanID.MatchString(p.Product) || !paypalPlanID.MatchString(*t) || slices.Contains(paypal, *t) {
+					return errInvalidPlan
+				}
+				paypal = append(paypal, *t)
+			}
 			if !paypalPlanID.MatchString(p.Product) && (p.MinAmount == nil || p.Currency == nil || !validPayPalPrice(*p.MinAmount, *p.Currency)) {
 				return errInvalidPlan
 			}
@@ -181,8 +195,8 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 		}
 		for _, p := range c.Products {
 			_, err := tx.Exec(ctx, `
-				insert into plan_products (provider, product, plan_id, days, min_amount, currency)
-				values ($1, $2, $3, $4, $5::numeric, $6)`, string(p.Provider), p.Product, p.PlanId, p.Days, p.MinAmount, p.Currency)
+				insert into plan_products (provider, product, plan_id, days, min_amount, currency, without_trial)
+				values ($1, $2, $3, $4, $5::numeric, $6, $7)`, string(p.Provider), p.Product, p.PlanId, p.Days, p.MinAmount, p.Currency, p.WithoutTrial)
 			// The index knows the same product however its amount is written.
 			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				return errInvalidPlan

@@ -3493,6 +3493,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'P- ile başlayan bir PayPal abonelik planı kimliği. Başka herhangi bir ad, aşağıdaki tutarda tek seferlik bir ödemedir.';
 
   @override
+  String get adminProductWithoutTrial => 'Deneme süresiz plan kimliği';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'İsteğe bağlı. PayPal bir planın ücretsiz denemesini her aboneliğe verir; bu yüzden daha önce deneme almış hesaplar bunun yerine bu plana abone olur: denemesi olmayan aynı plan, P- ile başlar.';
+
+  @override
   String get adminProductRemoveBody =>
       'Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.';
 

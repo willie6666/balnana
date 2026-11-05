@@ -3344,6 +3344,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminProductPayPalIdHelp => 'PayPal 订阅方案的 ID，以 P- 开头。其他名称则是下方金额的一次性付款。';
 
   @override
+  String get adminProductWithoutTrial => '无试用期的方案 ID';
+
+  @override
+  String get adminProductWithoutTrialHelp => '选填。PayPal 会让方案的每笔订阅都有免费试用，所以试用过的账号会改订这个方案：同样的方案但没有试用期，以 P- 开头。';
+
+  @override
   String get adminProductRemoveBody => '此商品的付款将不再计入账号。已持有的方案会保留到结束。';
 
   @override
@@ -6707,6 +6713,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminProductPayPalIdHelp => 'PayPal 訂閱方案的 ID，以 P- 開頭。其他名稱則是下方金額的單次付款。';
+
+  @override
+  String get adminProductWithoutTrial => '無試用期的方案 ID';
+
+  @override
+  String get adminProductWithoutTrialHelp => '選填。PayPal 會讓方案的每筆訂閱都有免費試用，所以試用過的帳戶會改訂這個方案：同樣的方案但沒有試用期，以 P- 開頭。';
 
   @override
   String get adminProductRemoveBody => '這個商品的付款將不再計入帳號。已持有的方案會保留到結束。';

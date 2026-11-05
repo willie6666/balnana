@@ -3516,6 +3516,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'El ID de un plan de suscripción de PayPal, que empieza por P-. Cualquier otro nombre es un pago único del importe de abajo.';
 
   @override
+  String get adminProductWithoutTrial => 'ID del plan sin prueba';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Opcional. PayPal da la prueba gratuita de un plan a cada suscripción, así que las cuentas que ya tuvieron una se suscriben a este plan: el mismo plan sin prueba, que empieza por P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Los pagos de este producto dejarán de aplicarse a las cuentas. Los planes ya activos se mantienen hasta que terminen.';
 

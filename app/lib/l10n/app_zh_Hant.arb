@@ -985,6 +985,8 @@
   "adminProductPlayIdHelp": "與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。",
   "adminProductPayPalId": "方案 ID 或名稱",
   "adminProductPayPalIdHelp": "PayPal 訂閱方案的 ID，以 P- 開頭。其他名稱則是下方金額的單次付款。",
+  "adminProductWithoutTrial": "無試用期的方案 ID",
+  "adminProductWithoutTrialHelp": "選填。PayPal 會讓方案的每筆訂閱都有免費試用，所以試用過的帳戶會改訂這個方案：同樣的方案但沒有試用期，以 P- 開頭。",
   "adminProductRemoveBody": "這個商品的付款將不再計入帳號。已持有的方案會保留到結束。",
   "errorRecentSignIn": "為了安全，請先登出再重新登入，然後再試一次。",
   "errorTooManyGroups": "一次的群組太多了。",

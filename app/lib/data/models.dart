@@ -1464,6 +1464,7 @@ class PlanProduct {
     required this.days,
     this.minAmount,
     this.currency,
+    this.withoutTrial,
   });
 
   factory PlanProduct.fromJson(Object? data) {
@@ -1475,6 +1476,7 @@ class PlanProduct {
       days: (_req<num>(json, 'days')).toInt(),
       minAmount: _opt(json, 'minAmount'),
       currency: _opt(json, 'currency'),
+      withoutTrial: _opt(json, 'withoutTrial'),
     );
   }
 
@@ -1491,6 +1493,10 @@ class PlanProduct {
   final String? minAmount;
   final String? currency;
 
+  /// For a PayPal plan with a free trial, the same plan without one, which
+  /// accounts that have had a trial subscribe to.
+  final String? withoutTrial;
+
   Map<String, Object?> toJson() => {
     'provider': provider,
     'product': product,
@@ -1498,6 +1504,7 @@ class PlanProduct {
     'days': days,
     'minAmount': ?minAmount,
     'currency': ?currency,
+    'withoutTrial': ?withoutTrial,
   };
 }
 

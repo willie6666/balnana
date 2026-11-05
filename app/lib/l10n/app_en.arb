@@ -5165,6 +5165,14 @@
   "@adminProductPayPalIdHelp": {
     "description": "Label or control text for PayPal payments in the server administrator interface."
   },
+  "adminProductWithoutTrial": "Plan ID without the trial",
+  "@adminProductWithoutTrial": {
+    "description": "Label for the PayPal plan ID that accounts which already had a free trial subscribe to, in the server administrator interface."
+  },
+  "adminProductWithoutTrialHelp": "Optional. PayPal gives a plan's free trial to every subscription, so accounts that have had a trial subscribe to this plan instead: the same plan with no trial, starting with P-.",
+  "@adminProductWithoutTrialHelp": {
+    "description": "Help text under the PayPal plan ID without a free trial, in the server administrator interface."
+  },
   "adminProductRemoveBody": "Payments for it stop being applied to accounts. Plans already held stay until they end.",
   "@adminProductRemoveBody": {
     "description": "Body of the confirmation before an administrator removes a product."

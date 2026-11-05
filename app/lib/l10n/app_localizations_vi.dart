@@ -3478,6 +3478,13 @@ class AppLocalizationsVi extends AppLocalizations {
       'Mã gói đăng ký PayPal, bắt đầu bằng P-. Mọi tên khác là thanh toán một lần với số tiền bên dưới.';
 
   @override
+  String get adminProductWithoutTrial => 'Mã gói không có dùng thử';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'Không bắt buộc. PayPal cho mọi gói đăng ký hưởng thời gian dùng thử miễn phí của gói, nên các tài khoản đã dùng thử sẽ đăng ký gói này thay thế: cùng gói nhưng không có dùng thử, bắt đầu bằng P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'Các khoản thanh toán cho sản phẩm này sẽ không còn được áp dụng vào tài khoản. Các gói đang có vẫn dùng được đến khi hết hạn.';
 

@@ -92,7 +92,7 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 	n, err = s.sweepBatches(ctx, sweepBatch, `
 		delete from paypal_subscriptions where subscription_id = any (array(
 			select subscription_id from paypal_subscriptions
-			where created_at < $2 and entitlement_id is null and (state is null or state = any($3)) and not exists (
+			where created_at < $2 and entitlement_id is null and trial_until is null and (state is null or state = any($3)) and not exists (
 				select 1 from payment_events p where p.provider = 'paypal' and p.reference = subscription_id)
 			limit $1))`, time.Now().Add(-checkoutKeep), []string{"APPROVAL_PENDING", "CANCELLED", "EXPIRED"})
 	total += n

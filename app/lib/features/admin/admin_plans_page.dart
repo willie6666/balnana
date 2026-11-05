@@ -489,6 +489,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   late final _days = TextEditingController(text: '${widget.product?.days ?? 35}');
   late final _minAmount = TextEditingController(text: widget.product?.minAmount);
   late final _currency = TextEditingController(text: widget.product?.currency);
+  late final _withoutTrial = TextEditingController(text: widget.product?.withoutTrial);
   late String? _plan = widget.product?.planId;
   late String _provider = widget.product?.provider ?? 'kofi';
 
@@ -499,7 +500,7 @@ class _ProductDialogState extends State<_ProductDialog> {
 
   @override
   void dispose() {
-    for (final c in [_name, _days, _minAmount, _currency]) {
+    for (final c in [_name, _days, _minAmount, _currency, _withoutTrial]) {
       c.dispose();
     }
     super.dispose();
@@ -509,6 +510,7 @@ class _ProductDialogState extends State<_ProductDialog> {
     if (!_form.currentState!.validate()) return;
     final amount = _minAmount.text.trim();
     final currency = _currency.text.trim().toUpperCase();
+    final withoutTrial = _withoutTrial.text.trim();
     Navigator.pop(
       context,
       PlanProduct(
@@ -518,6 +520,7 @@ class _ProductDialogState extends State<_ProductDialog> {
         days: int.parse(_days.text.trim()),
         minAmount: _play || amount.isEmpty ? null : amount,
         currency: _play || currency.isEmpty ? null : currency,
+        withoutTrial: _paypal && _paypalPlan.hasMatch(_name.text.trim()) && withoutTrial.isNotEmpty ? withoutTrial : null,
       ),
     );
   }
@@ -565,7 +568,26 @@ class _ProductDialogState extends State<_ProductDialog> {
                   helperMaxLines: 4,
                 ),
                 validator: (v) => (_play || _paypal) && (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
+                onChanged: _paypal ? (_) => setState(() {}) : null,
               ),
+              // PayPal gives a plan's trial to every subscription on it.
+              if (_paypal && _paypalPlan.hasMatch(_name.text.trim())) ...[
+                gap,
+                TextFormField(
+                  controller: _withoutTrial,
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    labelText: l10n.adminProductWithoutTrial,
+                    helperText: l10n.adminProductWithoutTrialHelp,
+                    helperMaxLines: 4,
+                  ),
+                  validator: (v) {
+                    final plan = (v ?? '').trim();
+                    if (plan.isEmpty) return null;
+                    return _paypalPlan.hasMatch(plan) && plan != _name.text.trim() ? null : l10n.adminInvalidValue;
+                  },
+                ),
+              ],
               gap,
               DropdownButtonFormField<String>(
                 initialValue: _plans.any((p) => p.id == _plan) ? _plan : null,

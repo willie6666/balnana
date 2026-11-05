@@ -3589,6 +3589,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'معرّف خطة اشتراك من PayPal يبدأ بـ P-. أي اسم آخر هو دفعة لمرة واحدة بالمبلغ أدناه.';
 
   @override
+  String get adminProductWithoutTrial => 'معرّف الخطة بدون فترة تجريبية';
+
+  @override
+  String get adminProductWithoutTrialHelp =>
+      'اختياري. يمنح PayPal الفترة التجريبية المجانية للخطة لكل اشتراك، لذا تشترك الحسابات التي حصلت عليها من قبل في هذه الخطة بدلًا منها: الخطة نفسها بدون فترة تجريبية، وتبدأ بـ P-.';
+
+  @override
   String get adminProductRemoveBody =>
       'لن تُطبَّق المدفوعات الخاصة به على الحسابات بعد الآن. وتبقى الخطط الحالية حتى تنتهي.';
 

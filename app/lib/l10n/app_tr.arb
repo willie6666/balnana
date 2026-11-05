@@ -980,6 +980,8 @@
   "adminProductPlayIdHelp": "Play Console'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.",
   "adminProductPayPalId": "Plan kimliği veya ad",
   "adminProductPayPalIdHelp": "P- ile başlayan bir PayPal abonelik planı kimliği. Başka herhangi bir ad, aşağıdaki tutarda tek seferlik bir ödemedir.",
+  "adminProductWithoutTrial": "Deneme süresiz plan kimliği",
+  "adminProductWithoutTrialHelp": "İsteğe bağlı. PayPal bir planın ücretsiz denemesini her aboneliğe verir; bu yüzden daha önce deneme almış hesaplar bunun yerine bu plana abone olur: denemesi olmayan aynı plan, P- ile başlar.",
   "adminProductRemoveBody": "Bu ürün için yapılan ödemeler artık hesaplara uygulanmaz. Mevcut planlar süreleri bitene kadar geçerlidir.",
   "errorRecentSignIn": "Güvenliğiniz için çıkış yapıp tekrar giriş yapın, ardından yeniden deneyin.",
   "errorTooManyGroups": "Bir seferde çok fazla grup var.",
