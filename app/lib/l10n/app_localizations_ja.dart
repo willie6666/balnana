@@ -2924,7 +2924,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminProductsSection => '商品';
 
   @override
-  String get adminProductsHelp => '支払いはまず同じティア名の商品に、なければティア名なしで金額を満たす商品に対応します。';
+  String get adminProductsHelp =>
+      'Ko-fi の支払いは、ショップ商品コードが一致する商品に、なければコードのない商品のうち金額が届くものに割り当てられます。PayPal の商品はサブスクリプションプランか一回払いです。';
 
   @override
   String get adminProductAdd => '商品を追加';
@@ -2938,10 +2939,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'ティア名';
+  String get adminProductName => 'ショップ商品コード';
 
   @override
-  String get adminProductNameHelp => 'Ko-fiの表記と同じにします。空欄の場合、単発・月額の支払いを金額で判定します。';
+  String get adminProductNameHelp => '商品リンクの末尾、ko-fi.com/s/<コード>。空欄にするとチップを金額で照合します。';
 
   @override
   String get adminProductPlan => 'プラン';
@@ -3043,6 +3044,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminPaymentUnmatched => '未対応';
 
   @override
+  String get adminPaymentRefunded => '返金済み';
+
+  @override
   String get adminPaymentsAll => 'すべて';
 
   @override
@@ -3080,6 +3084,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorPaymentNoPlan => 'この支払いに対応するプランがありません。サーバー管理者に適用を依頼してください。';
+
+  @override
+  String get errorPaymentRefunded => 'この支払いは返金されています。';
+
+  @override
+  String get errorPayPalSubscribed => 'このサブスクリプションはすでに契約しています。';
+
+  @override
+  String get errorPayPalUnavailable => '現在 PayPal に接続できません。しばらくしてからお試しください。';
 
   @override
   String get errorInvalidPlan => 'プランの設定を確認してください。無効な内容があります。';
@@ -3176,19 +3189,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '支払いをアカウントに反映するには、Ko-fi のメッセージに支払いコードを貼り付けてください。';
+  String get planKofiHelp => 'Ko-fi でプランを購入してから、取引 ID でここに支払いを追加してください。';
 
   @override
-  String get planPaymentCodeHelp => 'あなたの支払いコード。タップしてコピー。';
+  String get planPaymentClaim => 'Ko-fi の支払いを追加';
 
   @override
-  String get planPaymentCodeCopied => '支払いコードをコピーしました';
-
-  @override
-  String get planPaymentClaim => 'コードを書き忘れましたか？';
-
-  @override
-  String get planPaymentClaimHelp => 'Ko-fi の取引 ID で支払いを追加します。';
+  String get planPaymentClaimHelp => 'Ko-fi の領収書にある取引 ID を使います。';
 
   @override
   String get planPaymentClaimField => '取引 ID または支払いリンク';
@@ -3198,6 +3205,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => '支払いを追加しました';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'サブスクリプション、$days 日ごとに更新';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days 日間 $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days 日間';
+  }
+
+  @override
+  String get planPayPalManage => 'PayPal のサブスクリプションを管理';
+
+  @override
+  String get planPayPalManageHelp => 'PayPal で変更または解約';
+
+  @override
+  String get planPayPalDone => '支払いを受け取りました。プランが更新されました。';
+
+  @override
+  String get planPayPalPending => 'PayPal が支払いを処理中です。完了するとプランが更新されます。';
+
+  @override
+  String get planPayPalCancelled => '支払いをキャンセルしました';
+
+  @override
+  String get planPayPalFailed => 'PayPal の支払いが完了しませんでした。';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3273,6 +3313,32 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminPlayPushAccountHelp => 'Pub/Sub が配信の署名に使うサービスアカウントのメールアドレス。未設定だと、更新は誰かがプランページを開くまで届きません。';
 
   @override
+  String get adminPayPalClientId => 'PayPal クライアント ID';
+
+  @override
+  String get adminPayPalClientIdHelp => 'developer.paypal.com の REST アプリのもの。空欄にすると PayPal を無効にします。';
+
+  @override
+  String get adminPayPalSecret => 'PayPal シークレット';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal Webhook ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'PayPal アプリに支払い、チェックアウト注文、請求サブスクリプションのイベント用の Webhook を追加し、その ID を入力してください：$url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal サンドボックス';
+
+  @override
+  String get adminPayPalSandboxHelp => '実際の支払いが発生しない PayPal のサンドボックスを、サンドボックスアプリの認証情報で使います。';
+
+  @override
+  String get adminPayPalRequired => 'PayPal にはクライアント ID、シークレット、Webhook ID がすべて必要です。';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub のプッシュエンドポイント（オーディエンスも同じ）：$url';
   }
@@ -3285,6 +3351,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminProductPlayIdHelp => 'Play Console の表記のとおりに入力します。各支払いの終了日は Google Play が決めるため、日数の設定はありません。';
+
+  @override
+  String get adminProductPayPalId => 'プラン ID または名前';
+
+  @override
+  String get adminProductPayPalIdHelp => 'P- で始まる PayPal のサブスクリプションプラン ID。それ以外の名前は下の金額の一回払いになります。';
 
   @override
   String get adminProductRemoveBody => 'この商品への支払いはアカウントに反映されなくなります。適用中のプランは終了するまで有効です。';

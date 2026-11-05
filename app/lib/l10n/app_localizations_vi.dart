@@ -3022,7 +3022,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Khoản thanh toán thuộc về sản phẩm có tên cấp của nó, nếu không thì về sản phẩm không có tên cấp mà số tiền đạt tới.';
+      'Khoản thanh toán Ko-fi được gán cho sản phẩm có mã mặt hàng cửa hàng tương ứng, nếu không thì cho sản phẩm không có mã mà số tiền đạt tới. Sản phẩm PayPal là gói đăng ký hoặc thanh toán một lần.';
 
   @override
   String get adminProductAdd => 'Thêm sản phẩm';
@@ -3036,11 +3036,11 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Tên cấp';
+  String get adminProductName => 'Mã mặt hàng cửa hàng';
 
   @override
   String get adminProductNameHelp =>
-      'Viết giống trên Ko-fi. Để trống để khớp khoản thanh toán một lần hoặc hằng tháng theo số tiền.';
+      'Phần cuối của liên kết mặt hàng, ko-fi.com/s/<mã>. Để trống để khớp tiền tip theo số tiền.';
 
   @override
   String get adminProductPlan => 'Gói';
@@ -3143,6 +3143,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get adminPaymentUnmatched => 'Chưa khớp';
 
   @override
+  String get adminPaymentRefunded => 'Đã hoàn tiền';
+
+  @override
   String get adminPaymentsAll => 'Tất cả';
 
   @override
@@ -3182,6 +3185,15 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Khoản thanh toán này không khớp với gói nào. Hãy nhờ quản trị viên máy chủ áp dụng.';
+
+  @override
+  String get errorPaymentRefunded => 'Khoản thanh toán này đã được hoàn tiền.';
+
+  @override
+  String get errorPayPalSubscribed => 'Bạn đã có gói đăng ký này.';
+
+  @override
+  String get errorPayPalUnavailable => 'Hiện không thể kết nối PayPal. Hãy thử lại sau.';
 
   @override
   String get errorInvalidPlan => 'Hãy kiểm tra cài đặt gói: có mục không hợp lệ.';
@@ -3279,20 +3291,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'Hãy dán mã thanh toán vào lời nhắn trên Ko-fi để khoản thanh toán về đúng tài khoản của bạn.';
+  String get planKofiHelp => 'Mua gói trên Ko-fi, rồi thêm khoản thanh toán tại đây bằng mã giao dịch.';
 
   @override
-  String get planPaymentCodeHelp => 'Mã thanh toán của bạn. Nhấn để sao chép.';
+  String get planPaymentClaim => 'Thêm khoản thanh toán Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'Đã sao chép mã thanh toán';
-
-  @override
-  String get planPaymentClaim => 'Quên mã?';
-
-  @override
-  String get planPaymentClaimHelp => 'Thêm khoản thanh toán bằng mã giao dịch Ko-fi.';
+  String get planPaymentClaimHelp => 'Bằng mã giao dịch trong biên lai của Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'Mã giao dịch hoặc liên kết thanh toán';
@@ -3302,6 +3307,40 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Đã thêm khoản thanh toán';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Gói đăng ký, gia hạn mỗi $days ngày';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days ngày với giá $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days ngày';
+  }
+
+  @override
+  String get planPayPalManage => 'Quản lý gói đăng ký PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'Thay đổi hoặc hủy trên PayPal';
+
+  @override
+  String get planPayPalDone => 'Đã nhận thanh toán. Gói của bạn đã được cập nhật.';
+
+  @override
+  String get planPayPalPending =>
+      'PayPal vẫn đang xử lý khoản thanh toán. Gói của bạn sẽ cập nhật khi hoàn tất.';
+
+  @override
+  String get planPayPalCancelled => 'Đã hủy thanh toán';
+
+  @override
+  String get planPayPalFailed => 'Thanh toán PayPal không thành công.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3389,6 +3428,34 @@ class AppLocalizationsVi extends AppLocalizations {
       'Email của tài khoản dịch vụ mà Pub/Sub dùng để ký khi gửi. Nếu không có, các lần gia hạn chỉ đến khi có người mở trang gói.';
 
   @override
+  String get adminPayPalClientId => 'Mã khách hàng PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'Từ một ứng dụng REST trên developer.paypal.com. Để trống để tắt PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'Khóa bí mật PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'Mã webhook PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Thêm webhook vào ứng dụng PayPal cho các sự kiện thanh toán, đơn hàng và gói đăng ký, rồi nhập mã của nó: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'Sandbox PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Dùng sandbox của PayPal, nơi không có gì được trả thật, với thông tin xác thực của ứng dụng sandbox.';
+
+  @override
+  String get adminPayPalRequired => 'PayPal cần cả mã khách hàng, khóa bí mật và mã webhook.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Điểm cuối đẩy của Pub/Sub, đồng thời là đối tượng: $url';
   }
@@ -3402,6 +3469,13 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Như ghi trong Play Console. Google Play cho biết khi nào mỗi khoản thanh toán kết thúc nên không cần đặt số ngày.';
+
+  @override
+  String get adminProductPayPalId => 'Mã gói hoặc tên';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'Mã gói đăng ký PayPal, bắt đầu bằng P-. Mọi tên khác là thanh toán một lần với số tiền bên dưới.';
 
   @override
   String get adminProductRemoveBody =>

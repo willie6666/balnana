@@ -197,6 +197,15 @@ type Config struct {
 	// PlayPushAccount is the service account Pub/Sub signs Google Play's
 	// notifications as; empty turns them away.
 	PlayPushAccount string
+	// PayPalClientID and PayPalSecret are a PayPal REST app's credentials.
+	// Both turn on paying through PayPal.
+	PayPalClientID string
+	PayPalSecret   string
+	// PayPalWebhookID is the ID PayPal gave the webhook, which checking its
+	// notifications needs.
+	PayPalWebhookID string
+	// PayPalSandbox talks to PayPal's sandbox instead, where nothing is paid.
+	PayPalSandbox bool
 
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
@@ -252,6 +261,10 @@ var Managed = []Setting{
 	{Key: "BALNANA_PLAY_PACKAGE"},
 	{Key: "BALNANA_PLAY_SERVICE_ACCOUNT", Secret: true},
 	{Key: "BALNANA_PLAY_PUSH_ACCOUNT"},
+	{Key: "BALNANA_PAYPAL_CLIENT_ID"},
+	{Key: "BALNANA_PAYPAL_SECRET", Secret: true},
+	{Key: "BALNANA_PAYPAL_WEBHOOK_ID"},
+	{Key: "BALNANA_PAYPAL_SANDBOX", Default: "false"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
@@ -406,6 +419,10 @@ func load(getenv func(string) string) (*Config, error) {
 		Billing:         e.managedBool("BALNANA_BILLING_ENABLED"),
 		KofiToken:       e.managed("BALNANA_KOFI_TOKEN"),
 		PlayPackage:     e.managed("BALNANA_PLAY_PACKAGE"),
+		PayPalClientID:  e.managed("BALNANA_PAYPAL_CLIENT_ID"),
+		PayPalSecret:    e.managed("BALNANA_PAYPAL_SECRET"),
+		PayPalWebhookID: e.managed("BALNANA_PAYPAL_WEBHOOK_ID"),
+		PayPalSandbox:   e.managedBool("BALNANA_PAYPAL_SANDBOX"),
 		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
@@ -471,6 +488,16 @@ func load(getenv func(string) string) (*Config, error) {
 		e.fail("BALNANA_KOFI_URL", "BALNANA_KOFI_URL is required when BALNANA_KOFI_TOKEN is set")
 	}
 
+	// Without the webhook, a payment PayPal finishes later is never heard of.
+	switch {
+	case c.PayPalClientID != "" && c.PayPalSecret == "":
+		e.fail("BALNANA_PAYPAL_SECRET", "BALNANA_PAYPAL_SECRET is required when BALNANA_PAYPAL_CLIENT_ID is set")
+	case c.PayPalClientID == "" && c.PayPalSecret != "":
+		e.fail("BALNANA_PAYPAL_CLIENT_ID", "BALNANA_PAYPAL_CLIENT_ID is required when BALNANA_PAYPAL_SECRET is set")
+	case c.PayPalClientID != "" && c.PayPalWebhookID == "":
+		e.fail("BALNANA_PAYPAL_WEBHOOK_ID", "BALNANA_PAYPAL_WEBHOOK_ID is required when BALNANA_PAYPAL_CLIENT_ID is set")
+	}
+
 	if key := e.managed("BALNANA_PLAY_SERVICE_ACCOUNT"); key != "" {
 		var account ServiceAccount
 		if err := json.Unmarshal([]byte(key), &account); err != nil || account.Email == "" || !validPrivateKey(account.PrivateKey) {
@@ -534,7 +561,7 @@ func load(getenv func(string) string) (*Config, error) {
 
 	// Payment providers call back, and Google's notifications are signed for
 	// this address, so a server still on its default would lose them.
-	if c.Billing && (c.KofiToken != "" || c.PlayPackage != "") && c.PublicURL != nil && !publicHTTPS(c.PublicURL) {
+	if c.Billing && (c.KofiToken != "" || c.PlayPackage != "" || c.PayPalClientID != "") && c.PublicURL != nil && !publicHTTPS(c.PublicURL) {
 		e.fail("BALNANA_PUBLIC_URL", "BALNANA_PUBLIC_URL must be the server's public https address to take payments, got %q", publicURL)
 	}
 

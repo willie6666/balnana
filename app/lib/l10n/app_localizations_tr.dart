@@ -3037,7 +3037,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Ödeme önce kendi kademe adına sahip ürüne, yoksa kademe adı olmayan ve tutarına ulaştığı ürüne gider.';
+      'Bir Ko-fi ödemesi mağaza ürün koduyla eşleşen ürüne, yoksa tutarının ulaştığı kodsuz ürüne gider. Bir PayPal ürünü bir abonelik planı ya da tek seferlik bir ödemedir.';
 
   @override
   String get adminProductAdd => 'Ürün ekle';
@@ -3051,11 +3051,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Kademe adı';
+  String get adminProductName => 'Mağaza ürün kodu';
 
   @override
   String get adminProductNameHelp =>
-      'Ko-fi\'de yazdığı gibi. Tek seferlik veya aylık ödemeleri tutara göre eşleştirmek için boş bırakın.';
+      'Ürün bağlantısının sonu, ko-fi.com/s/<kod>. Bir bahşişi tutarıyla eşleştirmek için boş bırakın.';
 
   @override
   String get adminProductPlan => 'Plan';
@@ -3157,6 +3157,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get adminPaymentUnmatched => 'Eşleşmedi';
 
   @override
+  String get adminPaymentRefunded => 'İade edildi';
+
+  @override
   String get adminPaymentsAll => 'Tümü';
 
   @override
@@ -3196,6 +3199,15 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Bu ödeme hiçbir planla eşleşmiyor. Sunucu yöneticisinden uygulamasını isteyin.';
+
+  @override
+  String get errorPaymentRefunded => 'Bu ödeme iade edildi.';
+
+  @override
+  String get errorPayPalSubscribed => 'Bu aboneliğe zaten sahipsiniz.';
+
+  @override
+  String get errorPayPalUnavailable => 'Şu anda PayPal\'a ulaşılamıyor. Daha sonra tekrar deneyin.';
 
   @override
   String get errorInvalidPlan => 'Plan ayarlarını kontrol edin: geçersiz bir değer var.';
@@ -3293,19 +3305,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'Ödemenin hesabınıza ulaşması için ödeme kodunuzu Ko-fi mesajına yapıştırın.';
+  String get planKofiHelp =>
+      'Ko-fi\'de bir plan satın alın, ardından ödemeyi işlem kimliğiyle buraya ekleyin.';
 
   @override
-  String get planPaymentCodeHelp => 'Ödeme kodunuz. Kopyalamak için dokunun.';
+  String get planPaymentClaim => 'Ko-fi ödemesi ekle';
 
   @override
-  String get planPaymentCodeCopied => 'Ödeme kodu kopyalandı';
-
-  @override
-  String get planPaymentClaim => 'Kodu mu unuttunuz?';
-
-  @override
-  String get planPaymentClaimHelp => 'Ko-fi işlem kimliğiyle bir ödeme ekleyin.';
+  String get planPaymentClaimHelp => 'Ko-fi makbuzundaki işlem kimliğiyle.';
 
   @override
   String get planPaymentClaimField => 'İşlem kimliği veya ödeme bağlantısı';
@@ -3315,6 +3322,39 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Ödeme eklendi';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Abonelik, her $days günde yenilenir';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$price karşılığında $days gün';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days gün';
+  }
+
+  @override
+  String get planPayPalManage => 'PayPal aboneliğini yönet';
+
+  @override
+  String get planPayPalManageHelp => 'PayPal\'da değiştirin veya iptal edin';
+
+  @override
+  String get planPayPalDone => 'Ödeme alındı. Planınız güncellendi.';
+
+  @override
+  String get planPayPalPending => 'PayPal ödemeyi hâlâ işliyor. Tamamlandığında planınız güncellenecek.';
+
+  @override
+  String get planPayPalCancelled => 'Ödeme iptal edildi';
+
+  @override
+  String get planPayPalFailed => 'PayPal ödemesi tamamlanmadı.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3402,6 +3442,35 @@ class AppLocalizationsTr extends AppLocalizations {
       'Pub/Sub\'ın teslimatlarını imzaladığı hizmet hesabının e-postası. Olmazsa yenilemeler ancak biri plan sayfasını açtığında gelir.';
 
   @override
+  String get adminPayPalClientId => 'PayPal istemci kimliği';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'developer.paypal.com\'daki bir REST uygulamasından. PayPal\'ı kapatmak için boş bırakın.';
+
+  @override
+  String get adminPayPalSecret => 'PayPal gizli anahtarı';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal webhook kimliği';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'PayPal uygulamasına ödeme, sipariş ve abonelik olayları için bir webhook ekleyin ve kimliğini girin: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal sandbox';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Gerçekte hiçbir şeyin ödenmediği PayPal sandbox\'ını bir sandbox uygulamasının bilgileriyle kullanın.';
+
+  @override
+  String get adminPayPalRequired =>
+      'PayPal için istemci kimliği, gizli anahtar ve webhook kimliği birlikte gerekir.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub push uç noktası, aynı zamanda hedef kitlesi: $url';
   }
@@ -3415,6 +3484,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Play Console\'da yazdığı gibi. Her ödemenin ne zaman biteceğini Google Play bildirir, bu yüzden ayarlanacak gün yoktur.';
+
+  @override
+  String get adminProductPayPalId => 'Plan kimliği veya ad';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'P- ile başlayan bir PayPal abonelik planı kimliği. Başka herhangi bir ad, aşağıdaki tutarda tek seferlik bir ödemedir.';
 
   @override
   String get adminProductRemoveBody =>

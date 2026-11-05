@@ -11,7 +11,6 @@ import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:balnana/ui/widgets/play_purchases.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -93,7 +92,7 @@ class _FakeApi extends BalnanaApi {
   }
 }
 
-Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, BalnanaApi? api}) async {
+Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, BalnanaApi? api, String? paypal}) async {
   // Tall enough for the whole page: its lists only build what is on screen.
   tester.view.physicalSize = const Size(1200, 3600);
   addTearDown(tester.view.reset);
@@ -115,10 +114,10 @@ Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, Balnana
           ),
         ),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: PlanPage(),
+        home: PlanPage(paypal: paypal),
       ),
     ),
   );
@@ -184,7 +183,6 @@ void main() {
       'sponsoredGroups': {'used': 0, 'limit': 0},
       'receiptsPerGroup': 20,
       'membersPerGroup': 15,
-      'paymentCode': 'BAL-ABCD2345',
     });
     expect(plan.paid, isFalse);
     expect(plan.expiresAt, isNull);
@@ -193,7 +191,28 @@ void main() {
     expect(plan.sponsoredGroups.limit, 0);
     expect(plan.receiptsPerGroup, 20);
     expect(plan.recurringPerGroup, isNull);
-    expect(plan.paymentCode, 'BAL-ABCD2345');
+    expect(plan.paypal, isNull);
+  });
+
+  test('a plan reads what PayPal sells', () {
+    final plan = MyPlan.fromJson({
+      'planName': 'Free',
+      'joinedGroups': {'used': 0},
+      'sponsoredGroups': {'used': 0},
+      'paypal': {
+        'offers': [
+          {'product': 'P-ABC', 'planName': 'Plus', 'days': 30, 'subscription': true},
+          {'product': 'plus90', 'planName': 'Plus', 'days': 90, 'subscription': false, 'amount': '9.00', 'currency': 'USD'},
+        ],
+        'subscribed': ['P-ABC'],
+      },
+    });
+    final paypal = plan.paypal!;
+    expect(paypal.subscribed, ['P-ABC']);
+    expect(paypal.offers.map((o) => (o.product, o.days, o.subscription, o.amount)), [
+      ('P-ABC', 30, true, null),
+      ('plus90', 90, false, '9.00'),
+    ]);
   });
 
   testWidgets('the plan page shows the plan and how much of it is used', (tester) async {
@@ -216,33 +235,29 @@ void main() {
   });
 
   // Runs with --dart-define=BALNANA_EXTERNAL_PAYMENTS=true.
-  testWidgets('a build with external payments shows the code to pay with', (tester) async {
-    Object? copied;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'];
-      return null;
-    });
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
-    );
+  testWidgets('a build with external payments shows Ko-fi and PayPal', (tester) async {
     await _pump(
       tester,
       const MyPlan(
         planName: 'Free',
         joinedGroups: PlanUsage(used: 0),
         sponsoredGroups: PlanUsage(used: 0),
-        paymentCode: 'BAL-ABCD2345',
+        paypal: PayPalBilling(
+          offers: [
+            PayPalOffer(product: 'P-ABC', planName: 'Plus monthly', days: 30, subscription: true),
+            PayPalOffer(product: 'plus90', planName: 'Plus 90', days: 90, amount: '9.00', currency: 'USD'),
+          ],
+          subscribed: ['P-ABC'],
+        ),
       ),
       api: _FakeApi(),
     );
 
     expect(find.text(l10n.planKofiHelp), findsOneWidget);
-    await tester.ensureVisible(find.text('BAL-ABCD2345'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('BAL-ABCD2345'));
-    await tester.pumpAndSettle();
-    expect(copied, 'BAL-ABCD2345');
-    expect(find.text(l10n.planPaymentCodeCopied), findsOneWidget);
+    // A second subscription would pay twice for one plan.
+    expect(find.text('Plus monthly'), findsNothing);
+    expect(find.text(l10n.planPayPalManage), findsOneWidget);
+    expect(find.text(l10n.planPayPalOnce(90, '9.00 USD')), findsOneWidget);
 
     await tester.ensureVisible(find.text(l10n.planPaymentClaim));
     await tester.pumpAndSettle();
@@ -250,6 +265,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PaymentClaimDialog), findsOneWidget);
   }, skip: !externalPayments);
+
+  testWidgets('coming back from PayPal says how it went', (tester) async {
+    await _pump(tester, _plan, paypal: 'cancelled');
+
+    expect(find.text(l10n.planPayPalCancelled), findsOneWidget);
+  });
 
   group('claiming a payment', () {
     Future<void> open(WidgetTester tester, BalnanaApi api, {Future<MyPlan> Function()? plan}) async {

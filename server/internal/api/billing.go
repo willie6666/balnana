@@ -296,30 +296,14 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.Play, err = s.playOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
-	if cfg := s.conf(); cfg.KofiToken != "" && cfg.KofiURL != nil {
-		if out.PaymentCode, err = paymentCode(ctx, q, userID); err != nil {
-			return MyPlan{}, err
-		}
+	if out.Paypal, err = s.paypalOffer(ctx, q, userID); err != nil {
+		return MyPlan{}, err
 	}
 	return out, nil
 }
 
-// paymentCode is the account's code for payment messages. Most accounts never
-// pay, so it's made when first shown.
-func paymentCode(ctx context.Context, q querier, userID string) (*string, error) {
-	var code *string
-	err := q.QueryRow(ctx, `select payment_code from users where id = $1`, userID).Scan(&code)
-	if err != nil || code != nil {
-		return code, err
-	}
-	err = q.QueryRow(ctx, `
-		update users set payment_code = coalesce(payment_code, $2) where id = $1
-		returning payment_code`, userID, newPaymentCode()).Scan(&code)
-	return code, err
-}
-
-// ClaimPayment takes a payment by its transaction ID, for payers who left no
-// code. Ko-fi shows the ID to the payer, and it can't be guessed.
+// ClaimPayment takes a Ko-fi payment by its transaction ID. Ko-fi shows the ID
+// to the payer, and it can't be guessed.
 func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject) (ClaimPaymentResponseObject, error) {
 	if err := s.requireBilling(); err != nil {
 		return nil, err
@@ -338,13 +322,13 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 			return err
 		}
 		var id, state string
-		var owner, email *string
-		var planned, recurring bool
+		var owner *string
+		var planned bool
 		err := tx.QueryRow(ctx, `
-			select id::text, state, user_id::text, email::text, plan_id is not null, recurring
+			select id::text, state, user_id::text, plan_id is not null
 			from payment_events where provider = 'kofi' and reference = $1
 			order by paid_at desc limit 1 for update`, paymentReference(req.Body.Reference)).
-			Scan(&id, &state, &owner, &email, &planned, &recurring)
+			Scan(&id, &state, &owner, &planned)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errPaymentNotFound
 		}
@@ -355,24 +339,13 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 		if owner != nil && *owner != u.id || owner == nil && state == "applied" {
 			return conflict("payment_applied")
 		}
-		if recurring && email != nil {
-			if err := rememberPaymentEmail(ctx, tx, *email, u.id); err != nil {
-				return err
-			}
-		}
 		if !planned {
 			// Nothing to give, but the administrator can see whose it is.
 			noPlan = true
 			_, err = tx.Exec(ctx, `update payment_events set user_id = coalesce(user_id, $1) where id = $2`, u.id, id)
-			if err != nil {
-				return err
-			}
-			return claimPayments(ctx, tx, u.id)
-		}
-		if err := applyPayment(ctx, tx, id, u.id, true); err != nil {
 			return err
 		}
-		if err := claimPayments(ctx, tx, u.id); err != nil {
+		if err := applyPayment(ctx, tx, id, u.id); err != nil {
 			return err
 		}
 		out, err = s.myPlan(ctx, tx, u.id)
@@ -385,27 +358,6 @@ func (s *Server) ClaimPayment(ctx context.Context, req ClaimPaymentRequestObject
 		return nil, conflict("payment_no_plan")
 	}
 	return ClaimPayment200JSONResponse(out), nil
-}
-
-// rememberPaymentEmail sends the address's next subscription payments to
-// userID, whoever had them before.
-func rememberPaymentEmail(ctx context.Context, q querier, email, userID string) error {
-	_, err := q.Exec(ctx, `
-		insert into payment_emails (email, user_id) values ($1, $2)
-		on conflict (email) do update set user_id = excluded.user_id, created_at = now()`, email, userID)
-	return err
-}
-
-// adoptPaymentEmail is rememberPaymentEmail for a code in a message, which can
-// be anyone's: a gift doesn't take the payments of a Ko-fi plan still running.
-func adoptPaymentEmail(ctx context.Context, q querier, email, userID string) error {
-	_, err := q.Exec(ctx, `
-		insert into payment_emails (email, user_id) values ($1, $2)
-		on conflict (email) do update set user_id = excluded.user_id, created_at = now()
-		where not exists (
-			select 1 from entitlements e
-			where e.user_id = payment_emails.user_id and e.source = 'kofi' and `+entitlementActive+`)`, email, userID)
-	return err
 }
 
 func (s *Server) GetGroupPlan(ctx context.Context, req GetGroupPlanRequestObject) (GetGroupPlanResponseObject, error) {

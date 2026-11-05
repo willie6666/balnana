@@ -5275,7 +5275,7 @@ abstract class AppLocalizations {
   /// Label or control text for admin products help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'A payment goes to the product with its tier name, or else to the one without a tier name that its amount reaches.'**
+  /// **'A Ko-fi payment goes to the product with its shop item code, or else to the one without a code that its amount reaches. A PayPal product is a subscription plan or a one-off payment.'**
   String get adminProductsHelp;
 
   /// Label or control text for admin product add in the server administrator interface.
@@ -5299,13 +5299,13 @@ abstract class AppLocalizations {
   /// Label or control text for admin product name in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Tier name'**
+  /// **'Shop item code'**
   String get adminProductName;
 
   /// Label or control text for admin product name help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'As written on Ko-fi. Leave empty to match any one-off or monthly payment by its amount.'**
+  /// **'The end of the item\'s link, ko-fi.com/s/<code>. Leave empty to match a tip by its amount.'**
   String get adminProductNameHelp;
 
   /// Label or control text for admin product plan in the server administrator interface.
@@ -5482,6 +5482,12 @@ abstract class AppLocalizations {
   /// **'Unmatched'**
   String get adminPaymentUnmatched;
 
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get adminPaymentRefunded;
+
   /// Label or control text for admin payments all in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -5553,6 +5559,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This payment doesn\'t match a plan. Ask the server\'s administrator to apply it.'**
   String get errorPaymentNoPlan;
+
+  /// Error message shown when paying for a plan fails.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment was refunded.'**
+  String get errorPaymentRefunded;
+
+  /// Error message shown when paying for a plan fails.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have this subscription.'**
+  String get errorPayPalSubscribed;
+
+  /// Error message shown when paying for a plan fails.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal can\'t be reached right now. Try again later.'**
+  String get errorPayPalUnavailable;
 
   /// Label or control text for error invalid plan in an error message.
   ///
@@ -5713,31 +5737,19 @@ abstract class AppLocalizations {
   /// Label or control text for plan kofi help in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Put your payment code in the Ko-fi message, so the payment reaches your account.'**
+  /// **'Buy a plan on Ko-fi, then add the payment here with its transaction ID.'**
   String get planKofiHelp;
 
   /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Your payment code. Tap to copy.'**
-  String get planPaymentCodeHelp;
-
-  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment code copied'**
-  String get planPaymentCodeCopied;
-
-  /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
-  ///
-  /// In en, this message translates to:
-  /// **'Forgot the code?'**
+  /// **'Add a Ko-fi payment'**
   String get planPaymentClaim;
 
   /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Add a payment with its Ko-fi transaction ID.'**
+  /// **'With the transaction ID from Ko-fi\'s receipt.'**
   String get planPaymentClaimHelp;
 
   /// Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens.
@@ -5757,6 +5769,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment added'**
   String get planPaymentClaimed;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription, renews every {days} days'**
+  String planPayPalSubscription(int days);
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days for {price}'**
+  String planPayPalOnce(int days, String price);
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String planPayPalDays(int days);
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage PayPal subscription'**
+  String get planPayPalManage;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Change or cancel it on PayPal'**
+  String get planPayPalManageHelp;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received. Your plan is updated.'**
+  String get planPayPalDone;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal is still processing the payment. Your plan updates once it\'s through.'**
+  String get planPayPalPending;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment cancelled'**
+  String get planPayPalCancelled;
+
+  /// Text about paying for a plan with PayPal in the plan screens.
+  ///
+  /// In en, this message translates to:
+  /// **'The PayPal payment didn\'t go through.'**
+  String get planPayPalFailed;
 
   /// Label or control text for group plan usage in the plan screens.
   ///
@@ -5890,6 +5956,54 @@ abstract class AppLocalizations {
   /// **'The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.'**
   String get adminPlayPushAccountHelp;
 
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal client ID'**
+  String get adminPayPalClientId;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'From a REST app at developer.paypal.com. Leave empty to turn PayPal off.'**
+  String get adminPayPalClientIdHelp;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal secret'**
+  String get adminPayPalSecret;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal webhook ID'**
+  String get adminPayPalWebhookId;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a webhook to the PayPal app for payment, checkout order and billing subscription events, and enter its ID: {url}'**
+  String adminPayPalWebhook(String url);
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal sandbox'**
+  String get adminPayPalSandbox;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Use PayPal\'s sandbox, where nothing is really paid, with a sandbox app\'s credentials.'**
+  String get adminPayPalSandboxHelp;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal needs the client ID, secret and webhook ID together.'**
+  String get adminPayPalRequired;
+
   /// Label or control text for admin play webhook in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -5913,6 +6027,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'As written in Play Console. Google Play says when each payment ends, so there are no days to set.'**
   String get adminProductPlayIdHelp;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan ID or name'**
+  String get adminProductPayPalId;
+
+  /// Label or control text for PayPal payments in the server administrator interface.
+  ///
+  /// In en, this message translates to:
+  /// **'A subscription plan\'s ID from PayPal, starting with P-. Any other name is a one-off payment of the amount below.'**
+  String get adminProductPayPalIdHelp;
 
   /// Body of the confirmation before an administrator removes a product.
   ///

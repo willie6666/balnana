@@ -76,6 +76,7 @@ class _AdminPaymentsPageState extends ConsumerState<AdminPaymentsPage> {
     'applied' => l10n.adminPaymentApplied,
     'unclaimed' => l10n.adminPaymentUnclaimed,
     'unmatched' => l10n.adminPaymentUnmatched,
+    'refunded' => l10n.adminPaymentRefunded,
     _ => state,
   };
 
@@ -114,7 +115,7 @@ class _AdminPaymentsPageState extends ConsumerState<AdminPaymentsPage> {
                 child: SegmentedButton<String>(
                   segments: [
                     ButtonSegment(value: '', label: Text(l10n.adminPaymentsAll)),
-                    for (final state in ['unclaimed', 'unmatched', 'applied'])
+                    for (final state in ['unclaimed', 'unmatched', 'applied', 'refunded'])
                       ButtonSegment(value: state, label: Text(_stateName(l10n, state))),
                   ],
                   selected: {_state},

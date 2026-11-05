@@ -27,8 +27,10 @@ info:
     Billing: on a server that charges, adding past a plan's limit answers
     402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
     already stays as it is, even past a limit. Ko-fi posts
-    its payments as a form to /webhooks/kofi, and Google's Pub/Sub pushes
-    Google Play's notifications to /webhooks/play. This contract leaves both
+    its payments as a form to /webhooks/kofi, PayPal its events to
+    /webhooks/paypal, and Google's Pub/Sub pushes Google Play's notifications
+    to /webhooks/play. PayPal sends the payer back from its checkout to
+    /paypal/return, which redirects to the app. This contract leaves these
     out.
 
     Administration (/admin/...): one password, set once at /admin/setup
@@ -430,7 +432,7 @@ paths:
       operationId: claimPayment
       summary: Take a Ko-fi payment by its transaction ID
       description: |
-        For a payment that came without the account's payment code. Claiming
+        Ko-fi payments reach no account until they are claimed. Claiming
         one's own payment again changes nothing. `payment_not_found` is an ID
         the server hasn't heard of, `payment_applied` a payment of another
         account, and `payment_no_plan` a payment nothing on sale matches, which
@@ -448,6 +450,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/paypal/checkout:
+    post:
+      operationId: createPayPalCheckout
+      summary: Start paying with PayPal
+      description: |
+        Gives the PayPal page to send the payer to. PayPal sends them back to
+        the app's plan page with `paypal` set to `done`, `pending`,
+        `cancelled` or `failed`. `paypal_subscribed` means the account has
+        that subscription already, and `paypal_unavailable` that PayPal
+        couldn't be asked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayPalCheckoutRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayPalCheckout"
         default:
           $ref: "#/components/responses/Error"
   /groups:
@@ -3332,21 +3359,23 @@ components:
       properties:
         provider:
           type: string
-          enum: [kofi, play]
+          enum: [kofi, play, paypal]
         product:
           type: string
           description: >-
-            A Ko-fi membership tier's name or a Google Play product id. Empty
-            for Ko-fi: any payment of at least `minAmount` in `currency`.
+            A Ko-fi shop item's code (the end of its link), a Google Play
+            product id, or for PayPal a name for a one-off payment or a
+            subscription plan's ID ("P-..."). Empty for Ko-fi: any tip of at
+            least `minAmount` in `currency`.
         planId:
           type: string
         days:
           type: integer
           minimum: 1
-          description: How long one payment lasts. Monthly ones need a few days' grace, as payments arrive late. Google Play says for itself when each payment ends, so this is ignored for it.
+          description: How long one payment lasts. Google Play and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
         minAmount:
           type: string
-          description: A decimal number, such as "3.00".
+          description: A decimal number, such as "3.00". What a one-off PayPal payment costs.
         currency:
           type: string
     PlanCatalog:
@@ -3379,7 +3408,7 @@ components:
           type: string
         source:
           type: string
-          enum: [admin, kofi, play]
+          enum: [admin, kofi, play, paypal]
         note:
           type: string
         startsAt:
@@ -3417,7 +3446,7 @@ components:
           type: string
     PaymentState:
       type: string
-      enum: [applied, unclaimed, unmatched]
+      enum: [applied, unclaimed, unmatched, refunded]
     Payment:
       type: object
       required: [id, provider, kind, state, paidAt]
@@ -3426,7 +3455,7 @@ components:
           type: string
         provider:
           type: string
-          enum: [kofi, play]
+          enum: [kofi, play, paypal]
         kind:
           type: string
           description: What the provider called it, such as "Subscription".
@@ -3514,13 +3543,58 @@ components:
         reminders:
           type: boolean
           description: Whether groups this account sponsors can send payment reminders as notifications.
-        paymentCode:
-          type: string
-          description: |
-            What to write in a Ko-fi message so that the payment reaches this
-            account. Left out when the server takes no Ko-fi payments.
         play:
           $ref: "#/components/schemas/PlayBilling"
+        paypal:
+          $ref: "#/components/schemas/PayPalBilling"
+    PayPalBilling:
+      type: object
+      description: What can be bought through PayPal. Left out when nothing can.
+      required: [offers, subscribed]
+      properties:
+        offers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PayPalOffer"
+        subscribed:
+          type: array
+          description: The subscriptions the account has, by product.
+          items:
+            type: string
+    PayPalOffer:
+      type: object
+      required: [product, planName, days, subscription]
+      properties:
+        product:
+          type: string
+        planName:
+          type: string
+        days:
+          type: integer
+        amount:
+          type: string
+          description: What a one-off payment costs. PayPal shows a subscription's price.
+        currency:
+          type: string
+        subscription:
+          type: boolean
+    PayPalCheckoutRequest:
+      type: object
+      required: [product, app]
+      properties:
+        product:
+          type: string
+        app:
+          type: string
+          enum: [web, android]
+          description: Where PayPal sends the payer back to.
+    PayPalCheckout:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          description: The PayPal page to open.
     PlayBilling:
       type: object
       description: What can be bought through Google Play. Left out when nothing can.
@@ -3613,6 +3687,9 @@ components:
       properties:
         kofiUrl:
           type: string
+        paypal:
+          type: boolean
+          description: Whether the server takes PayPal payments.
     AdminUserList:
       type: object
       required: [users, total]

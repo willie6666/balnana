@@ -3175,7 +3175,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Płatność trafia do produktu z nazwą jej poziomu, a jeśli go nie ma, do produktu bez nazwy poziomu, którego kwotę osiąga.';
+      'Płatność Ko-fi trafia do produktu z jej kodem przedmiotu ze sklepu, a w przeciwnym razie do produktu bez kodu, którego kwotę osiąga. Produkt PayPal to plan subskrypcji albo płatność jednorazowa.';
 
   @override
   String get adminProductAdd => 'Dodaj produkt';
@@ -3189,11 +3189,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Nazwa poziomu';
+  String get adminProductName => 'Kod przedmiotu ze sklepu';
 
   @override
   String get adminProductNameHelp =>
-      'Tak jak w Ko-fi. Zostaw puste, aby dopasowywać płatności jednorazowe i miesięczne według kwoty.';
+      'Końcówka linku do przedmiotu, ko-fi.com/s/<kod>. Zostaw puste, aby dopasować napiwek po kwocie.';
 
   @override
   String get adminProductPlan => 'Plan';
@@ -3296,6 +3296,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get adminPaymentUnmatched => 'Niedopasowana';
 
   @override
+  String get adminPaymentRefunded => 'Zwrócona';
+
+  @override
   String get adminPaymentsAll => 'Wszystkie';
 
   @override
@@ -3343,6 +3346,15 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Ta płatność nie pasuje do żadnego planu. Poproś administratora serwera o jej przypisanie.';
+
+  @override
+  String get errorPaymentRefunded => 'Ta płatność została zwrócona.';
+
+  @override
+  String get errorPayPalSubscribed => 'Masz już tę subskrypcję.';
+
+  @override
+  String get errorPayPalUnavailable => 'Nie można teraz połączyć się z PayPal. Spróbuj później.';
 
   @override
   String get errorInvalidPlan => 'Sprawdź ustawienia planu: coś jest nieprawidłowe.';
@@ -3441,19 +3453,13 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Wklej swój kod płatności w wiadomości Ko-fi, aby płatność dotarła na Twoje konto.';
+      'Kup plan na Ko-fi, a potem dodaj tu płatność za pomocą jej identyfikatora transakcji.';
 
   @override
-  String get planPaymentCodeHelp => 'Twój kod płatności. Dotknij, aby skopiować.';
+  String get planPaymentClaim => 'Dodaj płatność Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'Skopiowano kod płatności';
-
-  @override
-  String get planPaymentClaim => 'Nie dodano kodu?';
-
-  @override
-  String get planPaymentClaimHelp => 'Dodaj płatność za pomocą identyfikatora transakcji Ko-fi.';
+  String get planPaymentClaimHelp => 'Za pomocą identyfikatora transakcji z potwierdzenia Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'Identyfikator transakcji lub link do płatności';
@@ -3463,6 +3469,40 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Dodano płatność';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Subskrypcja, odnawiana co $days dni';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days dni za $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days dni';
+  }
+
+  @override
+  String get planPayPalManage => 'Zarządzaj subskrypcją PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'Zmień lub anuluj ją w PayPal';
+
+  @override
+  String get planPayPalDone => 'Płatność otrzymana. Twój plan jest zaktualizowany.';
+
+  @override
+  String get planPayPalPending =>
+      'PayPal wciąż przetwarza płatność. Plan zaktualizuje się, gdy zostanie zakończona.';
+
+  @override
+  String get planPayPalCancelled => 'Płatność anulowana';
+
+  @override
+  String get planPayPalFailed => 'Płatność PayPal nie powiodła się.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3552,6 +3592,35 @@ class AppLocalizationsPl extends AppLocalizations {
       'Adres e-mail konta usługi, którym Pub/Sub podpisuje dostawy. Bez niego odnowienia docierają dopiero, gdy ktoś otworzy stronę planu.';
 
   @override
+  String get adminPayPalClientId => 'Identyfikator klienta PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'Z aplikacji REST na developer.paypal.com. Zostaw puste, aby wyłączyć PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'Sekret PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'Identyfikator webhooka PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Dodaj do aplikacji PayPal webhook dla zdarzeń płatności, zamówień i subskrypcji, a potem wpisz jego identyfikator: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'Piaskownica PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Używaj piaskownicy PayPal, w której nic nie jest naprawdę płacone, z danymi aplikacji piaskownicy.';
+
+  @override
+  String get adminPayPalRequired =>
+      'PayPal wymaga jednocześnie identyfikatora klienta, sekretu i identyfikatora webhooka.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Punkt końcowy push Pub/Sub, a także odbiorcy: $url';
   }
@@ -3565,6 +3634,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Tak jak w Play Console. Google Play określa, kiedy kończy się każda płatność, więc nie ma dni do ustawienia.';
+
+  @override
+  String get adminProductPayPalId => 'Identyfikator planu lub nazwa';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'Identyfikator planu subskrypcji PayPal, zaczynający się od P-. Każda inna nazwa to jednorazowa płatność kwoty poniżej.';
 
   @override
   String get adminProductRemoveBody =>

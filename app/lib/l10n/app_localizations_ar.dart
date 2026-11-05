@@ -3129,7 +3129,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'تذهب الدفعة إلى المنتج الذي يحمل اسم مستواها، وإلا فإلى المنتج بلا اسم مستوى الذي تبلغ مبلغه.';
+      'تذهب دفعة Ko-fi إلى المنتج الذي يحمل رمز عنصر المتجر الخاص بها، وإلا إلى المنتج بلا رمز الذي يبلغه مبلغها. منتج PayPal هو خطة اشتراك أو دفعة لمرة واحدة.';
 
   @override
   String get adminProductAdd => 'إضافة منتج';
@@ -3143,11 +3143,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'اسم المستوى';
+  String get adminProductName => 'رمز عنصر المتجر';
 
   @override
   String get adminProductNameHelp =>
-      'كما هو مكتوب في Ko-fi. اتركه فارغًا لمطابقة الدفعات الفردية أو الشهرية حسب المبلغ.';
+      'نهاية رابط العنصر، ko-fi.com/s/<الرمز>. اتركه فارغًا لمطابقة الإكرامية حسب مبلغها.';
 
   @override
   String get adminProductPlan => 'الخطة';
@@ -3249,6 +3249,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get adminPaymentUnmatched => 'غير مطابقة';
 
   @override
+  String get adminPaymentRefunded => 'مستردّة';
+
+  @override
   String get adminPaymentsAll => 'الكل';
 
   @override
@@ -3296,6 +3299,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorPaymentNoPlan => 'هذه الدفعة لا تطابق أي خطة. اطلب من مسؤول الخادم تطبيقها.';
+
+  @override
+  String get errorPaymentRefunded => 'تم استرداد هذه الدفعة.';
+
+  @override
+  String get errorPayPalSubscribed => 'لديك هذا الاشتراك بالفعل.';
+
+  @override
+  String get errorPayPalUnavailable => 'تعذّر الوصول إلى PayPal الآن. حاول لاحقًا.';
 
   @override
   String get errorInvalidPlan => 'تحقق من إعدادات الخطة: هناك قيمة غير صالحة.';
@@ -3393,19 +3405,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'ألصق رمز الدفع في رسالة Ko-fi ليصل الدفع إلى حسابك.';
+  String get planKofiHelp => 'اشترِ خطة على Ko-fi، ثم أضف الدفعة هنا بمعرّف المعاملة.';
 
   @override
-  String get planPaymentCodeHelp => 'رمز الدفع الخاص بك. انقر للنسخ.';
+  String get planPaymentClaim => 'إضافة دفعة Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'تم نسخ رمز الدفع';
-
-  @override
-  String get planPaymentClaim => 'هل نسيت الرمز؟';
-
-  @override
-  String get planPaymentClaimHelp => 'أضف دفعة باستخدام معرّف معاملة Ko-fi.';
+  String get planPaymentClaimHelp => 'بمعرّف المعاملة من إيصال Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'معرّف المعاملة أو رابط الدفع';
@@ -3415,6 +3421,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'تمت إضافة الدفعة';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'اشتراك يتجدد كل $days يومًا';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days يومًا مقابل $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days يومًا';
+  }
+
+  @override
+  String get planPayPalManage => 'إدارة اشتراك PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'غيّره أو ألغِه على PayPal';
+
+  @override
+  String get planPayPalDone => 'تم استلام الدفعة. تم تحديث خطتك.';
+
+  @override
+  String get planPayPalPending => 'لا يزال PayPal يعالج الدفعة. ستتحدّث خطتك عند اكتمالها.';
+
+  @override
+  String get planPayPalCancelled => 'أُلغيت الدفعة';
+
+  @override
+  String get planPayPalFailed => 'لم تكتمل دفعة PayPal.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3501,6 +3540,33 @@ class AppLocalizationsAr extends AppLocalizations {
       'البريد الإلكتروني لحساب الخدمة الذي يوقّع به Pub/Sub عمليات التسليم. بدونه لا تصل التجديدات إلا عندما يفتح أحدهم صفحة الخطة.';
 
   @override
+  String get adminPayPalClientId => 'معرّف عميل PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp => 'من تطبيق REST على developer.paypal.com. اتركه فارغًا لإيقاف PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'سر PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'معرّف Webhook في PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'أضف إلى تطبيق PayPal خطّاف Webhook لأحداث الدفع والطلبات والاشتراكات، وأدخل معرّفه: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'بيئة PayPal التجريبية';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'استخدام بيئة PayPal التجريبية، حيث لا يُدفع شيء فعليًا، ببيانات اعتماد تطبيق تجريبي.';
+
+  @override
+  String get adminPayPalRequired => 'يحتاج PayPal إلى معرّف العميل والسر ومعرّف Webhook معًا.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'نقطة نهاية الدفع في Pub/Sub، وهي الجمهور أيضًا: $url';
   }
@@ -3514,6 +3580,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'كما هو مكتوب في Play Console. يحدد Google Play موعد انتهاء كل دفعة، لذا لا توجد أيام لضبطها.';
+
+  @override
+  String get adminProductPayPalId => 'معرّف الخطة أو الاسم';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'معرّف خطة اشتراك من PayPal يبدأ بـ P-. أي اسم آخر هو دفعة لمرة واحدة بالمبلغ أدناه.';
 
   @override
   String get adminProductRemoveBody =>

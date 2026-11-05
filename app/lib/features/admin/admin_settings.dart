@@ -576,6 +576,14 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       gap,
       _note(l10n.adminPlayWebhook('$publicUrl$apiBasePath/webhooks/play')),
       _textField('BALNANA_PLAY_PUSH_ACCOUNT', keyboard: TextInputType.emailAddress),
+      gap,
+      _textField('BALNANA_PAYPAL_CLIENT_ID'),
+      gap,
+      _textField('BALNANA_PAYPAL_SECRET'),
+      gap,
+      _note(l10n.adminPayPalWebhook('$publicUrl$apiBasePath/webhooks/paypal')),
+      _textField('BALNANA_PAYPAL_WEBHOOK_ID'),
+      _toggle('BALNANA_PAYPAL_SANDBOX'),
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
@@ -915,6 +923,10 @@ String _label(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackage,
   'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccount,
   'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccount,
+  'BALNANA_PAYPAL_CLIENT_ID' => l10n.adminPayPalClientId,
+  'BALNANA_PAYPAL_SECRET' => l10n.adminPayPalSecret,
+  'BALNANA_PAYPAL_WEBHOOK_ID' => l10n.adminPayPalWebhookId,
+  'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandbox,
   _ => key,
 };
 
@@ -940,6 +952,8 @@ String? _help(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackageHelp,
   'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccountHelp,
   'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccountHelp,
+  'BALNANA_PAYPAL_CLIENT_ID' => l10n.adminPayPalClientIdHelp,
+  'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandboxHelp,
   _ => null,
 };
 
@@ -956,6 +970,9 @@ String _problem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_OAUTH_GOOGLE_SECRET' ||
   'BALNANA_OAUTH_OIDC_CLIENT_ID' ||
   'BALNANA_OAUTH_OIDC_SECRET' => l10n.adminInvalidRequired,
+  'BALNANA_PAYPAL_CLIENT_ID' ||
+  'BALNANA_PAYPAL_SECRET' ||
+  'BALNANA_PAYPAL_WEBHOOK_ID' => l10n.adminPayPalRequired,
   'BALNANA_AUTH_MODE' => l10n.adminNeedsSignIn,
   'BALNANA_BILLING_ENABLED' => l10n.adminBillingNeedsAccounts,
   'BALNANA_ANDROID_CERT_SHA256' => l10n.adminInvalidFingerprint,

@@ -1224,12 +1224,12 @@ class MyPlan {
     this.expiresAt,
     required this.joinedGroups,
     required this.sponsoredGroups,
-    this.paymentCode,
     this.receiptsPerGroup,
     this.recurringPerGroup,
     this.membersPerGroup,
     this.reminders = false,
     this.play,
+    this.paypal,
   });
 
   factory MyPlan.fromJson(Object? data) {
@@ -1240,12 +1240,12 @@ class MyPlan {
       expiresAt: _optTime(json, 'expiresAt'),
       joinedGroups: PlanUsage.fromJson(json['joinedGroups']),
       sponsoredGroups: PlanUsage.fromJson(json['sponsoredGroups']),
-      paymentCode: _opt(json, 'paymentCode'),
       receiptsPerGroup: _opt<num>(json, 'receiptsPerGroup')?.toInt(),
       recurringPerGroup: _opt<num>(json, 'recurringPerGroup')?.toInt(),
       membersPerGroup: _opt<num>(json, 'membersPerGroup')?.toInt(),
       reminders: _opt<bool>(json, 'reminders') ?? false,
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
+      paypal: json['paypal'] == null ? null : PayPalBilling.fromJson(json['paypal']),
     );
   }
 
@@ -1258,10 +1258,6 @@ class MyPlan {
   final DateTime? expiresAt;
   final PlanUsage joinedGroups;
   final PlanUsage sponsoredGroups;
-
-  /// What to write in a Ko-fi message for the payment to reach this account.
-  /// Null when the server takes no Ko-fi payments.
-  final String? paymentCode;
 
   /// Null means no limit.
   final int? receiptsPerGroup;
@@ -1278,6 +1274,63 @@ class MyPlan {
 
   /// Null when the server doesn't sell on Google Play.
   final PlayBilling? play;
+
+  /// Null when nothing can be bought through PayPal.
+  final PayPalBilling? paypal;
+}
+
+/// What the account can buy through PayPal.
+class PayPalBilling {
+  const PayPalBilling({required this.offers, this.subscribed = const []});
+
+  factory PayPalBilling.fromJson(Object? data) {
+    final json = _object(data);
+    return PayPalBilling(
+      offers: [for (final o in _opt<List<Object?>>(json, 'offers') ?? const []) PayPalOffer.fromJson(o)],
+      subscribed: [...?_opt<List<Object?>>(json, 'subscribed')?.whereType<String>()],
+    );
+  }
+
+  final List<PayPalOffer> offers;
+
+  /// The products the account has a subscription to.
+  final List<String> subscribed;
+}
+
+/// A plan sold through PayPal, as a subscription or a one-off payment.
+class PayPalOffer {
+  const PayPalOffer({
+    required this.product,
+    required this.planName,
+    required this.days,
+    this.subscription = false,
+    this.amount,
+    this.currency,
+  });
+
+  factory PayPalOffer.fromJson(Object? data) {
+    final json = _object(data);
+    return PayPalOffer(
+      product: _req(json, 'product'),
+      planName: _req(json, 'planName'),
+      days: _req<num>(json, 'days').toInt(),
+      subscription: _opt<bool>(json, 'subscription') ?? false,
+      amount: _opt(json, 'amount'),
+      currency: _opt(json, 'currency'),
+    );
+  }
+
+  /// What to ask the server to check out.
+  final String product;
+  final String planName;
+
+  /// How long one payment lasts.
+  final int days;
+  final bool subscription;
+
+  /// What a one-off payment costs; PayPal shows a subscription's price.
+  final String? amount;
+  final String? currency;
 }
 
 /// The limits that apply to a group and how much of them is used.

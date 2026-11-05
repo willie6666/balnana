@@ -4447,15 +4447,25 @@
     }
   },
   "errorReceiptUploadsDisabled": "Your plan does not allow photo uploads.",
-  "@errorReceiptUploadsDisabled": {"description": "Explains that the current plan prohibits uploading receipt photos."},
+  "@errorReceiptUploadsDisabled": {
+    "description": "Explains that the current plan prohibits uploading receipt photos."
+  },
   "adminAutomaticPlans": "Automatic plans",
   "adminAutomaticPlansHelp": "Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.",
   "adminUnverifiedPlan": "Without a verified email",
   "adminVerifiedPlan": "With a verified email",
-  "@adminAutomaticPlans": {"description": "Heading for automatic email verification plans in administration."},
-  "@adminAutomaticPlansHelp": {"description": "Explains automatic plan selection, entitlement priority, and disabling photo uploads."},
-  "@adminUnverifiedPlan": {"description": "Label for the automatic plan assigned to users without a verified email."},
-  "@adminVerifiedPlan": {"description": "Label for the automatic plan assigned to users with a verified email."},
+  "@adminAutomaticPlans": {
+    "description": "Heading for automatic email verification plans in administration."
+  },
+  "@adminAutomaticPlansHelp": {
+    "description": "Explains automatic plan selection, entitlement priority, and disabling photo uploads."
+  },
+  "@adminUnverifiedPlan": {
+    "description": "Label for the automatic plan assigned to users without a verified email."
+  },
+  "@adminVerifiedPlan": {
+    "description": "Label for the automatic plan assigned to users with a verified email."
+  },
   "adminPlansHelp": "A new limit applies to what people add next. What they already have stays. Leave a limit empty for no limit.",
   "@adminPlansHelp": {
     "description": "Label or control text for admin plans help in the server administrator interface."
@@ -4499,7 +4509,7 @@
   "@adminProductsSection": {
     "description": "Label or control text for admin products section in the server administrator interface."
   },
-  "adminProductsHelp": "A payment goes to the product with its tier name, or else to the one without a tier name that its amount reaches.",
+  "adminProductsHelp": "A Ko-fi payment goes to the product with its shop item code, or else to the one without a code that its amount reaches. A PayPal product is a subscription plan or a one-off payment.",
   "@adminProductsHelp": {
     "description": "Label or control text for admin products help in the server administrator interface."
   },
@@ -4520,11 +4530,11 @@
       }
     }
   },
-  "adminProductName": "Tier name",
+  "adminProductName": "Shop item code",
   "@adminProductName": {
     "description": "Label or control text for admin product name in the server administrator interface."
   },
-  "adminProductNameHelp": "As written on Ko-fi. Leave empty to match any one-off or monthly payment by its amount.",
+  "adminProductNameHelp": "The end of the item's link, ko-fi.com/s/<code>. Leave empty to match a tip by its amount.",
   "@adminProductNameHelp": {
     "description": "Label or control text for admin product name help in the server administrator interface."
   },
@@ -4674,6 +4684,10 @@
   "@adminPaymentUnmatched": {
     "description": "Label or control text for admin payment unmatched in the server administrator interface."
   },
+  "adminPaymentRefunded": "Refunded",
+  "@adminPaymentRefunded": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
   "adminPaymentsAll": "All",
   "@adminPaymentsAll": {
     "description": "Label or control text for admin payments all in the server administrator interface."
@@ -4727,6 +4741,18 @@
   "errorPaymentNoPlan": "This payment doesn't match a plan. Ask the server's administrator to apply it.",
   "@errorPaymentNoPlan": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "errorPaymentRefunded": "This payment was refunded.",
+  "@errorPaymentRefunded": {
+    "description": "Error message shown when paying for a plan fails."
+  },
+  "errorPayPalSubscribed": "You already have this subscription.",
+  "@errorPayPalSubscribed": {
+    "description": "Error message shown when paying for a plan fails."
+  },
+  "errorPayPalUnavailable": "PayPal can't be reached right now. Try again later.",
+  "@errorPayPalUnavailable": {
+    "description": "Error message shown when paying for a plan fails."
   },
   "errorInvalidPlan": "Check the plan settings: something in them isn't valid.",
   "@errorInvalidPlan": {
@@ -4883,23 +4909,15 @@
   "@planKofi": {
     "description": "Label or control text for plan kofi in the plan screens."
   },
-  "planKofiHelp": "Put your payment code in the Ko-fi message, so the payment reaches your account.",
+  "planKofiHelp": "Buy a plan on Ko-fi, then add the payment here with its transaction ID.",
   "@planKofiHelp": {
     "description": "Label or control text for plan kofi help in the plan screens."
   },
-  "planPaymentCodeHelp": "Your payment code. Tap to copy.",
-  "@planPaymentCodeHelp": {
-    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
-  },
-  "planPaymentCodeCopied": "Payment code copied",
-  "@planPaymentCodeCopied": {
-    "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
-  },
-  "planPaymentClaim": "Forgot the code?",
+  "planPaymentClaim": "Add a Ko-fi payment",
   "@planPaymentClaim": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "planPaymentClaimHelp": "Add a payment with its Ko-fi transaction ID.",
+  "planPaymentClaimHelp": "With the transaction ID from Ko-fi's receipt.",
   "@planPaymentClaimHelp": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
@@ -4914,6 +4932,60 @@
   "planPaymentClaimed": "Payment added",
   "@planPaymentClaimed": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
+  },
+  "planPayPalSubscription": "Subscription, renews every {days} days",
+  "@planPayPalSubscription": {
+    "description": "Text about paying for a plan with PayPal in the plan screens.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planPayPalOnce": "{days} days for {price}",
+  "@planPayPalOnce": {
+    "description": "Text about paying for a plan with PayPal in the plan screens.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "planPayPalDays": "{days} days",
+  "@planPayPalDays": {
+    "description": "Text about paying for a plan with PayPal in the plan screens.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planPayPalManage": "Manage PayPal subscription",
+  "@planPayPalManage": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
+  },
+  "planPayPalManageHelp": "Change or cancel it on PayPal",
+  "@planPayPalManageHelp": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
+  },
+  "planPayPalDone": "Payment received. Your plan is updated.",
+  "@planPayPalDone": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
+  },
+  "planPayPalPending": "PayPal is still processing the payment. Your plan updates once it's through.",
+  "@planPayPalPending": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
+  },
+  "planPayPalCancelled": "Payment cancelled",
+  "@planPayPalCancelled": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
+  },
+  "planPayPalFailed": "The PayPal payment didn't go through.",
+  "@planPayPalFailed": {
+    "description": "Text about paying for a plan with PayPal in the plan screens."
   },
   "groupPlanUsage": "People: {members} · Receipt photos: {receipts} · Recurring: {recurring}",
   "@groupPlanUsage": {
@@ -5027,6 +5099,43 @@
   "@adminPlayPushAccountHelp": {
     "description": "Label or control text for admin play push account help in the server administrator interface."
   },
+  "adminPayPalClientId": "PayPal client ID",
+  "@adminPayPalClientId": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalClientIdHelp": "From a REST app at developer.paypal.com. Leave empty to turn PayPal off.",
+  "@adminPayPalClientIdHelp": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalSecret": "PayPal secret",
+  "@adminPayPalSecret": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalWebhookId": "PayPal webhook ID",
+  "@adminPayPalWebhookId": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalWebhook": "Add a webhook to the PayPal app for payment, checkout order and billing subscription events, and enter its ID: {url}",
+  "@adminPayPalWebhook": {
+    "description": "Label or control text for PayPal payments in the server administrator interface.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "adminPayPalSandbox": "PayPal sandbox",
+  "@adminPayPalSandbox": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalSandboxHelp": "Use PayPal's sandbox, where nothing is really paid, with a sandbox app's credentials.",
+  "@adminPayPalSandboxHelp": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminPayPalRequired": "PayPal needs the client ID, secret and webhook ID together.",
+  "@adminPayPalRequired": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
   "adminPlayWebhook": "Pub/Sub push endpoint, and its audience too: {url}",
   "@adminPlayWebhook": {
     "description": "Label or control text for admin play webhook in the server administrator interface.",
@@ -5047,6 +5156,14 @@
   "adminProductPlayIdHelp": "As written in Play Console. Google Play says when each payment ends, so there are no days to set.",
   "@adminProductPlayIdHelp": {
     "description": "Label or control text for admin product play id help in the server administrator interface."
+  },
+  "adminProductPayPalId": "Plan ID or name",
+  "@adminProductPayPalId": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
+  },
+  "adminProductPayPalIdHelp": "A subscription plan's ID from PayPal, starting with P-. Any other name is a one-off payment of the amount below.",
+  "@adminProductPayPalIdHelp": {
+    "description": "Label or control text for PayPal payments in the server administrator interface."
   },
   "adminProductRemoveBody": "Payments for it stop being applied to accounts. Plans already held stay until they end.",
   "@adminProductRemoveBody": {

@@ -38,6 +38,7 @@ type Server struct {
 	guesses       *buckets // password guesses, by account
 	devices       *buckets // push devices registered, by client
 	claims        *buckets // transaction IDs tried, by account
+	checkouts     *buckets // PayPal checkouts started, by account
 	allGuesses    *buckets // wrong passwords, by account from anywhere
 	resets        *buckets // password reset requests, by client
 	resetMails    *buckets // password reset emails, by address and client
@@ -51,10 +52,11 @@ type Server struct {
 // administrator can change them while the server runs (see admin.go), so
 // handlers read them once per use through Server.conf and friends.
 type settings struct {
-	cfg   *config.Config
-	mail  mail.Sender // nil when the server has no email
-	oauth map[string]*oauthProvider
-	play  *playClient // nil when the server sells nothing through Google Play
+	cfg    *config.Config
+	mail   mail.Sender // nil when the server has no email
+	oauth  map[string]*oauthProvider
+	play   *playClient   // nil when the server sells nothing through Google Play
+	paypal *paypalClient // nil when the server takes no PayPal payments
 }
 
 var _ StrictServerInterface = (*Server)(nil)
@@ -72,6 +74,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, log *slog.Logger, version s
 		guesses:       &buckets{perSecond: guessPerHour / 3600.0, burst: guessBurst, m: map[string]*bucket{}},
 		devices:       &buckets{perSecond: devicePerDay / 86400.0, burst: deviceBurst, m: map[string]*bucket{}},
 		claims:        &buckets{perSecond: claimPerHour / 3600.0, burst: claimBurst, m: map[string]*bucket{}},
+		checkouts:     &buckets{perSecond: checkoutPerHour / 3600.0, burst: checkoutBurst, m: map[string]*bucket{}},
 		rejected:      newBuckets(1, 1),
 		allGuesses:    &buckets{perSecond: allGuessPerHour / 3600.0, burst: allGuessBurst, m: map[string]*bucket{}},
 		resets:        &buckets{perSecond: resetPerHour / 3600.0, burst: resetBurst, m: map[string]*bucket{}},
@@ -96,6 +99,7 @@ func (s *Server) apply(cfg *config.Config) {
 		}
 	}
 	st.play = newPlayClient(cfg, strings.TrimSuffix(cfg.PublicURL.String(), "/")+playPath)
+	st.paypal = newPayPalClient(cfg)
 	s.settings.Store(st)
 }
 
@@ -133,6 +137,10 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		if cfg.KofiURL != nil && cfg.KofiToken != "" {
 			kofi := cfg.KofiURL.String()
 			info.Billing.KofiUrl = &kofi
+		}
+		if st.paypal != nil {
+			paypal := true
+			info.Billing.Paypal = &paypal
 		}
 	}
 	if cfg.PrivacyURL != nil {

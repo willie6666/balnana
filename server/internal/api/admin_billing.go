@@ -99,11 +99,15 @@ func validateCatalog(c *PlanCatalog) error {
 			return errInvalidPlan
 		}
 	}
+	var paypal []string
 	for i := range c.Products {
 		p := &c.Products[i]
 		p.Product = strings.TrimSpace(p.Product)
+		if p.Provider == Kofi {
+			p.Product = kofiItemCode(p.Product)
+		}
 		if !slices.Contains(ids, p.PlanId) || p.Days < 1 || p.Days > maxPlanDays ||
-			p.Provider != Kofi && p.Provider != Play {
+			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal {
 			return errInvalidPlan
 		}
 		if p.MinAmount != nil && !decimalAmount.MatchString(*p.MinAmount) || p.Currency != nil && !currencyCode.MatchString(*p.Currency) {
@@ -112,6 +116,17 @@ func validateCatalog(c *PlanCatalog) error {
 		// Without a name, the amount is all there is to go by.
 		if p.Product == "" && (p.Provider != Kofi || p.MinAmount == nil || p.Currency == nil) {
 			return errInvalidPlan
+		}
+		if p.Provider == Paypal {
+			// The app buys it by its name, and a one-off payment by its price.
+			if slices.Contains(paypal, p.Product) {
+				return errInvalidPlan
+			}
+			paypal = append(paypal, p.Product)
+			if !paypalPlanID.MatchString(p.Product) && (p.MinAmount == nil || p.Currency == nil ||
+				!sameAmount(*p.MinAmount, paypalAmount(*p.MinAmount, *p.Currency))) {
+				return errInvalidPlan
+			}
 		}
 	}
 	return nil
@@ -334,19 +349,21 @@ func (s *Server) AssignAdminPayment(ctx context.Context, req AssignAdminPaymentR
 			return err
 		}
 		var state string
-		var email, plan *string
+		var plan *string
 		var days *int
-		var recurring bool
-		err := tx.QueryRow(ctx, `select state, email::text, plan_id, days, recurring from payment_events where id = $1 for update`,
-			req.PaymentId).Scan(&state, &email, &plan, &days, &recurring)
+		err := tx.QueryRow(ctx, `select state, plan_id, days from payment_events where id = $1 for update`,
+			req.PaymentId).Scan(&state, &plan, &days)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errNotFound
 		}
 		if err != nil {
 			return err
 		}
-		if state == "applied" {
+		switch state {
+		case "applied":
 			return conflict("payment_applied")
+		case "refunded":
+			return conflict("payment_refunded")
 		}
 		if req.Body.PlanId != nil {
 			plan = req.Body.PlanId
@@ -370,16 +387,8 @@ func (s *Server) AssignAdminPayment(ctx context.Context, req AssignAdminPaymentR
 		if err != nil {
 			return err
 		}
-		if err := applyPayment(ctx, tx, req.PaymentId, req.Body.UserId, true); err != nil {
+		if err := applyPayment(ctx, tx, req.PaymentId, req.Body.UserId); err != nil {
 			return err
-		}
-		if recurring && email != nil {
-			if err := rememberPaymentEmail(ctx, tx, *email, req.Body.UserId); err != nil {
-				return err
-			}
-			if err := claimPayments(ctx, tx, req.Body.UserId); err != nil {
-				return err
-			}
 		}
 		rows, err := tx.Query(ctx, paymentSelect+` where pe.id = $1`, req.PaymentId)
 		if err != nil {

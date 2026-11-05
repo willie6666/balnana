@@ -3168,7 +3168,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Платіж належить до продукту з назвою його рівня, а якщо такого немає — до продукту без назви рівня, суму якого досягнуто.';
+      'Платіж Ko-fi йде до продукту з його кодом товару з магазину, а інакше — до продукту без коду, суму якого він досягає. Продукт PayPal — це план підписки або разовий платіж.';
 
   @override
   String get adminProductAdd => 'Додати продукт';
@@ -3182,11 +3182,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Назва рівня';
+  String get adminProductName => 'Код товару в магазині';
 
   @override
   String get adminProductNameHelp =>
-      'Як на Ko-fi. Залиште порожнім, щоб зіставляти разові й щомісячні платежі за сумою.';
+      'Кінець посилання на товар, ko-fi.com/s/<код>. Залиште порожнім, щоб зіставляти чайові за сумою.';
 
   @override
   String get adminProductPlan => 'Тариф';
@@ -3288,6 +3288,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get adminPaymentUnmatched => 'Не зіставлено';
 
   @override
+  String get adminPaymentRefunded => 'Повернуто';
+
+  @override
   String get adminPaymentsAll => 'Усі';
 
   @override
@@ -3335,6 +3338,15 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Цей платіж не відповідає жодному тарифу. Попросіть адміністратора сервера застосувати його.';
+
+  @override
+  String get errorPaymentRefunded => 'Цей платіж повернуто.';
+
+  @override
+  String get errorPayPalSubscribed => 'У вас уже є ця підписка.';
+
+  @override
+  String get errorPayPalUnavailable => 'Зараз не вдається зв\'язатися з PayPal. Спробуйте пізніше.';
 
   @override
   String get errorInvalidPlan => 'Перевірте налаштування тарифу: щось указано неправильно.';
@@ -3433,19 +3445,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Вставте платіжний код у повідомлення на Ko-fi, щоб платіж потрапив на ваш обліковий запис.';
+      'Купіть план на Ko-fi, а потім додайте платіж тут за його ідентифікатором транзакції.';
 
   @override
-  String get planPaymentCodeHelp => 'Ваш платіжний код. Торкніться, щоб скопіювати.';
+  String get planPaymentClaim => 'Додати платіж Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'Платіжний код скопійовано';
-
-  @override
-  String get planPaymentClaim => 'Забули код?';
-
-  @override
-  String get planPaymentClaimHelp => 'Додайте платіж за ID транзакції Ko-fi.';
+  String get planPaymentClaimHelp => 'За ідентифікатором транзакції з чека Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'ID транзакції або посилання на платіж';
@@ -3455,6 +3461,39 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Платіж додано';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Підписка, поновлюється кожні $days дн.';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days дн. за $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days дн.';
+  }
+
+  @override
+  String get planPayPalManage => 'Керувати підпискою PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'Змінити або скасувати в PayPal';
+
+  @override
+  String get planPayPalDone => 'Платіж отримано. Ваш план оновлено.';
+
+  @override
+  String get planPayPalPending => 'PayPal ще обробляє платіж. План оновиться, коли він пройде.';
+
+  @override
+  String get planPayPalCancelled => 'Платіж скасовано';
+
+  @override
+  String get planPayPalFailed => 'Платіж PayPal не пройшов.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3543,6 +3582,35 @@ class AppLocalizationsUk extends AppLocalizations {
       'Адреса службового облікового запису, яким Pub/Sub підписує доставки. Без неї поновлення надходять, лише коли хтось відкриває сторінку тарифу.';
 
   @override
+  String get adminPayPalClientId => 'Ідентифікатор клієнта PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'З REST-застосунку на developer.paypal.com. Залиште порожнім, щоб вимкнути PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'Секрет PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'Ідентифікатор вебхука PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Додайте до застосунку PayPal вебхук для подій платежів, замовлень і підписок і введіть його ідентифікатор: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'Пісочниця PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Використовувати пісочницю PayPal, де нічого не оплачується насправді, з даними застосунку пісочниці.';
+
+  @override
+  String get adminPayPalRequired =>
+      'PayPal потрібні ідентифікатор клієнта, секрет та ідентифікатор вебхука разом.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Push-адреса Pub/Sub, вона ж аудиторія: $url';
   }
@@ -3556,6 +3624,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Як указано в Play Console. Google Play сам повідомляє, коли закінчується кожен платіж, тому дні задавати не потрібно.';
+
+  @override
+  String get adminProductPayPalId => 'Ідентифікатор плану або назва';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'Ідентифікатор плану підписки PayPal, що починається з P-. Будь-яка інша назва — разовий платіж на суму нижче.';
 
   @override
   String get adminProductRemoveBody =>

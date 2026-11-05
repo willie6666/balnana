@@ -2910,7 +2910,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminProductsSection => '商品';
 
   @override
-  String get adminProductsHelp => '付款会先匹配同名的赞助等级；没有时，再匹配未填等级名称且金额达标的商品。';
+  String get adminProductsHelp => 'Ko-fi 款项会归到商品代码相同的商品，没有的话就归到没有代码、且金额达到门槛的商品。PayPal 商品可以是订阅方案或一次性付款。';
 
   @override
   String get adminProductAdd => '添加商品';
@@ -2924,10 +2924,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => '等级名称';
+  String get adminProductName => '商店商品代码';
 
   @override
-  String get adminProductNameHelp => '与 Ko-fi 上的名称相同。留空时，单次或每月付款都按金额匹配。';
+  String get adminProductNameHelp => '商品链接的最后一段，ko-fi.com/s/<代码>。留空则按金额匹配打赏。';
 
   @override
   String get adminProductPlan => '方案';
@@ -3029,6 +3029,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPaymentUnmatched => '未匹配';
 
   @override
+  String get adminPaymentRefunded => '已退款';
+
+  @override
   String get adminPaymentsAll => '全部';
 
   @override
@@ -3066,6 +3069,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorPaymentNoPlan => '这笔付款对应不到方案，请联系服务器管理员处理。';
+
+  @override
+  String get errorPaymentRefunded => '这笔款项已退款。';
+
+  @override
+  String get errorPayPalSubscribed => '你已经有这个订阅了。';
+
+  @override
+  String get errorPayPalUnavailable => '暂时无法连接 PayPal，请稍后再试。';
 
   @override
   String get errorInvalidPlan => '请检查方案设置，其中有无效内容。';
@@ -3162,19 +3174,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '请把付款代码粘贴到 Ko-fi 留言中，款项才会进入你的账号。';
+  String get planKofiHelp => '在 Ko-fi 购买方案后，回到这里用交易 ID 添加款项。';
 
   @override
-  String get planPaymentCodeHelp => '你的付款代码，点按即可复制。';
+  String get planPaymentClaim => '添加 Ko-fi 款项';
 
   @override
-  String get planPaymentCodeCopied => '已复制付款代码';
-
-  @override
-  String get planPaymentClaim => '忘记留代码？';
-
-  @override
-  String get planPaymentClaimHelp => '用 Ko-fi 的交易编号添加付款。';
+  String get planPaymentClaimHelp => '使用 Ko-fi 收据上的交易 ID。';
 
   @override
   String get planPaymentClaimField => '交易编号或付款链接';
@@ -3184,6 +3190,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => '已添加付款';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return '订阅，每 $days 天续订';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days 天 $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days 天';
+  }
+
+  @override
+  String get planPayPalManage => '管理 PayPal 订阅';
+
+  @override
+  String get planPayPalManageHelp => '在 PayPal 更改或取消';
+
+  @override
+  String get planPayPalDone => '已收到款项，方案已更新。';
+
+  @override
+  String get planPayPalPending => 'PayPal 仍在处理这笔款项，完成后方案就会更新。';
+
+  @override
+  String get planPayPalCancelled => '已取消付款';
+
+  @override
+  String get planPayPalFailed => 'PayPal 付款未成功。';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3259,6 +3298,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPlayPushAccountHelp => 'Pub/Sub 用来签署推送的服务账号邮箱。未设置时，续订要等有人打开方案页才会收到。';
 
   @override
+  String get adminPayPalClientId => 'PayPal 客户端 ID';
+
+  @override
+  String get adminPayPalClientIdHelp => '来自 developer.paypal.com 的 REST 应用。留空则关闭 PayPal。';
+
+  @override
+  String get adminPayPalSecret => 'PayPal 密钥';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal Webhook ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return '在 PayPal 应用中添加 Webhook，订阅付款、结账订单和账单订阅事件，并填入它的 ID：$url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal 沙盒';
+
+  @override
+  String get adminPayPalSandboxHelp => '使用 PayPal 沙盒（不会真正付款），并搭配沙盒应用的凭据。';
+
+  @override
+  String get adminPayPalRequired => 'PayPal 需要同时设置客户端 ID、密钥和 Webhook ID。';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub 推送端点，受众也填此网址：$url';
   }
@@ -3271,6 +3336,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminProductPlayIdHelp => '与 Play Console 中填写的相同。每笔付款的到期时间由 Google Play 决定，因此无需设置天数。';
+
+  @override
+  String get adminProductPayPalId => '方案 ID 或名称';
+
+  @override
+  String get adminProductPayPalIdHelp => 'PayPal 订阅方案的 ID，以 P- 开头。其他名称则是下方金额的一次性付款。';
 
   @override
   String get adminProductRemoveBody => '此商品的付款将不再计入账号。已持有的方案会保留到结束。';
@@ -6204,7 +6275,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminProductsSection => '商品';
 
   @override
-  String get adminProductsHelp => '付款會先對應同名的贊助等級；沒有時，再對應未填等級名稱且金額達標的商品。';
+  String get adminProductsHelp => 'Ko-fi 款項會歸到商品代碼相同的商品，沒有的話就歸到沒有代碼、且金額達到門檻的商品。PayPal 商品可以是訂閱方案或單次付款。';
 
   @override
   String get adminProductAdd => '新增商品';
@@ -6218,10 +6289,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get adminProductName => '等級名稱';
+  String get adminProductName => '商店商品代碼';
 
   @override
-  String get adminProductNameHelp => '與 Ko-fi 上的名稱相同。留白時，單次或每月付款都依金額對應。';
+  String get adminProductNameHelp => '商品連結的最後一段，ko-fi.com/s/<代碼>。留空則依金額比對打賞。';
 
   @override
   String get adminProductPlan => '方案';
@@ -6323,6 +6394,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminPaymentUnmatched => '未對應';
 
   @override
+  String get adminPaymentRefunded => '已退款';
+
+  @override
   String get adminPaymentsAll => '全部';
 
   @override
@@ -6360,6 +6434,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorPaymentNoPlan => '這筆付款對不到方案，請聯絡伺服器管理員處理。';
+
+  @override
+  String get errorPaymentRefunded => '這筆款項已退款。';
+
+  @override
+  String get errorPayPalSubscribed => '你已經有這個訂閱了。';
+
+  @override
+  String get errorPayPalUnavailable => '目前無法連上 PayPal，請稍後再試。';
 
   @override
   String get errorInvalidPlan => '請檢查方案設定，其中有無效的內容。';
@@ -6456,19 +6539,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '請把付款代碼貼到 Ko-fi 留言，款項才會進到你的帳號。';
+  String get planKofiHelp => '在 Ko-fi 購買方案後，回到這裡用交易 ID 加入款項。';
 
   @override
-  String get planPaymentCodeHelp => '你的付款代碼，點一下複製。';
+  String get planPaymentClaim => '加入 Ko-fi 款項';
 
   @override
-  String get planPaymentCodeCopied => '已複製付款代碼';
-
-  @override
-  String get planPaymentClaim => '忘記留代碼？';
-
-  @override
-  String get planPaymentClaimHelp => '用 Ko-fi 的交易編號加入付款。';
+  String get planPaymentClaimHelp => '使用 Ko-fi 收據上的交易 ID。';
 
   @override
   String get planPaymentClaimField => '交易編號或付款連結';
@@ -6478,6 +6555,39 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get planPaymentClaimed => '已加入付款';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return '訂閱，每 $days 天續訂';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days 天 $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days 天';
+  }
+
+  @override
+  String get planPayPalManage => '管理 PayPal 訂閱';
+
+  @override
+  String get planPayPalManageHelp => '在 PayPal 變更或取消';
+
+  @override
+  String get planPayPalDone => '已收到款項，方案已更新。';
+
+  @override
+  String get planPayPalPending => 'PayPal 仍在處理這筆款項，完成後方案就會更新。';
+
+  @override
+  String get planPayPalCancelled => '已取消付款';
+
+  @override
+  String get planPayPalFailed => 'PayPal 付款沒有成功。';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -6553,6 +6663,32 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminPlayPushAccountHelp => 'Pub/Sub 用來簽署推送的服務帳號 email。沒有設定時，續訂要等有人開啟方案頁才會收到。';
 
   @override
+  String get adminPayPalClientId => 'PayPal 用戶端 ID';
+
+  @override
+  String get adminPayPalClientIdHelp => '來自 developer.paypal.com 的 REST 應用程式。留空則關閉 PayPal。';
+
+  @override
+  String get adminPayPalSecret => 'PayPal 密鑰';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal Webhook ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return '在 PayPal 應用程式新增 Webhook，訂閱付款、結帳訂單與帳單訂閱事件，並填入它的 ID：$url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal 沙盒';
+
+  @override
+  String get adminPayPalSandboxHelp => '使用 PayPal 沙盒（不會真的付款），並搭配沙盒應用程式的憑證。';
+
+  @override
+  String get adminPayPalRequired => 'PayPal 需要同時設定用戶端 ID、密鑰與 Webhook ID。';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub 推送端點，目標對象也填這個網址：$url';
   }
@@ -6565,6 +6701,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminProductPlayIdHelp => '與 Play Console 上寫的相同。每筆付款到何時由 Google Play 決定，所以不用設定天數。';
+
+  @override
+  String get adminProductPayPalId => '方案 ID 或名稱';
+
+  @override
+  String get adminProductPayPalIdHelp => 'PayPal 訂閱方案的 ID，以 P- 開頭。其他名稱則是下方金額的單次付款。';
 
   @override
   String get adminProductRemoveBody => '這個商品的付款將不再計入帳號。已持有的方案會保留到結束。';

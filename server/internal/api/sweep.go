@@ -19,6 +19,10 @@ const archiveKeep = 30 * 24 * time.Hour
 // bringing the expense back. After that the expense comes back without it.
 const receiptKeep = 30 * 24 * time.Hour
 
+// checkoutKeep is how long a PayPal checkout may take to be paid. PayPal
+// lets an order wait for its payer only a few hours.
+const checkoutKeep = 30 * 24 * time.Hour
+
 // sweepBatch is how many rows a statement deletes, so that a large backlog
 // doesn't hold up everything else at once.
 var sweepBatch = 1000
@@ -69,6 +73,26 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 	n, err = s.sweepBatches(ctx, groupSweepBatch, `
 		delete from groups where archived_at < $2 and id = any (array(
 			select id from groups where archived_at < $2 limit $1))`, time.Now().Add(-archiveKeep))
+	total += n
+	if err != nil {
+		return total, err
+	}
+	// PayPal checkouts nobody finished. A paid one has its payment or entitlement.
+	n, err = s.sweepBatches(ctx, sweepBatch, `
+		delete from paypal_orders where order_id = any (array(
+			select o.order_id from paypal_orders o where o.created_at < $2 and not exists (
+				select 1 from payment_events p where p.provider = 'paypal' and p.reference = o.order_id)
+			limit $1))`, time.Now().Add(-checkoutKeep))
+	total += n
+	if err != nil {
+		return total, err
+	}
+	n, err = s.sweepBatches(ctx, sweepBatch, `
+		delete from paypal_subscriptions where subscription_id = any (array(
+			select subscription_id from paypal_subscriptions
+			where created_at < $2 and entitlement_id is null and state is distinct from 'ACTIVE' and not exists (
+				select 1 from payment_events p where p.provider = 'paypal' and p.reference = subscription_id)
+			limit $1))`, time.Now().Add(-checkoutKeep))
 	total += n
 	if err != nil {
 		return total, err

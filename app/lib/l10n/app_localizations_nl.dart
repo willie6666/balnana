@@ -3055,7 +3055,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Een betaling gaat naar het product met de naam van het niveau, anders naar het product zonder niveaunaam waarvan het bedrag wordt gehaald.';
+      'Een Ko-fi-betaling gaat naar het product met de winkelartikelcode, of anders naar het product zonder code waarvan het bedrag wordt gehaald. Een PayPal-product is een abonnementsplan of een eenmalige betaling.';
 
   @override
   String get adminProductAdd => 'Product toevoegen';
@@ -3069,11 +3069,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Niveaunaam';
+  String get adminProductName => 'Winkelartikelcode';
 
   @override
   String get adminProductNameHelp =>
-      'Zoals op Ko-fi geschreven. Laat leeg om eenmalige of maandelijkse betalingen op bedrag te koppelen.';
+      'Het einde van de artikellink, ko-fi.com/s/<code>. Laat leeg om een fooi op bedrag te koppelen.';
 
   @override
   String get adminProductPlan => 'Abonnement';
@@ -3178,6 +3178,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get adminPaymentUnmatched => 'Niet gekoppeld';
 
   @override
+  String get adminPaymentRefunded => 'Terugbetaald';
+
+  @override
   String get adminPaymentsAll => 'Alle';
 
   @override
@@ -3222,6 +3225,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Deze betaling past bij geen enkel abonnement. Vraag de serverbeheerder om haar toe te wijzen.';
+
+  @override
+  String get errorPaymentRefunded => 'Deze betaling is terugbetaald.';
+
+  @override
+  String get errorPayPalSubscribed => 'Je hebt dit abonnement al.';
+
+  @override
+  String get errorPayPalUnavailable => 'PayPal is nu niet bereikbaar. Probeer het later opnieuw.';
 
   @override
   String get errorInvalidPlan => 'Controleer de abonnementsinstellingen: er klopt iets niet.';
@@ -3319,19 +3331,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'Plak je betaalcode in het Ko-fi-bericht, zodat de betaling je account bereikt.';
+  String get planKofiHelp =>
+      'Koop een abonnement op Ko-fi en voeg de betaling hier toe met de transactie-ID.';
 
   @override
-  String get planPaymentCodeHelp => 'Je betaalcode. Tik om te kopiëren.';
+  String get planPaymentClaim => 'Ko-fi-betaling toevoegen';
 
   @override
-  String get planPaymentCodeCopied => 'Betaalcode gekopieerd';
-
-  @override
-  String get planPaymentClaim => 'Code vergeten?';
-
-  @override
-  String get planPaymentClaimHelp => 'Voeg een betaling toe met de Ko-fi-transactie-ID.';
+  String get planPaymentClaimHelp => 'Met de transactie-ID van het Ko-fi-ontvangstbewijs.';
 
   @override
   String get planPaymentClaimField => 'Transactie-ID of betaallink';
@@ -3341,6 +3348,40 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Betaling toegevoegd';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Abonnement, verlengt elke $days dagen';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days dagen voor $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days dagen';
+  }
+
+  @override
+  String get planPayPalManage => 'PayPal-abonnement beheren';
+
+  @override
+  String get planPayPalManageHelp => 'Wijzig of annuleer het op PayPal';
+
+  @override
+  String get planPayPalDone => 'Betaling ontvangen. Je abonnement is bijgewerkt.';
+
+  @override
+  String get planPayPalPending =>
+      'PayPal verwerkt de betaling nog. Je abonnement wordt bijgewerkt zodra die rond is.';
+
+  @override
+  String get planPayPalCancelled => 'Betaling geannuleerd';
+
+  @override
+  String get planPayPalFailed => 'De PayPal-betaling is niet gelukt.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3428,6 +3469,34 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het e-mailadres van het serviceaccount waarmee Pub/Sub zijn leveringen ondertekent. Zonder dit komen verlengingen pas binnen als iemand de abonnementspagina opent.';
 
   @override
+  String get adminPayPalClientId => 'PayPal-client-ID';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'Van een REST-app op developer.paypal.com. Laat leeg om PayPal uit te zetten.';
+
+  @override
+  String get adminPayPalSecret => 'PayPal-secret';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal-webhook-ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Voeg aan de PayPal-app een webhook toe voor betalings-, bestellings- en abonnementsgebeurtenissen en vul de ID in: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal-sandbox';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'De PayPal-sandbox gebruiken, waar niets echt wordt betaald, met de gegevens van een sandbox-app.';
+
+  @override
+  String get adminPayPalRequired => 'PayPal heeft de client-ID, het secret en de webhook-ID samen nodig.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub-pusheindpunt, en ook de doelgroep: $url';
   }
@@ -3441,6 +3510,13 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Zoals in Play Console staat. Google Play bepaalt wanneer elke betaling afloopt, dus er zijn geen dagen in te stellen.';
+
+  @override
+  String get adminProductPayPalId => 'Plan-ID of naam';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'De ID van een PayPal-abonnementsplan, beginnend met P-. Elke andere naam is een eenmalige betaling van het bedrag hieronder.';
 
   @override
   String get adminProductRemoveBody =>

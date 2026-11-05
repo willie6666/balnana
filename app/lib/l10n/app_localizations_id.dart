@@ -3033,7 +3033,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Pembayaran masuk ke produk dengan nama tingkatnya, atau ke produk tanpa nama tingkat yang jumlahnya tercapai.';
+      'Pembayaran Ko-fi masuk ke produk dengan kode item tokonya, atau jika tidak ada, ke produk tanpa kode yang jumlahnya tercapai. Produk PayPal adalah paket langganan atau pembayaran sekali.';
 
   @override
   String get adminProductAdd => 'Tambah produk';
@@ -3047,11 +3047,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Nama tingkat';
+  String get adminProductName => 'Kode item toko';
 
   @override
   String get adminProductNameHelp =>
-      'Sesuai tulisan di Ko-fi. Kosongkan untuk mencocokkan pembayaran sekali atau bulanan berdasarkan jumlah.';
+      'Bagian akhir tautan item, ko-fi.com/s/<kode>. Kosongkan untuk mencocokkan tip berdasarkan jumlahnya.';
 
   @override
   String get adminProductPlan => 'Paket';
@@ -3154,6 +3154,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminPaymentUnmatched => 'Tidak cocok';
 
   @override
+  String get adminPaymentRefunded => 'Dikembalikan';
+
+  @override
   String get adminPaymentsAll => 'Semua';
 
   @override
@@ -3193,6 +3196,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Pembayaran ini tidak cocok dengan paket mana pun. Minta administrator server untuk menerapkannya.';
+
+  @override
+  String get errorPaymentRefunded => 'Pembayaran ini sudah dikembalikan.';
+
+  @override
+  String get errorPayPalSubscribed => 'Anda sudah memiliki langganan ini.';
+
+  @override
+  String get errorPayPalUnavailable => 'PayPal tidak dapat dihubungi saat ini. Coba lagi nanti.';
 
   @override
   String get errorInvalidPlan => 'Periksa setelan paket: ada yang tidak valid.';
@@ -3290,19 +3302,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'Tempel kode pembayaran Anda di pesan Ko-fi agar pembayaran masuk ke akun Anda.';
+  String get planKofiHelp =>
+      'Beli paket di Ko-fi, lalu tambahkan pembayarannya di sini dengan ID transaksinya.';
 
   @override
-  String get planPaymentCodeHelp => 'Kode pembayaran Anda. Ketuk untuk menyalin.';
+  String get planPaymentClaim => 'Tambahkan pembayaran Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'Kode pembayaran disalin';
-
-  @override
-  String get planPaymentClaim => 'Lupa kodenya?';
-
-  @override
-  String get planPaymentClaimHelp => 'Tambahkan pembayaran dengan ID transaksi Ko-fi.';
+  String get planPaymentClaimHelp => 'Dengan ID transaksi dari tanda terima Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'ID transaksi atau tautan pembayaran';
@@ -3312,6 +3319,39 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Pembayaran ditambahkan';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Langganan, diperpanjang setiap $days hari';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days hari seharga $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days hari';
+  }
+
+  @override
+  String get planPayPalManage => 'Kelola langganan PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'Ubah atau batalkan di PayPal';
+
+  @override
+  String get planPayPalDone => 'Pembayaran diterima. Paket Anda sudah diperbarui.';
+
+  @override
+  String get planPayPalPending => 'PayPal masih memproses pembayaran. Paket Anda diperbarui setelah selesai.';
+
+  @override
+  String get planPayPalCancelled => 'Pembayaran dibatalkan';
+
+  @override
+  String get planPayPalFailed => 'Pembayaran PayPal tidak berhasil.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3399,6 +3439,34 @@ class AppLocalizationsId extends AppLocalizations {
       'Email akun layanan yang dipakai Pub/Sub untuk menandatangani pengiriman. Tanpanya, perpanjangan baru tiba saat seseorang membuka halaman paket.';
 
   @override
+  String get adminPayPalClientId => 'ID klien PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'Dari aplikasi REST di developer.paypal.com. Kosongkan untuk mematikan PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'Secret PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'ID webhook PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Tambahkan webhook ke aplikasi PayPal untuk peristiwa pembayaran, pesanan, dan langganan, lalu masukkan ID-nya: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'Sandbox PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Gunakan sandbox PayPal, tempat tidak ada yang benar-benar dibayar, dengan kredensial aplikasi sandbox.';
+
+  @override
+  String get adminPayPalRequired => 'PayPal memerlukan ID klien, secret, dan ID webhook sekaligus.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Endpoint push Pub/Sub, sekaligus audiensnya: $url';
   }
@@ -3412,6 +3480,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Seperti tertulis di Play Console. Google Play menentukan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
+
+  @override
+  String get adminProductPayPalId => 'ID paket atau nama';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'ID paket langganan PayPal, diawali P-. Nama lain apa pun adalah pembayaran sekali sebesar jumlah di bawah.';
 
   @override
   String get adminProductRemoveBody =>

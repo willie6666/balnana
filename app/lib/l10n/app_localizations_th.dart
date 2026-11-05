@@ -2997,7 +2997,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'การชำระเงินจะไปยังสินค้าที่มีชื่อระดับตรงกัน หากไม่มีจะไปยังสินค้าที่ไม่มีชื่อระดับและจำนวนเงินถึงเกณฑ์';
+      'การชำระเงิน Ko-fi จะไปที่สินค้าที่มีรหัสสินค้าในร้านตรงกัน หรือถ้าไม่มี จะไปที่สินค้าที่ไม่มีรหัสซึ่งยอดเงินถึง สินค้า PayPal เป็นแผนการสมัครสมาชิกหรือการชำระครั้งเดียว';
 
   @override
   String get adminProductAdd => 'เพิ่มสินค้า';
@@ -3011,11 +3011,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'ชื่อระดับ';
+  String get adminProductName => 'รหัสสินค้าในร้าน';
 
   @override
   String get adminProductNameHelp =>
-      'ตามที่เขียนบน Ko-fi เว้นว่างไว้เพื่อจับคู่การชำระเงินครั้งเดียวหรือรายเดือนตามจำนวนเงิน';
+      'ส่วนท้ายของลิงก์สินค้า ko-fi.com/s/<รหัส> เว้นว่างไว้เพื่อจับคู่ทิปตามยอดเงิน';
 
   @override
   String get adminProductPlan => 'แพ็กเกจ';
@@ -3118,6 +3118,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPaymentUnmatched => 'ไม่ตรงกับสินค้า';
 
   @override
+  String get adminPaymentRefunded => 'คืนเงินแล้ว';
+
+  @override
   String get adminPaymentsAll => 'ทั้งหมด';
 
   @override
@@ -3156,6 +3159,15 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errorPaymentNoPlan => 'การชำระเงินนี้ไม่ตรงกับแพ็กเกจใด โปรดให้ผู้ดูแลเซิร์ฟเวอร์ดำเนินการให้';
+
+  @override
+  String get errorPaymentRefunded => 'การชำระเงินนี้ได้รับเงินคืนแล้ว';
+
+  @override
+  String get errorPayPalSubscribed => 'คุณมีการสมัครสมาชิกนี้อยู่แล้ว';
+
+  @override
+  String get errorPayPalUnavailable => 'ไม่สามารถติดต่อ PayPal ได้ในขณะนี้ โปรดลองอีกครั้งภายหลัง';
 
   @override
   String get errorInvalidPlan => 'ตรวจสอบการตั้งค่าแพ็กเกจ มีบางอย่างไม่ถูกต้อง';
@@ -3253,19 +3265,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'วางรหัสชำระเงินในข้อความบน Ko-fi เพื่อให้ยอดชำระเข้าบัญชีของคุณ';
+  String get planKofiHelp => 'ซื้อแผนบน Ko-fi แล้วเพิ่มการชำระเงินที่นี่ด้วยรหัสธุรกรรม';
 
   @override
-  String get planPaymentCodeHelp => 'รหัสชำระเงินของคุณ แตะเพื่อคัดลอก';
+  String get planPaymentClaim => 'เพิ่มการชำระเงิน Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'คัดลอกรหัสชำระเงินแล้ว';
-
-  @override
-  String get planPaymentClaim => 'ลืมใส่รหัสใช่ไหม';
-
-  @override
-  String get planPaymentClaimHelp => 'เพิ่มการชำระเงินด้วยรหัสธุรกรรมของ Ko-fi';
+  String get planPaymentClaimHelp => 'ใช้รหัสธุรกรรมจากใบเสร็จของ Ko-fi';
 
   @override
   String get planPaymentClaimField => 'รหัสธุรกรรมหรือลิงก์การชำระเงิน';
@@ -3275,6 +3281,39 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'เพิ่มการชำระเงินแล้ว';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'สมัครสมาชิก ต่ออายุทุก $days วัน';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days วัน ราคา $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days วัน';
+  }
+
+  @override
+  String get planPayPalManage => 'จัดการการสมัครสมาชิก PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'เปลี่ยนหรือยกเลิกบน PayPal';
+
+  @override
+  String get planPayPalDone => 'ได้รับการชำระเงินแล้ว แผนของคุณอัปเดตแล้ว';
+
+  @override
+  String get planPayPalPending => 'PayPal ยังประมวลผลการชำระเงินอยู่ แผนของคุณจะอัปเดตเมื่อเสร็จสิ้น';
+
+  @override
+  String get planPayPalCancelled => 'ยกเลิกการชำระเงินแล้ว';
+
+  @override
+  String get planPayPalFailed => 'การชำระเงิน PayPal ไม่สำเร็จ';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3362,6 +3401,33 @@ class AppLocalizationsTh extends AppLocalizations {
       'อีเมลของบัญชีบริการที่ Pub/Sub ใช้ลงนามการส่ง หากไม่ตั้งค่า การต่ออายุจะมาถึงเมื่อมีคนเปิดหน้าแพ็กเกจเท่านั้น';
 
   @override
+  String get adminPayPalClientId => 'รหัสไคลเอ็นต์ PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp => 'จากแอป REST ที่ developer.paypal.com เว้นว่างไว้เพื่อปิด PayPal';
+
+  @override
+  String get adminPayPalSecret => 'ซีเคร็ต PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'รหัสเว็บฮุก PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'เพิ่มเว็บฮุกในแอป PayPal สำหรับเหตุการณ์การชำระเงิน คำสั่งซื้อ และการสมัครสมาชิก แล้วใส่รหัสของมัน: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'แซนด์บ็อกซ์ PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'ใช้แซนด์บ็อกซ์ของ PayPal ซึ่งไม่มีการชำระเงินจริง พร้อมข้อมูลรับรองของแอปแซนด์บ็อกซ์';
+
+  @override
+  String get adminPayPalRequired => 'PayPal ต้องมีรหัสไคลเอ็นต์ ซีเคร็ต และรหัสเว็บฮุกพร้อมกัน';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'ปลายทางพุชของ Pub/Sub และเป็นกลุ่มเป้าหมายด้วย: $url';
   }
@@ -3375,6 +3441,13 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'ตามที่เขียนใน Play Console Google Play เป็นผู้บอกว่าการชำระเงินแต่ละครั้งสิ้นสุดเมื่อใด จึงไม่ต้องตั้งจำนวนวัน';
+
+  @override
+  String get adminProductPayPalId => 'รหัสแผนหรือชื่อ';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'รหัสแผนการสมัครสมาชิกของ PayPal ที่ขึ้นต้นด้วย P- ชื่ออื่นใดคือการชำระครั้งเดียวตามยอดเงินด้านล่าง';
 
   @override
   String get adminProductRemoveBody =>

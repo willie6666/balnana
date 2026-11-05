@@ -307,6 +307,16 @@ class BalnanaApi {
     MyPlan.fromJson,
   );
 
+  /// The PayPal page to pay for [product] on. PayPal sends the payer back to
+  /// the plan page on [app], web or android.
+  Future<Uri> paypalCheckout(String product, String app) => _send(
+    () => _dio.post<Object?>('/me/paypal/checkout', data: {'product': product, 'app': app}),
+    (data) => switch (data) {
+      {'url': final String url} => Uri.parse(url),
+      _ => throw const FormatException('bad checkout'),
+    },
+  );
+
   /// What one [from] is worth in [to], from the server's source of rates.
   Future<ExchangeRate> exchangeRate(String from, String to) => _send(
     () => _dio.get<Object?>('/exchange-rate', queryParameters: {'from': from, 'to': to}),

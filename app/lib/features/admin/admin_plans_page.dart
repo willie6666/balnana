@@ -303,6 +303,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
 /// The name of a payment provider.
 String providerName(String provider) => switch (provider) {
   'kofi' => 'Ko-fi',
+  'paypal' => 'PayPal',
   'play' => 'Google Play',
   _ => provider,
 };
@@ -481,6 +482,7 @@ class _ProductDialog extends StatefulWidget {
 class _ProductDialogState extends State<_ProductDialog> {
   static final _amount = RegExp(r'^\d{1,10}(\.\d{1,2})?$');
   static final _currencyCode = RegExp(r'^[A-Z]{3}$');
+  static final _paypalPlan = RegExp(r'^P-[0-9A-Z]+$');
 
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.product?.product);
@@ -491,6 +493,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   late String _provider = widget.product?.provider ?? 'kofi';
 
   bool get _play => _provider == 'play';
+  bool get _paypal => _provider == 'paypal';
 
   List<Plan> get _plans => [...widget.plans.where((p) => !p.isDefault)];
 
@@ -523,8 +526,9 @@ class _ProductDialogState extends State<_ProductDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     const gap = SizedBox(height: BSpace.s16);
-    // Without a tier name, the amount is all there is to go by.
-    bool needsAmount() => _name.text.trim().isEmpty;
+    // Without a shop item, the amount is all there is to go by. A PayPal
+    // product that isn't a plan is a payment of that amount.
+    bool needsAmount() => _paypal ? !_paypalPlan.hasMatch(_name.text.trim()) : _name.text.trim().isEmpty;
     return AlertDialog(
       title: Text(widget.product == null ? l10n.adminProductAdd : l10n.adminProductEdit),
       content: Form(
@@ -538,7 +542,7 @@ class _ProductDialogState extends State<_ProductDialog> {
                 isExpanded: true,
                 decoration: InputDecoration(labelText: l10n.adminProductProvider),
                 items: [
-                  for (final p in const ['kofi', 'play'])
+                  for (final p in const ['kofi', 'paypal', 'play'])
                     DropdownMenuItem(value: p, child: Text(providerName(p))),
                 ],
                 // A product's provider is part of what it is.
@@ -548,11 +552,19 @@ class _ProductDialogState extends State<_ProductDialog> {
               TextFormField(
                 controller: _name,
                 decoration: InputDecoration(
-                  labelText: _play ? l10n.adminProductPlayId : l10n.adminProductName,
-                  helperText: _play ? l10n.adminProductPlayIdHelp : l10n.adminProductNameHelp,
+                  labelText: switch (_provider) {
+                    'play' => l10n.adminProductPlayId,
+                    'paypal' => l10n.adminProductPayPalId,
+                    _ => l10n.adminProductName,
+                  },
+                  helperText: switch (_provider) {
+                    'play' => l10n.adminProductPlayIdHelp,
+                    'paypal' => l10n.adminProductPayPalIdHelp,
+                    _ => l10n.adminProductNameHelp,
+                  },
                   helperMaxLines: 4,
                 ),
-                validator: (v) => _play && (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
+                validator: (v) => (_play || _paypal) && (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
               ),
               gap,
               DropdownButtonFormField<String>(

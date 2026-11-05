@@ -3074,7 +3074,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'भुगतान उसके टियर नाम वाले प्रॉडक्ट को जाता है, नहीं तो बिना टियर नाम वाले उस प्रॉडक्ट को जिसकी राशि तक वह पहुँचता है।';
+      'Ko-fi भुगतान उसके शॉप आइटम कोड वाले उत्पाद में जाता है, नहीं तो बिना कोड वाले उस उत्पाद में जिसकी राशि तक वह पहुँचता है। PayPal उत्पाद एक सदस्यता प्लान या एक बार का भुगतान होता है।';
 
   @override
   String get adminProductAdd => 'प्रॉडक्ट जोड़ें';
@@ -3088,11 +3088,11 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'टियर का नाम';
+  String get adminProductName => 'शॉप आइटम कोड';
 
   @override
   String get adminProductNameHelp =>
-      'जैसा Ko-fi पर लिखा है। एक बार या मासिक भुगतान को राशि से मिलाने के लिए खाली छोड़ें।';
+      'आइटम लिंक का आखिरी हिस्सा, ko-fi.com/s/<कोड>। टिप को राशि से मिलाने के लिए खाली छोड़ें।';
 
   @override
   String get adminProductPlan => 'प्लान';
@@ -3194,6 +3194,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get adminPaymentUnmatched => 'मेल नहीं खाया';
 
   @override
+  String get adminPaymentRefunded => 'रिफ़ंड किया गया';
+
+  @override
   String get adminPaymentsAll => 'सभी';
 
   @override
@@ -3238,6 +3241,15 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'यह भुगतान किसी प्लान से मेल नहीं खाता। सर्वर व्यवस्थापक से इसे लागू करने को कहें।';
+
+  @override
+  String get errorPaymentRefunded => 'इस भुगतान का रिफ़ंड हो चुका है।';
+
+  @override
+  String get errorPayPalSubscribed => 'आपके पास यह सदस्यता पहले से है।';
+
+  @override
+  String get errorPayPalUnavailable => 'अभी PayPal तक नहीं पहुँचा जा सकता। बाद में फिर कोशिश करें।';
 
   @override
   String get errorInvalidPlan => 'प्लान की सेटिंग जाँचें: कुछ मान्य नहीं है।';
@@ -3335,19 +3347,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => 'अपना भुगतान कोड Ko-fi संदेश में चिपकाएँ, ताकि भुगतान आपके खाते में पहुँचे।';
+  String get planKofiHelp => 'Ko-fi पर प्लान खरीदें, फिर ट्रांज़ैक्शन ID से भुगतान यहाँ जोड़ें।';
 
   @override
-  String get planPaymentCodeHelp => 'आपका भुगतान कोड। कॉपी करने के लिए टैप करें।';
+  String get planPaymentClaim => 'Ko-fi भुगतान जोड़ें';
 
   @override
-  String get planPaymentCodeCopied => 'भुगतान कोड कॉपी किया गया';
-
-  @override
-  String get planPaymentClaim => 'कोड भूल गए?';
-
-  @override
-  String get planPaymentClaimHelp => 'Ko-fi लेन-देन आईडी से भुगतान जोड़ें।';
+  String get planPaymentClaimHelp => 'Ko-fi रसीद में दी गई ट्रांज़ैक्शन ID से।';
 
   @override
   String get planPaymentClaimField => 'लेन-देन आईडी या भुगतान लिंक';
@@ -3357,6 +3363,39 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'भुगतान जोड़ा गया';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'सदस्यता, हर $days दिन में नवीनीकृत';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$price में $days दिन';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days दिन';
+  }
+
+  @override
+  String get planPayPalManage => 'PayPal सदस्यता प्रबंधित करें';
+
+  @override
+  String get planPayPalManageHelp => 'PayPal पर बदलें या रद्द करें';
+
+  @override
+  String get planPayPalDone => 'भुगतान मिल गया। आपका प्लान अपडेट हो गया है।';
+
+  @override
+  String get planPayPalPending => 'PayPal अभी भुगतान प्रोसेस कर रहा है। पूरा होते ही आपका प्लान अपडेट होगा।';
+
+  @override
+  String get planPayPalCancelled => 'भुगतान रद्द किया गया';
+
+  @override
+  String get planPayPalFailed => 'PayPal भुगतान पूरा नहीं हुआ।';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3444,6 +3483,34 @@ class AppLocalizationsHi extends AppLocalizations {
       'उस सर्विस खाते का ईमेल जिससे Pub/Sub अपनी डिलीवरी पर हस्ताक्षर करता है। इसके बिना नवीनीकरण तभी पहुँचते हैं जब कोई प्लान पेज खोले।';
 
   @override
+  String get adminPayPalClientId => 'PayPal क्लाइंट ID';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'developer.paypal.com पर किसी REST ऐप से। PayPal बंद करने के लिए खाली छोड़ें।';
+
+  @override
+  String get adminPayPalSecret => 'PayPal सीक्रेट';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal वेबहुक ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'PayPal ऐप में भुगतान, ऑर्डर और सदस्यता इवेंट के लिए वेबहुक जोड़ें और उसकी ID दर्ज करें: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal सैंडबॉक्स';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'PayPal सैंडबॉक्स इस्तेमाल करें, जहाँ असल में कोई भुगतान नहीं होता, सैंडबॉक्स ऐप के क्रेडेंशियल के साथ।';
+
+  @override
+  String get adminPayPalRequired => 'PayPal को क्लाइंट ID, सीक्रेट और वेबहुक ID तीनों एक साथ चाहिए।';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub पुश एंडपॉइंट, और यही ऑडियंस भी: $url';
   }
@@ -3457,6 +3524,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'जैसा Play Console में लिखा है। हर भुगतान कब खत्म होगा यह Google Play बताता है, इसलिए दिन सेट नहीं करने होते।';
+
+  @override
+  String get adminProductPayPalId => 'प्लान ID या नाम';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'PayPal सदस्यता प्लान की ID, जो P- से शुरू होती है। कोई भी दूसरा नाम नीचे दी गई राशि का एक बार का भुगतान है।';
 
   @override
   String get adminProductRemoveBody =>

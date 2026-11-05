@@ -255,7 +255,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     redirect: (context, state) => canChooseServer ? null : '/settings',
                     builder: (context, state) => const ServerPage(),
                   ),
-                  GoRoute(path: 'plan', builder: (context, state) => const PlanPage()),
+                  GoRoute(
+                    path: 'plan',
+                    builder: (context, state) => PlanPage(paypal: state.uri.queryParameters['paypal']),
+                  ),
                 ],
               ),
             ],

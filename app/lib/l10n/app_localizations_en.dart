@@ -3026,7 +3026,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'A payment goes to the product with its tier name, or else to the one without a tier name that its amount reaches.';
+      'A Ko-fi payment goes to the product with its shop item code, or else to the one without a code that its amount reaches. A PayPal product is a subscription plan or a one-off payment.';
 
   @override
   String get adminProductAdd => 'Add product';
@@ -3040,11 +3040,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Tier name';
+  String get adminProductName => 'Shop item code';
 
   @override
   String get adminProductNameHelp =>
-      'As written on Ko-fi. Leave empty to match any one-off or monthly payment by its amount.';
+      'The end of the item\'s link, ko-fi.com/s/<code>. Leave empty to match a tip by its amount.';
 
   @override
   String get adminProductPlan => 'Plan';
@@ -3147,6 +3147,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPaymentUnmatched => 'Unmatched';
 
   @override
+  String get adminPaymentRefunded => 'Refunded';
+
+  @override
   String get adminPaymentsAll => 'All';
 
   @override
@@ -3190,6 +3193,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'This payment doesn\'t match a plan. Ask the server\'s administrator to apply it.';
+
+  @override
+  String get errorPaymentRefunded => 'This payment was refunded.';
+
+  @override
+  String get errorPayPalSubscribed => 'You already have this subscription.';
+
+  @override
+  String get errorPayPalUnavailable => 'PayPal can\'t be reached right now. Try again later.';
 
   @override
   String get errorInvalidPlan => 'Check the plan settings: something in them isn\'t valid.';
@@ -3287,20 +3299,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp =>
-      'Put your payment code in the Ko-fi message, so the payment reaches your account.';
+  String get planKofiHelp => 'Buy a plan on Ko-fi, then add the payment here with its transaction ID.';
 
   @override
-  String get planPaymentCodeHelp => 'Your payment code. Tap to copy.';
+  String get planPaymentClaim => 'Add a Ko-fi payment';
 
   @override
-  String get planPaymentCodeCopied => 'Payment code copied';
-
-  @override
-  String get planPaymentClaim => 'Forgot the code?';
-
-  @override
-  String get planPaymentClaimHelp => 'Add a payment with its Ko-fi transaction ID.';
+  String get planPaymentClaimHelp => 'With the transaction ID from Ko-fi\'s receipt.';
 
   @override
   String get planPaymentClaimField => 'Transaction ID or payment link';
@@ -3310,6 +3315,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Payment added';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Subscription, renews every $days days';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days days for $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get planPayPalManage => 'Manage PayPal subscription';
+
+  @override
+  String get planPayPalManageHelp => 'Change or cancel it on PayPal';
+
+  @override
+  String get planPayPalDone => 'Payment received. Your plan is updated.';
+
+  @override
+  String get planPayPalPending =>
+      'PayPal is still processing the payment. Your plan updates once it\'s through.';
+
+  @override
+  String get planPayPalCancelled => 'Payment cancelled';
+
+  @override
+  String get planPayPalFailed => 'The PayPal payment didn\'t go through.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3393,6 +3432,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'The service account email Pub/Sub signs its deliveries with. Without one, renewals arrive only when someone opens the plan page.';
 
   @override
+  String get adminPayPalClientId => 'PayPal client ID';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'From a REST app at developer.paypal.com. Leave empty to turn PayPal off.';
+
+  @override
+  String get adminPayPalSecret => 'PayPal secret';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal webhook ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Add a webhook to the PayPal app for payment, checkout order and billing subscription events, and enter its ID: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal sandbox';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Use PayPal\'s sandbox, where nothing is really paid, with a sandbox app\'s credentials.';
+
+  @override
+  String get adminPayPalRequired => 'PayPal needs the client ID, secret and webhook ID together.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub push endpoint, and its audience too: $url';
   }
@@ -3406,6 +3473,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'As written in Play Console. Google Play says when each payment ends, so there are no days to set.';
+
+  @override
+  String get adminProductPayPalId => 'Plan ID or name';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'A subscription plan\'s ID from PayPal, starting with P-. Any other name is a one-off payment of the amount below.';
 
   @override
   String get adminProductRemoveBody =>

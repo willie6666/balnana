@@ -2925,7 +2925,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminProductsSection => '상품';
 
   @override
-  String get adminProductsHelp => '결제는 먼저 티어 이름이 같은 상품에, 없으면 티어 이름이 없고 금액을 충족하는 상품에 연결돼요.';
+  String get adminProductsHelp =>
+      'Ko-fi 결제는 상점 상품 코드가 같은 상품으로, 없으면 코드가 없는 상품 중 금액이 닿는 상품으로 갑니다. PayPal 상품은 구독 플랜이거나 일회성 결제입니다.';
 
   @override
   String get adminProductAdd => '상품 추가';
@@ -2939,10 +2940,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => '티어 이름';
+  String get adminProductName => '상점 상품 코드';
 
   @override
-  String get adminProductNameHelp => 'Ko-fi에 적힌 그대로 입력하세요. 비워 두면 일회성·월간 결제를 금액으로 판단해요.';
+  String get adminProductNameHelp => '상품 링크의 끝부분, ko-fi.com/s/<코드>. 비워 두면 후원을 금액으로 맞춥니다.';
 
   @override
   String get adminProductPlan => '요금제';
@@ -3044,6 +3045,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminPaymentUnmatched => '연결 안 됨';
 
   @override
+  String get adminPaymentRefunded => '환불됨';
+
+  @override
   String get adminPaymentsAll => '전체';
 
   @override
@@ -3081,6 +3085,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorPaymentNoPlan => '이 결제에 맞는 요금제가 없습니다. 서버 관리자에게 적용을 요청하세요.';
+
+  @override
+  String get errorPaymentRefunded => '이 결제는 환불되었습니다.';
+
+  @override
+  String get errorPayPalSubscribed => '이미 이 구독을 이용 중입니다.';
+
+  @override
+  String get errorPayPalUnavailable => '지금은 PayPal에 연결할 수 없습니다. 나중에 다시 시도하세요.';
 
   @override
   String get errorInvalidPlan => '요금제 설정을 확인해 주세요. 올바르지 않은 내용이 있어요.';
@@ -3177,19 +3190,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planKofi => 'Ko-fi';
 
   @override
-  String get planKofiHelp => '결제가 계정에 반영되도록 Ko-fi 메시지에 결제 코드를 붙여 넣으세요.';
+  String get planKofiHelp => 'Ko-fi에서 플랜을 구매한 뒤 거래 ID로 여기에 결제를 추가하세요.';
 
   @override
-  String get planPaymentCodeHelp => '내 결제 코드입니다. 탭하여 복사하세요.';
+  String get planPaymentClaim => 'Ko-fi 결제 추가';
 
   @override
-  String get planPaymentCodeCopied => '결제 코드를 복사했습니다';
-
-  @override
-  String get planPaymentClaim => '코드를 잊으셨나요?';
-
-  @override
-  String get planPaymentClaimHelp => 'Ko-fi 거래 ID로 결제를 추가합니다.';
+  String get planPaymentClaimHelp => 'Ko-fi 영수증의 거래 ID를 사용하세요.';
 
   @override
   String get planPaymentClaimField => '거래 ID 또는 결제 링크';
@@ -3199,6 +3206,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => '결제를 추가했습니다';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return '구독, $days일마다 갱신';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days일 $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days일';
+  }
+
+  @override
+  String get planPayPalManage => 'PayPal 구독 관리';
+
+  @override
+  String get planPayPalManageHelp => 'PayPal에서 변경하거나 취소';
+
+  @override
+  String get planPayPalDone => '결제를 받았습니다. 플랜이 업데이트되었습니다.';
+
+  @override
+  String get planPayPalPending => 'PayPal에서 아직 결제를 처리 중입니다. 완료되면 플랜이 업데이트됩니다.';
+
+  @override
+  String get planPayPalCancelled => '결제가 취소되었습니다';
+
+  @override
+  String get planPayPalFailed => 'PayPal 결제가 완료되지 않았습니다.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3275,6 +3315,32 @@ class AppLocalizationsKo extends AppLocalizations {
       'Pub/Sub가 전송에 서명할 때 쓰는 서비스 계정 이메일입니다. 없으면 갱신은 누군가 요금제 페이지를 열 때만 도착합니다.';
 
   @override
+  String get adminPayPalClientId => 'PayPal 클라이언트 ID';
+
+  @override
+  String get adminPayPalClientIdHelp => 'developer.paypal.com의 REST 앱에서 가져옵니다. 비워 두면 PayPal을 끕니다.';
+
+  @override
+  String get adminPayPalSecret => 'PayPal 시크릿';
+
+  @override
+  String get adminPayPalWebhookId => 'PayPal 웹훅 ID';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'PayPal 앱에 결제, 결제 주문, 청구 구독 이벤트용 웹훅을 추가하고 그 ID를 입력하세요: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'PayPal 샌드박스';
+
+  @override
+  String get adminPayPalSandboxHelp => '실제로 결제되지 않는 PayPal 샌드박스를 샌드박스 앱의 자격 증명으로 사용합니다.';
+
+  @override
+  String get adminPayPalRequired => 'PayPal에는 클라이언트 ID, 시크릿, 웹훅 ID가 모두 필요합니다.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Pub/Sub 푸시 엔드포인트(대상도 동일): $url';
   }
@@ -3288,6 +3354,12 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Play Console에 적힌 그대로 입력하세요. 각 결제의 종료일은 Google Play가 정하므로 일수는 설정하지 않습니다.';
+
+  @override
+  String get adminProductPayPalId => '플랜 ID 또는 이름';
+
+  @override
+  String get adminProductPayPalIdHelp => 'P-로 시작하는 PayPal 구독 플랜 ID. 다른 이름은 아래 금액의 일회성 결제입니다.';
 
   @override
   String get adminProductRemoveBody => '이 상품의 결제가 더 이상 계정에 적용되지 않아요. 이미 보유한 요금제는 끝날 때까지 유지돼요.';

@@ -3135,7 +3135,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get adminProductsHelp =>
-      'Платёж относится к продукту с названием его уровня, а если такого нет — к продукту без названия уровня, сумма которого достигнута.';
+      'Платёж Ko-fi идёт к продукту с его кодом товара из магазина, а иначе — к продукту без кода, сумму которого он достигает. Продукт PayPal — это план подписки или разовый платёж.';
 
   @override
   String get adminProductAdd => 'Добавить продукт';
@@ -3149,11 +3149,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get adminProductName => 'Название уровня';
+  String get adminProductName => 'Код товара в магазине';
 
   @override
   String get adminProductNameHelp =>
-      'Как на Ko-fi. Оставьте пустым, чтобы сопоставлять разовые и ежемесячные платежи по сумме.';
+      'Конец ссылки на товар, ko-fi.com/s/<код>. Оставьте пустым, чтобы сопоставлять чаевые по сумме.';
 
   @override
   String get adminProductPlan => 'Тариф';
@@ -3256,6 +3256,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get adminPaymentUnmatched => 'Не сопоставлен';
 
   @override
+  String get adminPaymentRefunded => 'Возвращён';
+
+  @override
   String get adminPaymentsAll => 'Все';
 
   @override
@@ -3303,6 +3306,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get errorPaymentNoPlan =>
       'Этот платёж не соответствует ни одному тарифу. Попросите администратора сервера применить его.';
+
+  @override
+  String get errorPaymentRefunded => 'Этот платёж был возвращён.';
+
+  @override
+  String get errorPayPalSubscribed => 'У вас уже есть эта подписка.';
+
+  @override
+  String get errorPayPalUnavailable => 'Сейчас не удаётся связаться с PayPal. Попробуйте позже.';
 
   @override
   String get errorInvalidPlan => 'Проверьте настройки тарифа: что-то указано неверно.';
@@ -3401,19 +3413,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planKofiHelp =>
-      'Вставьте платёжный код в сообщение на Ko-fi, чтобы платёж попал на ваш аккаунт.';
+      'Купите план на Ko-fi, затем добавьте платёж здесь по его идентификатору транзакции.';
 
   @override
-  String get planPaymentCodeHelp => 'Ваш платёжный код. Нажмите, чтобы скопировать.';
+  String get planPaymentClaim => 'Добавить платёж Ko-fi';
 
   @override
-  String get planPaymentCodeCopied => 'Платёжный код скопирован';
-
-  @override
-  String get planPaymentClaim => 'Забыли код?';
-
-  @override
-  String get planPaymentClaimHelp => 'Добавьте платёж по ID транзакции Ko-fi.';
+  String get planPaymentClaimHelp => 'По идентификатору транзакции из чека Ko-fi.';
 
   @override
   String get planPaymentClaimField => 'ID транзакции или ссылка на платёж';
@@ -3423,6 +3429,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planPaymentClaimed => 'Платёж добавлен';
+
+  @override
+  String planPayPalSubscription(int days) {
+    return 'Подписка, продлевается каждые $days дн.';
+  }
+
+  @override
+  String planPayPalOnce(int days, String price) {
+    return '$days дн. за $price';
+  }
+
+  @override
+  String planPayPalDays(int days) {
+    return '$days дн.';
+  }
+
+  @override
+  String get planPayPalManage => 'Управлять подпиской PayPal';
+
+  @override
+  String get planPayPalManageHelp => 'Изменить или отменить в PayPal';
+
+  @override
+  String get planPayPalDone => 'Платёж получен. Ваш план обновлён.';
+
+  @override
+  String get planPayPalPending => 'PayPal ещё обрабатывает платёж. План обновится, когда он пройдёт.';
+
+  @override
+  String get planPayPalCancelled => 'Платёж отменён';
+
+  @override
+  String get planPayPalFailed => 'Платёж PayPal не прошёл.';
 
   @override
   String groupPlanUsage(String members, String receipts, String recurring) {
@@ -3511,6 +3550,35 @@ class AppLocalizationsRu extends AppLocalizations {
       'Адрес сервисного аккаунта, которым Pub/Sub подписывает доставки. Без него продления приходят, только когда кто-то открывает страницу тарифа.';
 
   @override
+  String get adminPayPalClientId => 'Идентификатор клиента PayPal';
+
+  @override
+  String get adminPayPalClientIdHelp =>
+      'Из REST-приложения на developer.paypal.com. Оставьте пустым, чтобы отключить PayPal.';
+
+  @override
+  String get adminPayPalSecret => 'Секрет PayPal';
+
+  @override
+  String get adminPayPalWebhookId => 'Идентификатор вебхука PayPal';
+
+  @override
+  String adminPayPalWebhook(String url) {
+    return 'Добавьте в приложение PayPal вебхук для событий платежей, заказов и подписок и введите его идентификатор: $url';
+  }
+
+  @override
+  String get adminPayPalSandbox => 'Песочница PayPal';
+
+  @override
+  String get adminPayPalSandboxHelp =>
+      'Использовать песочницу PayPal, где ничего не оплачивается по-настоящему, с данными приложения песочницы.';
+
+  @override
+  String get adminPayPalRequired =>
+      'PayPal нужны идентификатор клиента, секрет и идентификатор вебхука вместе.';
+
+  @override
   String adminPlayWebhook(String url) {
     return 'Push-адрес Pub/Sub, он же аудитория: $url';
   }
@@ -3524,6 +3592,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminProductPlayIdHelp =>
       'Как указано в Play Console. Google Play сам сообщает, когда заканчивается каждый платёж, поэтому дни задавать не нужно.';
+
+  @override
+  String get adminProductPayPalId => 'Идентификатор плана или название';
+
+  @override
+  String get adminProductPayPalIdHelp =>
+      'Идентификатор плана подписки PayPal, начинающийся с P-. Любое другое название — разовый платёж на сумму ниже.';
 
   @override
   String get adminProductRemoveBody =>

@@ -42,7 +42,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- The way back from signing in with Google or OpenID Connect. -->
+            <!-- The way back from signing in with Google or OpenID Connect, and from paying with PayPal. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

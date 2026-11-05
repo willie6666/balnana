@@ -186,6 +186,9 @@ const (
 	// Transaction IDs an account may try in a row, and how many an hour after.
 	claimBurst   = 10
 	claimPerHour = 10
+	// PayPal checkouts an account may start in a row, and how many an hour after.
+	checkoutBurst   = 10
+	checkoutPerHour = 20
 	// Wrong passwords an account (or the administrator) may be sent in a row
 	// from one client, and how many an hour after; then from anywhere, which
 	// stays loose, since using it up keeps the owner out as well.

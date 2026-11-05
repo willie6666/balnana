@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,7 +25,10 @@ String planUsage(AppLocalizations l10n, PlanUsage usage) {
 
 /// The account's plan, what it allows, and where to get one.
 class PlanPage extends ConsumerStatefulWidget {
-  const PlanPage({super.key});
+  const PlanPage({super.key, this.paypal});
+
+  /// How a PayPal checkout went, as PayPal's way back says.
+  final String? paypal;
 
   @override
   ConsumerState<PlanPage> createState() => _PlanPageState();
@@ -40,6 +43,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   bool _askedPlay = false;
   bool _playFailed = false;
 
+  /// Whether a PayPal page was opened, so the plan is looked at again when
+  /// the payer comes back.
+  bool _checkedOut = false;
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +56,39 @@ class _PlanPageState extends ConsumerState<PlanPage> {
       final play = next.value?.play;
       if (play != null && !_askedPlay) _loadPlay(play);
     });
+    _lifecycle = AppLifecycleListener(onShow: _cameBack);
+    if (widget.paypal != null) WidgetsBinding.instance.addPostFrameCallback((_) => _tellPayPal());
+  }
+
+  @override
+  void didUpdateWidget(PlanPage old) {
+    super.didUpdateWidget(old);
+    if (widget.paypal != null && widget.paypal != old.paypal) _tellPayPal();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  void _cameBack() {
+    if (!_checkedOut) return;
+    _checkedOut = false;
+    ref.invalidate(myPlanProvider);
+  }
+
+  void _tellPayPal() {
+    if (!mounted) return;
+    final l10n = context.l10n;
+    final message = switch (widget.paypal) {
+      'done' => l10n.planPayPalDone,
+      'pending' => l10n.planPayPalPending,
+      'cancelled' => l10n.planPayPalCancelled,
+      _ => l10n.planPayPalFailed,
+    };
+    ref.invalidate(myPlanProvider);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _loadPlay(PlayBilling play) async {
@@ -126,11 +167,25 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
   }
 
-  Future<void> _copyCode(String code) async {
-    final message = context.l10n.planPaymentCodeCopied;
+  Future<void> _payPal(PayPalOffer offer) async {
+    final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    await Clipboard.setData(ClipboardData(text: code));
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
+    setState(() => _buying = true);
+    try {
+      final url = await ref.read(balnanaApiProvider)!.paypalCheckout(offer.product, kIsWeb ? 'web' : 'android');
+      // On the web the page goes to PayPal, which sends it back here.
+      _checkedOut = true;
+      final opened = await launchUrl(
+        url,
+        mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
+      if (!opened) tell(l10n.errorGeneric);
+    } on ApiException catch (e) {
+      tell(errorMessage(l10n, e));
+    }
+    if (mounted) setState(() => _buying = false);
   }
 
   @override
@@ -165,6 +220,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final held = play?.held ?? const <String>[];
     // A second subscription would pay twice for one plan.
     final offers = held.isNotEmpty ? const <PlayOffer>[] : _offers;
+    final paypal = externalPayments ? plan.paypal : null;
+    final paypalOffers = [
+      for (final offer in paypal?.offers ?? const <PayPalOffer>[])
+        if (!offer.subscription || !paypal!.subscribed.contains(offer.product)) offer,
+    ];
     String limit(int? n) => n?.toString() ?? l10n.planUnlimited;
     return BPage(
       title: l10n.planTitle,
@@ -193,6 +253,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                     'package': play.packageName,
                   }),
                 ),
+              ),
+            if (paypal != null && paypal.subscribed.isNotEmpty)
+              GroupedTile(
+                icon: Icons.manage_accounts_outlined,
+                title: l10n.planPayPalManage,
+                subtitle: l10n.planPayPalManageHelp,
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => _open(Uri.https('www.paypal.com', '/myaccount/autopay/')),
               ),
           ],
         ),
@@ -231,7 +299,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
             ),
           ],
         ),
-        if (offers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))
+        if (offers.isNotEmpty || paypalOffers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))
           GroupedList(
             title: l10n.planGet,
             children: [
@@ -252,29 +320,32 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                   },
                   onTap: _buying ? null : () => _buy(offer, play!),
                 ),
+              for (final offer in paypalOffers)
+                GroupedTile(
+                  icon: Icons.payments_outlined,
+                  title: offer.planName,
+                  subtitle: switch ((offer.amount, offer.currency)) {
+                    _ when offer.subscription => l10n.planPayPalSubscription(offer.days),
+                    (final amount?, final currency?) => l10n.planPayPalOnce(offer.days, '$amount $currency'),
+                    _ => l10n.planPayPalDays(offer.days),
+                  },
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: _buying ? null : () => _payPal(offer),
+                ),
               if (kofi != null) ...[
                 GroupedTile(
                   icon: Icons.coffee_outlined,
                   title: l10n.planKofi,
-                  subtitle: plan.paymentCode == null ? null : l10n.planKofiHelp,
+                  subtitle: l10n.planKofiHelp,
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _open(kofi),
                 ),
-                if (plan.paymentCode case final code?) ...[
-                  GroupedTile(
-                    icon: Icons.tag,
-                    title: code,
-                    subtitle: l10n.planPaymentCodeHelp,
-                    trailing: const Icon(Icons.copy),
-                    onTap: () => _copyCode(code),
-                  ),
-                  GroupedTile(
-                    icon: Icons.receipt_long_outlined,
-                    title: l10n.planPaymentClaim,
-                    subtitle: l10n.planPaymentClaimHelp,
-                    onTap: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
-                  ),
-                ],
+                GroupedTile(
+                  icon: Icons.receipt_long_outlined,
+                  title: l10n.planPaymentClaim,
+                  subtitle: l10n.planPaymentClaimHelp,
+                  onTap: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
+                ),
               ],
             ],
           ),
@@ -283,7 +354,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   }
 }
 
-/// Takes a Ko-fi payment made without the account's code.
+/// Takes a Ko-fi payment by its transaction ID.
 class PaymentClaimDialog extends ConsumerStatefulWidget {
   const PaymentClaimDialog({super.key});
 

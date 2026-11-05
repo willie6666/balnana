@@ -30,7 +30,8 @@ const (
 	oauthCodeLifetime = 2 * time.Minute
 	googleIssuer      = "https://accounts.google.com"
 	// The Android app opens links on this scheme (AndroidManifest.xml).
-	androidReturn = "balnana://app/oauth-done"
+	androidApp    = "balnana://app"
+	androidReturn = androidApp + "/oauth-done"
 )
 
 // A PKCE S256 challenge: base64url of 32 bytes, unpadded.
