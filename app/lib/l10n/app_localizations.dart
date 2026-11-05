@@ -5206,6 +5206,36 @@ abstract class AppLocalizations {
   /// **'{plan} until {date}'**
   String adminUserPlanUntil(String plan, String date);
 
+  /// Explains that the current plan prohibits uploading receipt photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan does not allow photo uploads.'**
+  String get errorReceiptUploadsDisabled;
+
+  /// Heading for automatic email verification plans in administration.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic plans'**
+  String get adminAutomaticPlans;
+
+  /// Explains automatic plan selection, entitlement priority, and disabling photo uploads.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.'**
+  String get adminAutomaticPlansHelp;
+
+  /// Label for the automatic plan assigned to users without a verified email.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a verified email'**
+  String get adminUnverifiedPlan;
+
+  /// Label for the automatic plan assigned to users with a verified email.
+  ///
+  /// In en, this message translates to:
+  /// **'With a verified email'**
+  String get adminVerifiedPlan;
+
   /// Label or control text for admin plans help in the server administrator interface.
   ///
   /// In en, this message translates to:
@@ -5347,7 +5377,7 @@ abstract class AppLocalizations {
   /// Label or control text for admin plan default help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'For every account without another plan.'**
+  /// **'For groups without a sponsor. Automatic account plans are selected above.'**
   String get adminPlanDefaultHelp;
 
   /// Help under the admin switch that lets a plan's groups send payment reminders.

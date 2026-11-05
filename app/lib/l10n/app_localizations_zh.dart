@@ -2870,6 +2870,22 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get errorReceiptUploadsDisabled => '你的方案无法上传照片。';
+
+  @override
+  String get adminAutomaticPlans => '自动应用方案';
+
+  @override
+  String get adminAutomaticPlansHelp =>
+      '根据账号当前的邮箱验证状态自动应用方案，完成验证后立即切换。付费或手动授予的方案优先。照片上限设为 0 可禁止上传，包括他人赞助的群组。';
+
+  @override
+  String get adminUnverifiedPlan => '未验证邮箱的用户';
+
+  @override
+  String get adminVerifiedPlan => '已验证邮箱的用户';
+
+  @override
   String get adminPlansHelp => '新的上限只影响之后添加的内容，已有内容会保留。留空表示没有上限。';
 
   @override
@@ -2947,7 +2963,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPlanDefault => '默认方案';
 
   @override
-  String get adminPlanDefaultHelp => '用于没有其他方案的所有账号。';
+  String get adminPlanDefaultHelp => '用于没有赞助者的群组。账号自动应用的方案请在上方设置。';
 
   @override
   String get adminPlanRemindersHelp => '此方案的群组可以用通知提醒付款。';
@@ -6148,6 +6164,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
+  String get errorReceiptUploadsDisabled => '你的方案無法上傳照片。';
+
+  @override
+  String get adminAutomaticPlans => '自動套用方案';
+
+  @override
+  String get adminAutomaticPlansHelp =>
+      '依帳戶目前的 Email 驗證狀態自動套用方案，完成驗證後立即切換。付費或手動授予的方案優先。照片上限設為 0 可禁止上傳，包含他人贊助的群組。';
+
+  @override
+  String get adminUnverifiedPlan => '未驗證 Email 的使用者';
+
+  @override
+  String get adminVerifiedPlan => '已驗證 Email 的使用者';
+
+  @override
   String get adminPlansHelp => '新的上限只影響之後新增的內容，已有的內容會保留。留白代表沒有上限。';
 
   @override
@@ -6225,7 +6257,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminPlanDefault => '預設方案';
 
   @override
-  String get adminPlanDefaultHelp => '用於沒有其他方案的所有帳戶。';
+  String get adminPlanDefaultHelp => '用於沒有贊助者的群組。帳戶自動套用的方案請在上方設定。';
 
   @override
   String get adminPlanRemindersHelp => '此方案的群組可以用通知提醒付款。';

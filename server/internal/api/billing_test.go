@@ -112,11 +112,12 @@ func TestBillingOff(t *testing.T) {
 }
 
 func TestBillingNeedsAccounts(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	if info := serverInfo(c); info.Billing == nil || info.Billing.KofiUrl == nil || *info.Billing.KofiUrl != "https://ko-fi.com/balnana" {
 		t.Fatalf("%+v", info.Billing)
 	}
 	u := register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
 	p := myPlanOf(c)
 	if p.PlanName != "Free" || p.Paid || p.ExpiresAt != nil || p.JoinedGroups.Used != 0 ||
 		p.JoinedGroups.Limit == nil || *p.JoinedGroups.Limit != 10 || p.MembersPerGroup == nil || *p.MembersPerGroup != 15 {
@@ -130,9 +131,10 @@ func TestBillingNeedsAccounts(t *testing.T) {
 }
 
 func TestReceiptLimit(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	exec(t, s, `update plans set receipts_per_group = 1 where is_default`)
 	register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
 	g := createGroup(c, "Ana", "Ben")
 	first, second := receiptExpense(c, g), receiptExpense(c, g)
 	path := func(e Expense) string { return "/g/" + g.Token + "/expenses/" + e.Id + "/receipt" }
@@ -220,9 +222,10 @@ func TestRecurringLimit(t *testing.T) {
 }
 
 func TestJoinedGroupLimit(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	exec(t, s, `update plans set joined_groups = 1 where is_default`)
 	u := register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
 	g := createGroup(c, "Ana")
 	in := GroupCreate{Name: "More", Currency: "EUR", Members: []string{"Ana"}}
 	if code := c.errorCode(402, "POST", "/groups", in); code != "plan_limit" {
@@ -245,12 +248,14 @@ func TestJoinedGroupLimit(t *testing.T) {
 }
 
 func TestSponsor(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	exec(t, s, `update plans set receipts_per_group = 1 where is_default`)
 	exec(t, s, `update plans set receipts_per_group = 2, sponsored_groups = 1 where id = 'plus'`)
 	anaUser := register(c, "ana@example.test", "Ana")
+	confirmEmail(c, f, "ana@example.test")
 	ben := c.another()
 	benUser := register(ben, "ben@example.test", "Ben")
+	confirmEmail(ben, f, "ben@example.test")
 	var g, other Group
 	c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
 	c.must(201, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana"}}, &other)
@@ -735,7 +740,7 @@ func TestAdminPlans(t *testing.T) {
 	admin := c.asAdmin(setUp(c))
 	var catalog PlanCatalog
 	admin.must(200, "GET", "/admin/plans", nil, &catalog)
-	if len(catalog.Plans) != 2 {
+	if len(catalog.Plans) != 3 {
 		t.Fatalf("%+v", catalog)
 	}
 	bad := catalog
@@ -748,8 +753,8 @@ func TestAdminPlans(t *testing.T) {
 	catalog.Plans = append(catalog.Plans, gold)
 	catalog.Products = []PlanProduct{{Provider: Kofi, Product: "Gold tier", PlanId: "gold", Days: 35}}
 	admin.must(200, "PUT", "/admin/plans", catalog, &catalog)
-	if len(catalog.Plans) != 3 || len(catalog.Products) != 1 || catalog.Plans[2].Limits.Reminders == nil ||
-		!*catalog.Plans[2].Limits.Reminders || *catalog.Plans[0].Limits.Reminders {
+	if len(catalog.Plans) != 4 || len(catalog.Products) != 1 || catalog.Plans[3].Limits.Reminders == nil ||
+		!*catalog.Plans[3].Limits.Reminders || *catalog.Plans[0].Limits.Reminders {
 		t.Fatalf("%+v", catalog)
 	}
 	// No name needs an amount to go by.
@@ -783,13 +788,13 @@ func TestAdminPlans(t *testing.T) {
 		t.Fatalf("%+v", users.Users[0])
 	}
 	without := catalog
-	without.Plans = catalog.Plans[:2]
+	without.Plans = catalog.Plans[:3]
 	without.Products = []PlanProduct{}
 	if code := admin.errorCode(409, "PUT", "/admin/plans", without); code != "plan_in_use" {
 		t.Fatal(code)
 	}
 	admin.must(200, "GET", "/admin/plans", nil, &catalog)
-	if len(catalog.Plans) != 3 || len(catalog.Products) != 1 {
+	if len(catalog.Plans) != 4 || len(catalog.Products) != 1 {
 		t.Fatalf("a refused change must change nothing: %+v", catalog)
 	}
 	admin.must(204, "DELETE", "/admin/entitlements/"+e.Id, nil, nil)
@@ -878,7 +883,7 @@ func TestSponsorDoesNotComeBackWithItsMember(t *testing.T) {
 // Taking over a group nobody with an account is left in makes the joiner its
 // owner, which counts against their plan as creating one does.
 func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	register(c, "ana@example.test", "Ana")
 	var g Group
 	c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
@@ -888,6 +893,7 @@ func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
 	exec(t, s, `update plans set joined_groups = 1 where is_default`)
 	ben := c.another()
 	register(ben, "ben@example.test", "Ben")
+	confirmEmail(ben, f, "ben@example.test")
 	ben.must(201, "POST", "/groups", GroupCreate{Name: "Mine", Currency: "EUR", Members: []string{"Ben"}}, nil)
 	if code := ben.errorCode(402, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}); code != "plan_limit" {
 		t.Fatalf("code %q", code)
@@ -903,7 +909,7 @@ func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
 
 // Every way into a group counts, not only making one, and leaving makes room.
 func TestJoinedGroupsCountEveryWayIn(t *testing.T) {
-	c, _, s := billingServer(t)
+	c, f, s := billingServer(t)
 	register(c, "ana@example.test", "Ana")
 	var claim, plain Group
 	c.must(201, "POST", "/groups", GroupCreate{Name: "Claim", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &claim)
@@ -923,6 +929,7 @@ func TestJoinedGroupsCountEveryWayIn(t *testing.T) {
 	exec(t, s, `update plans set joined_groups = 1 where is_default`)
 	ben := c.another()
 	register(ben, "ben@example.test", "Ben")
+	confirmEmail(ben, f, "ben@example.test")
 	ben.must(201, "POST", "/groups", GroupCreate{Name: "Mine", Currency: "EUR", Members: []string{"Ben"}}, nil)
 	full(ben, "/g/"+plain.Token+"/join", JoinInput{})
 	full(ben, "/g/"+claim.Token+"/join", JoinInput{ClaimMemberId: &claim.Members[1].Id})

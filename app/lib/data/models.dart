@@ -1389,7 +1389,7 @@ class Plan {
   /// When someone has several plans, the highest counts.
   final int rank;
 
-  /// What anyone without an entitlement has.
+  /// The plan for groups without a sponsor.
   final bool isDefault;
   final PlanLimits limits;
 
@@ -1450,11 +1450,18 @@ class PlanProduct {
 
 /// Everything the administrator can sell and what it allows.
 class PlanCatalog {
-  const PlanCatalog({this.plans = const [], this.products = const []});
+  const PlanCatalog({
+    this.plans = const [],
+    this.products = const [],
+    this.unverifiedPlanId,
+    this.verifiedPlanId,
+  });
 
   factory PlanCatalog.fromJson(Object? data) {
     final json = _object(data);
     return PlanCatalog(
+      unverifiedPlanId: _opt<String>(json, 'unverifiedPlanId'),
+      verifiedPlanId: _opt<String>(json, 'verifiedPlanId'),
       plans: [for (final p in _opt<List<Object?>>(json, 'plans') ?? const <Object?>[]) Plan.fromJson(p)],
       products: [
         for (final p in _opt<List<Object?>>(json, 'products') ?? const <Object?>[]) PlanProduct.fromJson(p),
@@ -1464,8 +1471,24 @@ class PlanCatalog {
 
   final List<Plan> plans;
   final List<PlanProduct> products;
+  final String? unverifiedPlanId;
+  final String? verifiedPlanId;
+
+  PlanCatalog copyWith({
+    List<Plan>? plans,
+    List<PlanProduct>? products,
+    String? unverifiedPlanId,
+    String? verifiedPlanId,
+  }) => PlanCatalog(
+    plans: plans ?? this.plans,
+    products: products ?? this.products,
+    unverifiedPlanId: unverifiedPlanId ?? this.unverifiedPlanId,
+    verifiedPlanId: verifiedPlanId ?? this.verifiedPlanId,
+  );
 
   Map<String, Object?> toJson() => {
+    'unverifiedPlanId': ?unverifiedPlanId,
+    'verifiedPlanId': ?verifiedPlanId,
     'plans': [for (final p in plans) p.toJson()],
     'products': [for (final p in products) p.toJson()],
   };

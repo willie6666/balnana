@@ -2885,6 +2885,22 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+
+  @override
+  String get adminAutomaticPlans => 'Automatic plans';
+
+  @override
+  String get adminAutomaticPlansHelp =>
+      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+
+  @override
+  String get adminUnverifiedPlan => 'Without a verified email';
+
+  @override
+  String get adminVerifiedPlan => 'With a verified email';
+
+  @override
   String get adminPlansHelp => '새 한도는 앞으로 추가하는 항목에 적용되고 기존 항목은 그대로 남아요. 비워 두면 한도가 없어요.';
 
   @override

@@ -966,7 +966,7 @@ type PaymentState string
 type Plan struct {
 	Id string `json:"id"`
 
-	// IsDefault What anyone without an entitlement has.
+	// IsDefault The plan for groups without a sponsor. Account defaults are selected in PlanCatalog.
 	IsDefault bool `json:"isDefault"`
 
 	// Limits How much a plan allows. Left out means no limit.
@@ -981,6 +981,12 @@ type Plan struct {
 type PlanCatalog struct {
 	Plans    []Plan        `json:"plans"`
 	Products []PlanProduct `json:"products"`
+
+	// UnverifiedPlanId Automatic plan for accounts without a verified email. Active entitlements take precedence. Omitted on update to keep the assignment.
+	UnverifiedPlanId *string `json:"unverifiedPlanId,omitempty"`
+
+	// VerifiedPlanId Automatic plan for accounts with a verified email. Active entitlements take precedence. Omitted on update to keep the assignment.
+	VerifiedPlanId *string `json:"verifiedPlanId,omitempty"`
 }
 
 // PlanLimits How much a plan allows. Left out means no limit.
@@ -989,7 +995,9 @@ type PlanLimits struct {
 	JoinedGroups *int `json:"joinedGroups,omitempty"`
 
 	// MembersPerGroup The people a group can have. A server allows 100 at most whatever this says.
-	MembersPerGroup   *int `json:"membersPerGroup,omitempty"`
+	MembersPerGroup *int `json:"membersPerGroup,omitempty"`
+
+	// ReceiptsPerGroup Receipt quota for sponsored groups. Zero also forbids the account from uploading or replacing photos in any group.
 	ReceiptsPerGroup  *int `json:"receiptsPerGroup,omitempty"`
 	RecurringPerGroup *int `json:"recurringPerGroup,omitempty"`
 

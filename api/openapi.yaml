@@ -3291,6 +3291,7 @@ components:
         receiptsPerGroup:
           type: integer
           minimum: 0
+          description: Receipt quota for sponsored groups. Zero also forbids the account from uploading or replacing photos in any group.
         recurringPerGroup:
           type: integer
           minimum: 0
@@ -3322,7 +3323,7 @@ components:
           description: When someone has several plans, the highest counts.
         isDefault:
           type: boolean
-          description: What anyone without an entitlement has.
+          description: The plan for groups without a sponsor. Account defaults are selected in PlanCatalog.
         limits:
           $ref: "#/components/schemas/PlanLimits"
     PlanProduct:
@@ -3352,6 +3353,12 @@ components:
       type: object
       required: [plans, products]
       properties:
+        unverifiedPlanId:
+          type: string
+          description: Automatic plan for accounts without a verified email. Active entitlements take precedence. Omitted on update to keep the assignment.
+        verifiedPlanId:
+          type: string
+          description: Automatic plan for accounts with a verified email. Active entitlements take precedence. Omitted on update to keep the assignment.
         plans:
           type: array
           items:

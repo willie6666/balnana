@@ -62,6 +62,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       if (e.code != 'invalid_token' || account?.emailVerified != true) rethrow;
     }
     ref.invalidate(accountProvider);
+    ref.invalidate(myPlanProvider);
+    ref.invalidate(groupPlanProvider);
   }
 
   @override

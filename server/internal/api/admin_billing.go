@@ -55,7 +55,10 @@ func planCatalog(ctx context.Context, q querier) (PlanCatalog, error) {
 	if err != nil {
 		return PlanCatalog{}, err
 	}
-	return PlanCatalog{Plans: plans, Products: products}, nil
+	out := PlanCatalog{Plans: plans, Products: products}
+	err = q.QueryRow(ctx, `select unverified_plan_id, verified_plan_id from automatic_plans`).
+		Scan(&out.UnverifiedPlanId, &out.VerifiedPlanId)
+	return out, err
 }
 
 func (s *Server) GetAdminPlans(ctx context.Context, req GetAdminPlansRequestObject) (GetAdminPlansResponseObject, error) {
@@ -90,6 +93,11 @@ func validateCatalog(c *PlanCatalog) error {
 	}
 	if defaults != 1 {
 		return errInvalidPlan
+	}
+	for _, id := range []*string{c.UnverifiedPlanId, c.VerifiedPlanId} {
+		if id != nil && !slices.Contains(ids, *id) {
+			return errInvalidPlan
+		}
 	}
 	for i := range c.Products {
 		p := &c.Products[i]
@@ -145,6 +153,13 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 			if err != nil {
 				return err
 			}
+		}
+		// Change references before deleting plans that are no longer selected.
+		if _, err := tx.Exec(ctx, `update automatic_plans set
+			unverified_plan_id = coalesce($1, unverified_plan_id),
+			verified_plan_id = coalesce($2, verified_plan_id)`,
+			c.UnverifiedPlanId, c.VerifiedPlanId); err != nil {
+			return err
 		}
 		for _, p := range c.Products {
 			_, err := tx.Exec(ctx, `

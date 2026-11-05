@@ -29,6 +29,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
   PlanCatalog? _catalog;
   Object? _error;
   bool _busy = false;
+  int _saveVersion = 0;
 
   AdminApi get _api => ref.read(adminApiProvider)!;
 
@@ -62,7 +63,12 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
-    if (mounted) setState(() => _busy = false);
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _saveVersion++;
+      });
+    }
   }
 
   Future<void> _editPlan(Plan? plan) async {
@@ -75,7 +81,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     Plan demoted(Plan p) =>
         edited.isDefault && p.isDefault ? Plan(id: p.id, name: p.name, rank: p.rank, limits: p.limits) : p;
     await _save(
-      PlanCatalog(
+      catalog.copyWith(
         plans: [
           for (final p in catalog.plans)
             if (p.id == edited.id) edited else demoted(p),
@@ -112,7 +118,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     final body = products.isEmpty ? null : l10n.adminPlanRemoveBody(products.join(', '));
     if (!await _confirmRemove(l10n.adminPlanRemoveTitle(plan.name), body)) return;
     await _save(
-      PlanCatalog(
+      catalog.copyWith(
         plans: [...catalog.plans.where((p) => p.id != plan.id)],
         products: [...catalog.products.where((p) => p.planId != plan.id)],
       ),
@@ -127,7 +133,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
     );
     if (edited == null || !mounted) return;
     await _save(
-      PlanCatalog(
+      catalog.copyWith(
         plans: catalog.plans,
         products: [
           for (final p in catalog.products) identical(p, product) ? edited : p,
@@ -140,12 +146,13 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
   Future<void> _removeProduct(PlanProduct product) async {
     final l10n = context.l10n;
     final catalog = _catalog!;
-    if (!await _confirmRemove(l10n.adminPlanRemoveTitle(_productName(l10n, product)), l10n.adminProductRemoveBody)) {
+    if (!await _confirmRemove(
+      l10n.adminPlanRemoveTitle(_productName(l10n, product)),
+      l10n.adminProductRemoveBody,
+    )) {
       return;
     }
-    await _save(
-      PlanCatalog(plans: catalog.plans, products: [...catalog.products.where((p) => !identical(p, product))]),
-    );
+    await _save(catalog.copyWith(products: [...catalog.products.where((p) => !identical(p, product))]));
   }
 
   String _limits(AppLocalizations l10n, PlanLimits limits) {
@@ -156,7 +163,10 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
       l10n.adminPlanLimit(l10n.planLimitJoinedGroups, value(limits.joinedGroups)),
       l10n.adminPlanLimit(l10n.planLimitMembers, value(limits.membersPerGroup)),
       l10n.adminPlanLimit(l10n.planLimitSponsored, value(limits.sponsoredGroups)),
-      l10n.adminPlanLimit(l10n.planLimitReminders, limits.reminders ? l10n.planIncluded : l10n.planNotIncluded),
+      l10n.adminPlanLimit(
+        l10n.planLimitReminders,
+        limits.reminders ? l10n.planIncluded : l10n.planNotIncluded,
+      ),
     ].join(' · ');
   }
 
@@ -193,12 +203,37 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
       );
       String planName(String id) =>
           catalog.plans.where((p) => p.id == id).map((p) => p.name).firstOrNull ?? id;
+      final defaultId = catalog.plans.where((p) => p.isDefault).first.id;
+      Widget automaticPlan(String label, String? id, {required bool verified}) => Padding(
+        padding: const EdgeInsets.only(bottom: BSpace.s16),
+        child: DropdownButtonFormField<String>(
+          key: ValueKey('$verified-$id-$_saveVersion'),
+          initialValue: id ?? defaultId,
+          isExpanded: true,
+          decoration: InputDecoration(labelText: label),
+          items: [for (final p in catalog.plans) DropdownMenuItem(value: p.id, child: Text(p.name))],
+          onChanged: _busy
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  _save(
+                    verified
+                        ? catalog.copyWith(verifiedPlanId: value)
+                        : catalog.copyWith(unverifiedPlanId: value),
+                  );
+                },
+        ),
+      );
       body = LayoutBuilder(
         builder: (context, constraints) {
           final side = math.max(BSpace.s16, (constraints.maxWidth - contentMaxWidth) / 2);
           return ListView(
             padding: EdgeInsets.fromLTRB(side, BSpace.s8, side, BSpace.s32),
             children: [
+              FormSection(l10n.adminAutomaticPlans),
+              note(l10n.adminAutomaticPlansHelp),
+              automaticPlan(l10n.adminUnverifiedPlan, catalog.unverifiedPlanId, verified: false),
+              automaticPlan(l10n.adminVerifiedPlan, catalog.verifiedPlanId, verified: true),
               FormSection(l10n.adminPlans),
               note(l10n.adminPlansHelp),
               for (final p in catalog.plans)
@@ -207,7 +242,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
                   title: Text(p.isDefault ? l10n.adminPlanDefaultName(p.name) : p.name),
                   subtitle: Text(_limits(l10n, p.limits)),
                   onTap: _busy ? null : () => _editPlan(p),
-                  trailing: p.isDefault
+                  trailing: p.isDefault || p.id == catalog.unverifiedPlanId || p.id == catalog.verifiedPlanId
                       ? null
                       : IconButton(
                           tooltip: l10n.commonRemove,
@@ -507,9 +542,7 @@ class _ProductDialogState extends State<_ProductDialog> {
                     DropdownMenuItem(value: p, child: Text(providerName(p))),
                 ],
                 // A product's provider is part of what it is.
-                onChanged: widget.product != null
-                    ? null
-                    : (v) => setState(() => _provider = v!),
+                onChanged: widget.product != null ? null : (v) => setState(() => _provider = v!),
               ),
               gap,
               TextFormField(

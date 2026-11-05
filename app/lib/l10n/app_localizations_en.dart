@@ -2984,6 +2984,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+
+  @override
+  String get adminAutomaticPlans => 'Automatic plans';
+
+  @override
+  String get adminAutomaticPlansHelp =>
+      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+
+  @override
+  String get adminUnverifiedPlan => 'Without a verified email';
+
+  @override
+  String get adminVerifiedPlan => 'With a verified email';
+
+  @override
   String get adminPlansHelp =>
       'A new limit applies to what people add next. What they already have stays. Leave a limit empty for no limit.';
 
@@ -3064,7 +3080,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPlanDefault => 'Default plan';
 
   @override
-  String get adminPlanDefaultHelp => 'For every account without another plan.';
+  String get adminPlanDefaultHelp =>
+      'For groups without a sponsor. Automatic account plans are selected above.';
 
   @override
   String get adminPlanRemindersHelp => 'Groups on this plan can remind people to pay with a notification.';

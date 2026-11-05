@@ -122,7 +122,7 @@ String _importProblem(AppLocalizations l10n, String problem) => switch (problem)
 String _planLimit(AppLocalizations l10n, Map<String, Object?> params) {
   final max = (params['max'] as num?)?.toInt() ?? 0;
   return switch (params['limit']) {
-    'receipts' => l10n.errorLimitReceipts(max),
+    'receipts' => max == 0 ? l10n.errorReceiptUploadsDisabled : l10n.errorLimitReceipts(max),
     'recurring' => l10n.errorLimitRecurring(max),
     'joined_groups' => l10n.errorLimitJoinedGroups(max),
     'members' => l10n.errorLimitMembers(max),

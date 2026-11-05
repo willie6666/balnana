@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/l10n.dart';
+import '../../core/server.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
 
@@ -87,6 +88,12 @@ class ReceiptField extends ConsumerWidget {
         : null;
 
     if (photo == null) {
+      final billing = ref.watch(serverInfoProvider).value?.billing ?? false;
+      if (billing &&
+          ref.watch(signedInProvider) &&
+          ref.watchCurrent(myPlanProvider).value?.receiptsPerGroup == 0) {
+        return Text(l10n.errorReceiptUploadsDisabled);
+      }
       return Wrap(
         spacing: BSpace.s8,
         runSpacing: BSpace.s8,

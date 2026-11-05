@@ -4446,6 +4446,16 @@
       }
     }
   },
+  "errorReceiptUploadsDisabled": "Your plan does not allow photo uploads.",
+  "@errorReceiptUploadsDisabled": {"description": "Explains that the current plan prohibits uploading receipt photos."},
+  "adminAutomaticPlans": "Automatic plans",
+  "adminAutomaticPlansHelp": "Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.",
+  "adminUnverifiedPlan": "Without a verified email",
+  "adminVerifiedPlan": "With a verified email",
+  "@adminAutomaticPlans": {"description": "Heading for automatic email verification plans in administration."},
+  "@adminAutomaticPlansHelp": {"description": "Explains automatic plan selection, entitlement priority, and disabling photo uploads."},
+  "@adminUnverifiedPlan": {"description": "Label for the automatic plan assigned to users without a verified email."},
+  "@adminVerifiedPlan": {"description": "Label for the automatic plan assigned to users with a verified email."},
   "adminPlansHelp": "A new limit applies to what people add next. What they already have stays. Leave a limit empty for no limit.",
   "@adminPlansHelp": {
     "description": "Label or control text for admin plans help in the server administrator interface."
@@ -4562,7 +4572,7 @@
   "@adminPlanDefault": {
     "description": "Label or control text for admin plan default in the server administrator interface."
   },
-  "adminPlanDefaultHelp": "For every account without another plan.",
+  "adminPlanDefaultHelp": "For groups without a sponsor. Automatic account plans are selected above.",
   "@adminPlanDefaultHelp": {
     "description": "Label or control text for admin plan default help in the server administrator interface."
   },

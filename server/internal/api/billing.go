@@ -16,7 +16,7 @@ const entitlementActive = `e.revoked_at is null and e.starts_at <= now() and (e.
 // plan is what someone may use. A nil limit is no limit.
 type plan struct {
 	name      string
-	isDefault bool
+	paid      bool
 	receipts  *int
 	recurring *int
 	joined    *int
@@ -25,20 +25,25 @@ type plan struct {
 	reminders bool
 }
 
-// userPlan is the plan userID has now: its best entitlement, or the default
-// one. Its second result is when that plan ends, if it does.
+// userPlan is the best active entitlement, or the automatic plan for the
+// account's current email verification status. With no account it returns
+// the group default. Its second result is when an entitlement ends.
 func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time, error) {
 	var p plan
 	var ends *time.Time
 	err := q.QueryRow(ctx, `
-		select p.name, p.is_default, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
+		select p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
 		       p.members_per_group, p.sponsored_groups, p.reminders, e.expires_at
 		from plans p
+		cross join automatic_plans a
+		left join users u on u.id = $1
 		left join entitlements e on e.plan_id = p.id and e.user_id = $1 and `+entitlementActive+`
-		where p.is_default or e.id is not null
+		where (case when u.id is null then p.is_default
+		       when u.email_verified then p.id = a.verified_plan_id
+		       else p.id = a.unverified_plan_id end) or e.id is not null
 		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
 		limit 1`, userID).
-		Scan(&p.name, &p.isDefault, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
+		Scan(&p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -121,6 +126,21 @@ func countSponsored(ctx context.Context, q querier, userID string) (n int, err e
 func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, expenseID string) error {
 	if !s.conf().Billing {
 		return nil
+	}
+	// The uploader's zero-photo plan applies even in a sponsored group and
+	// when replacing a photo. The group's quota is checked separately below.
+	u, err := s.currentUser(ctx)
+	if err != nil {
+		return err
+	}
+	if u != nil {
+		p, _, err := userPlan(ctx, q, u.id)
+		if err != nil {
+			return err
+		}
+		if p.receipts != nil && *p.receipts == 0 {
+			return planLimit("receipts", 0)
+		}
 	}
 	var replaces bool
 	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
@@ -258,7 +278,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	}
 	out := MyPlan{
 		PlanName:          p.name,
-		Paid:              !p.isDefault,
+		Paid:              p.paid,
 		ExpiresAt:         ends,
 		ReceiptsPerGroup:  p.receipts,
 		RecurringPerGroup: p.recurring,
