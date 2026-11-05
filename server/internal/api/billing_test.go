@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -195,6 +196,73 @@ func TestReceiptLimit(t *testing.T) {
 	c.must(200, "POST", "/g/"+g.Token+"/expenses/"+first.Id+"/restore", nil, &back)
 	if back.HasReceipt {
 		t.Fatal("the photo was swept")
+	}
+}
+
+func TestReceiptReplacementAfterDowngrade(t *testing.T) {
+	c, mail, s := billingServer(t)
+	exec(t, s, `update plans set receipts_per_group = 1 where is_default`)
+	exec(t, s, `update plans set receipts_per_group = 2 where id = 'plus'`)
+	u := register(c, "ana@example.test", "Ana")
+	confirmEmail(c, mail, "ana@example.test")
+	grant(t, s, u.Id, "plus")
+	g := createGroup(c, "Ana", "Ben")
+	base := "/g/" + g.Token
+	c.must(200, "PUT", base+"/sponsor", nil, nil)
+	first, second, fresh := receiptExpense(c, g), receiptExpense(c, g), receiptExpense(c, g)
+	path := func(e Expense) string { return base + "/expenses/" + e.Id + "/receipt" }
+	photo := pngBytes(t, halves(8, 8))
+	for _, e := range []Expense{first, second} {
+		if rec := c.upload(path(e), "image/png", photo); rec.Code != http.StatusOK {
+			t.Fatalf("upload: %d %s", rec.Code, rec.Body)
+		}
+	}
+	original := c.do("GET", path(first), nil)
+	if original.Code != http.StatusOK {
+		t.Fatalf("original receipt: %d %s", original.Code, original.Body)
+	}
+	checkLimit := func(rec *httptest.ResponseRecorder) {
+		t.Helper()
+		var body Error
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if rec.Code != http.StatusPaymentRequired || body.Code != "plan_limit" || body.Params == nil ||
+			(*body.Params)["limit"] != "receipts" || (*body.Params)["max"] != float64(1) {
+			t.Fatalf("receipt limit: %d %s", rec.Code, rec.Body)
+		}
+	}
+
+	// A downgrade during a replacement must be caught again before saving.
+	replacement := pngBytes(t, halves(4, 4))
+	body := &watchedReceipt{Reader: bytes.NewReader(replacement), before: func() {
+		exec(t, s, `update entitlements set revoked_at = now() where user_id = $1`, u.Id)
+	}}
+	req := httptest.NewRequest("PUT", BasePath+path(first), body)
+	req.Header.Set("Content-Type", "image/png")
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	rec := httptest.NewRecorder()
+	c.h.ServeHTTP(rec, req)
+	checkLimit(rec)
+	if body.reads.Load() == 0 {
+		t.Fatal("the downgrade must happen while reading the replacement")
+	}
+
+	// Above the new quota, neither existing photo can be replaced or a new one added.
+	for _, e := range []Expense{first, second, fresh} {
+		checkLimit(c.upload(path(e), "image/png", replacement))
+	}
+	for _, e := range []Expense{first, second} {
+		rec := c.do("GET", path(e), nil)
+		if rec.Code != http.StatusOK || !bytes.Equal(rec.Body.Bytes(), original.Body.Bytes()) {
+			t.Fatalf("existing receipt changed: %d", rec.Code)
+		}
+	}
+
+	// Deletion is still allowed; back at the quota, replacement is allowed again.
+	c.must(204, "DELETE", path(second), nil, nil)
+	if rec := c.upload(path(first), "image/png", replacement); rec.Code != http.StatusOK {
+		t.Fatalf("replace at quota: %d %s", rec.Code, rec.Body)
 	}
 }
 

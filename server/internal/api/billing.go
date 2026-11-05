@@ -81,8 +81,7 @@ func groupPlan(ctx context.Context, q querier, g *group) (*plan, *string, error)
 
 const nilUUID = "00000000-0000-0000-0000-000000000000"
 
-// planLimit is the refusal to add past a limit. What exists stays as it is:
-// only adding stops.
+// planLimit is the refusal to exceed a limit. Existing data stays as it is.
 func planLimit(limit string, max int) error {
 	return &apiError{status: http.StatusPaymentRequired, code: "plan_limit", params: map[string]any{"limit": limit, "max": max}}
 }
@@ -121,8 +120,8 @@ func countSponsored(ctx context.Context, q querier, userID string) (n int, err e
 	return n, err
 }
 
-// checkReceiptLimit refuses a photo the group has no room for. One replacing
-// the expense's photo adds nothing. In a write it needs the group locked.
+// checkReceiptLimit allows replacement at the group's quota, but not above it.
+// New photos need room in the quota. In a write it needs the group locked.
 func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, expenseID string) error {
 	if !s.conf().Billing {
 		return nil
@@ -143,7 +142,7 @@ func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, exp
 		}
 	}
 	var replaces bool
-	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil || replaces {
+	if err := q.QueryRow(ctx, `select exists (select 1 from receipts where expense_id = $1)`, expenseID).Scan(&replaces); err != nil {
 		return err
 	}
 	p, _, err := groupPlan(ctx, q, g)
@@ -154,7 +153,7 @@ func (s *Server) checkReceiptLimit(ctx context.Context, q querier, g *group, exp
 	if err != nil {
 		return err
 	}
-	if n >= *p.receipts {
+	if n > *p.receipts || n == *p.receipts && !replaces {
 		return planLimit("receipts", *p.receipts)
 	}
 	return nil

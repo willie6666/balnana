@@ -1577,6 +1577,9 @@ paths:
         where it was taken. The expense's version does not change.
         Uploads are processed one at a time; once its turn comes, the photo
         must arrive within two minutes, or the answer is 408 `timeout`.
+        With billing enabled, new photos need room in the group's receipt
+        quota. Replacing a photo is allowed at the quota, but not above it
+        (402 `plan_limit`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
