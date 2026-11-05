@@ -249,6 +249,9 @@ func (s *Server) limitResets(ctx context.Context) error {
 
 // mayMailReset counts a reset email to address, by whoever asked and in all.
 func (s *Server) mayMailReset(ctx context.Context, address string) bool {
+	// Account addresses are case-insensitive (citext), so their mail limits
+	// must use the same key regardless of the spelling in the request.
+	address = strings.ToLower(address)
 	now := time.Now()
 	return s.resetMails.take(address+"|"+requestClient(ctx), 1, now) && s.allResetMails.take(address, 1, now)
 }

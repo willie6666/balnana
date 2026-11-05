@@ -460,7 +460,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
 
   List<Widget> _form(BuildContext context, Map<String, AdminSetting> settings) {
     final l10n = context.l10n;
-    final publicUrl = settings['BALNANA_PUBLIC_URL']?.effective ?? '';
+    final publicUrl = normalizeServerUrl(settings['BALNANA_PUBLIC_URL']?.effective ?? '') ?? '';
     String callback(String provider) => '$publicUrl$apiBasePath/auth/oauth/$provider/callback';
     const gap = SizedBox(height: BSpace.s16);
     // Only what the picked mode uses; hidden settings keep their values.

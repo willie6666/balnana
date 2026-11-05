@@ -468,4 +468,62 @@ void main() {
     });
     expect(find.text('Enter a full address starting with https:// or http://.'), findsOneWidget);
   });
+
+  for (final (publicUrl, base) in [
+    (_server, _server),
+    ('$_server/', _server),
+    ('$_server/split', '$_server/split'),
+    ('$_server/split/', '$_server/split'),
+  ]) {
+    testWidgets('OAuth and webhook instructions use the public URL without an extra slash ($publicUrl)', (
+      tester,
+    ) async {
+      final api = _api(
+        [],
+        (r) => switch ((r.method, r.path)) {
+          ('POST', '/admin/login') => (200, {'token': 'admin-token'}),
+          ('GET', '/admin/settings') => (
+            200,
+            {
+              'settings': [
+                _setting('BALNANA_PUBLIC_URL', value: publicUrl),
+                _setting('BALNANA_AUTH_MODE', value: 'accounts'),
+                _setting('BALNANA_AUTH_PASSWORD', value: 'true'),
+                _setting('BALNANA_OAUTH_GOOGLE_CLIENT_ID', value: 'google-client'),
+                _setting('BALNANA_OAUTH_GOOGLE_SECRET', secret: true),
+                _setting('BALNANA_OAUTH_OIDC_PROVIDERS', value: 'authentik'),
+                _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_ISSUER', value: 'https://auth.example.com'),
+                _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_CLIENT_ID', value: 'balnana'),
+                _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_SECRET', secret: true),
+                _setting('BALNANA_OAUTH_OIDC_AUTHENTIK_NAME', value: 'Authentik'),
+              ],
+            },
+          ),
+          _ => (404, {'code': 'not_found'}),
+        },
+      );
+      await _boot(
+        tester,
+        info: const ServerInfo(version: '1', authMode: AuthMode.accounts, publicUrl: _server),
+        api: api,
+      );
+      final router = tester.widget<MaterialApp>(find.byType(MaterialApp)).routerConfig! as GoRouter;
+      router.go('/admin');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), 'the admin password');
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+      for (final path in [
+        '/auth/oauth/google/callback',
+        '/auth/oauth/authentik/callback',
+        '/webhooks/kofi',
+        '/webhooks/play',
+      ]) {
+        final instruction = find.textContaining('$base/api/v1$path');
+        await tester.scrollUntilVisible(instruction, 300, scrollable: find.byType(Scrollable).first);
+        expect(instruction, findsOneWidget);
+      }
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
 }

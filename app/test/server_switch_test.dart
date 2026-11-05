@@ -127,8 +127,9 @@ void main() {
   });
 
   // A session is for the server that gave it, however late it comes back.
-  for (final register in [false, true]) {
-    testWidgets('a late ${register ? 'sign-up' : 'sign-in'} on one server is not kept for the next', (tester) async {
+  for (final (register, returnToA) in [(false, false), (true, false), (false, true), (true, true)]) {
+    final action = register ? 'sign-up' : 'sign-in';
+    testWidgets('late $action is ignored after switching (return: $returnToA)', (tester) async {
       SharedPreferences.setMockInitialValues({'settings.server': _a});
       final prefs = await SharedPreferences.getInstance();
       final answer = Completer<Response<Object?>>();
@@ -191,6 +192,13 @@ void main() {
       await tester.pumpAndSettle();
       container.read(settingsProvider.notifier).setServerUrl(_b);
       await tester.pumpAndSettle();
+      if (returnToA) {
+        container.read(settingsProvider.notifier).setServerUrl(_a);
+        container.read(routerProvider).go('/groups');
+        // The pending sign-in still animates while its branch is visible.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
       answer.complete(
         Response(
           requestOptions: asked!,
@@ -204,7 +212,7 @@ void main() {
 
       expect(prefs.getString('session.tokens'), isNull);
       expect(container.read(sessionProvider).token, isNull);
-      expect(container.read(routerProvider).state.matchedLocation, '/settings');
+      expect(container.read(routerProvider).state.matchedLocation, returnToA ? '/sign-in' : '/settings');
       await tester.runAsync(() => container.read(apiProvider)!.get<Object?>('/probe'));
       expect(sent.where((o) => o.uri.host == 'b.example' && o.headers.containsKey('Authorization')), isEmpty);
       await tester.pumpWidget(const SizedBox());
@@ -230,4 +238,49 @@ void main() {
     expect(session.set(null, from: first), isFalse);
     expect(container.read(sessionProvider).token, 'newer');
   });
+
+  test(
+    'returning to a server rejects old sign-in and sign-out replies without changing its newer account',
+    () async {
+      SharedPreferences.setMockInitialValues({'settings.server': _a});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [prefsProvider.overrideWithValue(prefs), cacheDbProvider.overrideWithValue(null)],
+      );
+      addTearDown(container.dispose);
+      final session = container.read(sessionProvider.notifier);
+      final settings = container.read(settingsProvider.notifier);
+      final old = container.read(identityProvider);
+      for (final token in ['first-token', 'renewed-token', 'fresh-token']) {
+        expect(session.set(token, from: container.read(identityProvider), userId: 'new-user'), isTrue);
+      }
+      final fresh = container.read(identityProvider);
+      // Returning must not reuse either the pre-login or signed-in generation.
+      for (var i = 0; i < 3; i++) {
+        settings.setServerUrl(_b);
+        container.read(identityProvider);
+        settings.setServerUrl(_a);
+        final current = container.read(identityProvider);
+        expect(current.generation, greaterThan(fresh.generation));
+        for (final stale in [old, fresh]) {
+          expect(session.set('old-token', from: stale, userId: 'old-user'), isFalse);
+          expect(session.set(null, from: stale), isFalse);
+          session.lost(stale, signedIn: true);
+        }
+        expect(container.read(sessionProvider).token, 'fresh-token');
+        expect(container.read(sessionProvider).userId, 'new-user');
+        expect(jsonDecode(prefs.getString('session.tokens')!), {_a: 'fresh-token'});
+      }
+      // Cookie-session loss must advance the counter used by later sign-ins.
+      final current = container.read(identityProvider);
+      expect(session.set(null, from: current), isTrue);
+      final cookie = container.read(identityProvider);
+      session.lost(cookie, signedIn: true);
+      final signedOut = container.read(identityProvider);
+      expect(signedOut.generation, greaterThan(cookie.generation));
+      expect(session.set('late-cookie-login', from: cookie), isFalse);
+      expect(session.set('current-login', from: signedOut, userId: 'current-user'), isTrue);
+      expect(container.read(identityProvider).generation, greaterThan(signedOut.generation));
+    },
+  );
 }

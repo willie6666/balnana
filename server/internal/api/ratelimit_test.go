@@ -44,6 +44,44 @@ func TestBuckets(t *testing.T) {
 	}
 }
 
+func TestResetMailCaseInsensitiveLimits(t *testing.T) {
+	from := func(client string) context.Context {
+		return context.WithValue(context.Background(), clientCtxKey{}, client)
+	}
+	addresses := []string{"ana@example.com", "ANA@EXAMPLE.COM", "Ana@Example.Com"}
+	t.Run("one client", func(t *testing.T) {
+		s := NewServer(baseConfig(t, map[string]string{}), nil, slog.New(slog.DiscardHandler), "test")
+		for i := range resetMailBurst {
+			if !s.mayMailReset(from("client"), addresses[i%len(addresses)]) {
+				t.Fatalf("reset %d refused before the burst ran out", i+1)
+			}
+		}
+		if s.mayMailReset(from("client"), addresses[0]) {
+			t.Fatal("changing the address case bypassed the client-address limit")
+		}
+		if !s.mayMailReset(from("other-client"), addresses[1]) {
+			t.Fatal("the client-address limit blocked another client")
+		}
+		if !s.mayMailReset(from("client"), "ben@example.com") {
+			t.Fatal("the address limit blocked a different account")
+		}
+	})
+	t.Run("all clients", func(t *testing.T) {
+		s := NewServer(baseConfig(t, map[string]string{}), nil, slog.New(slog.DiscardHandler), "test")
+		for i := range allResetMailBurst {
+			if !s.mayMailReset(from(fmt.Sprint("client", i)), addresses[i%len(addresses)]) {
+				t.Fatalf("reset %d refused before the burst ran out", i+1)
+			}
+		}
+		if s.mayMailReset(from("new-client"), addresses[1]) {
+			t.Fatal("changing the address case bypassed the address-wide limit")
+		}
+		if !s.mayMailReset(from("new-client"), "ben@example.com") {
+			t.Fatal("the address-wide limit blocked a different account")
+		}
+	})
+}
+
 func TestClientKey(t *testing.T) {
 	const xff, realIP = "X-Forwarded-For", "X-Real-Ip"
 	tests := []struct {

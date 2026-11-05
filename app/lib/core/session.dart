@@ -42,12 +42,19 @@ class SessionNotifier extends Notifier<SessionKey> {
   static const _usersKey = 'session.users';
 
   String? _server;
+  // The notifier survives dependency rebuilds. Keep one counter across
+  // server switches and session changes, so returning never revives an identity.
+  int _generation = -1;
 
   @override
   SessionKey build() {
     _server = ref.watch(serverUrlProvider);
     final token = _tokens()[_server];
-    return SessionKey(token, 0, userId: token == null ? null : _tokens(_usersKey)[_userKey(_server!, token)]);
+    return SessionKey(
+      token,
+      ++_generation,
+      userId: token == null ? null : _tokens(_usersKey)[_userKey(_server!, token)],
+    );
   }
 
   Map<String, String> _tokens([String key = _key]) {
@@ -73,7 +80,12 @@ class SessionNotifier extends Notifier<SessionKey> {
   /// and false is returned.
   bool set(String? token, {required Identity from, String? userId}) {
     final server = _server;
-    if (server == null || from.server != server || from.generation != state.generation) return false;
+    if (server == null ||
+        from.server != server ||
+        from.token != state.token ||
+        from.generation != state.generation) {
+      return false;
+    }
     final tokens = _tokens();
     if (token == null) {
       tokens.remove(server);
@@ -86,7 +98,7 @@ class SessionNotifier extends Notifier<SessionKey> {
     if (token != null && userId != null) _rememberUser(server, token, userId);
     state = SessionKey(
       token,
-      state.generation + 1,
+      ++_generation,
       userId: token == null ? null : userId ?? _tokens(_usersKey)[_userKey(server, token)],
     );
     return true;
@@ -120,7 +132,7 @@ class SessionNotifier extends Notifier<SessionKey> {
     if (from.token != null) {
       set(null, from: from);
     } else if (signedIn && from.server == _server && from.generation == state.generation) {
-      state = SessionKey(null, state.generation + 1);
+      state = SessionKey(null, ++_generation);
     }
   }
 }

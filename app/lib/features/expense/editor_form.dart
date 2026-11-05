@@ -181,7 +181,7 @@ class _EditorState extends ConsumerState<_Editor> {
     } else if (widget.repeat) {
       _unit = RepeatUnit.month;
     }
-    for (final c in [_amount, _every, ..._values.values]) {
+    for (final c in [_amount, _title, _note, _place, _every, ..._values.values]) {
       c.addListener(_changed);
     }
     for (final c in _paid.values) {

@@ -1786,6 +1786,37 @@ void foreignTests() {
     await tester.pumpAndSettle();
   }
 
+  for (final (name, hint) in [
+    ('title', 'What was it for?'),
+    ('note', 'Optional'),
+    ('place', 'Where was it? (optional)'),
+  ]) {
+    testWidgets('changing only the $name asks before discarding a draft', (tester) async {
+      final container = await boot(tester, _Saves());
+      await _go(tester, container, '/g/tok/expenses/new');
+      final input = find.widgetWithText(TextFormField, hint);
+      await tester.ensureVisible(input);
+      await tester.pumpAndSettle();
+      await tester.enterText(input, 'Draft text');
+      await tester.pump();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard changes?'), findsOneWidget);
+      expect(find.byType(ExpenseEditorPage), findsOneWidget);
+      await tester.tap(find.text('Cancel').last);
+      await tester.pumpAndSettle();
+      expect(field(tester, hint).controller.text, 'Draft text');
+
+      // Reverting the only change must allow leaving without a prompt.
+      await tester.enterText(input, '');
+      await tester.pump();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(find.byType(ExpenseEditorPage), findsNothing);
+    });
+  }
+
   testWidgets('hiding every category collapses the category row', (tester) async {
     final group = Group(
       token: 'tok',
