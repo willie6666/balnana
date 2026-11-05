@@ -27,7 +27,6 @@ import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
-import '../group/expenses_tab.dart';
 import '../group/group_page.dart';
 import '../group/recurring_page.dart';
 import 'location.dart';

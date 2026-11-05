@@ -112,30 +112,10 @@ class ReceiptField extends ConsumerWidget {
       );
     }
 
-    final scheme = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(BSpace.s12),
-          child: Container(
-            width: 120,
-            height: 160,
-            color: scheme.surfaceContainerHighest,
-            child: switch (photo) {
-              AsyncData(:final value) => Semantics(
-                button: true,
-                label: l10n.receiptView,
-                child: InkWell(
-                  onTap: () => showReceipt(context, value),
-                  child: Image.memory(value, fit: BoxFit.cover, gaplessPlayback: true),
-                ),
-              ),
-              AsyncError() => Icon(Icons.broken_image_outlined, color: scheme.onSurfaceVariant),
-              _ => const Center(child: CircularProgressIndicator()),
-            },
-          ),
-        ),
+        ReceiptThumbnail(photo: photo),
         const SizedBox(width: BSpace.s8),
         TextButton.icon(
           onPressed: onRemoved,
@@ -143,6 +123,38 @@ class ReceiptField extends ConsumerWidget {
           label: Text(l10n.receiptRemove),
         ),
       ],
+    );
+  }
+}
+
+/// A receipt photo, small, that opens over the whole screen when tapped.
+class ReceiptThumbnail extends StatelessWidget {
+  const ReceiptThumbnail({super.key, required this.photo});
+
+  final AsyncValue<Uint8List> photo;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(BSpace.s12),
+      child: Container(
+        width: 120,
+        height: 160,
+        color: scheme.surfaceContainerHighest,
+        child: switch (photo) {
+          AsyncData(:final value) => Semantics(
+            button: true,
+            label: context.l10n.receiptView,
+            child: InkWell(
+              onTap: () => showReceipt(context, value),
+              child: Image.memory(value, fit: BoxFit.cover, gaplessPlayback: true),
+            ),
+          ),
+          AsyncError() => Icon(Icons.broken_image_outlined, color: scheme.onSurfaceVariant),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
+      ),
     );
   }
 }

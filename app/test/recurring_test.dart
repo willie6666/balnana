@@ -463,7 +463,7 @@ void main() {
       recurringId: 'r1',
     );
     final container = await _boot(tester, server, [expenseProvider.overrideWith((ref, key) async => added)]);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
 
     // An expense already added does not repeat itself.
     expect(find.widgetWithText(ChoiceChip, 'Monthly', skipOffstage: false), findsNothing);

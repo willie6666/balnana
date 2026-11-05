@@ -486,24 +486,11 @@ class _EditorState extends ConsumerState<_Editor> {
     }
   }
 
-  Future<void> _delete() async {
-    final e = widget.expense!;
-    final router = GoRouter.of(context);
-    setState(() => _busy = true);
-    final deleted = await deleteExpenseWithUndo(context, ref, _group, e);
-    // Gone already (the user went back): popping now would close another page.
-    if (!mounted) return;
-    if (deleted) {
-      router.pop();
-    } else {
-      setState(() => _busy = false);
-    }
-  }
-
   Future<void> _deleteRecurring() async {
     final router = GoRouter.of(context);
     setState(() => _busy = true);
     final deleted = await deleteRecurring(context, ref, _group, widget.recurring!);
+    // Gone already (the user went back): popping now would close another page.
     if (!mounted) return;
     if (deleted) {
       router.pop();
@@ -555,16 +542,13 @@ class _EditorState extends ConsumerState<_Editor> {
         submitLabel: l10n.commonSave,
         busy: _busy,
         onSubmit: _save,
+        // An expense is deleted from its page, where it is looked at.
         actions: [
-          if (editing)
+          if (widget.recurring != null)
             IconButton(
               tooltip: l10n.expenseDelete,
               icon: const Icon(Icons.delete_outline),
-              onPressed: _busy
-                  ? null
-                  : widget.recurring != null
-                  ? _deleteRecurring
-                  : _delete,
+              onPressed: _busy ? null : _deleteRecurring,
             ),
         ],
         children: [

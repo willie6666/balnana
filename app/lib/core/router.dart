@@ -9,6 +9,7 @@ import '../features/account/oauth.dart';
 import '../features/account/sign_in_page.dart';
 import '../features/activity/activity_page.dart';
 import '../features/admin/admin_page.dart';
+import '../features/expense/expense_detail_page.dart';
 import '../features/expense/expense_editor_page.dart';
 import '../features/group/categories_page.dart';
 import '../features/group/group_page.dart';
@@ -192,13 +193,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'expenses/:id',
                     parentNavigatorKey: _root,
-                    pageBuilder: (context, state) => MaterialPage(
-                      fullscreenDialog: true,
-                      child: ExpenseEditorPage(
-                        token: state.pathParameters['token']!,
-                        expenseId: state.pathParameters['id'],
-                      ),
+                    builder: (context, state) => ExpenseDetailPage(
+                      token: state.pathParameters['token']!,
+                      expenseId: state.pathParameters['id']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        parentNavigatorKey: _root,
+                        pageBuilder: (context, state) => MaterialPage(
+                          fullscreenDialog: true,
+                          child: ExpenseEditorPage(
+                            token: state.pathParameters['token']!,
+                            expenseId: state.pathParameters['id'],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'recurring/:id',

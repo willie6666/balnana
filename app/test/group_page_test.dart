@@ -491,7 +491,7 @@ void main() {
       expenseProvider.overrideWith((ref, key) async => remote),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
     expect(find.widgetWithText(TextFormField, 'Lunch'), findsOneWidget);
 
     // Untouched, the form follows the newer version.
@@ -517,6 +517,50 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Dinner'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, '10.00'), findsOneWidget);
     expect(find.textContaining('Someone else changed this expense'), findsNothing);
+  });
+
+  testWidgets('an expense opens to read, and changes only from its edit button', (tester) async {
+    final server = _Saves();
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = server;
+    final lunch = _expense(1, 'Lunch');
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      expensesProvider.overrideWith2((token) => _Listed(token, [lunch])),
+      expenseProvider.overrideWith((ref, key) async => lunch),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    await tester.tap(find.text('Lunch'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextFormField), findsNothing);
+    expect(find.text('Save'), findsNothing);
+    expect(find.text('Paid by'), findsOneWidget);
+    expect(find.text('Equally'), findsOneWidget);
+    // Ana paid it and has half of it.
+    expect(find.text('Ana (you)'), findsNWidgets(2));
+    expect(find.text('Ben'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Edit expense'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Lunch'), 'Team lunch');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(server.sent.map((s) => s.$1), contains('PUT /api/v1/g/tok/expenses/e1'));
+    // Saved, it is back to reading.
+    expect(find.byType(TextFormField), findsNothing);
+    expect(find.byTooltip('Edit expense'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    expect(server.sent.map((s) => s.$1), contains('DELETE /api/v1/g/tok/expenses/e1'));
+    expect(find.text('Deleted “Lunch”'), findsOneWidget);
+    expect(find.byTooltip('Edit expense'), findsNothing);
   });
 
   testWidgets('a failed page waits for a retry instead of asking again', (tester) async {
@@ -774,7 +818,7 @@ void main() {
       expenseProvider.overrideWith((ref, key) async => remote),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
     await tester.ensureVisible(find.text('Take a photo'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Take a photo'));
@@ -792,7 +836,8 @@ void main() {
     // A saved photo shows, and removing it is sent on save.
     server.requests.clear();
     remote = _expense(1, 'Lunch', hasReceipt: true);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    container.invalidate(expenseProvider((token: 'tok', id: 'e1')));
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
     await tester.ensureVisible(find.text('Remove'));
     await tester.pumpAndSettle();
     expect(server.requests, ['GET /api/v1/g/tok/expenses/e1/receipt']);
@@ -817,7 +862,7 @@ void main() {
         expenseProvider.overrideWith((ref, key) async => remote),
         groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
       ]);
-      await _go(tester, container, '/g/tok/expenses/e1');
+      await _go(tester, container, '/g/tok/expenses/e1/edit');
       if (dirty) await tester.enterText(find.widgetWithText(TextField, 'Lunch'), 'My draft');
       Future<void> refresh(bool hasReceipt) async {
         remote = _expense(1, 'Lunch', hasReceipt: hasReceipt);
@@ -1769,8 +1814,14 @@ void foreignTests() {
     expect(find.text('¥1,000'), findsOneWidget);
     expect(find.text('Ana paid · \$6.43'), findsOneWidget);
 
-    // Opened, it is in yen, with the rate worked out from the two.
+    // Opened, it reads in yen, with what it came to in dollars.
     await tester.tap(find.text('Ramen'));
+    await tester.pumpAndSettle();
+    expect(find.text('¥1,000'), findsWidgets);
+    expect(find.text('\$6.43'), findsWidgets);
+
+    // Edited, it is in yen, with the rate worked out from the two.
+    await tester.tap(find.byTooltip('Edit expense'));
     await tester.pumpAndSettle();
     expect(find.text('Paid in JPY'), findsOneWidget);
     expect(field(tester, '1 JPY in USD').controller.text, '0.00643');
@@ -1860,7 +1911,7 @@ void foreignTests() {
       expensesProvider.overrideWith2((token) => _Listed(token, const [])),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
     final chip = find.widgetWithText(ChoiceChip, 'Food & drink');
     expect(chip, findsOneWidget);
     expect(tester.widget<ChoiceChip>(chip).selected, isTrue);
@@ -2053,7 +2104,7 @@ void foreignTests() {
       expenseProvider.overrideWith((ref, key) async => newer),
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
-    await _go(tester, container, '/g/tok/expenses/e1');
+    await _go(tester, container, '/g/tok/expenses/e1/edit');
 
     expect(find.text('Made with a newer version'), findsOneWidget);
     expect(find.text('Save'), findsNothing);
