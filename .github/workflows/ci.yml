@@ -59,6 +59,11 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # sqlite3's hook verifies its download but doesn't retry an unexpected
+      # response body. Prime its cache with the same locked SHA-256, retrying
+      # network errors and mismatches before any native library is used.
+      - run: python3 -B -m unittest discover -s ../.github/scripts -p 'test_*.py'
+      - run: python3 ../.github/scripts/prepare_sqlite.py .
       - run: flutter analyze
       - run: flutter test
       # The build that may link to Ko-fi, which the Play build must never do.
