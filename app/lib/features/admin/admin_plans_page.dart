@@ -482,7 +482,7 @@ class _ProductDialog extends StatefulWidget {
 class _ProductDialogState extends State<_ProductDialog> {
   static final _amount = RegExp(r'^\d{1,10}(\.\d{1,2})?$');
   static final _currencyCode = RegExp(r'^[A-Z]{3}$');
-  static final _paypalPlan = RegExp(r'^P-[0-9A-Z]+$');
+  static final _paypalPlan = RegExp(r'^P-[0-9A-Z]{24}$');
 
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.product?.product);

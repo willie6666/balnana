@@ -119,13 +119,15 @@ func validateCatalog(c *PlanCatalog) error {
 			return errInvalidPlan
 		}
 		if p.Provider == Paypal {
+			if strings.HasPrefix(p.Product, "P-") && !paypalPlanID.MatchString(p.Product) {
+				return errInvalidPlan
+			}
 			// The app buys it by its name, and a one-off payment by its price.
 			if slices.Contains(paypal, p.Product) {
 				return errInvalidPlan
 			}
 			paypal = append(paypal, p.Product)
-			if !paypalPlanID.MatchString(p.Product) && (p.MinAmount == nil || p.Currency == nil ||
-				!sameAmount(*p.MinAmount, paypalAmount(*p.MinAmount, *p.Currency))) {
+			if !paypalPlanID.MatchString(p.Product) && (p.MinAmount == nil || p.Currency == nil || !validPayPalPrice(*p.MinAmount, *p.Currency)) {
 				return errInvalidPlan
 			}
 		}

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -46,12 +47,15 @@ const (
 
 var (
 	// paypalPlanID is a subscription plan's ID, as PayPal makes them.
-	paypalPlanID = regexp.MustCompile(`^P-[0-9A-Z]+$`)
+	paypalPlanID = regexp.MustCompile(`^P-[0-9A-Z]{24}$`)
 	// paypalID is what an order or subscription ID from outside may look
 	// like before PayPal is asked about it.
 	paypalID = regexp.MustCompile(`^[A-Za-z0-9-]{1,64}$`)
 	// paypalWholeCurrencies take no decimals at PayPal.
 	paypalWholeCurrencies = []string{"HUF", "JPY", "TWD"}
+	// https://developer.paypal.com/api/codes/currency
+	paypalCurrencies = []string{"AUD", "BRL", "CAD", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "JPY",
+		"MYR", "MXN", "NOK", "NZD", "PHP", "PLN", "RUB", "SEK", "SGD", "CHF", "THB", "TWD", "USD"}
 
 	errPayPalUnavailable = &apiError{status: http.StatusServiceUnavailable, code: "paypal_unavailable"}
 	errPayPalSubscribed  = conflict("paypal_subscribed")
@@ -86,6 +90,10 @@ func newPayPalClient(cfg *config.Config) *paypalClient {
 	if cfg.PayPalSandbox {
 		base = paypalSandbox
 	}
+	return payPalClientAt(cfg, base)
+}
+
+func payPalClientAt(cfg *config.Config, base string) *paypalClient {
 	key := clientcredentials.Config{
 		ClientID:     cfg.PayPalClientID,
 		ClientSecret: cfg.PayPalSecret,
@@ -118,8 +126,13 @@ func (p *paypalClient) call(ctx context.Context, method, path string, body any, 
 	if err != nil {
 		return err
 	}
-	if r != nil {
-		req.Header.Set("Content-Type", "application/json")
+	// The Subscriptions schema requires this header even on its GET methods.
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	if method == http.MethodPost && (strings.HasPrefix(path, "/v2/checkout/orders") || path == "/v1/billing/subscriptions") {
+		// These endpoints default to id/status/links. Capture reconciliation
+		// needs purchase_units and its payments in the response as well.
+		req.Header.Set("Prefer", "return=representation")
 	}
 	if requestID != "" {
 		req.Header.Set("PayPal-Request-Id", requestID)
@@ -151,7 +164,7 @@ func (p *paypalClient) call(ctx context.Context, method, path string, body any, 
 // paypalNotFound says whether PayPal doesn't know what was asked about.
 func paypalNotFound(err error) bool {
 	var refused paypalRefusal
-	return errors.As(err, &refused) && (refused.status == http.StatusNotFound || refused.status == http.StatusBadRequest)
+	return errors.As(err, &refused) && refused.status == http.StatusNotFound
 }
 
 type paypalMoney struct {
@@ -251,6 +264,12 @@ func sameAmount(a, b string) bool {
 	return okX && okY && x.Cmp(y) == 0
 }
 
+func validPayPalPrice(amount, currency string) bool {
+	n, ok := new(big.Rat).SetString(amount)
+	return ok && n.Sign() > 0 && decimalAmount.MatchString(amount) && slices.Contains(paypalCurrencies, currency) &&
+		sameAmount(amount, paypalAmount(amount, currency))
+}
+
 // paypalSlot waits for one of paypalSlots; release gives it back.
 func paypalSlot(ctx context.Context) (release func(), err error) {
 	wait := time.NewTimer(playWait)
@@ -346,7 +365,7 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 		return nil, err
 	}
 	subscription := paypalPlanID.MatchString(req.Body.Product)
-	if !subscription && (amount == nil || currency == nil) {
+	if !subscription && (amount == nil || currency == nil || !validPayPalPrice(*amount, *currency)) {
 		return nil, errNotFound // the admin page doesn't allow it
 	}
 	if subscription {
@@ -405,7 +424,7 @@ func (s *Server) startPayPalOrder(ctx context.Context, pp *paypalClient, userID,
 		}}},
 	}
 	var order paypalOrder
-	if err := pp.call(ctx, http.MethodPost, "/v2/checkout/orders", body, "", &order); err != nil {
+	if err := pp.call(ctx, http.MethodPost, "/v2/checkout/orders", body, uuid.NewString(), &order); err != nil {
 		return "", err
 	}
 	href := linkTo(order.Links, "payer-action", "approve")
@@ -432,7 +451,7 @@ func (s *Server) startPayPalSubscription(ctx context.Context, pp *paypalClient, 
 		},
 	}
 	var sub paypalSubscription
-	if err := pp.call(ctx, http.MethodPost, "/v1/billing/subscriptions", body, "", &sub); err != nil {
+	if err := pp.call(ctx, http.MethodPost, "/v1/billing/subscriptions", body, uuid.NewString(), &sub); err != nil {
 		var refused paypalRefusal
 		if errors.As(err, &refused) && refused.status == http.StatusUnprocessableEntity {
 			return "", errNotFound // a plan PayPal doesn't have, or not active
@@ -550,8 +569,14 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 			return nil
 		}
 		if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
-			outcome = paypalPending
-			return nil
+			// A replay may use a minimal response cached by an earlier caller.
+			if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+				return err
+			}
+			if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
+				outcome = paypalPending
+				return nil
+			}
 		}
 		unit := order.PurchaseUnits[0]
 		capture := unit.Payments.Captures[0]

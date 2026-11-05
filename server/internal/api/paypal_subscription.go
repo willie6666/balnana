@@ -134,7 +134,7 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 }
 
 func recordPayPalSubscriptionPayment(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, payment *paypalTransaction, userID string, planID *string, days *int, entitlement **string) error {
-	refunded := payment.Status == "REFUNDED" || payment.Status == "REVERSED"
+	refunded := payment.Status == "REFUNDED"
 	if !refunded && payment.Status != "COMPLETED" && payment.Status != "PARTIALLY_REFUNDED" {
 		return nil
 	}
@@ -206,8 +206,12 @@ func (s *Server) refundPayPalSale(ctx context.Context, pp *paypalClient, ev *pay
 		if err := pp.call(ctx, http.MethodGet, "/v1/payments/refund/"+url.PathEscape(ev.Resource.ID), nil, "", &refund); err != nil {
 			return err
 		}
-		if refund.State != "completed" {
+		switch refund.State {
+		case "cancelled", "failed":
 			return nil
+		case "completed":
+		default:
+			return errors.New("paypal: sale refund has not completed yet")
 		}
 		saleID = refund.SaleID
 	} else if ev.Resource.SaleID != "" {
@@ -233,7 +237,10 @@ func (s *Server) refundPayPalSale(ctx context.Context, pp *paypalClient, ev *pay
 		// Partial refunds leave the purchased period in force.
 		return nil
 	}
-	if sale.ID != saleID || sale.State != "refunded" && sale.State != "reversed" {
+	// The Sale resource has no 'reversed' state. A signed reversal may be
+	// reflected as denied; refunded also covers completed money reversals.
+	negative := sale.State == "refunded" || ev.EventType == "PAYMENT.SALE.REVERSED" && sale.State == "denied"
+	if sale.ID != saleID || !negative {
 		return errors.New("paypal: sale refund is not reflected in the sale yet")
 	}
 	subID := sale.BillingAgreementID

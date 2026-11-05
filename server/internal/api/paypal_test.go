@@ -1,16 +1,20 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"balnana/internal/config"
 )
 
 // fakePayPal answers as PayPal's REST API does, for the calls the server
@@ -23,9 +27,21 @@ type fakePayPal struct {
 	transactions            map[string][]paypalTransaction
 	sales                   map[string]*fakeSale
 	refunds                 map[string]string // refund ID to original sale ID
+	refundStates            map[string]string
 	transactionsUnavailable bool
 	asked                   map[string]any // the last order or subscription asked for
 	n                       int
+	requests                []paypalTestRequest
+}
+
+type paypalTestRequest struct {
+	Method   string          `json:"method"`
+	Path     string          `json:"path"`
+	Query    url.Values      `json:"query"`
+	Header   http.Header     `json:"header"`
+	Body     json.RawMessage `json:"body,omitempty"`
+	Status   int             `json:"status"`
+	Response json.RawMessage `json:"response,omitempty"`
 }
 
 type fakeSale struct {
@@ -33,6 +49,7 @@ type fakeSale struct {
 	State              string    `json:"state"`
 	BillingAgreementID string    `json:"billing_agreement_id"`
 	CreateTime         time.Time `json:"create_time"`
+	ParentPayment      string    `json:"parent_payment"`
 	Amount             struct {
 		Total    string `json:"total"`
 		Currency string `json:"currency"`
@@ -40,15 +57,16 @@ type fakeSale struct {
 }
 
 type fakeOrder struct {
-	status   string
-	customID string
-	amount   paypalMoney
-	capture  string // the capture's status, once there is one
-	paid     *paypalMoney
+	status         string
+	customID       string
+	amount         paypalMoney
+	capture        string // the capture's status, once there is one
+	paid           *paypalMoney
+	minimalCapture bool // replay an earlier response that used PayPal's default
 }
 
 func (o *fakeOrder) json(id string) map[string]any {
-	unit := map[string]any{"custom_id": o.customID}
+	unit := map[string]any{"custom_id": o.customID, "amount": o.amount}
 	if o.capture != "" {
 		paid := o.amount
 		if o.paid != nil {
@@ -69,8 +87,8 @@ func (o *fakeOrder) json(id string) map[string]any {
 func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 	t.Helper()
 	c, _, s := billingServer(t)
-	f := &fakePayPal{orders: map[string]*fakeOrder{}, subs: map[string]*paypalSubscription{}, plans: []string{"P-PLUS"},
-		transactions: map[string][]paypalTransaction{}, sales: map[string]*fakeSale{}, refunds: map[string]string{}}
+	f := &fakePayPal{orders: map[string]*fakeOrder{}, subs: map[string]*paypalSubscription{}, plans: []string{"P-5ML4271244454362WXNWU5NQ"},
+		transactions: map[string][]paypalTransaction{}, sales: map[string]*fakeSale{}, refunds: map[string]string{}, refundStates: map[string]string{}}
 	mux := http.NewServeMux()
 	reply := func(w http.ResponseWriter, status int, v any) {
 		w.Header().Set("Content-Type", "application/json")
@@ -83,6 +101,10 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 	mux.HandleFunc("POST /v2/checkout/orders", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		defer f.mu.Unlock()
+		if r.Header.Get("PayPal-Request-Id") == "" {
+			refuse(w, 400, "PAYPAL_REQUEST_ID_REQUIRED")
+			return
+		}
 		var body struct {
 			PurchaseUnits []struct {
 				CustomID string      `json:"custom_id"`
@@ -118,7 +140,11 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 			refuse(w, 422, "ORDER_ALREADY_CAPTURED")
 		default:
 			o.status, o.capture = "COMPLETED", "COMPLETED"
-			reply(w, 201, o.json(r.PathValue("id")))
+			if o.minimalCapture || r.Header.Get("Prefer") != "return=representation" {
+				reply(w, 201, map[string]any{"id": r.PathValue("id"), "status": "COMPLETED", "links": []paypalLink{{Rel: "self", Href: "https://api-m.paypal.com/v2/checkout/orders/" + r.PathValue("id")}}})
+			} else {
+				reply(w, 201, o.json(r.PathValue("id")))
+			}
 		}
 	})
 	mux.HandleFunc("GET /v2/payments/captures/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +165,7 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 		body.ID, body.Status = fmt.Sprintf("I-SUB%d", f.n), "APPROVAL_PENDING"
 		body.Links = []paypalLink{{Rel: "approve", Href: "https://paypal.test/subscribe?ba_token=" + body.ID}}
 		f.subs[body.ID] = &body
-		reply(w, 201, body)
+		reply(w, 201, fakePayPalSubscriptionJSON(&body))
 	})
 	mux.HandleFunc("GET /v1/billing/subscriptions/{id}", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
@@ -149,7 +175,7 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 			refuse(w, 404, "RESOURCE_NOT_FOUND")
 			return
 		}
-		reply(w, 200, sub)
+		reply(w, 200, fakePayPalSubscriptionJSON(sub))
 	})
 	mux.HandleFunc("GET /v1/billing/subscriptions/{id}/transactions", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
@@ -185,7 +211,11 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 		f.mu.Lock()
 		defer f.mu.Unlock()
 		if sale := f.refunds[r.PathValue("id")]; sale != "" {
-			reply(w, 200, map[string]string{"id": r.PathValue("id"), "state": "completed", "sale_id": sale})
+			state := f.refundStates[r.PathValue("id")]
+			if state == "" {
+				state = "completed"
+			}
+			reply(w, 200, map[string]string{"id": r.PathValue("id"), "state": state, "sale_id": sale})
 		} else {
 			refuse(w, 404, "NOT_FOUND")
 		}
@@ -201,14 +231,36 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 			return
 		}
 		status := "FAILURE"
-		if body.Sig == "good" && body.WebhookID == "WH-TEST" {
+		if body.Sig == "good" && body.WebhookID == "6JK70417LH900261Y" {
 			status = "SUCCESS"
 		}
 		reply(w, 200, map[string]string{"verification_status": status})
 	})
-	fake := httptest.NewServer(mux)
+	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		f.mu.Lock()
+		request := len(f.requests)
+		f.requests = append(f.requests, paypalTestRequest{Method: r.Method, Path: r.URL.Path, Query: r.URL.Query(), Header: r.Header.Clone(), Body: body})
+		f.mu.Unlock()
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, r)
+		f.mu.Lock()
+		f.requests[request].Status, f.requests[request].Response = rec.Code, append([]byte(nil), rec.Body.Bytes()...)
+		f.mu.Unlock()
+		for key, values := range rec.Header() {
+			w.Header()[key] = values
+		}
+		w.WriteHeader(rec.Code)
+		_, _ = w.Write(rec.Body.Bytes())
+	}))
 	t.Cleanup(fake.Close)
-	s.settings.Load().paypal = &paypalClient{http: fake.Client(), base: fake.URL, webhookID: "WH-TEST"}
+	s.settings.Load().paypal = &paypalClient{http: fake.Client(), base: fake.URL, webhookID: "6JK70417LH900261Y"}
 	return c, s, f
 }
 
@@ -232,7 +284,7 @@ func (f *fakePayPal) sub(id string, change func(*paypalSubscription)) {
 		payment := paypalTransaction{ID: fmt.Sprintf("SALE-%s-%d", id, len(f.transactions[id])+1), Status: "COMPLETED", Time: paid.Time}
 		payment.Amount.Gross = paid.Amount
 		f.transactions[id] = append(f.transactions[id], payment)
-		sale := &fakeSale{ID: payment.ID, State: "completed", BillingAgreementID: id, CreateTime: paid.Time}
+		sale := &fakeSale{ID: payment.ID, State: "completed", BillingAgreementID: id, CreateTime: paid.Time, ParentPayment: "PAY-TEST"}
 		sale.Amount.Total, sale.Amount.Currency = paid.Amount.Value, paid.Amount.Currency
 		f.sales[payment.ID] = sale
 	}
@@ -251,8 +303,50 @@ func paypalBack(c *client, query string) string {
 func paypalEventTo(c *client, sig string, event map[string]any) int {
 	c.t.Helper()
 	hook := c.another()
-	hook.header = http.Header{"Paypal-Transmission-Sig": {sig}}
-	return hook.do("POST", "/webhooks/paypal", event).Code
+	hook.header = http.Header{
+		"Paypal-Transmission-Sig":  {sig},
+		"Paypal-Auth-Algo":         {"SHA256withRSA"},
+		"Paypal-Cert-Url":          {"https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-TEST"},
+		"Paypal-Transmission-Id":   {"8b4e4f10-c66f-11ed-afa1-0242ac120002"},
+		"Paypal-Transmission-Time": {time.Now().UTC().Format(time.RFC3339)},
+	}
+	full := map[string]any{
+		"id": "WH-8PT597110X687430L-KW908805XS166301R", "create_time": time.Now().UTC().Format(time.RFC3339),
+		"resource_type": "sale", "summary": "Payment status changed", "resource": map[string]any{},
+		"links": []paypalLink{{Rel: "self", Href: "https://api-m.paypal.com/v1/notifications/webhooks-events/WH-TEST"}},
+	}
+	for key, value := range event {
+		full[key] = value
+	}
+	return hook.do("POST", "/webhooks/paypal", full).Code
+}
+
+// Optional fields are omitted as in PayPal's API, rather than emitted as null
+// by the production projection struct. Populated billing info requires a balance.
+func fakePayPalSubscriptionJSON(sub *paypalSubscription) map[string]any {
+	data, _ := json.Marshal(sub)
+	var out map[string]any
+	_ = json.Unmarshal(data, &out)
+	if sub.Subscriber.Name.String() == "" {
+		delete(out, "subscriber")
+	}
+	if sub.BillingInfo.LastPayment == nil {
+		delete(out, "billing_info")
+	} else {
+		billing := out["billing_info"].(map[string]any)
+		if sub.BillingInfo.NextBillingTime == nil {
+			delete(billing, "next_billing_time")
+		}
+		if sub.BillingInfo.LastFailedPayment == nil {
+			delete(billing, "last_failed_payment")
+		} else {
+			billing["last_failed_payment"].(map[string]any)["amount"] = sub.BillingInfo.LastPayment.Amount
+		}
+		if sub.BillingInfo.OutstandingBalance.Value == "" {
+			billing["outstanding_balance"] = paypalMoney{Value: "0", Currency: sub.BillingInfo.LastPayment.Amount.Currency}
+		}
+	}
+	return out
 }
 
 func checkout(c *client, product string, app PayPalCheckoutRequestApp) string {
@@ -381,22 +475,22 @@ func TestPayPalOrder(t *testing.T) {
 
 func TestPayPalSubscription(t *testing.T) {
 	c, s, f := paypalServer(t)
-	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-PLUS', 'plus', 30), ('paypal', 'P-GONE', 'plus', 30)`)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30), ('paypal', 'P-3ML4271244454362WXNWU5NQ', 'plus', 30)`)
 	u := register(c, "ana@example.test", "Ana")
-	if o := myPlanOf(c).Paypal.Offers[0]; o.Product != "P-GONE" || !o.Subscription || o.Amount != nil {
+	if o := myPlanOf(c).Paypal.Offers[0]; o.Product != "P-3ML4271244454362WXNWU5NQ" || !o.Subscription || o.Amount != nil {
 		t.Fatalf("%+v", o)
 	}
 	// A plan PayPal no longer has.
-	c.errorCode(404, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-GONE", App: PayPalCheckoutRequestAppWeb})
+	c.errorCode(404, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-3ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb})
 
-	if href := checkout(c, "P-PLUS", PayPalCheckoutRequestAppAndroid); href != "https://paypal.test/subscribe?ba_token=I-SUB1" {
+	if href := checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppAndroid); href != "https://paypal.test/subscribe?ba_token=I-SUB1" {
 		t.Fatal(href)
 	}
 	if f.subs["I-SUB1"].CustomID != u.Id {
 		t.Fatalf("%+v", f.subs["I-SUB1"])
 	}
 	// Not approved yet: starting again is fine.
-	checkout(c, "P-PLUS", PayPalCheckoutRequestAppWeb)
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
 
 	next := time.Now().AddDate(0, 0, 30).UTC().Truncate(time.Second)
 	paid := func(at time.Time) {
@@ -417,10 +511,10 @@ func TestPayPalSubscription(t *testing.T) {
 	if !p.Paid || p.PlanName != "Plus" || p.ExpiresAt == nil || !p.ExpiresAt.Equal(next.Add(paypalGrace)) {
 		t.Fatalf("%+v want %v", p, next.Add(paypalGrace))
 	}
-	if !slices.Equal(p.Paypal.Subscribed, []string{"P-PLUS"}) {
+	if !slices.Equal(p.Paypal.Subscribed, []string{"P-5ML4271244454362WXNWU5NQ"}) {
 		t.Fatal(p.Paypal.Subscribed)
 	}
-	if code := c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-PLUS", App: PayPalCheckoutRequestAppWeb}); code != "paypal_subscribed" {
+	if code := c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-5ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb}); code != "paypal_subscribed" {
 		t.Fatal(code)
 	}
 
@@ -448,7 +542,7 @@ func TestPayPalSubscription(t *testing.T) {
 	if !p.Paid || !p.ExpiresAt.Equal(next.Add(paypalGrace)) || len(p.Paypal.Subscribed) != 0 {
 		t.Fatalf("%+v", p)
 	}
-	checkout(c, "P-PLUS", PayPalCheckoutRequestAppWeb)
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
 
 	// A return URL credits only the subscription's original account.
 	other := c.another()
@@ -467,9 +561,12 @@ func TestPayPalCatalog(t *testing.T) {
 	var catalog PlanCatalog
 	admin.must(200, "GET", "/admin/plans", nil, &catalog)
 	for _, bad := range [][]PlanProduct{
+		{{Provider: Paypal, Product: "P-SHORT", PlanId: "plus", Days: 30, MinAmount: ptr("10.00"), Currency: ptr("USD")}},
+		{{Provider: Paypal, Product: "plus-zero", PlanId: "plus", Days: 90, MinAmount: ptr("0.00"), Currency: ptr("USD")}},
+		{{Provider: Paypal, Product: "plus-btc", PlanId: "plus", Days: 90, MinAmount: ptr("10.00"), Currency: ptr("BTC")}},
 		{{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90}},                                                // no price
 		{{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("99.50"), Currency: ptr("TWD")}}, // TWD has no cents
-		{{Provider: Paypal, Product: "P-PLUS", PlanId: "plus", Days: 30}, {Provider: Paypal, Product: "P-PLUS", PlanId: "plus", Days: 30}},
+		{{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30}, {Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30}},
 	} {
 		catalog.Products = bad
 		if code := admin.errorCode(400, "PUT", "/admin/plans", catalog); code != "invalid_plan" {
@@ -477,7 +574,7 @@ func TestPayPalCatalog(t *testing.T) {
 		}
 	}
 	catalog.Products = []PlanProduct{
-		{Provider: Paypal, Product: "P-PLUS", PlanId: "plus", Days: 30},
+		{Provider: Paypal, Product: "P-5ML4271244454362WXNWU5NQ", PlanId: "plus", Days: 30},
 		{Provider: Paypal, Product: "plus-90", PlanId: "plus", Days: 90, MinAmount: ptr("300.00"), Currency: ptr("TWD")},
 		{Provider: Paypal, Product: "plus-usd", PlanId: "plus", Days: 90, MinAmount: ptr("9.99"), Currency: ptr("USD")},
 	}
@@ -490,9 +587,9 @@ func TestPayPalCatalog(t *testing.T) {
 func paidPayPalSubscription(t *testing.T) (*client, *Server, *fakePayPal, time.Time) {
 	t.Helper()
 	c, s, f := paypalServer(t)
-	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-PLUS', 'plus', 30)`)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30)`)
 	register(c, "ana@example.test", "Ana")
-	checkout(c, "P-PLUS", PayPalCheckoutRequestAppWeb)
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
 	paid := time.Now().UTC().Truncate(time.Second)
 	f.pay("I-SUB1", paid, paid.AddDate(0, 0, 30))
 	return c, s, f, paid
@@ -598,7 +695,7 @@ func TestPayPalSubscriptionRefund(t *testing.T) {
 			f.refundSale(saleID, "refunded")
 			kind, id := "PAYMENT.SALE.REFUNDED", "REFUND1"
 			if timing == "reversed" {
-				f.refundSale(saleID, "reversed")
+				f.refundSale(saleID, "denied")
 				kind, id = "PAYMENT.SALE.REVERSED", saleID
 			}
 			if timing != "transaction_list_lags" {
@@ -763,5 +860,141 @@ func TestPayPalConcurrentRefundAndRenewal(t *testing.T) {
 	}
 	if state, _ := paymentState(t, s, "SALE-I-SUB1-2"); state != "applied" {
 		t.Fatal(state)
+	}
+}
+
+// PayPal's default capture response contains no purchase_units. Full data is
+// requested explicitly, and an old cached minimal response is fetched again.
+// https://developer.paypal.com/api/orders/v2/orders-capture
+func TestPayPalCaptureMinimalReplay(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider,product,plan_id,days,min_amount,currency) values ('paypal','plus90','plus',90,300,'TWD')`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "plus90", PayPalCheckoutRequestAppWeb)
+	f.order("ORDER1", func(o *fakeOrder) { o.status = "APPROVED"; o.minimalCapture = true })
+	if got := paypalBack(c, "token=ORDER1&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
+		t.Fatal(got)
+	}
+	if !myPlanOf(c).Paid {
+		t.Fatal("minimal capture response lost its payment")
+	}
+	for _, r := range f.requests {
+		if r.Method == "POST" && strings.HasPrefix(r.Path, "/v2/checkout/orders") {
+			if r.Header.Get("Prefer") != "return=representation" || r.Header.Get("PayPal-Request-Id") == "" {
+				t.Fatalf("missing checkout headers: %+v", r)
+			}
+		}
+	}
+}
+
+func TestPayPalCreatesHaveDistinctRequestIDs(t *testing.T) {
+	c, s, f, _ := paidPayPalSubscription(t)
+	exec(t, s, `insert into plan_products (provider,product,plan_id,days,min_amount,currency) values ('paypal','plus90','plus',90,300,'TWD')`)
+	checkout(c, "plus90", PayPalCheckoutRequestAppWeb)
+	checkout(c, "plus90", PayPalCheckoutRequestAppWeb)
+	seen := map[string]bool{}
+	for _, r := range f.requests {
+		if r.Method == "POST" && (r.Path == "/v2/checkout/orders" || r.Path == "/v1/billing/subscriptions") {
+			id := r.Header.Get("PayPal-Request-Id")
+			if id == "" || len(id) > 38 || seen[id] {
+				t.Fatalf("bad create request ID: %q", id)
+			}
+			seen[id] = true
+			if r.Header.Get("Prefer") != "return=representation" {
+				t.Fatal(r.Header)
+			}
+		}
+	}
+	if len(seen) != 3 {
+		t.Fatal(seen)
+	}
+}
+
+func TestPayPalRefundPendingRetries(t *testing.T) {
+	c, _, f, _ := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	f.refundSale("SALE-I-SUB1-1", "refunded")
+	for _, row := range []struct {
+		state  string
+		status int
+	}{{"pending", 500}, {"cancelled", 200}, {"failed", 200}} {
+		f.mu.Lock()
+		f.refundStates["REFUND1"] = row.state
+		f.mu.Unlock()
+		if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != row.status {
+			t.Fatal(row, code)
+		}
+		if !myPlanOf(c).Paid {
+			t.Fatal("incomplete refund removed access")
+		}
+	}
+	f.mu.Lock()
+	f.refundStates["REFUND1"] = "completed"
+	f.mu.Unlock()
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if myPlanOf(c).Paid {
+		t.Fatal("completed refund did not remove access")
+	}
+}
+
+// The token exchange uses HTTP Basic plus a form, and REST calls use Bearer.
+// https://developer.paypal.com/api/rest/authentication/
+func TestPayPalOAuthContract(t *testing.T) {
+	var tokenCalls, orderCalls int
+	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/v1/oauth2/token":
+			tokenCalls++
+			id, secret, ok := r.BasicAuth()
+			if !ok || id != "test-client" || secret != "test-secret" || r.Method != "POST" {
+				t.Error("bad token authentication")
+			}
+			if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
+				t.Error(r.Header)
+			}
+			if err := r.ParseForm(); err != nil || r.Form.Get("grant_type") != "client_credentials" {
+				t.Error("bad token grant", err)
+			}
+			_, _ = io.WriteString(w, `{"access_token":"test-access","token_type":"Bearer","expires_in":3600}`)
+		case "/v2/checkout/orders/5O190127TN364715T":
+			orderCalls++
+			if r.Header.Get("Authorization") != "Bearer test-access" {
+				t.Error("bad REST authentication")
+			}
+			_, _ = io.WriteString(w, `{"id":"5O190127TN364715T","status":"CREATED"}`)
+		default:
+			t.Error(r.URL.Path)
+			w.WriteHeader(404)
+		}
+	}))
+	defer fake.Close()
+	cfg := &config.Config{PayPalClientID: "test-client", PayPalSecret: "test-secret", PayPalSandbox: true}
+	if p := newPayPalClient(cfg); p.base != paypalSandbox {
+		t.Fatal(p.base)
+	}
+	cfg.PayPalSandbox = false
+	if p := newPayPalClient(cfg); p.base != paypalLive {
+		t.Fatal(p.base)
+	}
+	pp := payPalClientAt(cfg, fake.URL)
+	for range 2 {
+		var order paypalOrder
+		if err := pp.call(t.Context(), "GET", "/v2/checkout/orders/5O190127TN364715T", nil, "", &order); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if tokenCalls != 1 || orderCalls != 2 {
+		t.Fatal(tokenCalls, orderCalls)
+	}
+}
+
+func TestPayPalBadRequestIsNotMissingResource(t *testing.T) {
+	for _, code := range []int{400, 401, 403, 404, 422, 500} {
+		if got := paypalNotFound(paypalRefusal{status: code}); got != (code == 404) {
+			t.Fatal(code, got)
+		}
 	}
 }
