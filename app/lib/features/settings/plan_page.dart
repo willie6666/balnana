@@ -63,7 +63,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   @override
   void didUpdateWidget(PlanPage old) {
     super.didUpdateWidget(old);
-    if (widget.paypal != null && widget.paypal != old.paypal) _tellPayPal();
+    if (widget.paypal != null && widget.paypal != old.paypal) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _tellPayPal());
+    }
   }
 
   @override

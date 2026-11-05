@@ -272,6 +272,41 @@ void main() {
     expect(find.text(l10n.planPayPalCancelled), findsOneWidget);
   });
 
+  testWidgets('returning from PayPal updates an already open plan page', (tester) async {
+    final outcome = ValueNotifier<String?>(null);
+    addTearDown(outcome.dispose);
+    var loads = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          myPlanProvider.overrideWith((ref) async {
+            loads++;
+            return _plan;
+          }),
+          balnanaApiProvider.overrideWithValue(null),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: ValueListenableBuilder<String?>(
+            valueListenable: outcome,
+            builder: (_, value, _) => PlanPage(paypal: value),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final page = tester.state(find.byType(PlanPage));
+    final before = loads;
+    outcome.value = 'done';
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.state(find.byType(PlanPage)), same(page));
+    expect(find.text(l10n.planPayPalDone), findsOneWidget);
+    expect(loads, before + 1);
+  });
+
   group('claiming a payment', () {
     Future<void> open(WidgetTester tester, BalnanaApi api, {Future<MyPlan> Function()? plan}) async {
       await tester.pumpWidget(

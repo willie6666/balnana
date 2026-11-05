@@ -886,3 +886,54 @@ func TestLargeNewGroupStartsSponsored(t *testing.T) {
 		t.Fatalf("%+v", refused)
 	}
 }
+
+func TestKofiMixedPlanOrderNeedsManualAssignment(t *testing.T) {
+	c, s, _ := adminClient(t, map[string]string{
+		"BALNANA_AUTH_MODE": "accounts", "BALNANA_BILLING_ENABLED": "true", "BALNANA_PUBLIC_URL": "https://balnana.test/",
+		"BALNANA_KOFI_TOKEN": kofiTestToken, "BALNANA_KOFI_URL": "https://ko-fi.com/balnana",
+	})
+	admin := c.asAdmin(setUp(c))
+	user := register(c, "ana@example.test", "Ana")
+	kofiProducts(t, s)
+	exec(t, s, `insert into plans (id,name,rank) values ('gold','Gold',20)`)
+	exec(t, s, `insert into plan_products (provider,product,plan_id,days) values ('kofi','gold90','gold',90)`)
+	for _, items := range [][]kofiShopItem{
+		{{Code: "plus90", Quantity: 1}, {Code: "gold90", Quantity: 2}},
+		{{Code: "gold90", Quantity: 2}, {Code: "plus90", Quantity: 1}},
+	} {
+		id := fmt.Sprintf("mixed-%s", items[0].Code)
+		c.kofiOK(map[string]any{"message_id": id, "type": kofiShopOrder, "kofi_transaction_id": id, "shop_items": items})
+		if state, _ := paymentState(t, s, id); state != "unmatched" {
+			t.Fatal(state)
+		}
+		if code := c.errorCode(409, "POST", "/me/payments/claim", PaymentClaim{Reference: id}); code != "payment_no_plan" {
+			t.Fatal(code)
+		}
+		if myPlanOf(c).Paid {
+			t.Fatal("mixed basket was partially applied")
+		}
+	}
+	var list PaymentList
+	admin.must(200, "GET", "/admin/payments?state=unmatched", nil, &list)
+	if list.Total != 2 {
+		t.Fatal(list)
+	}
+	for _, p := range list.Payments {
+		if p.PlanId != nil || p.Days != nil || p.Items == nil || len(*p.Items) != 2 {
+			t.Fatalf("incomplete manual payment: %+v", p)
+		}
+		for _, item := range *p.Items {
+			if item.Product == "gold90" && item.Quantity != 2 || item.Product == "plus90" && item.Quantity != 1 {
+				t.Fatal(item)
+			}
+		}
+	}
+	var assigned Payment
+	admin.must(200, "POST", "/admin/payments/"+list.Payments[0].Id+"/assign", PaymentAssign{UserId: user.Id, PlanId: ptr("gold"), Days: ptr(270)}, &assigned)
+	if assigned.State != "applied" || assigned.Items == nil || len(*assigned.Items) != 2 {
+		t.Fatal(assigned)
+	}
+	if p := myPlanOf(c); !p.Paid || p.PlanName != "Gold" {
+		t.Fatal(p)
+	}
+}

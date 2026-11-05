@@ -3,6 +3,8 @@ import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/features/admin/admin_page.dart';
+import 'package:balnana/features/admin/admin_payments_page.dart';
+import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +89,44 @@ Future<void> _boot(WidgetTester tester, {required ServerInfo info, required Admi
 }
 
 void main() {
+  testWidgets('manual shop payments show every item and quantity', (tester) async {
+    final api = _api(
+      [],
+      (r) => (
+        200,
+        {
+          'total': 1,
+          'payments': [
+            {
+              'id': 'mixed',
+              'provider': 'kofi',
+              'kind': 'Shop Order',
+              'state': 'unmatched',
+              'paidAt': '2026-11-05T00:00:00Z',
+              'product': 'plus90',
+              'items': [
+                {'product': 'plus90', 'quantity': 1},
+                {'product': 'gold90', 'quantity': 2},
+              ],
+            },
+          ],
+        },
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [adminApiProvider.overrideWithValue(api)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AdminPaymentsPage(token: 'admin'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('plus90 × 1 · gold90 × 2'), findsOneWidget);
+  });
+
   testWidgets('a new server sends people to set the administrator password', (tester) async {
     final seen = <RequestOptions>[];
     final api = _api(

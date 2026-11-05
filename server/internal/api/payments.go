@@ -189,13 +189,20 @@ func recordPayment(ctx context.Context, tx pgx.Tx, p payment) error {
 	if planID != nil {
 		state = "unclaimed"
 	}
+	items := []byte("[]")
+	if len(p.items) > 0 {
+		items, err = json.Marshal(p.items)
+	}
+	if err != nil {
+		return err
+	}
 	_, err = tx.Exec(ctx, `
 		insert into payment_events (provider, event_id, kind, payer_name, amount, currency, product,
-		                            state, plan_id, days, paid_at, reference)
-		values ($1, $2, $3, $4, $5::numeric, $6, $7, $8, $9, $10, $11, $12)
+		                            state, plan_id, days, paid_at, reference, shop_items)
+		values ($1, $2, $3, $4, $5::numeric, $6, $7, $8, $9, $10, $11, $12, $13)
 		on conflict (provider, event_id) do nothing`,
 		p.provider, p.eventID, p.kind, p.name, p.amount, p.currency, p.product,
-		state, planID, days, p.paidAt, p.reference)
+		state, planID, days, p.paidAt, p.reference, items)
 	return err
 }
 
@@ -206,6 +213,7 @@ func recordPayment(ctx context.Context, tx pgx.Tx, p payment) error {
 func matchKofi(ctx context.Context, q querier, p payment) (planID *string, days *int, err error) {
 	if p.kind == kofiShopOrder {
 		total := 0
+		mixed := false
 		for _, item := range p.items {
 			var itemPlan string
 			var itemDays int
@@ -221,12 +229,13 @@ func matchKofi(ctx context.Context, q querier, p payment) (planID *string, days 
 			}
 			// One payment gives one plan: items of another are for an administrator.
 			if planID != nil && *planID != itemPlan {
+				mixed = true
 				continue
 			}
 			planID = &itemPlan
 			total += itemDays * max(item.Quantity, 1)
 		}
-		if planID == nil {
+		if planID == nil || mixed {
 			return nil, nil, nil
 		}
 		total = min(total, maxPlanDays)

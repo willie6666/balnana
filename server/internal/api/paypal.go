@@ -211,8 +211,13 @@ type paypalSubscription struct {
 		Name paypalName `json:"name"`
 	} `json:"subscriber"`
 	BillingInfo struct {
-		NextBillingTime *time.Time `json:"next_billing_time"`
-		LastPayment     *struct {
+		NextBillingTime     *time.Time  `json:"next_billing_time"`
+		FailedPaymentsCount int         `json:"failed_payments_count"`
+		OutstandingBalance  paypalMoney `json:"outstanding_balance"`
+		LastFailedPayment   *struct {
+			Time time.Time `json:"time"`
+		} `json:"last_failed_payment"`
+		LastPayment *struct {
 			Amount paypalMoney `json:"amount"`
 			Time   time.Time   `json:"time"`
 		} `json:"last_payment"`
@@ -610,109 +615,28 @@ func refundPayment(ctx context.Context, tx pgx.Tx, paymentID string) error {
 	if err != nil || state == "refunded" {
 		return err
 	}
-	if state == "applied" && entitlement != nil && days != nil {
-		_, err = tx.Exec(ctx, `
-			update entitlements
-			set expires_at = least(expires_at, greatest(now(), expires_at - make_interval(days => $2)))
-			where id = $1`, *entitlement, *days)
-		if err != nil {
-			return err
-		}
-	}
 	_, err = tx.Exec(ctx, `update payment_events set state = 'refunded' where id = $1`, paymentID)
-	return err
-}
-
-// syncPayPalSubscription brings the account in line with what PayPal says of
-// the subscription, under one lock per subscription.
-func (s *Server) syncPayPalSubscription(ctx context.Context, pp *paypalClient, subID string) (outcome string, err error) {
-	release, err := paypalSlot(ctx)
-	if err != nil {
-		return "", err
-	}
-	defer release()
-	outcome = paypalFailed
-	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, "paypal:"+subID); err != nil {
-			return err
-		}
-		var userID string
-		var entitlement *string
-		err := tx.QueryRow(ctx, `
-			select user_id::text, entitlement_id::text from paypal_subscriptions where subscription_id = $1`,
-			subID).Scan(&userID, &entitlement)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		var sub paypalSubscription
-		if err := pp.call(ctx, http.MethodGet, "/v1/billing/subscriptions/"+url.PathEscape(subID), nil, "", &sub); err != nil {
-			if paypalNotFound(err) {
-				return nil
-			}
-			return err
-		}
-		if sub.CustomID != userID {
-			return nil
-		}
-		if err := holdAccount(ctx, tx, userID); err != nil {
-			return err
-		}
-		planID, days, err := matchProduct(ctx, tx, payment{provider: "paypal", product: &sub.PlanID})
-		if err != nil {
-			return err
-		}
-		paid := sub.BillingInfo.LastPayment
-		switch {
-		case sub.Status == "ACTIVE" && paid != nil && planID != nil:
-			until := paid.Time.AddDate(0, 0, *days)
-			if next := sub.BillingInfo.NextBillingTime; next != nil {
-				until = next.Add(paypalGrace)
-			}
-			if entitlement != nil {
-				_, err = tx.Exec(ctx, `
-					update entitlements set plan_id = $2, expires_at = greatest(expires_at, $3) where id = $1`,
-					*entitlement, *planID, until)
-			} else {
-				err = tx.QueryRow(ctx, `
-					insert into entitlements (user_id, plan_id, source, expires_at) values ($1, $2, 'paypal', $3)
-					returning id::text`, userID, *planID, until).Scan(&entitlement)
-			}
-			if err != nil {
-				return err
-			}
-			outcome = paypalDone
-		case sub.Status == "ACTIVE" && planID == nil:
-			outcome = paypalDone // paid, for an administrator to place
-		case sub.Status == "ACTIVE", sub.Status == "APPROVAL_PENDING", sub.Status == "APPROVED":
-			outcome = paypalPending
-		}
-		// A subscription that stopped keeps the time it was paid for.
-		_, err = tx.Exec(ctx, `
-			update paypal_subscriptions set product = $2, entitlement_id = $3, state = $4 where subscription_id = $1`,
-			subID, sub.PlanID, entitlement, sub.Status)
-		if err != nil || paid == nil || paid.Time.IsZero() {
-			return err
-		}
-		state := "unmatched"
-		if planID != nil && entitlement != nil {
-			state = "applied"
-		}
-		_, err = tx.Exec(ctx, `
-			insert into payment_events (provider, event_id, kind, payer_name, amount, currency, product, recurring,
-			                            state, plan_id, days, user_id, entitlement_id, paid_at, reference)
-			values ('paypal', $1, 'Subscription', $2, $3::numeric, $4, $5, true, $6, $7, $8, $9, $10, $11, $12)
-			on conflict (provider, event_id) do update
-			set state = excluded.state, plan_id = excluded.plan_id, entitlement_id = excluded.entitlement_id
-			where payment_events.state = 'unmatched'`,
-			subID+"@"+paid.Time.UTC().Format(time.RFC3339), optional(sub.Subscriber.Name.String()),
-			paid.Amount.Value, strings.ToUpper(paid.Amount.Currency), sub.PlanID,
-			state, planID, days, userID, entitlement, paid.Time, subID)
+	if err != nil || state != "applied" || entitlement == nil {
 		return err
-	})
-	return outcome, err
+	}
+	var subscription bool
+	err = tx.QueryRow(ctx, `select exists (select 1 from paypal_subscriptions where entitlement_id = $1)`, *entitlement).Scan(&subscription)
+	if err != nil {
+		return err
+	}
+	if subscription {
+		// Other paid periods keep their own end; refunding an older period
+		// must not take time from a later, successful renewal.
+		_, err = tx.Exec(ctx, `update entitlements e set expires_at = least(e.expires_at,
+            coalesce((select max(p.paid_until) from payment_events p
+                      where p.entitlement_id = e.id and p.state = 'applied'), now()))
+            where e.id = $1`, *entitlement)
+	} else if days != nil {
+		_, err = tx.Exec(ctx, `update entitlements
+            set expires_at = least(expires_at, greatest(now(), expires_at - make_interval(days => $2)))
+            where id = $1`, *entitlement, *days)
+	}
+	return err
 }
 
 // paypalEvent is the part of a webhook event the server reads: only what
@@ -722,6 +646,7 @@ type paypalEvent struct {
 	Resource  struct {
 		ID                 string `json:"id"`
 		BillingAgreementID string `json:"billing_agreement_id"`
+		SaleID             string `json:"sale_id"`
 		SupplementaryData  struct {
 			RelatedIDs struct {
 				OrderID string `json:"order_id"`
@@ -823,6 +748,8 @@ func (s *Server) PayPalWebhook(w http.ResponseWriter, r *http.Request) {
 		orderID, err = pp.orderOf(r.Context(), &ev)
 	case strings.HasPrefix(t, "BILLING.SUBSCRIPTION."):
 		subID = ev.Resource.ID
+	case t == "PAYMENT.SALE.REFUNDED" || t == "PAYMENT.SALE.REVERSED":
+		err = s.refundPayPalSale(r.Context(), pp, &ev)
 	case strings.HasPrefix(t, "PAYMENT.SALE."):
 		subID = ev.Resource.BillingAgreementID
 	}

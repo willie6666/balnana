@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"regexp"
 	"slices"
@@ -300,13 +301,28 @@ func (s *Server) RevokeAdminEntitlement(ctx context.Context, req RevokeAdminEnti
 
 const paymentSelect = `
 	select pe.id::text, pe.provider, pe.kind, pe.state, pe.email::text, pe.payer_name, pe.amount::text, pe.currency,
-	       pe.product, pe.plan_id, pe.days, pe.user_id::text, u.display_name, pe.paid_at, pe.reference
+	       pe.product, pe.plan_id, pe.days, pe.user_id::text, u.display_name, pe.paid_at, pe.reference, pe.shop_items
 	from payment_events pe left join users u on u.id = pe.user_id`
 
 func scanPayment(row pgx.CollectableRow) (Payment, error) {
 	var p Payment
+	var data []byte
 	err := row.Scan(&p.Id, &p.Provider, &p.Kind, &p.State, &p.Email, &p.PayerName, &p.Amount, &p.Currency,
-		&p.Product, &p.PlanId, &p.Days, &p.UserId, &p.UserName, &p.PaidAt, &p.Reference)
+		&p.Product, &p.PlanId, &p.Days, &p.UserId, &p.UserName, &p.PaidAt, &p.Reference, &data)
+	if err != nil {
+		return p, err
+	}
+	var items []kofiShopItem
+	if err := json.Unmarshal(data, &items); err != nil {
+		return p, err
+	}
+	if len(items) > 0 {
+		list := make([]PaymentItem, 0, len(items))
+		for _, item := range items {
+			list = append(list, PaymentItem{Product: item.Code, Quantity: item.Quantity})
+		}
+		p.Items = &list
+	}
 	return p, err
 }
 

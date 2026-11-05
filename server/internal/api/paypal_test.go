@@ -16,12 +16,27 @@ import (
 // fakePayPal answers as PayPal's REST API does, for the calls the server
 // makes. Tests change its orders and subscriptions as a payer or PayPal would.
 type fakePayPal struct {
-	mu     sync.Mutex
-	orders map[string]*fakeOrder
-	subs   map[string]*paypalSubscription
-	plans  []string       // the subscription plans PayPal has
-	asked  map[string]any // the last order or subscription asked for
-	n      int
+	mu                      sync.Mutex
+	orders                  map[string]*fakeOrder
+	subs                    map[string]*paypalSubscription
+	plans                   []string // the subscription plans PayPal has
+	transactions            map[string][]paypalTransaction
+	sales                   map[string]*fakeSale
+	refunds                 map[string]string // refund ID to original sale ID
+	transactionsUnavailable bool
+	asked                   map[string]any // the last order or subscription asked for
+	n                       int
+}
+
+type fakeSale struct {
+	ID                 string    `json:"id"`
+	State              string    `json:"state"`
+	BillingAgreementID string    `json:"billing_agreement_id"`
+	CreateTime         time.Time `json:"create_time"`
+	Amount             struct {
+		Total    string `json:"total"`
+		Currency string `json:"currency"`
+	} `json:"amount"`
 }
 
 type fakeOrder struct {
@@ -54,7 +69,8 @@ func (o *fakeOrder) json(id string) map[string]any {
 func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 	t.Helper()
 	c, _, s := billingServer(t)
-	f := &fakePayPal{orders: map[string]*fakeOrder{}, subs: map[string]*paypalSubscription{}, plans: []string{"P-PLUS"}}
+	f := &fakePayPal{orders: map[string]*fakeOrder{}, subs: map[string]*paypalSubscription{}, plans: []string{"P-PLUS"},
+		transactions: map[string][]paypalTransaction{}, sales: map[string]*fakeSale{}, refunds: map[string]string{}}
 	mux := http.NewServeMux()
 	reply := func(w http.ResponseWriter, status int, v any) {
 		w.Header().Set("Content-Type", "application/json")
@@ -135,6 +151,45 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 		}
 		reply(w, 200, sub)
 	})
+	mux.HandleFunc("GET /v1/billing/subscriptions/{id}/transactions", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		if f.transactionsUnavailable {
+			refuse(w, 503, "UNAVAILABLE")
+			return
+		}
+		start, err1 := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+		end, err2 := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+		if err1 != nil || err2 != nil {
+			refuse(w, 400, "BAD_TIME_RANGE")
+			return
+		}
+		var list []paypalTransaction
+		for _, payment := range f.transactions[r.PathValue("id")] {
+			if !payment.Time.Before(start) && !payment.Time.After(end) {
+				list = append(list, payment)
+			}
+		}
+		reply(w, 200, map[string]any{"transactions": list})
+	})
+	mux.HandleFunc("GET /v1/payments/sale/{id}", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		if sale := f.sales[r.PathValue("id")]; sale != nil {
+			reply(w, 200, sale)
+		} else {
+			refuse(w, 404, "NOT_FOUND")
+		}
+	})
+	mux.HandleFunc("GET /v1/payments/refund/{id}", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		if sale := f.refunds[r.PathValue("id")]; sale != "" {
+			reply(w, 200, map[string]string{"id": r.PathValue("id"), "state": "completed", "sale_id": sale})
+		} else {
+			refuse(w, 404, "NOT_FOUND")
+		}
+	})
 	mux.HandleFunc("POST /v1/notifications/verify-webhook-signature", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Sig       string          `json:"transmission_sig"`
@@ -168,6 +223,19 @@ func (f *fakePayPal) sub(id string, change func(*paypalSubscription)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	change(f.subs[id])
+	if paid := f.subs[id].BillingInfo.LastPayment; paid != nil {
+		for _, payment := range f.transactions[id] {
+			if payment.Time.Equal(paid.Time) {
+				return
+			}
+		}
+		payment := paypalTransaction{ID: fmt.Sprintf("SALE-%s-%d", id, len(f.transactions[id])+1), Status: "COMPLETED", Time: paid.Time}
+		payment.Amount.Gross = paid.Amount
+		f.transactions[id] = append(f.transactions[id], payment)
+		sale := &fakeSale{ID: payment.ID, State: "completed", BillingAgreementID: id, CreateTime: paid.Time}
+		sale.Amount.Total, sale.Amount.Currency = paid.Amount.Value, paid.Amount.Currency
+		f.sales[payment.ID] = sale
+	}
 }
 
 // paypalBack is where the server sends a payer coming back from PayPal.
@@ -382,10 +450,10 @@ func TestPayPalSubscription(t *testing.T) {
 	}
 	checkout(c, "P-PLUS", PayPalCheckoutRequestAppWeb)
 
-	// Someone else's subscription gives this account nothing.
+	// A return URL credits only the subscription's original account.
 	other := c.another()
 	register(other, "ben@example.test", "Ben")
-	if got := paypalBack(other, "subscription_id=I-SUB1&app=web"); got != "https://balnana.test/settings/plan?paypal=failed" {
+	if got := paypalBack(other, "subscription_id=I-SUB1&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
 		t.Fatal(got)
 	}
 	if p := myPlanOf(other); p.Paid {
@@ -416,5 +484,284 @@ func TestPayPalCatalog(t *testing.T) {
 	admin.must(200, "PUT", "/admin/plans", catalog, &catalog)
 	if len(catalog.Products) != 3 {
 		t.Fatalf("%+v", catalog.Products)
+	}
+}
+
+func paidPayPalSubscription(t *testing.T) (*client, *Server, *fakePayPal, time.Time) {
+	t.Helper()
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-PLUS', 'plus', 30)`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "P-PLUS", PayPalCheckoutRequestAppWeb)
+	paid := time.Now().UTC().Truncate(time.Second)
+	f.pay("I-SUB1", paid, paid.AddDate(0, 0, 30))
+	return c, s, f, paid
+}
+
+func (f *fakePayPal) pay(id string, at, next time.Time) {
+	f.sub(id, func(sub *paypalSubscription) {
+		sub.Status = "ACTIVE"
+		sub.BillingInfo.NextBillingTime = &next
+		sub.BillingInfo.LastPayment = &struct {
+			Amount paypalMoney `json:"amount"`
+			Time   time.Time   `json:"time"`
+		}{paypalMoney{"TWD", "100"}, at}
+	})
+}
+
+func subscriptionEvent(c *client, kind string) int {
+	return paypalEventTo(c, "good", map[string]any{"event_type": kind, "resource": map[string]string{"id": "I-SUB1"}})
+}
+
+func TestPayPalFailedRenewalKeepsPaidPeriod(t *testing.T) {
+	c, _, f, paid := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	before := *myPlanOf(c).ExpiresAt
+	f.sub("I-SUB1", func(sub *paypalSubscription) {
+		next := paid.AddDate(0, 0, 60)
+		sub.BillingInfo.NextBillingTime = &next
+		sub.BillingInfo.FailedPaymentsCount = 1
+		sub.BillingInfo.OutstandingBalance = paypalMoney{"TWD", "100"}
+	})
+	for range 2 {
+		if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.PAYMENT.FAILED"); code != 200 {
+			t.Fatal(code)
+		}
+		if after := myPlanOf(c).ExpiresAt; after == nil || !after.Equal(before) {
+			t.Fatal(before, after)
+		}
+	}
+}
+
+func TestPayPalFirstSyncAfterFailedRenewal(t *testing.T) {
+	for _, failure := range []string{"balance", "count", "last_attempt"} {
+		t.Run(failure, func(t *testing.T) {
+			c, _, f, _ := paidPayPalSubscription(t)
+			paid := time.Now().UTC().Truncate(time.Second).AddDate(0, 0, -40)
+			f.pay("I-SUB1", paid, paid.AddDate(0, 0, 60))
+			f.sub("I-SUB1", func(sub *paypalSubscription) {
+				switch failure {
+				case "balance":
+					sub.BillingInfo.OutstandingBalance = paypalMoney{"TWD", "100"}
+				case "count":
+					sub.BillingInfo.FailedPaymentsCount = 1
+				case "last_attempt":
+					sub.BillingInfo.LastFailedPayment = &struct {
+						Time time.Time `json:"time"`
+					}{paid.AddDate(0, 0, 30)}
+				}
+			})
+			paypalBack(c, "subscription_id=I-SUB1&app=web")
+			if p := myPlanOf(c); p.Paid {
+				t.Fatalf("unpaid period granted: %+v", p)
+			}
+		})
+	}
+}
+
+func TestPayPalPaidPeriodSurvivesCancellationBeforeSync(t *testing.T) {
+	for _, status := range []string{"CANCELLED", "SUSPENDED", "EXPIRED"} {
+		t.Run(status, func(t *testing.T) {
+			c, _, f, paid := paidPayPalSubscription(t)
+			f.sub("I-SUB1", func(sub *paypalSubscription) { sub.Status = status; sub.BillingInfo.NextBillingTime = nil })
+			if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION."+status); code != 200 {
+				t.Fatal(code)
+			}
+			p := myPlanOf(c)
+			if !p.Paid || p.ExpiresAt == nil || !p.ExpiresAt.Equal(paid.AddDate(0, 0, 30).Add(paypalGrace)) {
+				t.Fatalf("%+v", p)
+			}
+		})
+	}
+}
+
+func (f *fakePayPal) refundSale(saleID, state string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.sales[saleID].State = state
+	f.refunds["REFUND1"] = saleID
+}
+
+func saleRefundEvent(c *client, kind, id string) int {
+	// No billing_agreement_id: PayPal's refund resource points to the sale.
+	return paypalEventTo(c, "good", map[string]any{"event_type": kind, "resource": map[string]string{"id": id}})
+}
+
+func TestPayPalSubscriptionRefund(t *testing.T) {
+	for _, timing := range []string{"after_payment", "before_payment", "reversed", "transaction_list_lags"} {
+		t.Run(timing, func(t *testing.T) {
+			c, s, f, _ := paidPayPalSubscription(t)
+			const saleID = "SALE-I-SUB1-1"
+			if timing != "before_payment" {
+				paypalBack(c, "subscription_id=I-SUB1&app=web")
+			}
+			f.refundSale(saleID, "refunded")
+			kind, id := "PAYMENT.SALE.REFUNDED", "REFUND1"
+			if timing == "reversed" {
+				f.refundSale(saleID, "reversed")
+				kind, id = "PAYMENT.SALE.REVERSED", saleID
+			}
+			if timing != "transaction_list_lags" {
+				f.mu.Lock()
+				f.transactions["I-SUB1"][0].Status = "REFUNDED"
+				f.mu.Unlock()
+			}
+			for range 2 {
+				if code := saleRefundEvent(c, kind, id); code != 200 {
+					t.Fatal(code)
+				}
+				if state, _ := paymentState(t, s, saleID); state != "refunded" {
+					t.Fatal(state)
+				}
+				if p := myPlanOf(c); p.Paid {
+					t.Fatalf("refunded time remains: %+v", p)
+				}
+			}
+			// A delayed successful-payment webhook must not resurrect access.
+			if code := paypalEventTo(c, "good", map[string]any{"event_type": "PAYMENT.SALE.COMPLETED", "resource": map[string]string{"id": saleID, "billing_agreement_id": "I-SUB1"}}); code != 200 {
+				t.Fatal(code)
+			}
+			if myPlanOf(c).Paid {
+				t.Fatal("refunded subscription restored")
+			}
+			var n int
+			if err := s.db.QueryRow(t.Context(), `select count(*) from payment_events where provider = 'paypal'`).Scan(&n); err != nil || n != 1 {
+				t.Fatal(n, err)
+			}
+		})
+	}
+}
+
+func TestPayPalRefundKeepsOtherPaidPeriods(t *testing.T) {
+	c, s, f, paid := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	firstEnd := *myPlanOf(c).ExpiresAt
+	f.pay("I-SUB1", paid.Add(time.Hour), paid.AddDate(0, 0, 60))
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	secondEnd := *myPlanOf(c).ExpiresAt
+	f.refundSale("SALE-I-SUB1-1", "refunded")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if p := myPlanOf(c); p.ExpiresAt == nil || !p.ExpiresAt.Equal(secondEnd) {
+		t.Fatalf("older refund shortened later renewal: %+v", p)
+	}
+	f.refundSale("SALE-I-SUB1-2", "refunded")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if myPlanOf(c).Paid {
+		t.Fatal("both periods refunded but still paid")
+	}
+	// A genuinely new payment after a refund can renew the subscription.
+	f.pay("I-SUB1", paid.Add(2*time.Hour), paid.AddDate(0, 0, 90))
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	if p := myPlanOf(c); !p.Paid || !p.ExpiresAt.After(firstEnd) {
+		t.Fatalf("new payment did not renew: %+v", p)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-3"); state != "applied" {
+		t.Fatal(state)
+	}
+}
+
+func TestPayPalRefundLatestPeriodRestoresPreviousEnd(t *testing.T) {
+	c, _, f, paid := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	firstEnd := *myPlanOf(c).ExpiresAt
+	f.pay("I-SUB1", paid.Add(time.Hour), paid.AddDate(0, 0, 60))
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	f.refundSale("SALE-I-SUB1-2", "refunded")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if p := myPlanOf(c); p.ExpiresAt == nil || !p.ExpiresAt.Equal(firstEnd) {
+		t.Fatalf("%+v", p)
+	}
+}
+
+func TestPayPalRefundChecksNativeSale(t *testing.T) {
+	c, s, f, _ := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	before := *myPlanOf(c).ExpiresAt
+	f.refundSale("SALE-I-SUB1-1", "partially_refunded")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if p := myPlanOf(c); p.ExpiresAt == nil || !p.ExpiresAt.Equal(before) {
+		t.Fatal(p)
+	}
+	f.refundSale("SALE-I-SUB1-1", "completed")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 500 {
+		t.Fatal(code)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-1"); state != "applied" {
+		t.Fatal(state)
+	}
+	f.refundSale("SALE-I-SUB1-1", "refunded")
+	if code := paypalEventTo(c, "forged", map[string]any{"event_type": "PAYMENT.SALE.REFUNDED", "resource": map[string]string{"id": "REFUND1"}}); code != 403 {
+		t.Fatal(code)
+	}
+	if !myPlanOf(c).Paid {
+		t.Fatal("forged refund removed access")
+	}
+}
+
+func TestPayPalTransactionListFailureRetries(t *testing.T) {
+	c, _, f, _ := paidPayPalSubscription(t)
+	f.transactionsUnavailable = true
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.ACTIVATED"); code != 500 {
+		t.Fatal(code)
+	}
+	if myPlanOf(c).Paid {
+		t.Fatal("unverified transaction granted access")
+	}
+	f.transactionsUnavailable = false
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.ACTIVATED"); code != 200 {
+		t.Fatal(code)
+	}
+	if !myPlanOf(c).Paid {
+		t.Fatal("retry lost successful payment")
+	}
+}
+
+func TestPayPalLegacyPaymentAdoptsSaleID(t *testing.T) {
+	c, s, f, paid := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	before := *myPlanOf(c).ExpiresAt
+	exec(t, s, `update payment_events set event_id = $1 where event_id = 'SALE-I-SUB1-1'`, "I-SUB1@"+paid.Format(time.RFC3339))
+	f.refundSale("SALE-I-SUB1-1", "refunded")
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REFUNDED", "REFUND1"); code != 200 {
+		t.Fatal(code)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-1"); state != "refunded" {
+		t.Fatal(state)
+	}
+	if p := myPlanOf(c); p.Paid {
+		t.Fatal(p, before)
+	}
+}
+
+func TestPayPalConcurrentRefundAndRenewal(t *testing.T) {
+	c, s, f, paid := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	next := paid.AddDate(0, 0, 60)
+	f.pay("I-SUB1", paid.Add(time.Hour), next)
+	f.refundSale("SALE-I-SUB1-1", "refunded")
+	codes := make(chan int, 2)
+	go func() { codes <- saleRefundEvent(c.another(), "PAYMENT.SALE.REFUNDED", "REFUND1") }()
+	go func() { codes <- subscriptionEvent(c.another(), "BILLING.SUBSCRIPTION.ACTIVATED") }()
+	for range 2 {
+		if code := <-codes; code != 200 {
+			t.Fatal(code)
+		}
+	}
+	if p := myPlanOf(c); !p.Paid || p.ExpiresAt == nil || !p.ExpiresAt.Equal(next.Add(paypalGrace)) {
+		t.Fatalf("%+v", p)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-1"); state != "refunded" {
+		t.Fatal(state)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-2"); state != "applied" {
+		t.Fatal(state)
 	}
 }

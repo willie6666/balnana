@@ -1607,6 +1607,7 @@ class AdminPayment {
     this.amount,
     this.currency,
     this.product,
+    this.items = const [],
     this.planId,
     this.days,
     this.userId,
@@ -1627,6 +1628,7 @@ class AdminPayment {
       amount: _opt(json, 'amount'),
       currency: _opt(json, 'currency'),
       product: _opt(json, 'product'),
+      items: [for (final item in _opt<List<Object?>>(json, 'items') ?? const []) PaymentItem.fromJson(item)],
       planId: _opt(json, 'planId'),
       days: _opt<num>(json, 'days')?.toInt(),
       userId: _opt(json, 'userId'),
@@ -1649,6 +1651,7 @@ class AdminPayment {
   final String? amount;
   final String? currency;
   final String? product;
+  final List<PaymentItem> items;
   final String? planId;
   final int? days;
   final String? userId;
@@ -1657,6 +1660,18 @@ class AdminPayment {
 
   /// The provider's ID for the transaction.
   final String? reference;
+}
+
+class PaymentItem {
+  const PaymentItem({required this.product, required this.quantity});
+
+  factory PaymentItem.fromJson(Object? data) {
+    final json = _object(data);
+    return PaymentItem(product: _req(json, 'product'), quantity: _req<num>(json, 'quantity').toInt());
+  }
+
+  final String product;
+  final int quantity;
 }
 
 /// GET /exchange-rate: what one unit of a currency is worth in another.

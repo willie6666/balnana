@@ -3474,6 +3474,11 @@ components:
           type: string
         product:
           type: string
+        items:
+          type: array
+          description: Every item in a Ko-fi shop order, including orders requiring manual assignment.
+          items:
+            $ref: "#/components/schemas/PaymentItem"
         planId:
           type: string
         days:
@@ -3485,6 +3490,14 @@ components:
         paidAt:
           type: string
           format: date-time
+    PaymentItem:
+      type: object
+      required: [product, quantity]
+      properties:
+        product:
+          type: string
+        quantity:
+          type: integer
     PaymentList:
       type: object
       required: [payments, total]
