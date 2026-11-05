@@ -19,8 +19,9 @@ const archiveKeep = 30 * 24 * time.Hour
 // bringing the expense back. After that the expense comes back without it.
 const receiptKeep = 30 * 24 * time.Hour
 
-// checkoutKeep is how long a PayPal checkout may take to be paid. PayPal
-// lets an order wait for its payer only a few hours.
+// checkoutKeep is how long an unpaid PayPal checkout is kept. PayPal lets an
+// order wait for its payer only a few hours; the rest is a margin for late
+// events and retries to still find the checkout.
 const checkoutKeep = 30 * 24 * time.Hour
 
 // sweepBatch is how many rows a statement deletes, so that a large backlog

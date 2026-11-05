@@ -38,6 +38,9 @@ OAuth 在本地 token server 測試。其餘清單由 `TestPayPalContractFixture
 - Capture 被拒（`INSTRUMENT_DECLINED`、`PAYER_ACTION_REQUIRED`、`REDIRECT_PAYER_FOR_ALTERNATE_FUNDING`）時把付款人導回訂單的 payer-action 頁；`TRANSACTION_REFUSED` 直接回報 failed。每次被拒都遞增 `capture_attempts`，下一次 capture 改用新的 `PayPal-Request-Id`，避免 6 小時內重播先前的拒絕。
 - V2 capture 失敗事件名稱改用官方 `PAYMENT.CAPTURE.DECLINED`。訂閱保留官方的 `PAYMENT.SALE.COMPLETED`、`REFUNDED`、`REVERSED` 與 billing subscription 事件。[Webhook events](https://developer.paypal.com/api/rest/webhooks/event-names/)
 - 模擬回應補齊官方必填欄位、移除不應出現的 null 欄位，避免測試依賴不合法的 PayPal 回應。
+- 刪除帳號前以 `POST /v1/billing/subscriptions/{id}/cancel` 取消仍在跑的訂閱；404 與 422（已不能取消）視為完成，其他錯誤讓刪除失敗以便重試。這個 endpoint 只在本地模擬服務測過，尚未加入上面的官方 schema 驗證。
+- 試用期間沒有任何同步時，之後看到訂閱有 `TRIAL` 週期也會標記 `trial_until`，帳戶不會再拿到第二次試用。
+- 向 PayPal 查詢改在交易外進行；`paypal_subscriptions.synced_at` 記錄狀態的查詢時間，較舊的查詢結果不會覆蓋較新的狀態。
 
 ## 相容性界線
 

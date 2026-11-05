@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -34,11 +35,25 @@ func (p *paypalClient) subscriptionPayment(ctx context.Context, sub *paypalSubsc
 	if err := p.call(ctx, http.MethodGet, "/v1/billing/subscriptions/"+url.PathEscape(sub.ID)+"/transactions?"+query.Encode(), nil, "", &out); err != nil {
 		return nil, err
 	}
-	for _, payment := range out.Transactions {
-		if paypalID.MatchString(payment.ID) && payment.Time.Equal(paid.Time) &&
-			strings.EqualFold(payment.Amount.Gross.Currency, paid.Amount.Currency) && sameAmount(payment.Amount.Gross.Value, paid.Amount.Value) {
-			return &payment, nil
+	// Nothing says the two times agree to the second: the payment in the
+	// window nearest the time is it, one for the same amount first.
+	var found *paypalTransaction
+	for i := range out.Transactions {
+		payment := &out.Transactions[i]
+		if !paypalID.MatchString(payment.ID) || !strings.EqualFold(payment.Amount.Gross.Currency, paid.Amount.Currency) {
+			continue
 		}
+		if found == nil {
+			found = payment
+			continue
+		}
+		same, sameFound := sameAmount(payment.Amount.Gross.Value, paid.Amount.Value), sameAmount(found.Amount.Gross.Value, paid.Amount.Value)
+		if same && !sameFound || same == sameFound && payment.Time.Sub(paid.Time).Abs() < found.Time.Sub(paid.Time).Abs() {
+			found = payment
+		}
+	}
+	if found != nil {
+		return found, nil
 	}
 	// The transaction list may trail the subscription details. Retry instead
 	// of acknowledging a payment that could no longer be reconciled later.
@@ -80,6 +95,17 @@ func (sub *paypalSubscription) inTrial(now time.Time) bool {
 	return trial
 }
 
+// hadTrial says whether the subscription got as far as its plan's trial, if
+// the plan has one.
+func (sub *paypalSubscription) hadTrial() bool {
+	switch sub.Status {
+	case "ACTIVE", "SUSPENDED", "CANCELLED", "EXPIRED":
+	default:
+		return false
+	}
+	return slices.ContainsFunc(sub.BillingInfo.CycleExecutions, func(cycle paypalCycleExecution) bool { return cycle.TenureType == "TRIAL" })
+}
+
 // grantPayPalTrial gives the plan until the trial's end, to one subscription
 // per account: cancelling and subscribing again doesn't start another.
 func grantPayPalTrial(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, userID, planID string, entitlement **string) (bool, error) {
@@ -108,46 +134,89 @@ func (s *Server) syncPayPalSubscription(ctx context.Context, pp *paypalClient, s
 	return s.syncPayPalSubscriptionRefund(ctx, pp, subID, nil)
 }
 
+// cancelPayPalSubscriptions stops the account's PayPal subscriptions before it
+// is deleted: PayPal would go on billing for an account that is gone. One
+// PayPal doesn't know, or can't cancel as it no longer runs, is done with.
+func (s *Server) cancelPayPalSubscriptions(ctx context.Context, userID string) error {
+	rows, err := s.db.Query(ctx, `select subscription_id from paypal_subscriptions
+        where user_id = $1 and (state is null or state = any($2))`, userID, []string{"APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED"})
+	if err != nil {
+		return err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil || len(ids) == 0 {
+		return err
+	}
+	pp := s.settings.Load().paypal
+	if pp == nil {
+		s.log.Warn("deleting an account whose paypal subscriptions PayPal isn't set up to cancel", "subscriptions", ids)
+		return nil
+	}
+	release, err := paypalSlot(ctx)
+	if err != nil {
+		return err
+	}
+	defer release()
+	for _, id := range ids {
+		err := pp.call(ctx, http.MethodPost, "/v1/billing/subscriptions/"+url.PathEscape(id)+"/cancel",
+			map[string]string{"reason": "The Balnana account was deleted."}, "", nil)
+		var refused paypalRefusal
+		if err != nil && !paypalNotFound(err) && !(errors.As(err, &refused) && refused.status == http.StatusUnprocessableEntity) {
+			s.log.Error("cancelling a paypal subscription failed", "subscription", id, "err", err)
+			return errPayPalUnavailable
+		}
+	}
+	return nil
+}
+
 // An optional refund is processed under the same subscription lock as renewals,
 // so delayed payment notifications cannot restore refunded access.
 func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalClient, subID string, refund *paypalTransaction) (outcome string, err error) {
+	outcome = paypalFailed
+	var userID string
+	err = s.db.QueryRow(ctx, `select user_id::text from paypal_subscriptions where subscription_id = $1`, subID).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return outcome, nil // only the server's own take a turn at PayPal
+	}
+	if err != nil {
+		return "", err
+	}
 	release, err := paypalSlot(ctx)
 	if err != nil {
 		return "", err
 	}
 	defer release()
-	outcome = paypalFailed
+	// PayPal is asked everything before the transaction, which would keep
+	// the account's other payments waiting on PayPal.
+	asked := time.Now()
+	var sub paypalSubscription
+	if err := pp.call(ctx, http.MethodGet, "/v1/billing/subscriptions/"+url.PathEscape(subID)+"?fields=last_failed_payment", nil, "", &sub); err != nil {
+		if paypalNotFound(err) {
+			return outcome, nil
+		}
+		return "", err
+	}
+	if sub.CustomID != userID || sub.ID != subID {
+		return outcome, nil
+	}
 	// unreconciled fails the sync once what could be taken in is: PayPal
 	// sends the event again, or the payer's return says it is pending.
 	var unreconciled error
+	var last *paypalTransaction
+	if paid := sub.BillingInfo.LastPayment; paid != nil && !paid.Time.IsZero() {
+		last, unreconciled = pp.subscriptionPayment(ctx, &sub)
+	}
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, "paypal:"+subID); err != nil {
 			return err
 		}
-		var userID string
 		var entitlement *string
-		err := tx.QueryRow(ctx, `select user_id::text, entitlement_id::text from paypal_subscriptions where subscription_id = $1`, subID).Scan(&userID, &entitlement)
+		err := tx.QueryRow(ctx, `select entitlement_id::text from paypal_subscriptions where subscription_id = $1`, subID).Scan(&entitlement)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
+			return nil // its account was deleted meanwhile
 		}
 		if err != nil {
 			return err
-		}
-		var sub paypalSubscription
-		if err := pp.call(ctx, http.MethodGet, "/v1/billing/subscriptions/"+url.PathEscape(subID)+"?fields=last_failed_payment", nil, "", &sub); err != nil {
-			if paypalNotFound(err) {
-				return nil
-			}
-			return err
-		}
-		if sub.CustomID != userID || sub.ID != subID {
-			return nil
-		}
-		// PayPal is asked everything before the account is held, which would
-		// keep its other payments waiting on PayPal.
-		var last *paypalTransaction
-		if paid := sub.BillingInfo.LastPayment; paid != nil && !paid.Time.IsZero() {
-			last, unreconciled = pp.subscriptionPayment(ctx, &sub)
 		}
 		if err := holdAccount(ctx, tx, userID); err != nil {
 			return err
@@ -165,7 +234,7 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 			if refund != nil && last.ID == refund.ID {
 				last = refund
 			}
-			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, last, userID, planID, days, &entitlement); err != nil {
+			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, last, true, userID, planID, days, &entitlement); err != nil {
 				return err
 			}
 			if last.Status == "COMPLETED" || last.Status == "PARTIALLY_REFUNDED" {
@@ -173,11 +242,11 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 			}
 		}
 		if refund != nil {
-			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, refund, userID, planID, days, &entitlement); err != nil {
+			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, refund, false, userID, planID, days, &entitlement); err != nil {
 				return err
 			}
 		}
-		if planID != nil && sub.inTrial(time.Now()) {
+		if planID != nil && sub.inTrial(asked) {
 			granted, err := grantPayPalTrial(ctx, tx, &sub, userID, *planID, &entitlement)
 			if err != nil {
 				return err
@@ -185,11 +254,21 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 			if granted {
 				outcome = paypalDone
 			}
+		} else if sub.hadTrial() {
+			// A trial no sync saw while it ran was still the account's one.
+			if _, err := tx.Exec(ctx, `update paypal_subscriptions set trial_until = coalesce(trial_until, $2) where subscription_id = $1`, subID, asked); err != nil {
+				return err
+			}
 		}
 		// The state is kept even when the last payment is still to be found,
-		// so the account can't start a second subscription meanwhile.
-		_, err = tx.Exec(ctx, `update paypal_subscriptions set product = $2, entitlement_id = $3, state = $4 where subscription_id = $1`, subID, sub.PlanID, entitlement, sub.Status)
-		return err
+		// so the account can't start a second subscription meanwhile. A sync
+		// that asked PayPal later has stored a newer one already.
+		_, err = tx.Exec(ctx, `update paypal_subscriptions set product = $2, entitlement_id = $3, state = $4, synced_at = $5
+			where subscription_id = $1 and (synced_at is null or synced_at <= $5)`, subID, sub.PlanID, entitlement, sub.Status, asked)
+		if err != nil {
+			return err
+		}
+		return s.warnPayPalSubscriptions(ctx, tx, userID)
 	})
 	if err == nil {
 		err = unreconciled
@@ -197,15 +276,39 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 	return outcome, err
 }
 
-func recordPayPalSubscriptionPayment(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, payment *paypalTransaction, userID string, planID *string, days *int, entitlement **string) error {
+// warnPayPalSubscriptions tells the administrator of an account paying for
+// two subscriptions at once, as when it approved two checkouts in two tabs.
+// Which one to cancel and refund is theirs to say.
+func (s *Server) warnPayPalSubscriptions(ctx context.Context, tx pgx.Tx, userID string) error {
+	rows, err := tx.Query(ctx, `select subscription_id from paypal_subscriptions
+        where user_id = $1 and state = any($2) order by created_at`, userID, []string{"APPROVED", "ACTIVE", "SUSPENDED"})
+	if err != nil {
+		return err
+	}
+	running, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err == nil && len(running) > 1 {
+		s.log.Warn("an account has more than one paypal subscription running", "user", userID, "subscriptions", running)
+	}
+	return err
+}
+
+// latest says payment is the subscription's last_payment, whose period its
+// billing info tells.
+func recordPayPalSubscriptionPayment(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, payment *paypalTransaction, latest bool, userID string, planID *string, days *int, entitlement **string) error {
 	refunded := payment.Status == "REFUNDED"
 	if !refunded && payment.Status != "COMPLETED" && payment.Status != "PARTIALLY_REFUNDED" {
 		return nil
 	}
-	// Adopt records created before real sale IDs were kept.
-	legacy := sub.ID + "@" + payment.Time.UTC().Format(time.RFC3339)
+	// Adopt records created before real sale IDs were kept. They were named
+	// for the last_payment time, and one already adopted stays as it is.
+	at := payment.Time
+	if latest {
+		at = sub.BillingInfo.LastPayment.Time
+	}
+	legacy := sub.ID + "@" + at.UTC().Format(time.RFC3339)
 	if _, err := tx.Exec(ctx, `update payment_events set event_id = $1
-        where provider = 'paypal' and event_id = $2`, payment.ID, legacy); err != nil {
+        where provider = 'paypal' and event_id = $2
+          and not exists (select 1 from payment_events where provider = 'paypal' and event_id = $1)`, payment.ID, legacy); err != nil {
 		return err
 	}
 	state := "unmatched"
@@ -213,7 +316,7 @@ func recordPayPalSubscriptionPayment(ctx context.Context, tx pgx.Tx, sub *paypal
 	if planID != nil && days != nil {
 		state = "unclaimed"
 		end := payment.Time.AddDate(0, 0, *days).Add(paypalGrace)
-		if paid := sub.BillingInfo.LastPayment; paid != nil && paid.Time.Equal(payment.Time) {
+		if latest {
 			end = subscriptionUntil(sub, payment.Time, *days)
 		}
 		until = &end

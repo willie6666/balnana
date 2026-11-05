@@ -186,8 +186,10 @@ class _PlanPageState extends ConsumerState<PlanPage> {
       if (!opened) tell(l10n.errorGeneric);
     } on ApiException catch (e) {
       tell(errorMessage(l10n, e));
+    } finally {
+      // Not left disabled when opening PayPal fails some other way.
+      if (mounted) setState(() => _buying = false);
     }
-    if (mounted) setState(() => _buying = false);
   }
 
   @override

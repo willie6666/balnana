@@ -31,6 +31,7 @@ type fakePayPal struct {
 	refunds                 map[string]string // refund ID to original sale ID
 	refundStates            map[string]string
 	transactionsUnavailable bool
+	cancelUnavailable       bool
 	// captureRefusals remembers each declined capture's request ID, as PayPal
 	// answers a repeat of one with the same refusal.
 	captureRefusals map[string]string
@@ -190,6 +191,22 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 			return
 		}
 		reply(w, 200, fakePayPalSubscriptionJSON(sub))
+	})
+	mux.HandleFunc("POST /v1/billing/subscriptions/{id}/cancel", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		sub := f.subs[r.PathValue("id")]
+		switch {
+		case f.cancelUnavailable:
+			refuse(w, 503, "UNAVAILABLE")
+		case sub == nil:
+			refuse(w, 404, "RESOURCE_NOT_FOUND")
+		case sub.Status != "ACTIVE" && sub.Status != "SUSPENDED":
+			refuse(w, 422, "SUBSCRIPTION_STATUS_INVALID")
+		default:
+			sub.Status = "CANCELLED"
+			w.WriteHeader(http.StatusNoContent)
+		}
 	})
 	mux.HandleFunc("GET /v1/billing/subscriptions/{id}/transactions", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
@@ -1281,4 +1298,90 @@ func TestPayPalPlanWithoutTrialAfterTrial(t *testing.T) {
 		t.Fatal(p.Paypal.Subscribed)
 	}
 	c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-5ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb})
+}
+
+func TestPayPalDeletingAccountCancelsSubscription(t *testing.T) {
+	c, _, f, _ := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	// With PayPal out of reach the account stays, to be deleted on another try.
+	f.mu.Lock()
+	f.cancelUnavailable = true
+	f.mu.Unlock()
+	c.errorCode(503, "POST", "/me/delete", AccountDelete{Password: ptr("correct horse")})
+	f.mu.Lock()
+	f.cancelUnavailable = false
+	f.mu.Unlock()
+	c.must(204, "POST", "/me/delete", AccountDelete{Password: ptr("correct horse")}, nil)
+	if status := f.subs["I-SUB1"].Status; status != "CANCELLED" {
+		t.Fatal(status)
+	}
+}
+
+func TestPayPalTransactionTimeNearLastPayment(t *testing.T) {
+	c, _, f, paid := paidPayPalSubscription(t)
+	f.mu.Lock()
+	f.transactions["I-SUB1"][0].Time = paid.Add(2 * time.Second)
+	f.mu.Unlock()
+	if got := paypalBack(c, "subscription_id=I-SUB1&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
+		t.Fatal(got)
+	}
+	if p := myPlanOf(c); !p.Paid || !p.ExpiresAt.Equal(paid.AddDate(0, 0, 30).Add(paypalGrace)) {
+		t.Fatalf("%+v", p)
+	}
+}
+
+func TestPayPalOlderSyncKeepsNewerState(t *testing.T) {
+	c, s, _, _ := paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	// A sync that asked PayPal later stored CANCELLED; this one's ACTIVE is older.
+	exec(t, s, `update paypal_subscriptions set state = 'CANCELLED', synced_at = now() + interval '1 hour' where subscription_id = 'I-SUB1'`)
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.ACTIVATED"); code != 200 {
+		t.Fatal(code)
+	}
+	var state string
+	if err := s.db.QueryRow(t.Context(), `select state from paypal_subscriptions where subscription_id = 'I-SUB1'`).Scan(&state); err != nil {
+		t.Fatal(err)
+	}
+	if state != "CANCELLED" {
+		t.Fatal(state)
+	}
+}
+
+func TestPayPalTrialNoSyncSawStillCounts(t *testing.T) {
+	c, s, f := paypalServer(t)
+	f.plans = append(f.plans, "P-3ML4271244454362WXNWU5NQ")
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, without_trial)
+		values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30, 'P-3ML4271244454362WXNWU5NQ')`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	// The trial ran out unheard of; the first regular payment is what comes.
+	end := time.Now().AddDate(0, 0, -1).UTC().Truncate(time.Second)
+	f.trial("I-SUB1", end)
+	f.pay("I-SUB1", end, end.AddDate(0, 0, 30))
+	f.sub("I-SUB1", func(sub *paypalSubscription) {
+		sub.BillingInfo.CycleExecutions = []paypalCycleExecution{{TenureType: "TRIAL", CyclesCompleted: 1}, {TenureType: "REGULAR", CyclesCompleted: 1}}
+	})
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	f.sub("I-SUB1", func(sub *paypalSubscription) { sub.Status = "CANCELLED" })
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.CANCELLED"); code != 200 {
+		t.Fatal(code)
+	}
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	if plan := f.subs["I-SUB2"].PlanID; plan != "P-3ML4271244454362WXNWU5NQ" {
+		t.Fatal(plan)
+	}
+}
+
+func TestPayPalOfferNeedsValidPrice(t *testing.T) {
+	c, s, _ := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, min_amount, currency) values
+		('paypal', 'plus-90', 'plus', 90, 300, 'TWD'), ('paypal', 'plus-odd', 'plus', 90, 300.50, 'TWD')`)
+	register(c, "ana@example.test", "Ana")
+	var products []string
+	for _, o := range myPlanOf(c).Paypal.Offers {
+		products = append(products, o.Product)
+	}
+	if !slices.Equal(products, []string{"plus-90"}) {
+		t.Fatal(products)
+	}
 }

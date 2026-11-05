@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const kofiTestToken = "kofi-secret"
@@ -935,5 +937,37 @@ func TestKofiMixedPlanOrderNeedsManualAssignment(t *testing.T) {
 	}
 	if p := myPlanOf(c); !p.Paid || p.PlanName != "Gold" {
 		t.Fatal(p)
+	}
+}
+
+func TestHandPlacedPlayPaymentsAddUp(t *testing.T) {
+	c, _, s := billingServer(t)
+	u := register(c, "ana@example.test", "Ana")
+	ctx := t.Context()
+	for _, id := range []string{"GPA.1", "GPA.2"} {
+		exec(t, s, `insert into payment_events (provider, event_id, kind, state, plan_id, days, paid_at)
+			values ('play', $1, 'Subscription', 'unclaimed', 'plus', 30, now())`, id)
+		err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+			var paymentID string
+			if err := tx.QueryRow(ctx, `select id::text from payment_events where event_id = $1`, id).Scan(&paymentID); err != nil {
+				return err
+			}
+			if err := holdAccount(ctx, tx, u.Id); err != nil {
+				return err
+			}
+			return applyPayment(ctx, tx, paymentID, u.Id)
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var n int
+	var expires time.Time
+	err := s.db.QueryRow(ctx, `select count(*), max(expires_at) from entitlements where user_id = $1`, u.Id).Scan(&n, &expires)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := time.Now().AddDate(0, 0, 60); n != 1 || expires.Sub(want).Abs() > time.Minute {
+		t.Fatal(n, expires)
 	}
 }

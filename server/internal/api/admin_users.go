@@ -65,6 +65,9 @@ func (s *Server) DeleteAdminUser(ctx context.Context, req DeleteAdminUserRequest
 	if !validUUID(req.UserId) {
 		return nil, errNotFound
 	}
+	if err := s.cancelPayPalSubscriptions(ctx, req.UserId); err != nil {
+		return nil, err
+	}
 	if err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error { return s.deleteAccount(ctx, tx, req.UserId) }); err != nil {
 		return nil, err
 	}

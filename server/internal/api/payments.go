@@ -270,8 +270,11 @@ func matchProduct(ctx context.Context, q querier, p payment) (planID *string, da
 }
 
 // oneOffEntitlement picks the entitlements (as e) that bought time adds to:
-// the ones no subscription runs, whose end only payments move.
-const oneOffEntitlement = `e.source in ('kofi', 'paypal') and e.expires_at is not null
+// the ones no subscription runs, whose end only payments move. A Play payment
+// placed by hand starts an admin one, which a grant on the admin page doesn't.
+const oneOffEntitlement = `(e.source in ('kofi', 'paypal')
+	    or e.source = 'admin' and exists (select 1 from payment_events pe where pe.entitlement_id = e.id))
+	and e.expires_at is not null
 	and not exists (select 1 from play_subscriptions ps where ps.entitlement_id = e.id)
 	and not exists (select 1 from paypal_subscriptions pp where pp.entitlement_id = e.id)`
 

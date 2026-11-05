@@ -191,6 +191,9 @@ func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (Delet
 	if err != nil {
 		return nil, err
 	}
+	if err := s.cancelPayPalSubscriptions(ctx, u.id); err != nil {
+		return nil, err
+	}
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if err := lockAccount(ctx, tx, u, checked); err != nil {
 			return err

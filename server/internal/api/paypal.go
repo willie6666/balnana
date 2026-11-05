@@ -320,14 +320,21 @@ func (s *Server) paypalOffer(ctx context.Context, q querier, userID string) (*Pa
 		o.Subscription = paypalPlanID.MatchString(o.Product)
 		if o.Subscription {
 			o.Amount = nil // PayPal's plan has the price
-		} else if o.Amount != nil && o.Currency != nil {
+		} else if o.Amount != nil && o.Currency != nil && validPayPalPrice(*o.Amount, *o.Currency) {
 			a := paypalAmount(*o.Amount, *o.Currency)
 			o.Amount = &a
+		} else {
+			o.Amount = nil
 		}
 		return o, err
 	})
-	if err != nil || len(offers) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	// Checkout refuses an order without a price PayPal takes.
+	offers = slices.DeleteFunc(offers, func(o PayPalOffer) bool { return !o.Subscription && o.Amount == nil })
+	if len(offers) == 0 {
+		return nil, nil
 	}
 	subscribed, err := paypalSubscribed(ctx, q, userID)
 	if err != nil {
@@ -595,100 +602,111 @@ func (s *Server) PayPalReturn(w http.ResponseWriter, r *http.Request) {
 // of its business.
 // A declined capture leaves retry as the page to send the payer back to.
 func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID string) (outcome, retry string, err error) {
+	outcome = paypalFailed
+	var userID, product, amount, currency string
+	var planID *string
+	var days, attempts int
+	err = s.db.QueryRow(ctx, `
+		select user_id::text, product, plan_id, days, amount::text, currency, capture_attempts
+		from paypal_orders where order_id = $1`, orderID).
+		Scan(&userID, &product, &planID, &days, &amount, &currency, &attempts)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return outcome, "", nil // only the server's own take a turn at PayPal
+	}
+	if err != nil {
+		return "", "", err
+	}
 	release, err := paypalSlot(ctx)
 	if err != nil {
 		return "", "", err
 	}
 	defer release()
-	outcome = paypalFailed
+	// PayPal is asked everything before the transaction, which would keep
+	// the account's other payments waiting on PayPal. Two syncs of the order
+	// at once capture it with the same request ID, which PayPal does once.
+	var order paypalOrder
+	if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+		if paypalNotFound(err) {
+			return outcome, "", nil
+		}
+		return "", "", err
+	}
+	if order.Status == "APPROVED" {
+		requestID := "capture-" + orderID
+		if attempts > 0 {
+			requestID += "-" + strconv.Itoa(attempts)
+		}
+		err := pp.call(ctx, http.MethodPost, "/v2/checkout/orders/"+url.PathEscape(orderID)+"/capture",
+			[]byte("{}"), requestID, &order)
+		var refused paypalRefusal
+		switch {
+		case errors.As(err, &refused) && slices.Contains(paypalDeclines, refused.issue):
+			// Kept at once, whatever happens next, so the payer's next try
+			// isn't answered with this refusal again.
+			tag, err := s.db.Exec(ctx, `update paypal_orders set capture_attempts = capture_attempts + 1
+				where order_id = $1 and capture_attempts = $2`, orderID, attempts)
+			if err != nil {
+				return "", "", err
+			}
+			if tag.RowsAffected() == 0 {
+				// Another sync tried again since: see how that went.
+				if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+					return "", "", err
+				}
+				break
+			}
+			if refused.issue == "TRANSACTION_REFUSED" {
+				return outcome, "", nil
+			}
+			// PayPal asks for the payer to be sent back to choose another
+			// way to pay; the order's page is where they approved it.
+			if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+				return "", "", err
+			}
+			if retry = linkTo(order.Links, "payer-action", "approve"); retry != "" {
+				outcome = paypalPending
+			}
+			return outcome, retry, nil
+		case errors.As(err, &refused) && refused.status == http.StatusUnprocessableEntity:
+			// Captured already, most likely: see what it is now.
+			if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+				return "", "", err
+			}
+		case err != nil:
+			return "", "", err
+		}
+	}
+	switch order.Status {
+	case "CREATED", "SAVED", "APPROVED", "PAYER_ACTION_REQUIRED":
+		return paypalPending, "", nil
+	case "COMPLETED":
+	default:
+		return outcome, "", nil
+	}
+	if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
+		// A replay may use a minimal response cached by an earlier caller.
+		if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+			return "", "", err
+		}
+		if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
+			return paypalPending, "", nil
+		}
+	}
+	unit := order.PurchaseUnits[0]
+	capture := unit.Payments.Captures[0]
+	// A reversed payment, as after a chargeback, gives the time back as a
+	// refund does; PayPal shows it as REFUNDED or, at times, REVERSED.
+	negative := capture.Status == "REFUNDED" || capture.Status == "REVERSED"
+	switch {
+	case capture.Status == "PENDING":
+		return paypalPending, "", nil
+	case capture.Status == "COMPLETED", capture.Status == "PARTIALLY_REFUNDED", negative:
+	default:
+		return outcome, "", nil
+	}
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, "paypal:"+orderID); err != nil {
 			return err
-		}
-		var userID, product, amount, currency string
-		var planID *string
-		var days, attempts int
-		err := tx.QueryRow(ctx, `
-			select user_id::text, product, plan_id, days, amount::text, currency, capture_attempts
-			from paypal_orders where order_id = $1`, orderID).
-			Scan(&userID, &product, &planID, &days, &amount, &currency, &attempts)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		var order paypalOrder
-		if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
-			if paypalNotFound(err) {
-				return nil
-			}
-			return err
-		}
-		if order.Status == "APPROVED" {
-			requestID := "capture-" + orderID
-			if attempts > 0 {
-				requestID += "-" + strconv.Itoa(attempts)
-			}
-			err := pp.call(ctx, http.MethodPost, "/v2/checkout/orders/"+url.PathEscape(orderID)+"/capture",
-				[]byte("{}"), requestID, &order)
-			var refused paypalRefusal
-			switch {
-			case errors.As(err, &refused) && slices.Contains(paypalDeclines, refused.issue):
-				if _, err := tx.Exec(ctx, `update paypal_orders set capture_attempts = capture_attempts + 1 where order_id = $1`, orderID); err != nil {
-					return err
-				}
-				if refused.issue == "TRANSACTION_REFUSED" {
-					return nil
-				}
-				// PayPal asks for the payer to be sent back to choose another
-				// way to pay; the order's page is where they approved it.
-				if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
-					return err
-				}
-				if retry = linkTo(order.Links, "payer-action", "approve"); retry != "" {
-					outcome = paypalPending
-				}
-				return nil
-			case errors.As(err, &refused) && refused.status == http.StatusUnprocessableEntity:
-				// Captured already, most likely: see what it is now.
-				if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
-					return err
-				}
-			case err != nil:
-				return err
-			}
-		}
-		switch order.Status {
-		case "CREATED", "SAVED", "APPROVED", "PAYER_ACTION_REQUIRED":
-			outcome = paypalPending
-			return nil
-		case "COMPLETED":
-		default:
-			return nil
-		}
-		if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
-			// A replay may use a minimal response cached by an earlier caller.
-			if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
-				return err
-			}
-			if len(order.PurchaseUnits) == 0 || len(order.PurchaseUnits[0].Payments.Captures) == 0 {
-				outcome = paypalPending
-				return nil
-			}
-		}
-		unit := order.PurchaseUnits[0]
-		capture := unit.Payments.Captures[0]
-		// A reversed payment, as after a chargeback, gives the time back as a
-		// refund does; PayPal shows it as REFUNDED or, at times, REVERSED.
-		negative := capture.Status == "REFUNDED" || capture.Status == "REVERSED"
-		switch {
-		case capture.Status == "PENDING":
-			outcome = paypalPending
-			return nil
-		case capture.Status == "COMPLETED", capture.Status == "PARTIALLY_REFUNDED", negative:
-		default:
-			return nil
 		}
 		if err := holdAccount(ctx, tx, userID); err != nil {
 			return err
@@ -707,7 +725,7 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 			paidAt = time.Now()
 		}
 		var paymentID, recorded string
-		err = tx.QueryRow(ctx, `
+		err := tx.QueryRow(ctx, `
 			insert into payment_events (provider, event_id, kind, payer_name, amount, currency, product,
 			                            state, plan_id, days, user_id, paid_at, reference)
 			values ('paypal', $1, 'Order', $2, $3::numeric, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -722,17 +740,17 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 			return refundPayment(ctx, tx, paymentID)
 		}
 		if recorded == "unclaimed" {
-			if err := applyPayment(ctx, tx, paymentID, userID); err != nil {
-				return err
-			}
+			return applyPayment(ctx, tx, paymentID, userID)
 		}
-		outcome = paypalDone
 		return nil
 	})
 	if err != nil {
-		retry = ""
+		return "", "", err
 	}
-	return outcome, retry, err
+	if negative {
+		return outcome, "", nil
+	}
+	return paypalDone, "", nil
 }
 
 // refundPayment takes back the time a payment gave, as far as it is left.
