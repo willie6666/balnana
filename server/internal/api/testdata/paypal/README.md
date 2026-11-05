@@ -33,7 +33,9 @@ OAuth 在本地 token server 測試。其餘清單由 `TestPayPalContractFixture
 - Subscription plan ID 依 create schema 限制為 `P-` 加 24 個大寫英數字元。假資料也改成有效格式。
 - 單次付款價格須為正值，幣別限於官方表列範圍。HUF、JPY、TWD 不送小數；不接受會被截掉的非零小數。[Currency codes](https://developer.paypal.com/api/codes/currency)
 - HTTP 400 代表 bad request，現在只有 404 被判定為資源不存在，避免查詢格式錯誤被當成已處理。
-- Native refund 的 pending 狀態要求重試；failed／cancelled 不移除權限。Sale schema 沒有 `reversed` enum，測試與處理不再依賴此值；撤銷由已驗證的 SALE.REVERSED 事件與 REST 的負向狀態共同判斷。
+- Native refund 的 pending 狀態要求重試；failed／cancelled 不移除權限。Sale schema 沒有 `reversed` enum，但實際回應可能出現，因此 `reversed` 一律視為負向；撤銷仍由已驗證的 SALE.REVERSED 事件與 REST 的負向狀態（`refunded`、`reversed`，或 REVERSED 事件下的 `denied`）共同判斷。V2 capture 的 `REVERSED` 狀態也比照 `REFUNDED` 收回時間。
+- 免費試用：訂閱 ACTIVE、`cycle_executions` 有 `TRIAL` 且 `REGULAR` 的 `cycles_completed` 為 0、`next_billing_time` 在未來、沒有失敗扣款或欠款時，視為試用中，權限給到 `next_billing_time` 加寬限期。每個帳號只給一次（`paypal_subscriptions.trial_until`），試用中取消仍保留到試用結束。官方 schema 沒有說試用期間 `last_payment` 與 `next_billing_time` 的實際值，上線前要用 sandbox 的試用方案確認。
+- Capture 被拒（`INSTRUMENT_DECLINED`、`PAYER_ACTION_REQUIRED`、`REDIRECT_PAYER_FOR_ALTERNATE_FUNDING`）時把付款人導回訂單的 payer-action 頁；`TRANSACTION_REFUSED` 直接回報 failed。每次被拒都遞增 `capture_attempts`，下一次 capture 改用新的 `PayPal-Request-Id`，避免 6 小時內重播先前的拒絕。
 - V2 capture 失敗事件名稱改用官方 `PAYMENT.CAPTURE.DECLINED`。訂閱保留官方的 `PAYMENT.SALE.COMPLETED`、`REFUNDED`、`REVERSED` 與 billing subscription 事件。[Webhook events](https://developer.paypal.com/api/rest/webhooks/event-names/)
 - 模擬回應補齊官方必填欄位、移除不應出現的 null 欄位，避免測試依賴不合法的 PayPal 回應。
 

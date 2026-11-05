@@ -77,7 +77,9 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 	if err != nil {
 		return total, err
 	}
-	// PayPal checkouts nobody finished. A paid one has its payment or entitlement.
+	// PayPal checkouts nobody finished. A paid one has its payment or
+	// entitlement; a subscription that was approved, even one with no payment
+	// yet, stays for its later payments to find.
 	n, err = s.sweepBatches(ctx, sweepBatch, `
 		delete from paypal_orders where order_id = any (array(
 			select o.order_id from paypal_orders o where o.created_at < $2 and not exists (
@@ -90,9 +92,9 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 	n, err = s.sweepBatches(ctx, sweepBatch, `
 		delete from paypal_subscriptions where subscription_id = any (array(
 			select subscription_id from paypal_subscriptions
-			where created_at < $2 and entitlement_id is null and state is distinct from 'ACTIVE' and not exists (
+			where created_at < $2 and entitlement_id is null and (state is null or state = any($3)) and not exists (
 				select 1 from payment_events p where p.provider = 'paypal' and p.reference = subscription_id)
-			limit $1))`, time.Now().Add(-checkoutKeep))
+			limit $1))`, time.Now().Add(-checkoutKeep), []string{"APPROVAL_PENDING", "CANCELLED", "EXPIRED"})
 	total += n
 	if err != nil {
 		return total, err

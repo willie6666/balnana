@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"balnana/internal/config"
 )
 
@@ -29,9 +31,12 @@ type fakePayPal struct {
 	refunds                 map[string]string // refund ID to original sale ID
 	refundStates            map[string]string
 	transactionsUnavailable bool
-	asked                   map[string]any // the last order or subscription asked for
-	n                       int
-	requests                []paypalTestRequest
+	// captureRefusals remembers each declined capture's request ID, as PayPal
+	// answers a repeat of one with the same refusal.
+	captureRefusals map[string]string
+	asked           map[string]any // the last order or subscription asked for
+	n               int
+	requests        []paypalTestRequest
 }
 
 type paypalTestRequest struct {
@@ -61,6 +66,7 @@ type fakeOrder struct {
 	customID       string
 	amount         paypalMoney
 	capture        string // the capture's status, once there is one
+	decline        string // the issue capturing it is refused with
 	paid           *paypalMoney
 	minimalCapture bool // replay an earlier response that used PayPal's default
 }
@@ -88,7 +94,8 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 	t.Helper()
 	c, _, s := billingServer(t)
 	f := &fakePayPal{orders: map[string]*fakeOrder{}, subs: map[string]*paypalSubscription{}, plans: []string{"P-5ML4271244454362WXNWU5NQ"},
-		transactions: map[string][]paypalTransaction{}, sales: map[string]*fakeSale{}, refunds: map[string]string{}, refundStates: map[string]string{}}
+		transactions: map[string][]paypalTransaction{}, sales: map[string]*fakeSale{}, refunds: map[string]string{}, refundStates: map[string]string{},
+		captureRefusals: map[string]string{}}
 	mux := http.NewServeMux()
 	reply := func(w http.ResponseWriter, status int, v any) {
 		w.Header().Set("Content-Type", "application/json")
@@ -96,6 +103,7 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 		_ = json.NewEncoder(w).Encode(v)
 	}
 	refuse := func(w http.ResponseWriter, status int, issue string) {
+		w.Header().Set("PayPal-Debug-Id", "f0e1d2c3b4a59")
 		reply(w, status, map[string]any{"name": "REFUSED", "details": []map[string]string{{"issue": issue}}})
 	}
 	mux.HandleFunc("POST /v2/checkout/orders", func(w http.ResponseWriter, r *http.Request) {
@@ -133,9 +141,15 @@ func paypalServer(t *testing.T) (*client, *Server, *fakePayPal) {
 		f.mu.Lock()
 		defer f.mu.Unlock()
 		o := f.orders[r.PathValue("id")]
+		key := r.Header.Get("PayPal-Request-Id")
 		switch {
 		case o == nil:
 			refuse(w, 404, "INVALID_RESOURCE_ID")
+		case f.captureRefusals[key] != "":
+			refuse(w, 422, f.captureRefusals[key])
+		case o.decline != "":
+			f.captureRefusals[key] = o.decline
+			refuse(w, 422, o.decline)
 		case o.status != "APPROVED":
 			refuse(w, 422, "ORDER_ALREADY_CAPTURED")
 		default:
@@ -330,20 +344,29 @@ func fakePayPalSubscriptionJSON(sub *paypalSubscription) map[string]any {
 	if sub.Subscriber.Name.String() == "" {
 		delete(out, "subscriber")
 	}
-	if sub.BillingInfo.LastPayment == nil {
+	if sub.BillingInfo.LastPayment == nil && sub.BillingInfo.CycleExecutions == nil {
 		delete(out, "billing_info")
 	} else {
 		billing := out["billing_info"].(map[string]any)
 		if sub.BillingInfo.NextBillingTime == nil {
 			delete(billing, "next_billing_time")
 		}
+		if sub.BillingInfo.CycleExecutions == nil {
+			delete(billing, "cycle_executions")
+		}
+		currency := "TWD"
+		if sub.BillingInfo.LastPayment == nil {
+			delete(billing, "last_payment") // a free trial has paid nothing yet
+		} else {
+			currency = sub.BillingInfo.LastPayment.Amount.Currency
+		}
 		if sub.BillingInfo.LastFailedPayment == nil {
 			delete(billing, "last_failed_payment")
 		} else {
-			billing["last_failed_payment"].(map[string]any)["amount"] = sub.BillingInfo.LastPayment.Amount
+			billing["last_failed_payment"].(map[string]any)["amount"] = paypalMoney{Value: "100", Currency: currency}
 		}
 		if sub.BillingInfo.OutstandingBalance.Value == "" {
-			billing["outstanding_balance"] = paypalMoney{Value: "0", Currency: sub.BillingInfo.LastPayment.Amount.Currency}
+			billing["outstanding_balance"] = paypalMoney{Value: "0", Currency: currency}
 		}
 	}
 	return out
@@ -996,5 +1019,213 @@ func TestPayPalBadRequestIsNotMissingResource(t *testing.T) {
 		if got := paypalNotFound(paypalRefusal{status: code}); got != (code == 404) {
 			t.Fatal(code, got)
 		}
+	}
+}
+
+func TestPayPalDeclinedCaptureSendsPayerBack(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, min_amount, currency) values ('paypal', 'plus-90', 'plus', 90, 300, 'TWD')`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "plus-90", PayPalCheckoutRequestAppWeb)
+	f.order("ORDER1", func(o *fakeOrder) { o.status, o.decline = "APPROVED", "INSTRUMENT_DECLINED" })
+	if got := paypalBack(c, "token=ORDER1&app=web"); got != "https://paypal.test/pay?token=ORDER1" {
+		t.Fatal(got)
+	}
+	// Paying another way, the next capture isn't taken for a repeat of the first.
+	f.order("ORDER1", func(o *fakeOrder) { o.decline = "" })
+	if got := paypalBack(c, "token=ORDER1&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
+		t.Fatal(got)
+	}
+	if !myPlanOf(c).Paid {
+		t.Fatal("paid on the second try, but no time")
+	}
+
+	// Refused outright, there is nothing to go back for.
+	checkout(c, "plus-90", PayPalCheckoutRequestAppWeb)
+	f.order("ORDER2", func(o *fakeOrder) { o.status, o.decline = "APPROVED", "TRANSACTION_REFUSED" })
+	if got := paypalBack(c, "token=ORDER2&app=android"); got != "balnana://app/settings/plan?paypal=failed" {
+		t.Fatal(got)
+	}
+}
+
+func TestPayPalReversedPayments(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, min_amount, currency) values ('paypal', 'plus-90', 'plus', 90, 300, 'TWD')`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "plus-90", PayPalCheckoutRequestAppWeb)
+	f.order("ORDER1", func(o *fakeOrder) { o.status = "APPROVED" })
+	paypalBack(c, "token=ORDER1&app=web")
+	f.order("ORDER1", func(o *fakeOrder) { o.capture = "REVERSED" })
+	reversal := map[string]any{"event_type": "PAYMENT.CAPTURE.REVERSED", "resource": map[string]any{"id": "REFUND1",
+		"links": []paypalLink{{Rel: "up", Href: "https://api.paypal.com/v2/payments/captures/CAP-ORDER1"}}}}
+	if code := paypalEventTo(c, "good", reversal); code != 200 {
+		t.Fatal(code)
+	}
+	if state, _ := paymentState(t, s, "CAP-ORDER1"); state != "refunded" || myPlanOf(c).Paid {
+		t.Fatal(state)
+	}
+
+	c, s, f, _ = paidPayPalSubscription(t)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	f.mu.Lock()
+	f.sales["SALE-I-SUB1-1"].State = "reversed"
+	f.mu.Unlock()
+	if code := saleRefundEvent(c, "PAYMENT.SALE.REVERSED", "SALE-I-SUB1-1"); code != 200 {
+		t.Fatal(code)
+	}
+	if state, _ := paymentState(t, s, "SALE-I-SUB1-1"); state != "refunded" || myPlanOf(c).Paid {
+		t.Fatal(state)
+	}
+}
+
+// A payment the transaction list doesn't show yet mustn't leave the
+// subscription looking unapproved, or the payer could start a second one.
+func TestPayPalUnreconciledSubscriptionStillCounts(t *testing.T) {
+	c, _, f, _ := paidPayPalSubscription(t)
+	f.transactionsUnavailable = true
+	if got := paypalBack(c, "subscription_id=I-SUB1&app=web"); got != "https://balnana.test/settings/plan?paypal=pending" {
+		t.Fatal(got)
+	}
+	if p := myPlanOf(c); p.Paid || !slices.Equal(p.Paypal.Subscribed, []string{"P-5ML4271244454362WXNWU5NQ"}) {
+		t.Fatalf("%+v", p)
+	}
+	c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-5ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb})
+	f.transactionsUnavailable = false
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.ACTIVATED"); code != 200 {
+		t.Fatal(code)
+	}
+	if !myPlanOf(c).Paid {
+		t.Fatal("the payment was never taken in")
+	}
+}
+
+// Approved at PayPal, but neither the payer's return nor an event came: a new
+// checkout asks PayPal first.
+func TestPayPalCheckoutFindsUnreportedApproval(t *testing.T) {
+	c, _, f, _ := paidPayPalSubscription(t)
+	c.errorCode(409, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "P-5ML4271244454362WXNWU5NQ", App: PayPalCheckoutRequestAppWeb})
+	if p := myPlanOf(c); !p.Paid {
+		t.Fatalf("%+v", p)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.subs) != 1 {
+		t.Fatal(len(f.subs))
+	}
+}
+
+func TestPayPalSweepKeepsApprovedSubscriptions(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30)`)
+	register(c, "ana@example.test", "Ana")
+	for range 3 {
+		checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	}
+	// Approved, but its first payment hasn't come; one given up on; one
+	// never approved.
+	f.sub("I-SUB1", func(sub *paypalSubscription) { sub.Status = "SUSPENDED" })
+	f.sub("I-SUB2", func(sub *paypalSubscription) { sub.Status = "CANCELLED" })
+	for _, id := range []string{"I-SUB1", "I-SUB2"} {
+		paypalBack(c, "subscription_id="+id+"&app=web")
+	}
+	exec(t, s, `update paypal_subscriptions set created_at = now() - interval '60 days'`)
+	if _, err := s.sweepExpired(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var kept []string
+	rows, err := s.db.Query(t.Context(), `select subscription_id from paypal_subscriptions order by subscription_id`)
+	if err == nil {
+		kept, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	}
+	if err != nil || !slices.Equal(kept, []string{"I-SUB1"}) {
+		t.Fatal(kept, err)
+	}
+}
+
+func TestPayPalWebhookNeedsPayPalHeaders(t *testing.T) {
+	c, _, f := paypalServer(t)
+	hook := c.another()
+	hook.header = http.Header{"Paypal-Transmission-Sig": {"good"}, "Paypal-Cert-Url": {"https://evil.test/cert"}}
+	if code := hook.do("POST", "/webhooks/paypal", map[string]any{"event_type": "PAYMENT.SALE.COMPLETED"}).Code; code != 403 {
+		t.Fatal(code)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.requests) != 0 {
+		t.Fatalf("asked paypal: %+v", f.requests)
+	}
+}
+
+func TestPayPalRefusalNamesDebugID(t *testing.T) {
+	_, s, _ := paypalServer(t)
+	err := s.settings.Load().paypal.call(t.Context(), http.MethodGet, "/v2/checkout/orders/NONE", nil, "", nil)
+	if !strings.Contains(fmt.Sprint(err), "f0e1d2c3b4a59") {
+		t.Fatal(err)
+	}
+}
+
+// trial starts a subscription's free trial at PayPal, to end at next.
+func (f *fakePayPal) trial(id string, next time.Time) {
+	f.sub(id, func(sub *paypalSubscription) {
+		sub.Status = "ACTIVE"
+		sub.BillingInfo.NextBillingTime = &next
+		sub.BillingInfo.CycleExecutions = []paypalCycleExecution{{TenureType: "TRIAL", CyclesCompleted: 1}, {TenureType: "REGULAR"}}
+	})
+}
+
+func TestPayPalTrial(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30)`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	end := time.Now().AddDate(0, 0, 7).UTC().Truncate(time.Second)
+	f.trial("I-SUB1", end)
+	if got := paypalBack(c, "subscription_id=I-SUB1&app=web"); got != "https://balnana.test/settings/plan?paypal=done" {
+		t.Fatal(got)
+	}
+	p := myPlanOf(c)
+	if !p.Paid || p.PlanName != "Plus" || p.ExpiresAt == nil || !p.ExpiresAt.Equal(end.Add(paypalGrace)) {
+		t.Fatalf("%+v", p)
+	}
+
+	// The trial over, the first payment carries it on.
+	next := end.AddDate(0, 0, 30)
+	f.pay("I-SUB1", end, next)
+	f.sub("I-SUB1", func(sub *paypalSubscription) {
+		sub.BillingInfo.CycleExecutions = []paypalCycleExecution{{TenureType: "TRIAL", CyclesCompleted: 1}, {TenureType: "REGULAR", CyclesCompleted: 1}}
+	})
+	if code := paypalEventTo(c, "good", map[string]any{"event_type": "PAYMENT.SALE.COMPLETED",
+		"resource": map[string]any{"id": "SALE-I-SUB1-1", "billing_agreement_id": "I-SUB1"}}); code != 200 {
+		t.Fatal(code)
+	}
+	if p := myPlanOf(c); !p.ExpiresAt.Equal(next.Add(paypalGrace)) {
+		t.Fatal(p.ExpiresAt)
+	}
+}
+
+func TestPayPalTrialOncePerAccount(t *testing.T) {
+	c, s, f := paypalServer(t)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days) values ('paypal', 'P-5ML4271244454362WXNWU5NQ', 'plus', 30)`)
+	register(c, "ana@example.test", "Ana")
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	end := time.Now().AddDate(0, 0, 7).UTC().Truncate(time.Second)
+	f.trial("I-SUB1", end)
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	// Cancelled in the trial, it lasts to the trial's end.
+	f.sub("I-SUB1", func(sub *paypalSubscription) { sub.Status = "CANCELLED" })
+	if code := subscriptionEvent(c, "BILLING.SUBSCRIPTION.CANCELLED"); code != 200 {
+		t.Fatal(code)
+	}
+	if p := myPlanOf(c); !p.Paid || !p.ExpiresAt.Equal(end.Add(paypalGrace)) {
+		t.Fatalf("%+v", p)
+	}
+	// Subscribing again doesn't give a second trial.
+	checkout(c, "P-5ML4271244454362WXNWU5NQ", PayPalCheckoutRequestAppWeb)
+	f.trial("I-SUB2", end.AddDate(0, 0, 7))
+	if got := paypalBack(c, "subscription_id=I-SUB2&app=web"); got != "https://balnana.test/settings/plan?paypal=pending" {
+		t.Fatal(got)
+	}
+	if p := myPlanOf(c); !p.ExpiresAt.Equal(end.Add(paypalGrace)) {
+		t.Fatal(p.ExpiresAt)
 	}
 }

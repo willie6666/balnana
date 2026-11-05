@@ -58,6 +58,52 @@ func subscriptionUntil(sub *paypalSubscription, paidAt time.Time, days int) time
 	return until
 }
 
+// inTrial says whether the subscription is in its trial: its plan has one,
+// no regular cycle has been billed, and nothing it owes has failed.
+func (sub *paypalSubscription) inTrial(now time.Time) bool {
+	billing := sub.BillingInfo
+	if sub.Status != "ACTIVE" || billing.NextBillingTime == nil || !billing.NextBillingTime.After(now) ||
+		billing.FailedPaymentsCount > 0 || billing.OutstandingBalance.Value != "" && !sameAmount(billing.OutstandingBalance.Value, "0") {
+		return false
+	}
+	trial := false
+	for _, cycle := range billing.CycleExecutions {
+		switch cycle.TenureType {
+		case "TRIAL":
+			trial = true
+		case "REGULAR":
+			if cycle.CyclesCompleted > 0 {
+				return false
+			}
+		}
+	}
+	return trial
+}
+
+// grantPayPalTrial gives the plan until the trial's end, to one subscription
+// per account: cancelling and subscribing again doesn't start another.
+func grantPayPalTrial(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, userID, planID string, entitlement **string) (bool, error) {
+	var tried bool
+	err := tx.QueryRow(ctx, `select exists (select 1 from paypal_subscriptions
+        where user_id = $1 and subscription_id <> $2 and trial_until is not null)`, userID, sub.ID).Scan(&tried)
+	if err != nil || tried {
+		return false, err
+	}
+	until := sub.BillingInfo.NextBillingTime.Add(paypalGrace)
+	if *entitlement == nil {
+		err = tx.QueryRow(ctx, `insert into entitlements (user_id, plan_id, source, expires_at)
+            values ($1, $2, 'paypal', $3) returning id::text`, userID, planID, until).Scan(entitlement)
+	} else {
+		_, err = tx.Exec(ctx, `update entitlements set plan_id = $2, expires_at = greatest(expires_at, $3) where id = $1`, **entitlement, planID, until)
+	}
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, `update paypal_subscriptions set entitlement_id = $2, trial_until = greatest(trial_until, $3)
+        where subscription_id = $1`, sub.ID, *entitlement, until)
+	return err == nil, err
+}
+
 func (s *Server) syncPayPalSubscription(ctx context.Context, pp *paypalClient, subID string) (string, error) {
 	return s.syncPayPalSubscriptionRefund(ctx, pp, subID, nil)
 }
@@ -71,6 +117,9 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 	}
 	defer release()
 	outcome = paypalFailed
+	// unreconciled fails the sync once what could be taken in is: PayPal
+	// sends the event again, or the payer's return says it is pending.
+	var unreconciled error
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `select pg_advisory_xact_lock(hashtextextended($1, 0))`, "paypal:"+subID); err != nil {
 			return err
@@ -94,6 +143,12 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 		if sub.CustomID != userID || sub.ID != subID {
 			return nil
 		}
+		// PayPal is asked everything before the account is held, which would
+		// keep its other payments waiting on PayPal.
+		var last *paypalTransaction
+		if paid := sub.BillingInfo.LastPayment; paid != nil && !paid.Time.IsZero() {
+			last, unreconciled = pp.subscriptionPayment(ctx, &sub)
+		}
 		if err := holdAccount(ctx, tx, userID); err != nil {
 			return err
 		}
@@ -105,20 +160,15 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 		case "ACTIVE", "APPROVAL_PENDING", "APPROVED":
 			outcome = paypalPending
 		}
-		paid := sub.BillingInfo.LastPayment
-		if paid != nil && !paid.Time.IsZero() {
-			payment, err := pp.subscriptionPayment(ctx, &sub)
-			if err != nil {
-				return err
-			}
+		if last != nil {
 			// A verified refund can arrive before the transaction list changes.
-			if refund != nil && payment.ID == refund.ID {
-				payment = refund
+			if refund != nil && last.ID == refund.ID {
+				last = refund
 			}
-			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, payment, userID, planID, days, &entitlement); err != nil {
+			if err := recordPayPalSubscriptionPayment(ctx, tx, &sub, last, userID, planID, days, &entitlement); err != nil {
 				return err
 			}
-			if payment.Status == "COMPLETED" || payment.Status == "PARTIALLY_REFUNDED" {
+			if last.Status == "COMPLETED" || last.Status == "PARTIALLY_REFUNDED" {
 				outcome = paypalDone
 			}
 		}
@@ -127,9 +177,23 @@ func (s *Server) syncPayPalSubscriptionRefund(ctx context.Context, pp *paypalCli
 				return err
 			}
 		}
+		if planID != nil && sub.inTrial(time.Now()) {
+			granted, err := grantPayPalTrial(ctx, tx, &sub, userID, *planID, &entitlement)
+			if err != nil {
+				return err
+			}
+			if granted {
+				outcome = paypalDone
+			}
+		}
+		// The state is kept even when the last payment is still to be found,
+		// so the account can't start a second subscription meanwhile.
 		_, err = tx.Exec(ctx, `update paypal_subscriptions set product = $2, entitlement_id = $3, state = $4 where subscription_id = $1`, subID, sub.PlanID, entitlement, sub.Status)
 		return err
 	})
+	if err == nil {
+		err = unreconciled
+	}
 	return outcome, err
 }
 
@@ -237,9 +301,11 @@ func (s *Server) refundPayPalSale(ctx context.Context, pp *paypalClient, ev *pay
 		// Partial refunds leave the purchased period in force.
 		return nil
 	}
-	// The Sale resource has no 'reversed' state. A signed reversal may be
-	// reflected as denied; refunded also covers completed money reversals.
-	negative := sale.State == "refunded" || ev.EventType == "PAYMENT.SALE.REVERSED" && sale.State == "denied"
+	// The Sale schema has no 'reversed' state, yet PayPal reports it for a
+	// reversed sale; a reversal may also show as denied, and refunded covers
+	// completed money reversals.
+	negative := sale.State == "refunded" || sale.State == "reversed" ||
+		ev.EventType == "PAYMENT.SALE.REVERSED" && sale.State == "denied"
 	if sale.ID != saleID || !negative {
 		return errors.New("paypal: sale refund is not reflected in the sale yet")
 	}

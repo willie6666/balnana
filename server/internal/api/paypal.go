@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +44,11 @@ const (
 	paypalGrace = 2 * 24 * time.Hour
 	// paypalPlanPath is where the app shows how a PayPal payment went.
 	paypalPlanPath = "/settings/plan"
+	// paypalApprovalWindow is how far back a new subscription checkout looks
+	// for earlier ones that may have been approved, at most
+	// paypalApprovalsAsked of them.
+	paypalApprovalWindow = 24 * time.Hour
+	paypalApprovalsAsked = 3
 )
 
 var (
@@ -57,6 +63,10 @@ var (
 	paypalCurrencies = []string{"AUD", "BRL", "CAD", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "JPY",
 		"MYR", "MXN", "NOK", "NZD", "PHP", "PLN", "RUB", "SEK", "SGD", "CHF", "THB", "TWD", "USD"}
 
+	// paypalDeclines are the capture refusals that mean the payer's money
+	// didn't come; PayPal wants all but the last sent back to pay another way.
+	paypalDeclines = []string{"INSTRUMENT_DECLINED", "PAYER_ACTION_REQUIRED", "REDIRECT_PAYER_FOR_ALTERNATE_FUNDING", "TRANSACTION_REFUSED"}
+
 	errPayPalUnavailable = &apiError{status: http.StatusServiceUnavailable, code: "paypal_unavailable"}
 	errPayPalSubscribed  = conflict("paypal_subscribed")
 )
@@ -68,10 +78,12 @@ var paypalSlots = make(chan struct{}, 5)
 type paypalRefusal struct {
 	status int
 	issue  string // the first detail's issue, such as INSTRUMENT_DECLINED
+	// debugID is what PayPal's support asks for about the call.
+	debugID string
 }
 
 func (e paypalRefusal) Error() string {
-	return fmt.Sprintf("paypal: %d %s %s", e.status, http.StatusText(e.status), e.issue)
+	return fmt.Sprintf("paypal: %d %s %s (debug ID %s)", e.status, http.StatusText(e.status), e.issue, e.debugID)
 }
 
 // paypalClient talks to PayPal for one REST app.
@@ -149,7 +161,7 @@ func (p *paypalClient) call(ctx context.Context, method, path string, body any, 
 			} `json:"details"`
 		}
 		_ = json.NewDecoder(io.LimitReader(resp.Body, maxBody)).Decode(&refused)
-		e := paypalRefusal{status: resp.StatusCode}
+		e := paypalRefusal{status: resp.StatusCode, debugID: resp.Header.Get("PayPal-Debug-Id")}
 		if len(refused.Details) > 0 {
 			e.issue = refused.Details[0].Issue
 		}
@@ -234,8 +246,14 @@ type paypalSubscription struct {
 			Amount paypalMoney `json:"amount"`
 			Time   time.Time   `json:"time"`
 		} `json:"last_payment"`
+		CycleExecutions []paypalCycleExecution `json:"cycle_executions"`
 	} `json:"billing_info"`
 	Links []paypalLink `json:"links"`
+}
+
+type paypalCycleExecution struct {
+	TenureType      string `json:"tenure_type"` // TRIAL or REGULAR
+	CyclesCompleted int    `json:"cycles_completed"`
 }
 
 func linkTo(links []paypalLink, rels ...string) string {
@@ -380,6 +398,17 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 	if now := time.Now(); !s.checkouts.take(u.id, 1, now) {
 		return nil, limited(s.checkouts, u.id, now)
 	}
+	if subscription {
+		// The payer may have approved an earlier one whose return and events
+		// haven't come yet; a second would be charged as well.
+		subscribed, err := s.refreshPayPalApprovals(ctx, pp, u.id, req.Body.Product)
+		if err != nil {
+			return nil, err
+		}
+		if subscribed {
+			return nil, errPayPalSubscribed
+		}
+	}
 	back := strings.TrimSuffix(s.conf().PublicURL.String(), "/") + paypalReturnPath + "?app=" + string(app)
 	var href string
 	if subscription {
@@ -396,6 +425,33 @@ func (s *Server) CreatePayPalCheckout(ctx context.Context, req CreatePayPalCheck
 		return nil, errPayPalUnavailable
 	}
 	return CreatePayPalCheckout200JSONResponse{Url: href}, nil
+}
+
+// refreshPayPalApprovals asks PayPal about the account's recent subscriptions
+// to product that were waiting for approval, and says whether one now runs.
+func (s *Server) refreshPayPalApprovals(ctx context.Context, pp *paypalClient, userID, product string) (bool, error) {
+	rows, err := s.db.Query(ctx, `
+		select subscription_id from paypal_subscriptions
+		where user_id = $1 and product = $2 and state = 'APPROVAL_PENDING' and created_at > $3
+		order by created_at desc limit $4`, userID, product, time.Now().Add(-paypalApprovalWindow), paypalApprovalsAsked)
+	if err != nil {
+		return false, err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return false, err
+	}
+	for _, id := range ids {
+		// The state is kept even when its payment isn't found yet.
+		if _, err := s.syncPayPalSubscription(ctx, pp, id); err != nil {
+			s.log.Warn("asking paypal about a subscription failed", "err", err)
+		}
+	}
+	if len(ids) == 0 {
+		return false, nil
+	}
+	subscribed, err := paypalSubscribed(ctx, s.db, userID)
+	return slices.Contains(subscribed, product), err
 }
 
 func (s *Server) startPayPalOrder(ctx context.Context, pp *paypalClient, userID, product, planID, planName string, days int, amount, currency, back string) (string, error) {
@@ -495,10 +551,14 @@ func (s *Server) PayPalReturn(w http.ResponseWriter, r *http.Request) {
 		}
 		outcome = o
 	case paypalID.MatchString(order):
-		o, err := s.syncPayPalOrder(r.Context(), pp, order)
+		o, retry, err := s.syncPayPalOrder(r.Context(), pp, order)
 		if err != nil {
 			s.log.Error("taking a paypal order failed", "err", err)
 			o = paypalPending
+		}
+		if retry != "" {
+			http.Redirect(w, r, retry, http.StatusSeeOther)
+			return
 		}
 		outcome = o
 	}
@@ -513,10 +573,11 @@ func (s *Server) PayPalReturn(w http.ResponseWriter, r *http.Request) {
 // syncPayPalOrder captures the order if it waits for that and takes in what
 // it paid, under one lock per order. Orders the server didn't start are none
 // of its business.
-func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID string) (outcome string, err error) {
+// A declined capture leaves retry as the page to send the payer back to.
+func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID string) (outcome, retry string, err error) {
 	release, err := paypalSlot(ctx)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer release()
 	outcome = paypalFailed
@@ -526,11 +587,11 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 		}
 		var userID, product, amount, currency string
 		var planID *string
-		var days int
+		var days, attempts int
 		err := tx.QueryRow(ctx, `
-			select user_id::text, product, plan_id, days, amount::text, currency
+			select user_id::text, product, plan_id, days, amount::text, currency, capture_attempts
 			from paypal_orders where order_id = $1`, orderID).
-			Scan(&userID, &product, &planID, &days, &amount, &currency)
+			Scan(&userID, &product, &planID, &days, &amount, &currency, &attempts)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
 		}
@@ -545,12 +606,30 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 			return err
 		}
 		if order.Status == "APPROVED" {
+			requestID := "capture-" + orderID
+			if attempts > 0 {
+				requestID += "-" + strconv.Itoa(attempts)
+			}
 			err := pp.call(ctx, http.MethodPost, "/v2/checkout/orders/"+url.PathEscape(orderID)+"/capture",
-				[]byte("{}"), "capture-"+orderID, &order)
+				[]byte("{}"), requestID, &order)
 			var refused paypalRefusal
 			switch {
-			case errors.As(err, &refused) && refused.issue == "INSTRUMENT_DECLINED":
-				return nil // the payer can start again
+			case errors.As(err, &refused) && slices.Contains(paypalDeclines, refused.issue):
+				if _, err := tx.Exec(ctx, `update paypal_orders set capture_attempts = capture_attempts + 1 where order_id = $1`, orderID); err != nil {
+					return err
+				}
+				if refused.issue == "TRANSACTION_REFUSED" {
+					return nil
+				}
+				// PayPal asks for the payer to be sent back to choose another
+				// way to pay; the order's page is where they approved it.
+				if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
+					return err
+				}
+				if retry = linkTo(order.Links, "payer-action", "approve"); retry != "" {
+					outcome = paypalPending
+				}
+				return nil
 			case errors.As(err, &refused) && refused.status == http.StatusUnprocessableEntity:
 				// Captured already, most likely: see what it is now.
 				if err := pp.call(ctx, http.MethodGet, "/v2/checkout/orders/"+url.PathEscape(orderID), nil, "", &order); err != nil {
@@ -580,11 +659,14 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 		}
 		unit := order.PurchaseUnits[0]
 		capture := unit.Payments.Captures[0]
-		switch capture.Status {
-		case "PENDING":
+		// A reversed payment, as after a chargeback, gives the time back as a
+		// refund does; PayPal shows it as REFUNDED or, at times, REVERSED.
+		negative := capture.Status == "REFUNDED" || capture.Status == "REVERSED"
+		switch {
+		case capture.Status == "PENDING":
 			outcome = paypalPending
 			return nil
-		case "COMPLETED", "PARTIALLY_REFUNDED", "REFUNDED":
+		case capture.Status == "COMPLETED", capture.Status == "PARTIALLY_REFUNDED", negative:
 		default:
 			return nil
 		}
@@ -593,7 +675,7 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 		}
 		state := "unclaimed"
 		switch {
-		case capture.Status == "REFUNDED":
+		case negative:
 			state = "refunded"
 		case planID == nil || unit.CustomID != userID ||
 			!strings.EqualFold(capture.Amount.Currency, currency) || !sameAmount(capture.Amount.Value, amount):
@@ -616,7 +698,7 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 		if err != nil {
 			return err
 		}
-		if capture.Status == "REFUNDED" {
+		if negative {
 			return refundPayment(ctx, tx, paymentID)
 		}
 		if recorded == "unclaimed" {
@@ -627,7 +709,10 @@ func (s *Server) syncPayPalOrder(ctx context.Context, pp *paypalClient, orderID 
 		outcome = paypalDone
 		return nil
 	})
-	return outcome, err
+	if err != nil {
+		retry = ""
+	}
+	return outcome, retry, err
 }
 
 // refundPayment takes back the time a payment gave, as far as it is left.
@@ -687,14 +772,25 @@ func (p *paypalClient) verified(ctx context.Context, r *http.Request, event []by
 	if p.webhookID == "" {
 		return false, nil
 	}
-	fields, err := json.Marshal(map[string]string{
+	signed := map[string]string{
 		"auth_algo":         r.Header.Get("PAYPAL-AUTH-ALGO"),
 		"cert_url":          r.Header.Get("PAYPAL-CERT-URL"),
 		"transmission_id":   r.Header.Get("PAYPAL-TRANSMISSION-ID"),
 		"transmission_sig":  r.Header.Get("PAYPAL-TRANSMISSION-SIG"),
 		"transmission_time": r.Header.Get("PAYPAL-TRANSMISSION-TIME"),
-		"webhook_id":        p.webhookID,
-	})
+	}
+	// What PayPal could never have sent isn't worth asking it about.
+	for _, v := range signed {
+		if v == "" {
+			return false, nil
+		}
+	}
+	if cert, err := url.Parse(signed["cert_url"]); err != nil || cert.Scheme != "https" ||
+		cert.Hostname() != "paypal.com" && !strings.HasSuffix(cert.Hostname(), ".paypal.com") {
+		return false, nil
+	}
+	signed["webhook_id"] = p.webhookID
+	fields, err := json.Marshal(signed)
 	if err != nil {
 		return false, err
 	}
@@ -781,7 +877,7 @@ func (s *Server) PayPalWebhook(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err != nil:
 	case paypalID.MatchString(orderID):
-		_, err = s.syncPayPalOrder(r.Context(), pp, orderID)
+		_, _, err = s.syncPayPalOrder(r.Context(), pp, orderID)
 	case paypalID.MatchString(subID):
 		_, err = s.syncPayPalSubscription(r.Context(), pp, subID)
 	}
