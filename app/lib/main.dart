@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'core/autofill_io.dart' if (dart.library.js_interop) 'core/autofill_web.dart';
 import 'core/home_screen.dart';
 import 'core/l10n.dart';
 import 'core/prefs.dart';
@@ -31,6 +32,7 @@ Future<void> main(List<String> args) async {
   // find and automated tests see an empty page until someone turns on
   // accessibility by hand.
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
+  watchAutofill();
   useLatinDigits();
   final prefs = await SharedPreferences.getInstance();
   final launched = await launchedFromNotification();
