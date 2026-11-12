@@ -3526,4 +3526,124 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Güncellenemedi. Bu bilgiler eski olabilir.';
+
+  @override
+  String get sharePlanTitle => 'Plan paylaşımı';
+
+  @override
+  String get sharePlanSettingsHelp => 'Planını hangi grupların kullanacağını seç';
+
+  @override
+  String get sharePlanHelp => 'Planını paylaştığın grup, içindeki herkes için planın sınırlarını alır.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Planını paylaşan gruplar: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Gruptaki herkes $plan planının sınırlarını alır.';
+  }
+
+  @override
+  String get twoFactorTitle => 'İki adımlı oturum açma';
+
+  @override
+  String get twoFactorTotp => 'Kimlik doğrulama uygulaması';
+
+  @override
+  String get twoFactorTotpHelp => 'Parolanla oturum açarken kimlik doğrulama uygulamasından bir kod iste';
+
+  @override
+  String get twoFactorConfirmBody => 'Oturum açma şeklini değiştirmek için parolanı gir.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Bu kodu kimlik doğrulama uygulamanla tara veya aşağıdaki anahtarı uygulamaya yaz. Ardından uygulamanın gösterdiği altı haneyi gir.';
+
+  @override
+  String get twoFactorCode => 'Kod';
+
+  @override
+  String get twoFactorTurnOn => 'Aç';
+
+  @override
+  String get twoFactorTurnOff => 'Kapat';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Oturum açarken artık uygulamandan kod istenmeyecek ve kurtarma kodların çalışmayacak. Kapatmak için parolanı gir.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Kurtarma kodları';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Bunları güvenli bir yerde sakla. Kimlik doğrulama uygulaman yanında olmadığında her biri bir kez oturum açmanı sağlar. Tekrar gösterilmeyecekler.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Kurtarma kodları kopyalandı';
+
+  @override
+  String get twoFactorEmail => 'E-posta ile kod';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Parolanla oturum açarken $email adresine kod gönder';
+  }
+
+  @override
+  String get signInCodeTotp => 'Kimlik doğrulama uygulamandaki kodu gir.';
+
+  @override
+  String get signInCodeEmail => 'Sana e-postayla gönderdiğimiz kodu gir.';
+
+  @override
+  String get signInCodeEither => 'Kimlik doğrulama uygulamandaki kodu gir veya e-postayla bir kod iste.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Kurtarma kodu da olur.';
+
+  @override
+  String get signInCodeSend => 'Bana e-postayla kod gönder';
+
+  @override
+  String get signInCodeSent => 'E-posta adresine bir kod gönderildi. 10 dakika geçerlidir.';
+
+  @override
+  String get errorInvalidCode => 'Bu kod doğru değil veya süresi dolmuş.';
+
+  @override
+  String get adminSectionEnv => 'Ortam dosyası';
+
+  @override
+  String get adminEnvOnly => 'Ayarları yalnızca .env dosyasından oku';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Açık. Sunucu bu ayarları yalnızca .env dosyasından okur ve burada kaydedilenleri yok sayar. Ayarları o dosyada değiştirip sunucuyu yeniden başlat.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Kapalı. Tüm ayarların sunucunun .env dosyasından okunması ve burada kaydedilenlerin yok sayılması için o dosyada BALNANA_ENV_ONLY=true ayarla.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Bunu yalnızca sunucunun .env dosyasındaki $key değiştirir';
+  }
+
+  @override
+  String get adminExport => '.env olarak dışa aktar';
+
+  @override
+  String get adminExportHelp =>
+      'Burada kaydedilen ayarları sunucunun .env dosyası için satırlar olarak indir';
+
+  @override
+  String get adminExportBody =>
+      'Dosya, parolalar ve anahtarlar dahil kaydedilen tüm ayarları içerir. İndirmek için yönetici parolasını gir.';
+
+  @override
+  String get adminExportDone => 'Ayarlar dışa aktarıldı';
 }

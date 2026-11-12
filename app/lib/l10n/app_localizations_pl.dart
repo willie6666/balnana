@@ -3675,4 +3675,124 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Nie udało się zaktualizować. Te dane mogą być nieaktualne.';
+
+  @override
+  String get sharePlanTitle => 'Udostępnianie planu';
+
+  @override
+  String get sharePlanSettingsHelp => 'Wybierz, które grupy korzystają z twojego planu';
+
+  @override
+  String get sharePlanHelp =>
+      'Grupa, której udostępniasz swój plan, otrzymuje jego limity dla wszystkich członków.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Grupy korzystające z twojego planu: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Wszyscy w grupie otrzymują limity twojego planu $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Logowanie dwuetapowe';
+
+  @override
+  String get twoFactorTotp => 'Aplikacja uwierzytelniająca';
+
+  @override
+  String get twoFactorTotpHelp => 'Wymagaj kodu z aplikacji uwierzytelniającej podczas logowania hasłem';
+
+  @override
+  String get twoFactorConfirmBody => 'Wpisz hasło, aby zmienić sposób logowania.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Zeskanuj ten kod aplikacją uwierzytelniającą lub wpisz w niej poniższy klucz. Następnie wpisz sześć cyfr, które pokaże aplikacja.';
+
+  @override
+  String get twoFactorCode => 'Kod';
+
+  @override
+  String get twoFactorTurnOn => 'Włącz';
+
+  @override
+  String get twoFactorTurnOff => 'Wyłącz';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Logowanie nie będzie już wymagać kodu z aplikacji, a kody zapasowe przestaną działać. Wpisz hasło, aby ją wyłączyć.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Kody zapasowe';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Przechowuj je w bezpiecznym miejscu. Każdy pozwala zalogować się raz, gdy nie masz aplikacji uwierzytelniającej. Nie zostaną pokazane ponownie.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Skopiowano kody zapasowe';
+
+  @override
+  String get twoFactorEmail => 'Kod e-mailem';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Wyślij kod na adres $email podczas logowania hasłem';
+  }
+
+  @override
+  String get signInCodeTotp => 'Wpisz kod z aplikacji uwierzytelniającej.';
+
+  @override
+  String get signInCodeEmail => 'Wpisz kod, który wysłaliśmy ci e-mailem.';
+
+  @override
+  String get signInCodeEither => 'Wpisz kod z aplikacji uwierzytelniającej lub poproś o kod e-mailem.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Kod zapasowy też zadziała.';
+
+  @override
+  String get signInCodeSend => 'Wyślij mi kod e-mailem';
+
+  @override
+  String get signInCodeSent => 'Kod został wysłany na twój adres e-mail. Jest ważny przez 10 minut.';
+
+  @override
+  String get errorInvalidCode => 'Ten kod jest nieprawidłowy lub wygasł.';
+
+  @override
+  String get adminSectionEnv => 'Plik środowiskowy';
+
+  @override
+  String get adminEnvOnly => 'Czytaj ustawienia tylko z .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Włączone. Serwer czyta te ustawienia tylko z pliku .env i ignoruje to, co zapisano tutaj. Zmień je w tym pliku i uruchom serwer ponownie.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Wyłączone. Ustaw BALNANA_ENV_ONLY=true w pliku .env serwera, aby czytać wszystkie ustawienia stamtąd i ignorować to, co zapisano tutaj.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Zmienia to tylko $key w pliku .env serwera';
+  }
+
+  @override
+  String get adminExport => 'Eksportuj jako .env';
+
+  @override
+  String get adminExportHelp => 'Pobierz zapisane tutaj ustawienia jako wiersze do pliku .env serwera';
+
+  @override
+  String get adminExportBody =>
+      'Plik zawiera wszystkie zapisane ustawienia, w tym hasła i klucze. Wpisz hasło administratora, aby go pobrać.';
+
+  @override
+  String get adminExportDone => 'Wyeksportowano ustawienia';
 }

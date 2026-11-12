@@ -18,6 +18,7 @@ import '../../data/providers.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
+import '../account/two_factor.dart';
 import 'my_groups.dart';
 import 'privacy_page.dart';
 
@@ -59,6 +60,7 @@ class SettingsPage extends ConsumerWidget {
       title: l10n.navSettings,
       children: [
         if (ref.watch(accountsModeProvider)) const AccountSection(),
+        if (ref.watch(accountsModeProvider)) const TwoFactorSection(),
         if (ref.watch(signedInProvider) && (ref.watch(serverInfoProvider).value?.billing ?? false))
           GroupedList(
             children: [
@@ -68,6 +70,13 @@ class SettingsPage extends ConsumerWidget {
                 subtitle: l10n.planSettingsHelp,
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/plan'),
+              ),
+              GroupedTile(
+                icon: Icons.volunteer_activism_outlined,
+                title: l10n.sharePlanTitle,
+                subtitle: l10n.sharePlanSettingsHelp,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/sharing'),
               ),
             ],
           ),

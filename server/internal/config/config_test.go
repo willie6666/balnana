@@ -393,3 +393,58 @@ func TestStartupKeepsAnAddress(t *testing.T) {
 		t.Fatal("the address was not checked")
 	}
 }
+
+func TestDotEnv(t *testing.T) {
+	t.Setenv("BALNANA_SOURCE_URL", "https://git.example.com/balnana")
+	got := DotEnv(map[string]string{
+		"BALNANA_SOURCE_URL":                  "https://saved.example.com", // the environment's wins, and is in the file
+		"BALNANA_PUBLIC_URL":                  "https://split.example.com",
+		"BALNANA_SMTP_FROM":                   "Balnana <balnana@example.com>",
+		"BALNANA_SMTP_PASSWORD":               `a'b "c" $d \e`,
+		"BALNANA_PLAY_SERVICE_ACCOUNT":        "{\n  \"client_email\": \"a@b.example\"\n}",
+		"BALNANA_OAUTH_OIDC_PROVIDERS":        "my-sso",
+		"BALNANA_OAUTH_OIDC_MY_SSO_ISSUER":    "https://sso.example.com",
+		"BALNANA_OAUTH_OIDC_GONE_ISSUER":      "https://gone.example.com", // of a provider no longer listed
+		"BALNANA_OAUTH_GOOGLE_TRUST_EMAIL":    "  ",
+		"BALNANA_SOMETHING_NOBODY_KNOWS_OF":   "x",
+		"BALNANA_OAUTH_OIDC_MY_SSO_NAME":      "My SSO",
+		"BALNANA_OAUTH_OIDC_MY_SSO_SECRET":    "s3cret",
+		"BALNANA_OAUTH_OIDC_MY_SSO_CLIENT_ID": "balnana",
+	})
+	want := strings.Join([]string{
+		"BALNANA_PUBLIC_URL=https://split.example.com",
+		`BALNANA_SMTP_PASSWORD="a'b \"c\" \$d \\e"`,
+		"BALNANA_SMTP_FROM='Balnana <balnana@example.com>'",
+		"BALNANA_OAUTH_OIDC_PROVIDERS=my-sso",
+		"BALNANA_OAUTH_OIDC_MY_SSO_ISSUER=https://sso.example.com",
+		"BALNANA_OAUTH_OIDC_MY_SSO_CLIENT_ID=balnana",
+		"BALNANA_OAUTH_OIDC_MY_SSO_SECRET=s3cret",
+		"BALNANA_OAUTH_OIDC_MY_SSO_NAME='My SSO'",
+		`BALNANA_PLAY_SERVICE_ACCOUNT='{"client_email":"a@b.example"}'`,
+	}, "\n") + "\n"
+	var lines []string
+	for _, line := range strings.SplitAfter(got, "\n") {
+		if !strings.HasPrefix(line, "#") {
+			lines = append(lines, line)
+		}
+	}
+	if strings.Join(lines, "") != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestEnvOnlyIgnoresStored(t *testing.T) {
+	t.Setenv("BALNANA_DATABASE_URL", "postgres:///unused")
+	stored := map[string]string{"BALNANA_AUTH_MODE": "accounts"}
+	if c, err := LoadWith(stored); err != nil || c.AuthMode != AuthModeAccounts || c.EnvOnly {
+		t.Fatal(c, err)
+	}
+	t.Setenv("BALNANA_ENV_ONLY", "true")
+	if c, err := LoadWith(stored); err != nil || c.AuthMode != AuthModeLink || !c.EnvOnly {
+		t.Fatal(c, err)
+	}
+	t.Setenv("BALNANA_ENV_ONLY", "maybe")
+	if _, err := LoadWith(stored); err == nil {
+		t.Fatal("a wrong value was taken")
+	}
+}

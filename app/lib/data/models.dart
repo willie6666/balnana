@@ -310,6 +310,7 @@ class GroupSummary {
     required this.memberCount,
     this.balance,
     required this.updatedAt,
+    this.sharedPlan,
   });
 
   factory GroupSummary.fromJson(Object? data) {
@@ -327,6 +328,11 @@ class GroupSummary {
       memberCount: _req(json, 'memberCount'),
       balance: balance == null ? null : parseAmount(balance, digits, total: true),
       updatedAt: _time(json, 'updatedAt'),
+      sharedPlan: switch (_opt<String>(json, 'sharedPlan')) {
+        'mine' => SharedPlan.mine,
+        'other' => SharedPlan.other,
+        _ => null,
+      },
     );
   }
 
@@ -344,7 +350,14 @@ class GroupSummary {
   /// This device's member's balance, when it knows who it is in the group.
   final BigInt? balance;
   final DateTime updatedAt;
+
+  /// Whose plan covers the group, among a signed-in account's groups on a
+  /// server that charges. Null when nobody's does.
+  final SharedPlan? sharedPlan;
 }
+
+/// Whose plan a group uses: the signed-in account's, or another member's.
+enum SharedPlan { mine, other }
 
 /// [unknown] is one a newer server sent: shown, but not edited.
 enum ExpenseKind { expense, payment, unknown }
@@ -798,6 +811,8 @@ class User {
     required this.name,
     this.locale,
     required this.hasPassword,
+    this.totp = false,
+    this.emailTwoFactor = false,
   });
 
   factory User.fromJson(Object? data) {
@@ -811,6 +826,8 @@ class User {
       name: _req(json, 'name'),
       locale: _opt(json, 'locale'),
       hasPassword: _opt<bool>(json, 'hasPassword') ?? false,
+      totp: _opt<bool>(json, 'totp') ?? false,
+      emailTwoFactor: _opt<bool>(json, 'emailTwoFactor') ?? false,
     );
   }
 
@@ -827,6 +844,30 @@ class User {
   final String name;
   final String? locale;
   final bool hasPassword;
+
+  /// Signing in with the password also asks for a code from an
+  /// authenticator app.
+  final bool totp;
+
+  /// Signing in with the password also asks for a code sent by email.
+  final bool emailTwoFactor;
+}
+
+/// The key of an authenticator app being added to the account.
+@immutable
+class TotpSetup {
+  const TotpSetup({required this.secret, required this.uri});
+
+  factory TotpSetup.fromJson(Object? data) {
+    final json = _object(data);
+    return TotpSetup(secret: _req(json, 'secret'), uri: _req(json, 'uri'));
+  }
+
+  /// The key to type into the app.
+  final String secret;
+
+  /// The same as an otpauth:// link, for a QR code.
+  final String uri;
 }
 
 /// A provider sign-in that matched an account by an address the account
@@ -1068,6 +1109,17 @@ class GroupStats {
 /// One server setting on the admin page, by the environment variable that
 /// sets it (see .env.example).
 @immutable
+/// The server's settings as the admin page shows them.
+class AdminSettings {
+  const AdminSettings(this.settings, {this.envOnly = false});
+
+  final List<AdminSetting> settings;
+
+  /// The server reads its settings from its environment alone, so none can
+  /// be changed here.
+  final bool envOnly;
+}
+
 class AdminSetting {
   const AdminSetting({
     required this.key,
@@ -1090,9 +1142,13 @@ class AdminSetting {
     );
   }
 
-  static List<AdminSetting> listFromJson(Object? data) => [
-    for (final s in _objects(_object(data), 'settings')) AdminSetting.fromJson(s),
-  ];
+  static AdminSettings listFromJson(Object? data) {
+    final json = _object(data);
+    return AdminSettings(
+      [for (final s in _objects(json, 'settings')) AdminSetting.fromJson(s)],
+      envOnly: _opt<bool>(json, 'envOnly') ?? false,
+    );
+  }
 
   final String key;
 
@@ -1100,7 +1156,8 @@ class AdminSetting {
   final String? value;
   final String defaultValue;
 
-  /// Set by an environment variable on the server, which wins.
+  /// Set by an environment variable on the server, which wins. With
+  /// [AdminSettings.envOnly] every setting is.
   final bool locked;
   final bool secret;
 

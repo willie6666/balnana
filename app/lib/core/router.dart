@@ -25,6 +25,7 @@ import '../features/settings/plan_page.dart';
 import '../features/settings/privacy_page.dart';
 import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
+import '../features/settings/share_plan_page.dart';
 import '../features/shell/shell.dart';
 import 'home_screen.dart';
 import 'push.dart';
@@ -154,7 +155,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/groups',
-                builder: (context, state) => const GroupsPage(),
+                builder: (context, state) => const TabRoot(tab: 0, child: GroupsPage()),
                 routes: [
                   GoRoute(
                     path: 'new',
@@ -253,13 +254,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/activity', builder: (context, state) => const ActivityPage())],
+            routes: [
+              GoRoute(
+                path: '/activity',
+                builder: (context, state) => const TabRoot(tab: 1, child: ActivityPage()),
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const SettingsPage(),
+                builder: (context, state) => const TabRoot(tab: 2, child: SettingsPage()),
                 routes: [
                   GoRoute(
                     path: 'server',
@@ -270,6 +276,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'plan',
                     builder: (context, state) => PlanPage(paypal: state.uri.queryParameters['paypal']),
                   ),
+                  GoRoute(path: 'sharing', builder: (context, state) => const SharePlanPage()),
                 ],
               ),
             ],

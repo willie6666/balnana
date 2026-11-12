@@ -3583,4 +3583,125 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Não foi possível atualizar. Isto pode estar desatualizado.';
+
+  @override
+  String get sharePlanTitle => 'Compartilhamento do plano';
+
+  @override
+  String get sharePlanSettingsHelp => 'Escolha quais grupos usam seu plano';
+
+  @override
+  String get sharePlanHelp =>
+      'Um grupo com o qual você compartilha seu plano recebe os limites dele, para todos os membros.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Grupos compartilhando seu plano: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Todos no grupo recebem os limites do seu plano $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Login em duas etapas';
+
+  @override
+  String get twoFactorTotp => 'Aplicativo autenticador';
+
+  @override
+  String get twoFactorTotpHelp => 'Pedir um código de um aplicativo autenticador ao entrar com sua senha';
+
+  @override
+  String get twoFactorConfirmBody => 'Digite sua senha para alterar a forma como você entra.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Escaneie este código com seu aplicativo autenticador ou digite nele a chave abaixo. Depois, digite os seis dígitos que o aplicativo mostrar.';
+
+  @override
+  String get twoFactorCode => 'Código';
+
+  @override
+  String get twoFactorTurnOn => 'Ativar';
+
+  @override
+  String get twoFactorTurnOff => 'Desativar';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'O login não pedirá mais um código do seu aplicativo, e seus códigos de recuperação deixarão de funcionar. Digite sua senha para desativar.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Códigos de recuperação';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Guarde-os em um lugar seguro. Cada um permite entrar uma vez quando você não tiver seu aplicativo autenticador. Eles não serão mostrados novamente.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Códigos de recuperação copiados';
+
+  @override
+  String get twoFactorEmail => 'Código por e-mail';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Enviar um código para $email ao entrar com sua senha';
+  }
+
+  @override
+  String get signInCodeTotp => 'Digite o código do seu aplicativo autenticador.';
+
+  @override
+  String get signInCodeEmail => 'Digite o código que enviamos para o seu e-mail.';
+
+  @override
+  String get signInCodeEither => 'Digite o código do seu aplicativo autenticador ou peça um por e-mail.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Um código de recuperação também funciona.';
+
+  @override
+  String get signInCodeSend => 'Enviar um código por e-mail';
+
+  @override
+  String get signInCodeSent => 'Um código foi enviado para o seu e-mail. Ele vale por 10 minutos.';
+
+  @override
+  String get errorInvalidCode => 'Esse código está incorreto ou expirou.';
+
+  @override
+  String get adminSectionEnv => 'Arquivo de ambiente';
+
+  @override
+  String get adminEnvOnly => 'Ler configurações somente do .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Ativado. O servidor lê estas configurações somente do arquivo .env e ignora o que foi salvo aqui. Altere-as nesse arquivo e reinicie o servidor.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Desativado. Defina BALNANA_ENV_ONLY=true no arquivo .env do servidor para ler todas as configurações de lá e ignorar o que está salvo aqui.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Somente $key no arquivo .env do servidor altera isto';
+  }
+
+  @override
+  String get adminExport => 'Exportar como .env';
+
+  @override
+  String get adminExportHelp =>
+      'Baixe as configurações salvas aqui como linhas para o arquivo .env do servidor';
+
+  @override
+  String get adminExportBody =>
+      'O arquivo contém todas as configurações salvas, incluindo senhas e chaves. Digite a senha de administrador para baixá-lo.';
+
+  @override
+  String get adminExportDone => 'Configurações exportadas';
 }

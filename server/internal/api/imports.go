@@ -153,7 +153,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 
 	if dryRun {
 		err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-			_, err := s.checkNewGroup(ctx, tx, creator, len(names))
+			_, err := s.checkNewGroup(ctx, tx, creator, len(names), false)
 			return err
 		})
 		if err != nil {
@@ -188,7 +188,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names))
+		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names), false)
 		if err != nil {
 			return err
 		}

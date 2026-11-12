@@ -213,8 +213,9 @@ func (s *Server) checkJoinedGroups(ctx context.Context, tx pgx.Tx, userID string
 
 // checkNewGroup refuses a group of n people that its creator may not start. A
 // group larger than the default plan allows is sponsored from the start, or
-// nobody could import one: it returns who sponsors it, if anyone.
-func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n int) (sponsor *string, err error) {
+// nobody could import one, and so is one whose creator asks to share their
+// plan with it: it returns who sponsors it, if anyone.
+func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n int, share bool) (sponsor *string, err error) {
 	if !s.conf().Billing {
 		return nil, nil
 	}
@@ -224,8 +225,13 @@ func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n 
 		}
 	}
 	free, _, err := userPlan(ctx, tx, nilUUID)
-	if err != nil || free.members == nil || n <= *free.members {
+	if err != nil {
 		return nil, err
+	}
+	// Too large for the default plan: only a sponsor's makes room for it.
+	large := free.members != nil && n > *free.members
+	if !large && (!share || creator == nil) {
+		return nil, nil
 	}
 	if creator == nil {
 		return nil, planLimit("members", *free.members)
@@ -238,7 +244,10 @@ func (s *Server) checkNewGroup(ctx context.Context, tx pgx.Tx, creator *user, n 
 		return nil, planLimit("members", *p.members)
 	}
 	if p.sponsored != nil && *p.sponsored == 0 {
-		return nil, planLimit("members", *free.members)
+		if large {
+			return nil, planLimit("members", *free.members)
+		}
+		return nil, planLimit("sponsored_groups", 0)
 	}
 	if room, err := hasRoomToSponsor(ctx, tx, creator.id, p); err != nil {
 		return nil, err
@@ -415,6 +424,51 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	}
 	out.CanSponsor, err = hasRoomToSponsor(ctx, q, u.id, mine)
 	return out, err
+}
+
+// sharedPlans says whose plan covers each of userID's groups, by group ID:
+// their own, or another member's that still sponsors. Groups nobody's plan
+// covers are left out.
+func sharedPlans(ctx context.Context, q querier, userID string, groups []*group) (map[string]GroupSummarySharedPlan, error) {
+	ids := make([]string, len(groups))
+	for i, g := range groups {
+		ids[i] = g.id
+	}
+	rows, err := q.Query(ctx, `
+		select g.id::text, g.sponsor_user_id::text from groups g
+		join members m on m.group_id = g.id and m.user_id = g.sponsor_user_id and m.left_at is null
+		where g.id = any($1::uuid[])`, ids)
+	if err != nil {
+		return nil, err
+	}
+	sponsors := map[string]string{}
+	var id, sponsor string
+	if _, err := pgx.ForEachRow(rows, []any{&id, &sponsor}, func() error {
+		sponsors[id] = sponsor
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	out := map[string]GroupSummarySharedPlan{}
+	covers := map[string]bool{}
+	for id, sponsor := range sponsors {
+		// The account's own stays theirs to stop, whatever their plan is now.
+		if sponsor == userID {
+			out[id] = Mine
+			continue
+		}
+		covered, known := covers[sponsor]
+		if !known {
+			if covered, err = sponsorCovers(ctx, q, &sponsor); err != nil {
+				return nil, err
+			}
+			covers[sponsor] = covered
+		}
+		if covered {
+			out[id] = Other
+		}
+	}
+	return out, nil
 }
 
 // sponsors reports whether the plan sponsors groups. A sponsor who stopped

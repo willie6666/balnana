@@ -3566,4 +3566,125 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get refreshFailed => 'अपडेट नहीं हो सका। यह जानकारी पुरानी हो सकती है।';
+
+  @override
+  String get sharePlanTitle => 'प्लान साझा करना';
+
+  @override
+  String get sharePlanSettingsHelp => 'चुनें कि कौन से समूह आपका प्लान इस्तेमाल करें';
+
+  @override
+  String get sharePlanHelp =>
+      'जिस समूह के साथ आप अपना प्लान साझा करते हैं, उसके सभी सदस्यों को उस प्लान की सीमाएँ मिलती हैं।';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'आपका प्लान साझा करने वाले समूह: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'समूह में सभी को आपके $plan प्लान की सीमाएँ मिलती हैं।';
+  }
+
+  @override
+  String get twoFactorTitle => 'दो-चरणीय साइन-इन';
+
+  @override
+  String get twoFactorTotp => 'ऑथेंटिकेटर ऐप';
+
+  @override
+  String get twoFactorTotpHelp => 'पासवर्ड से साइन इन करते समय ऑथेंटिकेटर ऐप का कोड भी माँगें';
+
+  @override
+  String get twoFactorConfirmBody => 'साइन इन करने का तरीका बदलने के लिए अपना पासवर्ड डालें।';
+
+  @override
+  String get twoFactorTotpScan =>
+      'इस कोड को अपने ऑथेंटिकेटर ऐप से स्कैन करें, या नीचे दी गई कुंजी उसमें टाइप करें। फिर ऐप में दिखने वाले छह अंक डालें।';
+
+  @override
+  String get twoFactorCode => 'कोड';
+
+  @override
+  String get twoFactorTurnOn => 'चालू करें';
+
+  @override
+  String get twoFactorTurnOff => 'बंद करें';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'साइन इन करते समय अब आपके ऐप का कोड नहीं माँगा जाएगा, और आपके रिकवरी कोड काम करना बंद कर देंगे। बंद करने के लिए अपना पासवर्ड डालें।';
+
+  @override
+  String get twoFactorRecoveryTitle => 'रिकवरी कोड';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'इन्हें सुरक्षित जगह रखें। जब आपके पास ऑथेंटिकेटर ऐप न हो, तो हर कोड से एक बार साइन इन किया जा सकता है। ये दोबारा नहीं दिखाए जाएँगे।';
+
+  @override
+  String get twoFactorRecoveryCopied => 'रिकवरी कोड कॉपी किए गए';
+
+  @override
+  String get twoFactorEmail => 'ईमेल से कोड';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'पासवर्ड से साइन इन करते समय $email पर कोड भेजें';
+  }
+
+  @override
+  String get signInCodeTotp => 'अपने ऑथेंटिकेटर ऐप का कोड डालें।';
+
+  @override
+  String get signInCodeEmail => 'वह कोड डालें जो हमने आपको ईमेल किया है।';
+
+  @override
+  String get signInCodeEither => 'अपने ऑथेंटिकेटर ऐप का कोड डालें, या ईमेल से कोड मँगवाएँ।';
+
+  @override
+  String get signInCodeRecoveryHelp => 'रिकवरी कोड भी चलेगा।';
+
+  @override
+  String get signInCodeSend => 'मुझे ईमेल से कोड भेजें';
+
+  @override
+  String get signInCodeSent => 'आपके ईमेल पर कोड भेजा जा रहा है। यह 10 मिनट तक मान्य है।';
+
+  @override
+  String get errorInvalidCode => 'यह कोड सही नहीं है या इसकी समय-सीमा खत्म हो गई है।';
+
+  @override
+  String get adminSectionEnv => 'एनवायरनमेंट फ़ाइल';
+
+  @override
+  String get adminEnvOnly => 'सेटिंग केवल .env से पढ़ें';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'चालू। सर्वर ये सेटिंग केवल अपनी .env फ़ाइल से पढ़ता है और यहाँ सहेजी गई सेटिंग को अनदेखा करता है। उन्हें उस फ़ाइल में बदलें और सर्वर फिर से शुरू करें।';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'बंद। सर्वर की .env फ़ाइल में BALNANA_ENV_ONLY=true सेट करें, ताकि सभी सेटिंग वहीं से पढ़ी जाएँ और यहाँ सहेजी गई सेटिंग अनदेखी की जाएँ।';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'इसे केवल सर्वर की .env फ़ाइल में $key बदलता है';
+  }
+
+  @override
+  String get adminExport => '.env के रूप में एक्सपोर्ट करें';
+
+  @override
+  String get adminExportHelp =>
+      'यहाँ सहेजी गई सेटिंग को सर्वर की .env फ़ाइल की पंक्तियों के रूप में डाउनलोड करें';
+
+  @override
+  String get adminExportBody =>
+      'फ़ाइल में पासवर्ड और कुंजियों सहित सभी सहेजी गई सेटिंग होती हैं। डाउनलोड करने के लिए एडमिनिस्ट्रेटर पासवर्ड डालें।';
+
+  @override
+  String get adminExportDone => 'सेटिंग एक्सपोर्ट की गईं';
 }

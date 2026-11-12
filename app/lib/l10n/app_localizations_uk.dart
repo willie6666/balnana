@@ -3665,4 +3665,123 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Не вдалося оновити. Ці дані можуть бути застарілими.';
+
+  @override
+  String get sharePlanTitle => 'Спільний доступ до тарифу';
+
+  @override
+  String get sharePlanSettingsHelp => 'Виберіть, які групи користуються вашим тарифом';
+
+  @override
+  String get sharePlanHelp => 'Група, з якою ви ділитеся тарифом, отримує його ліміти для всіх учасників.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Групи, що користуються вашим тарифом: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Усі учасники групи отримують ліміти вашого тарифу $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Двоетапний вхід';
+
+  @override
+  String get twoFactorTotp => 'Застосунок-автентифікатор';
+
+  @override
+  String get twoFactorTotpHelp => 'Запитувати код із застосунку-автентифікатора під час входу з паролем';
+
+  @override
+  String get twoFactorConfirmBody => 'Введіть пароль, щоб змінити спосіб входу.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Відскануйте цей код застосунком-автентифікатором або введіть у нього ключ нижче. Потім введіть шість цифр, які покаже застосунок.';
+
+  @override
+  String get twoFactorCode => 'Код';
+
+  @override
+  String get twoFactorTurnOn => 'Увімкнути';
+
+  @override
+  String get twoFactorTurnOff => 'Вимкнути';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Під час входу більше не запитуватиметься код із застосунку, а резервні коди перестануть працювати. Введіть пароль, щоб вимкнути.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Резервні коди';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Зберігайте їх у надійному місці. Кожен код дає змогу увійти один раз, коли застосунку-автентифікатора немає під рукою. Їх більше не буде показано.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Резервні коди скопійовано';
+
+  @override
+  String get twoFactorEmail => 'Код електронною поштою';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Надсилати код на $email під час входу з паролем';
+  }
+
+  @override
+  String get signInCodeTotp => 'Введіть код із застосунку-автентифікатора.';
+
+  @override
+  String get signInCodeEmail => 'Введіть код, який ми надіслали вам поштою.';
+
+  @override
+  String get signInCodeEither => 'Введіть код із застосунку-автентифікатора або отримайте код поштою.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Резервний код теж підійде.';
+
+  @override
+  String get signInCodeSend => 'Надіслати мені код поштою';
+
+  @override
+  String get signInCodeSent => 'Код надіслано на вашу пошту. Він діє 10 хвилин.';
+
+  @override
+  String get errorInvalidCode => 'Код неправильний або його термін дії минув.';
+
+  @override
+  String get adminSectionEnv => 'Файл середовища';
+
+  @override
+  String get adminEnvOnly => 'Читати налаштування лише з .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Увімкнено. Сервер читає ці налаштування лише з файлу .env та ігнорує збережене тут. Змініть їх у цьому файлі й перезапустіть сервер.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Вимкнено. Укажіть BALNANA_ENV_ONLY=true у файлі .env сервера, щоб усі налаштування читалися звідти, а збережене тут ігнорувалося.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Це змінює лише $key у файлі .env сервера';
+  }
+
+  @override
+  String get adminExport => 'Експорт у .env';
+
+  @override
+  String get adminExportHelp => 'Завантажити збережені тут налаштування як рядки для файлу .env сервера';
+
+  @override
+  String get adminExportBody =>
+      'Файл містить усі збережені налаштування, зокрема паролі та ключі. Введіть пароль адміністратора, щоб завантажити його.';
+
+  @override
+  String get adminExportDone => 'Налаштування експортовано';
 }

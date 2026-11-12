@@ -679,6 +679,9 @@ class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
       final api = groupApiOf(ref, token);
       await (stop ? api.unsponsor() : api.sponsor());
       ref.invalidate(groupPlanProvider(token));
+      // The account's plan and its list of groups say who shares with what.
+      ref.invalidate(myPlanProvider);
+      ref.invalidate(summariesProvider);
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
     }
@@ -702,21 +705,17 @@ class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
     );
     final mine = sponsor != null && sponsor == widget.me;
     final signedIn = ref.watch(signedInProvider);
-    return GroupedTile(
-      icon: Icons.workspace_premium_outlined,
-      title: mine
-          ? l10n.groupUnsponsor
-          : sponsor == null && signedIn && plan.canSponsor
-          ? l10n.groupSponsor
-          : plan.planName,
-      subtitle: sponsorName == null ? usage : '${l10n.groupSponsoredBy(sponsorName)}\n$usage',
-      onTap: _busy
-          ? null
-          : mine
-          ? () => _sponsor(stop: true)
-          : sponsor == null && signedIn && plan.canSponsor
-          ? () => _sponsor(stop: false)
-          : null,
-    );
+    final subtitle = sponsorName == null ? usage : '${l10n.groupSponsoredBy(sponsorName)}\n$usage';
+    // A switch for whoever shares their plan with the group, or could.
+    if (mine || sponsor == null && signedIn && plan.canSponsor) {
+      return GroupedSwitchTile(
+        icon: Icons.workspace_premium_outlined,
+        title: l10n.groupSponsor,
+        subtitle: subtitle,
+        value: mine,
+        onChanged: _busy ? null : (on) => _sponsor(stop: !on),
+      );
+    }
+    return GroupedTile(icon: Icons.workspace_premium_outlined, title: plan.planName, subtitle: subtitle);
   }
 }

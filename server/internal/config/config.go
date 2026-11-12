@@ -4,6 +4,7 @@
 package config
 
 import (
+	"bytes"
 	"cmp"
 	"crypto/sha256"
 	"crypto/x509"
@@ -210,6 +211,10 @@ type Config struct {
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
 	AndroidCertSHA256 []string
+
+	// EnvOnly reads the Managed settings from the environment alone: what an
+	// administrator saved at /admin is ignored, and /admin changes none.
+	EnvOnly bool
 }
 
 // ServiceAccount is what a Google Cloud service account's JSON key holds.
@@ -342,11 +347,22 @@ func Environment(key string) bool {
 	return strings.TrimSpace(os.Getenv(key)) != ""
 }
 
+// EnvOnly reports whether BALNANA_ENV_ONLY is on: every Managed setting is
+// then the environment's, or its default, and stored settings count for
+// nothing.
+func EnvOnly() bool {
+	on, _ := strconv.ParseBool(strings.TrimSpace(os.Getenv("BALNANA_ENV_ONLY")))
+	return on
+}
+
 // LoadWith reads the environment, and stored (the settings an administrator
-// saved) for the Managed settings the environment leaves unset. It returns
-// every problem at once so a misconfigured container fails with one complete
-// message.
+// saved) for the Managed settings the environment leaves unset, unless
+// EnvOnly. It returns every problem at once so a misconfigured container
+// fails with one complete message.
 func LoadWith(stored map[string]string) (*Config, error) {
+	if EnvOnly() {
+		stored = nil
+	}
 	c, err := load(func(key string) string {
 		if v := os.Getenv(key); strings.TrimSpace(v) != "" {
 			return v
@@ -408,6 +424,7 @@ func load(getenv func(string) string) (*Config, error) {
 		PaymentKeepDays: e.int("BALNANA_PAYMENT_KEEP_DAYS", 0),
 		TrustProxy:      e.bool("BALNANA_TRUST_PROXY", false),
 		Push:            e.bool("BALNANA_PUSH", true),
+		EnvOnly:         e.bool("BALNANA_ENV_ONLY", false),
 		AuthMode:        AuthMode(e.managed("BALNANA_AUTH_MODE")),
 		Password:        e.managedBool("BALNANA_AUTH_PASSWORD"),
 		RequireEmail:    e.managedBool("BALNANA_AUTH_REQUIRE_EMAIL"),
@@ -773,4 +790,51 @@ func splitList(s string) []string {
 		}
 	}
 	return out
+}
+
+// envPlain is a value a .env file takes as it is, without quotes.
+var envPlain = regexp.MustCompile(`^[A-Za-z0-9_@%+=:,./-]*$`)
+
+// DotEnv writes stored, the settings an administrator saved, as the lines of
+// a .env file, in the order /admin shows them. Settings the environment sets
+// are left out: they win over stored ones, and are in the file already.
+func DotEnv(stored map[string]string) string {
+	lookup := func(key string) string {
+		if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+			return v
+		}
+		return stored[key]
+	}
+	var b strings.Builder
+	b.WriteString("# Balnana settings saved at /admin. Add these lines to the server's .env file.\n")
+	b.WriteString("# With BALNANA_ENV_ONLY=true the server reads its settings from there alone.\n")
+	for _, m := range ManagedFor(lookup) {
+		v := strings.TrimSpace(stored[m.Key])
+		if v == "" || Environment(m.Key) {
+			continue
+		}
+		b.WriteString(m.Key + "=" + envValue(v) + "\n")
+	}
+	return b.String()
+}
+
+// envValue quotes v as Docker Compose's env_file and systemd's
+// EnvironmentFile both read it: plain when nothing in it means anything to
+// them, in single quotes, which neither looks inside, when it can be, and
+// else in double quotes with what they read there escaped. JSON, such as a
+// service account's key, goes on one line.
+func envValue(v string) string {
+	if json.Valid([]byte(v)) {
+		var one bytes.Buffer
+		if json.Compact(&one, []byte(v)) == nil {
+			v = one.String()
+		}
+	}
+	switch {
+	case envPlain.MatchString(v):
+		return v
+	case !strings.ContainsAny(v, "'\n\r"):
+		return "'" + v + "'"
+	}
+	return `"` + strings.NewReplacer(`\`, `\\`, `"`, `\"`, "$", `\$`, "\n", `\n`, "\r", `\r`).Replace(v) + `"`
 }

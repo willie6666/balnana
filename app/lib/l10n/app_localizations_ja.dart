@@ -3390,4 +3390,119 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get refreshFailed => '更新できませんでした。表示が古い可能性があります。';
+
+  @override
+  String get sharePlanTitle => 'プランの共有';
+
+  @override
+  String get sharePlanSettingsHelp => 'プランを使うグループを選びます';
+
+  @override
+  String get sharePlanHelp => 'プランを共有したグループでは、メンバー全員にそのプランの上限が適用されます。';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'プランを共有しているグループ: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'グループの全員に$planプランの上限が適用されます。';
+  }
+
+  @override
+  String get twoFactorTitle => '2段階サインイン';
+
+  @override
+  String get twoFactorTotp => '認証アプリ';
+
+  @override
+  String get twoFactorTotpHelp => 'パスワードでサインインするとき、認証アプリのコードも求めます';
+
+  @override
+  String get twoFactorConfirmBody => 'サインイン方法を変更するにはパスワードを入力してください。';
+
+  @override
+  String get twoFactorTotpScan => '認証アプリでこのコードを読み取るか、下のキーを入力してください。そのあと、アプリに表示される6桁の数字を入力します。';
+
+  @override
+  String get twoFactorCode => 'コード';
+
+  @override
+  String get twoFactorTurnOn => 'オンにする';
+
+  @override
+  String get twoFactorTurnOff => 'オフにする';
+
+  @override
+  String get twoFactorTotpOffBody => 'サインイン時にアプリのコードを求めなくなり、リカバリーコードも使えなくなります。オフにするにはパスワードを入力してください。';
+
+  @override
+  String get twoFactorRecoveryTitle => 'リカバリーコード';
+
+  @override
+  String get twoFactorRecoveryBody => '安全な場所に保管してください。認証アプリが使えないとき、それぞれ1回だけサインインに使えます。再表示はされません。';
+
+  @override
+  String get twoFactorRecoveryCopied => 'リカバリーコードをコピーしました';
+
+  @override
+  String get twoFactorEmail => 'メールでコードを受け取る';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'パスワードでサインインするとき、$email にコードを送ります';
+  }
+
+  @override
+  String get signInCodeTotp => '認証アプリのコードを入力してください。';
+
+  @override
+  String get signInCodeEmail => 'メールでお送りしたコードを入力してください。';
+
+  @override
+  String get signInCodeEither => '認証アプリのコードを入力するか、メールでコードを受け取ってください。';
+
+  @override
+  String get signInCodeRecoveryHelp => 'リカバリーコードも使えます。';
+
+  @override
+  String get signInCodeSend => 'コードをメールで送る';
+
+  @override
+  String get signInCodeSent => 'コードをメールでお送りしました。10分間有効です。';
+
+  @override
+  String get errorInvalidCode => 'コードが正しくないか、期限が切れています。';
+
+  @override
+  String get adminSectionEnv => '環境ファイル';
+
+  @override
+  String get adminEnvOnly => '設定を .env からのみ読み込む';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'オン。サーバーはこれらの設定を .env ファイルからのみ読み込み、ここに保存された内容は無視します。変更するにはそのファイルを編集してサーバーを再起動してください。';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'オフ。サーバーの .env ファイルで BALNANA_ENV_ONLY=true を設定すると、すべての設定をそこから読み込み、ここに保存された内容は無視します。';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'サーバーの .env ファイルの $key でのみ変更できます';
+  }
+
+  @override
+  String get adminExport => '.env としてエクスポート';
+
+  @override
+  String get adminExportHelp => 'ここに保存された設定を、サーバーの .env ファイル用の行としてダウンロードします';
+
+  @override
+  String get adminExportBody => 'ファイルには、パスワードやキーを含む保存済みの設定がすべて含まれます。ダウンロードするには管理者パスワードを入力してください。';
+
+  @override
+  String get adminExportDone => '設定をエクスポートしました';
 }

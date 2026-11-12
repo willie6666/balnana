@@ -48,6 +48,9 @@ func (s *Server) LoadSettings(ctx context.Context) error {
 		return err
 	}
 	cfg, err := config.LoadWith(stored)
+	if err != nil && config.EnvOnly() {
+		return err // nothing saved is in force, so there is nothing to leave out
+	}
 	if err != nil {
 		bad := config.ErrorKeys(err)
 		for _, k := range bad {
@@ -366,7 +369,7 @@ func (s *Server) UpdateAdminSettings(ctx context.Context, req UpdateAdminSetting
 	values := req.Body.Values
 	var bad []string
 	for k := range values {
-		if _, ok := config.ManagedSetting(k); !ok || config.Environment(k) {
+		if _, ok := config.ManagedSetting(k); !ok || config.EnvOnly() || config.Environment(k) {
 			bad = append(bad, k)
 		}
 	}
@@ -421,20 +424,58 @@ func invalidSettings(keys []string) error {
 	return &apiError{status: http.StatusBadRequest, code: "invalid_settings", params: map[string]any{"keys": keys}}
 }
 
+// ExportAdminSettings writes the saved settings as a .env file, secrets and
+// all, which is why the password is asked for again: a session left open
+// must not be enough to read them.
+func (s *Server) ExportAdminSettings(ctx context.Context, req ExportAdminSettingsRequestObject) (ExportAdminSettingsResponseObject, error) {
+	token := req.Params.XBalnanaAdmin
+	if err := s.requireAdmin(ctx, token); err != nil {
+		return nil, err
+	}
+	var hash *string
+	if err := s.db.QueryRow(ctx, `select password_hash from admin`).Scan(&hash); err != nil {
+		return nil, err
+	}
+	release, err := s.holdGuess(ctx, "admin")
+	if err != nil {
+		return nil, err
+	}
+	if hash == nil || !checkPassword(*hash, req.Body.Password) {
+		return nil, forbidden("wrong_password")
+	}
+	release()
+	var stored map[string]string
+	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
+		if err := lockAdmin(ctx, tx, *hash, token); err != nil {
+			return err
+		}
+		var err error
+		stored, err = storedSettings(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.log.Info("settings exported by the administrator")
+	return ExportAdminSettings200JSONResponse{Env: config.DotEnv(stored)}, nil
+}
+
 // adminSettings describes every Managed setting, with those of each listed
 // OpenID Connect provider: what is in force (secrets left out), whether the
-// environment sets it, and its default.
+// environment sets it, and its default. With BALNANA_ENV_ONLY the
+// environment sets them all, the ones it leaves at their defaults too.
 func adminSettings(stored map[string]string) AdminSettings {
-	out := AdminSettings{Settings: []AdminSetting{}}
+	envOnly := config.EnvOnly()
+	out := AdminSettings{Settings: []AdminSetting{}, EnvOnly: envOnly}
 	lookup := func(key string) string {
-		if config.Environment(key) {
+		if envOnly || config.Environment(key) {
 			return strings.TrimSpace(os.Getenv(key))
 		}
 		return stored[key]
 	}
 	for _, m := range config.ManagedFor(lookup) {
 		v := lookup(m.Key)
-		locked := config.Environment(m.Key)
+		locked := envOnly || config.Environment(m.Key)
 		item := AdminSetting{Key: m.Key, Default: m.Default, Locked: locked, Secret: m.Secret, Set: v != ""}
 		if v != "" && !m.Secret {
 			item.Value = &v

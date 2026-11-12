@@ -3573,4 +3573,127 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Aktualisierung fehlgeschlagen. Die Angaben sind möglicherweise veraltet.';
+
+  @override
+  String get sharePlanTitle => 'Tarif teilen';
+
+  @override
+  String get sharePlanSettingsHelp => 'Wähle, welche Gruppen deinen Tarif nutzen';
+
+  @override
+  String get sharePlanHelp =>
+      'Eine Gruppe, mit der du deinen Tarif teilst, bekommt dessen Limits für alle Mitglieder.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Gruppen, die deinen Tarif nutzen: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Alle in der Gruppe bekommen die Limits deines Tarifs $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Anmeldung in zwei Schritten';
+
+  @override
+  String get twoFactorTotp => 'Authenticator-App';
+
+  @override
+  String get twoFactorTotpHelp =>
+      'Bei der Anmeldung mit Passwort zusätzlich einen Code aus einer Authenticator-App verlangen';
+
+  @override
+  String get twoFactorConfirmBody => 'Gib dein Passwort ein, um deine Anmeldung zu ändern.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Scanne diesen Code mit deiner Authenticator-App oder gib den Schlüssel unten dort ein. Gib dann die sechs Ziffern ein, die die App anzeigt.';
+
+  @override
+  String get twoFactorCode => 'Code';
+
+  @override
+  String get twoFactorTurnOn => 'Einschalten';
+
+  @override
+  String get twoFactorTurnOff => 'Ausschalten';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Bei der Anmeldung wird kein Code aus deiner App mehr verlangt, und deine Wiederherstellungscodes funktionieren nicht mehr. Gib dein Passwort ein, um sie auszuschalten.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Wiederherstellungscodes';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Bewahre sie sicher auf. Jeder Code meldet dich einmal an, wenn du deine Authenticator-App nicht zur Hand hast. Sie werden nicht noch einmal angezeigt.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Wiederherstellungscodes kopiert';
+
+  @override
+  String get twoFactorEmail => 'Code per E-Mail';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Bei der Anmeldung mit Passwort einen Code an $email senden';
+  }
+
+  @override
+  String get signInCodeTotp => 'Gib den Code aus deiner Authenticator-App ein.';
+
+  @override
+  String get signInCodeEmail => 'Gib den Code ein, den wir dir per E-Mail geschickt haben.';
+
+  @override
+  String get signInCodeEither =>
+      'Gib den Code aus deiner Authenticator-App ein oder lass dir einen per E-Mail schicken.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Ein Wiederherstellungscode funktioniert auch.';
+
+  @override
+  String get signInCodeSend => 'Code per E-Mail senden';
+
+  @override
+  String get signInCodeSent => 'Ein Code ist unterwegs zu deiner E-Mail-Adresse. Er gilt 10 Minuten.';
+
+  @override
+  String get errorInvalidCode => 'Dieser Code stimmt nicht oder ist abgelaufen.';
+
+  @override
+  String get adminSectionEnv => 'Umgebungsdatei';
+
+  @override
+  String get adminEnvOnly => 'Einstellungen nur aus .env lesen';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Ein. Der Server liest diese Einstellungen nur aus seiner .env-Datei und ignoriert, was hier gespeichert wurde. Ändere sie in dieser Datei und starte den Server neu.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Aus. Setze BALNANA_ENV_ONLY=true in der .env-Datei des Servers, damit alle Einstellungen von dort gelesen werden und hier Gespeichertes ignoriert wird.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Nur $key in der .env-Datei des Servers ändert das';
+  }
+
+  @override
+  String get adminExport => 'Als .env exportieren';
+
+  @override
+  String get adminExportHelp =>
+      'Die hier gespeicherten Einstellungen als Zeilen für die .env-Datei des Servers herunterladen';
+
+  @override
+  String get adminExportBody =>
+      'Die Datei enthält alle gespeicherten Einstellungen, auch Passwörter und Schlüssel. Gib das Administratorpasswort ein, um sie herunterzuladen.';
+
+  @override
+  String get adminExportDone => 'Einstellungen exportiert';
 }

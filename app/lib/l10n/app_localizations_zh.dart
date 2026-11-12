@@ -3374,6 +3374,119 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get refreshFailed => '无法更新，显示的内容可能不是最新的。';
+
+  @override
+  String get sharePlanTitle => '方案共享';
+
+  @override
+  String get sharePlanSettingsHelp => '选择哪些群组使用你的方案';
+
+  @override
+  String get sharePlanHelp => '与群组共享方案后，群组里的每个人都适用你方案的上限。';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return '共享你方案的群组：$usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return '群组里的每个人都适用你 $plan 方案的上限。';
+  }
+
+  @override
+  String get twoFactorTitle => '两步登录';
+
+  @override
+  String get twoFactorTotp => '身份验证器应用';
+
+  @override
+  String get twoFactorTotpHelp => '用密码登录时，另外要求身份验证器应用的验证码';
+
+  @override
+  String get twoFactorConfirmBody => '输入密码以更改登录方式。';
+
+  @override
+  String get twoFactorTotpScan => '用身份验证器应用扫描此二维码，或手动输入下方的密钥，然后输入应用显示的六位验证码。';
+
+  @override
+  String get twoFactorCode => '验证码';
+
+  @override
+  String get twoFactorTurnOn => '开启';
+
+  @override
+  String get twoFactorTurnOff => '关闭';
+
+  @override
+  String get twoFactorTotpOffBody => '登录时将不再要求应用的验证码，恢复码也会失效。输入密码以关闭。';
+
+  @override
+  String get twoFactorRecoveryTitle => '恢复码';
+
+  @override
+  String get twoFactorRecoveryBody => '请妥善保存。没有身份验证器应用时，每个恢复码可登录一次。之后不会再显示。';
+
+  @override
+  String get twoFactorRecoveryCopied => '已复制恢复码';
+
+  @override
+  String get twoFactorEmail => '邮箱验证码';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return '用密码登录时，向 $email 发送验证码';
+  }
+
+  @override
+  String get signInCodeTotp => '输入身份验证器应用的验证码。';
+
+  @override
+  String get signInCodeEmail => '输入我们发到你邮箱的验证码。';
+
+  @override
+  String get signInCodeEither => '输入身份验证器应用的验证码，或改用邮箱接收。';
+
+  @override
+  String get signInCodeRecoveryHelp => '也可以使用恢复码。';
+
+  @override
+  String get signInCodeSend => '给我发送验证码';
+
+  @override
+  String get signInCodeSent => '验证码已发送到你的邮箱，10 分钟内有效。';
+
+  @override
+  String get errorInvalidCode => '验证码不正确或已过期。';
+
+  @override
+  String get adminSectionEnv => '环境配置文件';
+
+  @override
+  String get adminEnvOnly => '仅从 .env 读取设置';
+
+  @override
+  String get adminEnvOnlyOn => '已开启。服务器只从 .env 文件读取这些设置，并忽略此处保存的内容。请在该文件中修改并重启服务器。';
+
+  @override
+  String get adminEnvOnlyOff => '已关闭。在服务器的 .env 文件中设置 BALNANA_ENV_ONLY=true，即可只从该文件读取所有设置，并忽略此处保存的内容。';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return '只能在服务器的 .env 文件中通过 $key 修改';
+  }
+
+  @override
+  String get adminExport => '导出为 .env';
+
+  @override
+  String get adminExportHelp => '将此处保存的设置下载为服务器 .env 文件可用的内容';
+
+  @override
+  String get adminExportBody => '文件包含所有已保存的设置，包括密码和密钥。输入管理员密码以下载。';
+
+  @override
+  String get adminExportDone => '设置已导出';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6745,4 +6858,117 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get refreshFailed => '無法更新，顯示的內容可能不是最新的。';
+
+  @override
+  String get sharePlanTitle => '方案分享';
+
+  @override
+  String get sharePlanSettingsHelp => '選擇哪些群組使用你的方案';
+
+  @override
+  String get sharePlanHelp => '與群組分享方案後，群組裡的每個人都適用你方案的上限。';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return '分享你方案的群組：$usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return '群組裡的每個人都適用你 $plan 方案的上限。';
+  }
+
+  @override
+  String get twoFactorTitle => '兩步驟登入';
+
+  @override
+  String get twoFactorTotp => '驗證器應用程式';
+
+  @override
+  String get twoFactorTotpHelp => '用密碼登入時，另外要求驗證器應用程式的驗證碼';
+
+  @override
+  String get twoFactorConfirmBody => '輸入密碼以變更登入方式。';
+
+  @override
+  String get twoFactorTotpScan => '用驗證器應用程式掃描這個 QR 碼，或手動輸入下方的金鑰，再輸入應用程式顯示的六位數驗證碼。';
+
+  @override
+  String get twoFactorCode => '驗證碼';
+
+  @override
+  String get twoFactorTurnOn => '開啟';
+
+  @override
+  String get twoFactorTurnOff => '關閉';
+
+  @override
+  String get twoFactorTotpOffBody => '登入時將不再要求應用程式的驗證碼，備用碼也會失效。輸入密碼以關閉。';
+
+  @override
+  String get twoFactorRecoveryTitle => '備用碼';
+
+  @override
+  String get twoFactorRecoveryBody => '請妥善保存。沒有驗證器應用程式時，每組備用碼可登入一次。之後不會再顯示。';
+
+  @override
+  String get twoFactorRecoveryCopied => '已複製備用碼';
+
+  @override
+  String get twoFactorEmail => '電子郵件驗證碼';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return '用密碼登入時，寄送驗證碼到 $email';
+  }
+
+  @override
+  String get signInCodeTotp => '輸入驗證器應用程式的驗證碼。';
+
+  @override
+  String get signInCodeEmail => '輸入我們寄到你電子郵件的驗證碼。';
+
+  @override
+  String get signInCodeEither => '輸入驗證器應用程式的驗證碼，或改用電子郵件收取。';
+
+  @override
+  String get signInCodeRecoveryHelp => '也可以使用備用碼。';
+
+  @override
+  String get signInCodeSend => '寄驗證碼給我';
+
+  @override
+  String get signInCodeSent => '驗證碼已寄到你的電子郵件，10 分鐘內有效。';
+
+  @override
+  String get errorInvalidCode => '驗證碼不正確或已過期。';
+
+  @override
+  String get adminSectionEnv => '環境設定檔';
+
+  @override
+  String get adminEnvOnly => '只從 .env 讀取設定';
+
+  @override
+  String get adminEnvOnlyOn => '已開啟。伺服器只從 .env 檔讀取這些設定，並忽略這裡儲存的內容。請在該檔案中修改並重新啟動伺服器。';
+
+  @override
+  String get adminEnvOnlyOff => '已關閉。在伺服器的 .env 檔設定 BALNANA_ENV_ONLY=true，就會只從該檔讀取所有設定，並忽略這裡儲存的內容。';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return '只能在伺服器的 .env 檔用 $key 修改';
+  }
+
+  @override
+  String get adminExport => '匯出為 .env';
+
+  @override
+  String get adminExportHelp => '將這裡儲存的設定下載成伺服器 .env 檔可用的內容';
+
+  @override
+  String get adminExportBody => '檔案包含所有已儲存的設定，包括密碼和金鑰。輸入管理員密碼以下載。';
+
+  @override
+  String get adminExportDone => '已匯出設定';
 }

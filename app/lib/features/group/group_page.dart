@@ -27,6 +27,7 @@ import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../account/sign_in_page.dart';
 import '../groups/group_switcher.dart';
+import '../shell/shell.dart';
 import 'balances.dart';
 import 'expenses_tab.dart';
 import 'identity_sheet.dart';
@@ -322,6 +323,9 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     return GroupTheme(
       group: group,
       child: DefaultTabController(
+        // Picking Groups in the navigation shows the group from its start:
+        // the first tab, at the top.
+        key: ValueKey(ref.watch(tabResetsProvider.select((resets) => resets[0]))),
         length: 2,
         child: Builder(
           builder: (context) => Scaffold(

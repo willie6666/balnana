@@ -445,3 +445,83 @@ func TestSweepTakesBatches(t *testing.T) {
 		t.Fatalf("swept %d rows, err %v", n, err)
 	}
 }
+
+func TestExportSettings(t *testing.T) {
+	c, _, _ := adminClient(t, map[string]string{"BALNANA_SOURCE_URL": "https://git.example.com/balnana"})
+	admin := c.asAdmin(setUp(c))
+	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{
+		"BALNANA_AUTH_MODE":     "accounts",
+		"BALNANA_SMTP_HOST":     "smtp.example.com",
+		"BALNANA_SMTP_FROM":     "Balnana <balnana@example.com>",
+		"BALNANA_SMTP_PASSWORD": "it's $ecret",
+	}}, nil)
+
+	// The file holds the secrets, so a session alone doesn't get it.
+	if code := admin.errorCode(403, "POST", "/admin/settings/export", AdminLoginInput{Password: "wrong password"}); code != "wrong_password" {
+		t.Fatal(code)
+	}
+	if code := c.errorCode(401, "POST", "/admin/settings/export", AdminLoginInput{Password: adminPassword}); code != "admin_required" {
+		t.Fatal(code)
+	}
+	var out AdminSettingsExport
+	admin.must(200, "POST", "/admin/settings/export", AdminLoginInput{Password: adminPassword}, &out)
+	var lines []string
+	for _, line := range strings.Split(out.Env, "\n") {
+		if line != "" && !strings.HasPrefix(line, "#") {
+			lines = append(lines, line)
+		}
+	}
+	// In the page's order, without what the environment sets already.
+	want := []string{
+		"BALNANA_AUTH_MODE=accounts",
+		"BALNANA_SMTP_HOST=smtp.example.com",
+		`BALNANA_SMTP_PASSWORD="it's \$ecret"`,
+		"BALNANA_SMTP_FROM='Balnana <balnana@example.com>'",
+	}
+	if !slices.Equal(lines, want) {
+		t.Fatalf("%q", lines)
+	}
+}
+
+func TestEnvOnly(t *testing.T) {
+	c, s, _ := adminClient(t, map[string]string{})
+	admin := c.asAdmin(setUp(c))
+	var all AdminSettings
+	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{
+		"BALNANA_SOURCE_URL": "https://saved.example.com/balnana",
+	}}, &all)
+	if all.EnvOnly || setting(t, all, "BALNANA_SOURCE_URL").Locked {
+		t.Fatalf("%+v", all)
+	}
+
+	// Turned on, what was saved counts for nothing: the environment and the
+	// defaults are all there is, and the page changes none of it.
+	t.Setenv("BALNANA_ENV_ONLY", "true")
+	t.Setenv("BALNANA_PRIVACY_URL", "https://env.example.com/privacy")
+	if err := s.LoadSettings(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if info := serverInfo(c); info.SourceUrl != config.UpstreamSourceURL || info.PrivacyUrl == nil {
+		t.Fatalf("%+v", info)
+	}
+	all = AdminSettings{} // decoding into the old one would keep its values
+	admin.must(200, "GET", "/admin/settings", nil, &all)
+	src := setting(t, all, "BALNANA_SOURCE_URL")
+	if !all.EnvOnly || !src.Locked || src.Set || src.Value != nil {
+		t.Fatalf("%v %+v", all.EnvOnly, src)
+	}
+	if privacy := setting(t, all, "BALNANA_PRIVACY_URL"); !privacy.Locked || privacy.Value == nil {
+		t.Fatalf("%+v", privacy)
+	}
+	var e Error
+	got := admin.call("PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{"BALNANA_MAP_SOURCE": "off"}}, &e)
+	if got != 400 || e.Code != "invalid_settings" {
+		t.Fatalf("status %d %+v", got, e)
+	}
+	// What was saved is still there to export.
+	var out AdminSettingsExport
+	admin.must(200, "POST", "/admin/settings/export", AdminLoginInput{Password: adminPassword}, &out)
+	if !strings.Contains(out.Env, "BALNANA_SOURCE_URL=https://saved.example.com/balnana\n") {
+		t.Fatal(out.Env)
+	}
+}

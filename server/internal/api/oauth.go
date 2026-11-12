@@ -607,9 +607,9 @@ func (s *Server) ExchangeOAuthCode(ctx context.Context, req ExchangeOAuthCodeReq
 		// and leaves no code to spend.
 		err = tx.QueryRow(ctx, `
 			select email::text, pending_email::text, username::text, email_verified, password_hash is not null,
-			       display_name, locale
-			from users where id = $1 for share`, u.id).
-			Scan(&u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale)
+			       display_name, locale, `+twoFactorFlags+`
+			from users u where id = $1 for share`, u.id).
+			Scan(&u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name, &u.locale, &u.totp, &u.emailCodes)
 		if errors.Is(err, pgx.ErrNoRows) {
 			wrong = true
 			return nil

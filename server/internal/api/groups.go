@@ -81,7 +81,7 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names))
+		sponsor, err := s.checkNewGroup(ctx, tx, creator, len(names), in.SharePlan != nil && *in.SharePlan)
 		if err != nil {
 			return err
 		}
@@ -198,6 +198,17 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	out := GroupSummaryList{Missing: []string{}, Locked: []string{}}
 	if out.Groups, err = summarize(ctx, s.db, groups); err != nil {
 		return nil, err
+	}
+	if s.conf().Billing && len(groups) > 0 {
+		shared, err := sharedPlans(ctx, s.db, u.id, groups)
+		if err != nil {
+			return nil, err
+		}
+		for i, g := range groups {
+			if whose, ok := shared[g.id]; ok {
+				out.Groups[i].SharedPlan = &whose
+			}
+		}
 	}
 	slices.SortStableFunc(out.Groups, func(a, b GroupSummary) int { return b.UpdatedAt.Compare(a.UpdatedAt) })
 	return GetMyGroups200JSONResponse(out), nil

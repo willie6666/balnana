@@ -6099,6 +6099,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t update. This may be out of date.'**
   String get refreshFailed;
+
+  /// Title of the settings page where an account picks which of its groups use its plan, and of the tile that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan sharing'**
+  String get sharePlanTitle;
+
+  /// Subtitle of the settings tile that opens the plan sharing page.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which groups use your plan'**
+  String get sharePlanSettingsHelp;
+
+  /// Explains on the plan sharing page what sharing a plan with a group does.
+  ///
+  /// In en, this message translates to:
+  /// **'A group you share your plan with gets its limits, for everyone in it.'**
+  String get sharePlanHelp;
+
+  /// How many groups share the plan, on the plan sharing page.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups sharing your plan: {usage}'**
+  String sharePlanUsage(String usage);
+
+  /// Subtitle of the share-my-plan switch when creating a group.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone in the group gets the limits of your {plan} plan.'**
+  String groupSponsorHelp(String plan);
+
+  /// Heading for two-step sign-in (two-factor authentication) in settings and on the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-step sign-in'**
+  String get twoFactorTitle;
+
+  /// Switch and dialog title for signing in with a code from an authenticator app (TOTP).
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticator app'**
+  String get twoFactorTotp;
+
+  /// Subtitle of the authenticator app switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a code from an authenticator app when you sign in with your password'**
+  String get twoFactorTotpHelp;
+
+  /// Text of the dialog that asks for the password before two-step sign-in changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password to change how you sign in.'**
+  String get twoFactorConfirmBody;
+
+  /// Instructions above the QR code and key for adding an authenticator app.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this code with your authenticator app, or type the key below into it. Then enter the six digits the app shows.'**
+  String get twoFactorTotpScan;
+
+  /// Label of the field a sign-in code is typed into.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get twoFactorCode;
+
+  /// Button that turns a two-step sign-in method on.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get twoFactorTurnOn;
+
+  /// Button that turns a two-step sign-in method off.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get twoFactorTurnOff;
+
+  /// Text of the dialog that turns the authenticator app off.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in will no longer ask for a code from your app, and your recovery codes will stop working. Enter your password to turn it off.'**
+  String get twoFactorTotpOffBody;
+
+  /// Title of the dialog showing the recovery codes once.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery codes'**
+  String get twoFactorRecoveryTitle;
+
+  /// Explains what recovery codes are for.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep these somewhere safe. Each one signs you in once when you don\'t have your authenticator app. They won\'t be shown again.'**
+  String get twoFactorRecoveryBody;
+
+  /// Snackbar after copying the recovery codes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery codes copied'**
+  String get twoFactorRecoveryCopied;
+
+  /// Switch and dialog title for signing in with a code sent by email.
+  ///
+  /// In en, this message translates to:
+  /// **'Code by email'**
+  String get twoFactorEmail;
+
+  /// Subtitle of the code by email switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a code to {email} when you sign in with your password'**
+  String twoFactorEmailHelp(String email);
+
+  /// Sign-in page, second step: the account asks for an authenticator app code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your authenticator app.'**
+  String get signInCodeTotp;
+
+  /// Sign-in page, second step: the account asks for a code sent by email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code we emailed you.'**
+  String get signInCodeEmail;
+
+  /// Sign-in page, second step: the account takes a code from either an app or email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your authenticator app, or have one emailed to you.'**
+  String get signInCodeEither;
+
+  /// Helper text under the code field, for accounts with an authenticator app.
+  ///
+  /// In en, this message translates to:
+  /// **'A recovery code works too.'**
+  String get signInCodeRecoveryHelp;
+
+  /// Button on the sign-in page that emails a sign-in code.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a code'**
+  String get signInCodeSend;
+
+  /// Shown on the sign-in page after a code was emailed.
+  ///
+  /// In en, this message translates to:
+  /// **'A code is on its way to your email. It works for 10 minutes.'**
+  String get signInCodeSent;
+
+  /// Message for a wrong or expired sign-in code.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn\'t right, or it has expired.'**
+  String get errorInvalidCode;
+
+  /// Heading of the admin page section about the server .env file.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment file'**
+  String get adminSectionEnv;
+
+  /// Label of the always-disabled switch showing whether the server reads its settings from .env only.
+  ///
+  /// In en, this message translates to:
+  /// **'Read settings from .env only'**
+  String get adminEnvOnly;
+
+  /// Subtitle of that switch when the mode is on.
+  ///
+  /// In en, this message translates to:
+  /// **'On. The server reads these settings from its .env file alone and ignores what was saved here. Change them in that file and restart the server.'**
+  String get adminEnvOnlyOn;
+
+  /// Subtitle of that switch when the mode is off. BALNANA_ENV_ONLY=true stays as written.
+  ///
+  /// In en, this message translates to:
+  /// **'Off. Set BALNANA_ENV_ONLY=true in the server\'s .env file to read every setting from there and ignore what is saved here.'**
+  String get adminEnvOnlyOff;
+
+  /// Note under a setting that only the .env file can change, in .env-only mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {key} in the server\'s .env file changes this'**
+  String adminEnvOnlyLocked(String key);
+
+  /// Button and dialog title for exporting the saved settings as a .env file.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as .env'**
+  String get adminExport;
+
+  /// Subtitle of the export tile on the admin page.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the settings saved here as lines for the server\'s .env file'**
+  String get adminExportHelp;
+
+  /// Text of the export dialog, which asks for the administrator password.
+  ///
+  /// In en, this message translates to:
+  /// **'The file holds every saved setting, passwords and keys included. Enter the administrator password to download it.'**
+  String get adminExportBody;
+
+  /// Snackbar after the settings file was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings exported'**
+  String get adminExportDone;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

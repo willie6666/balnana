@@ -3548,4 +3548,127 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get refreshFailed => 'No se pudo actualizar. Esto podría estar desactualizado.';
+
+  @override
+  String get sharePlanTitle => 'Compartir plan';
+
+  @override
+  String get sharePlanSettingsHelp => 'Elige qué grupos usan tu plan';
+
+  @override
+  String get sharePlanHelp =>
+      'Un grupo con el que compartes tu plan obtiene sus límites para todos sus miembros.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Grupos que comparten tu plan: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Todos en el grupo obtienen los límites de tu plan $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Inicio de sesión en dos pasos';
+
+  @override
+  String get twoFactorTotp => 'Aplicación de autenticación';
+
+  @override
+  String get twoFactorTotpHelp =>
+      'Pedir un código de una aplicación de autenticación al iniciar sesión con tu contraseña';
+
+  @override
+  String get twoFactorConfirmBody => 'Introduce tu contraseña para cambiar cómo inicias sesión.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Escanea este código con tu aplicación de autenticación o escribe en ella la clave de abajo. Después introduce los seis dígitos que muestra la aplicación.';
+
+  @override
+  String get twoFactorCode => 'Código';
+
+  @override
+  String get twoFactorTurnOn => 'Activar';
+
+  @override
+  String get twoFactorTurnOff => 'Desactivar';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Al iniciar sesión ya no se pedirá un código de tu aplicación y tus códigos de recuperación dejarán de funcionar. Introduce tu contraseña para desactivarla.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Códigos de recuperación';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Guárdalos en un lugar seguro. Cada uno te permite iniciar sesión una vez cuando no tengas tu aplicación de autenticación. No se volverán a mostrar.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Códigos de recuperación copiados';
+
+  @override
+  String get twoFactorEmail => 'Código por correo';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Enviar un código a $email al iniciar sesión con tu contraseña';
+  }
+
+  @override
+  String get signInCodeTotp => 'Introduce el código de tu aplicación de autenticación.';
+
+  @override
+  String get signInCodeEmail => 'Introduce el código que te enviamos por correo.';
+
+  @override
+  String get signInCodeEither =>
+      'Introduce el código de tu aplicación de autenticación o pide que te enviemos uno por correo.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'También sirve un código de recuperación.';
+
+  @override
+  String get signInCodeSend => 'Enviarme un código por correo';
+
+  @override
+  String get signInCodeSent => 'Hemos enviado un código a tu correo. Es válido durante 10 minutos.';
+
+  @override
+  String get errorInvalidCode => 'Ese código no es correcto o ha caducado.';
+
+  @override
+  String get adminSectionEnv => 'Archivo de entorno';
+
+  @override
+  String get adminEnvOnly => 'Leer la configuración solo de .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Activado. El servidor lee esta configuración solo de su archivo .env e ignora lo guardado aquí. Cámbiala en ese archivo y reinicia el servidor.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Desactivado. Pon BALNANA_ENV_ONLY=true en el archivo .env del servidor para leer toda la configuración de ahí e ignorar lo guardado aquí.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Solo $key en el archivo .env del servidor cambia esto';
+  }
+
+  @override
+  String get adminExport => 'Exportar como .env';
+
+  @override
+  String get adminExportHelp =>
+      'Descarga la configuración guardada aquí como líneas para el archivo .env del servidor';
+
+  @override
+  String get adminExportBody =>
+      'El archivo contiene toda la configuración guardada, incluidas contraseñas y claves. Introduce la contraseña de administrador para descargarlo.';
+
+  @override
+  String get adminExportDone => 'Configuración exportada';
 }

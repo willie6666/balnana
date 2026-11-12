@@ -43,21 +43,27 @@ type user struct {
 	username    *string
 	verified    bool
 	hasPassword bool
-	name        string
-	locale      *string
-	sessionID   string
+	// totp and emailCodes are the second steps the account chose for signing
+	// in with its password.
+	totp       bool
+	emailCodes bool
+	name       string
+	locale     *string
+	sessionID  string
 }
 
 func (u *user) api() User {
 	return User{
-		Id:            u.id,
-		Email:         u.email,
-		PendingEmail:  u.pending,
-		Username:      u.username,
-		EmailVerified: u.verified,
-		HasPassword:   u.hasPassword,
-		Name:          u.name,
-		Locale:        u.locale,
+		Id:             u.id,
+		Email:          u.email,
+		PendingEmail:   u.pending,
+		Username:       u.username,
+		EmailVerified:  u.verified,
+		HasPassword:    u.hasPassword,
+		Totp:           u.totp,
+		EmailTwoFactor: u.emailCodes,
+		Name:           u.name,
+		Locale:         u.locale,
 	}
 }
 
@@ -169,11 +175,11 @@ func (s *Server) currentUser(ctx context.Context) (*user, error) {
 	var lastUsed time.Time
 	err := s.db.QueryRow(ctx, `
 		select s.id::text, s.last_used_at, u.id::text, u.email::text, u.pending_email::text, u.username::text,
-		       u.email_verified, u.password_hash is not null, u.display_name, u.locale
+		       u.email_verified, u.password_hash is not null, u.display_name, u.locale, `+twoFactorFlags+`
 		from sessions s join users u on u.id = s.user_id
 		where s.token_hash = $1 and s.expires_at > now()`, hashToken(st.token)).
 		Scan(&u.sessionID, &lastUsed, &u.id, &u.email, &u.pending, &u.username, &u.verified, &u.hasPassword, &u.name,
-			&u.locale)
+			&u.locale, &u.totp, &u.emailCodes)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		st.loaded = true
@@ -270,9 +276,10 @@ func (s *Server) handOut(ctx context.Context, token string, cookie bool) *string
 // back from whoever made it with their address, so that person's other ways
 // back in go too: emailed links and OAuth identities.
 func signOut(ctx context.Context, q querier, userID string, reclaimed bool) error {
-	tables := []string{"sessions", "oauth_codes", "oauth_link_tickets", "oauth_logins"}
+	tables := []string{"sessions", "oauth_codes", "oauth_link_tickets", "oauth_logins", "login_codes"}
 	if reclaimed {
-		tables = append(tables, "email_tokens", "oauth_identities")
+		// An authenticator app that person added would keep the owner out.
+		tables = append(tables, "email_tokens", "oauth_identities", "two_factor", "recovery_codes")
 	}
 	for _, table := range tables {
 		if _, err := q.Exec(ctx, `delete from `+table+` where user_id = $1`, userID); err != nil {
@@ -503,6 +510,54 @@ func (s *Server) reclaimForInvite(ctx context.Context, tx pgx.Tx, email, hash, n
 
 var errBadLogin = &apiError{status: http.StatusUnauthorized, code: "invalid_credentials"}
 
+// checkLogin finds the account a login names and checks its password. The
+// guess it counts is given back by release, once the sign-in went through.
+// It returns the hash it checked, for lockLogin.
+func (s *Server) checkLogin(ctx context.Context, login, password string) (u *user, hash string, release func(), err error) {
+	u = &user{}
+	var stored *string
+	err = s.db.QueryRow(ctx, `
+		select id::text, email::text, pending_email::text, username::text, email_verified, password_hash, display_name, locale
+		from users where email = $1 or username = $1`, strings.TrimSpace(login)).
+		Scan(&u.id, &u.email, &u.pending, &u.username, &u.verified, &stored, &u.name, &u.locale)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, "", nil, err
+	}
+	// Unknown logins are counted like accounts, so the limit tells nothing.
+	account := u.id
+	if stored == nil {
+		account = "login:" + strings.ToLower(strings.TrimSpace(login))
+	}
+	release, err = s.holdGuess(ctx, account)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	if stored == nil {
+		checkPassword(dummyHash, password)
+	}
+	if stored == nil || !checkPassword(*stored, password) {
+		return nil, "", nil, errBadLogin
+	}
+	u.hasPassword = true
+	return u, *stored, release, nil
+}
+
+// lockLogin holds the account checkLogin found until tx ends, and reads it
+// again. The password was checked outside the lock, as hashing is slow: the
+// address owner may have taken the account back, or the password changed,
+// meanwhile. Either waits for this sign-in, and then ends its session.
+func lockLogin(ctx context.Context, tx pgx.Tx, u *user, hash string) error {
+	var now *string
+	err := tx.QueryRow(ctx, `
+		select email::text, username::text, email_verified, password_hash, display_name, locale
+		from users where id = $1 for share`, u.id).
+		Scan(&u.email, &u.username, &u.verified, &now, &u.name, &u.locale)
+	if errors.Is(err, pgx.ErrNoRows) || err == nil && (now == nil || *now != hash) {
+		return errBadLogin
+	}
+	return err
+}
+
 func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginResponseObject, error) {
 	if err := s.requirePasswords(); err != nil {
 		return nil, err
@@ -511,46 +566,18 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 		return nil, err
 	}
 	in := req.Body
-	var u user
-	var hash *string
-	err := s.db.QueryRow(ctx, `
-		select id::text, email::text, pending_email::text, username::text, email_verified, password_hash, display_name, locale
-		from users where email = $1 or username = $1`, strings.TrimSpace(in.Login)).
-		Scan(&u.id, &u.email, &u.pending, &u.username, &u.verified, &hash, &u.name, &u.locale)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return nil, err
-	}
-	// Unknown logins are counted like accounts, so the limit tells nothing.
-	account := u.id
-	if hash == nil {
-		account = "login:" + strings.ToLower(strings.TrimSpace(in.Login))
-	}
-	release, err := s.holdGuess(ctx, account)
+	u, hash, release, err := s.checkLogin(ctx, in.Login, in.Password)
 	if err != nil {
 		return nil, err
 	}
-	if hash == nil {
-		checkPassword(dummyHash, in.Password)
-	}
-	if hash == nil || !checkPassword(*hash, in.Password) {
-		return nil, errBadLogin
-	}
-	release()
-	// The password was checked outside the lock, as hashing is slow, so the
-	// account is locked and the hash read again before a session is made: the
-	// address owner may have taken the account back, or the password changed,
-	// meanwhile. Either waits for this session, and then ends it.
 	var token string
+	var refused *apiError
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
-		var now *string
-		err := tx.QueryRow(ctx, `
-			select email::text, username::text, email_verified, password_hash, display_name, locale
-			from users where id = $1 for share`, u.id).
-			Scan(&u.email, &u.username, &u.verified, &now, &u.name, &u.locale)
-		if errors.Is(err, pgx.ErrNoRows) || err == nil && (now == nil || *now != *hash) {
-			return errBadLogin
+		if err := lockLogin(ctx, tx, u, hash); err != nil {
+			return err
 		}
-		if err != nil {
+		var err error
+		if refused, err = s.secondStep(ctx, tx, u, in.Code); err != nil || refused != nil {
 			return err
 		}
 		token, err = startSession(ctx, tx, u.id)
@@ -559,7 +586,14 @@ func (s *Server) Login(ctx context.Context, req LoginRequestObject) (LoginRespon
 	if err != nil {
 		return nil, err
 	}
-	u.hasPassword = true
+	// A wrong code stays counted as a wrong password does. Asking for the
+	// code guessed nothing: the password was right.
+	if refused != errInvalidCode {
+		release()
+	}
+	if refused != nil {
+		return nil, refused
+	}
 	return Login200JSONResponse(Session{Token: s.handOut(ctx, token, in.Cookie != nil && *in.Cookie), User: u.api()}), nil
 }
 

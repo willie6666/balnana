@@ -3393,4 +3393,118 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get refreshFailed => '업데이트하지 못했습니다. 표시된 내용이 오래되었을 수 있습니다.';
+
+  @override
+  String get sharePlanTitle => '요금제 공유';
+
+  @override
+  String get sharePlanSettingsHelp => '내 요금제를 사용할 그룹을 선택하세요';
+
+  @override
+  String get sharePlanHelp => '요금제를 공유한 그룹은 구성원 모두에게 그 요금제의 한도가 적용됩니다.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return '내 요금제를 공유하는 그룹: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return '그룹의 모든 구성원에게 $plan 요금제의 한도가 적용됩니다.';
+  }
+
+  @override
+  String get twoFactorTitle => '2단계 로그인';
+
+  @override
+  String get twoFactorTotp => '인증 앱';
+
+  @override
+  String get twoFactorTotpHelp => '비밀번호로 로그인할 때 인증 앱의 코드도 요청합니다';
+
+  @override
+  String get twoFactorConfirmBody => '로그인 방식을 변경하려면 비밀번호를 입력하세요.';
+
+  @override
+  String get twoFactorTotpScan => '인증 앱으로 이 코드를 스캔하거나 아래 키를 직접 입력하세요. 그런 다음 앱에 표시되는 6자리 숫자를 입력하세요.';
+
+  @override
+  String get twoFactorCode => '코드';
+
+  @override
+  String get twoFactorTurnOn => '켜기';
+
+  @override
+  String get twoFactorTurnOff => '끄기';
+
+  @override
+  String get twoFactorTotpOffBody => '로그인할 때 더 이상 앱의 코드를 요청하지 않으며 복구 코드도 사용할 수 없게 됩니다. 끄려면 비밀번호를 입력하세요.';
+
+  @override
+  String get twoFactorRecoveryTitle => '복구 코드';
+
+  @override
+  String get twoFactorRecoveryBody => '안전한 곳에 보관하세요. 인증 앱을 사용할 수 없을 때 각 코드로 한 번씩 로그인할 수 있습니다. 다시 표시되지 않습니다.';
+
+  @override
+  String get twoFactorRecoveryCopied => '복구 코드를 복사했습니다';
+
+  @override
+  String get twoFactorEmail => '이메일 코드';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return '비밀번호로 로그인할 때 $email(으)로 코드를 보냅니다';
+  }
+
+  @override
+  String get signInCodeTotp => '인증 앱의 코드를 입력하세요.';
+
+  @override
+  String get signInCodeEmail => '이메일로 보낸 코드를 입력하세요.';
+
+  @override
+  String get signInCodeEither => '인증 앱의 코드를 입력하거나 이메일로 코드를 받으세요.';
+
+  @override
+  String get signInCodeRecoveryHelp => '복구 코드도 사용할 수 있습니다.';
+
+  @override
+  String get signInCodeSend => '이메일로 코드 받기';
+
+  @override
+  String get signInCodeSent => '코드를 이메일로 보냈습니다. 10분 동안 유효합니다.';
+
+  @override
+  String get errorInvalidCode => '코드가 올바르지 않거나 만료되었습니다.';
+
+  @override
+  String get adminSectionEnv => '환경 파일';
+
+  @override
+  String get adminEnvOnly => '설정을 .env에서만 읽기';
+
+  @override
+  String get adminEnvOnlyOn => '켜짐. 서버가 이 설정을 .env 파일에서만 읽고 여기에 저장된 내용은 무시합니다. 해당 파일에서 변경한 뒤 서버를 다시 시작하세요.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      '꺼짐. 서버의 .env 파일에 BALNANA_ENV_ONLY=true를 설정하면 모든 설정을 그 파일에서 읽고 여기에 저장된 내용은 무시합니다.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return '서버의 .env 파일에 있는 $key(으)로만 변경할 수 있습니다';
+  }
+
+  @override
+  String get adminExport => '.env로 내보내기';
+
+  @override
+  String get adminExportHelp => '여기에 저장된 설정을 서버의 .env 파일에 넣을 줄로 내려받습니다';
+
+  @override
+  String get adminExportBody => '파일에는 비밀번호와 키를 포함해 저장된 모든 설정이 들어 있습니다. 내려받으려면 관리자 비밀번호를 입력하세요.';
+
+  @override
+  String get adminExportDone => '설정을 내보냈습니다';
 }

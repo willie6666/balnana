@@ -127,6 +127,17 @@ func grantPayPalTrial(ctx context.Context, tx pgx.Tx, sub *paypalSubscription, u
 	}
 	_, err = tx.Exec(ctx, `update paypal_subscriptions set entitlement_id = $2, trial_until = greatest(trial_until, $3)
         where subscription_id = $1`, sub.ID, *entitlement, until)
+	if err != nil {
+		return false, err
+	}
+	// A trial pays nothing, but the administrator's payments list shows it
+	// next to the payments that follow: once per subscription, with no amount.
+	_, err = tx.Exec(ctx, `insert into payment_events
+        (provider, event_id, kind, payer_name, product, recurring, state, plan_id, user_id, entitlement_id, paid_at, reference, paid_until)
+        values ('paypal', $1, 'Trial', $2, $3, true, 'applied', $4, $5, $6, now(), $7, $8)
+        on conflict (provider, event_id) do update set entitlement_id = excluded.entitlement_id,
+            paid_until = greatest(payment_events.paid_until, excluded.paid_until)`,
+		sub.ID+"@trial", optional(sub.Subscriber.Name.String()), sub.PlanID, planID, userID, *entitlement, sub.ID, until)
 	return err == nil, err
 }
 

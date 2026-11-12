@@ -5209,5 +5209,169 @@
   "refreshFailed": "Couldn't update. This may be out of date.",
   "@refreshFailed": {
     "description": "Shown when reloading a group failed and the older data stays on screen."
+  },
+  "sharePlanTitle": "Plan sharing",
+  "@sharePlanTitle": {
+    "description": "Title of the settings page where an account picks which of its groups use its plan, and of the tile that opens it."
+  },
+  "sharePlanSettingsHelp": "Choose which groups use your plan",
+  "@sharePlanSettingsHelp": {
+    "description": "Subtitle of the settings tile that opens the plan sharing page."
+  },
+  "sharePlanHelp": "A group you share your plan with gets its limits, for everyone in it.",
+  "@sharePlanHelp": {
+    "description": "Explains on the plan sharing page what sharing a plan with a group does."
+  },
+  "sharePlanUsage": "Groups sharing your plan: {usage}",
+  "@sharePlanUsage": {
+    "description": "How many groups share the plan, on the plan sharing page.",
+    "placeholders": {
+      "usage": {
+        "type": "String",
+        "description": "Already formatted, such as \"2 of 10\"."
+      }
+    }
+  },
+  "groupSponsorHelp": "Everyone in the group gets the limits of your {plan} plan.",
+  "@groupSponsorHelp": {
+    "description": "Subtitle of the share-my-plan switch when creating a group.",
+    "placeholders": {
+      "plan": {
+        "type": "String",
+        "description": "The name of the plan."
+      }
+    }
+  },
+  "twoFactorTitle": "Two-step sign-in",
+  "@twoFactorTitle": {
+    "description": "Heading for two-step sign-in (two-factor authentication) in settings and on the sign-in page."
+  },
+  "twoFactorTotp": "Authenticator app",
+  "@twoFactorTotp": {
+    "description": "Switch and dialog title for signing in with a code from an authenticator app (TOTP)."
+  },
+  "twoFactorTotpHelp": "Ask for a code from an authenticator app when you sign in with your password",
+  "@twoFactorTotpHelp": {
+    "description": "Subtitle of the authenticator app switch."
+  },
+  "twoFactorConfirmBody": "Enter your password to change how you sign in.",
+  "@twoFactorConfirmBody": {
+    "description": "Text of the dialog that asks for the password before two-step sign-in changes."
+  },
+  "twoFactorTotpScan": "Scan this code with your authenticator app, or type the key below into it. Then enter the six digits the app shows.",
+  "@twoFactorTotpScan": {
+    "description": "Instructions above the QR code and key for adding an authenticator app."
+  },
+  "twoFactorCode": "Code",
+  "@twoFactorCode": {
+    "description": "Label of the field a sign-in code is typed into."
+  },
+  "twoFactorTurnOn": "Turn on",
+  "@twoFactorTurnOn": {
+    "description": "Button that turns a two-step sign-in method on."
+  },
+  "twoFactorTurnOff": "Turn off",
+  "@twoFactorTurnOff": {
+    "description": "Button that turns a two-step sign-in method off."
+  },
+  "twoFactorTotpOffBody": "Signing in will no longer ask for a code from your app, and your recovery codes will stop working. Enter your password to turn it off.",
+  "@twoFactorTotpOffBody": {
+    "description": "Text of the dialog that turns the authenticator app off."
+  },
+  "twoFactorRecoveryTitle": "Recovery codes",
+  "@twoFactorRecoveryTitle": {
+    "description": "Title of the dialog showing the recovery codes once."
+  },
+  "twoFactorRecoveryBody": "Keep these somewhere safe. Each one signs you in once when you don't have your authenticator app. They won't be shown again.",
+  "@twoFactorRecoveryBody": {
+    "description": "Explains what recovery codes are for."
+  },
+  "twoFactorRecoveryCopied": "Recovery codes copied",
+  "@twoFactorRecoveryCopied": {
+    "description": "Snackbar after copying the recovery codes."
+  },
+  "twoFactorEmail": "Code by email",
+  "@twoFactorEmail": {
+    "description": "Switch and dialog title for signing in with a code sent by email."
+  },
+  "twoFactorEmailHelp": "Send a code to {email} when you sign in with your password",
+  "@twoFactorEmailHelp": {
+    "description": "Subtitle of the code by email switch.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "description": "The account email address."
+      }
+    }
+  },
+  "signInCodeTotp": "Enter the code from your authenticator app.",
+  "@signInCodeTotp": {
+    "description": "Sign-in page, second step: the account asks for an authenticator app code."
+  },
+  "signInCodeEmail": "Enter the code we emailed you.",
+  "@signInCodeEmail": {
+    "description": "Sign-in page, second step: the account asks for a code sent by email."
+  },
+  "signInCodeEither": "Enter the code from your authenticator app, or have one emailed to you.",
+  "@signInCodeEither": {
+    "description": "Sign-in page, second step: the account takes a code from either an app or email."
+  },
+  "signInCodeRecoveryHelp": "A recovery code works too.",
+  "@signInCodeRecoveryHelp": {
+    "description": "Helper text under the code field, for accounts with an authenticator app."
+  },
+  "signInCodeSend": "Email me a code",
+  "@signInCodeSend": {
+    "description": "Button on the sign-in page that emails a sign-in code."
+  },
+  "signInCodeSent": "A code is on its way to your email. It works for 10 minutes.",
+  "@signInCodeSent": {
+    "description": "Shown on the sign-in page after a code was emailed."
+  },
+  "errorInvalidCode": "That code isn't right, or it has expired.",
+  "@errorInvalidCode": {
+    "description": "Message for a wrong or expired sign-in code."
+  },
+  "adminSectionEnv": "Environment file",
+  "@adminSectionEnv": {
+    "description": "Heading of the admin page section about the server .env file."
+  },
+  "adminEnvOnly": "Read settings from .env only",
+  "@adminEnvOnly": {
+    "description": "Label of the always-disabled switch showing whether the server reads its settings from .env only."
+  },
+  "adminEnvOnlyOn": "On. The server reads these settings from its .env file alone and ignores what was saved here. Change them in that file and restart the server.",
+  "@adminEnvOnlyOn": {
+    "description": "Subtitle of that switch when the mode is on."
+  },
+  "adminEnvOnlyOff": "Off. Set BALNANA_ENV_ONLY=true in the server's .env file to read every setting from there and ignore what is saved here.",
+  "@adminEnvOnlyOff": {
+    "description": "Subtitle of that switch when the mode is off. BALNANA_ENV_ONLY=true stays as written."
+  },
+  "adminEnvOnlyLocked": "Only {key} in the server's .env file changes this",
+  "@adminEnvOnlyLocked": {
+    "description": "Note under a setting that only the .env file can change, in .env-only mode.",
+    "placeholders": {
+      "key": {
+        "type": "String",
+        "description": "The environment variable name."
+      }
+    }
+  },
+  "adminExport": "Export as .env",
+  "@adminExport": {
+    "description": "Button and dialog title for exporting the saved settings as a .env file."
+  },
+  "adminExportHelp": "Download the settings saved here as lines for the server's .env file",
+  "@adminExportHelp": {
+    "description": "Subtitle of the export tile on the admin page."
+  },
+  "adminExportBody": "The file holds every saved setting, passwords and keys included. Enter the administrator password to download it.",
+  "@adminExportBody": {
+    "description": "Text of the export dialog, which asks for the administrator password."
+  },
+  "adminExportDone": "Settings exported",
+  "@adminExportDone": {
+    "description": "Snackbar after the settings file was saved."
   }
 }

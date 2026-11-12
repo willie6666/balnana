@@ -3482,4 +3482,124 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get refreshFailed => 'อัปเดตไม่ได้ ข้อมูลนี้อาจไม่เป็นปัจจุบัน';
+
+  @override
+  String get sharePlanTitle => 'การแชร์แพ็กเกจ';
+
+  @override
+  String get sharePlanSettingsHelp => 'เลือกกลุ่มที่จะใช้แพ็กเกจของคุณ';
+
+  @override
+  String get sharePlanHelp => 'กลุ่มที่คุณแชร์แพ็กเกจให้จะได้ขีดจำกัดของแพ็กเกจนั้นสำหรับทุกคนในกลุ่ม';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'กลุ่มที่ใช้แพ็กเกจของคุณ: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'ทุกคนในกลุ่มจะได้ขีดจำกัดของแพ็กเกจ $plan ของคุณ';
+  }
+
+  @override
+  String get twoFactorTitle => 'การลงชื่อเข้าใช้สองขั้นตอน';
+
+  @override
+  String get twoFactorTotp => 'แอปยืนยันตัวตน';
+
+  @override
+  String get twoFactorTotpHelp => 'ขอรหัสจากแอปยืนยันตัวตนเมื่อลงชื่อเข้าใช้ด้วยรหัสผ่าน';
+
+  @override
+  String get twoFactorConfirmBody => 'ป้อนรหัสผ่านเพื่อเปลี่ยนวิธีลงชื่อเข้าใช้';
+
+  @override
+  String get twoFactorTotpScan =>
+      'สแกนโค้ดนี้ด้วยแอปยืนยันตัวตน หรือพิมพ์คีย์ด้านล่างลงในแอป จากนั้นป้อนตัวเลขหกหลักที่แอปแสดง';
+
+  @override
+  String get twoFactorCode => 'รหัส';
+
+  @override
+  String get twoFactorTurnOn => 'เปิด';
+
+  @override
+  String get twoFactorTurnOff => 'ปิด';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'การลงชื่อเข้าใช้จะไม่ขอรหัสจากแอปอีก และรหัสกู้คืนจะใช้ไม่ได้ ป้อนรหัสผ่านเพื่อปิด';
+
+  @override
+  String get twoFactorRecoveryTitle => 'รหัสกู้คืน';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'เก็บไว้ในที่ปลอดภัย แต่ละรหัสใช้ลงชื่อเข้าใช้ได้หนึ่งครั้งเมื่อคุณไม่มีแอปยืนยันตัวตน และจะไม่แสดงอีก';
+
+  @override
+  String get twoFactorRecoveryCopied => 'คัดลอกรหัสกู้คืนแล้ว';
+
+  @override
+  String get twoFactorEmail => 'รหัสทางอีเมล';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'ส่งรหัสไปที่ $email เมื่อลงชื่อเข้าใช้ด้วยรหัสผ่าน';
+  }
+
+  @override
+  String get signInCodeTotp => 'ป้อนรหัสจากแอปยืนยันตัวตนของคุณ';
+
+  @override
+  String get signInCodeEmail => 'ป้อนรหัสที่เราส่งให้ทางอีเมล';
+
+  @override
+  String get signInCodeEither => 'ป้อนรหัสจากแอปยืนยันตัวตน หรือขอรับรหัสทางอีเมล';
+
+  @override
+  String get signInCodeRecoveryHelp => 'ใช้รหัสกู้คืนก็ได้';
+
+  @override
+  String get signInCodeSend => 'ส่งรหัสให้ฉันทางอีเมล';
+
+  @override
+  String get signInCodeSent => 'กำลังส่งรหัสไปที่อีเมลของคุณ รหัสใช้ได้ 10 นาที';
+
+  @override
+  String get errorInvalidCode => 'รหัสไม่ถูกต้องหรือหมดอายุแล้ว';
+
+  @override
+  String get adminSectionEnv => 'ไฟล์สภาพแวดล้อม';
+
+  @override
+  String get adminEnvOnly => 'อ่านการตั้งค่าจาก .env เท่านั้น';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'เปิดอยู่ เซิร์ฟเวอร์อ่านการตั้งค่าเหล่านี้จากไฟล์ .env เท่านั้น และไม่สนใจสิ่งที่บันทึกไว้ที่นี่ แก้ไขในไฟล์นั้นแล้วเริ่มเซิร์ฟเวอร์ใหม่';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'ปิดอยู่ ตั้งค่า BALNANA_ENV_ONLY=true ในไฟล์ .env ของเซิร์ฟเวอร์เพื่ออ่านการตั้งค่าทั้งหมดจากไฟล์นั้นและไม่สนใจสิ่งที่บันทึกไว้ที่นี่';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'เปลี่ยนได้ด้วย $key ในไฟล์ .env ของเซิร์ฟเวอร์เท่านั้น';
+  }
+
+  @override
+  String get adminExport => 'ส่งออกเป็น .env';
+
+  @override
+  String get adminExportHelp =>
+      'ดาวน์โหลดการตั้งค่าที่บันทึกไว้ที่นี่เป็นบรรทัดสำหรับไฟล์ .env ของเซิร์ฟเวอร์';
+
+  @override
+  String get adminExportBody =>
+      'ไฟล์นี้มีการตั้งค่าที่บันทึกไว้ทั้งหมด รวมถึงรหัสผ่านและคีย์ ป้อนรหัสผ่านผู้ดูแลระบบเพื่อดาวน์โหลด';
+
+  @override
+  String get adminExportDone => 'ส่งออกการตั้งค่าแล้ว';
 }

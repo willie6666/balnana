@@ -3621,4 +3621,123 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get refreshFailed => 'تعذّر التحديث. قد تكون هذه البيانات قديمة.';
+
+  @override
+  String get sharePlanTitle => 'مشاركة الخطة';
+
+  @override
+  String get sharePlanSettingsHelp => 'اختر المجموعات التي تستخدم خطتك';
+
+  @override
+  String get sharePlanHelp => 'المجموعة التي تشارك خطتك معها تحصل على حدودها لجميع أعضائها.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'المجموعات التي تشارك خطتك: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'يحصل كل من في المجموعة على حدود خطتك $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'تسجيل الدخول بخطوتين';
+
+  @override
+  String get twoFactorTotp => 'تطبيق المصادقة';
+
+  @override
+  String get twoFactorTotpHelp => 'طلب رمز من تطبيق مصادقة عند تسجيل الدخول بكلمة المرور';
+
+  @override
+  String get twoFactorConfirmBody => 'أدخل كلمة المرور لتغيير طريقة تسجيل الدخول.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'امسح هذا الرمز بتطبيق المصادقة، أو اكتب المفتاح أدناه فيه. ثم أدخل الأرقام الستة التي يعرضها التطبيق.';
+
+  @override
+  String get twoFactorCode => 'الرمز';
+
+  @override
+  String get twoFactorTurnOn => 'تشغيل';
+
+  @override
+  String get twoFactorTurnOff => 'إيقاف';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'لن يُطلب رمز من تطبيقك عند تسجيل الدخول، وستتوقف رموز الاسترداد عن العمل. أدخل كلمة المرور للإيقاف.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'رموز الاسترداد';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'احتفظ بها في مكان آمن. كل رمز يسجّل دخولك مرة واحدة عندما لا يكون تطبيق المصادقة معك. لن تُعرض مرة أخرى.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'تم نسخ رموز الاسترداد';
+
+  @override
+  String get twoFactorEmail => 'رمز عبر البريد الإلكتروني';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'إرسال رمز إلى $email عند تسجيل الدخول بكلمة المرور';
+  }
+
+  @override
+  String get signInCodeTotp => 'أدخل الرمز من تطبيق المصادقة.';
+
+  @override
+  String get signInCodeEmail => 'أدخل الرمز الذي أرسلناه إلى بريدك الإلكتروني.';
+
+  @override
+  String get signInCodeEither => 'أدخل الرمز من تطبيق المصادقة، أو اطلب رمزًا عبر البريد الإلكتروني.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'يمكنك أيضًا استخدام رمز استرداد.';
+
+  @override
+  String get signInCodeSend => 'أرسل لي رمزًا بالبريد الإلكتروني';
+
+  @override
+  String get signInCodeSent => 'الرمز في طريقه إلى بريدك الإلكتروني. يبقى صالحًا لمدة 10 دقائق.';
+
+  @override
+  String get errorInvalidCode => 'هذا الرمز غير صحيح أو انتهت صلاحيته.';
+
+  @override
+  String get adminSectionEnv => 'ملف البيئة';
+
+  @override
+  String get adminEnvOnly => 'قراءة الإعدادات من ‎.env فقط';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'مفعّل. يقرأ الخادم هذه الإعدادات من ملف ‎.env وحده ويتجاهل ما حُفظ هنا. غيّرها في ذلك الملف ثم أعد تشغيل الخادم.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'متوقف. اضبط BALNANA_ENV_ONLY=true في ملف ‎.env على الخادم لقراءة كل الإعدادات منه وتجاهل ما هو محفوظ هنا.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'لا يغيّر هذا إلا $key في ملف ‎.env على الخادم';
+  }
+
+  @override
+  String get adminExport => 'تصدير بصيغة ‎.env';
+
+  @override
+  String get adminExportHelp => 'نزّل الإعدادات المحفوظة هنا كأسطر لملف ‎.env على الخادم';
+
+  @override
+  String get adminExportBody =>
+      'يحتوي الملف على كل الإعدادات المحفوظة، بما فيها كلمات المرور والمفاتيح. أدخل كلمة مرور المسؤول لتنزيله.';
+
+  @override
+  String get adminExportDone => 'تم تصدير الإعدادات';
 }

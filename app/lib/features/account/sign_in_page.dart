@@ -58,14 +58,26 @@ final _usernameRule = RegExp(r'^[a-z0-9][a-z0-9._-]{2,31}$');
 
 class _SignInPageState extends ConsumerState<SignInPage> {
   final _form = GlobalKey<FormState>();
+
+  /// The second step's own form: its field must not take the place, and
+  /// with it the state, of a field of the first.
+  final _codeForm = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _username = TextEditingController();
   late final _email = TextEditingController(text: widget.prefill?.email);
   final _password = TextEditingController();
+  final _code = TextEditingController();
   late bool _register = widget.prefill?.register ?? false;
   bool _showPassword = false;
   bool _busy = false;
   String? _error;
+
+  /// What gives the code the account's second step asks for (`totp`,
+  /// `email`), once its password was right. Null before that.
+  List<String>? _methods;
+
+  /// Whether a code was emailed, and to say so.
+  bool _emailed = false;
 
   @override
   void dispose() {
@@ -73,11 +85,31 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     _username.dispose();
     _email.dispose();
     _password.dispose();
+    _code.dispose();
     super.dispose();
   }
 
+  /// Emails a sign-in code to the account.
+  Future<void> _emailCode() async {
+    final api = ref.read(balnanaApiProvider);
+    if (api == null) return;
+    final l10n = context.l10n;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await api.emailLoginCode(login: _email.text.trim(), password: _password.text);
+      if (mounted) setState(() => _emailed = true);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = errorMessage(l10n, e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _submit() async {
-    if (!_form.currentState!.validate()) return;
+    if (!(_methods == null ? _form : _codeForm).currentState!.validate()) return;
     final api = ref.read(balnanaApiProvider);
     if (api == null) return;
     // The session is for this server, should another be chosen meanwhile.
@@ -100,7 +132,11 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               locale: locale,
               invite: widget.prefill?.invite,
             )
-          : await api.login(login: email, password: _password.text);
+          : await api.login(
+              login: email,
+              password: _password.text,
+              code: _methods == null ? null : _code.text.trim(),
+            );
       if (!mounted) return;
       TextInput.finishAutofillContext();
       // Whether a first account may still sign up has changed.
@@ -112,6 +148,19 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       context.go(safeNext(widget.next) ?? '/groups');
     } on ApiException catch (e) {
       if (!mounted) return;
+      if (e.code == 'two_factor_required' && _methods == null) {
+        // The password was right: the account asks for a code as well.
+        final methods = [...?(e.params['methods'] as List<Object?>?)?.whereType<String>()];
+        setState(() {
+          _busy = false;
+          _methods = methods;
+          _code.clear();
+          _emailed = false;
+        });
+        // Only by email: the code is on its way without asking for it.
+        if (methods.length == 1 && methods.single == 'email') await _emailCode();
+        return;
+      }
       setState(() {
         _busy = false;
         _error = errorMessage(l10n, e);
@@ -119,11 +168,106 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     }
   }
 
+  /// The second step: the code, with a way to have one emailed.
+  Widget _codeStep(BuildContext context, List<String> methods) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final totp = methods.contains('totp');
+    final email = methods.contains('email');
+    return Form(
+      key: _codeForm,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            switch ((totp, email)) {
+              (true, true) => l10n.signInCodeEither,
+              (false, true) => l10n.signInCodeEmail,
+              _ => l10n.signInCodeTotp,
+            },
+            style: text.bodyLarge,
+          ),
+          const SizedBox(height: BSpace.s16),
+          TextFormField(
+            key: const ValueKey('sign-in-code'),
+            controller: _code,
+            enabled: !_busy,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            keyboardType: totp ? TextInputType.text : TextInputType.number,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            inputFormatters: [LengthLimitingTextInputFormatter(32)],
+            onFieldSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: l10n.twoFactorCode,
+              helperText: totp ? l10n.signInCodeRecoveryHelp : null,
+              helperMaxLines: 3,
+            ),
+            validator: (v) => (v ?? '').trim().isEmpty ? l10n.errorRequired : null,
+          ),
+          if (_emailed && _error == null) ...[
+            const SizedBox(height: BSpace.s16),
+            Text(l10n.signInCodeSent, style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+          ],
+          if (_error case final error?) ...[
+            const SizedBox(height: BSpace.s16),
+            Text(error, style: text.bodyMedium?.copyWith(color: scheme.error)),
+          ],
+          const SizedBox(height: BSpace.s24),
+          FilledButton(
+            onPressed: _busy ? null : _submit,
+            child: _busy
+                ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(l10n.signIn),
+          ),
+          if (email) ...[
+            const SizedBox(height: BSpace.s8),
+            TextButton(
+              onPressed: _busy ? null : _emailCode,
+              child: Text(l10n.signInCodeSend),
+            ),
+          ],
+          const SizedBox(height: BSpace.s8),
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () => setState(() {
+                    _methods = null;
+                    _error = null;
+                  }),
+            child: Text(l10n.commonCancel),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    if (_methods case final methods?) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final side = math.max(BSpace.s16, (constraints.maxWidth - formMaxWidth) / 2);
+            return ListView(
+              padding: EdgeInsets.fromLTRB(side, BSpace.s8, side, BSpace.s32),
+              children: [
+                Text(l10n.twoFactorTitle, style: text.headlineMedium),
+                const SizedBox(height: BSpace.s24),
+                _codeStep(context, methods),
+              ],
+            );
+          },
+        ),
+      );
+    }
     final info = ref.watch(serverInfoProvider).value;
     final passwords = info?.password ?? true;
     final canRegister =

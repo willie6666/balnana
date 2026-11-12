@@ -3510,4 +3510,123 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Không thể cập nhật. Nội dung này có thể đã cũ.';
+
+  @override
+  String get sharePlanTitle => 'Chia sẻ gói';
+
+  @override
+  String get sharePlanSettingsHelp => 'Chọn nhóm nào dùng gói của bạn';
+
+  @override
+  String get sharePlanHelp => 'Nhóm được bạn chia sẻ gói sẽ có các giới hạn của gói đó cho mọi thành viên.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Nhóm đang dùng gói của bạn: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Mọi người trong nhóm có các giới hạn của gói $plan của bạn.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Đăng nhập hai bước';
+
+  @override
+  String get twoFactorTotp => 'Ứng dụng xác thực';
+
+  @override
+  String get twoFactorTotpHelp => 'Yêu cầu mã từ ứng dụng xác thực khi đăng nhập bằng mật khẩu';
+
+  @override
+  String get twoFactorConfirmBody => 'Nhập mật khẩu để thay đổi cách bạn đăng nhập.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Quét mã này bằng ứng dụng xác thực hoặc nhập khóa bên dưới vào ứng dụng. Sau đó nhập sáu chữ số mà ứng dụng hiển thị.';
+
+  @override
+  String get twoFactorCode => 'Mã';
+
+  @override
+  String get twoFactorTurnOn => 'Bật';
+
+  @override
+  String get twoFactorTurnOff => 'Tắt';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Khi đăng nhập sẽ không còn yêu cầu mã từ ứng dụng và các mã khôi phục sẽ ngừng hoạt động. Nhập mật khẩu để tắt.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Mã khôi phục';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Hãy cất giữ ở nơi an toàn. Mỗi mã cho phép đăng nhập một lần khi bạn không có ứng dụng xác thực. Chúng sẽ không được hiển thị lại.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Đã sao chép mã khôi phục';
+
+  @override
+  String get twoFactorEmail => 'Mã qua email';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Gửi mã đến $email khi đăng nhập bằng mật khẩu';
+  }
+
+  @override
+  String get signInCodeTotp => 'Nhập mã từ ứng dụng xác thực của bạn.';
+
+  @override
+  String get signInCodeEmail => 'Nhập mã chúng tôi đã gửi qua email cho bạn.';
+
+  @override
+  String get signInCodeEither => 'Nhập mã từ ứng dụng xác thực hoặc nhận mã qua email.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Mã khôi phục cũng dùng được.';
+
+  @override
+  String get signInCodeSend => 'Gửi mã cho tôi qua email';
+
+  @override
+  String get signInCodeSent => 'Mã đang được gửi đến email của bạn. Mã có hiệu lực trong 10 phút.';
+
+  @override
+  String get errorInvalidCode => 'Mã không đúng hoặc đã hết hạn.';
+
+  @override
+  String get adminSectionEnv => 'Tệp môi trường';
+
+  @override
+  String get adminEnvOnly => 'Chỉ đọc cài đặt từ .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Bật. Máy chủ chỉ đọc các cài đặt này từ tệp .env và bỏ qua những gì đã lưu ở đây. Hãy thay đổi trong tệp đó rồi khởi động lại máy chủ.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Tắt. Đặt BALNANA_ENV_ONLY=true trong tệp .env của máy chủ để đọc mọi cài đặt từ đó và bỏ qua những gì đã lưu ở đây.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Chỉ $key trong tệp .env của máy chủ mới thay đổi được mục này';
+  }
+
+  @override
+  String get adminExport => 'Xuất thành .env';
+
+  @override
+  String get adminExportHelp => 'Tải các cài đặt đã lưu ở đây dưới dạng các dòng cho tệp .env của máy chủ';
+
+  @override
+  String get adminExportBody =>
+      'Tệp chứa mọi cài đặt đã lưu, kể cả mật khẩu và khóa. Nhập mật khẩu quản trị viên để tải xuống.';
+
+  @override
+  String get adminExportDone => 'Đã xuất cài đặt';
 }

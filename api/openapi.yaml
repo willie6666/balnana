@@ -184,7 +184,8 @@ paths:
         one to its default. The server checks the result as a whole and
         changes nothing when something is wrong: 400 `invalid_settings` with
         `params.keys`, the settings at fault (unknown, set by the
-        environment, or invalid).
+        environment, or invalid). With `envOnly` every setting is the
+        environment's, and none can be changed.
       parameters:
         - $ref: "#/components/parameters/AdminToken"
       requestBody:
@@ -200,6 +201,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminSettings"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/settings/export:
+    post:
+      operationId: exportAdminSettings
+      summary: The settings saved at /admin, written as a .env file
+      description: >-
+        Holds every saved setting with its secrets, so the administrator
+        password is asked for again (403 `wrong_password`). Settings the
+        environment already sets are left out: they are in the .env file as
+        it is.
+      parameters:
+        - $ref: "#/components/parameters/AdminToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettingsExport"
         default:
           $ref: "#/components/responses/Error"
   /admin/users:
@@ -485,7 +512,7 @@ paths:
         The response carries the secret token. In accounts mode the creator
         must be signed in and becomes the first member. A group with more
         people than the default plan allows starts sponsored by its creator,
-        whose plan must allow it.
+        whose plan must allow it; `sharePlan` asks for that for any group.
       requestBody:
         required: true
         content:
@@ -597,6 +624,12 @@ paths:
     post:
       operationId: login
       summary: Sign in with email and password (accounts mode)
+      description: >-
+        An account with two-step sign-in answers 401 `two_factor_required`
+        until `code` is sent with the same login and password; `params.methods`
+        lists what gives a code: `totp` (an authenticator app, or one of its
+        recovery codes) and `email` (ask for one with emailLoginCode). A wrong
+        code is 401 `invalid_code`, and counts as a wrong password does.
       requestBody:
         required: true
         content:
@@ -610,6 +643,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/login/email-code:
+    post:
+      operationId: emailLoginCode
+      summary: Email a sign-in code to an account with two-step sign-in by email
+      description: >-
+        Takes the login and password, like login. Sends nothing when a code
+        was sent within the last minute, or when the account takes no codes by
+        email (400 `two_factor_off`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "204":
+          description: Sent
         default:
           $ref: "#/components/responses/Error"
   /auth/logout:
@@ -923,6 +975,91 @@ paths:
       responses:
         "204":
           description: Changed
+        default:
+          $ref: "#/components/responses/Error"
+  /me/two-factor/totp:
+    post:
+      operationId: setupTotp
+      summary: Start adding an authenticator app to the account
+      description: >-
+        Makes a new key, which asks for nothing at sign-in until confirmTotp
+        proves the app has it. 409 `totp_on` when the account has one already.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordConfirm"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotpSetup"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/two-factor/totp/confirm:
+    post:
+      operationId: confirmTotp
+      summary: Turn the authenticator app on with a code from it
+      description: >-
+        400 `invalid_code` when the code is not the key's. The recovery codes
+        in the answer are not shown again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TotpConfirm"
+      responses:
+        "200":
+          description: On
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryCodes"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/two-factor/totp/disable:
+    post:
+      operationId: disableTotp
+      summary: Stop asking for the authenticator app's code; its recovery codes go too
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordConfirm"
+      responses:
+        "200":
+          description: Off
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/two-factor/email:
+    put:
+      operationId: setEmailTwoFactor
+      summary: Turn sign-in codes by email on or off
+      description: >-
+        Turning it on needs a confirmed address (400 `email_unverified`) on a
+        server that sends email (403 `email_off`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailTwoFactor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
         default:
           $ref: "#/components/responses/Error"
   /me/email:
@@ -2059,6 +2196,12 @@ components:
           description: >-
             Accounts mode: let anyone with the link in, as in link mode.
             Ignored unless the server allows it (`linkGroups`).
+        sharePlan:
+          type: boolean
+          description: >-
+            Share the creator's plan with the group from the start, as
+            sponsorGroup would: 402 `plan_limit` when the plan shares with no
+            more groups. Ignored while the server charges for nothing.
         features:
           $ref: "#/components/schemas/GroupFeaturesInput"
     GroupFeatures:
@@ -2361,6 +2504,13 @@ components:
           type: string
           format: date-time
           description: Last activity in the group.
+        sharedPlan:
+          type: string
+          enum: [mine, other]
+          description: >-
+            Whose plan covers the group, among the signed-in account's groups
+            on a server that charges: the account's own, or another member's
+            that still shares. Left out when nobody's does.
     Share:
       type: object
       required: [memberId]
@@ -2884,6 +3034,11 @@ components:
           description: The account's email address or username.
         password:
           type: string
+        code:
+          type: string
+          description: >-
+            The second step, for an account that has one: the six digits from
+            its authenticator app or from the email, or a recovery code.
         cookie:
           type: boolean
           description: >-
@@ -2901,7 +3056,7 @@ components:
           $ref: "#/components/schemas/User"
     User:
       type: object
-      required: [id, name, emailVerified, hasPassword]
+      required: [id, name, emailVerified, hasPassword, totp, emailTwoFactor]
       properties:
         id:
           type: string
@@ -2923,6 +3078,56 @@ components:
           type: string
         hasPassword:
           type: boolean
+        totp:
+          type: boolean
+          description: Signing in with the password also asks for a code from an authenticator app.
+        emailTwoFactor:
+          type: boolean
+          description: >-
+            Signing in with the password also asks for a code emailed to the
+            account. It asks only while the address is confirmed and the
+            server can send email.
+    PasswordConfirm:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Required when the account has a password (403 `wrong_password`).
+    TotpSetup:
+      type: object
+      required: [secret, uri]
+      properties:
+        secret:
+          type: string
+          description: The key to type into an authenticator app, in base32.
+        uri:
+          type: string
+          description: The same as an otpauth:// link, for a QR code.
+    TotpConfirm:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: Six digits from the authenticator app.
+    RecoveryCodes:
+      type: object
+      required: [codes]
+      properties:
+        codes:
+          type: array
+          description: Each signs in once in place of the authenticator's code. Shown only now.
+          items:
+            type: string
+    EmailTwoFactor:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+        password:
+          type: string
+          description: Required when the account has a password (403 `wrong_password`).
     UserUpdate:
       type: object
       properties:
@@ -3259,7 +3464,9 @@ components:
           description: The value when nothing sets it.
         locked:
           type: boolean
-          description: Set by an environment variable, which wins; it cannot be changed here.
+          description: >-
+            Set by an environment variable, which wins; it cannot be changed
+            here. With `envOnly` every setting is.
         secret:
           type: boolean
         set:
@@ -3267,12 +3474,25 @@ components:
           description: Something sets it, the environment or this page.
     AdminSettings:
       type: object
-      required: [settings]
+      required: [settings, envOnly]
       properties:
         settings:
           type: array
           items:
             $ref: "#/components/schemas/AdminSetting"
+        envOnly:
+          type: boolean
+          description: >-
+            BALNANA_ENV_ONLY is on: the server reads these settings from its
+            environment alone and ignores what was saved here. Only the
+            environment turns it on or off.
+    AdminSettingsExport:
+      type: object
+      required: [env]
+      properties:
+        env:
+          type: string
+          description: The lines of a .env file, one setting each.
     AdminSettingsInput:
       type: object
       required: [values]
@@ -3468,7 +3688,9 @@ components:
           enum: [kofi, play, paypal]
         kind:
           type: string
-          description: What the provider called it, such as "Subscription".
+          description: >-
+            What the provider called it, such as "Subscription". "Trial" is a
+            PayPal subscription's free trial, which paid nothing.
         reference:
           type: string
           description: The provider's ID for the transaction.

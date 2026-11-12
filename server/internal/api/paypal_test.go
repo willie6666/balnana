@@ -1219,6 +1219,17 @@ func TestPayPalTrial(t *testing.T) {
 	if !p.Paid || p.PlanName != "Plus" || p.ExpiresAt == nil || !p.ExpiresAt.Equal(end.Add(paypalGrace)) {
 		t.Fatalf("%+v", p)
 	}
+	// The administrator sees the trial among the payments, once, as given.
+	paypalBack(c, "subscription_id=I-SUB1&app=web")
+	var kind, state string
+	var amount *string
+	var trials int
+	err := s.db.QueryRow(t.Context(), `
+		select min(kind), min(state), min(amount::text), count(*) from payment_events where reference = 'I-SUB1'`).
+		Scan(&kind, &state, &amount, &trials)
+	if err != nil || trials != 1 || kind != "Trial" || state != "applied" || amount != nil {
+		t.Fatal(kind, state, amount, trials, err)
+	}
 
 	// The trial over, the first payment carries it on.
 	next := end.AddDate(0, 0, 30)

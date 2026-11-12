@@ -16,6 +16,7 @@ import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/currency_field.dart';
 import '../../ui/widgets/form_page.dart';
+import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/icon_picker.dart';
 import '../../ui/widgets/symbol_field.dart';
 import '../group/feature_switches.dart';
@@ -43,6 +44,9 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
   String _icon = '';
   bool _iconChosen = false;
   GroupFeatures _features = const GroupFeatures();
+
+  /// Share the creator's plan with the group from the start.
+  bool _sharePlan = false;
   bool _busy = false;
 
   @override
@@ -85,7 +89,9 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
         minorDigits: defaultMinorDigits(currency),
         members: names,
         features: _features,
+        sharePlan: _sharePlan,
       );
+      container.invalidate(myPlanProvider);
       // The creator is the first member. A signed-in account keeps its groups
       // on the server instead.
       if (from.server case final server? when !signedIn) {
@@ -104,6 +110,19 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
     if (_iconChosen) return;
     final icon = suggestIcon(name) ?? '';
     if (icon != _icon) setState(() => _icon = icon);
+  }
+
+  /// The account's plan, on a server that charges, when it shares with groups.
+  MyPlan? get _plan {
+    if (!ref.watch(signedInProvider) || !(ref.watch(serverInfoProvider).value?.billing ?? false)) return null;
+    final plan = ref.watch(myPlanProvider).value;
+    return plan == null || plan.sponsoredGroups.limit == 0 ? null : plan;
+  }
+
+  /// Whether the plan has room for one more group.
+  bool get _mayShare {
+    final shared = _plan?.sponsoredGroups;
+    return shared != null && (shared.limit == null || shared.used < shared.limit!);
   }
 
   String? _required(String? value) => (value ?? '').trim().isEmpty ? context.l10n.errorRequired : null;
@@ -239,6 +258,21 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
               ),
               const SizedBox(height: BSpace.s24),
               FeatureSwitches(features: _features, onChanged: (f) => setState(() => _features = f)),
+              if (_plan case final plan?)
+                GroupedList(
+                  title: l10n.planTitle,
+                  children: [
+                    GroupedSwitchTile(
+                      icon: Icons.workspace_premium_outlined,
+                      title: l10n.groupSponsor,
+                      subtitle: _mayShare
+                          ? l10n.groupSponsorHelp(plan.planName)
+                          : l10n.errorLimitSponsored(plan.sponsoredGroups.limit ?? 0),
+                      value: _sharePlan && _mayShare,
+                      onChanged: _mayShare && !_busy ? (on) => setState(() => _sharePlan = on) : null,
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

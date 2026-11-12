@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:balnana/app.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
@@ -6,6 +9,7 @@ import 'package:balnana/features/admin/admin_page.dart';
 import 'package:balnana/features/admin/admin_payments_page.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -44,6 +48,27 @@ final _settings = {
     _setting('BALNANA_SMTP_FROM'),
   ],
 };
+
+/// Keeps what would have been saved.
+class _Saver extends FilePickerPlatform {
+  final saved = <(String, String, String)>[];
+
+  @override
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+    String? dialogTitle,
+    String? initialDirectory,
+    Function(FilePickerStatus)? onFileSaving,
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    saved.add((fileName, utf8.decode(bytes), mimeType));
+    return Uri.parse('content://saved/$fileName');
+  }
+}
 
 /// A fake server: [answer] gets each admin request and returns its status
 /// and body.
@@ -254,6 +279,70 @@ void main() {
       find.text('Accounts need a way to sign in: turn on email and password, or set up a provider.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('settings read from .env only are shown dimmed and export after the password', (tester) async {
+    final saver = _Saver();
+    FilePickerPlatform.instance = saver;
+    final seen = <RequestOptions>[];
+    final api = _api(
+      seen,
+      (r) => switch ((r.method, r.path)) {
+        ('POST', '/admin/login') => (200, {'token': 'admin-token', 'expiresAt': '2026-10-27T00:00:00Z'}),
+        ('GET', '/admin/settings') => (
+          200,
+          {
+            'envOnly': true,
+            'settings': [
+              _setting('BALNANA_PUBLIC_URL', value: _server, locked: true),
+              _setting('BALNANA_SOURCE_URL', def: 'https://github.com/willie6666/balnana', locked: true),
+              _setting('BALNANA_AUTH_MODE', def: 'link', locked: true),
+              _setting('BALNANA_LINK_GROUPS', def: 'true', locked: true),
+            ],
+          },
+        ),
+        ('POST', '/admin/settings/export') =>
+          (r.data as Map)['password'] == 'the admin password'
+              ? (200, {'env': 'BALNANA_AUTH_MODE=accounts\n'})
+              : (403, {'code': 'wrong_password'}),
+        _ => (404, {'code': 'not_found'}),
+      },
+    );
+    await _boot(
+      tester,
+      info: const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server),
+      api: api,
+    );
+    final router = tester.widget<MaterialApp>(find.byType(MaterialApp)).routerConfig! as GoRouter;
+    router.go('/admin');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'the admin password');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    // The mode shows as on, and only the environment turns it off.
+    final mode = tester.widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Read settings from .env only'));
+    expect(mode.value, isTrue);
+    expect(mode.onChanged, isNull);
+    // Every setting is the environment's, the ones left at their default too.
+    expect(find.text("Only BALNANA_SOURCE_URL in the server's .env file changes this"), findsOneWidget);
+    expect(tester.widget<TextField>(find.widgetWithText(TextField, 'Source code link')).enabled, isFalse);
+    expect(tester.widget<SegmentedButton<String>>(find.byType(SegmentedButton<String>).first).onSelectionChanged, isNull);
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Save')).onPressed, isNull);
+
+    // The file holds the secrets, so the password is asked for again.
+    await tester.tap(find.widgetWithText(ListTile, 'Export as .env'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Current password'), 'not it');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text("That password isn't right."), findsOneWidget);
+    expect(saver.saved, isEmpty);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Current password'), 'the admin password');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(saver.saved, [('balnana.env', 'BALNANA_AUTH_MODE=accounts\n', 'text/plain')]);
+    expect(find.text('Settings exported'), findsOneWidget);
   });
 
   testWidgets('sign-in switches keep a way in and show only what is on', (tester) async {

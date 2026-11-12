@@ -1039,3 +1039,63 @@ func TestHandPlacedPlayPaymentsAddUp(t *testing.T) {
 		t.Fatal(n, expires)
 	}
 }
+
+func TestSharePlanWithNewGroup(t *testing.T) {
+	c, _, s := billingServer(t)
+	exec(t, s, `update plans set sponsored_groups = 1 where id = 'plus'`)
+	u := register(c, "ana@example.test", "Ana")
+	shared := GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}, SharePlan: ptr(true)}
+
+	// The free plan shares with nobody.
+	var refused struct {
+		Params map[string]any `json:"params"`
+	}
+	c.must(402, "POST", "/groups", shared, &refused)
+	if refused.Params["limit"] != "sponsored_groups" || refused.Params["max"] != float64(0) {
+		t.Fatalf("%+v", refused)
+	}
+	grant(t, s, u.Id, "plus")
+	var g, plain Group
+	c.must(201, "POST", "/groups", shared, &g)
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana"}}, &plain)
+	var gp GroupPlan
+	c.must(200, "GET", "/g/"+g.Token+"/plan", nil, &gp)
+	if gp.PlanName != "Plus" || gp.SponsorMemberId == nil || *gp.SponsorMemberId != g.Members[0].Id {
+		t.Fatalf("%+v", gp)
+	}
+	// The plan shares with one group, and that is taken.
+	c.must(402, "POST", "/groups", shared, &refused)
+	if refused.Params["limit"] != "sponsored_groups" || refused.Params["max"] != float64(1) {
+		t.Fatalf("%+v", refused)
+	}
+
+	// The account's groups say whose plan covers each.
+	ben := c.another()
+	register(ben, "ben@example.test", "Ben")
+	ben.must(200, "POST", "/g/"+g.Token+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+	whose := func(c *client) map[string]string {
+		var list GroupSummaryList
+		c.must(200, "GET", "/me/groups", nil, &list)
+		out := map[string]string{}
+		for _, g := range list.Groups {
+			if g.SharedPlan != nil {
+				out[g.Name] = string(*g.SharedPlan)
+			}
+		}
+		return out
+	}
+	if got := whose(c); len(got) != 1 || got["Flat"] != "mine" {
+		t.Fatalf("%v", got)
+	}
+	if got := whose(ben); len(got) != 1 || got["Flat"] != "other" {
+		t.Fatalf("%v", got)
+	}
+	// A plan that ended covers no group for the others, and stays its owner's to stop.
+	exec(t, s, `update entitlements set revoked_at = now()`)
+	if got := whose(ben); len(got) != 0 {
+		t.Fatalf("%v", got)
+	}
+	if got := whose(c); got["Flat"] != "mine" {
+		t.Fatalf("%v", got)
+	}
+}

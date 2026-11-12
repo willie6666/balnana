@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -100,6 +102,10 @@ class AdminSettingsPage extends ConsumerStatefulWidget {
 
 class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
   Map<String, AdminSetting>? _settings;
+
+  /// The server reads its settings from its environment alone: they show
+  /// here, and none can be changed.
+  bool _envOnly = false;
   Object? _loadError;
   final _text = <String, TextEditingController>{};
 
@@ -155,9 +161,11 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     return true;
   }
 
-  void _show(List<AdminSetting> settings) {
+  void _show(AdminSettings all) {
     if (!mounted) return;
+    final settings = all.settings;
     setState(() {
+      _envOnly = all.envOnly;
       final byKey = _settings = {for (final s in settings) s.key: s};
       for (final s in settings) {
         if (_toggles.contains(s.key) || _choices.contains(s.key) || _isOidc(s.key)) continue;
@@ -340,6 +348,28 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     router.go('/');
   }
 
+  /// Why a locked setting cannot be changed here.
+  String _lockedNote(AppLocalizations l10n, String key) =>
+      _envOnly ? l10n.adminEnvOnlyLocked(key) : l10n.adminLocked(key);
+
+  /// Saves the settings kept in the database as a .env file, after asking
+  /// for the administrator password again: the file holds every secret.
+  Future<void> _export() async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final env = await showDialog<String>(
+      context: context,
+      builder: (_) => _ExportDialog(api: _api, token: widget.token),
+    );
+    if (env == null) return;
+    final saved = await FilePicker.saveFile(
+      fileName: 'balnana.env',
+      bytes: utf8.encode(env),
+      mimeType: 'text/plain',
+    );
+    if (saved != null) messenger.showSnackBar(SnackBar(content: Text(l10n.adminExportDone)));
+  }
+
   void _pick(String key, String value) {
     final s = _settings![key]!;
     setState(() {
@@ -418,6 +448,11 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
                       .push(MaterialPageRoute<void>(builder: (_) => AdminPaymentsPage(token: widget.token))),
             ),
             IconButton(
+              tooltip: l10n.adminExport,
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: settings == null ? null : _export,
+            ),
+            IconButton(
               tooltip: l10n.adminChangePassword,
               icon: const Icon(Icons.key_outlined),
               onPressed: () => showDialog<void>(
@@ -468,6 +503,22 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final passwords = _passwordForced || _current('BALNANA_AUTH_PASSWORD', settings).isTrue;
     final mapSource = _current('BALNANA_MAP_SOURCE', settings);
     return [
+      FormSection(l10n.adminSectionEnv),
+      // Only the environment turns this on or off, so it is always dimmed.
+      SwitchListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
+        title: Text(l10n.adminEnvOnly),
+        subtitle: Text(_envOnly ? l10n.adminEnvOnlyOn : l10n.adminEnvOnlyOff),
+        value: _envOnly,
+        onChanged: null,
+      ),
+      ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
+        title: Text(l10n.adminExport),
+        subtitle: Text(l10n.adminExportHelp),
+        trailing: const Icon(Icons.file_download_outlined),
+        onTap: _busy ? null : _export,
+      ),
       FormSection(l10n.adminSectionGeneral),
       _textField('BALNANA_PUBLIC_URL', keyboard: TextInputType.url),
       gap,
@@ -543,7 +594,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
         FormSection(l10n.adminSectionOidc),
         _note(
           _oidcLocked && settings.containsKey(_oidcProviders)
-              ? '${l10n.adminOidcHelp}\n${l10n.adminLocked(_oidcProviders)}'
+              ? '${l10n.adminOidcHelp}\n${_lockedNote(l10n, _oidcProviders)}'
               : l10n.adminOidcHelp,
         ),
         for (final o in _oidc) ...[_oidcCard(o, callback), gap],
@@ -621,7 +672,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
           hintText: field == 'NAME' && id.isNotEmpty ? l10n.adminDefault(id) : null,
           floatingLabelBehavior: field == 'NAME' && id.isNotEmpty ? FloatingLabelBehavior.always : null,
           helperText: s?.locked ?? false
-              ? l10n.adminLocked(key)
+              ? _lockedNote(l10n, key)
               : secret && (s?.set ?? false) && c.text.isEmpty
               ? l10n.adminSecretSaved
               : _help(l10n, 'BALNANA_OAUTH_OIDC_$field'),
@@ -703,7 +754,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
               contentPadding: const EdgeInsets.only(left: BSpace.s4, right: BSpace.s8),
               title: Text(l10n.adminTrustEmail),
               subtitle: Text(
-                trustSetting?.locked ?? false ? l10n.adminLocked(trustKey) : l10n.adminOidcTrustEmailHelp,
+                trustSetting?.locked ?? false ? _lockedNote(l10n, trustKey) : l10n.adminOidcTrustEmailHelp,
               ),
               value: o.trust ?? (trustSetting?.effective ?? 'false').isTrue,
               onChanged: _busy || _oidcLocked || (trustSetting?.locked ?? false)
@@ -734,7 +785,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final controller = _text[key];
     if (s == null || controller == null) return const SizedBox.shrink();
     final removing = _removed.contains(key);
-    String? helper = s.locked ? l10n.adminLocked(key) : _help(l10n, key);
+    String? helper = s.locked ? _lockedNote(l10n, key) : _help(l10n, key);
     if (s.secret && !s.locked && s.set && controller.text.isEmpty) {
       helper = removing ? l10n.adminSecretRemoved : l10n.adminSecretSaved;
     }
@@ -797,7 +848,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
         _invalid.contains(key)
             ? _problem(l10n, key)
             : s.locked
-            ? l10n.adminLocked(key)
+            ? _lockedNote(l10n, key)
             : help ?? _help(l10n, key) ?? '',
         style: _invalid.contains(key) ? TextStyle(color: scheme.error) : null,
       ),
@@ -814,7 +865,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
       title: Text(title),
-      subtitle: Text(s.locked ? l10n.adminLocked(key) : help),
+      subtitle: Text(s.locked ? _lockedNote(l10n, key) : help),
       value: _on[key]!,
       onChanged: _busy || s.locked
           ? null
@@ -836,7 +887,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final note = _invalid.contains(key)
         ? _problem(l10n, key)
         : s.locked
-        ? l10n.adminLocked(key)
+        ? _lockedNote(l10n, key)
         : options[value]?.$2 ?? _help(l10n, key);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1073,4 +1124,88 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       ],
     );
   }
+}
+
+/// Asks for the administrator password again and returns the saved settings
+/// as the text of a .env file.
+class _ExportDialog extends StatefulWidget {
+  const _ExportDialog({required this.api, required this.token});
+
+  final AdminApi api;
+  final String token;
+
+  @override
+  State<_ExportDialog> createState() => _ExportDialogState();
+}
+
+class _ExportDialogState extends State<_ExportDialog> {
+  final _form = GlobalKey<FormState>();
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_busy || !_form.currentState!.validate()) return;
+    final l10n = context.l10n;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final env = await widget.api.exportSettings(widget.token, _password.text);
+      if (mounted) Navigator.pop(context, env);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.code == 'wrong_password' ? l10n.errorAdminWrongPassword : errorMessage(l10n, e);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      scrollable: true,
+      title: Text(l10n.adminExport),
+      content: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.adminExportBody),
+            const SizedBox(height: BSpace.s16),
+            TextFormField(
+              controller: _password,
+              enabled: !_busy,
+              autofocus: true,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              onFieldSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                labelText: l10n.adminPasswordCurrent,
+                errorText: _error,
+                errorMaxLines: 3,
+              ),
+              validator: (v) => (v ?? '').isEmpty ? l10n.errorRequired : null,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.commonCancel)),
+        TextButton(onPressed: _busy ? null : _export, child: Text(l10n.commonContinue)),
+      ],
+    );
+  }
+
+  void _export() => _submit();
 }

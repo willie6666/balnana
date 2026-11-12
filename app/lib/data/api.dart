@@ -207,9 +207,46 @@ class BalnanaApi {
 
   /// Signs in with an email address or username. Returns the session token,
   /// or null on the web.
-  Future<(String?, User)> login({required String login, required String password}) => _send(
-    () => _dio.post<Object?>('/auth/login', data: {'login': login, 'password': password, 'cookie': _cookie}),
+  /// An account with two-step sign-in answers `two_factor_required` until
+  /// [code] comes too; `params['methods']` lists what gives one, `totp` or
+  /// `email`.
+  Future<(String?, User)> login({required String login, required String password, String? code}) => _send(
+    () => _dio.post<Object?>(
+      '/auth/login',
+      data: {'login': login, 'password': password, 'code': ?code, 'cookie': _cookie},
+    ),
     _session,
+  );
+
+  /// Emails a sign-in code to an account that takes them, at most one a minute.
+  Future<void> emailLoginCode({required String login, required String password}) => _send(
+    () => _dio.post<Object?>('/auth/login/email-code', data: {'login': login, 'password': password}),
+    (_) {},
+  );
+
+  /// Starts adding an authenticator app to the signed-in account.
+  Future<TotpSetup> setupTotp({String? password}) =>
+      _send(() => _dio.post<Object?>('/me/two-factor/totp', data: {'password': ?password}), TotpSetup.fromJson);
+
+  /// Turns the authenticator app on with a code from it, and returns the
+  /// recovery codes, shown only now.
+  Future<List<String>> confirmTotp(String code) => _send(
+    () => _dio.post<Object?>('/me/two-factor/totp/confirm', data: {'code': code}),
+    (data) => switch (data) {
+      {'codes': final List<Object?> codes} => [...codes.whereType<String>()],
+      _ => throw const FormatException('bad recovery codes'),
+    },
+  );
+
+  Future<User> disableTotp({String? password}) => _send(
+    () => _dio.post<Object?>('/me/two-factor/totp/disable', data: {'password': ?password}),
+    User.fromJson,
+  );
+
+  /// Turns sign-in codes by email on or off.
+  Future<User> setEmailTwoFactor(bool enabled, {String? password}) => _send(
+    () => _dio.put<Object?>('/me/two-factor/email', data: {'enabled': enabled, 'password': ?password}),
+    User.fromJson,
   );
 
   /// Trades the code a Google or OpenID Connect sign-in sent back to the
@@ -368,10 +405,12 @@ class BalnanaApi {
     required int minorDigits,
     required List<String> members,
     GroupFeatures? features,
+    bool sharePlan = false,
   }) => _send(
     () => _dio.post<Object?>(
       '/groups',
       data: {
+        if (sharePlan) 'sharePlan': true,
         'name': name,
         'emoji': ?emoji,
         'color': ?color,
@@ -870,15 +909,26 @@ class AdminApi {
     (_) {},
   );
 
-  Future<List<AdminSetting>> settings(String token) =>
+  Future<AdminSettings> settings(String token) =>
       _api._send(() => _dio.get<Object?>('/admin/settings', options: _as(token)), AdminSetting.listFromJson);
 
   /// Changes the settings in [values] (empty for the default) and returns
   /// all of them as now in force. Throws `invalid_settings` with the keys at
   /// fault in `params['keys']`, changing nothing.
-  Future<List<AdminSetting>> save(String token, Map<String, String> values) => _api._send(
+  Future<AdminSettings> save(String token, Map<String, String> values) => _api._send(
     () => _dio.put<Object?>('/admin/settings', data: {'values': values}, options: _as(token)),
     AdminSetting.listFromJson,
+  );
+
+  /// The saved settings as the lines of a .env file, secrets and all, which
+  /// is why the administrator [password] is asked for again: `wrong_password`
+  /// when it is not right.
+  Future<String> exportSettings(String token, String password) => _api._send(
+    () => _dio.post<Object?>('/admin/settings/export', data: {'password': password}, options: _as(token)),
+    (data) => switch (data) {
+      {'env': final String env} => env,
+      _ => throw const FormatException('bad export'),
+    },
   );
 
   /// Accounts whose name, address or username contains [query], newest

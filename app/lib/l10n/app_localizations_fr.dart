@@ -3612,4 +3612,128 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Impossible d\'actualiser. Ces informations ne sont peut-être plus à jour.';
+
+  @override
+  String get sharePlanTitle => 'Partage de formule';
+
+  @override
+  String get sharePlanSettingsHelp => 'Choisissez les groupes qui utilisent votre formule';
+
+  @override
+  String get sharePlanHelp =>
+      'Un groupe avec lequel vous partagez votre formule profite de ses limites, pour tous ses membres.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Groupes partageant votre formule : $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Tous les membres du groupe profitent des limites de votre formule $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Connexion en deux étapes';
+
+  @override
+  String get twoFactorTotp => 'Application d\'authentification';
+
+  @override
+  String get twoFactorTotpHelp =>
+      'Demander un code d\'une application d\'authentification lors de la connexion avec votre mot de passe';
+
+  @override
+  String get twoFactorConfirmBody =>
+      'Saisissez votre mot de passe pour modifier votre façon de vous connecter.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Scannez ce code avec votre application d\'authentification, ou saisissez-y la clé ci-dessous. Saisissez ensuite les six chiffres affichés par l\'application.';
+
+  @override
+  String get twoFactorCode => 'Code';
+
+  @override
+  String get twoFactorTurnOn => 'Activer';
+
+  @override
+  String get twoFactorTurnOff => 'Désactiver';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'La connexion ne demandera plus de code de votre application, et vos codes de secours ne fonctionneront plus. Saisissez votre mot de passe pour la désactiver.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Codes de secours';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Conservez-les en lieu sûr. Chacun vous connecte une fois quand vous n\'avez pas votre application d\'authentification. Ils ne seront plus affichés.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Codes de secours copiés';
+
+  @override
+  String get twoFactorEmail => 'Code par e-mail';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Envoyer un code à $email lors de la connexion avec votre mot de passe';
+  }
+
+  @override
+  String get signInCodeTotp => 'Saisissez le code de votre application d\'authentification.';
+
+  @override
+  String get signInCodeEmail => 'Saisissez le code que nous vous avons envoyé par e-mail.';
+
+  @override
+  String get signInCodeEither =>
+      'Saisissez le code de votre application d\'authentification, ou recevez-en un par e-mail.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Un code de secours fonctionne aussi.';
+
+  @override
+  String get signInCodeSend => 'M\'envoyer un code par e-mail';
+
+  @override
+  String get signInCodeSent => 'Un code vous a été envoyé par e-mail. Il est valable 10 minutes.';
+
+  @override
+  String get errorInvalidCode => 'Ce code est incorrect ou a expiré.';
+
+  @override
+  String get adminSectionEnv => 'Fichier d\'environnement';
+
+  @override
+  String get adminEnvOnly => 'Lire les réglages uniquement depuis .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Activé. Le serveur lit ces réglages uniquement dans son fichier .env et ignore ce qui a été enregistré ici. Modifiez-les dans ce fichier et redémarrez le serveur.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Désactivé. Définissez BALNANA_ENV_ONLY=true dans le fichier .env du serveur pour lire tous les réglages depuis ce fichier et ignorer ce qui est enregistré ici.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Seul $key dans le fichier .env du serveur modifie ce réglage';
+  }
+
+  @override
+  String get adminExport => 'Exporter en .env';
+
+  @override
+  String get adminExportHelp =>
+      'Télécharger les réglages enregistrés ici sous forme de lignes pour le fichier .env du serveur';
+
+  @override
+  String get adminExportBody =>
+      'Le fichier contient tous les réglages enregistrés, mots de passe et clés compris. Saisissez le mot de passe administrateur pour le télécharger.';
+
+  @override
+  String get adminExportDone => 'Réglages exportés';
 }

@@ -72,6 +72,9 @@ void _deliver() {
   final fills = _fills.toList();
   _fills.clear();
   for (final fill in fills) {
+    // Its page may have gone meanwhile, and another field be drawn where it
+    // was: what was typed for one must never show up in the other.
+    if (!fill.field.isConnected) continue;
     final editable = _editableUnder(fill.field);
     if (editable == null || editable.readOnly) continue;
     final state = editable.textSelectionDelegate;

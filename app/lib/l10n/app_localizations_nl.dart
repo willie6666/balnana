@@ -3552,4 +3552,127 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Bijwerken is mislukt. Dit is mogelijk verouderd.';
+
+  @override
+  String get sharePlanTitle => 'Abonnement delen';
+
+  @override
+  String get sharePlanSettingsHelp => 'Kies welke groepen je abonnement gebruiken';
+
+  @override
+  String get sharePlanHelp =>
+      'Een groep waarmee je je abonnement deelt, krijgt de limieten ervan voor iedereen in de groep.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Groepen die je abonnement delen: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Iedereen in de groep krijgt de limieten van je abonnement $plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Aanmelden in twee stappen';
+
+  @override
+  String get twoFactorTotp => 'Authenticator-app';
+
+  @override
+  String get twoFactorTotpHelp =>
+      'Vraag om een code uit een authenticator-app wanneer je je aanmeldt met je wachtwoord';
+
+  @override
+  String get twoFactorConfirmBody => 'Voer je wachtwoord in om te wijzigen hoe je je aanmeldt.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Scan deze code met je authenticator-app of typ de sleutel hieronder in de app. Voer daarna de zes cijfers in die de app toont.';
+
+  @override
+  String get twoFactorCode => 'Code';
+
+  @override
+  String get twoFactorTurnOn => 'Inschakelen';
+
+  @override
+  String get twoFactorTurnOff => 'Uitschakelen';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Bij het aanmelden wordt niet meer om een code uit je app gevraagd en je herstelcodes werken niet meer. Voer je wachtwoord in om dit uit te schakelen.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Herstelcodes';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Bewaar ze op een veilige plek. Met elke code kun je je één keer aanmelden als je je authenticator-app niet bij de hand hebt. Ze worden niet opnieuw getoond.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Herstelcodes gekopieerd';
+
+  @override
+  String get twoFactorEmail => 'Code per e-mail';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Stuur een code naar $email wanneer je je aanmeldt met je wachtwoord';
+  }
+
+  @override
+  String get signInCodeTotp => 'Voer de code uit je authenticator-app in.';
+
+  @override
+  String get signInCodeEmail => 'Voer de code in die we je per e-mail hebben gestuurd.';
+
+  @override
+  String get signInCodeEither =>
+      'Voer de code uit je authenticator-app in, of laat er een per e-mail sturen.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Een herstelcode werkt ook.';
+
+  @override
+  String get signInCodeSend => 'Stuur me een code per e-mail';
+
+  @override
+  String get signInCodeSent => 'Er is een code onderweg naar je e-mailadres. De code is 10 minuten geldig.';
+
+  @override
+  String get errorInvalidCode => 'Die code klopt niet of is verlopen.';
+
+  @override
+  String get adminSectionEnv => 'Omgevingsbestand';
+
+  @override
+  String get adminEnvOnly => 'Instellingen alleen uit .env lezen';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Aan. De server leest deze instellingen alleen uit het .env-bestand en negeert wat hier is opgeslagen. Wijzig ze in dat bestand en start de server opnieuw.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Uit. Zet BALNANA_ENV_ONLY=true in het .env-bestand van de server om alle instellingen daaruit te lezen en te negeren wat hier is opgeslagen.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Alleen $key in het .env-bestand van de server wijzigt dit';
+  }
+
+  @override
+  String get adminExport => 'Exporteren als .env';
+
+  @override
+  String get adminExportHelp =>
+      'Download de hier opgeslagen instellingen als regels voor het .env-bestand van de server';
+
+  @override
+  String get adminExportBody =>
+      'Het bestand bevat alle opgeslagen instellingen, inclusief wachtwoorden en sleutels. Voer het beheerderswachtwoord in om het te downloaden.';
+
+  @override
+  String get adminExportDone => 'Instellingen geëxporteerd';
 }

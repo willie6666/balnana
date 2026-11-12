@@ -3514,4 +3514,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Couldn\'t update. This may be out of date.';
+
+  @override
+  String get sharePlanTitle => 'Plan sharing';
+
+  @override
+  String get sharePlanSettingsHelp => 'Choose which groups use your plan';
+
+  @override
+  String get sharePlanHelp => 'A group you share your plan with gets its limits, for everyone in it.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Groups sharing your plan: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Everyone in the group gets the limits of your $plan plan.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Two-step sign-in';
+
+  @override
+  String get twoFactorTotp => 'Authenticator app';
+
+  @override
+  String get twoFactorTotpHelp =>
+      'Ask for a code from an authenticator app when you sign in with your password';
+
+  @override
+  String get twoFactorConfirmBody => 'Enter your password to change how you sign in.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Scan this code with your authenticator app, or type the key below into it. Then enter the six digits the app shows.';
+
+  @override
+  String get twoFactorCode => 'Code';
+
+  @override
+  String get twoFactorTurnOn => 'Turn on';
+
+  @override
+  String get twoFactorTurnOff => 'Turn off';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Signing in will no longer ask for a code from your app, and your recovery codes will stop working. Enter your password to turn it off.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Recovery codes';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Keep these somewhere safe. Each one signs you in once when you don\'t have your authenticator app. They won\'t be shown again.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Recovery codes copied';
+
+  @override
+  String get twoFactorEmail => 'Code by email';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Send a code to $email when you sign in with your password';
+  }
+
+  @override
+  String get signInCodeTotp => 'Enter the code from your authenticator app.';
+
+  @override
+  String get signInCodeEmail => 'Enter the code we emailed you.';
+
+  @override
+  String get signInCodeEither => 'Enter the code from your authenticator app, or have one emailed to you.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'A recovery code works too.';
+
+  @override
+  String get signInCodeSend => 'Email me a code';
+
+  @override
+  String get signInCodeSent => 'A code is on its way to your email. It works for 10 minutes.';
+
+  @override
+  String get errorInvalidCode => 'That code isn\'t right, or it has expired.';
+
+  @override
+  String get adminSectionEnv => 'Environment file';
+
+  @override
+  String get adminEnvOnly => 'Read settings from .env only';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'On. The server reads these settings from its .env file alone and ignores what was saved here. Change them in that file and restart the server.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Off. Set BALNANA_ENV_ONLY=true in the server\'s .env file to read every setting from there and ignore what is saved here.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Only $key in the server\'s .env file changes this';
+  }
+
+  @override
+  String get adminExport => 'Export as .env';
+
+  @override
+  String get adminExportHelp => 'Download the settings saved here as lines for the server\'s .env file';
+
+  @override
+  String get adminExportBody =>
+      'The file holds every saved setting, passwords and keys included. Enter the administrator password to download it.';
+
+  @override
+  String get adminExportDone => 'Settings exported';
 }

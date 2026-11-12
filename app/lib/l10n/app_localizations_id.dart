@@ -3521,4 +3521,125 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get refreshFailed => 'Tidak dapat memperbarui. Ini mungkin sudah tidak terbaru.';
+
+  @override
+  String get sharePlanTitle => 'Berbagi paket';
+
+  @override
+  String get sharePlanSettingsHelp => 'Pilih grup mana yang memakai paket Anda';
+
+  @override
+  String get sharePlanHelp =>
+      'Grup yang Anda bagikan paket akan mendapat batas paket itu untuk semua anggotanya.';
+
+  @override
+  String sharePlanUsage(String usage) {
+    return 'Grup yang memakai paket Anda: $usage';
+  }
+
+  @override
+  String groupSponsorHelp(String plan) {
+    return 'Semua anggota grup mendapat batas paket $plan Anda.';
+  }
+
+  @override
+  String get twoFactorTitle => 'Login dua langkah';
+
+  @override
+  String get twoFactorTotp => 'Aplikasi autentikator';
+
+  @override
+  String get twoFactorTotpHelp => 'Minta kode dari aplikasi autentikator saat login dengan kata sandi';
+
+  @override
+  String get twoFactorConfirmBody => 'Masukkan kata sandi untuk mengubah cara Anda login.';
+
+  @override
+  String get twoFactorTotpScan =>
+      'Pindai kode ini dengan aplikasi autentikator Anda, atau ketik kunci di bawah ke dalamnya. Lalu masukkan enam digit yang ditampilkan aplikasi.';
+
+  @override
+  String get twoFactorCode => 'Kode';
+
+  @override
+  String get twoFactorTurnOn => 'Aktifkan';
+
+  @override
+  String get twoFactorTurnOff => 'Nonaktifkan';
+
+  @override
+  String get twoFactorTotpOffBody =>
+      'Login tidak akan lagi meminta kode dari aplikasi Anda, dan kode pemulihan Anda tidak akan berfungsi. Masukkan kata sandi untuk menonaktifkannya.';
+
+  @override
+  String get twoFactorRecoveryTitle => 'Kode pemulihan';
+
+  @override
+  String get twoFactorRecoveryBody =>
+      'Simpan di tempat yang aman. Setiap kode dapat dipakai login satu kali saat aplikasi autentikator tidak ada. Kode ini tidak akan ditampilkan lagi.';
+
+  @override
+  String get twoFactorRecoveryCopied => 'Kode pemulihan disalin';
+
+  @override
+  String get twoFactorEmail => 'Kode lewat email';
+
+  @override
+  String twoFactorEmailHelp(String email) {
+    return 'Kirim kode ke $email saat login dengan kata sandi';
+  }
+
+  @override
+  String get signInCodeTotp => 'Masukkan kode dari aplikasi autentikator Anda.';
+
+  @override
+  String get signInCodeEmail => 'Masukkan kode yang kami kirim ke email Anda.';
+
+  @override
+  String get signInCodeEither =>
+      'Masukkan kode dari aplikasi autentikator Anda, atau minta kode lewat email.';
+
+  @override
+  String get signInCodeRecoveryHelp => 'Kode pemulihan juga bisa dipakai.';
+
+  @override
+  String get signInCodeSend => 'Kirimi saya kode lewat email';
+
+  @override
+  String get signInCodeSent => 'Kode sedang dikirim ke email Anda. Berlaku selama 10 menit.';
+
+  @override
+  String get errorInvalidCode => 'Kode itu salah atau sudah kedaluwarsa.';
+
+  @override
+  String get adminSectionEnv => 'File lingkungan';
+
+  @override
+  String get adminEnvOnly => 'Baca pengaturan hanya dari .env';
+
+  @override
+  String get adminEnvOnlyOn =>
+      'Aktif. Server membaca pengaturan ini hanya dari file .env dan mengabaikan yang disimpan di sini. Ubah di file itu lalu mulai ulang server.';
+
+  @override
+  String get adminEnvOnlyOff =>
+      'Nonaktif. Setel BALNANA_ENV_ONLY=true di file .env server agar semua pengaturan dibaca dari sana dan yang disimpan di sini diabaikan.';
+
+  @override
+  String adminEnvOnlyLocked(String key) {
+    return 'Hanya $key di file .env server yang mengubah ini';
+  }
+
+  @override
+  String get adminExport => 'Ekspor sebagai .env';
+
+  @override
+  String get adminExportHelp => 'Unduh pengaturan yang disimpan di sini sebagai baris untuk file .env server';
+
+  @override
+  String get adminExportBody =>
+      'File ini berisi semua pengaturan yang disimpan, termasuk kata sandi dan kunci. Masukkan kata sandi administrator untuk mengunduhnya.';
+
+  @override
+  String get adminExportDone => 'Pengaturan diekspor';
 }
