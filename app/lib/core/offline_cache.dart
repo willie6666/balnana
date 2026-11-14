@@ -65,6 +65,9 @@ abstract final class PendingPath {
   static bool supports(String path) => path == expenses || path == payments;
 }
 
+typedef _CacheKey = ({String server, String account, String request});
+typedef _CacheScope = (String server, String? path);
+
 /// What this device remembers of each server, to show while it is out of
 /// reach. Only the Android app keeps one: the web app comes from the server
 /// itself, so it cannot load without it anyway.
@@ -83,23 +86,35 @@ class CacheDb extends _$CacheDb {
   /// app runs. Answers for any other account are no longer saved.
   final _accounts = <String, String>{};
 
-  /// Counts [forgetGroup] calls. A request notes it when asked, so its
-  /// answer can tell whether a change came after it.
-  int get forgets => _forgets;
-  var _forgets = 0;
+  int get generation => _generation;
+  var _generation = 0;
 
-  /// When each group, and any group's lists, were last forgotten: the
-  /// [forgets] count just after, keyed by server, account and group.
-  final _forgotten = <String, int>{};
+  /// Generations are local to this process. Rows from earlier runs have
+  /// generation zero until they are fetched again.
+  final _forgotten = <(String, String, String), int>{};
+  final _accountChanged = <String, int>{};
+  final _expired = <_CacheScope, int>{};
+  final _recheckFrom = <_CacheScope, int>{};
 
-  /// When what was saved of each group, of the lists of groups, or of a
-  /// whole server, stopped being shown before the server is asked: see
-  /// [expire]. Keyed as in [_expiryKeys].
-  final _expired = <String, DateTime>{};
+  /// The last response kept for a cache-first request, including removals.
+  final _answered = <_CacheKey, int>{};
+  final _rechecking = <(_CacheKey, int)>{};
 
-  /// Requests being asked again behind an answer shown from the cache, by
-  /// server, account and request, so each is asked once at a time.
-  final rechecking = <String>{};
+  Future<void>? _cacheWrites;
+
+  /// Serialize writes and check generations when each write reaches the queue.
+  Future<T> _writeCache<T>(Future<T> Function() write) async {
+    final previous = _cacheWrites;
+    final done = Completer<void>();
+    _cacheWrites = done.future;
+    try {
+      if (previous != null) await previous;
+      return await write();
+    } finally {
+      if (identical(_cacheWrites, done.future)) _cacheWrites = null;
+      done.complete();
+    }
+  }
 
   @override
   int get schemaVersion => 3;
@@ -120,67 +135,92 @@ class CacheDb extends _$CacheDb {
     },
   );
 
-  /// Keeps [body] as the answer to [request]. [asked] is [forgets] when the
-  /// request was sent: an answer asked before its group changed may show it
-  /// as it was, and is not kept.
-  /// Returns whether it was kept.
-  Future<bool> save(String server, String account, String request, String body, {int? asked}) async {
-    // An answer still on its way when its account signed out stays unsaved.
-    final current = _accounts[server];
-    if (account != public && current != null && current != account) return false;
-    if (asked != null &&
-        (asked < (_forgotten[_forgetKey(server, account, request)] ?? 0) ||
-            asked < (_forgotten[_forgetKey(server, public, request)] ?? 0))) {
-      return false;
-    }
-    await into(cachedResponses).insertOnConflictUpdate(
-      CachedResponsesCompanion.insert(
-        server: server,
-        account: account,
-        request: request,
-        body: body,
-        savedAt: DateTime.now(),
-      ),
-    );
-    return true;
+  /// Keeps [body] if the request is still current. [asked] is its generation
+  /// when sent. A direct save gets a new generation.
+  Future<bool> save(String server, String account, String request, String body, {int? asked}) {
+    final key = (server: server, account: account, request: request);
+    return _keepAnswer(key, asked ?? ++_generation, () async {
+      await into(cachedResponses).insertOnConflictUpdate(
+        CachedResponsesCompanion.insert(
+          server: server,
+          account: account,
+          request: request,
+          body: body,
+          savedAt: DateTime.now(),
+        ),
+      );
+    });
   }
 
-  /// Forgets the answer to [request], which the server no longer gives.
-  Future<void> forget(String server, String account, String request) => (delete(
-    cachedResponses,
-  )..where((r) => r.server.equals(server) & r.account.equals(account) & r.request.equals(request))).go();
-
-  /// Has the server asked first, rather than [OfflineCache] showing what was
-  /// saved meanwhile, for what is shown of [group] on [server] and the lists
-  /// of groups, or for everything there when [group] is null. For when what
-  /// was saved is known to be out of date, as after a change someone else
-  /// made, or when the person asks to see it as it is now. Applies to what
-  /// was saved until now; what the server answers next is shown first again.
-  void expire(String server, {String? group}) {
-    // Saved times keep whole seconds, so an answer saved in the same second
-    // counts as new; the reload that follows saves over it anyway.
-    final now = DateTime.fromMillisecondsSinceEpoch(DateTime.now().millisecondsSinceEpoch ~/ 1000 * 1000);
-    if (group == null) {
-      _expired[server] = now;
-    } else {
-      _expired['$server /g/${Uri.encodeComponent(group)}'] = now;
-      _expired['$server lists'] = now;
-    }
-  }
-
-  /// Whether the answer to [request] saved at [savedAt] has expired: see [expire].
-  bool isExpired(String server, String request, DateTime savedAt) => _expiryKeys(server, request).any((key) {
-    final at = _expired[key];
-    return at != null && savedAt.isBefore(at);
+  /// Forgets an answer after the server confirms it is no longer available.
+  Future<bool> _forgetAnswer(_CacheKey key, int asked) => _keepAnswer(key, asked, () async {
+    await (delete(cachedResponses)..where(
+          (r) => r.server.equals(key.server) & r.account.equals(key.account) & r.request.equals(key.request),
+        ))
+        .go();
   });
 
-  static List<String> _expiryKeys(String server, String request) {
-    final group = RegExp(r'^GET (/g/[^/?]+)').firstMatch(request)?.group(1);
-    final lists = request == 'GET /me/groups' || request.startsWith('POST /groups/summaries ');
-    return [server, if (group != null) '$server $group', if (lists) '$server lists'];
+  Future<bool> _keepAnswer(_CacheKey key, int asked, Future<void> Function() write) => _writeCache(() async {
+    if (!_canKeep(key, asked)) return false;
+    await write();
+    if (OfflineCache.showsFirst(key.request)) _answered[key] = asked;
+    return _canKeep(key, asked);
+  });
+
+  bool _canKeep(_CacheKey key, int asked) {
+    final (server, account, request) = (key.server, key.account, key.request);
+    final current = _accounts[server];
+    if (account != public &&
+        ((current != null && current != account) || asked < (_accountChanged[server] ?? 0))) {
+      return false;
+    }
+    final scope = _requestScope(request);
+    return asked >= (_answered[key] ?? 0) &&
+        asked >= _scopeGeneration(_expired, server, scope) &&
+        (!OfflineCache.showsFirst(request) || asked >= _scopeGeneration(_recheckFrom, server, scope)) &&
+        (scope == null ||
+            (asked >= (_forgotten[(server, account, scope)] ?? 0) &&
+                asked >= (_forgotten[(server, public, scope)] ?? 0)));
   }
 
-  Future<CachedResponse?> find(String server, String account, String request) {
+  /// Requires a server read after a change or a manual refresh. Old rows
+  /// remain available for offline use.
+  void expire(String server, {String? group}) {
+    final generation = ++_generation;
+    _expired[(server, group == null ? null : '/g/${Uri.encodeComponent(group)}')] = generation;
+    if (group != null) _expired[(server, _lists)] = generation;
+  }
+
+  void _expireGroupLists(String server) => _expired[(server, _lists)] = ++_generation;
+
+  /// On reconnect, shows cached data and checks it even if saved recently.
+  void recheckGroup(String server, String group) {
+    final generation = ++_generation;
+    _recheckFrom[(server, '/g/${Uri.encodeComponent(group)}')] = generation;
+    _recheckFrom[(server, _lists)] = generation;
+  }
+
+  int _expiry(_CacheKey key) => _scopeGeneration(_expired, key.server, _requestScope(key.request));
+
+  int _recheckGeneration(_CacheKey key) =>
+      _scopeGeneration(_recheckFrom, key.server, _requestScope(key.request));
+
+  static int _scopeGeneration(Map<_CacheScope, int> generations, String server, String? scope) {
+    final all = generations[(server, null)] ?? 0;
+    final specific = generations[(server, scope)] ?? 0;
+    return specific > all ? specific : all;
+  }
+
+  static String? _requestScope(String request) =>
+      _groupPath(request) ?? (_isGroupList(request) ? _lists : null);
+  static final _groupRequest = RegExp(r'^GET (/g/[^/?]+)');
+  static String? _groupPath(String request) => _groupRequest.firstMatch(request)?.group(1);
+  static const _lists = 'lists';
+  static bool _isGroupList(String request) =>
+      request == 'GET /me/groups' || request.startsWith('POST /groups/summaries ');
+
+  Future<CachedResponse?> find(String server, String account, String request) async {
+    if (_cacheWrites case final writes?) await writes;
     final cutoff = DateTime.now().subtract(keep);
     final query = select(cachedResponses)
       ..where(
@@ -203,43 +243,38 @@ class CacheDb extends _$CacheDb {
   Future<void> forgetDeletedGroup(String server, String group) => _forgetGroup(server, group);
 
   Future<void> _forgetGroup(String server, String group, {String? account}) {
-    _forgets++;
-    final accountKey = '$server ${account ?? public}';
-    _forgotten['$accountKey /g/$group'] = _forgets;
-    _forgotten[accountKey] = _forgets;
+    final generation = ++_generation;
+    _forgotten[(server, account ?? public, '/g/$group')] = generation;
+    _forgotten[(server, account ?? public, _lists)] = generation;
     final groupRequest = 'GET /g/$group';
-    return (delete(cachedResponses)..where((r) {
-          final sameServer = r.server.equals(server);
-          final scope = account == null ? sameServer : sameServer & r.account.equals(account);
-          // Tokens are case-sensitive and may contain underscores.
-          final prefix = r.request.substr(1, groupRequest.length + 1);
-          return scope &
-              (r.request.equals(groupRequest) |
-                  prefix.equals('$groupRequest/') |
-                  prefix.equals('$groupRequest?') |
-                  r.request.equals('GET /me/groups') |
-                  r.request.like('POST /groups/summaries %'));
-        }))
-        .go();
-  }
-
-  /// Where [save] finds when what [request] asks for was last forgotten:
-  /// its group, or for the lists of groups, any group.
-  static String _forgetKey(String server, String account, String request) {
-    final group = RegExp(r'^GET (/g/[^/?]+)').firstMatch(request)?.group(1);
-    if (group != null) return '$server $account $group';
-    final lists = request == 'GET /me/groups' || request.startsWith('POST /groups/summaries ');
-    return lists ? '$server $account' : '';
+    return _writeCache(() async {
+      await (delete(cachedResponses)..where((r) {
+            final sameServer = r.server.equals(server);
+            final scope = account == null ? sameServer : sameServer & r.account.equals(account);
+            // Tokens are case-sensitive and may contain underscores.
+            final prefix = r.request.substr(1, groupRequest.length + 1);
+            return scope &
+                (r.request.equals(groupRequest) |
+                    prefix.equals('$groupRequest/') |
+                    prefix.equals('$groupRequest?') |
+                    r.request.equals('GET /me/groups') |
+                    r.request.like('POST /groups/summaries %'));
+          }))
+          .go();
+    });
   }
 
   /// Makes [account] the one signed in to [server], forgetting what any
   /// other account saw and saving nothing more for them. Unsent writes stay
   /// with their owner until that account returns or discards them.
-  Future<void> switchAccount(String server, String account) async {
+  Future<void> switchAccount(String server, String account) {
     _accounts[server] = account;
-    final others = delete(cachedResponses)
-      ..where((r) => r.server.equals(server) & r.account.isNotIn([account, public]));
-    await others.go();
+    _accountChanged[server] = ++_generation;
+    return _writeCache(() async {
+      await (delete(
+        cachedResponses,
+      )..where((r) => r.server.equals(server) & r.account.isNotIn([account, public]))).go();
+    });
   }
 
   /// Moves session-keyed writes to their verified account, for older caches.
@@ -460,42 +495,60 @@ class OfflineCache extends Interceptor {
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    options.extra[_askedKey] = _db.forgets;
     if (options.extra.containsKey(_recheckKey)) return handler.next(options);
-    if (!_isWarm() && (probe || !_isOffline())) return _showFirst(options, handler);
     final key = _key(options);
     if (key == null) return handler.next(options);
+    if (!_isWarm() && (probe || !_isOffline())) return _showFirst(options, handler, key);
     final saved = await _find(key);
-    if (saved == null) return handler.next(options);
+    if (saved == null) return _ask(options, handler);
     // The startup probe or a live request may have finished during the lookup.
     final warm = _isWarm();
-    if (!warm && (probe || !_isOffline())) return handler.next(options);
+    if (!warm && (probe || !_isOffline())) return _ask(options, handler);
     if (warm) _onWarm();
     handler.resolve(_answer(options, saved));
   }
 
+  void _ask(RequestOptions options, RequestInterceptorHandler handler) {
+    options.extra[_askedKey] = ++_db._generation;
+    handler.next(options);
+  }
+
   /// Answers what [showsFirst] from what was saved, then asks the server
   /// again; anything else, or what has nothing saved, goes to the server.
-  Future<void> _showFirst(RequestOptions options, RequestInterceptorHandler handler) async {
-    final key = _key(options);
+  Future<void> _showFirst(RequestOptions options, RequestInterceptorHandler handler, String key) async {
     final client = this.client;
-    if (client == null || probe || key == null || !showsFirst(key)) return handler.next(options);
+    if (client == null || probe || !showsFirst(key)) return _ask(options, handler);
+    final cacheKey = (server: _server, account: _account, request: key);
+    final beforeLookup = _db._answered[cacheKey] ?? 0;
     final saved = await _find(key);
-    if (saved == null || _db.isExpired(_server, key, saved.savedAt)) return handler.next(options);
+    // A write may have completed during the lookup. Use the generation
+    // observed before it so an older snapshot cannot pass a later expiry.
+    if (saved == null || beforeLookup < _db._expiry(cacheKey)) return _ask(options, handler);
     handler.resolve(_answer(options, saved));
-    if (DateTime.now().difference(saved.savedAt) >= recheckAfter) unawaited(_recheck(client, options, key, saved));
+    final recheckFrom = _db._recheckGeneration(cacheKey);
+    if (beforeLookup < recheckFrom || DateTime.now().difference(saved.savedAt) >= recheckAfter) {
+      unawaited(_recheck(client, options, cacheKey, saved, recheckFrom));
+    }
   }
 
   /// Asks the server again for what [saved] answered: see [onResponse].
-  Future<void> _recheck(Dio client, RequestOptions options, String key, CachedResponse saved) async {
-    final asking = '$_server $_account $key';
-    if (!_db.rechecking.add(asking)) return;
+  Future<void> _recheck(
+    Dio client,
+    RequestOptions options,
+    _CacheKey key,
+    CachedResponse saved,
+    int recheckFrom,
+  ) async {
+    final asking = (key, recheckFrom);
+    if (!_db._rechecking.add(asking)) return;
     try {
-      await client.fetch<Object?>(options.copyWith(extra: {...options.extra, _recheckKey: saved.body}));
+      await client.fetch<Object?>(
+        options.copyWith(extra: {...options.extra, _recheckKey: saved.body, _askedKey: ++_db._generation}),
+      );
     } on Object {
       // What was shown stays; onError has told whether the server is there.
     } finally {
-      _db.rechecking.remove(asking);
+      _db._rechecking.remove(asking);
     }
   }
 
@@ -504,33 +557,24 @@ class OfflineCache extends Interceptor {
     _offline(false);
     final options = response.requestOptions;
     final key = _key(options);
-    if (options.extra[_recheckKey] case final String shown when key != null) {
-      final data = response.data;
-      if (response.statusCode == 200 && (data is Map || data is List)) {
-        final body = jsonEncode(data);
+    final data = response.data;
+    if (key != null && response.statusCode == 200 && (data is Map || data is List)) {
+      final body = jsonEncode(data);
+      final save = _db.save(_server, _account, key, body, asked: options.extra[_askedKey] as int?);
+      if (options.extra[_recheckKey] case final String shown) {
         try {
           // Kept before anyone hears of it, so the reload shows it.
-          final kept = await _db.save(_server, _account, key, body, asked: options.extra[_askedKey] as int?);
-          if (kept && body != shown) onFresh?.call(key);
+          if (await save && body != shown) onFresh?.call(key);
         } on Object {
           // The cache only helps.
         }
+      } else {
+        unawaited(save.catchError((Object _) => false));
       }
-    } else if (key != null && response.statusCode == 200 && response.data != null) {
-      // Anything else is not this API: a captive portal's page, answered 200.
-      if (response.data is Map || response.data is List) {
-        unawaited(
-          _db
-              .save(
-                _server,
-                _account,
-                key,
-                jsonEncode(response.data),
-                asked: options.extra[_askedKey] as int?,
-              )
-              .catchError((Object _) => false),
-        );
-      }
+    } else if (options.method == 'POST' &&
+        response.statusCode == 201 &&
+        (options.path == '/groups' || options.path == '/groups/import')) {
+      _db._expireGroupLists(_server);
     } else if (key == null && options.method != 'GET') {
       // A change to a group: what was saved of it is out of date. This is
       // done before the caller hears back, and so before it reloads.
@@ -558,13 +602,14 @@ class OfflineCache extends Interceptor {
     final response = err.response;
     if (response != null && !isGatewayError(response)) {
       _offline(false);
-      // Asked again behind what was shown, the server now refuses it, as
-      // for a group that is gone: the reload shows why.
+      // Only authoritative removals or access denials evict saved answers.
       final key = _key(err.requestOptions);
-      if (key != null && err.requestOptions.extra.containsKey(_recheckKey)) {
+      final extra = err.requestOptions.extra;
+      final asked = extra[_askedKey];
+      if (key != null && asked is int && showsFirst(key) && _answerUnavailable(response)) {
         try {
-          await _db.forget(_server, _account, key);
-          onFresh?.call(key);
+          final removed = await _db._forgetAnswer((server: _server, account: _account, request: key), asked);
+          if (removed && extra.containsKey(_recheckKey)) onFresh?.call(key);
         } on Object {
           // The cache only helps.
         }
@@ -586,5 +631,14 @@ class OfflineCache extends Interceptor {
     if (saved == null) return handler.next(err);
     _offline(true);
     handler.resolve(_answer(err.requestOptions, saved));
+  }
+
+  static bool _answerUnavailable(Response<dynamic> response) {
+    final data = response.data;
+    if (data is! Map) return false;
+    return switch ((response.statusCode, data['code'])) {
+      (401, 'sign_in_required') || (403, 'not_a_member' || 'email_unverified') || (404, 'not_found') => true,
+      _ => false,
+    };
   }
 }

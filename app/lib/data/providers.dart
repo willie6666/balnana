@@ -452,7 +452,11 @@ void refreshGroupOf(Ref ref, String token) =>
 /// [refreshGroup] when nothing is known to have changed, as when following
 /// the group's changes starts again: what was saved shows at once, and is
 /// replaced if the server answers otherwise (see [OfflineCache.showsFirst]).
-void recheckGroup(WidgetRef ref, String token) => _refresh(ref.invalidate, token, null, null);
+void recheckGroup(WidgetRef ref, String token) {
+  final server = ref.read(serverUrlProvider);
+  if (server != null) ref.read(cacheDbProvider)?.recheckGroup(server, token);
+  _refresh(ref.invalidate, token, null, null);
+}
 
 /// [refreshGroup] for a pull to refresh, done once [shown], what the tab
 /// shows, is back. A failure is left to the tab to show.

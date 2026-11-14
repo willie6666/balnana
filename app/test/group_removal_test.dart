@@ -162,7 +162,7 @@ void main() {
   test('deletion purges every account cache and rejects late saved answers', () async {
     final db = CacheDb(NativeDatabase.memory());
     addTearDown(db.close);
-    final asked = db.forgets;
+    final asked = db.generation;
     for (final account in ['ana', 'ben']) {
       for (final request in [
         'GET /g/deleted',

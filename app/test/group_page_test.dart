@@ -665,40 +665,63 @@ void main() {
     expect(find.text('Flat 3'), findsWidgets);
   });
 
-  testWidgets('connecting shows what was saved meanwhile; a change asks the server first', (tester) async {
+  testWidgets('connecting checks a recent cache in the background; a change asks the server first', (
+    tester,
+  ) async {
     final db = _memoryDb();
-    final streams = <StreamController<LiveEvent>>[];
-    final container = await _boot(tester, db: db, [
-      groupProvider.overrideWith((ref, token) async => _group('Flat')),
-      groupEventsProvider.overrideWithValue((dio, token) {
-        final events = StreamController<LiveEvent>();
-        streams.add(events);
-        return events.stream;
-      }),
-    ]);
+    final events = StreamController<LiveEvent>.broadcast();
     addTearDown(() {
-      for (final s in streams) {
-        s.close();
-      }
+      events.close();
     });
-    await _go(tester, container, '/g/tok');
-    final saved = DateTime.now().subtract(const Duration(minutes: 1));
-    bool expired(String request) => db.isExpired(_server, request, saved);
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server;
+    // Seed before boot, while the test can await real database work.
+    await tester.runAsync(() async {
+      final initial = await dio.get<Object?>('/g/tok');
+      await db.save(_server, '', 'GET /g/tok', jsonEncode(initial.data));
+    });
+    final container = await _boot(tester, db: db, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((_, _) => events.stream),
+    ]);
+    dio.interceptors.add(
+      OfflineCache(
+        db,
+        _server,
+        '',
+        (_) {},
+        client: dio,
+        onFresh: (request) => container.read(freshAnswersProvider.notifier).add(request),
+      ),
+    );
 
-    streams.last.add(LiveEvent.connected);
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-    expect(expired('GET /g/tok/activity?limit=30'), isFalse);
-    expect(expired('POST /groups/summaries {}'), isFalse);
+    var replies = 0;
+    Future<void> emit(List<LiveEvent> burst, String name, {required bool background}) async {
+      final reply = Completer<ResponseBody>();
+      server.group = () {
+        replies++;
+        return reply.future;
+      };
+      final values = <AsyncValue<Group>>[];
+      final sub = container.listen(groupProvider('tok'), (_, value) => values.add(value));
+      for (final event in burst) {
+        events.add(event);
+      }
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(replies, 1);
+      expect(values.last.isLoading, !background);
+      reply.complete(_GroupServer.named(name));
+      await tester.pumpAndSettle();
+      expect(find.text(name), findsWidgets);
+      sub.close();
+      replies = 0;
+    }
 
+    await emit([LiveEvent.connected], 'After connecting', background: true);
     // A change in the same burst wins.
-    streams.last
-      ..add(LiveEvent.change)
-      ..add(LiveEvent.connected);
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-    expect(expired('GET /g/tok/activity?limit=30'), isTrue);
-    expect(expired('POST /groups/summaries {}'), isTrue);
+    await emit([LiveEvent.change, LiveEvent.connected], 'After a change', background: false);
   });
 
   testWidgets('searching asks the server and clearing brings everything back', (tester) async {

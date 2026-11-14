@@ -52,6 +52,8 @@ class _Server implements HttpClientAdapter {
   var calls = 0;
   var plain = false;
   Future<void>? hold;
+  Completer<void>? started;
+  RequestOptions? firstRequest;
 
   @override
   Future<ResponseBody> fetch(
@@ -59,7 +61,11 @@ class _Server implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    calls++;
+    final call = ++calls;
+    firstRequest ??= options;
+    final hold = this.hold;
+    final status = this.status;
+    if (started case final signal? when !signal.isCompleted) signal.complete();
     if (down) throw DioException.connectionError(requestOptions: options, reason: 'down');
     final who = options.headers['Authorization'];
     await hold;
@@ -75,8 +81,10 @@ class _Server implements HttpClientAdapter {
     return ResponseBody.fromString(
       jsonEncode(switch (status) {
         401 => {'code': 'sign_in_required'},
+        403 => {'code': 'not_a_member'},
+        404 => {'code': 'not_found'},
         >= 400 => {'code': 'busy'},
-        _ => {'path': options.uri.path, 'call': calls, 'who': who},
+        _ => {'path': options.uri.path, 'call': call, 'who': who},
       }),
       status,
       headers: {
@@ -379,16 +387,51 @@ void main() {
   group('shown first while online', () {
     late List<String> fresh;
     late Dio showing;
+    late Completer<String> changed;
+
+    // Register after OfflineCache so the signal arrives after it has saved
+    // or rejected the recheck's response.
+    Future<void> observeRecheck() {
+      final done = Completer<void>();
+      showing.interceptors.add(
+        InterceptorsWrapper(
+          onResponse: (response, handler) {
+            if (identical(response.requestOptions, server.firstRequest)) done.complete();
+            handler.next(response);
+          },
+          onError: (error, handler) {
+            if (identical(error.requestOptions, server.firstRequest)) done.complete();
+            handler.next(error);
+          },
+        ),
+      );
+      return done.future;
+    }
 
     setUp(() {
       fresh = [];
+      changed = Completer<String>();
       showing = Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server;
-      showing.interceptors.add(OfflineCache(db, _server, '', offline.add, client: showing, onFresh: fresh.add));
+      showing.interceptors.add(
+        OfflineCache(
+          db,
+          _server,
+          '',
+          offline.add,
+          client: showing,
+          onFresh: (request) {
+            fresh.add(request);
+            if (!changed.isCompleted) changed.complete(request);
+          },
+        ),
+      );
+      addTearDown(showing.close);
     });
 
     /// Saves [body] as the answer to [request], [age] ago.
-    Future<void> keep(String request, Object body, {Duration age = const Duration(minutes: 1)}) =>
-        db.into(db.cachedResponses).insertOnConflictUpdate(
+    Future<void> keep(String request, Object body, {Duration age = const Duration(minutes: 1)}) => db
+        .into(db.cachedResponses)
+        .insertOnConflictUpdate(
           CachedResponsesCompanion.insert(
             server: _server,
             account: '',
@@ -403,7 +446,7 @@ void main() {
       final shown = await showing.get<Object?>('/g/tok/balances');
       expect(shown.data, {'old': true});
       expect(shown.extra['savedAt'], isA<DateTime>());
-      await saved();
+      expect(await changed.future, 'GET /g/tok/balances');
       expect(server.calls, 1);
       expect(fresh, ['GET /g/tok/balances']);
 
@@ -416,17 +459,26 @@ void main() {
 
     test('an answer that did not change reloads nothing', () async {
       await keep('GET /g/tok', {'path': '/api/v1/g/tok', 'call': 1, 'who': null});
+      final checked = observeRecheck();
       await showing.get<Object?>('/g/tok');
-      await saved();
+      await checked;
       expect(server.calls, 1);
       expect(fresh, isEmpty);
     });
 
     test('the lists of groups show first too, asked once at a time', () async {
       await keep('GET /me/groups', []);
-      server.hold = Future<void>.delayed(const Duration(milliseconds: 50));
-      await Future.wait([showing.get<Object?>('/me/groups'), showing.get<Object?>('/me/groups')]);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final release = Completer<void>();
+      final started = server.started = Completer<void>();
+      server.hold = release.future;
+      final cached = await Future.wait([
+        showing.get<Object?>('/me/groups'),
+        showing.get<Object?>('/me/groups'),
+      ]);
+      expect(cached.map((r) => r.data), [[], []]);
+      await started.future;
+      release.complete();
+      expect(await changed.future, 'GET /me/groups');
       expect(server.calls, 1);
       expect(fresh, ['GET /me/groups']);
     });
@@ -455,16 +507,16 @@ void main() {
     });
 
     test('after expire the server is asked first, for that group and the lists', () async {
-      await keep('GET /g/tok/activity?limit=30', {'old': true});
-      await keep('GET /g/other', {'old': true});
-      await keep('GET /me/groups', {'old': true});
+      const old = '{"old":true}';
+      await db.save(_server, '', 'GET /g/tok/activity?limit=30', old);
+      await db.save(_server, '', 'GET /g/other', old);
+      await db.save(_server, '', 'GET /me/groups', old);
       db.expire(_server, group: 'tok');
       expect((await showing.get<Object?>('/g/tok/activity', queryParameters: {'limit': 30})).data, isNot({'old': true}));
       expect((await showing.get<Object?>('/me/groups')).data, isNot({'old': true}));
       expect((await showing.get<Object?>('/g/other')).data, {'old': true});
 
       // What the server answered since shows first again.
-      await saved();
       final calls = server.calls;
       expect((await showing.get<Object?>('/me/groups')).extra['savedAt'], isA<DateTime>());
       expect(server.calls, calls);
@@ -477,10 +529,67 @@ void main() {
       await keep('GET /g/gone', {'old': true});
       server.status = 404;
       expect((await showing.get<Object?>('/g/gone')).data, {'old': true});
-      await saved();
+      expect(await changed.future, 'GET /g/gone');
       expect(fresh, ['GET /g/gone']);
       expect(await db.find(_server, '', 'GET /g/gone'), isNull);
     });
+
+    for (final status in [429, 500, 503]) {
+      test('a temporary HTTP $status keeps the offline answer', () async {
+        await keep('GET /g/tok', {'old': true});
+        final checked = observeRecheck();
+        server.status = status;
+        expect((await showing.get<Object?>('/g/tok')).data, {'old': true});
+        await checked;
+        expect(fresh, isEmpty);
+        expect(server.calls, 1);
+        server.down = true;
+        expect((await dio.get<Object?>('/g/tok')).data, {'old': true});
+      });
+    }
+
+    for (final (action, status) in [('refresh', 200), ('join', 403), ('a newer read', 200)]) {
+      test('a late recheck HTTP $status cannot roll back data after $action', () async {
+        const request = 'GET /g/tok';
+        await keep(request, {'old': true});
+        final checked = observeRecheck();
+        final release = Completer<void>();
+        final started = server.started = Completer<void>();
+        server
+          ..status = status
+          ..hold = release.future;
+        expect((await showing.get<Object?>('/g/tok')).data, {'old': true});
+        await started.future;
+        server
+          ..status = 200
+          ..hold = null;
+        if (action == 'join') {
+          await showing.post<Object?>('/g/tok/join');
+        } else if (action == 'refresh') {
+          db.expire(_server, group: 'tok');
+        }
+        final latest = (await (action == 'a newer read' ? dio : showing).get<Object?>('/g/tok')).data;
+        expect(latest, isNot({'old': true}));
+        release.complete();
+        await checked;
+        expect(fresh, isEmpty);
+        final cached = await db.find(_server, '', request);
+        expect(jsonDecode(cached!.body), latest);
+      });
+    }
+
+    for (final (path, status) in [('/groups', 201), ('/groups/import', 201), ('/groups/import', 200)]) {
+      test('POST $path with HTTP $status only expires the list when it creates a group', () async {
+        await db.save(_server, '', 'GET /me/groups', '[]');
+        await db.save(_server, '', 'GET /g/tok', '{"old":true}');
+        server.status = status;
+        await showing.post<Object?>(path);
+        server.status = 200;
+        final list = await showing.get<Object?>('/me/groups');
+        expect(list.extra['savedAt'], status == 201 ? isNull : isA<DateTime>());
+        expect((await showing.get<Object?>('/g/tok')).data, {'old': true});
+      });
+    }
 
     test('out of reach on asking again, the bar shows and nothing reloads', () async {
       await keep('GET /g/tok', {'old': true});
