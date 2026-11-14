@@ -68,7 +68,9 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
     _checking = true;
     try {
       await ref.read(serverProbeProvider)(url);
-      if (mounted) ref.read(offlineProvider.notifier).set(false);
+      if (mounted && ref.read(serverUrlProvider) == url) {
+        ref.read(offlineProvider.notifier).set(false);
+      }
     } on Object {
       // Still out of reach.
     } finally {
@@ -91,7 +93,7 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
     final offline = ref.watch(offlineProvider);
     // Kept alive here, to send what waits whenever the server is back.
     ref.watch(pendingSenderProvider);
-    final waiting = ref.watch(pendingWritesProvider).value?.where((w) => w.error == null).length ?? 0;
+    final waiting = ref.watch(visiblePendingWritesProvider).where((w) => w.error == null).length;
 
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;

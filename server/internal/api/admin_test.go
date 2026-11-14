@@ -164,7 +164,7 @@ func TestAdminSetupCodeOnUpgrade(t *testing.T) {
 }
 
 func TestAdminSettings(t *testing.T) {
-	c, _, _ := adminClient(t, map[string]string{"BALNANA_SOURCE_URL": "https://git.example.com/balnana"})
+	c, s, _ := adminClient(t, map[string]string{"BALNANA_SOURCE_URL": "https://git.example.com/balnana"})
 	admin := c.asAdmin(setUp(c))
 
 	var all AdminSettings
@@ -205,6 +205,7 @@ func TestAdminSettings(t *testing.T) {
 	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{
 		"BALNANA_AUTH_MODE":     "accounts",
 		"BALNANA_SMTP_HOST":     "smtp.example.com",
+		"BALNANA_SMTP_PORT":     "465",
 		"BALNANA_SMTP_FROM":     "Balnana <balnana@example.com>",
 		"BALNANA_SMTP_PASSWORD": "mail secret",
 		"BALNANA_PUBLIC_URL":    " https://split.example.com/ ",
@@ -215,6 +216,9 @@ func TestAdminSettings(t *testing.T) {
 	info := serverInfo(c)
 	if info.AuthMode != "accounts" || !info.Email || info.PublicUrl != "https://split.example.com" {
 		t.Fatalf("not applied: %+v", info)
+	}
+	if port := s.conf().SMTP.Port; port != 465 {
+		t.Fatalf("saved SMTP port was not applied: %d", port)
 	}
 	// Accounts mode is in force for requests, too.
 	if code := c.errorCode(401, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana"}}); code != "sign_in_required" {
@@ -335,6 +339,31 @@ func TestSettingsReachOtherServers(t *testing.T) {
 			t.Fatal("the other server kept the old settings")
 		}
 		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+func TestSettingsChangedBeforeListen(t *testing.T) {
+	c, s, pool := adminClient(t, map[string]string{})
+	admin := c.asAdmin(setUp(c))
+	other := NewServer(s.conf(), pool, slog.New(slog.DiscardHandler), "test")
+	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{"BALNANA_SMTP_PORT": "465"}}, nil)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	finished := make(chan struct{})
+	go func() {
+		defer close(finished)
+		other.ListenForChanges(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-finished
+	})
+	deadline := time.Now().Add(5 * time.Second)
+	for other.conf().SMTP.Port != 465 {
+		if time.Now().After(deadline) {
+			t.Fatal("the server missed settings changed before it started listening")
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

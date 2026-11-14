@@ -107,7 +107,10 @@ void main() {
     expect(await queue('Sushi', 'k1'), isTrue);
 
     final row = (await rows()).single;
-    expect((row.server, row.account, row.groupToken, row.path, row.key), (_server, '', 'tok', '/expenses', 'k1'));
+    expect(
+      (row.server, row.account, row.groupToken, row.path, row.key),
+      (_server, '', 'tok', '/expenses', 'k1'),
+    );
     expect(jsonDecode(row.body), {'title': 'Sushi'});
     expect(row.error, isNull);
     expect(container.read(offlineProvider), isTrue);
@@ -120,7 +123,10 @@ void main() {
 
     await sender().send();
 
-    expect(server.sent.map((s) => (s.path, s.key)), [('/api/v1/g/tok/expenses', 'k1'), ('/api/v1/g/tok/expenses', 'k2')]);
+    expect(server.sent.map((s) => (s.path, s.key)), [
+      ('/api/v1/g/tok/expenses', 'k1'),
+      ('/api/v1/g/tok/expenses', 'k2'),
+    ]);
     expect(server.sent.map((s) => s.body), [
       {'title': 'Sushi'},
       {'title': 'Ramen'},
@@ -208,6 +214,39 @@ void main() {
 
     expect(await rows(), isEmpty);
   });
+
+  test('a broken local row does not stop later drafts from sending', () async {
+    await queue('Sushi', 'k1');
+    await queue('Ramen', 'k2');
+    await queue('Udon', 'k3');
+    await db.customStatement('update pending_writes set body = ?', ['broken JSON']);
+    await db.customStatement('update pending_writes set body = ?, path = ? where "key" = ?', [
+      '{}',
+      '/other',
+      'k2',
+    ]);
+    await db.customStatement('update pending_writes set body = ? where "key" = ?', ['{}', 'k3']);
+
+    await sender().send();
+
+    expect(server.sent.single.key, 'k3');
+    expect((await rows()).map((w) => (w.key, w.error)), [('k1', 'bad_request'), ('k2', 'bad_request')]);
+  });
+
+  test('a pending row from the previous account cannot be discarded or retried', () async {
+    await queue('Sushi', 'k1');
+    final row = (await rows()).single;
+    await db.parkPending(row.id, 'validation_failed');
+    final who = container.read(identityProvider);
+    container.read(sessionProvider.notifier).set('other-account', from: who);
+
+    await sender().discard(row);
+    await sender().retry(row);
+
+    expect((await rows()).single.error, 'validation_failed');
+    expect(server.sent, isEmpty);
+  });
+
   test('a late failure keeps its original server, account and member', () async {
     final session = container.read(sessionProvider.notifier);
     session.set('a-token', from: container.read(identityProvider), userId: 'ana');

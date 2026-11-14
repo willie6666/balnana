@@ -64,9 +64,6 @@ func (f expenseFilter) where(groupID string) (string, []any, error) {
 	return strings.Join(conds, " and "), args, nil
 }
 
-// readerZone is the time zone the reader counts dates in: the named IANA zone,
-// which knows when daylight saving time began and ended, or else one fixed
-// offset in minutes east of UTC, which older apps send.
 // unknownZone reports PostgreSQL turning down a time zone: its own list of
 // them may be older than the one readerZone checks against.
 func unknownZone(err error) bool {
@@ -74,6 +71,8 @@ func unknownZone(err error) bool {
 	return errors.As(err, &pg) && pg.Code == "22023"
 }
 
+// readerZone is the IANA time zone the reader counts dates in, or a fixed
+// offset in minutes east of UTC for older apps.
 func readerZone(utcOffset *int, timeZone *string) (*time.Location, error) {
 	if timeZone != nil && *timeZone != "" {
 		loc, err := time.LoadLocation(*timeZone)

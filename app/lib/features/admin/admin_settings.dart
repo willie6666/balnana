@@ -19,6 +19,8 @@ import '../../ui/widgets/form_page.dart';
 import 'admin_page.dart';
 import 'admin_payments_page.dart';
 import 'admin_plans_page.dart';
+import 'admin_setting_labels.dart';
+import 'admin_settings_dialogs.dart';
 import 'admin_users_page.dart';
 
 /// Settings that are on or off; the server reads them as "true" or "false".
@@ -320,14 +322,17 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final l10n = context.l10n;
     setState(() => _busy = true);
     try {
-      _show(await _api.save(widget.token, changes));
+      final saved = await _api.save(widget.token, changes);
+      if (!mounted) return;
+      _show(saved);
       // This app follows the server's new mode and features too.
       ref.invalidate(serverInfoProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.adminSaved)));
     } on ApiException catch (e) {
       if (_signedOut(e) || !mounted) return;
       if (e.code == 'invalid_settings') {
-        setState(() => _invalid = {...?(e.params['keys'] as List<Object?>?)?.whereType<String>()});
+        final keys = e.params['keys'];
+        setState(() => _invalid = keys is List<Object?> ? keys.whereType<String>().toSet() : {});
         messenger.showSnackBar(SnackBar(content: Text(l10n.adminSaveFailed)));
       } else {
         messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
@@ -344,6 +349,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     } on ApiException {
       // Forget the session here all the same.
     }
+    if (!mounted || ref.read(adminTokenProvider) != widget.token) return;
     ref.read(adminTokenProvider.notifier).set(null);
     router.go('/');
   }
@@ -359,9 +365,9 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final messenger = ScaffoldMessenger.of(context);
     final env = await showDialog<String>(
       context: context,
-      builder: (_) => _ExportDialog(api: _api, token: widget.token),
+      builder: (_) => AdminExportSettingsDialog(api: _api, token: widget.token),
     );
-    if (env == null) return;
+    if (!mounted || env == null) return;
     final saved = await FilePicker.saveFile(
       fileName: 'balnana.env',
       bytes: utf8.encode(env),
@@ -457,7 +463,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
               icon: const Icon(Icons.key_outlined),
               onPressed: () => showDialog<void>(
                 context: context,
-                builder: (_) => _ChangePasswordDialog(api: _api, token: widget.token),
+                builder: (_) => AdminChangePasswordDialog(api: _api, token: widget.token),
               ),
             ),
             IconButton(tooltip: l10n.adminSignOut, icon: const Icon(Icons.logout), onPressed: _signOut),
@@ -668,20 +674,20 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
         keyboardType: keyboard,
         onChanged: (_) => setState(() => _invalid.remove(key)),
         decoration: InputDecoration(
-          labelText: _label(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+          labelText: settingLabel(l10n, 'BALNANA_OAUTH_OIDC_$field'),
           hintText: field == 'NAME' && id.isNotEmpty ? l10n.adminDefault(id) : null,
           floatingLabelBehavior: field == 'NAME' && id.isNotEmpty ? FloatingLabelBehavior.always : null,
           helperText: s?.locked ?? false
               ? _lockedNote(l10n, key)
               : secret && (s?.set ?? false) && c.text.isEmpty
               ? l10n.adminSecretSaved
-              : _help(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+              : settingHelp(l10n, 'BALNANA_OAUTH_OIDC_$field'),
           helperMaxLines: 4,
           errorText: !_invalid.contains(key)
               ? null
               : c.text.trim().isEmpty
               ? l10n.errorRequired
-              : _problem(l10n, 'BALNANA_OAUTH_OIDC_$field'),
+              : settingProblem(l10n, 'BALNANA_OAUTH_OIDC_$field'),
           errorMaxLines: 4,
         ),
       );
@@ -785,7 +791,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final controller = _text[key];
     if (s == null || controller == null) return const SizedBox.shrink();
     final removing = _removed.contains(key);
-    String? helper = s.locked ? _lockedNote(l10n, key) : _help(l10n, key);
+    String? helper = s.locked ? _lockedNote(l10n, key) : settingHelp(l10n, key);
     if (s.secret && !s.locked && s.set && controller.text.isEmpty) {
       helper = removing ? l10n.adminSecretRemoved : l10n.adminSecretSaved;
     }
@@ -800,7 +806,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       maxLines: s.secret ? 1 : maxLines,
       onChanged: (_) => setState(() => _invalid.remove(key)),
       decoration: InputDecoration(
-        labelText: _label(l10n, key),
+        labelText: settingLabel(l10n, key),
         hintText: hint ?? (s.defaultValue.isEmpty ? null : l10n.adminDefault(s.defaultValue)),
         // An empty field means the default; show it without waiting for focus.
         floatingLabelBehavior: hint != null || s.defaultValue.isNotEmpty
@@ -812,7 +818,7 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
             ? null
             : _on.containsKey(key) && controller.text.trim().isEmpty
             ? l10n.errorRequired
-            : _problem(l10n, key),
+            : settingProblem(l10n, key),
         errorMaxLines: 4,
         suffixIcon: s.secret && s.set && !s.locked
             ? IconButton(
@@ -843,13 +849,13 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final scheme = Theme.of(context).colorScheme;
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
-      title: Text(_label(l10n, key)),
+      title: Text(settingLabel(l10n, key)),
       subtitle: Text(
         _invalid.contains(key)
-            ? _problem(l10n, key)
+            ? settingProblem(l10n, key)
             : s.locked
             ? _lockedNote(l10n, key)
-            : help ?? _help(l10n, key) ?? '',
+            : help ?? settingHelp(l10n, key) ?? '',
         style: _invalid.contains(key) ? TextStyle(color: scheme.error) : null,
       ),
       value: value,
@@ -885,17 +891,17 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
     final value = _picked[key] ?? s.effective;
     final theme = Theme.of(context);
     final note = _invalid.contains(key)
-        ? _problem(l10n, key)
+        ? settingProblem(l10n, key)
         : s.locked
         ? _lockedNote(l10n, key)
-        : options[value]?.$2 ?? _help(l10n, key);
+        : options[value]?.$2 ?? settingHelp(l10n, key);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (titled)
           Padding(
             padding: const EdgeInsets.fromLTRB(BSpace.s4, 0, BSpace.s4, BSpace.s8),
-            child: Text(_label(l10n, key), style: theme.textTheme.titleMedium),
+            child: Text(settingLabel(l10n, key), style: theme.textTheme.titleMedium),
           ),
         SegmentedButton<String>(
           segments: [
@@ -939,273 +945,4 @@ Future<bool> _confirmDiscard(BuildContext context) async {
 
 extension on String {
   bool get isTrue => this == 'true';
-}
-
-String _label(AppLocalizations l10n, String key) => switch (key) {
-  'BALNANA_PUBLIC_URL' => l10n.adminPublicUrl,
-  'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
-  'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrl,
-  'BALNANA_MAP_SOURCE' => l10n.adminMapSource,
-  'BALNANA_MAP_STYLE' => l10n.adminMapStyle,
-  'BALNANA_MAP_TILES' => l10n.adminMapTiles,
-  'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttribution,
-  'BALNANA_EXCHANGE_RATES' => l10n.adminExchangeRates,
-  'BALNANA_OXR_APP_ID' => l10n.adminOxrAppId,
-  'BALNANA_AUTH_MODE' => l10n.adminAuthMode,
-  'BALNANA_AUTH_PASSWORD' => l10n.adminPasswordLogin,
-  'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmail,
-  'BALNANA_AUTH_REQUIRE_VERIFIED' => l10n.adminRequireVerified,
-  'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL' => l10n.adminTrustEmail,
-  'BALNANA_AUTH_SIGNUP' => l10n.adminSignup,
-  'BALNANA_LINK_GROUPS' => l10n.adminLinkGroups,
-  'BALNANA_SMTP_HOST' => l10n.adminSmtpHost,
-  'BALNANA_SMTP_PORT' => l10n.adminSmtpPort,
-  'BALNANA_SMTP_USER' => l10n.adminSmtpUser,
-  'BALNANA_SMTP_PASSWORD' => l10n.adminSmtpPassword,
-  'BALNANA_SMTP_FROM' => l10n.adminSmtpFrom,
-  'BALNANA_OAUTH_GOOGLE_CLIENT_ID' || 'BALNANA_OAUTH_OIDC_CLIENT_ID' => l10n.adminClientId,
-  'BALNANA_OAUTH_GOOGLE_SECRET' || 'BALNANA_OAUTH_OIDC_SECRET' => l10n.adminClientSecret,
-  'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminOidcIssuer,
-  'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcName,
-  'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprints,
-  'BALNANA_BILLING_ENABLED' => l10n.adminBillingOn,
-  'BALNANA_KOFI_URL' => l10n.adminKofiUrl,
-  'BALNANA_KOFI_TOKEN' => l10n.adminKofiToken,
-  'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackage,
-  'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccount,
-  'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccount,
-  'BALNANA_PAYPAL_CLIENT_ID' => l10n.adminPayPalClientId,
-  'BALNANA_PAYPAL_SECRET' => l10n.adminPayPalSecret,
-  'BALNANA_PAYPAL_WEBHOOK_ID' => l10n.adminPayPalWebhookId,
-  'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandbox,
-  _ => key,
-};
-
-String? _help(AppLocalizations l10n, String key) => switch (key) {
-  'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
-  'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
-  'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrlHelp,
-  'BALNANA_MAP_STYLE' => l10n.adminMapStyleHelp,
-  'BALNANA_MAP_TILES' => l10n.adminMapTilesHelp,
-  'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttributionHelp,
-  'BALNANA_EXCHANGE_RATES' => l10n.adminExchangeRatesHelp,
-  'BALNANA_OXR_APP_ID' => l10n.adminOxrAppIdHelp,
-  'BALNANA_AUTH_SIGNUP' => l10n.adminSignupHelp,
-  'BALNANA_AUTH_REQUIRE_EMAIL' => l10n.adminRequireEmailHelp,
-  'BALNANA_AUTH_REQUIRE_VERIFIED' => l10n.adminRequireVerifiedHelp,
-  'BALNANA_OAUTH_GOOGLE_TRUST_EMAIL' => l10n.adminGoogleTrustEmailHelp,
-  'BALNANA_LINK_GROUPS' => l10n.adminLinkGroupsHelp,
-  'BALNANA_OAUTH_OIDC_NAME' => l10n.adminOidcNameHelp,
-  'BALNANA_ANDROID_CERT_SHA256' => l10n.adminFingerprintsHelp,
-  'BALNANA_BILLING_ENABLED' => l10n.adminBillingOnHelp,
-  'BALNANA_KOFI_URL' => l10n.adminKofiUrlHelp,
-  'BALNANA_KOFI_TOKEN' => l10n.adminKofiTokenHelp,
-  'BALNANA_PLAY_PACKAGE' => l10n.adminPlayPackageHelp,
-  'BALNANA_PLAY_SERVICE_ACCOUNT' => l10n.adminPlayServiceAccountHelp,
-  'BALNANA_PLAY_PUSH_ACCOUNT' => l10n.adminPlayPushAccountHelp,
-  'BALNANA_PAYPAL_CLIENT_ID' => l10n.adminPayPalClientIdHelp,
-  'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandboxHelp,
-  _ => null,
-};
-
-/// Why the server refused a setting.
-String _problem(AppLocalizations l10n, String key) => switch (key) {
-  'BALNANA_PUBLIC_URL' ||
-  'BALNANA_SOURCE_URL' ||
-  'BALNANA_PRIVACY_URL' ||
-  'BALNANA_KOFI_URL' ||
-  'BALNANA_MAP_STYLE' ||
-  'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
-  'BALNANA_SMTP_FROM' => l10n.adminInvalidFrom,
-  'BALNANA_SMTP_PORT' => l10n.adminInvalidPort,
-  'BALNANA_OAUTH_GOOGLE_SECRET' ||
-  'BALNANA_OAUTH_OIDC_CLIENT_ID' ||
-  'BALNANA_OAUTH_OIDC_SECRET' => l10n.adminInvalidRequired,
-  'BALNANA_PAYPAL_CLIENT_ID' ||
-  'BALNANA_PAYPAL_SECRET' ||
-  'BALNANA_PAYPAL_WEBHOOK_ID' => l10n.adminPayPalRequired,
-  'BALNANA_AUTH_MODE' => l10n.adminNeedsSignIn,
-  'BALNANA_BILLING_ENABLED' => l10n.adminBillingNeedsAccounts,
-  'BALNANA_ANDROID_CERT_SHA256' => l10n.adminInvalidFingerprint,
-  'BALNANA_MAP_TILES' => l10n.adminInvalidMapTiles,
-  _ => l10n.adminInvalidValue,
-};
-
-class _ChangePasswordDialog extends StatefulWidget {
-  const _ChangePasswordDialog({required this.api, required this.token});
-
-  final AdminApi api;
-  final String token;
-
-  @override
-  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
-}
-
-class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
-  final _form = GlobalKey<FormState>();
-  final _current = TextEditingController();
-  final _next = TextEditingController();
-  bool _busy = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _current.dispose();
-    _next.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_form.currentState!.validate()) return;
-    final l10n = context.l10n;
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await widget.api.changePassword(widget.token, current: _current.text, next: _next.text);
-      if (!mounted) return;
-      Navigator.pop(context);
-      messenger.showSnackBar(SnackBar(content: Text(l10n.adminPasswordChanged)));
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = e.code == 'wrong_password' ? l10n.errorAdminWrongPassword : errorMessage(l10n, e);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    return AlertDialog(
-      scrollable: true,
-      title: Text(l10n.adminChangePassword),
-      content: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _current,
-              enabled: !_busy,
-              obscureText: true,
-              autofillHints: const [AutofillHints.password],
-              decoration: InputDecoration(labelText: l10n.adminPasswordCurrent),
-              validator: (v) => (v ?? '').isEmpty ? l10n.errorRequired : null,
-            ),
-            const SizedBox(height: BSpace.s16),
-            TextFormField(
-              controller: _next,
-              enabled: !_busy,
-              obscureText: true,
-              autofillHints: const [AutofillHints.newPassword],
-              onFieldSubmitted: (_) => _submit(),
-              decoration: InputDecoration(
-                labelText: l10n.adminPasswordNew,
-                helperText: l10n.accountPasswordHelp,
-              ),
-              validator: (v) =>
-                  (v ?? '').runes.length < 8 || v!.runes.length > 200 ? l10n.errorInvalidPassword : null,
-            ),
-            if (_error case final error?) ...[
-              const SizedBox(height: BSpace.s16),
-              Text(error, style: TextStyle(color: scheme.error)),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.commonCancel)),
-        TextButton(onPressed: _busy ? null : _submit, child: Text(l10n.commonSave)),
-      ],
-    );
-  }
-}
-
-/// Asks for the administrator password again and returns the saved settings
-/// as the text of a .env file.
-class _ExportDialog extends StatefulWidget {
-  const _ExportDialog({required this.api, required this.token});
-
-  final AdminApi api;
-  final String token;
-
-  @override
-  State<_ExportDialog> createState() => _ExportDialogState();
-}
-
-class _ExportDialogState extends State<_ExportDialog> {
-  final _form = GlobalKey<FormState>();
-  final _password = TextEditingController();
-  bool _busy = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _password.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (_busy || !_form.currentState!.validate()) return;
-    final l10n = context.l10n;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final env = await widget.api.exportSettings(widget.token, _password.text);
-      if (mounted) Navigator.pop(context, env);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = e.code == 'wrong_password' ? l10n.errorAdminWrongPassword : errorMessage(l10n, e);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AlertDialog(
-      scrollable: true,
-      title: Text(l10n.adminExport),
-      content: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.adminExportBody),
-            const SizedBox(height: BSpace.s16),
-            TextFormField(
-              controller: _password,
-              enabled: !_busy,
-              autofocus: true,
-              obscureText: true,
-              autofillHints: const [AutofillHints.password],
-              onFieldSubmitted: (_) => _submit(),
-              decoration: InputDecoration(
-                labelText: l10n.adminPasswordCurrent,
-                errorText: _error,
-                errorMaxLines: 3,
-              ),
-              validator: (v) => (v ?? '').isEmpty ? l10n.errorRequired : null,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.commonCancel)),
-        TextButton(onPressed: _busy ? null : _export, child: Text(l10n.commonContinue)),
-      ],
-    );
-  }
-
-  void _export() => _submit();
 }

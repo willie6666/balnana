@@ -389,7 +389,7 @@ func failureCode(err error) string {
 }
 
 // recurringBatch is how many repeating expenses are looked up at a time.
-var recurringBatch = 100
+const recurringBatch = 100
 
 // RunRecurring adds the occurrences that are due now and then every minute
 // until ctx ends. Several servers sharing the database may each run it.
@@ -399,7 +399,7 @@ func (s *Server) RunRecurring(ctx context.Context) {
 	for {
 		func() {
 			defer s.logPanic("adding recurring expenses")
-			if n, err := s.runRecurring(ctx, time.Now()); err != nil && ctx.Err() == nil {
+			if n, err := s.runRecurring(ctx, time.Now(), recurringBatch); err != nil && ctx.Err() == nil {
 				s.log.Warn("adding recurring expenses failed", "err", err)
 			} else if n > 0 {
 				s.log.Debug("added recurring expenses", "expenses", n)
@@ -414,35 +414,48 @@ func (s *Server) RunRecurring(ctx context.Context) {
 }
 
 // runRecurring adds what is due by now, returning how many expenses it added.
-func (s *Server) runRecurring(ctx context.Context, now time.Time) (int, error) {
+func (s *Server) runRecurring(ctx context.Context, now time.Time, batch int) (int, error) {
+	type dueRecurring struct {
+		nextAt time.Time
+		id     string
+	}
+	var after *dueRecurring
 	total := 0
-	var first error
+	var firstErr error
 	for {
+		var afterTime, afterID any
+		if after != nil {
+			afterTime, afterID = after.nextAt, after.id
+		}
 		rows, err := s.db.Query(ctx, `
-			select r.id::text from recurring_expenses r join groups g on g.id = r.group_id
+			select r.next_at, r.id::text from recurring_expenses r join groups g on g.id = r.group_id
 			where r.next_at <= $1 and r.paused_at is null and g.archived_at is null and g.recurring
-			order by r.next_at limit $2`, now, recurringBatch)
+			  and ($3::timestamptz is null or (r.next_at, r.id) > ($3, $4::uuid))
+			order by r.next_at, r.id limit $2`, now, batch, afterTime, afterID)
 		if err != nil {
-			return total, err
+			return total, errors.Join(firstErr, err)
 		}
-		ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+		due, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (dueRecurring, error) {
+			var r dueRecurring
+			err := row.Scan(&r.nextAt, &r.id)
+			return r, err
+		})
 		if err != nil {
-			return total, err
+			return total, errors.Join(firstErr, err)
 		}
-		added := 0
-		for _, id := range ids {
-			n, err := s.runOneRecurring(ctx, id, now)
-			added += n
-			if err != nil && first == nil {
-				first = err
+		for _, r := range due {
+			n, err := s.runOneRecurring(ctx, r.id, now)
+			total += n
+			if err != nil && firstErr == nil {
+				firstErr = err
 			}
 		}
-		total += added
-		// A full batch means more are waiting. One that added nothing is stuck
-		// on what is busy or failing, which the next round tries again.
-		if len(ids) < recurringBatch || added == 0 {
-			return total, first
+		if len(due) < batch {
+			return total, firstErr
 		}
+		// Advance even if this entire batch was locked. The next round will
+		// retry what stayed due.
+		after = &due[len(due)-1]
 	}
 }
 

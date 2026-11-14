@@ -117,22 +117,38 @@ func (h *hub) changedAll() {
 	}
 }
 
-// ListenForChanges keeps a database connection listening for group changes
-// and saved settings
-// until ctx ends, then closes all event streams. Run it once per server.
+// ListenForChanges listens for group and settings changes until ctx ends,
+// then closes all event streams. Run it once per server.
 func (s *Server) ListenForChanges(ctx context.Context) {
-	defer close(s.hub.done)
+	// Keep database reads off the notification connection. A buffered signal
+	// covers every change before the next read, even while a reload is running.
+	reload := make(chan struct{}, 1)
+	var worker sync.WaitGroup
+	worker.Go(func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-reload:
+				s.reloadSettings(ctx)
+			}
+		}
+	})
+	defer func() {
+		close(s.hub.done)
+		worker.Wait()
+	}()
 	backoff := time.Second
 	first := true
 	for {
-		err := s.listenOnce(ctx, func() {
+		err := s.listenOnce(ctx, reload, func() {
+			// Settings may have changed before LISTEN was established.
+			wake(reload)
 			if first {
 				close(s.hub.ready)
 				first = false
 			} else {
 				s.hub.changedAll()
-				// Settings may have changed while nobody was listening.
-				go s.reloadSettings(ctx)
 			}
 			backoff = time.Second
 		})
@@ -149,7 +165,7 @@ func (s *Server) ListenForChanges(ctx context.Context) {
 	}
 }
 
-func (s *Server) listenOnce(ctx context.Context, listening func()) error {
+func (s *Server) listenOnce(ctx context.Context, reload chan struct{}, listening func()) error {
 	pooled, err := s.db.Acquire(ctx)
 	if err != nil {
 		return err
@@ -167,7 +183,7 @@ func (s *Server) listenOnce(ctx context.Context, listening func()) error {
 			return err
 		}
 		if n.Channel == settingsChannel {
-			go s.reloadSettings(ctx)
+			wake(reload)
 			continue
 		}
 		s.hub.changed(n.Payload)

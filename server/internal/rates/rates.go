@@ -229,16 +229,19 @@ func (c *Cache) Table(ctx context.Context, source Source) (*Table, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	now := c.now()
-	if c.source != source.Name() {
+	name := source.Name()
+	if c.source != name {
 		// A new source, or the first ask since starting.
-		c.source, c.table, c.failed = source.Name(), nil, time.Time{}
+		var table *Table
+		var fetched time.Time
 		if c.Store != nil {
-			t, fetched, err := c.Store.Load(ctx, source.Name())
+			var err error
+			table, fetched, err = c.Store.Load(ctx, name)
 			if err != nil {
 				return nil, err
 			}
-			c.table, c.fetched = t, fetched
 		}
+		c.source, c.table, c.fetched, c.failed = name, table, fetched, time.Time{}
 	}
 	if c.table != nil && now.Sub(c.fetched) < MaxAge || now.Sub(c.failed) < retryAfter {
 		return c.last()
@@ -253,7 +256,7 @@ func (c *Cache) Table(ctx context.Context, source Source) (*Table, error) {
 	if err != nil {
 		c.failed = now
 		if c.Log != nil {
-			c.Log.Warn("exchange rates not fetched", "source", source.Name(), "err", err)
+			c.Log.Warn("exchange rates not fetched", "source", name, "err", err)
 		}
 		if c.table == nil {
 			return nil, fmt.Errorf("%w: %w", ErrUnavailable, err)
@@ -262,8 +265,11 @@ func (c *Cache) Table(ctx context.Context, source Source) (*Table, error) {
 	}
 	c.table, c.fetched, c.failed = t, now, time.Time{}
 	if c.Store != nil {
-		if err := c.Store.Save(ctx, t, now); err != nil {
-			return nil, err
+		// Persist a successful refresh even if its caller went away.
+		saveCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+		defer cancel()
+		if err := c.Store.Save(saveCtx, t, now); err != nil && c.Log != nil {
+			c.Log.Warn("exchange rates not saved", "source", name, "err", err)
 		}
 	}
 	return t, nil

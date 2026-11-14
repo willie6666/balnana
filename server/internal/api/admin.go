@@ -80,6 +80,11 @@ func (s *Server) LoadSettings(ctx context.Context) error {
 // that do not fit this server's environment leave in force what is.
 func (s *Server) reloadSettings(ctx context.Context) {
 	defer s.logPanic("reloading settings")
+	s.settingsMu.Lock()
+	defer s.settingsMu.Unlock()
+	if ctx.Err() != nil || config.EnvOnly() {
+		return
+	}
 	stored, err := storedSettings(ctx, s.db)
 	if err == nil {
 		var cfg *config.Config
@@ -88,7 +93,9 @@ func (s *Server) reloadSettings(ctx context.Context) {
 			return
 		}
 	}
-	s.log.Error("reloading settings failed; keeping the settings in force", "err", err)
+	if ctx.Err() == nil {
+		s.log.Error("reloading settings failed; keeping the settings in force", "err", err)
+	}
 }
 
 func storedSettings(ctx context.Context, q querier) (map[string]string, error) {
@@ -96,6 +103,7 @@ func storedSettings(ctx context.Context, q querier) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	stored := map[string]string{}
 	for rows.Next() {
 		var k, v string
@@ -378,6 +386,10 @@ func (s *Server) UpdateAdminSettings(ctx context.Context, req UpdateAdminSetting
 		return nil, invalidSettings(bad)
 	}
 
+	// Include applying the committed config in the local critical section.
+	// The database lock orders writes across servers but ends at commit.
+	s.settingsMu.Lock()
+	defer s.settingsMu.Unlock()
 	var cfg *config.Config
 	var stored map[string]string
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {

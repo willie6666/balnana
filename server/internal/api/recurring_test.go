@@ -276,7 +276,7 @@ func TestRecurringResumeAfterFailure(t *testing.T) {
 		where id = $1`, r.Id); err != nil {
 		t.Fatal(err)
 	}
-	if n, err := s.runRecurring(ctx, time.Now()); err != nil || n != 0 {
+	if n, err := s.runRecurring(ctx, time.Now(), recurringBatch); err != nil || n != 0 {
 		t.Fatalf("added %d, err %v", n, err)
 	}
 	c.must(200, "GET", base+"/recurring/"+r.Id, nil, &r)
@@ -368,7 +368,7 @@ func TestRecurringSchedulersAtOnce(t *testing.T) {
 	total := 0
 	for range 4 {
 		wg.Go(func() {
-			n, err := s.runRecurring(ctx, at)
+			n, err := s.runRecurring(ctx, at, recurringBatch)
 			if err != nil {
 				t.Error(err)
 			}
@@ -379,11 +379,11 @@ func TestRecurringSchedulersAtOnce(t *testing.T) {
 	}
 	wg.Wait()
 	// One that found everything busy leaves it for the next round.
-	n, err := s.runRecurring(ctx, at)
+	n, err := s.runRecurring(ctx, at, recurringBatch)
 	if err != nil || total+n != 20 {
 		t.Fatalf("added %d and then %d, err %v", total, n, err)
 	}
-	if n, err := s.runRecurring(ctx, at); err != nil || n != 0 {
+	if n, err := s.runRecurring(ctx, at, recurringBatch); err != nil || n != 0 {
 		t.Fatalf("again: added %d, err %v", n, err)
 	}
 }
@@ -436,7 +436,7 @@ func TestRecurringCalendar(t *testing.T) {
 			SplitMethod: "equal", Splits: []Share{{MemberId: c.member}},
 			Repeat: Repeat{Unit: c2.unit, Every: 1}, TimeZone: ptr("Europe/Berlin"),
 		}, &r)
-		if n, err := s.runRecurring(ctx, c2.at); err != nil || n != len(c2.want) {
+		if n, err := s.runRecurring(ctx, c2.at, recurringBatch); err != nil || n != len(c2.want) {
 			t.Fatalf("%s: added %d, err %v", c2.name, n, err)
 		}
 		var got []string
@@ -540,7 +540,7 @@ func TestRecurringExpenses(t *testing.T) {
 	// The job adds each occurrence once, however often it runs.
 	run := func(at time.Time, want int) {
 		t.Helper()
-		n, err := s.runRecurring(ctx, at)
+		n, err := s.runRecurring(ctx, at, recurringBatch)
 		if err != nil || n != want {
 			t.Fatalf("run at %v: added %d, want %d, err %v", at, n, want, err)
 		}
@@ -618,7 +618,7 @@ func TestRecurringGoesOnWhenMemberLeaves(t *testing.T) {
 	}
 	c.must(204, "DELETE", base+"/members/"+ben, nil, nil)
 
-	if n, err := s.runRecurring(ctx, time.Now().Add(2*time.Hour)); err != nil || n != 1 {
+	if n, err := s.runRecurring(ctx, time.Now().Add(2*time.Hour), recurringBatch); err != nil || n != 1 {
 		t.Fatalf("added %d, err %v", n, err)
 	}
 	c.must(200, "GET", base+"/recurring/"+r.Id, nil, &r)
@@ -698,9 +698,6 @@ func TestRecurringValidation(t *testing.T) {
 
 // A backlog larger than a batch is added in one round, not one batch a minute.
 func TestRecurringCatchesUpInOneRound(t *testing.T) {
-	old := recurringBatch
-	recurringBatch = 2
-	t.Cleanup(func() { recurringBatch = old })
 	c, s, _ := adminClient(t, map[string]string{})
 	start := time.Now().UTC().Truncate(time.Second).Add(time.Hour)
 	g := createGroup(c, "Ana")
@@ -713,8 +710,48 @@ func TestRecurringCatchesUpInOneRound(t *testing.T) {
 			Repeat: Repeat{Unit: Day, Every: 1},
 		}, nil)
 	}
-	if n, err := s.runRecurring(context.Background(), start.Add(time.Minute)); err != nil || n != 5 {
+	if n, err := s.runRecurring(t.Context(), start.Add(time.Minute), 2); err != nil || n != 5 {
 		t.Fatalf("added %d, err %v", n, err)
+	}
+}
+
+func TestRecurringContinuesPastLockedBatch(t *testing.T) {
+	c, s, pool := adminClient(t, map[string]string{})
+	ctx := t.Context()
+	start := time.Now().UTC().Truncate(time.Second).Add(time.Hour)
+	busy, free := createGroup(c, "Ana"), createGroup(c, "Ben")
+	for _, tc := range []struct {
+		group Group
+		start time.Time
+		count int
+	}{{busy, start, 2}, {free, start.Add(time.Minute), 1}} {
+		c.member = tc.group.Members[0].Id
+		for range tc.count {
+			c.must(201, "POST", "/g/"+tc.group.Token+"/recurring", RecurringExpenseInput{
+				Title: "Bread", Amount: "2.00", StartsAt: tc.start,
+				Payers:      []PayerInput{{MemberId: c.member, Amount: "2.00"}},
+				SplitMethod: "equal", Splits: []Share{{MemberId: c.member}},
+				Repeat: Repeat{Unit: Day, Every: 1},
+			}, nil)
+		}
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(ctx)
+	if _, err := tx.Exec(ctx, `select id from groups where token = $1 for update`, busy.Token); err != nil {
+		t.Fatal(err)
+	}
+	now := start.Add(2 * time.Minute)
+	if n, err := s.runRecurring(ctx, now, 2); n != 1 || err != nil {
+		t.Fatalf("while locked: added %d, err %v", n, err)
+	}
+	if err := tx.Rollback(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := s.runRecurring(ctx, now, 2); n != 2 || err != nil {
+		t.Fatalf("after unlock: added %d, err %v", n, err)
 	}
 }
 

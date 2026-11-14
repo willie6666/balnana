@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 	// Readers' time zones are looked up even in an image without tzdata.
@@ -94,9 +95,14 @@ func run() error {
 	}
 	// Stops with ctx, which also ends open event streams so shutdown need
 	// not wait for them.
-	go srv.ListenForChanges(ctx)
-	go srv.SweepExpired(ctx)
-	go srv.RunRecurring(ctx)
+	var background sync.WaitGroup
+	background.Go(func() { srv.ListenForChanges(ctx) })
+	background.Go(func() { srv.SweepExpired(ctx) })
+	background.Go(func() { srv.RunRecurring(ctx) })
+	defer func() {
+		stop()
+		background.Wait()
+	}()
 	httpServer := &http.Server{
 		Addr:              cfg.Listen,
 		Handler:           api.NewHandler(srv, web.Handler(cfg.WebDir)),
@@ -118,10 +124,25 @@ func run() error {
 	log.Info("shutting down")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err = httpServer.Shutdown(shutdownCtx)
-	srv.FinishPushes()
-	srv.FinishMail()
-	return err
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		_ = httpServer.Close()
+		return err
+	}
+	// Recurring work and active HTTP requests can enqueue notifications.
+	// They must both stop before waiting for the remaining deliveries.
+	drained := make(chan struct{})
+	go func() {
+		background.Wait()
+		srv.FinishPushes()
+		srv.FinishMail()
+		close(drained)
+	}()
+	select {
+	case <-drained:
+		return nil
+	case <-shutdownCtx.Done():
+		return fmt.Errorf("finish background deliveries: %w", shutdownCtx.Err())
+	}
 }
 
 // resetAdmin is for a lost administrator password: /admin then asks for a
@@ -154,20 +175,21 @@ func resetAdmin() error {
 // connect retries for a while: in docker compose the database may still be
 // starting when the server comes up.
 func connect(ctx context.Context, log *slog.Logger, url string) (*pgxpool.Pool, error) {
-	deadline := time.Now().Add(60 * time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
 	for {
 		pool, err := db.Open(ctx, url)
 		if err == nil {
 			return pool, nil
 		}
-		if time.Now().After(deadline) || ctx.Err() != nil {
+		if ctx.Err() != nil {
 			return nil, err
 		}
 		log.Warn("database not ready, retrying", "err", err)
 		select {
 		case <-time.After(2 * time.Second):
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, errors.Join(ctx.Err(), err)
 		}
 	}
 }

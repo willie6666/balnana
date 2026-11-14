@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -83,11 +81,14 @@ class PendingTile extends ConsumerWidget {
 /// The title and amount [w] will have in [group].
 ({String title, String amount}) _describe(BuildContext context, PendingWrite w, Group group) {
   final l10n = context.l10n;
-  final body = jsonDecode(w.body) as Map<String, Object?>;
+  final body = w.decodeBody() ?? const {};
   String name(Object? id) => (id is String ? group.member(id)?.name : null) ?? l10n.someone;
   final title = w.path == PendingPath.payments
       ? l10n.paymentTitle(name(body['fromMemberId']), name(body['toMemberId']))
-      : body['title'] as String? ?? '';
+      : switch (body['title']) {
+          final String title => title,
+          _ => l10n.someone,
+        };
   String amount;
   try {
     final minor = parseAmount(body['amount'] as String? ?? '', group.minorDigits);

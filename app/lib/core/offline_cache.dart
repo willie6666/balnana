@@ -61,6 +61,8 @@ class PendingWrites extends Table {
 abstract final class PendingPath {
   static const expenses = '/expenses';
   static const payments = '/payments';
+
+  static bool supports(String path) => path == expenses || path == payments;
 }
 
 /// What this device remembers of each server, to show while it is out of
@@ -148,38 +150,30 @@ class CacheDb extends _$CacheDb {
   /// Forgets what [account] was told about [group] on [server], and the
   /// lists of groups that sum it up, once it has changed there. Were the
   /// reload after a change to fail, they would show it as it was before.
-  Future<void> forgetGroup(String server, String account, String group) {
-    _forgets++;
-    _forgotten['$server $account /g/$group'] = _forgets;
-    _forgotten['$server $account'] = _forgets;
-    final stale = delete(cachedResponses)
-      ..where(
-        (r) =>
-            r.server.equals(server) &
-            r.account.equals(account) &
-            (r.request.equals('GET /g/$group') |
-                r.request.like('GET /g/$group/%') |
-                r.request.like('GET /g/$group?%') |
-                r.request.equals('GET /me/groups') |
-                r.request.like('POST /groups/summaries %')),
-      );
-    return stale.go();
-  }
+  Future<void> forgetGroup(String server, String account, String group) =>
+      _forgetGroup(server, group, account: account);
 
   /// Deletion applies to every account. Late answers must not restore it.
-  Future<void> forgetDeletedGroup(String server, String group) {
+  Future<void> forgetDeletedGroup(String server, String group) => _forgetGroup(server, group);
+
+  Future<void> _forgetGroup(String server, String group, {String? account}) {
     _forgets++;
-    _forgotten['$server $public /g/$group'] = _forgets;
-    _forgotten['$server $public'] = _forgets;
-    return (delete(cachedResponses)..where(
-          (r) =>
-              r.server.equals(server) &
-              (r.request.equals('GET /g/$group') |
-                  r.request.like('GET /g/$group/%') |
-                  r.request.like('GET /g/$group?%') |
+    final accountKey = '$server ${account ?? public}';
+    _forgotten['$accountKey /g/$group'] = _forgets;
+    _forgotten[accountKey] = _forgets;
+    final groupRequest = 'GET /g/$group';
+    return (delete(cachedResponses)..where((r) {
+          final sameServer = r.server.equals(server);
+          final scope = account == null ? sameServer : sameServer & r.account.equals(account);
+          // Tokens are case-sensitive and may contain underscores.
+          final prefix = r.request.substr(1, groupRequest.length + 1);
+          return scope &
+              (r.request.equals(groupRequest) |
+                  prefix.equals('$groupRequest/') |
+                  prefix.equals('$groupRequest?') |
                   r.request.equals('GET /me/groups') |
-                  r.request.like('POST /groups/summaries %')),
-        ))
+                  r.request.like('POST /groups/summaries %'));
+        }))
         .go();
   }
 
@@ -243,8 +237,9 @@ class CacheDb extends _$CacheDb {
   Future<void> removePending(int id) => (delete(pendingWrites)..where((w) => w.id.equals(id))).go();
 
   /// Keeps [id] from being sent again until [retryPending].
-  Future<void> parkPending(int id, String error) =>
-      (update(pendingWrites)..where((w) => w.id.equals(id))).write(PendingWritesCompanion(error: Value(error)));
+  Future<void> parkPending(int id, String error) => (update(
+    pendingWrites,
+  )..where((w) => w.id.equals(id))).write(PendingWritesCompanion(error: Value(error)));
 
   Future<void> retryPending(int id) => (update(
     pendingWrites,

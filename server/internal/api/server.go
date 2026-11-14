@@ -23,6 +23,7 @@ import (
 // Server implements StrictServerInterface.
 type Server struct {
 	settings      atomic.Pointer[settings]
+	settingsMu    sync.Mutex // serializes reading, saving and applying runtime settings
 	db            *pgxpool.Pool
 	log           *slog.Logger
 	version       string

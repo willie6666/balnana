@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,595 +11,6 @@ import (
 
 	"balnana/internal/domain"
 )
-
-const (
-	kindExpense = "expense"
-	kindPayment = "payment"
-)
-
-// expenseData is a validated expense, ready to store.
-type expenseData struct {
-	kind            string
-	transactionType string
-	title           string
-	category        *string
-	amount          int64
-	occurredAt      time.Time
-	note            *string
-	location        *Location
-	method          domain.SplitMethod
-	payers          map[string]int64
-	splits          map[string]int64
-	shares          map[string]string // entered weight, 4 decimals
-	foreign         *foreignData
-	clientKey       *IdempotencyKey
-}
-
-// foreignData is what an expense paid in another currency came to in it.
-// The expenseData's amounts are the same spread over the group's currency.
-type foreignData struct {
-	currency string
-	digits   int
-	amount   int64
-	payers   map[string]int64
-	splits   map[string]int64
-}
-
-// foreignCurrency checks the currency of an expense's foreign amount.
-func foreignCurrency(g *group, in ForeignInput) (string, error) {
-	currency := strings.ToUpper(strings.TrimSpace(in.Currency))
-	if !currencyCode.MatchString(currency) || currency == g.currency {
-		return "", badRequest("invalid_currency")
-	}
-	return currency, nil
-}
-
-// Dates an expense may have: wide enough for any real one, and well inside
-// what JSON and the database can carry.
-const (
-	minExpenseYear = 1900
-	maxExpenseYear = 2999
-)
-
-// maxGroupTotal caps what the live expenses and payments of a group add up
-// to. Every balance and spending total is at most that sum, so it keeps them
-// all far from int64 overflow.
-const maxGroupTotal = 1000 * domain.MaxMinor
-
-// groupTotal is what the group's live entries add up to. except leaves out
-// an entry being replaced.
-func groupTotal(ctx context.Context, q querier, groupID string, except *string) (int64, error) {
-	var total int64
-	err := q.QueryRow(ctx, `
-		select coalesce(sum(amount), 0)::bigint from expenses
-		where group_id = $1 and deleted_at is null and ($2::uuid is null or id <> $2::uuid)`,
-		groupID, except).Scan(&total)
-	return total, err
-}
-
-// checkGroupTotal refuses add more to the group's live entries when they
-// would pass maxGroupTotal. except leaves out an entry being replaced.
-func checkGroupTotal(ctx context.Context, q querier, groupID string, add int64, except *string) error {
-	total, err := groupTotal(ctx, q, groupID, except)
-	if err != nil {
-		return err
-	}
-	return fitsGroupTotal(total, add)
-}
-
-// fitsGroupTotal refuses adding add to a group whose entries add up to total
-// when that would pass maxGroupTotal.
-func fitsGroupTotal(total, add int64) error {
-	if total > maxGroupTotal-add {
-		return domain.ErrAmountTooLarge
-	}
-	return nil
-}
-
-// checkExpenseDate refuses a date outside the years an expense may have.
-func checkExpenseDate(t time.Time) error {
-	if y := t.Year(); t.IsZero() || y < minExpenseYear || y > maxExpenseYear {
-		return badRequest("invalid_date")
-	}
-	return nil
-}
-
-// validateExpense checks an expense against the group: every member must
-// belong to it, payers must add up to the amount and the split must work.
-// Members who left still belong: their balance has to stay possible to settle.
-// members is the group's, or nil to load them.
-func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput,
-	members []member) (*expenseData, error) {
-	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
-
-	minTitle := 1
-	if kind == kindPayment {
-		minTitle = 0
-	}
-	title, ok := cleanText(in.Title, minTitle, maxTitleLen)
-	if !ok || strings.Contains(title, "\n") {
-		return nil, badRequest("invalid_title")
-	}
-	d.title = title
-
-	if in.Note != nil {
-		note, ok := cleanText(*in.Note, 0, maxNoteLen)
-		if !ok {
-			return nil, badRequest("invalid_note")
-		}
-		if note != "" {
-			d.note = &note
-		}
-	}
-	if in.Location != nil {
-		loc, err := cleanLocation(*in.Location)
-		if err != nil {
-			return nil, err
-		}
-		d.location = loc
-	}
-	if err := checkExpenseDate(in.OccurredAt); err != nil {
-		return nil, err
-	}
-
-	if in.CategoryId != nil && *in.CategoryId != "" {
-		var exists bool
-		if err := q.QueryRow(ctx, `
-			select exists (select 1 from categories where id = $1 and (group_id is null or group_id = $2))`,
-			*in.CategoryId, g.id).Scan(&exists); err != nil {
-			return nil, err
-		}
-		if !exists {
-			return nil, badRequest("invalid_category")
-		}
-		d.category = in.CategoryId
-	}
-
-	amount, err := domain.ParseAmount(in.Amount, g.digits)
-	if err != nil {
-		return nil, err
-	}
-	if amount <= 0 {
-		return nil, domain.ErrInvalidAmount
-	}
-	d.amount = amount
-
-	// Payers and the split are entered in the currency the expense was paid
-	// in: the group's, or the foreign one.
-	total, digits := amount, g.digits
-	if in.Foreign != nil {
-		if kind == kindPayment {
-			return nil, badRequest("invalid_payment")
-		}
-		currency, err := foreignCurrency(g, *in.Foreign)
-		if err != nil {
-			return nil, err
-		}
-		digits = domain.CurrencyDigits(currency)
-		if total, err = domain.ParseAmount(in.Foreign.Amount, digits); err != nil {
-			return nil, err
-		}
-		if total <= 0 {
-			return nil, domain.ErrInvalidAmount
-		}
-		d.foreign = &foreignData{currency: currency, digits: digits, amount: total}
-	}
-
-	if members == nil {
-		if members, err = groupMembers(ctx, q, g.id); err != nil {
-			return nil, err
-		}
-	}
-	known := func(id string) error {
-		if findMember(members, id) == nil {
-			return badRequest("unknown_member")
-		}
-		return nil
-	}
-
-	if len(in.Payers) == 0 {
-		return nil, badRequest("no_payers")
-	}
-	if len(in.Payers) > maxMembers || len(in.Splits) > maxMembers {
-		return nil, badRequest("too_many_members")
-	}
-	d.payers = make(map[string]int64, len(in.Payers))
-	var paid int64
-	for _, p := range in.Payers {
-		if err := known(p.MemberId); err != nil {
-			return nil, err
-		}
-		if _, dup := d.payers[p.MemberId]; dup {
-			return nil, domain.ErrDuplicateMember
-		}
-		v, err := domain.ParseAmount(p.Amount, digits)
-		if err != nil {
-			return nil, err
-		}
-		if v <= 0 {
-			return nil, domain.ErrInvalidAmount
-		}
-		d.payers[p.MemberId] = v
-		paid += v // each v <= MaxMinor and there are few: no overflow
-	}
-	if paid != total {
-		return nil, badRequest("payer_total")
-	}
-
-	parts := make([]domain.Part, 0, len(in.Splits))
-	d.shares = map[string]string{}
-	for _, sp := range in.Splits {
-		if err := known(sp.MemberId); err != nil {
-			return nil, err
-		}
-		value := ""
-		if sp.Value != nil {
-			value = strings.TrimSpace(*sp.Value)
-		}
-		if d.method == domain.SplitShares {
-			w, err := domain.ParseAmount(value, 4)
-			if err != nil || w < 0 || w > maxShareValue {
-				return nil, domain.ErrInvalidShare
-			}
-			d.shares[sp.MemberId] = domain.FormatAmount(w, 4)
-		}
-		parts = append(parts, domain.Part{Member: sp.MemberId, Value: value})
-	}
-	d.splits, err = domain.Split(total, digits, d.method, parts)
-	if err != nil {
-		return nil, err
-	}
-
-	if f := d.foreign; f != nil {
-		f.payers, f.splits = d.payers, d.splits
-		if d.payers, err = domain.Spread(amount, f.payers); err != nil {
-			return nil, err
-		}
-		for _, v := range d.payers {
-			if v == 0 {
-				return nil, badRequest("payer_too_small")
-			}
-		}
-		if d.splits, err = domain.Spread(amount, f.splits); err != nil {
-			return nil, err
-		}
-	}
-
-	if kind == kindPayment {
-		if len(d.payers) != 1 || len(d.splits) != 1 || d.method != domain.SplitExact {
-			return nil, badRequest("invalid_payment")
-		}
-		for from := range d.payers {
-			if _, self := d.splits[from]; self {
-				return nil, badRequest("invalid_payment")
-			}
-		}
-	}
-	return d, nil
-}
-
-// partTables names where the payers and splits of one kind of row are kept.
-// Only expense parts have a foreign_amount column.
-type partTables struct {
-	payers, splits, key string
-	foreign             bool
-}
-
-var (
-	expenseParts   = partTables{"expense_payers", "expense_splits", "expense_id", true}
-	recurringParts = partTables{"recurring_expense_payers", "recurring_expense_splits", "recurring_id", false}
-)
-
-// foreignColumn is the foreign_amount column to select, or a null for parts
-// without one.
-func (t partTables) foreignColumn(alias string) string {
-	if t.foreign {
-		return alias + ".foreign_amount"
-	}
-	return "null::bigint"
-}
-
-func (t partTables) insert(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
-	if d.foreign != nil && !t.foreign {
-		return errors.New("api: " + t.payers + " cannot hold foreign amounts")
-	}
-	column := ""
-	if t.foreign {
-		column = ", foreign_amount"
-	}
-	// foreign is a part's foreign amount, or null when the expense has none.
-	foreign := func(amounts map[string]int64, m string) *int64 {
-		if d.foreign == nil {
-			return nil
-		}
-		v := amounts[m]
-		return &v
-	}
-	var payers, splits map[string]int64
-	if d.foreign != nil {
-		payers, splits = d.foreign.payers, d.foreign.splits
-	}
-	for m, v := range d.payers {
-		args, values := []any{id, m, v}, "$1, $2, $3"
-		if t.foreign {
-			args, values = append(args, foreign(payers, m)), values+", $4"
-		}
-		if _, err := tx.Exec(ctx, `insert into `+t.payers+` (`+t.key+`, member_id, amount`+column+`)
-			values (`+values+`)`, args...); err != nil {
-			return err
-		}
-	}
-	for m, v := range d.splits {
-		var share *string
-		if s, ok := d.shares[m]; ok {
-			share = &s
-		}
-		args, values := []any{id, m, v, share}, "$1, $2, $3, $4::text::numeric"
-		if t.foreign {
-			args, values = append(args, foreign(splits, m)), values+", $5"
-		}
-		if _, err := tx.Exec(ctx, `
-			insert into `+t.splits+` (`+t.key+`, member_id, amount, share`+column+`)
-			values (`+values+`)`, args...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// replace swaps the payers and splits of id for d's.
-func (t partTables) replace(ctx context.Context, tx pgx.Tx, id string, d *expenseData) error {
-	for _, table := range []string{t.payers, t.splits} {
-		if _, err := tx.Exec(ctx, `delete from `+table+` where `+t.key+` = $1`, id); err != nil {
-			return err
-		}
-	}
-	return t.insert(ctx, tx, id, d)
-}
-
-// load reads the payers and splits of the rows ids, in member order, and
-// hands each to its row with its foreign amount in minor units, if any.
-func (t partTables) load(ctx context.Context, q querier, digits int, ids []string,
-	payer func(id string, p Payer, foreign *int64), split func(id string, p SplitPart, foreign *int64)) error {
-	rows, err := q.Query(ctx, `
-		select p.`+t.key+`::text, p.member_id::text, p.amount, `+t.foreignColumn("p")+`
-		from `+t.payers+` p join members m on m.id = p.member_id
-		where p.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return err
-	}
-	var id, mid string
-	var amount int64
-	var foreign *int64
-	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &foreign}, func() error {
-		payer(id, Payer{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}, foreign)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	rows, err = q.Query(ctx, `
-		select s.`+t.key+`::text, s.member_id::text, s.amount, s.share::text, `+t.foreignColumn("s")+`
-		from `+t.splits+` s join members m on m.id = s.member_id
-		where s.`+t.key+` = any($1::uuid[]) order by m.created_at, m.id`, ids)
-	if err != nil {
-		return err
-	}
-	var share *string
-	_, err = pgx.ForEachRow(rows, []any{&id, &mid, &amount, &share, &foreign}, func() error {
-		part := SplitPart{MemberId: mid, Amount: domain.FormatAmount(amount, digits)}
-		if share != nil {
-			v := trimShare(*share)
-			part.Share = &v
-		}
-		split(id, part, foreign)
-		return nil
-	})
-	return err
-}
-
-func (d *expenseData) payload(digits int) map[string]any {
-	p := map[string]any{"title": d.title, "amount": domain.FormatAmount(d.amount, digits), "kind": d.kind}
-	if f := d.foreign; f != nil {
-		p["foreignAmount"] = domain.FormatAmount(f.amount, f.digits)
-		p["foreignCurrency"] = f.currency
-	}
-	return p
-}
-
-// cleanLocation checks where an expense happened. A location with neither a
-// name nor a point is none.
-func cleanLocation(in Location) (*Location, error) {
-	var out Location
-	if in.Name != nil {
-		name, ok := cleanText(*in.Name, 0, maxTitleLen)
-		if !ok || strings.Contains(name, "\n") {
-			return nil, badRequest("invalid_location")
-		}
-		if name != "" {
-			out.Name = &name
-		}
-	}
-	if p := in.Point; p != nil {
-		// NaN fails both comparisons, so it is refused too.
-		if !(p.Latitude >= -90 && p.Latitude <= 90 && p.Longitude >= -180 && p.Longitude <= 180) {
-			return nil, badRequest("invalid_location")
-		}
-		out.Point = &GeoPoint{Latitude: p.Latitude, Longitude: p.Longitude}
-	}
-	if out.Name == nil && out.Point == nil {
-		return nil, nil
-	}
-	return &out, nil
-}
-
-var errNoCoordinate = errors.New("a point needs both coordinates")
-
-// UnmarshalJSON refuses a point missing a coordinate, which would otherwise
-// be 0.
-func (p *GeoPoint) UnmarshalJSON(b []byte) error {
-	var in struct {
-		Latitude  *float64 `json:"latitude"`
-		Longitude *float64 `json:"longitude"`
-	}
-	if err := json.Unmarshal(b, &in); err != nil {
-		return err
-	}
-	if in.Latitude == nil || in.Longitude == nil {
-		return errNoCoordinate
-	}
-	p.Latitude, p.Longitude = *in.Latitude, *in.Longitude
-	return nil
-}
-
-// locationColumns splits a location into its location_name, latitude and
-// longitude columns.
-func locationColumns(l *Location) (name *string, lat, lng *float64) {
-	if l == nil {
-		return nil, nil, nil
-	}
-	if l.Point != nil {
-		lat, lng = &l.Point.Latitude, &l.Point.Longitude
-	}
-	return l.Name, lat, lng
-}
-
-// locationOf joins the location_name, latitude and longitude columns back
-// into a location.
-func locationOf(name *string, lat, lng *float64) *Location {
-	if name == nil && lat == nil {
-		return nil
-	}
-	l := &Location{Name: name}
-	if lat != nil && lng != nil {
-		l.Point = &GeoPoint{Latitude: *lat, Longitude: *lng}
-	}
-	return l
-}
-
-// insertExpense stores a validated expense and logs it.
-func insertExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData, payload map[string]any) (string, error) {
-	id, err := storeExpense(ctx, tx, g, who, d)
-	if err != nil {
-		return "", err
-	}
-	return id, logActivity(ctx, tx, g.id, who, "expense.created", &id, payload)
-}
-
-// storeExpense stores a validated expense without logging it.
-func storeExpense(ctx context.Context, tx pgx.Tx, g *group, who *string, d *expenseData) (string, error) {
-	var id string
-	place, lat, lng := locationColumns(d.location)
-	err := tx.QueryRow(ctx, `
-		insert into expenses (group_id, kind, title, category_id, amount, currency, split_method, occurred_at, note,
-			created_by_member, transaction_type, location_name, latitude, longitude,
-			client_key, foreign_currency, foreign_digits, foreign_amount)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) returning id::text`,
-		append([]any{g.id, d.kind, d.title, d.category, d.amount, g.currency, string(d.method), d.occurredAt, d.note, who,
-			d.transactionType, place, lat, lng, d.clientKey}, foreignColumns(d.foreign)...)...).Scan(&id)
-	if err != nil {
-		return "", err
-	}
-	return id, expenseParts.insert(ctx, tx, id, d)
-}
-
-// foreignColumns splits an expense's foreign amount into its foreign_currency,
-// foreign_digits and foreign_amount columns.
-func foreignColumns(f *foreignData) []any {
-	if f == nil {
-		return []any{nil, nil, nil}
-	}
-	return []any{f.currency, f.digits, f.amount}
-}
-
-const expenseColumns = `id::text, kind::text, title, category_id, amount, occurred_at, note, split_method::text,
-	created_by_member::text, created_at, updated_at, deleted_at, version, transaction_type,
-	exists (select 1 from receipts r where r.expense_id = expenses.id), location_name, latitude, longitude,
-	recurring_id::text, foreign_currency::text, foreign_digits, foreign_amount`
-
-// loadExpenses runs a query selecting expenseColumns and attaches payers and splits.
-func loadExpenses(ctx context.Context, q querier, digits int, sql string, args ...any) ([]Expense, error) {
-	rows, err := q.Query(ctx, sql, args...)
-	if err != nil {
-		return nil, err
-	}
-	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Expense, error) {
-		var e Expense
-		var kind, method string
-		var amount int64
-		var place, foreignCurrency *string
-		var lat, lng *float64
-		var foreignDigits *int
-		var foreignAmount *int64
-		err := row.Scan(&e.Id, &kind, &e.Title, &e.CategoryId, &amount, &e.OccurredAt, &e.Note, &method,
-			&e.CreatedBy, &e.CreatedAt, &e.UpdatedAt, &e.DeletedAt, &e.Version, &e.TransactionType, &e.HasReceipt,
-			&place, &lat, &lng, &e.RecurringId, &foreignCurrency, &foreignDigits, &foreignAmount)
-		e.Location = locationOf(place, lat, lng)
-		if foreignCurrency != nil && foreignDigits != nil && foreignAmount != nil {
-			e.Foreign = &Foreign{Currency: *foreignCurrency, MinorDigits: *foreignDigits,
-				Amount: domain.FormatAmount(*foreignAmount, *foreignDigits)}
-		}
-		e.Kind = ExpenseKind(kind)
-		e.SplitMethod = SplitMethod(method)
-		e.Amount = domain.FormatAmount(amount, digits)
-		e.Payers = []Payer{}
-		e.Splits = []SplitPart{}
-		return e, err
-	})
-	if err != nil || len(list) == 0 {
-		return list, err
-	}
-
-	index := make(map[string]*Expense, len(list))
-	ids := make([]string, len(list))
-	for i := range list {
-		index[list[i].Id] = &list[i]
-		ids[i] = list[i].Id
-	}
-	// foreignOf formats a part's foreign amount in its expense's currency.
-	foreignOf := func(id string, v *int64) *string {
-		f := index[id].Foreign
-		if f == nil || v == nil {
-			return nil
-		}
-		s := domain.FormatAmount(*v, f.MinorDigits)
-		return &s
-	}
-	err = expenseParts.load(ctx, q, digits, ids,
-		func(id string, p Payer, foreign *int64) {
-			p.ForeignAmount = foreignOf(id, foreign)
-			index[id].Payers = append(index[id].Payers, p)
-		},
-		func(id string, p SplitPart, foreign *int64) {
-			p.ForeignAmount = foreignOf(id, foreign)
-			index[id].Splits = append(index[id].Splits, p)
-		})
-	return list, err
-}
-
-// trimShare drops trailing zeros of a numeric(12,4): "33.3300" -> "33.33".
-func trimShare(s string) string {
-	if !strings.Contains(s, ".") {
-		return s
-	}
-	s = strings.TrimRight(s, "0")
-	return strings.TrimSuffix(s, ".")
-}
-
-func loadExpense(ctx context.Context, q querier, g *group, id string) (Expense, error) {
-	if !validUUID(id) {
-		return Expense{}, errNotFound
-	}
-	list, err := loadExpenses(ctx, q, g.digits, `select `+expenseColumns+` from expenses where id = $1 and group_id = $2`, id, g.id)
-	if err != nil {
-		return Expense{}, err
-	}
-	if len(list) == 0 {
-		return Expense{}, errNotFound
-	}
-	return list[0], nil
-}
 
 // Expense cursors are opaque to clients: "<occurred_at>|<id>" in base64url.
 func encodeExpenseCursor(e Expense) string {
@@ -676,24 +85,55 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 }
 
 func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObject) (CreateExpenseResponseObject, error) {
+	expense, err := s.createExpense(ctx, req.Token, kindExpense, *req.Body, req.Params.IdempotencyKey, req.Params.XBalnanaMember)
+	if err != nil {
+		return nil, err
+	}
+	return CreateExpense201JSONResponse(expense), nil
+}
+
+func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObject) (CreatePaymentResponseObject, error) {
+	in := req.Body
+	occurred := time.Now()
+	if in.OccurredAt != nil {
+		occurred = *in.OccurredAt
+	}
+	payment, err := s.createExpense(ctx, req.Token, kindPayment, ExpenseInput{
+		Amount:      in.Amount,
+		OccurredAt:  occurred,
+		Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
+		SplitMethod: SplitMethod(domain.SplitExact),
+		Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
+	}, req.Params.IdempotencyKey, req.Params.XBalnanaMember)
+	if err != nil {
+		return nil, err
+	}
+	return CreatePayment201JSONResponse(payment), nil
+}
+
+func (s *Server) createExpense(ctx context.Context, token, kind string, in ExpenseInput, key *IdempotencyKey, memberHeader *string) (Expense, error) {
 	var out Expense
 	var g *group
 	var who *string
-	var again bool
+	var created bool
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
-		g, err = s.groupByToken(ctx, tx, req.Token, true)
+		g, err = s.groupByToken(ctx, tx, token, true)
 		if err != nil {
 			return err
 		}
-		id, err := sentBefore(ctx, tx, "expenses", g.id, req.Params.IdempotencyKey)
+		id, err := sentBefore(ctx, tx, "expenses", g.id, key)
 		if err != nil {
 			return err
 		}
-		if again = id != ""; again {
+		if id != "" {
 			out, err = loadExpense(ctx, tx, g, id)
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kindExpense, *req.Body, nil)
+		members, err := groupMembers(ctx, tx, g.id)
+		if err != nil {
+			return err
+		}
+		d, err := validateExpense(ctx, tx, g, kind, in, members)
 		if err != nil {
 			return err
 		}
@@ -703,104 +143,31 @@ func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObje
 		if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
 			return err
 		}
-		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
-		if err != nil {
-			return err
-		}
-		d.clientKey = req.Params.IdempotencyKey
-		id, err = insertExpense(ctx, tx, g, who, d, d.payload(g.digits))
-		if err != nil {
-			return err
-		}
-		out, err = loadExpense(ctx, tx, g, id)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !again {
-		s.notifyExpense(g, who, "added", out)
-	}
-	return CreateExpense201JSONResponse(out), nil
-}
-
-func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObject) (CreatePaymentResponseObject, error) {
-	in := req.Body
-	occurred := time.Now()
-	if in.OccurredAt != nil {
-		occurred = *in.OccurredAt
-	}
-	var out Expense
-	var g *group
-	var who *string
-	var again bool
-	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) (err error) {
-		g, err = s.groupByToken(ctx, tx, req.Token, true)
-		if err != nil {
-			return err
-		}
-		id, err := sentBefore(ctx, tx, "expenses", g.id, req.Params.IdempotencyKey)
-		if err != nil {
-			return err
-		}
-		if again = id != ""; again {
-			out, err = loadExpense(ctx, tx, g, id)
-			return err
-		}
-		d, err := validateExpense(ctx, tx, g, kindPayment, ExpenseInput{
-			Amount:      in.Amount,
-			OccurredAt:  occurred,
-			Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
-			SplitMethod: SplitMethod(domain.SplitExact),
-			Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
-		}, nil)
-		if err != nil {
-			return err
-		}
-		if err := checkGroupTotal(ctx, tx, g.id, d.amount, nil); err != nil {
-			return err
-		}
-		who, err = actor(ctx, tx, g, req.Params.XBalnanaMember)
+		who, err = actor(ctx, tx, g, memberHeader)
 		if err != nil {
 			return err
 		}
 		payload := d.payload(g.digits)
-		members, err := groupMembers(ctx, tx, g.id)
-		if err != nil {
-			return err
+		if kind == kindPayment {
+			payload["from"] = findMember(members, in.Payers[0].MemberId).name
+			payload["to"] = findMember(members, in.Splits[0].MemberId).name
 		}
-		payload["from"] = findMember(members, in.FromMemberId).name
-		payload["to"] = findMember(members, in.ToMemberId).name
-		d.clientKey = req.Params.IdempotencyKey
+		d.clientKey = key
 		id, err = insertExpense(ctx, tx, g, who, d, payload)
 		if err != nil {
 			return err
 		}
 		out, err = loadExpense(ctx, tx, g, id)
+		created = true
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return Expense{}, err
 	}
-	if !again {
+	if created {
 		s.notifyExpense(g, who, "added", out)
 	}
-	return CreatePayment201JSONResponse(out), nil
-}
-
-// sentBefore finds what an earlier try of a create request added, or "" when
-// there is none. The caller holds the group's lock, so two tries cannot both
-// miss it.
-func sentBefore(ctx context.Context, tx pgx.Tx, table, groupID string, key *IdempotencyKey) (string, error) {
-	if key == nil {
-		return "", nil
-	}
-	var id string
-	err := tx.QueryRow(ctx, `select id::text from `+table+` where group_id = $1 and client_key = $2`, groupID, *key).Scan(&id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", nil
-	}
-	return id, err
+	return out, nil
 }
 
 func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (GetExpenseResponseObject, error) {
@@ -813,39 +180,6 @@ func (s *Server) GetExpense(ctx context.Context, req GetExpenseRequestObject) (G
 		return nil, err
 	}
 	return GetExpense200JSONResponse(out), nil
-}
-
-// expenseMembers returns who pays or shares in an expense.
-func expenseMembers(ctx context.Context, q querier, id string) (map[string]bool, error) {
-	rows, err := q.Query(ctx, `
-		select member_id::text from expense_payers where expense_id = $1
-		union select member_id::text from expense_splits where expense_id = $1`, id)
-	if err != nil {
-		return nil, err
-	}
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
-	if err != nil {
-		return nil, err
-	}
-	set := make(map[string]bool, len(ids))
-	for _, id := range ids {
-		set[id] = true
-	}
-	return set, nil
-}
-
-// lockExpense reads an expense's kind, version and deleted state, holding the row.
-func lockExpense(ctx context.Context, tx pgx.Tx, g *group, id string) (kind string, version int, deleted bool, title string, err error) {
-	if !validUUID(id) {
-		return "", 0, false, "", errNotFound
-	}
-	err = tx.QueryRow(ctx, `
-		select kind::text, version, deleted_at is not null, title
-		from expenses where id = $1 and group_id = $2 for update`, id, g.id).Scan(&kind, &version, &deleted, &title)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = errNotFound
-	}
-	return
 }
 
 func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObject) (UpdateExpenseResponseObject, error) {

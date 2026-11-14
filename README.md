@@ -19,7 +19,7 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
   <a href="#features">Features</a> ·
-  <a href="#built-with">Built with</a> ·
+  <a href="#development">Development</a> ·
   <a href="#license">License</a>
 </p>
 
@@ -104,7 +104,7 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - One Docker Compose file, a PostgreSQL database and a web page for
   administering the server.
 - Optional plans, if you run a server for others: limits on what it stores,
-  with Ko-fi or Google Play payments. Off by default.
+  with Ko-fi, PayPal or Google Play payments. Off by default.
 - A Material 3 app with light and dark themes and, if you like, your
   wallpaper's colors.
 
@@ -118,9 +118,9 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://localhost:8080`. The first visit asks you to choose the
-administrator password, so do that right away. Every setting is listed in
-[.env.example](.env.example).
+Open `http://localhost:8080`. On first setup, `/admin` asks for a password
+and a setup code. Get the code with `docker compose logs balnana`. Every
+setting is listed in [.env.example](.env.example).
 
 ## Built with
 
@@ -129,6 +129,22 @@ administrator password, so do that right away. Every setting is listed in
 | Server | Go, backed by PostgreSQL (`server/`)                     |
 | App    | Flutter, for Android and the web (`app/`)                |
 | API    | One OpenAPI contract between them (`api/openapi.yaml`)   |
+
+## Development
+
+CI records the Go, Flutter and PostgreSQL versions used to verify changes.
+See the [CI workflow](.github/workflows/ci.yml).
+
+- In `server/`, point `DATABASE_URL` at a development PostgreSQL instance.
+  The test role needs permission to create and drop temporary databases.
+  Run `go vet ./...` and `REQUIRE_DB=1 go test -race ./...`.
+- In `app/`, run `flutter pub get`, `flutter analyze` and `flutter test`.
+  On Linux x64, CI primes SQLite's native library cache with
+  `python3 ../.github/scripts/prepare_sqlite.py .` after `flutter pub get`.
+- After editing `api/openapi.yaml`, run `go generate ./internal/api` in
+  `server/` with the `oapi-codegen` version pinned in CI. After editing
+  `app/lib/l10n/*.arb`, run `flutter gen-l10n` in `app/`. If any push
+  notification strings changed, also run `dart run tool/push_strings.dart`.
 
 ## License
 

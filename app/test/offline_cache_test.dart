@@ -263,6 +263,19 @@ void main() {
     await dio.get<Object?>('/g/other');
   });
 
+  test('invalidating one group preserves groups with similar tokens', () async {
+    const requests = ['GET /g/A_B/expenses', 'GET /g/A-B/expenses', 'GET /g/a_b/expenses'];
+    for (final request in requests) {
+      await db.save(_server, '', request, '{}');
+    }
+
+    await db.forgetGroup(_server, '', 'A_B');
+
+    expect(await db.find(_server, '', requests[0]), isNull);
+    expect(await db.find(_server, '', requests[1]), isNotNull);
+    expect(await db.find(_server, '', requests[2]), isNotNull);
+  });
+
   test('an answer expires while the database stays open', () async {
     await dio.get<Object?>('/g/tok');
     await saved();

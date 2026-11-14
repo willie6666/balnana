@@ -77,3 +77,20 @@ jobs:
       - run: flutter test
       # The build that may link to Ko-fi, which the Play build must never do.
       - run: flutter test --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --plain-name "a build with external payments shows Ko-fi and PayPal" test/plan_test.dart
+      # Compile the browser-only code and each native billing implementation.
+      - run: flutter build web --release --no-web-resources-cdn --no-pub
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: flutter build apk --debug --flavor foss --target-platform android-arm64 --no-pub
+      - run: flutter build apk --debug --flavor play --target-platform android-arm64 --no-pub
+
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n scripts/deploy-debian.sh
+      - run: docker compose --env-file /dev/null config --quiet
+        env:
+          POSTGRES_PASSWORD: ci-validation-only

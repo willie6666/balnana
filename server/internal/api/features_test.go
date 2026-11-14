@@ -121,7 +121,7 @@ func TestRecurringOff(t *testing.T) {
 		where id = $1`, r.Id); err != nil {
 		t.Fatal(err)
 	}
-	if n, err := s.runRecurring(ctx, now); err != nil || n != 0 {
+	if n, err := s.runRecurring(ctx, now, recurringBatch); err != nil || n != 0 {
 		t.Fatalf("added %d, err %v", n, err)
 	}
 	// An edit is kept, without adding what came due.
@@ -141,7 +141,7 @@ func TestRecurringOff(t *testing.T) {
 	if r.NextAt == nil || !r.NextAt.After(now) || r.Paused {
 		t.Fatalf("on again: %+v", r)
 	}
-	if n, err := s.runRecurring(ctx, time.Now()); err != nil || n != 0 {
+	if n, err := s.runRecurring(ctx, time.Now(), recurringBatch); err != nil || n != 0 {
 		t.Fatalf("added %d, err %v", n, err)
 	}
 	c.must(200, "PATCH", base+"/recurring/"+paused.Id, RecurringPause{Paused: false}, &paused)

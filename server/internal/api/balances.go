@@ -65,13 +65,11 @@ func (s *Server) ListActivity(ctx context.Context, req ListActivityRequestObject
 	if err != nil {
 		return nil, err
 	}
-	var ids []int64
 	items, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Activity, error) {
 		var a Activity
 		var id int64
 		err := row.Scan(&id, &a.Action, &a.ActorMemberId, &a.SubjectId, &a.Payload, &a.CreatedAt)
 		a.Id = strconv.FormatInt(id, 10)
-		ids = append(ids, id)
 		return a, err
 	})
 	if err != nil {
@@ -80,7 +78,7 @@ func (s *Server) ListActivity(ctx context.Context, req ListActivityRequestObject
 	page := ActivityPage{Items: items}
 	if len(items) > limit {
 		page.Items = items[:limit]
-		c := strconv.FormatInt(ids[limit-1], 10)
+		c := page.Items[limit-1].Id
 		page.NextCursor = &c
 	}
 	return ListActivity200JSONResponse(page), nil

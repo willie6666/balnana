@@ -443,7 +443,7 @@ func load(getenv func(string) string) (*Config, error) {
 		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
-			Port:     e.int("BALNANA_SMTP_PORT", 587),
+			Port:     e.managedInt("BALNANA_SMTP_PORT"),
 			User:     e.managed("BALNANA_SMTP_USER"),
 			Password: e.managed("BALNANA_SMTP_PASSWORD"),
 			From:     e.managed("BALNANA_SMTP_FROM"),
@@ -743,6 +743,12 @@ func (e *env) managedBool(key string) bool {
 	m, _ := ManagedSetting(key)
 	def, _ := strconv.ParseBool(m.Default)
 	return e.bool(key, def)
+}
+
+func (e *env) managedInt(key string) int {
+	m, _ := ManagedSetting(key)
+	def, _ := strconv.Atoi(m.Default)
+	return e.int(key, def)
 }
 
 func (e *env) str(key, def string) string {

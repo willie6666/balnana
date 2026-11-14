@@ -179,3 +179,49 @@ func TestCache(t *testing.T) {
 		t.Errorf("restart: %v, %d fetches", err, src.fetches)
 	}
 }
+
+type interruptedStore struct {
+	memStore
+	loadErr, saveErr error
+}
+
+func (s interruptedStore) Load(ctx context.Context, name string) (*Table, time.Time, error) {
+	if s.loadErr != nil {
+		return nil, time.Time{}, s.loadErr
+	}
+	return s.memStore.Load(ctx, name)
+}
+
+func (s interruptedStore) Save(ctx context.Context, table *Table, fetched time.Time) error {
+	if s.saveErr != nil {
+		return s.saveErr
+	}
+	return s.memStore.Save(ctx, table, fetched)
+}
+
+func TestCacheRetriesStoreLoadAfterFailure(t *testing.T) {
+	now := time.Now()
+	src := &fakeSource{name: Frankfurter}
+	store := &interruptedStore{
+		memStore: memStore{Frankfurter: {Source: Frankfurter, Updated: now}},
+		loadErr:  context.DeadlineExceeded,
+	}
+	c := &Cache{Store: store, Now: func() time.Time { return now }}
+	if _, err := c.Table(t.Context(), src); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("first load: %v", err)
+	}
+	store.loadErr = nil
+	if got, err := c.Table(t.Context(), src); got != store.memStore[Frankfurter] || err != nil || src.fetches != 0 {
+		t.Fatalf("second load: %v, %v, %d fetches", got, err, src.fetches)
+	}
+}
+
+func TestCacheReturnsFreshRatesWhenPersistenceFails(t *testing.T) {
+	src := &fakeSource{name: Frankfurter}
+	c := &Cache{Store: interruptedStore{memStore: memStore{}, saveErr: errors.New("disk full")}}
+	for range 2 {
+		if got, err := c.Table(t.Context(), src); got == nil || err != nil || src.fetches != 1 {
+			t.Fatalf("fresh rates: %v, %v, %d fetches", got, err, src.fetches)
+		}
+	}
+}

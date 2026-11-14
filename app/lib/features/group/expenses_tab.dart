@@ -8,7 +8,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
-import '../../core/offline_cache.dart';
 import '../../core/settings.dart';
 import '../../data/api.dart';
 import '../../data/categories.dart';
@@ -41,10 +40,7 @@ class ExpensesTab extends ConsumerWidget {
     final filter = ref.watch(expenseFilterProvider(group.token));
     final list = async.value;
     final me = myMemberId(ref, group.token);
-    final pending = [
-      for (final w in ref.watch(pendingWritesProvider).value ?? const <PendingWrite>[])
-        if (w.groupToken == group.token) w,
-    ];
+    final pending = ref.watch(visiblePendingWritesProvider).where((w) => w.groupToken == group.token);
     // Shown while the list for a new filter loads, or failed to.
     final stale = list != null && list.filter != filter;
 

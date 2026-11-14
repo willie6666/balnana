@@ -16,7 +16,20 @@ final pendingWritesProvider = StreamProvider<List<PendingWrite>>((ref) {
   final db = ref.watch(cacheDbProvider);
   final server = ref.watch(serverUrlProvider);
   if (db == null || server == null) return Stream.value(const []);
-  return db.watchPending(server, ref.watch(sessionProvider).pendingAccount);
+  final account = ref.watch(sessionProvider.select((session) => session.pendingAccount));
+  return db.watchPending(server, account);
+});
+
+/// The previous stream may still hold rows while a new account is loading.
+final visiblePendingWritesProvider = Provider<List<PendingWrite>>((ref) {
+  final rows = ref.watch(pendingWritesProvider).value;
+  if (rows == null || rows.isEmpty) return const [];
+  final server = ref.watch(serverUrlProvider);
+  final account = ref.watch(sessionProvider.select((session) => session.pendingAccount));
+  return [
+    for (final row in rows)
+      if (row.server == server && row.account == account) row,
+  ];
 });
 
 /// The original owner of a write, captured before its network request starts.
@@ -114,7 +127,12 @@ class PendingSender extends Notifier<void> {
         final api = ref.read(balnanaApiProvider);
         if (api == null) return;
         try {
-          await api.group(w.groupToken, memberId: w.member).resend(w.path, jsonDecode(w.body), key: w.key);
+          final body = w.decodeBody();
+          if (!PendingPath.supports(w.path) || body == null) {
+            await db.parkPending(w.id, 'bad_request');
+            continue;
+          }
+          await api.group(w.groupToken, memberId: w.member).resend(w.path, body, key: w.key);
         } on ApiException catch (e) {
           // Authentication can expire while offline. Keep every draft for
           // its owner to send after signing in again.
@@ -156,9 +174,26 @@ class PendingSender extends Notifier<void> {
 
   /// Sends [w] again after the server refused it.
   Future<void> retry(PendingWrite w) async {
+    if (!_owns(w)) return;
     await ref.read(cacheDbProvider)?.retryPending(w.id);
-    await send();
+    if (ref.mounted && _owns(w)) await send();
   }
 
-  Future<void> discard(PendingWrite w) async => ref.read(cacheDbProvider)?.removePending(w.id);
+  Future<void> discard(PendingWrite w) async {
+    if (_owns(w)) await ref.read(cacheDbProvider)?.removePending(w.id);
+  }
+
+  bool _owns(PendingWrite w) =>
+      ref.read(serverUrlProvider) == w.server && ref.read(sessionProvider).pendingAccount == w.account;
+}
+
+extension PendingWriteBody on PendingWrite {
+  Map<String, Object?>? decodeBody() {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, Object?> ? decoded : null;
+    } on FormatException {
+      return null;
+    }
+  }
 }
