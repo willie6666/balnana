@@ -12,10 +12,55 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/grouped_list.dart';
+import '../../ui/widgets/page.dart';
 import '../group/identity_sheet.dart';
 import 'oauth.dart';
+import 'two_factor.dart';
 
-/// The signed-in account in Settings (accounts mode).
+/// The account's row in Settings (accounts mode): signing in, or the
+/// signed-in account, which opens its own page.
+class AccountEntry extends ConsumerWidget {
+  const AccountEntry({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final account = ref.watch(currentAccountProvider).value;
+    return GroupedList(
+      title: l10n.settingsAccount,
+      children: [
+        if (account == null)
+          GroupedTile(
+            icon: Icons.login,
+            title: l10n.signIn,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/sign-in'),
+          )
+        else
+          GroupedTile(
+            icon: Icons.account_circle_outlined,
+            title: account.name,
+            subtitle: account.email ?? account.username,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/account'),
+          ),
+      ],
+    );
+  }
+}
+
+/// /settings/account: everything about the signed-in account.
+class AccountPage extends ConsumerWidget {
+  const AccountPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return BPage(title: context.l10n.settingsAccount, children: const [AccountSection()]);
+  }
+}
+
+/// The signed-in account (accounts mode): who it is, how it signs in, its
+/// second step, and signing out or deleting it.
 class AccountSection extends ConsumerWidget {
   const AccountSection({super.key});
 
@@ -68,7 +113,7 @@ class AccountSection extends ConsumerWidget {
       }
     }
     if (ticket == null) return;
-    await startOAuth(ref, provider, '/settings', link: ticket);
+    await startOAuth(ref, provider, '/settings/account', link: ticket);
   }
 
   Future<void> _unlink(BuildContext context, WidgetRef ref, OAuthProvider provider, User account) async {
@@ -107,8 +152,37 @@ class AccountSection extends ConsumerWidget {
         ],
       );
     }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _details(context, ref, account, email: email, passwords: passwords, providers: providers),
+        const TwoFactorSection(),
+        GroupedList(
+          children: [
+            GroupedTile(icon: Icons.logout, title: l10n.signOut, onTap: () => _signOut(context, ref)),
+            GroupedTile(
+              icon: Icons.delete_forever_outlined,
+              title: l10n.accountDelete,
+              subtitle: l10n.accountDeleteHelp,
+              onTap: () => deleteAccount(context, ref),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Who the account is and how it signs in.
+  Widget _details(
+    BuildContext context,
+    WidgetRef ref,
+    User account, {
+    required bool email,
+    required bool passwords,
+    required List<OAuthProvider> providers,
+  }) {
+    final l10n = context.l10n;
     return GroupedList(
-      title: l10n.settingsAccount,
       children: [
         GroupedTile(
           icon: Icons.account_circle_outlined,
@@ -169,13 +243,6 @@ class AccountSection extends ConsumerWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _link(context, ref, provider, account),
                     ),
-        GroupedTile(icon: Icons.logout, title: l10n.signOut, onTap: () => _signOut(context, ref)),
-        GroupedTile(
-          icon: Icons.delete_forever_outlined,
-          title: l10n.accountDelete,
-          subtitle: l10n.accountDeleteHelp,
-          onTap: () => deleteAccount(context, ref),
-        ),
       ],
     );
   }

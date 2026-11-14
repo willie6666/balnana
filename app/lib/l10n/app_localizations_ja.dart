@@ -3467,6 +3467,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get signInCodeSend => 'コードをメールで送る';
 
   @override
+  String get signInCodeResend => 'コードを再送信';
+
+  @override
   String get signInCodeSent => 'コードをメールでお送りしました。10分間有効です。';
 
   @override

@@ -113,6 +113,9 @@ void main() {
     expect(find.text('A code is on its way to your email. It works for 10 minutes.'), findsOneWidget);
     final mailed = sent.singleWhere((r) => r.path == '/auth/login/email-code');
     expect(mailed.data, {'login': 'ana@example.com', 'password': 'correct horse'});
+    // A code was sent already, so the button sends another.
+    expect(find.text('Email me a code'), findsNothing);
+    expect(find.text('Send the code again'), findsOneWidget);
 
     // The code's field is its own: nothing typed before shows up in it.
     expect(tester.widget<TextFormField>(find.widgetWithText(TextFormField, 'Code')).controller!.text, isEmpty);

@@ -3470,6 +3470,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get signInCodeSend => '이메일로 코드 받기';
 
   @override
+  String get signInCodeResend => '코드 다시 보내기';
+
+  @override
   String get signInCodeSent => '코드를 이메일로 보냈습니다. 10분 동안 유효합니다.';
 
   @override

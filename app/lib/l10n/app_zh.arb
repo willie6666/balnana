@@ -1018,6 +1018,7 @@
   "signInCodeEither": "输入身份验证器应用的验证码，或改用邮箱接收。",
   "signInCodeRecoveryHelp": "也可以使用恢复码。",
   "signInCodeSend": "给我发送验证码",
+  "signInCodeResend": "重新发送验证码",
   "signInCodeSent": "验证码已发送到你的邮箱，10 分钟内有效。",
   "errorInvalidCode": "验证码不正确或已过期。",
   "adminSectionEnv": "环境配置文件",

@@ -1018,6 +1018,7 @@
   "signInCodeEither": "ป้อนรหัสจากแอปยืนยันตัวตน หรือขอรับรหัสทางอีเมล",
   "signInCodeRecoveryHelp": "ใช้รหัสกู้คืนก็ได้",
   "signInCodeSend": "ส่งรหัสให้ฉันทางอีเมล",
+  "signInCodeResend": "ส่งรหัสอีกครั้ง",
   "signInCodeSent": "กำลังส่งรหัสไปที่อีเมลของคุณ รหัสใช้ได้ 10 นาที",
   "errorInvalidCode": "รหัสไม่ถูกต้องหรือหมดอายุแล้ว",
   "adminSectionEnv": "ไฟล์สภาพแวดล้อม",

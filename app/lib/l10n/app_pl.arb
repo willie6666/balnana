@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Wpisz kod z aplikacji uwierzytelniającej lub poproś o kod e-mailem.",
   "signInCodeRecoveryHelp": "Kod zapasowy też zadziała.",
   "signInCodeSend": "Wyślij mi kod e-mailem",
+  "signInCodeResend": "Wyślij kod ponownie",
   "signInCodeSent": "Kod został wysłany na twój adres e-mail. Jest ważny przez 10 minut.",
   "errorInvalidCode": "Ten kod jest nieprawidłowy lub wygasł.",
   "adminSectionEnv": "Plik środowiskowy",

@@ -1018,6 +1018,7 @@
   "signInCodeEither": "輸入驗證器應用程式的驗證碼，或改用電子郵件收取。",
   "signInCodeRecoveryHelp": "也可以使用備用碼。",
   "signInCodeSend": "寄驗證碼給我",
+  "signInCodeResend": "重新寄送驗證碼",
   "signInCodeSent": "驗證碼已寄到你的電子郵件，10 分鐘內有效。",
   "errorInvalidCode": "驗證碼不正確或已過期。",
   "adminSectionEnv": "環境設定檔",

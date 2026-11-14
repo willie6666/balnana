@@ -3635,6 +3635,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get signInCodeSend => 'Stuur me een code per e-mail';
 
   @override
+  String get signInCodeResend => 'Code opnieuw sturen';
+
+  @override
   String get signInCodeSent => 'Er is een code onderweg naar je e-mailadres. De code is 10 minuten geldig.';
 
   @override

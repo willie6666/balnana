@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Kimlik doğrulama uygulamandaki kodu gir veya e-postayla bir kod iste.",
   "signInCodeRecoveryHelp": "Kurtarma kodu da olur.",
   "signInCodeSend": "Bana e-postayla kod gönder",
+  "signInCodeResend": "Kodu yeniden gönder",
   "signInCodeSent": "E-posta adresine bir kod gönderildi. 10 dakika geçerlidir.",
   "errorInvalidCode": "Bu kod doğru değil veya süresi dolmuş.",
   "adminSectionEnv": "Ortam dosyası",

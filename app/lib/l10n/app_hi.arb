@@ -1018,6 +1018,7 @@
   "signInCodeEither": "अपने ऑथेंटिकेटर ऐप का कोड डालें, या ईमेल से कोड मँगवाएँ।",
   "signInCodeRecoveryHelp": "रिकवरी कोड भी चलेगा।",
   "signInCodeSend": "मुझे ईमेल से कोड भेजें",
+  "signInCodeResend": "कोड फिर से भेजें",
   "signInCodeSent": "आपके ईमेल पर कोड भेजा जा रहा है। यह 10 मिनट तक मान्य है।",
   "errorInvalidCode": "यह कोड सही नहीं है या इसकी समय-सीमा खत्म हो गई है।",
   "adminSectionEnv": "एनवायरनमेंट फ़ाइल",

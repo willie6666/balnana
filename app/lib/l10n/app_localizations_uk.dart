@@ -3745,6 +3745,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get signInCodeSend => 'Надіслати мені код поштою';
 
   @override
+  String get signInCodeResend => 'Надіслати код ще раз';
+
+  @override
   String get signInCodeSent => 'Код надіслано на вашу пошту. Він діє 10 хвилин.';
 
   @override

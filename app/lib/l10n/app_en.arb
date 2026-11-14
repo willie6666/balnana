@@ -5320,6 +5320,10 @@
   "@signInCodeSend": {
     "description": "Button on the sign-in page that emails a sign-in code."
   },
+  "signInCodeResend": "Send the code again",
+  "@signInCodeResend": {
+    "description": "Button on the sign-in page that emails another sign-in code, once one was sent."
+  },
   "signInCodeSent": "A code is on its way to your email. It works for 10 minutes.",
   "@signInCodeSent": {
     "description": "Shown on the sign-in page after a code was emailed."

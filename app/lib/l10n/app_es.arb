@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Introduce el código de tu aplicación de autenticación o pide que te enviemos uno por correo.",
   "signInCodeRecoveryHelp": "También sirve un código de recuperación.",
   "signInCodeSend": "Enviarme un código por correo",
+  "signInCodeResend": "Reenviar el código",
   "signInCodeSent": "Hemos enviado un código a tu correo. Es válido durante 10 minutos.",
   "errorInvalidCode": "Ese código no es correcto o ha caducado.",
   "adminSectionEnv": "Archivo de entorno",

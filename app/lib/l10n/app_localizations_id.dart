@@ -3603,6 +3603,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get signInCodeSend => 'Kirimi saya kode lewat email';
 
   @override
+  String get signInCodeResend => 'Kirim ulang kode';
+
+  @override
   String get signInCodeSent => 'Kode sedang dikirim ke email Anda. Berlaku selama 10 menit.';
 
   @override

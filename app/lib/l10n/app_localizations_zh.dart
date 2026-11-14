@@ -3451,6 +3451,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signInCodeSend => '给我发送验证码';
 
   @override
+  String get signInCodeResend => '重新发送验证码';
+
+  @override
   String get signInCodeSent => '验证码已发送到你的邮箱，10 分钟内有效。';
 
   @override
@@ -6930,6 +6933,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get signInCodeSend => '寄驗證碼給我';
+
+  @override
+  String get signInCodeResend => '重新寄送驗證碼';
 
   @override
   String get signInCodeSent => '驗證碼已寄到你的電子郵件，10 分鐘內有效。';

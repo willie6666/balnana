@@ -410,7 +410,7 @@ class _ConfirmEmailPageState extends ConsumerState<ConfirmEmailPage> {
                     child: Text(l10n.confirmEmailResend),
                   ),
                   const SizedBox(height: BSpace.s8),
-                  TextButton(onPressed: () => context.go('/settings'), child: Text(l10n.navSettings)),
+                  TextButton(onPressed: () => context.go('/settings/account'), child: Text(l10n.navSettings)),
                 ],
               ),
             ),

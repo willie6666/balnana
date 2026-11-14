@@ -3606,6 +3606,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get signInCodeSend => 'Bana e-postayla kod gönder';
 
   @override
+  String get signInCodeResend => 'Kodu yeniden gönder';
+
+  @override
   String get signInCodeSent => 'E-posta adresine bir kod gönderildi. 10 dakika geçerlidir.';
 
   @override

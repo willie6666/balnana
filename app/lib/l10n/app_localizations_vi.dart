@@ -3590,6 +3590,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get signInCodeSend => 'Gửi mã cho tôi qua email';
 
   @override
+  String get signInCodeResend => 'Gửi lại mã';
+
+  @override
   String get signInCodeSent => 'Mã đang được gửi đến email của bạn. Mã có hiệu lực trong 10 phút.';
 
   @override

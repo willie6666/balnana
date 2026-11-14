@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Masukkan kode dari aplikasi autentikator Anda, atau minta kode lewat email.",
   "signInCodeRecoveryHelp": "Kode pemulihan juga bisa dipakai.",
   "signInCodeSend": "Kirimi saya kode lewat email",
+  "signInCodeResend": "Kirim ulang kode",
   "signInCodeSent": "Kode sedang dikirim ke email Anda. Berlaku selama 10 menit.",
   "errorInvalidCode": "Kode itu salah atau sudah kedaluwarsa.",
   "adminSectionEnv": "File lingkungan",

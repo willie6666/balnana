@@ -18,7 +18,6 @@ import '../../data/providers.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
-import '../account/two_factor.dart';
 import 'my_groups.dart';
 import 'privacy_page.dart';
 
@@ -59,8 +58,7 @@ class SettingsPage extends ConsumerWidget {
     return BPage(
       title: l10n.navSettings,
       children: [
-        if (ref.watch(accountsModeProvider)) const AccountSection(),
-        if (ref.watch(accountsModeProvider)) const TwoFactorSection(),
+        if (ref.watch(accountsModeProvider)) const AccountEntry(),
         if (ref.watch(signedInProvider) && (ref.watch(serverInfoProvider).value?.billing ?? false))
           GroupedList(
             children: [

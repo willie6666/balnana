@@ -3701,6 +3701,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signInCodeSend => 'أرسل لي رمزًا بالبريد الإلكتروني';
 
   @override
+  String get signInCodeResend => 'إعادة إرسال الرمز';
+
+  @override
   String get signInCodeSent => 'الرمز في طريقه إلى بريدك الإلكتروني. يبقى صالحًا لمدة 10 دقائق.';
 
   @override

@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Nhập mã từ ứng dụng xác thực hoặc nhận mã qua email.",
   "signInCodeRecoveryHelp": "Mã khôi phục cũng dùng được.",
   "signInCodeSend": "Gửi mã cho tôi qua email",
+  "signInCodeResend": "Gửi lại mã",
   "signInCodeSent": "Mã đang được gửi đến email của bạn. Mã có hiệu lực trong 10 phút.",
   "errorInvalidCode": "Mã không đúng hoặc đã hết hạn.",
   "adminSectionEnv": "Tệp môi trường",

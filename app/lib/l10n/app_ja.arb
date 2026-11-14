@@ -1018,6 +1018,7 @@
   "signInCodeEither": "認証アプリのコードを入力するか、メールでコードを受け取ってください。",
   "signInCodeRecoveryHelp": "リカバリーコードも使えます。",
   "signInCodeSend": "コードをメールで送る",
+  "signInCodeResend": "コードを再送信",
   "signInCodeSent": "コードをメールでお送りしました。10分間有効です。",
   "errorInvalidCode": "コードが正しくないか、期限が切れています。",
   "adminSectionEnv": "環境ファイル",

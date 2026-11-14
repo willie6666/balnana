@@ -6237,6 +6237,12 @@ abstract class AppLocalizations {
   /// **'Email me a code'**
   String get signInCodeSend;
 
+  /// Button on the sign-in page that emails another sign-in code, once one was sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the code again'**
+  String get signInCodeResend;
+
   /// Shown on the sign-in page after a code was emailed.
   ///
   /// In en, this message translates to:

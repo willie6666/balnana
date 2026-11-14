@@ -3647,6 +3647,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get signInCodeSend => 'मुझे ईमेल से कोड भेजें';
 
   @override
+  String get signInCodeResend => 'कोड फिर से भेजें';
+
+  @override
   String get signInCodeSent => 'आपके ईमेल पर कोड भेजा जा रहा है। यह 10 मिनट तक मान्य है।';
 
   @override

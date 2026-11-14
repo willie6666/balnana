@@ -227,7 +227,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             const SizedBox(height: BSpace.s8),
             TextButton(
               onPressed: _busy ? null : _emailCode,
-              child: Text(l10n.signInCodeSend),
+              // Once one was sent, the button sends another.
+              child: Text(_emailed ? l10n.signInCodeResend : l10n.signInCodeSend),
             ),
           ],
           const SizedBox(height: BSpace.s8),

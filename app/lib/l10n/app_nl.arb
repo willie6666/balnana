@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Voer de code uit je authenticator-app in, of laat er een per e-mail sturen.",
   "signInCodeRecoveryHelp": "Een herstelcode werkt ook.",
   "signInCodeSend": "Stuur me een code per e-mail",
+  "signInCodeResend": "Code opnieuw sturen",
   "signInCodeSent": "Er is een code onderweg naar je e-mailadres. De code is 10 minuten geldig.",
   "errorInvalidCode": "Die code klopt niet of is verlopen.",
   "adminSectionEnv": "Omgevingsbestand",

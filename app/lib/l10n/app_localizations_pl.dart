@@ -3756,6 +3756,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get signInCodeSend => 'Wyślij mi kod e-mailem';
 
   @override
+  String get signInCodeResend => 'Wyślij kod ponownie';
+
+  @override
   String get signInCodeSent => 'Kod został wysłany na twój adres e-mail. Jest ważny przez 10 minut.';
 
   @override

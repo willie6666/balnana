@@ -1018,6 +1018,7 @@
   "signInCodeEither": "인증 앱의 코드를 입력하거나 이메일로 코드를 받으세요.",
   "signInCodeRecoveryHelp": "복구 코드도 사용할 수 있습니다.",
   "signInCodeSend": "이메일로 코드 받기",
+  "signInCodeResend": "코드 다시 보내기",
   "signInCodeSent": "코드를 이메일로 보냈습니다. 10분 동안 유효합니다.",
   "errorInvalidCode": "코드가 올바르지 않거나 만료되었습니다.",
   "adminSectionEnv": "환경 파일",

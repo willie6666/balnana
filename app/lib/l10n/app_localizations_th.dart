@@ -3562,6 +3562,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get signInCodeSend => 'ส่งรหัสให้ฉันทางอีเมล';
 
   @override
+  String get signInCodeResend => 'ส่งรหัสอีกครั้ง';
+
+  @override
   String get signInCodeSent => 'กำลังส่งรหัสไปที่อีเมลของคุณ รหัสใช้ได้ 10 นาที';
 
   @override

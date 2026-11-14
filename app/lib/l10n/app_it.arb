@@ -1018,6 +1018,7 @@
   "signInCodeEither": "Inserisci il codice della tua app di autenticazione, oppure fattene inviare uno via email.",
   "signInCodeRecoveryHelp": "Va bene anche un codice di recupero.",
   "signInCodeSend": "Inviami un codice via email",
+  "signInCodeResend": "Invia di nuovo il codice",
   "signInCodeSent": "Ti abbiamo inviato un codice via email. È valido per 10 minuti.",
   "errorInvalidCode": "Il codice non è corretto o è scaduto.",
   "adminSectionEnv": "File di ambiente",

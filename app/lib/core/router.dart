@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/home_group.dart';
 import '../data/providers.dart';
+import '../features/account/account_section.dart';
 import '../features/account/email_pages.dart';
 import '../features/account/oauth.dart';
 import '../features/account/sign_in_page.dart';
@@ -277,6 +278,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => PlanPage(paypal: state.uri.queryParameters['paypal']),
                   ),
                   GoRoute(path: 'sharing', builder: (context, state) => const SharePlanPage()),
+                  GoRoute(
+                    path: 'account',
+                    redirect: (context, state) => ref.read(accountsModeProvider) ? null : '/settings',
+                    builder: (context, state) => const AccountPage(),
+                  ),
                 ],
               ),
             ],
