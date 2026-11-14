@@ -3093,20 +3093,20 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Ваш тариф не позволяет загружать фото.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Автоматические тарифы';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Аккаунты автоматически получают тариф в зависимости от того, подтверждён ли их адрес электронной почты. После подтверждения тариф меняется сразу. Оплаченные или назначенные вручную тарифы имеют приоритет. Укажите 0 фото, чтобы запретить загрузку, в том числе в группах, покрытых тарифом другого участника.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Без подтверждённой почты';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'С подтверждённой почтой';
 
   @override
   String get adminPlansHelp =>

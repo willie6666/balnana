@@ -3087,20 +3087,20 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'خطتك لا تسمح برفع الصور.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'الخطط التلقائية';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'تستخدم الحسابات تلقائيًا الخطة المناسبة لحالة تأكيد بريدها الإلكتروني. يؤدي تأكيد البريد الإلكتروني إلى تبديل الخطة فورًا. الأولوية للخطط المدفوعة أو الممنوحة يدويًا. اضبط الصور على 0 لمنع الرفع، حتى في المجموعات التي تغطيها خطة عضو آخر.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'بدون بريد إلكتروني مؤكد';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'مع بريد إلكتروني مؤكد';
 
   @override
   String get adminPlansHelp =>

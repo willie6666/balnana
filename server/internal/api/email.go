@@ -33,6 +33,7 @@ func (s *Server) sendMail(m mail.Message) {
 	s.mailing.Add(1)
 	go func() {
 		defer s.mailing.Done()
+		defer s.logPanic("sending email")
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		err := mailer.Send(ctx, m)

@@ -2995,20 +2995,20 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Planınız fotoğraf yüklemeye izin vermiyor.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Otomatik planlar';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Hesaplar, e-posta adreslerinin doğrulanma durumuna göre otomatik olarak bir plan kullanır. E-posta doğrulanınca plan hemen değişir. Ücretli veya elle verilen planlar önceliklidir. Yüklemeleri engellemek için fotoğrafları 0 yapın; bu, başka bir üyenin planı kapsamındaki gruplar için de geçerlidir.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Doğrulanmamış e-posta';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'Doğrulanmış e-posta';
 
   @override
   String get adminPlansHelp =>

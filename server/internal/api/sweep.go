@@ -40,11 +40,14 @@ func (s *Server) SweepExpired(ctx context.Context) {
 	tick := time.NewTicker(sweepEvery)
 	defer tick.Stop()
 	for {
-		if n, err := s.sweepExpired(ctx); err != nil && ctx.Err() == nil {
-			s.log.Warn("deleting expired rows failed", "err", err)
-		} else if n > 0 {
-			s.log.Debug("deleted expired rows", "rows", n)
-		}
+		func() {
+			defer s.logPanic("deleting expired rows")
+			if n, err := s.sweepExpired(ctx); err != nil && ctx.Err() == nil {
+				s.log.Warn("deleting expired rows failed", "err", err)
+			} else if n > 0 {
+				s.log.Debug("deleted expired rows", "rows", n)
+			}
+		}()
 		select {
 		case <-tick.C:
 		case <-ctx.Done():

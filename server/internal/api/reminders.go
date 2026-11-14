@@ -73,6 +73,7 @@ func (s *Server) RemindMember(ctx context.Context, req RemindMemberRequestObject
 		s.pushing.Add(1)
 		go func() {
 			defer s.pushing.Done()
+			defer s.logPanic("push")
 			ctx, cancel := context.WithTimeout(context.Background(), pushTimeout)
 			defer cancel()
 			s.sendAll(ctx, g, devices, n)

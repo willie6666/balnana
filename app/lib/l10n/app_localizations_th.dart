@@ -2955,20 +2955,20 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'แพ็กเกจของคุณไม่อนุญาตให้อัปโหลดรูป';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'แพ็กเกจอัตโนมัติ';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'บัญชีจะใช้แพ็กเกจตามสถานะการยืนยันอีเมลโดยอัตโนมัติ เมื่อยืนยันอีเมลแล้วแพ็กเกจจะเปลี่ยนทันที แพ็กเกจที่ชำระเงินหรือมอบให้ด้วยตนเองจะมีลำดับก่อน ตั้งรูปเป็น 0 เพื่อปิดการอัปโหลด รวมถึงในกลุ่มที่แพ็กเกจของสมาชิกคนอื่นครอบคลุม';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'ยังไม่ได้ยืนยันอีเมล';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'ยืนยันอีเมลแล้ว';
 
   @override
   String get adminPlansHelp =>

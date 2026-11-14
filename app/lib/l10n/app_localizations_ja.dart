@@ -2884,20 +2884,20 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'ご利用のプランでは写真をアップロードできません。';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => '自動プラン';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'アカウントには、メールアドレスの確認状況に応じたプランが自動で適用されます。メールアドレスを確認すると、すぐにプランが切り替わります。有料のプランや手動で付与したプランが優先されます。写真を 0 にするとアップロードを禁止できます。別のメンバーのプランが適用されているグループも対象です。';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'メールアドレス未確認';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'メールアドレス確認済み';
 
   @override
   String get adminPlansHelp => '新しい上限は今後の追加分に適用され、既存のものは残ります。空欄にすると上限なしになります。';

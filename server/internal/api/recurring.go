@@ -397,11 +397,14 @@ func (s *Server) RunRecurring(ctx context.Context) {
 	tick := time.NewTicker(recurringEvery)
 	defer tick.Stop()
 	for {
-		if n, err := s.runRecurring(ctx, time.Now()); err != nil && ctx.Err() == nil {
-			s.log.Warn("adding recurring expenses failed", "err", err)
-		} else if n > 0 {
-			s.log.Debug("added recurring expenses", "expenses", n)
-		}
+		func() {
+			defer s.logPanic("adding recurring expenses")
+			if n, err := s.runRecurring(ctx, time.Now()); err != nil && ctx.Err() == nil {
+				s.log.Warn("adding recurring expenses failed", "err", err)
+			} else if n > 0 {
+				s.log.Debug("added recurring expenses", "expenses", n)
+			}
+		}()
 		select {
 		case <-tick.C:
 		case <-ctx.Done():

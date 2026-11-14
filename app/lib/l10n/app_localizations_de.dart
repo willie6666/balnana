@@ -3034,20 +3034,20 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Dein Tarif erlaubt keine Foto-Uploads.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Automatische Tarife';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Konten erhalten automatisch den Tarif, der zum Bestätigungsstatus ihrer E-Mail-Adresse passt. Nach der Bestätigung wechselt der Tarif sofort. Bezahlte oder manuell vergebene Tarife haben Vorrang. Setze Fotos auf 0, um Uploads zu sperren, auch in Gruppen, für die der Tarif eines anderen Mitglieds gilt.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Ohne bestätigte E-Mail-Adresse';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'Mit bestätigter E-Mail-Adresse';
 
   @override
   String get adminPlansHelp =>

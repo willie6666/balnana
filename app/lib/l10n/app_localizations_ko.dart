@@ -2885,20 +2885,20 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => '현재 요금제에서는 사진을 업로드할 수 없어요.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => '자동 요금제';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      '계정에는 이메일 확인 상태에 맞는 요금제가 자동으로 적용돼요. 이메일을 확인하면 요금제가 바로 바뀌어요. 유료 요금제나 직접 부여한 요금제가 우선해요. 사진을 0으로 설정하면 다른 멤버의 요금제가 적용된 그룹을 포함해 업로드를 막을 수 있어요.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => '이메일 미확인';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => '이메일 확인됨';
 
   @override
   String get adminPlansHelp => '새 한도는 앞으로 추가하는 항목에 적용되고 기존 항목은 그대로 남아요. 비워 두면 한도가 없어요.';

@@ -5,7 +5,7 @@
 # See docker-compose.yml and .env.example for running it.
 
 ARG FLUTTER_VERSION=3.47.8
-ARG GO_VERSION=1.26
+ARG GO_VERSION=1.26.11
 
 # --- Flutter web build --------------------------------------------------------
 FROM debian:bookworm-slim AS web

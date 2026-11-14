@@ -207,6 +207,7 @@ func (s *Server) notifyExpense(g *group, who *string, action string, e Expense, 
 	s.pushing.Add(1)
 	go func() {
 		defer s.pushing.Done()
+		defer s.logPanic("push")
 		ctx, cancel := context.WithTimeout(context.Background(), pushTimeout)
 		defer cancel()
 		if err := s.sendExpense(ctx, g, who, action, e, earlier); err != nil {
@@ -303,6 +304,7 @@ func (s *Server) sendAll(ctx context.Context, g *group, devices []pushDevice, n 
 		wg.Add(1)
 		go func() {
 			defer func() { <-sem; wg.Done() }()
+			defer s.logPanic("push")
 			s.sendTo(ctx, g, d, payload, n.Expense)
 		}()
 	}

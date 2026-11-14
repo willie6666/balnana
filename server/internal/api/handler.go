@@ -221,6 +221,15 @@ func maskPath(path string) string {
 	return path
 }
 
+// logPanic, deferred first thing in a background goroutine, logs a panic
+// there instead of letting it stop the whole server, as recoverer does for
+// requests.
+func (s *Server) logPanic(task string) {
+	if v := recover(); v != nil {
+		s.log.Error("panic", "task", task, "value", v, "stack", string(debug.Stack()))
+	}
+}
+
 func recoverer(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

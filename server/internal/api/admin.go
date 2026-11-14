@@ -79,6 +79,7 @@ func (s *Server) LoadSettings(ctx context.Context) error {
 // reloadSettings follows settings another server saved. Saved settings
 // that do not fit this server's environment leave in force what is.
 func (s *Server) reloadSettings(ctx context.Context) {
+	defer s.logPanic("reloading settings")
 	stored, err := storedSettings(ctx, s.db)
 	if err == nil {
 		var cfg *config.Config

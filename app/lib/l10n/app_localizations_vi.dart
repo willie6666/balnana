@@ -2980,20 +2980,20 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Gói của bạn không cho phép tải ảnh lên.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Gói tự động';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Tài khoản tự động dùng gói tương ứng với trạng thái xác nhận email. Khi xác nhận email, gói sẽ đổi ngay. Gói trả phí hoặc được cấp thủ công được ưu tiên. Đặt ảnh thành 0 để chặn tải lên, kể cả trong nhóm được gói của thành viên khác bao gồm.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Chưa xác nhận email';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'Đã xác nhận email';
 
   @override
   String get adminPlansHelp =>

@@ -2991,20 +2991,20 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Paket Anda tidak mengizinkan unggahan foto.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Paket otomatis';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Akun otomatis memakai paket sesuai status konfirmasi email-nya. Setelah email dikonfirmasi, paket langsung berganti. Paket berbayar atau yang diberikan manual diutamakan. Atur foto ke 0 untuk memblokir unggahan, termasuk di grup yang dicakup paket anggota lain.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Tanpa email terkonfirmasi';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'Dengan email terkonfirmasi';
 
   @override
   String get adminPlansHelp =>

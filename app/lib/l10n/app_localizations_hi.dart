@@ -3032,20 +3032,20 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'आपका प्लान फ़ोटो अपलोड करने की अनुमति नहीं देता।';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'स्वचालित प्लान';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'खाते अपने ईमेल की पुष्टि की मौजूदा स्थिति के अनुसार अपने-आप प्लान पाते हैं। ईमेल की पुष्टि होते ही प्लान तुरंत बदल जाता है। भुगतान किए गए या मैन्युअल रूप से दिए गए प्लान को प्राथमिकता मिलती है। अपलोड रोकने के लिए फ़ोटो को 0 पर सेट करें, उन समूहों में भी जिन्हें किसी दूसरे सदस्य का प्लान कवर करता है।';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'बिना पुष्टि किए गए ईमेल के';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'पुष्टि किए गए ईमेल के साथ';
 
   @override
   String get adminPlansHelp =>

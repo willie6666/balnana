@@ -3073,20 +3073,20 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Votre formule ne permet pas d’envoyer des photos.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Formules automatiques';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Les comptes reçoivent automatiquement la formule correspondant à l’état de confirmation de leur adresse e-mail. La confirmation de l’adresse change la formule immédiatement. Les formules payées ou attribuées manuellement sont prioritaires. Réglez les photos sur 0 pour bloquer les envois, y compris dans les groupes couverts par la formule d’un autre membre.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Sans adresse e-mail confirmée';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'Avec une adresse e-mail confirmée';
 
   @override
   String get adminPlansHelp =>

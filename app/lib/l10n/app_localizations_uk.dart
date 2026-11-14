@@ -3126,20 +3126,20 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorReceiptUploadsDisabled => 'Your plan does not allow photo uploads.';
+  String get errorReceiptUploadsDisabled => 'Ваш тариф не дозволяє завантажувати фото.';
 
   @override
-  String get adminAutomaticPlans => 'Automatic plans';
+  String get adminAutomaticPlans => 'Автоматичні тарифи';
 
   @override
   String get adminAutomaticPlansHelp =>
-      'Accounts automatically use the plan for their current email verification status. Verifying email switches the plan immediately. Paid or manually granted plans take priority. Set photos to 0 to block uploads, including in sponsored groups.';
+      'Облікові записи автоматично отримують тариф залежно від того, чи підтверджено їхню електронну пошту. Після підтвердження тариф змінюється одразу. Оплачені або призначені вручну тарифи мають пріоритет. Укажіть 0 фото, щоб заборонити завантаження, зокрема в групах, які покриває тариф іншого учасника.';
 
   @override
-  String get adminUnverifiedPlan => 'Without a verified email';
+  String get adminUnverifiedPlan => 'Без підтвердженої пошти';
 
   @override
-  String get adminVerifiedPlan => 'With a verified email';
+  String get adminVerifiedPlan => 'З підтвердженою поштою';
 
   @override
   String get adminPlansHelp =>

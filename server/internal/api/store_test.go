@@ -8,7 +8,7 @@ func TestCleanText(t *testing.T) {
 		ok       bool
 	}{
 		{"  Ana ", "Ana", true},
-		{"A‮B", "AB", true},
+		{"A\u202eB", "AB", true},
 		{"a\nb", "a\nb", true},
 		{"a\tb", "", false},
 		{"", "", false},

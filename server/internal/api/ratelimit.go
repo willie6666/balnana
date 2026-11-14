@@ -34,9 +34,12 @@ type bucket struct {
 	last   time.Time
 }
 
-func newBuckets(perMinute, burst int) *buckets {
-	return &buckets{perSecond: float64(perMinute) / 60, burst: float64(burst), m: map[string]*bucket{}}
+// newBuckets gives each key burst tokens at once, and n more every period.
+func newBuckets(n int, period time.Duration, burst int) *buckets {
+	return &buckets{perSecond: float64(n) / period.Seconds(), burst: float64(burst), m: map[string]*bucket{}}
 }
+
+const day = 24 * time.Hour
 
 // take removes n tokens and reports whether there were at least n. A request
 // that takes more than is left still drains the bucket (to zero), so a burst
@@ -277,9 +280,9 @@ func rateLimit(perMinute int, proxyHeader string, next http.Handler) http.Handle
 	var requests *buckets
 	if perMinute > 0 {
 		// Allow a short burst: opening the app fetches a few things at once.
-		requests = newBuckets(perMinute, max(perMinute/4, 20))
+		requests = newBuckets(perMinute, time.Minute, max(perMinute/4, 20))
 	}
-	misses := newBuckets(missPerMinute, missBurst)
+	misses := newBuckets(missPerMinute, time.Minute, missBurst)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, BasePath+"/") || r.Method == http.MethodOptions {
 			next.ServeHTTP(w, r)

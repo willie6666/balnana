@@ -11,7 +11,7 @@ import (
 )
 
 func TestBuckets(t *testing.T) {
-	b := newBuckets(60, 3) // one a second, three at once
+	b := newBuckets(60, time.Minute, 3) // one a second, three at once
 	now := time.Unix(1000, 0)
 	for i := range 3 {
 		if !b.take("a", 1, now) {

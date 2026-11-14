@@ -744,7 +744,7 @@ func TestExpenseDateRange(t *testing.T) {
 // The marks that turn text right to left are taken out of what people type.
 func TestNamesDropBidiControls(t *testing.T) {
 	c := newClient(t)
-	g := createGroup(c, "Ana‮gnp.exe", "Ben")
+	g := createGroup(c, "Ana\u202egnp.exe", "Ben")
 	if g.Members[0].Name != "Anagnp.exe" {
 		t.Fatalf("name %q", g.Members[0].Name)
 	}
