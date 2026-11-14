@@ -12,6 +12,7 @@ import 'app.dart';
 import 'core/autofill_io.dart' if (dart.library.js_interop) 'core/autofill_web.dart';
 import 'core/home_screen.dart';
 import 'core/l10n.dart';
+import 'core/offline_cache.dart';
 import 'core/prefs.dart';
 import 'core/push.dart';
 import 'core/settings.dart';
@@ -46,6 +47,9 @@ Future<void> main(List<String> args) async {
       overrides: [
         prefsProvider.overrideWithValue(prefs),
         launchTargetProvider.overrideWithValue(launched),
+        // Show what was saved while the server is asked. Not on the web,
+        // where a signed-in session is a cookie the cache cannot tell apart.
+        if (!kIsWeb) warmStartProvider.overrideWith(() => WarmStartNotifier(on: true)),
         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           homeScreenProvider.overrideWithValue(const HomeScreen()),
       ],

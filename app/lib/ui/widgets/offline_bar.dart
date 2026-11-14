@@ -43,6 +43,31 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
         }
       },
     );
+    if (ref.read(warmStartProvider)) _warmUp();
+  }
+
+  /// Ends the start ([warmStartProvider]) once the server answers or is
+  /// known to be out of reach, and reloads what was shown from the cache.
+  Future<void> _warmUp() async {
+    final url = ref.read(serverUrlProvider);
+    var unreachable = false;
+    if (url != null) {
+      try {
+        await ref.read(serverProbeProvider)(url);
+      } on ProbeException catch (e) {
+        unreachable = e.error == ProbeError.unreachable;
+      } on Object {
+        // Something answered; the reload shows what.
+      }
+    }
+    if (!mounted) return;
+    final served = ref.read(warmStartProvider.notifier).end();
+    if (unreachable) {
+      // What was shown came from the cache, and the bar says so.
+      if (served) ref.read(offlineProvider.notifier).set(true);
+    } else if (served && ref.read(serverUrlProvider) == url) {
+      _retry();
+    }
   }
 
   @override

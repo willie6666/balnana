@@ -315,6 +315,10 @@ Dio _cachedDio(Ref ref, String url, String account, {bool probe = false}) {
           if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
         },
         isOffline: () => ref.mounted && ref.read(offlineProvider),
+        isWarm: () => ref.mounted && ref.read(warmStartProvider),
+        onWarm: () {
+          if (ref.mounted) ref.read(warmStartProvider.notifier).served();
+        },
         probe: probe,
       ),
     );

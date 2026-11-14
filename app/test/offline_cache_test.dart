@@ -142,6 +142,32 @@ void main() {
     expect(server.calls, calls + 3);
   });
 
+  test('while the app starts, every client answers from what was saved', () async {
+    var warm = false, served = 0;
+    Dio client({bool probe = false}) => Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..httpClientAdapter = server
+      ..interceptors.add(
+        OfflineCache(db, _server, '', offline.add, isWarm: () => warm, onWarm: () => served++, probe: probe),
+      );
+
+    final first = await client().get<Object?>('/me');
+    await client(probe: true).get<Object?>('/server-info');
+    await saved();
+    warm = true;
+    final calls = server.calls;
+    expect((await client().get<Object?>('/me')).data, first.data);
+    await client(probe: true).get<Object?>('/server-info');
+    expect(server.calls, calls);
+    expect(served, 2);
+    // Without the bar: the server was not found out of reach.
+    expect(offline, [false, false]);
+
+    // What was never saved still goes to the server, unremarked.
+    await client().get<Object?>('/g/other');
+    expect(server.calls, calls + 1);
+    expect(served, 2);
+  });
+
   test('keeps reading POSTs by body, and nothing else that writes', () async {
     await dio.post<Object?>('/g/tok/expenses', data: {'title': 'x'});
     await dio.post<Object?>(
@@ -464,5 +490,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
     expect(infoLoads, 3);
+  });
+
+  Future<ProviderContainer> warmStart(
+    WidgetTester tester, {
+    required bool up,
+    required void Function() onInfo,
+  }) async {
+    final container = ProviderContainer(
+      overrides: [
+        cacheDbProvider.overrideWithValue(null),
+        serverUrlProvider.overrideWithValue(_server),
+        warmStartProvider.overrideWith(() => WarmStartNotifier(on: true)),
+        serverInfoProvider.overrideWith((ref) async {
+          onInfo();
+          // As if answered from the cache while starting.
+          if (ref.read(warmStartProvider)) ref.read(warmStartProvider.notifier).served();
+          return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
+        }),
+        serverProbeProvider.overrideWithValue((url) async {
+          if (!up) throw const ProbeException(ProbeError.unreachable);
+          return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: l10nDelegates,
+          builder: (context, child) => OfflineBar(child: child!),
+          home: Consumer(
+            builder: (context, ref, _) => Text('${ref.watch(serverInfoProvider).value?.version}'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    return container;
+  }
+
+  testWidgets('what was saved shows at start, and reloads once the server answers', (tester) async {
+    var infoLoads = 0;
+    final container = await warmStart(tester, up: true, onInfo: () => infoLoads++);
+    expect(container.read(warmStartProvider), isFalse);
+    expect(infoLoads, 2);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+  });
+
+  testWidgets('what was saved shows at start, with the bar if the server is out of reach', (tester) async {
+    var infoLoads = 0;
+    final container = await warmStart(tester, up: false, onInfo: () => infoLoads++);
+    expect(container.read(warmStartProvider), isFalse);
+    expect(infoLoads, 1);
+    expect(container.read(offlineProvider), isTrue);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
   });
 }

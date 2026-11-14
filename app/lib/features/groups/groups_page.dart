@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/l10n.dart';
 import '../../core/server.dart';
+import '../../core/session.dart';
 import '../../data/known_groups.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
@@ -68,8 +70,12 @@ class GroupsPage extends ConsumerWidget {
     ];
 
     // A signed-in account's groups live on the server, not on this device.
+    // Until the server says whether this session is signed in, an empty
+    // device says nothing: wait for the list rather than call it empty.
     final data = view.value;
-    final empty = ref.watch(signedInProvider) ? data?.groups.isEmpty ?? false : known.isEmpty;
+    final account = ref.watch(currentAccountProvider);
+    final mayBeSignedIn = !account.hasValue && !account.hasError && (kIsWeb || ref.watch(identityProvider).token != null);
+    final empty = ref.watch(signedInProvider) || mayBeSignedIn ? data?.groups.isEmpty ?? false : known.isEmpty;
     if (empty) {
       return _empty(
         context,

@@ -272,6 +272,34 @@ class OfflineNotifier extends Notifier<bool> {
   }
 }
 
+/// Whether the app has just opened and not yet heard whether the server is
+/// there. Meanwhile what was saved is shown at once, as while offline but
+/// without the bar; [OfflineBar] ends it and reloads what was shown so.
+///
+/// Off unless the app turns it on as it starts (see main.dart).
+final warmStartProvider = NotifierProvider<WarmStartNotifier, bool>(() => WarmStartNotifier());
+
+class WarmStartNotifier extends Notifier<bool> {
+  WarmStartNotifier({this.on = false});
+
+  final bool on;
+  var _served = false;
+
+  @override
+  bool build() => on;
+
+  /// Notes that a request was answered from the cache while starting.
+  void served() => _served = true;
+
+  /// Ends the start, and returns whether anything shown came from the cache.
+  bool end() {
+    final served = _served;
+    _served = false;
+    state = false;
+    return served;
+  }
+}
+
 /// Saves the server's answers and gives them back when it cannot be reached.
 ///
 /// Answers are kept per [_account] (see [cacheAccount]), so no account ever
@@ -279,7 +307,9 @@ class OfflineNotifier extends Notifier<bool> {
 ///
 /// Once [isOffline] says the server is out of reach, saved answers are given
 /// back at once instead of after each request times out. A [probe] client
-/// still asks the server every time, so it can tell when it is back.
+/// still asks the server every time, so it can tell when it is back. While
+/// [isWarm] says the app has just started, every client is answered from
+/// what was saved, and [onWarm] hears of it.
 class OfflineCache extends Interceptor {
   OfflineCache(
     this._db,
@@ -287,14 +317,20 @@ class OfflineCache extends Interceptor {
     this._account,
     this._offline, {
     bool Function()? isOffline,
+    bool Function()? isWarm,
+    void Function()? onWarm,
     this.probe = false,
-  }) : _isOffline = isOffline ?? (() => false);
+  }) : _isOffline = isOffline ?? (() => false),
+       _isWarm = isWarm ?? (() => false),
+       _onWarm = onWarm ?? (() {});
 
   final CacheDb _db;
   final String _server;
   final String _account;
   final void Function(bool offline) _offline;
   final bool Function() _isOffline;
+  final bool Function() _isWarm;
+  final void Function() _onWarm;
   final bool probe;
 
   /// POSTs that only read, and so may be answered from the cache.
@@ -333,9 +369,11 @@ class OfflineCache extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     options.extra[_askedKey] = _db.forgets;
-    final key = probe || !_isOffline() ? null : _key(options);
+    final warm = _isWarm();
+    final key = warm || (!probe && _isOffline()) ? _key(options) : null;
     final saved = key == null ? null : await _find(key);
     if (saved == null) return handler.next(options);
+    if (warm) _onWarm();
     handler.resolve(_answer(options, saved));
   }
 
