@@ -1,9 +1,5 @@
 {
   "@@locale": "en",
-  "languageEndonym": "English",
-  "@languageEndonym": {
-    "description": "The name of this language, written in this language. Shown in the language picker."
-  },
   "appTitle": "Balnana",
   "@appTitle": {
     "description": "The app name. Usually not translated."

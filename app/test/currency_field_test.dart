@@ -1,4 +1,4 @@
-import 'package:balnana/l10n/app_localizations.dart';
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/ui/widgets/currency_field.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -9,7 +9,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: CurrencyField(controller: controller)),
       ),

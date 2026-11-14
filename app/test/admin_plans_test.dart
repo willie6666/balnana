@@ -1,8 +1,8 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/features/admin/admin_page.dart';
 import 'package:balnana/features/admin/admin_plans_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +44,7 @@ Future<void> _pump(WidgetTester tester, _Api api) async {
     ProviderScope(
       overrides: [adminApiProvider.overrideWithValue(api)],
       child: const MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: AdminPlansPage(token: 'admin'),
       ),

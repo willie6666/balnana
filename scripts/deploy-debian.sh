@@ -131,7 +131,7 @@ log "Installing Debian packages"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   ca-certificates curl git unzip xz-utils zip file libglu1-mesa libstdc++6 \
-  python3 postgresql-common
+  python3 postgresql-common brotli
 log "Installing PostgreSQL $POSTGRES_MAJOR from the official PGDG repository"
 # The distribution's default PostgreSQL package may have a different major version.
 # This helper is shipped by postgresql-common and configures the signed PGDG repo.
@@ -223,6 +223,7 @@ as_builder bash -c '
   test -s build/web/main.dart.js
   mkdir -p "$1/server/internal/web/dist"
   cp -a build/web/. "$1/server/internal/web/dist/"
+  sh "$1/server/internal/web/precompress.sh" "$1/server/internal/web/dist"
   cd "$1/server"
   CGO_ENABLED=0 go build -mod=readonly -trimpath \
     -ldflags "-s -w -X main.version=$2" -o balnana ./cmd/balnana

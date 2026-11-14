@@ -10,9 +10,6 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get languageEndonym => 'Türkçe';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override

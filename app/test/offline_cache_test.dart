@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
 import 'package:balnana/data/providers.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/offline_bar.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
@@ -379,7 +379,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           builder: (context, child) => OfflineBar(child: child!),
           home: const SizedBox(),
         ),
@@ -410,7 +410,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           home: const OfflineBar(child: Scaffold(body: TextField())),
         ),
       ),
@@ -440,7 +440,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           builder: (context, child) => OfflineBar(child: child!),
           home: Consumer(
             builder: (context, ref, _) => Text('${ref.watch(serverInfoProvider).value?.version}'),

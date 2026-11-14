@@ -1,7 +1,7 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/features/group/share_sheet.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +26,7 @@ Future<void> _open(WidgetTester tester, Group group, {AuthMode mode = AuthMode.l
     ProviderScope(
       overrides: [serverInfoProvider.overrideWithValue(AsyncValue.data(info))],
       child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Builder(

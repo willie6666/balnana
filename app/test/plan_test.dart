@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:balnana/core/errors.dart';
 import 'package:balnana/core/google_play.dart';
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/settings/plan_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:balnana/ui/widgets/play_purchases.dart';
 import 'package:dio/dio.dart';
@@ -115,7 +115,7 @@ Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, Balnana
         ),
       ],
       child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: PlanPage(paypal: paypal),
       ),
@@ -286,7 +286,7 @@ void main() {
           balnanaApiProvider.overrideWithValue(null),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: ValueListenableBuilder<String?>(
@@ -316,7 +316,7 @@ void main() {
             if (plan != null) myPlanProvider.overrideWith((ref) => plan()),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: l10nDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(

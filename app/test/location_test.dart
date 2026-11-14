@@ -1,8 +1,8 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/location.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/features/expense/location.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_map_vector_tiles/flutter_map_vector_tiles.dart' as vt;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,7 +84,7 @@ void main() {
           }),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(

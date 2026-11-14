@@ -1,5 +1,5 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/data/models.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/member_picker.dart';
 import 'package:balnana/ui/widgets/menu_chip.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +16,7 @@ List<Member> _people(int count) => [
 Future<void> _host(WidgetTester tester, Future<void> Function(BuildContext context) open) async {
   await tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: l10nDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Builder(
@@ -104,7 +104,7 @@ void main() {
   testWidgets('a long list shows its first part until asked for more', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
@@ -126,7 +126,7 @@ void main() {
   testWidgets('a short list shows everything with no button', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: l10nDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: ShowMore(limit: 3, children: [for (var i = 1; i <= 3; i++) Text('Row $i')])),
       ),

@@ -32,6 +32,8 @@ COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
 COPY --from=web /src/app/build/web ./internal/web/dist/
+# Brotli copies for browsers that take it, smaller again than gzip.
+RUN apk add --no-cache brotli && sh internal/web/precompress.sh internal/web/dist
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/balnana ./cmd/balnana
 

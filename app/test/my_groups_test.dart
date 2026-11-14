@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/settings.dart';
@@ -7,7 +8,6 @@ import 'package:balnana/data/known_groups.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/groups/open_link.dart';
 import 'package:balnana/features/settings/my_groups.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +74,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: l10nDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const Scaffold(body: MyGroupsSection()),
           ),
@@ -123,7 +123,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: MyGroupsSection()),
         ),

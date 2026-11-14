@@ -45,6 +45,7 @@ func serve(files fs.FS, tagged bool) http.Handler {
 	}
 
 	fileServer := http.FileServerFS(files)
+	compressed := &compressor{}
 	serveIndex := func(w http.ResponseWriter) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -73,10 +74,15 @@ func serve(files fs.FS, tagged bool) http.Handler {
 			w.Header().Set("Cache-Control", "no-cache")
 			// Embedded files carry no modification time, so without an ETag
 			// browsers download the megabytes of the app again on every visit.
+			var tag string
 			if etags != nil {
-				if tag := etag(files, name, etags); tag != "" {
-					w.Header().Set("ETag", tag)
-				}
+				tag = etag(files, name, etags)
+			}
+			if compressed.serve(w, r, files, name, info, tag) {
+				return
+			}
+			if tag != "" {
+				w.Header().Set("ETag", tag)
 			}
 			fileServer.ServeHTTP(w, r)
 			return

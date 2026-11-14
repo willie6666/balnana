@@ -54,7 +54,7 @@ class SettingsPage extends ConsumerWidget {
     final locale = settings.locale;
     final languageLabel = locale == null
         ? l10n.languageSystem
-        : lookupAppLocalizations(locale).languageEndonym;
+        : languageName(locale);
 
     return BPage(
       title: l10n.navSettings,
@@ -245,7 +245,7 @@ class SettingsPage extends ConsumerWidget {
       options: {
         system: l10n.languageSystem,
         for (final locale in AppLocalizations.supportedLocales)
-          locale: lookupAppLocalizations(locale).languageEndonym,
+          locale: languageName(locale),
       },
     );
     if (picked == null || !context.mounted) return;

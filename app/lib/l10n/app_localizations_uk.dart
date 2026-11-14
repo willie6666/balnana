@@ -10,9 +10,6 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
-  String get languageEndonym => 'Українська';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override

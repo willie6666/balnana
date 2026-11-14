@@ -10,9 +10,6 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get languageEndonym => '한국어';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override

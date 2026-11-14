@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:balnana/app.dart';
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/features/admin/admin_page.dart';
 import 'package:balnana/features/admin/admin_payments_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,7 +142,7 @@ void main() {
       ProviderScope(
         overrides: [adminApiProvider.overrideWithValue(api)],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const AdminPaymentsPage(token: 'admin'),
         ),

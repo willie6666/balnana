@@ -1277,8 +1277,8 @@ void main() {
       expect(server.sent, ['POST /api/v1/g/tok/members/b/remind']);
     });
 
-    test('the message says how to pay', () {
-      final l10n = lookupAppLocalizations(const Locale('en'));
+    test('the message says how to pay', () async {
+      final l10n = await lookupAppLocalizations(const Locale('en'));
       final group = flat();
       expect(
         reminderText(l10n, group, group.member('a')!, r'$10.00', 'https://example.test/g/tok'),

@@ -10,9 +10,6 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get languageEndonym => 'العربية';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override

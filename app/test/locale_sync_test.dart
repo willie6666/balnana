@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/settings.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/settings/settings_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,7 +96,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: l10nDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const SettingsPage(),
           ),

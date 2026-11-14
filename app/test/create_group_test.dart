@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/settings.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/groups/create_group_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/currency_field.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +18,7 @@ Widget host(ProviderContainer container, Widget home, {Locale locale = const Loc
     UncontrolledProviderScope(
   container: container,
   child: MaterialApp(
-    localizationsDelegates: const [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates],
+    localizationsDelegates: l10nDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: locale,
     localeResolutionCallback: (locale, _) => locale,

@@ -46,4 +46,23 @@ void main() {
   test('no languages at all shows English', () {
     expect(resolveLocale(null, const []).toLanguageTag(), 'en');
   });
+
+  // The picker's names live in code, so a new translation needs one too.
+  test('every language has its own name in the picker', () {
+    final names = {for (final l in AppLocalizations.supportedLocales) languageName(l)};
+    expect(names, hasLength(AppLocalizations.supportedLocales.length));
+    for (final l in AppLocalizations.supportedLocales) {
+      expect(languageName(l), isNot(l.toLanguageTag()), reason: 'no name for $l');
+    }
+    expect(languageName(_tag('zh-TW')), '繁體中文');
+    expect(languageName(_tag('zh-CN')), '简体中文');
+    expect(languageName(_tag('pt-BR')), 'Português');
+  });
+
+  // On the web each translation loads on its own, before the first frame.
+  test('every translation loads', () async {
+    for (final l in AppLocalizations.supportedLocales) {
+      expect((await lookupAppLocalizations(l)).localeName, isNotEmpty);
+    }
+  });
 }

@@ -1,9 +1,9 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/expense/receipt.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -41,7 +41,7 @@ void main() {
             ),
           ],
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: l10nDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: ReceiptField(

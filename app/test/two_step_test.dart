@@ -1,10 +1,10 @@
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/features/account/sign_in_page.dart';
 import 'package:balnana/features/account/two_factor.dart';
 import 'package:balnana/features/settings/share_plan_page.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/grouped_list.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +18,7 @@ const _server = 'https://a.example';
 Widget _host(ProviderContainer container, Widget home) => UncontrolledProviderScope(
   container: container,
   child: MaterialApp(
-    localizationsDelegates: const [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates],
+    localizationsDelegates: l10nDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: home,
   ),

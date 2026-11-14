@@ -10,9 +10,6 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
-  String get languageEndonym => 'Bahasa Indonesia';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override

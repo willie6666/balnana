@@ -293,7 +293,7 @@ Future<void> _notify(SharedPreferences prefs, PushMessage message, String instan
   }) {
     final saved = SettingsNotifier.savedLocale(prefs);
     final device = PlatformDispatcher.instance.locales;
-    final l10n = lookupAppLocalizations(resolveLocale(saved == null ? device : [saved], device));
+    final l10n = await lookupAppLocalizations(resolveLocale(saved == null ? device : [saved], device));
     final a = args.whereType<String>().toList();
     final body = switch ((key, a)) {
       ('push_payment_added', [final payer, final payee, final amount]) => l10n.pushPaymentAdded(

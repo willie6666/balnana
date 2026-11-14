@@ -4,3 +4,4 @@ output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
 untranslated-messages-file: build/untranslated.json
+use-deferred-loading: true

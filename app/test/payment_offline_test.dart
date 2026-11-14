@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/money.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
@@ -9,7 +10,6 @@ import 'package:balnana/core/server.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/pending_writes.dart';
 import 'package:balnana/features/group/balances.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,7 +73,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Consumer(

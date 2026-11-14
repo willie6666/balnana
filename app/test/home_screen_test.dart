@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:balnana/core/home_screen.dart';
+import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
-import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/widgets/home_screen_sync.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,7 +83,7 @@ void main() {
           summariesProvider.overrideWith((ref) async => summaries),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeScreenSync(child: SizedBox()),
         ),
@@ -117,7 +117,7 @@ void main() {
           summariesProvider.overrideWith((ref) async => summaries),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeScreenSync(child: SizedBox(key: Key('again'))),
         ),
@@ -147,7 +147,7 @@ void main() {
           }),
         ],
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: l10nDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Builder(
             builder: (context) {

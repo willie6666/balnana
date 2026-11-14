@@ -10,9 +10,6 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get languageEndonym => 'Tiếng Việt';
-
-  @override
   String get appTitle => 'Balnana';
 
   @override
