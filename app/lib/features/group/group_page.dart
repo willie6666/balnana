@@ -196,6 +196,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
 
   StreamSubscription<LiveEvent>? _live;
   Timer? _reload;
+  var _changed = false;
 
   /// Follows changes others make to the group while it is open and shown.
   void _goLive() {
@@ -213,10 +214,19 @@ class _GroupPageState extends ConsumerState<GroupPage> {
     // Every connection catches up, since what is shown may be cached from an
     // earlier visit or have changed between loading it and connecting. Gone
     // reloads too, to show why the group is no longer there. Changes often
-    // come in a burst, such as an expense and its undo.
+    // come in a burst, such as an expense and its undo. Connecting says only
+    // that something may have changed, so what was saved shows meanwhile; a
+    // change says it is out of date, so the server is asked first.
+    if (event != LiveEvent.connected) _changed = true;
     _reload?.cancel();
     _reload = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) refreshGroup(ref, widget.token);
+      if (!mounted) return;
+      if (_changed) {
+        refreshGroup(ref, widget.token);
+      } else {
+        recheckGroup(ref, widget.token);
+      }
+      _changed = false;
     });
   }
 

@@ -321,6 +321,10 @@ Dio _cachedDio(Ref ref, String url, String account, {bool probe = false}) {
           ref.read(warmStartProvider.notifier).served();
         },
         probe: probe,
+        client: probe ? null : dio,
+        onFresh: (request) {
+          if (currentServer()) ref.read(freshAnswersProvider.notifier).add(request);
+        },
       ),
     );
   }

@@ -92,6 +92,15 @@ class CacheDb extends _$CacheDb {
   /// [forgets] count just after, keyed by server, account and group.
   final _forgotten = <String, int>{};
 
+  /// When what was saved of each group, of the lists of groups, or of a
+  /// whole server, stopped being shown before the server is asked: see
+  /// [expire]. Keyed as in [_expiryKeys].
+  final _expired = <String, DateTime>{};
+
+  /// Requests being asked again behind an answer shown from the cache, by
+  /// server, account and request, so each is asked once at a time.
+  final rechecking = <String>{};
+
   @override
   int get schemaVersion => 3;
 
@@ -114,14 +123,15 @@ class CacheDb extends _$CacheDb {
   /// Keeps [body] as the answer to [request]. [asked] is [forgets] when the
   /// request was sent: an answer asked before its group changed may show it
   /// as it was, and is not kept.
-  Future<void> save(String server, String account, String request, String body, {int? asked}) async {
+  /// Returns whether it was kept.
+  Future<bool> save(String server, String account, String request, String body, {int? asked}) async {
     // An answer still on its way when its account signed out stays unsaved.
     final current = _accounts[server];
-    if (account != public && current != null && current != account) return;
+    if (account != public && current != null && current != account) return false;
     if (asked != null &&
         (asked < (_forgotten[_forgetKey(server, account, request)] ?? 0) ||
             asked < (_forgotten[_forgetKey(server, public, request)] ?? 0))) {
-      return;
+      return false;
     }
     await into(cachedResponses).insertOnConflictUpdate(
       CachedResponsesCompanion.insert(
@@ -132,6 +142,42 @@ class CacheDb extends _$CacheDb {
         savedAt: DateTime.now(),
       ),
     );
+    return true;
+  }
+
+  /// Forgets the answer to [request], which the server no longer gives.
+  Future<void> forget(String server, String account, String request) => (delete(
+    cachedResponses,
+  )..where((r) => r.server.equals(server) & r.account.equals(account) & r.request.equals(request))).go();
+
+  /// Has the server asked first, rather than [OfflineCache] showing what was
+  /// saved meanwhile, for what is shown of [group] on [server] and the lists
+  /// of groups, or for everything there when [group] is null. For when what
+  /// was saved is known to be out of date, as after a change someone else
+  /// made, or when the person asks to see it as it is now. Applies to what
+  /// was saved until now; what the server answers next is shown first again.
+  void expire(String server, {String? group}) {
+    // Saved times keep whole seconds, so an answer saved in the same second
+    // counts as new; the reload that follows saves over it anyway.
+    final now = DateTime.fromMillisecondsSinceEpoch(DateTime.now().millisecondsSinceEpoch ~/ 1000 * 1000);
+    if (group == null) {
+      _expired[server] = now;
+    } else {
+      _expired['$server /g/${Uri.encodeComponent(group)}'] = now;
+      _expired['$server lists'] = now;
+    }
+  }
+
+  /// Whether the answer to [request] saved at [savedAt] has expired: see [expire].
+  bool isExpired(String server, String request, DateTime savedAt) => _expiryKeys(server, request).any((key) {
+    final at = _expired[key];
+    return at != null && savedAt.isBefore(at);
+  });
+
+  static List<String> _expiryKeys(String server, String request) {
+    final group = RegExp(r'^GET (/g/[^/?]+)').firstMatch(request)?.group(1);
+    final lists = request == 'GET /me/groups' || request.startsWith('POST /groups/summaries ');
+    return [server, if (group != null) '$server $group', if (lists) '$server lists'];
   }
 
   Future<CachedResponse?> find(String server, String account, String request) {
@@ -272,6 +318,24 @@ class OfflineNotifier extends Notifier<bool> {
   }
 }
 
+/// Answers that were shown from the cache and then came back different
+/// from the server: what showed them is to load again (see OfflineBar).
+final freshAnswersProvider = NotifierProvider<FreshAnswers, FreshAnswer?>(FreshAnswers.new);
+
+class FreshAnswer {
+  FreshAnswer(this.request);
+
+  /// The request as [OfflineCache] keeps it, such as `GET /g/abc/balances`.
+  final String request;
+}
+
+class FreshAnswers extends Notifier<FreshAnswer?> {
+  @override
+  FreshAnswer? build() => null;
+
+  void add(String request) => state = FreshAnswer(request);
+}
+
 /// Whether the app has just opened and not yet heard whether the server is
 /// there. Meanwhile what was saved is shown at once, as while offline but
 /// without the bar. The startup probe in OfflineBar ends it and reloads
@@ -311,6 +375,11 @@ class WarmStartNotifier extends Notifier<bool> {
 /// still asks the server every time, so it can tell when it is back. While
 /// [isWarm] says the app has just started, every client is answered from
 /// what was saved, and [onWarm] hears of it.
+///
+/// Given a [client], the one this is added to, what a group shows and the
+/// lists of groups ([showsFirst]) are answered from what was saved even
+/// while online, so they show at once. [client] then asks the server again,
+/// and [onFresh] hears of each answer that came back different.
 class OfflineCache extends Interceptor {
   OfflineCache(
     this._db,
@@ -321,6 +390,8 @@ class OfflineCache extends Interceptor {
     bool Function()? isWarm,
     void Function()? onWarm,
     this.probe = false,
+    this.client,
+    this.onFresh,
   }) : _isOffline = isOffline ?? (() => false),
        _isWarm = isWarm ?? (() => false),
        _onWarm = onWarm ?? (() {});
@@ -333,6 +404,26 @@ class OfflineCache extends Interceptor {
   final bool Function() _isWarm;
   final void Function() _onWarm;
   final bool probe;
+  final Dio? client;
+  final void Function(String request)? onFresh;
+
+  /// An answer saved this recently is shown without asking again.
+  static const recheckAfter = Duration(seconds: 5);
+
+  /// What may be shown from the cache before the server is asked: a group,
+  /// its balances, the first page of its expenses and changes, what it
+  /// spent and its recurring expenses, and the lists of groups. Not one
+  /// expense or plan, which editing or paying needs as the server has it,
+  /// nor a later page, which follows on from what the server said.
+  static bool showsFirst(String request) =>
+      _showsFirst.hasMatch(request) && !RegExp(r'[?&]cursor=').hasMatch(request);
+
+  static final _showsFirst = RegExp(
+    r'^(GET /g/[^/?]+(/(balances|expenses|stats|activity|recurring))?(\?.*)?|GET /me/groups|POST /groups/summaries .*)$',
+  );
+
+  /// Set on a request asking the server again, to the body that was shown.
+  static const _recheckKey = 'offlineCacheShown';
 
   /// POSTs that only read, and so may be answered from the cache.
   static const _readingPosts = {'/groups/summaries'};
@@ -370,7 +461,8 @@ class OfflineCache extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     options.extra[_askedKey] = _db.forgets;
-    if (!_isWarm() && (probe || !_isOffline())) return handler.next(options);
+    if (options.extra.containsKey(_recheckKey)) return handler.next(options);
+    if (!_isWarm() && (probe || !_isOffline())) return _showFirst(options, handler);
     final key = _key(options);
     if (key == null) return handler.next(options);
     final saved = await _find(key);
@@ -382,12 +474,49 @@ class OfflineCache extends Interceptor {
     handler.resolve(_answer(options, saved));
   }
 
+  /// Answers what [showsFirst] from what was saved, then asks the server
+  /// again; anything else, or what has nothing saved, goes to the server.
+  Future<void> _showFirst(RequestOptions options, RequestInterceptorHandler handler) async {
+    final key = _key(options);
+    final client = this.client;
+    if (client == null || probe || key == null || !showsFirst(key)) return handler.next(options);
+    final saved = await _find(key);
+    if (saved == null || _db.isExpired(_server, key, saved.savedAt)) return handler.next(options);
+    handler.resolve(_answer(options, saved));
+    if (DateTime.now().difference(saved.savedAt) >= recheckAfter) unawaited(_recheck(client, options, key, saved));
+  }
+
+  /// Asks the server again for what [saved] answered: see [onResponse].
+  Future<void> _recheck(Dio client, RequestOptions options, String key, CachedResponse saved) async {
+    final asking = '$_server $_account $key';
+    if (!_db.rechecking.add(asking)) return;
+    try {
+      await client.fetch<Object?>(options.copyWith(extra: {...options.extra, _recheckKey: saved.body}));
+    } on Object {
+      // What was shown stays; onError has told whether the server is there.
+    } finally {
+      _db.rechecking.remove(asking);
+    }
+  }
+
   @override
   Future<void> onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) async {
     _offline(false);
     final options = response.requestOptions;
     final key = _key(options);
-    if (key != null && response.statusCode == 200 && response.data != null) {
+    if (options.extra[_recheckKey] case final String shown when key != null) {
+      final data = response.data;
+      if (response.statusCode == 200 && (data is Map || data is List)) {
+        final body = jsonEncode(data);
+        try {
+          // Kept before anyone hears of it, so the reload shows it.
+          final kept = await _db.save(_server, _account, key, body, asked: options.extra[_askedKey] as int?);
+          if (kept && body != shown) onFresh?.call(key);
+        } on Object {
+          // The cache only helps.
+        }
+      }
+    } else if (key != null && response.statusCode == 200 && response.data != null) {
       // Anything else is not this API: a captive portal's page, answered 200.
       if (response.data is Map || response.data is List) {
         unawaited(
@@ -399,7 +528,7 @@ class OfflineCache extends Interceptor {
                 jsonEncode(response.data),
                 asked: options.extra[_askedKey] as int?,
               )
-              .catchError((Object _) {}),
+              .catchError((Object _) => false),
         );
       }
     } else if (key == null && options.method != 'GET') {
@@ -429,6 +558,17 @@ class OfflineCache extends Interceptor {
     final response = err.response;
     if (response != null && !isGatewayError(response)) {
       _offline(false);
+      // Asked again behind what was shown, the server now refuses it, as
+      // for a group that is gone: the reload shows why.
+      final key = _key(err.requestOptions);
+      if (key != null && err.requestOptions.extra.containsKey(_recheckKey)) {
+        try {
+          await _db.forget(_server, _account, key);
+          onFresh?.call(key);
+        } on Object {
+          // The cache only helps.
+        }
+      }
       return handler.next(err);
     }
     final key = _key(err.requestOptions);

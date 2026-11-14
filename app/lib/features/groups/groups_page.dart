@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -105,9 +107,42 @@ class GroupsPage extends ConsumerWidget {
         if (context.mounted) context.go('/g/$first');
       });
     }
-    return _empty(context, const CircularProgressIndicator(), actions: actions);
+    // Waiting to know which group to open, as while the app starts. The
+    // group then shows in this page's place, so no title of its own here,
+    // and a spinner only if it takes a while.
+    return const Scaffold(body: Center(child: _LateSpinner()));
   }
 
   Widget _empty(BuildContext context, Widget child, {List<Widget>? actions}) =>
       BPage(title: context.l10n.navGroups, actions: actions, fillRemaining: true, children: [child]);
+}
+
+/// A spinner that shows only after a moment, so a short wait shows nothing.
+class _LateSpinner extends StatefulWidget {
+  const _LateSpinner();
+
+  static const delay = Duration(milliseconds: 500);
+
+  @override
+  State<_LateSpinner> createState() => _LateSpinnerState();
+}
+
+class _LateSpinnerState extends State<_LateSpinner> {
+  Timer? _timer;
+  var _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(_LateSpinner.delay, () => setState(() => _shown = true));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _shown ? const CircularProgressIndicator() : const SizedBox.shrink();
 }

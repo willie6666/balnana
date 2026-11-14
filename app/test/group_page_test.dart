@@ -665,6 +665,42 @@ void main() {
     expect(find.text('Flat 3'), findsWidgets);
   });
 
+  testWidgets('connecting shows what was saved meanwhile; a change asks the server first', (tester) async {
+    final db = _memoryDb();
+    final streams = <StreamController<LiveEvent>>[];
+    final container = await _boot(tester, db: db, [
+      groupProvider.overrideWith((ref, token) async => _group('Flat')),
+      groupEventsProvider.overrideWithValue((dio, token) {
+        final events = StreamController<LiveEvent>();
+        streams.add(events);
+        return events.stream;
+      }),
+    ]);
+    addTearDown(() {
+      for (final s in streams) {
+        s.close();
+      }
+    });
+    await _go(tester, container, '/g/tok');
+    final saved = DateTime.now().subtract(const Duration(minutes: 1));
+    bool expired(String request) => db.isExpired(_server, request, saved);
+
+    streams.last.add(LiveEvent.connected);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(expired('GET /g/tok/activity?limit=30'), isFalse);
+    expect(expired('POST /groups/summaries {}'), isFalse);
+
+    // A change in the same burst wins.
+    streams.last
+      ..add(LiveEvent.change)
+      ..add(LiveEvent.connected);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(expired('GET /g/tok/activity?limit=30'), isTrue);
+    expect(expired('POST /groups/summaries {}'), isTrue);
+  });
+
   testWidgets('searching asks the server and clearing brings everything back', (tester) async {
     // Tall enough for both expenses below the group's header.
     tester.view.physicalSize = const Size(800, 900);

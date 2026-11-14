@@ -82,7 +82,8 @@ class _GroupsSheet extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final view = ref.watch(visibleSummariesProvider);
     final summaries = view.state;
-    final data = summaries.isLoading ? null : view.value;
+    // While it reloads, the list as it was, so it does not blink.
+    final data = view.value;
 
     final Widget list;
     if (data == null) {

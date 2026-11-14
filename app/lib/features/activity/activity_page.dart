@@ -79,7 +79,7 @@ class ActivityPage extends ConsumerWidget {
     }
     return RefreshIndicator(
       onRefresh: () {
-        ref.invalidate(summariesProvider);
+        refreshAll(ref);
         return ref.refresh(activityFeedProvider.future);
       },
       child: BPage(title: l10n.navActivity, children: rows),

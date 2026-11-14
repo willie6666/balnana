@@ -376,6 +376,146 @@ void main() {
     expect((await dio.get<Object?>('/g/tok')).extra['savedAt'], isA<DateTime>());
   });
 
+  group('shown first while online', () {
+    late List<String> fresh;
+    late Dio showing;
+
+    setUp(() {
+      fresh = [];
+      showing = Dio(BaseOptions(baseUrl: '$_server/api/v1'))..httpClientAdapter = server;
+      showing.interceptors.add(OfflineCache(db, _server, '', offline.add, client: showing, onFresh: fresh.add));
+    });
+
+    /// Saves [body] as the answer to [request], [age] ago.
+    Future<void> keep(String request, Object body, {Duration age = const Duration(minutes: 1)}) =>
+        db.into(db.cachedResponses).insertOnConflictUpdate(
+          CachedResponsesCompanion.insert(
+            server: _server,
+            account: '',
+            request: request,
+            body: jsonEncode(body),
+            savedAt: DateTime.now().subtract(age),
+          ),
+        );
+
+    test('what was saved shows at once, and the server is asked again', () async {
+      await keep('GET /g/tok/balances', {'old': true});
+      final shown = await showing.get<Object?>('/g/tok/balances');
+      expect(shown.data, {'old': true});
+      expect(shown.extra['savedAt'], isA<DateTime>());
+      await saved();
+      expect(server.calls, 1);
+      expect(fresh, ['GET /g/tok/balances']);
+
+      // The reload it calls for shows the server's answer, without asking again.
+      final again = await showing.get<Object?>('/g/tok/balances');
+      expect((again.data as Map)['call'], 1);
+      await saved();
+      expect(server.calls, 1);
+    });
+
+    test('an answer that did not change reloads nothing', () async {
+      await keep('GET /g/tok', {'path': '/api/v1/g/tok', 'call': 1, 'who': null});
+      await showing.get<Object?>('/g/tok');
+      await saved();
+      expect(server.calls, 1);
+      expect(fresh, isEmpty);
+    });
+
+    test('the lists of groups show first too, asked once at a time', () async {
+      await keep('GET /me/groups', []);
+      server.hold = Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future.wait([showing.get<Object?>('/me/groups'), showing.get<Object?>('/me/groups')]);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(server.calls, 1);
+      expect(fresh, ['GET /me/groups']);
+    });
+
+    test('one expense, a later page and the account ask the server first', () async {
+      for (final request in ['GET /g/tok/expenses/e1', 'GET /g/tok/expenses?cursor=c', 'GET /me', 'GET /g/tok/plan']) {
+        await keep(request, {'old': true});
+      }
+      for (final (path, query) in [
+        ('/g/tok/expenses/e1', <String, Object?>{}),
+        ('/g/tok/expenses', {'cursor': 'c'}),
+        ('/me', <String, Object?>{}),
+        ('/g/tok/plan', <String, Object?>{}),
+      ]) {
+        final res = await showing.get<Object?>(path, queryParameters: query);
+        expect(res.data, isNot({'old': true}), reason: path);
+      }
+      expect(server.calls, 4);
+    });
+
+    test('an answer saved moments ago is not asked for again', () async {
+      await keep('GET /g/tok/stats', {'old': true}, age: Duration.zero);
+      expect((await showing.get<Object?>('/g/tok/stats')).data, {'old': true});
+      await saved();
+      expect(server.calls, 0);
+    });
+
+    test('after expire the server is asked first, for that group and the lists', () async {
+      await keep('GET /g/tok/activity?limit=30', {'old': true});
+      await keep('GET /g/other', {'old': true});
+      await keep('GET /me/groups', {'old': true});
+      db.expire(_server, group: 'tok');
+      expect((await showing.get<Object?>('/g/tok/activity', queryParameters: {'limit': 30})).data, isNot({'old': true}));
+      expect((await showing.get<Object?>('/me/groups')).data, isNot({'old': true}));
+      expect((await showing.get<Object?>('/g/other')).data, {'old': true});
+
+      // What the server answered since shows first again.
+      await saved();
+      final calls = server.calls;
+      expect((await showing.get<Object?>('/me/groups')).extra['savedAt'], isA<DateTime>());
+      expect(server.calls, calls);
+
+      db.expire(_server);
+      expect((await showing.get<Object?>('/g/other')).data, isNot({'old': true}));
+    });
+
+    test('a refusal on asking again forgets the answer and reloads', () async {
+      await keep('GET /g/gone', {'old': true});
+      server.status = 404;
+      expect((await showing.get<Object?>('/g/gone')).data, {'old': true});
+      await saved();
+      expect(fresh, ['GET /g/gone']);
+      expect(await db.find(_server, '', 'GET /g/gone'), isNull);
+    });
+
+    test('out of reach on asking again, the bar shows and nothing reloads', () async {
+      await keep('GET /g/tok', {'old': true});
+      server.down = true;
+      expect((await showing.get<Object?>('/g/tok')).data, {'old': true});
+      await saved();
+      expect(offline, [true]);
+      expect(fresh, isEmpty);
+    });
+
+    test('a fresh answer reloads what showed it', () {
+      final reloaded = <Object>[];
+      for (final request in [
+        'GET /g/tok',
+        'GET /g/tok/balances',
+        'GET /g/tok/expenses?limit=50',
+        'GET /g/tok/stats?tz=UTC',
+        'GET /g/tok/activity?limit=30',
+        'GET /g/tok/recurring',
+        'GET /me/groups',
+      ]) {
+        reloadFresh(reloaded.add, request);
+      }
+      expect(reloaded, [
+        groupProvider('tok'),
+        balancesProvider('tok'),
+        expensesProvider('tok'),
+        statsProvider,
+        activityFeedProvider,
+        recurringProvider('tok'),
+        summariesProvider,
+      ]);
+    });
+  });
+
   test('signing in or out forgets what the last account saw', () async {
     await db.save(_server, cacheAccount('a'), 'GET /me', '{}');
     await db.save(_server, CacheDb.public, 'GET /server-info', '{}');

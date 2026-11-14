@@ -34,6 +34,11 @@ import 'server.dart';
 
 final _root = GlobalKey<NavigatorState>();
 
+/// The page of both /groups and /g/:token. Home waits on /groups until it
+/// knows which group to open, such as while the app starts; the same page
+/// then shows the group in place, instead of sliding it in over the wait.
+const _homePage = ValueKey('home');
+
 /// A new server sends everyone to /admin until its administrator password
 /// is set. In accounts mode, signed-out people only see signing in, settings
 /// and groups opened by link (which ask them to sign in unless open to
@@ -156,7 +161,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/groups',
-                builder: (context, state) => const TabRoot(tab: 0, child: GroupsPage()),
+                pageBuilder: (context, state) =>
+                    const MaterialPage(key: _homePage, child: TabRoot(tab: 0, child: GroupsPage())),
                 routes: [
                   GoRoute(
                     path: 'new',
@@ -176,9 +182,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/g/:token',
                 // Keyed, since switching groups keeps the page and only changes the token.
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final token = state.pathParameters['token']!;
-                  return GroupPage(key: ValueKey(token), token: token);
+                  return MaterialPage(key: _homePage, child: GroupPage(key: ValueKey(token), token: token));
                 },
                 routes: [
                   GoRoute(

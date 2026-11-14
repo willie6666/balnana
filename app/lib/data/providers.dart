@@ -217,7 +217,7 @@ void removeDeletedGroup(ProviderContainer container, String server, String token
   container.read(currentGroupProvider.notifier).removeOn(server, token);
   container.read(groupOrderProvider.notifier).removeOn(server, token);
   container.read(cacheDbProvider)?.forgetDeletedGroup(server, token).ignore();
-  if (container.read(serverUrlProvider) == server) _refresh(container.invalidate, token);
+  if (container.read(serverUrlProvider) == server) _refresh(container.invalidate, token, null, null);
 }
 
 /// How many links one summaries request may carry: the server's `maxPageSize`
@@ -438,13 +438,21 @@ final activityFeedProvider = FutureProvider<ActivityFeed>((ref) async {
 });
 
 /// Reloads everything that shows [token]'s data after a change.
-void refreshGroup(WidgetRef ref, String token) => _refresh(ref.invalidate, token);
+void refreshGroup(WidgetRef ref, String token) =>
+    _refresh(ref.invalidate, token, ref.read(cacheDbProvider), ref.read(serverUrlProvider));
 
 /// [refreshGroup] for callbacks that may outlive the widget, such as undo.
-void refreshGroupIn(ProviderContainer container, String token) => _refresh(container.invalidate, token);
+void refreshGroupIn(ProviderContainer container, String token) =>
+    _refresh(container.invalidate, token, container.read(cacheDbProvider), container.read(serverUrlProvider));
 
 /// [refreshGroup] for providers.
-void refreshGroupOf(Ref ref, String token) => _refresh(ref.invalidate, token);
+void refreshGroupOf(Ref ref, String token) =>
+    _refresh(ref.invalidate, token, ref.read(cacheDbProvider), ref.read(serverUrlProvider));
+
+/// [refreshGroup] when nothing is known to have changed, as when following
+/// the group's changes starts again: what was saved shows at once, and is
+/// replaced if the server answers otherwise (see [OfflineCache.showsFirst]).
+void recheckGroup(WidgetRef ref, String token) => _refresh(ref.invalidate, token, null, null);
 
 /// [refreshGroup] for a pull to refresh, done once [shown], what the tab
 /// shows, is back. A failure is left to the tab to show.
@@ -457,7 +465,10 @@ Future<void> pullToRefresh(WidgetRef ref, String token, Future<Object?> Function
   }
 }
 
-void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
+/// Reloads what shows [token] from the server, not from what [db] saved of
+/// it on [server], which is out of date (see [CacheDb.expire]).
+void _refresh(void Function(ProviderOrFamily) invalidate, String token, CacheDb? db, String? server) {
+  if (server != null) db?.expire(server, group: token);
   invalidate(groupProvider(token));
   invalidate(balancesProvider(token));
   invalidate(expensesProvider(token));
@@ -466,6 +477,35 @@ void _refresh(void Function(ProviderOrFamily) invalidate, String token) {
   invalidate(activityFeedProvider);
   invalidate(receiptProvider);
   invalidate(recurringProvider(token));
+}
+
+/// Reloads everything at home from the server, for a pull to refresh.
+void refreshAll(WidgetRef ref) {
+  final server = ref.read(serverUrlProvider);
+  if (server != null) ref.read(cacheDbProvider)?.expire(server);
+  ref.invalidate(summariesProvider);
+}
+
+/// Reloads what showed [request] from the cache, now that the server
+/// answered it differently (see [freshAnswersProvider]).
+void reloadFresh(void Function(ProviderOrFamily) invalidate, String request) {
+  final match = RegExp(r'^GET /g/([^/?]+)(?:/(\w+))?').firstMatch(request);
+  if (match == null) return invalidate(summariesProvider);
+  final token = Uri.decodeComponent(match[1]!);
+  switch (match[2]) {
+    case null:
+      invalidate(groupProvider(token));
+    case 'balances':
+      invalidate(balancesProvider(token));
+    case 'expenses':
+      invalidate(expensesProvider(token));
+    case 'stats':
+      invalidate(statsProvider);
+    case 'activity':
+      invalidate(activityFeedProvider);
+    case 'recurring':
+      invalidate(recurringProvider(token));
+  }
 }
 
 /// One expense, for the editor.

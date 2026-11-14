@@ -8,6 +8,7 @@ import '../../core/offline_cache.dart';
 import '../../core/server.dart';
 import '../../data/api.dart';
 import '../../data/pending_writes.dart';
+import '../../data/providers.dart';
 import '../tokens.dart';
 
 /// Puts a bar above [child] while the server is out of reach and what is
@@ -130,6 +131,10 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
     ref.listen(offlineProvider, (was, now) {
       if (was == true && !now) _retry();
       _keepChecking(now);
+    });
+    // Something was shown from what was saved, and the server says otherwise.
+    ref.listen(freshAnswersProvider, (_, fresh) {
+      if (fresh != null) reloadFresh(ref.invalidate, fresh.request);
     });
     final offline = ref.watch(offlineProvider);
     // Kept alive here, to send what waits whenever the server is back.
