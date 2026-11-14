@@ -3510,9 +3510,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get groupSponsor => 'Udostępnij mój plan tej grupie';
 
   @override
-  String get groupUnsponsor => 'Przestań udostępniać mój plan';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Korzysta z planu: $name';
   }

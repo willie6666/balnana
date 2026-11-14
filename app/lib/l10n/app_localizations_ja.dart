@@ -3245,9 +3245,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groupSponsor => 'このグループにプランを共有';
 
   @override
-  String get groupUnsponsor => 'プランの共有を停止';
-
-  @override
   String groupSponsoredBy(String name) {
     return '$nameのプランを使用';
   }

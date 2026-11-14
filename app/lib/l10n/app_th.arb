@@ -950,7 +950,6 @@
   "planPayPalFailed": "การชำระเงิน PayPal ไม่สำเร็จ",
   "groupPlanUsage": "จำนวนคน: {members} · รูปใบเสร็จ: {receipts} · ค่าใช้จ่ายประจำ: {recurring}",
   "groupSponsor": "แชร์แพ็กเกจของฉันกับกลุ่มนี้",
-  "groupUnsponsor": "หยุดแชร์แพ็กเกจของฉัน",
   "groupSponsoredBy": "ใช้แพ็กเกจของ {name}",
   "accountDeletePlayNote": "การสมัครสมาชิก Google Play ไม่สิ้นสุดพร้อมบัญชีของคุณ โปรดยกเลิกใน Google Play ก่อน",
   "planPlayManage": "จัดการการสมัครสมาชิก",

@@ -3362,9 +3362,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groupSponsor => 'Planımı bu grupla paylaş';
 
   @override
-  String get groupUnsponsor => 'Planımı paylaşmayı durdur';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Planı kullanılan üye: $name';
   }

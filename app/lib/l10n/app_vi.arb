@@ -950,7 +950,6 @@
   "planPayPalFailed": "Thanh toán PayPal không thành công.",
   "groupPlanUsage": "Số người: {members} · Ảnh hóa đơn: {receipts} · Định kỳ: {recurring}",
   "groupSponsor": "Chia sẻ gói của tôi với nhóm này",
-  "groupUnsponsor": "Ngừng chia sẻ gói của tôi",
   "groupSponsoredBy": "Dùng gói của {name}",
   "accountDeletePlayNote": "Gói đăng ký Google Play không kết thúc cùng tài khoản. Hãy hủy trên Google Play trước.",
   "planPlayManage": "Quản lý gói đăng ký",

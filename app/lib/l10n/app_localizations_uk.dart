@@ -3501,9 +3501,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get groupSponsor => 'Поділитися тарифом із цією групою';
 
   @override
-  String get groupUnsponsor => 'Більше не ділитися тарифом';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Використовує тариф учасника $name';
   }

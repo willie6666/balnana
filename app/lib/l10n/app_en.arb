@@ -5002,10 +5002,6 @@
   "@groupSponsor": {
     "description": "Label or control text for group sponsor in the plan screens."
   },
-  "groupUnsponsor": "Stop sharing my plan",
-  "@groupUnsponsor": {
-    "description": "Label or control text for group unsponsor in the plan screens."
-  },
   "groupSponsoredBy": "Uses {name}'s plan",
   "@groupSponsoredBy": {
     "description": "Label or control text for group sponsored by in the plan screens.",

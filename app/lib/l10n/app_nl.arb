@@ -950,7 +950,6 @@
   "planPayPalFailed": "De PayPal-betaling is niet gelukt.",
   "groupPlanUsage": "Personen: {members} · Bonfoto's: {receipts} · Terugkerend: {recurring}",
   "groupSponsor": "Mijn abonnement met deze groep delen",
-  "groupUnsponsor": "Mijn abonnement niet meer delen",
   "groupSponsoredBy": "Gebruikt het abonnement van {name}",
   "accountDeletePlayNote": "Een Google Play-abonnement stopt niet met je account. Zeg het eerst op via Google Play.",
   "planPlayManage": "Abonnement beheren",

@@ -950,7 +950,6 @@
   "planPayPalFailed": "PayPal ödemesi tamamlanmadı.",
   "groupPlanUsage": "Kişiler: {members} · Fiş fotoğrafları: {receipts} · Tekrarlayan: {recurring}",
   "groupSponsor": "Planımı bu grupla paylaş",
-  "groupUnsponsor": "Planımı paylaşmayı durdur",
   "groupSponsoredBy": "Planı kullanılan üye: {name}",
   "accountDeletePlayNote": "Google Play aboneliği hesabınızla birlikte bitmez. Önce Google Play'den iptal edin.",
   "planPlayManage": "Aboneliği yönet",

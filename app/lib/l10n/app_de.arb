@@ -950,7 +950,6 @@
   "planPayPalFailed": "Die PayPal-Zahlung ist nicht durchgegangen.",
   "groupPlanUsage": "Personen: {members} · Belegfotos: {receipts} · Wiederkehrend: {recurring}",
   "groupSponsor": "Meinen Tarif mit dieser Gruppe teilen",
-  "groupUnsponsor": "Tarif nicht mehr teilen",
   "groupSponsoredBy": "Nutzt den Tarif von {name}",
   "accountDeletePlayNote": "Ein Google-Play-Abo endet nicht mit deinem Konto. Kündige es zuerst bei Google Play.",
   "planPlayManage": "Abo verwalten",

@@ -950,7 +950,6 @@
   "planPayPalFailed": "PayPal भुगतान पूरा नहीं हुआ।",
   "groupPlanUsage": "लोग: {members} · रसीद फ़ोटो: {receipts} · नियमित: {recurring}",
   "groupSponsor": "इस समूह के साथ मेरा प्लान साझा करें",
-  "groupUnsponsor": "मेरा प्लान साझा करना बंद करें",
   "groupSponsoredBy": "{name} का प्लान इस्तेमाल करता है",
   "accountDeletePlayNote": "Google Play सदस्यता आपके खाते के साथ खत्म नहीं होती। पहले उसे Google Play पर रद्द करें।",
   "planPlayManage": "सदस्यता प्रबंधित करें",

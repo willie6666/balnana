@@ -950,7 +950,6 @@
   "planPayPalFailed": "Pembayaran PayPal tidak berhasil.",
   "groupPlanUsage": "Orang: {members} · Foto struk: {receipts} · Berulang: {recurring}",
   "groupSponsor": "Bagikan paket saya ke grup ini",
-  "groupUnsponsor": "Berhenti membagikan paket saya",
   "groupSponsoredBy": "Memakai paket {name}",
   "accountDeletePlayNote": "Langganan Google Play tidak berakhir bersama akun Anda. Batalkan dulu di Google Play.",
   "planPlayManage": "Kelola langganan",

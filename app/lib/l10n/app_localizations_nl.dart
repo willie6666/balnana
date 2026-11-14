@@ -3389,9 +3389,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get groupSponsor => 'Mijn abonnement met deze groep delen';
 
   @override
-  String get groupUnsponsor => 'Mijn abonnement niet meer delen';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Gebruikt het abonnement van $name';
   }

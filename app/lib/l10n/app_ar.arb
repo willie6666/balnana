@@ -950,7 +950,6 @@
   "planPayPalFailed": "لم تكتمل دفعة PayPal.",
   "groupPlanUsage": "الأشخاص: {members} · صور الإيصالات: {receipts} · المتكررة: {recurring}",
   "groupSponsor": "مشاركة خطتي مع هذه المجموعة",
-  "groupUnsponsor": "إيقاف مشاركة خطتي",
   "groupSponsoredBy": "تستخدم خطة {name}",
   "accountDeletePlayNote": "لا ينتهي اشتراك Google Play مع حسابك. ألغِه أولًا على Google Play.",
   "planPlayManage": "إدارة الاشتراك",

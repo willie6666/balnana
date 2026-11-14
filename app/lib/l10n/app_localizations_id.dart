@@ -3359,9 +3359,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get groupSponsor => 'Bagikan paket saya ke grup ini';
 
   @override
-  String get groupUnsponsor => 'Berhenti membagikan paket saya';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Memakai paket $name';
   }

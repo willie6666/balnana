@@ -950,7 +950,6 @@
   "planPayPalFailed": "PayPal 결제가 완료되지 않았습니다.",
   "groupPlanUsage": "인원: {members} · 영수증 사진: {receipts} · 반복 지출: {recurring}",
   "groupSponsor": "이 그룹에 내 요금제 공유",
-  "groupUnsponsor": "요금제 공유 중지",
   "groupSponsoredBy": "{name}의 요금제 사용 중",
   "accountDeletePlayNote": "Google Play 구독은 계정을 삭제해도 끝나지 않습니다. 먼저 Google Play에서 해지하세요.",
   "planPlayManage": "구독 관리",

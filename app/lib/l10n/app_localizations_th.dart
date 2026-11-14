@@ -3321,9 +3321,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get groupSponsor => 'แชร์แพ็กเกจของฉันกับกลุ่มนี้';
 
   @override
-  String get groupUnsponsor => 'หยุดแชร์แพ็กเกจของฉัน';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'ใช้แพ็กเกจของ $name';
   }

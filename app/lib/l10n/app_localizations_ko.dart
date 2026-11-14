@@ -3246,9 +3246,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groupSponsor => '이 그룹에 내 요금제 공유';
 
   @override
-  String get groupUnsponsor => '요금제 공유 중지';
-
-  @override
   String groupSponsoredBy(String name) {
     return '$name의 요금제 사용 중';
   }

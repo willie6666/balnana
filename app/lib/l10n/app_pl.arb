@@ -950,7 +950,6 @@
   "planPayPalFailed": "Płatność PayPal nie powiodła się.",
   "groupPlanUsage": "Osoby: {members} · Zdjęcia paragonów: {receipts} · Cykliczne: {recurring}",
   "groupSponsor": "Udostępnij mój plan tej grupie",
-  "groupUnsponsor": "Przestań udostępniać mój plan",
   "groupSponsoredBy": "Korzysta z planu: {name}",
   "accountDeletePlayNote": "Subskrypcja Google Play nie kończy się wraz z kontem. Najpierw anuluj ją w Google Play.",
   "planPlayManage": "Zarządzaj subskrypcją",

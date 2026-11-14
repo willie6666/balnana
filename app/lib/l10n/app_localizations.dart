@@ -5829,12 +5829,6 @@ abstract class AppLocalizations {
   /// **'Share my plan with this group'**
   String get groupSponsor;
 
-  /// Label or control text for group unsponsor in the plan screens.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop sharing my plan'**
-  String get groupUnsponsor;
-
   /// Label or control text for group sponsored by in the plan screens.
   ///
   /// In en, this message translates to:

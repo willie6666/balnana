@@ -3461,9 +3461,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupSponsor => 'مشاركة خطتي مع هذه المجموعة';
 
   @override
-  String get groupUnsponsor => 'إيقاف مشاركة خطتي';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'تستخدم خطة $name';
   }

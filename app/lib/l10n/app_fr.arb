@@ -950,7 +950,6 @@
   "planPayPalFailed": "Le paiement PayPal n'a pas abouti.",
   "groupPlanUsage": "Personnes : {members} · Photos de justificatifs : {receipts} · Récurrentes : {recurring}",
   "groupSponsor": "Partager ma formule avec ce groupe",
-  "groupUnsponsor": "Ne plus partager ma formule",
   "groupSponsoredBy": "Utilise la formule de {name}",
   "accountDeletePlayNote": "Un abonnement Google Play ne s'arrête pas avec votre compte. Résiliez-le d'abord sur Google Play.",
   "planPlayManage": "Gérer l'abonnement",

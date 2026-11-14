@@ -950,7 +950,6 @@
   "planPayPalFailed": "PayPal 付款未成功。",
   "groupPlanUsage": "人数：{members} · 收据照片：{receipts} · 周期性支出：{recurring}",
   "groupSponsor": "与此群组共享我的方案",
-  "groupUnsponsor": "停止共享我的方案",
   "groupSponsoredBy": "使用 {name} 的方案",
   "accountDeletePlayNote": "Google Play 订阅不会随账号一起结束，请先到 Google Play 取消。",
   "planPlayManage": "管理订阅",

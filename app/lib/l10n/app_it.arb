@@ -950,7 +950,6 @@
   "planPayPalFailed": "Il pagamento PayPal non è andato a buon fine.",
   "groupPlanUsage": "Persone: {members} · Foto di ricevute: {receipts} · Ricorrenti: {recurring}",
   "groupSponsor": "Condividi il mio piano con questo gruppo",
-  "groupUnsponsor": "Smetti di condividere il mio piano",
   "groupSponsoredBy": "Usa il piano di {name}",
   "accountDeletePlayNote": "Un abbonamento Google Play non termina con il tuo account. Annullalo prima su Google Play.",
   "planPlayManage": "Gestisci abbonamento",

@@ -950,7 +950,6 @@
   "planPayPalFailed": "Платёж PayPal не прошёл.",
   "groupPlanUsage": "Люди: {members} · Фото чеков: {receipts} · Регулярные: {recurring}",
   "groupSponsor": "Поделиться тарифом с этой группой",
-  "groupUnsponsor": "Больше не делиться тарифом",
   "groupSponsoredBy": "Использует тариф участника {name}",
   "accountDeletePlayNote": "Подписка Google Play не заканчивается вместе с аккаунтом. Сначала отмените её в Google Play.",
   "planPlayManage": "Управление подпиской",

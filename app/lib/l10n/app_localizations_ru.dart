@@ -3469,9 +3469,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get groupSponsor => 'Поделиться тарифом с этой группой';
 
   @override
-  String get groupUnsponsor => 'Больше не делиться тарифом';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Использует тариф участника $name';
   }

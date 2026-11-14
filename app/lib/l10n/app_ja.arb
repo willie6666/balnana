@@ -950,7 +950,6 @@
   "planPayPalFailed": "PayPal の支払いが完了しませんでした。",
   "groupPlanUsage": "人数：{members} · レシート写真：{receipts} · 定期支出：{recurring}",
   "groupSponsor": "このグループにプランを共有",
-  "groupUnsponsor": "プランの共有を停止",
   "groupSponsoredBy": "{name}のプランを使用",
   "accountDeletePlayNote": "Google Play の定期購入はアカウントを削除しても終了しません。先に Google Play で解約してください。",
   "planPlayManage": "定期購入を管理",

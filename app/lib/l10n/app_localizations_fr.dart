@@ -3448,9 +3448,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get groupSponsor => 'Partager ma formule avec ce groupe';
 
   @override
-  String get groupUnsponsor => 'Ne plus partager ma formule';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Utilise la formule de $name';
   }

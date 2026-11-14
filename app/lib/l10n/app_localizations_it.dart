@@ -3395,9 +3395,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get groupSponsor => 'Condividi il mio piano con questo gruppo';
 
   @override
-  String get groupUnsponsor => 'Smetti di condividere il mio piano';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Usa il piano di $name';
   }

@@ -3348,9 +3348,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groupSponsor => 'Chia sẻ gói của tôi với nhóm này';
 
   @override
-  String get groupUnsponsor => 'Ngừng chia sẻ gói của tôi';
-
-  @override
   String groupSponsoredBy(String name) {
     return 'Dùng gói của $name';
   }

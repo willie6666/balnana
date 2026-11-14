@@ -3230,9 +3230,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupSponsor => '与此群组共享我的方案';
 
   @override
-  String get groupUnsponsor => '停止共享我的方案';
-
-  @override
   String groupSponsoredBy(String name) {
     return '使用 $name 的方案';
   }
@@ -6712,9 +6709,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupSponsor => '與這個群組分享我的方案';
-
-  @override
-  String get groupUnsponsor => '停止分享我的方案';
 
   @override
   String groupSponsoredBy(String name) {
