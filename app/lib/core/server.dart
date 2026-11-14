@@ -306,18 +306,19 @@ final apiProvider = Provider<Dio?>((ref) {
 Dio _cachedDio(Ref ref, String url, String account, {bool probe = false}) {
   final dio = _newDio(url);
   if (ref.watch(cacheDbProvider) case final db?) {
+    bool currentServer() => ref.mounted && ref.read(serverUrlProvider) == url;
     dio.interceptors.add(
       OfflineCache(
         db,
         url,
         account,
         (offline) {
-          if (ref.mounted) ref.read(offlineProvider.notifier).set(offline);
+          if (currentServer()) ref.read(offlineProvider.notifier).set(offline);
         },
-        isOffline: () => ref.mounted && ref.read(offlineProvider),
-        isWarm: () => ref.mounted && ref.read(warmStartProvider),
+        isOffline: () => currentServer() && ref.read(offlineProvider),
+        isWarm: () => currentServer() && ref.read(warmStartProvider),
         onWarm: () {
-          if (ref.mounted) ref.read(warmStartProvider.notifier).served();
+          ref.read(warmStartProvider.notifier).served();
         },
         probe: probe,
       ),
@@ -356,10 +357,15 @@ final serverPublicUrlProvider = Provider<String?>((ref) {
 });
 
 /// Whether the chosen server still needs its administrator password set;
-/// false until its info has loaded.
-final setupRequiredProvider = Provider<bool>(
-  (ref) => ref.watch(serverInfoProvider.select((info) => info.value?.setupRequired ?? false)),
-);
+/// false while probing at startup or waiting for settled server info.
+final setupRequiredProvider = Provider<bool>((ref) {
+  if (ref.watch(warmStartProvider)) return false;
+  return ref.watch(
+    serverInfoProvider.select(
+      (info) => !info.isLoading && !info.hasError && info.value?.setupRequired == true,
+    ),
+  );
+});
 
 /// Whether the chosen server has accounts; false until its info has loaded.
 final accountsModeProvider = Provider<bool>(
@@ -382,8 +388,12 @@ Future<ServerInfo> probeServer(String serverUrl) async {
     final res = await dio.get<Object?>('/server-info');
     return ServerInfo.fromJson(res.data);
   } on DioException catch (e) {
-    // A response of any kind means something is there, just not Balnana.
-    throw ProbeException(e.response == null ? ProbeError.unreachable : ProbeError.notBalnana);
+    final response = e.response;
+    throw ProbeException(
+      response == null || OfflineCache.isGatewayError(response)
+          ? ProbeError.unreachable
+          : ProbeError.notBalnana,
+    );
   } on FormatException {
     throw const ProbeException(ProbeError.notBalnana);
   } finally {

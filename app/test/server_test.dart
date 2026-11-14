@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:balnana/core/server.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +67,22 @@ void main() {
     answer.completeError(StateError('offline'));
     await expectLater(container.read(serverInfoProvider.future), throwsStateError);
     expect(container.read(serverPublicUrlProvider), isNull);
+  });
+
+  test('a probe treats a proxy outage as unreachable', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      request.response
+        ..statusCode = HttpStatus.badGateway
+        ..write('Bad Gateway');
+      await request.response.close();
+    });
+
+    await expectLater(
+      probeServer('http://127.0.0.1:${server.port}'),
+      throwsA(isA<ProbeException>().having((e) => e.error, 'error', ProbeError.unreachable)),
+    );
   });
 
   group('ServerInfo.fromJson', () {

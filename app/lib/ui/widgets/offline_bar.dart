@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/l10n.dart';
 import '../../core/offline_cache.dart';
 import '../../core/server.dart';
+import '../../data/api.dart';
 import '../../data/pending_writes.dart';
 import '../tokens.dart';
 
@@ -43,29 +44,44 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
         }
       },
     );
-    if (ref.read(warmStartProvider)) _warmUp();
+    if (ref.read(warmStartProvider)) {
+      final url = ref.read(serverUrlProvider);
+      // Ending warm start can be synchronous when no server is configured.
+      scheduleMicrotask(() {
+        if (mounted) unawaited(_warmUp(url));
+      });
+    }
   }
 
   /// Ends the start ([warmStartProvider]) once the server answers or is
   /// known to be out of reach, and reloads what was shown from the cache.
-  Future<void> _warmUp() async {
-    final url = ref.read(serverUrlProvider);
-    var unreachable = false;
-    if (url != null) {
-      try {
-        await ref.read(serverProbeProvider)(url);
-      } on ProbeException catch (e) {
-        unreachable = e.error == ProbeError.unreachable;
-      } on Object {
-        // Something answered; the reload shows what.
-      }
+  Future<void> _warmUp(String? url) async {
+    if (url == null || ref.read(serverUrlProvider) != url) {
+      ref.read(warmStartProvider.notifier).end();
+      return;
     }
-    if (!mounted) return;
+    // End this startup if the selection changes, even if it later returns to this URL.
+    final selection = ref.listenManual(serverUrlProvider, (_, _) {
+      scheduleMicrotask(() {
+        if (mounted && ref.read(warmStartProvider)) ref.read(warmStartProvider.notifier).end();
+      });
+    });
+    var unreachable = false;
+    try {
+      await ref.read(serverProbeProvider)(url);
+    } on ProbeException catch (e) {
+      unreachable = e.error == ProbeError.unreachable;
+    } on Object {
+      // The reload will show what the server answered.
+    } finally {
+      if (mounted) selection.close();
+    }
+    if (!mounted || !ref.read(warmStartProvider)) return;
     final served = ref.read(warmStartProvider.notifier).end();
+    if (ref.read(serverUrlProvider) != url || !served) return;
     if (unreachable) {
-      // What was shown came from the cache, and the bar says so.
-      if (served) ref.read(offlineProvider.notifier).set(true);
-    } else if (served && ref.read(serverUrlProvider) == url) {
+      ref.read(offlineProvider.notifier).set(true);
+    } else {
       _retry();
     }
   }
@@ -105,7 +121,7 @@ class _OfflineBarState extends ConsumerState<OfflineBar> {
 
   void _retry() {
     ref.invalidate(serverInfoProvider);
-    ref.invalidate(apiProvider);
+    ref.invalidate(balnanaApiProvider);
   }
 
   @override

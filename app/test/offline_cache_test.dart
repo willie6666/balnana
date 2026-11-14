@@ -2,11 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:balnana/app.dart';
 import 'package:balnana/core/l10n.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
+import 'package:balnana/core/push.dart';
+import 'package:balnana/core/router.dart';
 import 'package:balnana/core/server.dart';
 import 'package:balnana/core/session.dart';
+import 'package:balnana/core/settings.dart';
+import 'package:balnana/data/api.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/ui/widgets/offline_bar.dart';
 import 'package:dio/dio.dart';
@@ -17,6 +22,27 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _server = 'https://split.example.com';
+const _info = ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
+
+class _HeldCache extends CacheDb {
+  _HeldCache() : super(NativeDatabase.memory());
+
+  final reading = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<CachedResponse?> find(String server, String account, String request) async {
+    reading.complete();
+    await release.future;
+    return CachedResponse(
+      server: server,
+      account: account,
+      request: request,
+      body: '{}',
+      savedAt: DateTime.now(),
+    );
+  }
+}
 
 /// Answers with [status] and a body naming the request and who asked, or
 /// throws a connection error while [down]. Answers wait for [hold] if set.
@@ -166,6 +192,36 @@ void main() {
     await client().get<Object?>('/g/other');
     expect(server.calls, calls + 1);
     expect(served, 2);
+  });
+
+  test('a cache lookup finishing after warm start goes to the server', () async {
+    final cache = _HeldCache();
+    addTearDown(cache.close);
+    var warm = true;
+    var served = false;
+    final client = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..httpClientAdapter = server
+      ..interceptors.add(
+        OfflineCache(
+          cache,
+          _server,
+          CacheDb.public,
+          (_) {},
+          probe: true,
+          isWarm: () => warm,
+          onWarm: () => served = true,
+        ),
+      );
+    addTearDown(client.close);
+
+    final response = client.get<Object?>('/server-info');
+    await cache.reading.future;
+    warm = false;
+    cache.release.complete();
+
+    expect((await response).extra, isNot(contains('savedAt')));
+    expect(server.calls, 1);
+    expect(served, isFalse);
   });
 
   test('keeps reading POSTs by body, and nothing else that writes', () async {
@@ -450,6 +506,26 @@ void main() {
     expect(find.text('unsaved draft'), findsOneWidget);
   });
 
+  testWidgets('a fresh install can start without a server', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          prefsProvider.overrideWithValue(prefs),
+          serverUrlProvider.overrideWithValue(null),
+          cacheDbProvider.overrideWithValue(null),
+          pushServiceProvider.overrideWithValue(null),
+          warmStartProvider.overrideWith(() => WarmStartNotifier(on: true)),
+        ],
+        child: const BalnanaApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Connect to a server'), findsOneWidget);
+  });
+
   testWidgets('a bar says the app is offline until the server answers again', (tester) async {
     var infoLoads = 0;
     final container = ProviderContainer(
@@ -494,24 +570,23 @@ void main() {
 
   Future<ProviderContainer> warmStart(
     WidgetTester tester, {
-    required bool up,
+    required Future<ServerInfo> Function(String) probe,
     required void Function() onInfo,
   }) async {
+    SharedPreferences.setMockInitialValues({'settings.server': _server});
+    final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
       overrides: [
+        prefsProvider.overrideWithValue(prefs),
         cacheDbProvider.overrideWithValue(null),
-        serverUrlProvider.overrideWithValue(_server),
         warmStartProvider.overrideWith(() => WarmStartNotifier(on: true)),
         serverInfoProvider.overrideWith((ref) async {
           onInfo();
           // As if answered from the cache while starting.
           if (ref.read(warmStartProvider)) ref.read(warmStartProvider.notifier).served();
-          return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
+          return _info;
         }),
-        serverProbeProvider.overrideWithValue((url) async {
-          if (!up) throw const ProbeException(ProbeError.unreachable);
-          return const ServerInfo(version: '1', authMode: AuthMode.link, publicUrl: _server);
-        }),
+        serverProbeProvider.overrideWithValue(probe),
       ],
     );
     addTearDown(container.dispose);
@@ -533,7 +608,7 @@ void main() {
 
   testWidgets('what was saved shows at start, and reloads once the server answers', (tester) async {
     var infoLoads = 0;
-    final container = await warmStart(tester, up: true, onInfo: () => infoLoads++);
+    final container = await warmStart(tester, probe: (_) async => _info, onInfo: () => infoLoads++);
     expect(container.read(warmStartProvider), isFalse);
     expect(infoLoads, 2);
     expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
@@ -541,10 +616,145 @@ void main() {
 
   testWidgets('what was saved shows at start, with the bar if the server is out of reach', (tester) async {
     var infoLoads = 0;
-    final container = await warmStart(tester, up: false, onInfo: () => infoLoads++);
+    final container = await warmStart(
+      tester,
+      probe: (_) async => throw const ProbeException(ProbeError.unreachable),
+      onInfo: () => infoLoads++,
+    );
     expect(container.read(warmStartProvider), isFalse);
     expect(infoLoads, 1);
     expect(container.read(offlineProvider), isTrue);
     expect(find.byIcon(Icons.cloud_off_outlined), findsOneWidget);
   });
+
+  testWidgets('a failed startup probe is ignored after changing servers', (tester) async {
+    final probe = Completer<ServerInfo>();
+    final container = await warmStart(tester, probe: (_) => probe.future, onInfo: () {});
+    expect(container.read(warmStartProvider), isTrue);
+
+    container.read(settingsProvider.notifier).setServerUrl('https://other.example.com');
+    probe.completeError(const ProbeException(ProbeError.unreachable));
+    await tester.pumpAndSettle();
+
+    expect(container.read(warmStartProvider), isFalse);
+    expect(container.read(offlineProvider), isFalse);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+  });
+
+  testWidgets('switching away and back still discards the startup probe', (tester) async {
+    final probe = Completer<ServerInfo>();
+    final container = await warmStart(tester, probe: (_) => probe.future, onInfo: () {});
+    final settings = container.read(settingsProvider.notifier);
+    settings.setServerUrl('https://other.example.com');
+    await tester.pumpAndSettle();
+    expect(container.read(warmStartProvider), isFalse);
+    settings.setServerUrl(_server);
+    probe.completeError(const ProbeException(ProbeError.unreachable));
+    await tester.pumpAndSettle();
+
+    expect(container.read(offlineProvider), isFalse);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+  });
+
+  testWidgets('startup refresh reloads readers without closing a client saving an expense', (tester) async {
+    final probe = Completer<ServerInfo>();
+    var infoLoads = 0;
+    final container = await warmStart(tester, probe: (_) => probe.future, onInfo: () => infoLoads++);
+    final reads = container.listen(balnanaApiProvider, (_, _) {});
+    final api = reads.read();
+    final client = container.read(apiProvider)!..httpClientAdapter = server;
+    final release = Completer<void>();
+    server.hold = release.future;
+    final expense = client.post<Object?>('/g/tok/expenses', data: {'title': 'Groceries'});
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(server.calls, 1);
+
+    probe.complete(_info);
+    await tester.pumpAndSettle();
+    expect(infoLoads, 2);
+    expect(reads.read(), isNot(same(api)));
+    expect(container.read(apiProvider), same(client));
+
+    release.complete();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect((await expense).statusCode, 200);
+    final receipt = client.put<Object?>('/g/tok/expenses/123/receipt');
+    await tester.pump(const Duration(milliseconds: 100));
+    expect((await receipt).statusCode, 200);
+  });
+
+  test('a delayed authentication failure still clears the session after an API refresh', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer.test(
+      overrides: [
+        prefsProvider.overrideWithValue(await SharedPreferences.getInstance()),
+        serverUrlProvider.overrideWithValue(_server),
+        cacheDbProvider.overrideWithValue(null),
+        serverInfoProvider.overrideWithValue(const AsyncData(_info)),
+      ],
+    );
+    container.read(sessionProvider.notifier).set('expired', from: container.read(identityProvider));
+    final api = container.read(balnanaApiProvider)!;
+    container.read(apiProvider)!.httpClientAdapter = server;
+    final release = Completer<void>();
+    server
+      ..status = 401
+      ..hold = release.future;
+    final request = expectLater(api.me(), throwsA(isA<ApiException>()));
+    container.invalidate(balnanaApiProvider);
+    expect(container.read(balnanaApiProvider), isNot(same(api)));
+    release.complete();
+    await request;
+    // The transport handles the rejection in a microtask.
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(sessionProvider).token, isNull);
+  });
+
+  for (final up in [true, false]) {
+    testWidgets('cached setup status waits for the startup probe (reachable: $up)', (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({'settings.server': _server});
+      final prefs = await SharedPreferences.getInstance();
+      final probe = Completer<ServerInfo>();
+      final reload = Completer<ServerInfo>();
+      final container = ProviderContainer(
+        retry: (_, _) => null,
+        overrides: [
+          prefsProvider.overrideWithValue(prefs),
+          cacheDbProvider.overrideWithValue(null),
+          pushServiceProvider.overrideWithValue(null),
+          warmStartProvider.overrideWith(() => WarmStartNotifier(on: true)),
+          serverInfoProvider.overrideWith((ref) async {
+            if (!ref.read(warmStartProvider)) return reload.future;
+            ref.read(warmStartProvider.notifier).served();
+            return const ServerInfo(
+              version: '1',
+              authMode: AuthMode.link,
+              publicUrl: _server,
+              setupRequired: true,
+            );
+          }),
+          serverProbeProvider.overrideWithValue((_) => probe.future),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const BalnanaApp()));
+      await tester.pumpAndSettle();
+      final router = container.read(routerProvider);
+      expect(router.state.matchedLocation, '/groups');
+
+      if (up) {
+        probe.complete(_info);
+        await tester.pumpAndSettle();
+        expect(router.state.matchedLocation, '/groups');
+        reload.complete(_info);
+      } else {
+        probe.completeError(const ProbeException(ProbeError.unreachable));
+      }
+      await tester.pumpAndSettle();
+      expect(router.state.matchedLocation, up ? '/groups' : '/admin');
+    });
+  }
 }

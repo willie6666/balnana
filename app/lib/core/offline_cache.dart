@@ -274,7 +274,8 @@ class OfflineNotifier extends Notifier<bool> {
 
 /// Whether the app has just opened and not yet heard whether the server is
 /// there. Meanwhile what was saved is shown at once, as while offline but
-/// without the bar; [OfflineBar] ends it and reloads what was shown so.
+/// without the bar. The startup probe in OfflineBar ends it and reloads
+/// what was shown from the cache.
 ///
 /// Off unless the app turns it on as it starts (see main.dart).
 final warmStartProvider = NotifierProvider<WarmStartNotifier, bool>(() => WarmStartNotifier());
@@ -369,10 +370,14 @@ class OfflineCache extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     options.extra[_askedKey] = _db.forgets;
-    final warm = _isWarm();
-    final key = warm || (!probe && _isOffline()) ? _key(options) : null;
-    final saved = key == null ? null : await _find(key);
+    if (!_isWarm() && (probe || !_isOffline())) return handler.next(options);
+    final key = _key(options);
+    if (key == null) return handler.next(options);
+    final saved = await _find(key);
     if (saved == null) return handler.next(options);
+    // The startup probe or a live request may have finished during the lookup.
+    final warm = _isWarm();
+    if (!warm && (probe || !_isOffline())) return handler.next(options);
     if (warm) _onWarm();
     handler.resolve(_answer(options, saved));
   }
@@ -414,7 +419,7 @@ class OfflineCache extends Interceptor {
 
   /// Whether [response] is a proxy in front of the server saying it cannot
   /// reach it. The server's own errors always carry a code.
-  static bool _fromGateway(Response<dynamic> response) {
+  static bool isGatewayError(Response<dynamic> response) {
     final data = response.data;
     return const {502, 503, 504}.contains(response.statusCode) && !(data is Map && data['code'] is String);
   }
@@ -422,7 +427,7 @@ class OfflineCache extends Interceptor {
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     final response = err.response;
-    if (response != null && !_fromGateway(response)) {
+    if (response != null && !isGatewayError(response)) {
       _offline(false);
       return handler.next(err);
     }
