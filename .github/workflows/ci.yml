@@ -77,9 +77,9 @@ jobs:
       - run: flutter test
       # FOSS shows external payment links by default. Play must hide them even
       # when explicitly enabled; other distributions can explicitly opt out.
-      - run: flutter test --flavor foss --plain-name "a build with external payments shows Ko-fi and PayPal" test/plan_test.dart
-      - run: flutter test --flavor play --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --plain-name "a build without external payments has no way to pay" test/plan_test.dart
-      - run: flutter test --flavor foss --dart-define=BALNANA_EXTERNAL_PAYMENTS=false --plain-name "a build without external payments has no way to pay" test/plan_test.dart
+      - run: flutter test --flavor foss --dart-define=BALNANA_TEST_EXTERNAL_PAYMENTS=true --plain-name "external payment links match the expected build policy" test/plan_test.dart
+      - run: flutter test --flavor play --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --dart-define=BALNANA_TEST_EXTERNAL_PAYMENTS=false --plain-name "external payment links match the expected build policy" test/plan_test.dart
+      - run: flutter test --flavor foss --dart-define=BALNANA_EXTERNAL_PAYMENTS=false --dart-define=BALNANA_TEST_EXTERNAL_PAYMENTS=false --plain-name "external payment links match the expected build policy" test/plan_test.dart
       # Compile the browser-only code and each native billing implementation.
       - run: flutter build web --release --no-web-resources-cdn --no-pub
       - uses: actions/setup-java@v4

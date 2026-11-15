@@ -146,6 +146,9 @@ See the [CI workflow](.github/workflows/ci.yml).
   `--dart-define=BALNANA_EXTERNAL_PAYMENTS=false` hides those links. The
   `play` flavor always hides external payment links. The server must also
   have the corresponding payment provider and products configured.
+  For flavored payment UI tests, also set
+  `--dart-define=BALNANA_TEST_EXTERNAL_PAYMENTS=true` or `false` to specify
+  the expected policy independently; see the CI matrix.
 - After editing `api/openapi.yaml`, run `go generate ./internal/api` in
   `server/` with the `oapi-codegen` version pinned in CI. After editing
   `app/lib/l10n/*.arb`, run `flutter gen-l10n` in `app/`. If any push

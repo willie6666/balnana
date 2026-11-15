@@ -26,6 +26,15 @@ type plan struct {
 	reminders bool
 }
 
+// effectiveMemberLimit includes the server's hard cap, even for unlimited plans.
+func effectiveMemberLimit(limit *int) *int {
+	members := maxMembers
+	if limit != nil {
+		members = min(members, *limit)
+	}
+	return &members
+}
+
 // userPlan is the best active entitlement, or the automatic plan for the
 // account's current email verification status. With no account it returns
 // the group default. Its second result is when an entitlement ends.
@@ -291,7 +300,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 		ExpiresAt:         ends,
 		ReceiptsPerGroup:  p.receipts,
 		RecurringPerGroup: p.recurring,
-		MembersPerGroup:   p.members,
+		MembersPerGroup:   effectiveMemberLimit(p.members),
 		Reminders:         p.reminders,
 		JoinedGroups:      Usage{Limit: p.joined},
 		SponsoredGroups:   Usage{Limit: p.sponsored},
@@ -314,7 +323,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.Paypal, err = s.paypalOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
-	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.Paypal != nil); err != nil {
+	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.Paypal); err != nil {
 		return MyPlan{}, err
 	}
 	return out, nil
@@ -322,7 +331,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 
 // planComparison exposes the plans this account can use or buy. Product
 // mappings and unrelated administrator-only plans stay in the admin API.
-func (s *Server) planComparison(ctx context.Context, q querier, current string, play, paypal bool) (*PlanComparison, error) {
+func (s *Server) planComparison(ctx context.Context, q querier, current string, play bool, paypal *PayPalBilling) (*PlanComparison, error) {
 	catalog, err := planCatalog(ctx, q)
 	if err != nil {
 		return nil, err
@@ -333,9 +342,17 @@ func (s *Server) planComparison(ctx context.Context, q querier, current string, 
 	if catalog.VerifiedPlanId != nil {
 		visible[*catalog.VerifiedPlanId] = true
 	}
+	// PayPal omits legacy products whose prices checkout cannot accept.
+	// One valid offer must not make every PayPal mapping purchasable.
+	paypalProducts := map[string]bool{}
+	if paypal != nil {
+		for _, offer := range paypal.Offers {
+			paypalProducts[offer.Product] = true
+		}
+	}
 	for _, product := range catalog.Products {
 		if (product.Provider == Kofi && s.conf().KofiURL != nil) ||
-			(product.Provider == Play && play) || (product.Provider == Paypal && paypal) {
+			(product.Provider == Play && play) || (product.Provider == Paypal && paypalProducts[product.Product]) {
 			visible[product.PlanId] = true
 		}
 	}
@@ -347,12 +364,7 @@ func (s *Server) planComparison(ctx context.Context, q querier, current string, 
 		if !option.IsDefault && !visible[option.Id] {
 			continue
 		}
-		// The group API's hard member cap applies even to an unlimited plan.
-		members := maxMembers
-		if option.Limits.MembersPerGroup != nil {
-			members = min(members, *option.Limits.MembersPerGroup)
-		}
-		option.Limits.MembersPerGroup = &members
+		option.Limits.MembersPerGroup = effectiveMemberLimit(option.Limits.MembersPerGroup)
 		out.Plans = append(out.Plans, option)
 	}
 	return out, nil
@@ -439,7 +451,7 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	out := GroupPlan{
 		PlanName:        p.name,
 		SponsorMemberId: sponsor,
-		Members:         Usage{Limit: p.members},
+		Members:         Usage{Limit: effectiveMemberLimit(p.members)},
 		Receipts:        Usage{Limit: p.receipts},
 		Recurring:       Usage{Limit: p.recurring},
 		Reminders:       p.reminders,
@@ -471,7 +483,7 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 			return GroupPlan{}, err
 		}
 		out.PlanName = p.name
-		out.Members.Limit, out.Receipts.Limit, out.Recurring.Limit = p.members, p.receipts, p.recurring
+		out.Members.Limit, out.Receipts.Limit, out.Recurring.Limit = effectiveMemberLimit(p.members), p.receipts, p.recurring
 		out.Reminders = p.reminders
 		out.SponsorMemberId = nil
 	}

@@ -55,7 +55,9 @@ func TestPlanComparison(t *testing.T) {
 	}
 
 	// Only configured payment providers add their purchasable plans.
-	comparison, err := s.planComparison(context.Background(), s.db, "free", true, true)
+	comparison, err := s.planComparison(context.Background(), s.db, "free", true, &PayPalBilling{
+		Offers: []PayPalOffer{{Product: "P-PAYPAL"}},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,5 +101,75 @@ func TestPlanComparisonAfterAdminRevocation(t *testing.T) {
 	admin.must(200, "GET", "/admin/plans", nil, &catalog)
 	if len(catalog.Products) != 3 {
 		t.Fatalf("revocation changed the products: %+v", catalog.Products)
+	}
+}
+
+func TestPlanComparisonUsesPayPalOffers(t *testing.T) {
+	c, s, _ := paypalServer(t)
+	exec(t, s, `insert into plans (id, name, rank) values ('subscription', 'Subscription', 20), ('unavailable', 'Unavailable', 30)`)
+	exec(t, s, `insert into plan_products (provider, product, plan_id, days, min_amount, currency) values
+		('paypal', 'plus-90', 'plus', 90, 300, 'TWD'),
+		('paypal', 'P-5ML4271244454362WXNWU5NQ', 'subscription', 30, null, null),
+		('paypal', 'invalid-price', 'unavailable', 90, 300.50, 'TWD')`)
+	u := register(c, "ana@example.test", "Ana")
+	p := myPlanOf(c)
+	if p.Paypal == nil || len(p.Paypal.Offers) != 2 {
+		t.Fatalf("valid PayPal offers: %+v", p.Paypal)
+	}
+	if got := comparisonIDs(p.Comparison); !slices.Equal(got, []string{"email-unverified", "free", "plus", "subscription"}) {
+		t.Fatalf("comparison must include only the valid PayPal offers: %v", got)
+	}
+	c.errorCode(404, "POST", "/me/paypal/checkout", PayPalCheckoutRequest{Product: "invalid-price", App: PayPalCheckoutRequestAppWeb})
+
+	// An unavailable product must not hide a plan the account already holds.
+	grant(t, s, u.Id, "unavailable")
+	p = myPlanOf(c)
+	if p.Comparison.CurrentPlanId != "unavailable" || !slices.Contains(comparisonIDs(p.Comparison), "unavailable") {
+		t.Fatalf("current plan must remain visible: %+v", p.Comparison)
+	}
+}
+
+func TestPlanMemberLimitsMatchComparison(t *testing.T) {
+	c, _, s := billingServer(t)
+	u := register(c, "ana@example.test", "Ana")
+	grant(t, s, u.Id, "plus")
+	g := createGroup(c, "Ana")
+	base := "/g/" + g.Token
+	c.must(200, "PUT", base+"/sponsor", nil, nil)
+	for _, tc := range []struct {
+		name  string
+		limit *int
+		want  int
+	}{
+		{"unlimited", nil, maxMembers},
+		{"above server cap", ptr(500), maxMembers},
+		{"at server cap", ptr(maxMembers), maxMembers},
+		{"below server cap", ptr(7), 7},
+		{"zero", ptr(0), 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			exec(t, s, `update plans set members_per_group = $1 where id = 'plus'`, tc.limit)
+			p := myPlanOf(c)
+			if p.MembersPerGroup == nil || *p.MembersPerGroup != tc.want {
+				t.Fatalf("summary member limit: %v, want %d", p.MembersPerGroup, tc.want)
+			}
+			found := false
+			for _, option := range p.Comparison.Plans {
+				if option.Id == p.Comparison.CurrentPlanId {
+					found = true
+					if option.Limits.MembersPerGroup == nil || *option.Limits.MembersPerGroup != tc.want {
+						t.Fatalf("comparison member limit: %v, want %d", option.Limits.MembersPerGroup, tc.want)
+					}
+				}
+			}
+			if !found {
+				t.Fatal("current plan missing from comparison")
+			}
+			var groupPlan GroupPlan
+			c.must(200, "GET", base+"/plan", nil, &groupPlan)
+			if groupPlan.Members.Limit == nil || *groupPlan.Members.Limit != tc.want {
+				t.Fatalf("group member limit: %v, want %d", groupPlan.Members.Limit, tc.want)
+			}
+		})
 	}
 }

@@ -315,32 +315,13 @@ void main() {
     expect(find.text(l10n.planLimits), findsOneWidget);
   });
 
-  // Google Play doesn't allow pointing people elsewhere to pay.
-  testWidgets('a build without external payments has no way to pay', (tester) async {
-    expect(externalPayments, isFalse);
-    await _pump(
-      tester,
-      const MyPlan(
-        planName: 'Free',
-        joinedGroups: PlanUsage(used: 0),
-        sponsoredGroups: PlanUsage(used: 0),
-        paypal: PayPalBilling(
-          offers: [PayPalOffer(product: 'P-ABC', planName: 'Plus monthly', days: 30, subscription: true)],
-          subscribed: ['P-ABC'],
-        ),
-      ),
-      externalLinks: true,
-    );
-
-    expect(find.text('Plus monthly'), findsNothing);
-    expect(find.text(l10n.planPayPalManage), findsNothing);
-    expect(find.text(l10n.planKofi), findsNothing);
-    expect(find.text(l10n.planGet), findsNothing);
-    expect(find.text(l10n.planPaymentClaim), findsNothing);
-  }, skip: externalPayments);
-
-  // Runs in FOSS by default, or with BALNANA_EXTERNAL_PAYMENTS=true.
-  testWidgets('a build with external payments shows Ko-fi and PayPal', (tester) async {
+  // The regular suite exercises the build's UI. CI also supplies an independent
+  // policy expectation, so a wrong flavor or flag fails instead of skipping.
+  testWidgets('external payment links match the expected build policy', (tester) async {
+    const expected = bool.hasEnvironment('BALNANA_TEST_EXTERNAL_PAYMENTS')
+        ? bool.fromEnvironment('BALNANA_TEST_EXTERNAL_PAYMENTS')
+        : null;
+    if (expected != null) expect(externalPayments, expected);
     await _pump(
       tester,
       const MyPlan(
@@ -359,9 +340,18 @@ void main() {
       externalLinks: true,
     );
 
-    expect(find.text(l10n.planKofiHelp), findsOneWidget);
     // A second subscription would pay twice for one plan.
     expect(find.text('Plus monthly'), findsNothing);
+    if (!externalPayments) {
+      expect(find.text(l10n.planPayPalManage), findsNothing);
+      expect(find.text(l10n.planPayPalOnce(90, '9.00 USD')), findsNothing);
+      expect(find.text(l10n.planKofi), findsNothing);
+      expect(find.text(l10n.planGet), findsNothing);
+      expect(find.text(l10n.planPaymentClaim), findsNothing);
+      return;
+    }
+
+    expect(find.text(l10n.planKofiHelp), findsOneWidget);
     expect(find.text(l10n.planPayPalManage), findsOneWidget);
     expect(find.text(l10n.planPayPalOnce(90, '9.00 USD')), findsOneWidget);
 
@@ -370,7 +360,7 @@ void main() {
     await tester.tap(find.text(l10n.planPaymentClaim));
     await tester.pumpAndSettle();
     expect(find.byType(PaymentClaimDialog), findsOneWidget);
-  }, skip: !externalPayments);
+  });
 
   testWidgets('coming back from PayPal says how it went', (tester) async {
     await _pump(tester, _plan, paypal: 'cancelled');
