@@ -3743,4 +3743,69 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planCurrent => 'Offre actuelle';
+
+  @override
+  String get groupPasswordTitle => 'Ce groupe a un mot de passe';
+
+  @override
+  String get groupPasswordBody => 'Saisissez-le pour ouvrir le groupe. Cet appareil s\'en souviendra.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Ouvrez-le et saisissez son mot de passe.';
+
+  @override
+  String get groupPassword => 'Mot de passe du groupe';
+
+  @override
+  String get groupUnlock => 'Ouvrir le groupe';
+
+  @override
+  String get groupPasswordWrong => 'Ce mot de passe n\'est pas le bon.';
+
+  @override
+  String get groupPasswordOnHelp => 'Activé. Le lien seul n\'ouvre plus le groupe.';
+
+  @override
+  String get groupPasswordOffHelp => 'Désactivé. Demander un mot de passe avant que le lien ouvre le groupe.';
+
+  @override
+  String get groupPasswordSet => 'Définir un mot de passe';
+
+  @override
+  String get groupPasswordChange => 'Changer le mot de passe';
+
+  @override
+  String get groupPasswordNew => 'Nouveau mot de passe';
+
+  @override
+  String get groupPasswordRemove => 'Retirer';
+
+  @override
+  String get groupPasswordHelp =>
+      'Toute personne qui ouvre le groupe par son lien le saisit une fois sur chaque appareil, y compris celles déjà dans le groupe. Partagez-le séparément du lien.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Les membres connectés à leur compte n\'en ont pas besoin.';
+
+  @override
+  String get groupPasswordSetDone => 'Mot de passe enregistré';
+
+  @override
+  String get groupPasswordRemoved => 'Mot de passe retiré';
+
+  @override
+  String get errorPasswordRequired => 'Ce groupe demande son mot de passe.';
+
+  @override
+  String get errorNoPassword => 'Ce groupe n\'a plus de mot de passe.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who a défini le mot de passe du groupe';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who a retiré le mot de passe du groupe';
+  }
 }

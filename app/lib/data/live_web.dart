@@ -4,30 +4,38 @@ import 'dart:js_interop';
 import 'package:dio/dio.dart';
 import 'package:web/web.dart' as web;
 
+import '../core/group_keys.dart';
 import 'live.dart';
 
 /// Reads the stream in the browser. The web app on its own server signs in
 /// with a cookie, which the browser's EventSource sends. A web app on
 /// another origin signs in with a bearer token instead, which EventSource
 /// cannot send, so it reads the stream with fetch.
+///
+/// The group's key, if it has a password, is looked up at every connect:
+/// fetch sends it as a header, EventSource, which cannot, in the URL.
 Stream<LiveEvent> groupEvents(Dio dio, String token, Duration retryAfter) {
   final url = '${dio.options.baseUrl}/g/$token/events';
+  String? key() => GroupKeyInterceptor.of(dio, token);
   if (dio.options.headers['Authorization'] case final String authorization) {
-    return _fetchEvents(url, authorization, retryAfter);
+    return _fetchEvents(url, authorization, key, retryAfter);
   }
-  return _eventSource(url, retryAfter);
+  return _eventSource(() => switch (key()) {
+    final k? => '$url?key=${Uri.encodeQueryComponent(k)}',
+    null => url,
+  }, retryAfter);
 }
 
 /// EventSource sends the session cookie and reconnects by itself after a
 /// dropped connection.
-Stream<LiveEvent> _eventSource(String url, Duration retryAfter) {
+Stream<LiveEvent> _eventSource(String Function() url, Duration retryAfter) {
   late final StreamController<LiveEvent> out;
   web.EventSource? source;
   Timer? retry;
   var delay = retryAfter;
 
   void connect() {
-    final s = source = web.EventSource(url);
+    final s = source = web.EventSource(url());
     s.onopen = ((web.Event _) {
       delay = retryAfter;
       out.add(LiveEvent.connected);
@@ -64,7 +72,7 @@ Stream<LiveEvent> _eventSource(String url, Duration retryAfter) {
 /// fetch with the bearer token, reconnecting like the Android app does. The
 /// server pings every 25 seconds, so a minute without data means the
 /// connection is dead.
-Stream<LiveEvent> _fetchEvents(String url, String authorization, Duration retryAfter) {
+Stream<LiveEvent> _fetchEvents(String url, String authorization, String? Function() key, Duration retryAfter) {
   late final StreamController<LiveEvent> out;
   web.AbortController? abort;
   Timer? retry;
@@ -84,6 +92,7 @@ Stream<LiveEvent> _fetchEvents(String url, String authorization, Duration retryA
       final headers = web.Headers()
         ..append('Authorization', authorization)
         ..append('Accept', 'text/event-stream');
+      if (key() case final k?) headers.append(groupKeyHeader, k);
       final res = await web.window
           .fetch(url.toJS, web.RequestInit(headers: headers, signal: thisAbort.signal, cache: 'no-store'))
           .toDart;

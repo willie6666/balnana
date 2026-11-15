@@ -3514,4 +3514,68 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get planCurrent => '현재 요금제';
+
+  @override
+  String get groupPasswordTitle => '이 그룹에는 비밀번호가 있습니다';
+
+  @override
+  String get groupPasswordBody => '비밀번호를 입력하면 그룹이 열립니다. 이 기기가 기억합니다.';
+
+  @override
+  String get groupPasswordLockedHelp => '그룹을 열고 비밀번호를 입력하세요.';
+
+  @override
+  String get groupPassword => '그룹 비밀번호';
+
+  @override
+  String get groupUnlock => '그룹 열기';
+
+  @override
+  String get groupPasswordWrong => '비밀번호가 맞지 않습니다.';
+
+  @override
+  String get groupPasswordOnHelp => '켜짐. 이제 링크만으로는 그룹이 열리지 않습니다.';
+
+  @override
+  String get groupPasswordOffHelp => '꺼짐. 링크로 그룹을 열기 전에 비밀번호를 묻습니다.';
+
+  @override
+  String get groupPasswordSet => '비밀번호 설정';
+
+  @override
+  String get groupPasswordChange => '비밀번호 변경';
+
+  @override
+  String get groupPasswordNew => '새 비밀번호';
+
+  @override
+  String get groupPasswordRemove => '삭제';
+
+  @override
+  String get groupPasswordHelp => '링크로 그룹을 여는 사람은 이미 그룹에 있는 사람도 포함해 기기마다 한 번 입력합니다. 링크와 따로 알려 주세요.';
+
+  @override
+  String get groupPasswordMembersHelp => '계정에 로그인한 멤버는 필요하지 않습니다.';
+
+  @override
+  String get groupPasswordSetDone => '비밀번호를 저장했습니다';
+
+  @override
+  String get groupPasswordRemoved => '비밀번호를 삭제했습니다';
+
+  @override
+  String get errorPasswordRequired => '이 그룹은 비밀번호가 필요합니다.';
+
+  @override
+  String get errorNoPassword => '이 그룹에는 더 이상 비밀번호가 없습니다.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who 님이 그룹 비밀번호를 설정했습니다';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who 님이 그룹 비밀번호를 삭제했습니다';
+  }
 }

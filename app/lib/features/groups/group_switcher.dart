@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
+import '../../core/server.dart';
 import '../../data/home_group.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
@@ -81,6 +82,7 @@ class _GroupsSheet extends ConsumerWidget {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final view = ref.watch(visibleSummariesProvider);
+    final accounts = ref.watch(accountsModeProvider);
     final summaries = view.state;
     // While it reloads, the list as it was, so it does not blink.
     final data = view.value;
@@ -119,16 +121,25 @@ class _GroupsSheet extends ConsumerWidget {
         ),
         footer: Column(
           children: [
+            // Without accounts, only a password keeps a group shut, and the
+            // group asks for it.
             for (final token in data.locked)
-              ListTile(
-                leading: const Icon(Icons.lock_outline),
-                title: Text(l10n.groupLockedTitle),
-                subtitle: Text(l10n.groupLockedBody),
-                trailing: TextButton(
-                  onPressed: () => _then(context, (home) => home.go(signInPath('/g/$token'))),
-                  child: Text(l10n.signIn),
-                ),
-              ),
+              accounts
+                  ? ListTile(
+                      leading: const Icon(Icons.lock_outline),
+                      title: Text(l10n.groupLockedTitle),
+                      subtitle: Text(l10n.groupLockedBody),
+                      trailing: TextButton(
+                        onPressed: () => _then(context, (home) => home.go(signInPath('/g/$token'))),
+                        child: Text(l10n.signIn),
+                      ),
+                    )
+                  : ListTile(
+                      leading: const Icon(Icons.lock_outline),
+                      title: Text(l10n.groupPasswordTitle),
+                      subtitle: Text(l10n.groupPasswordLockedHelp),
+                      onTap: () => _then(context, (home) => home.go('/g/$token')),
+                    ),
           ],
         ),
       );

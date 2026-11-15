@@ -187,6 +187,7 @@ func TestAccountsGroupAccess(t *testing.T) {
 	// Home lists it as locked, not gone, so the app does not offer to forget it.
 	var sums GroupSummaryList
 	anon.must(200, "POST", "/groups/summaries", GroupSummaryRequest{Groups: []struct {
+		Key      *string `json:"key,omitempty"`
 		MemberId *string `json:"memberId,omitempty"`
 		Token    string  `json:"token"`
 	}{{Token: g.Token}}}, &sums)

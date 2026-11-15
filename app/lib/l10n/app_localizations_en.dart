@@ -3641,4 +3641,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planCurrent => 'Current plan';
+
+  @override
+  String get groupPasswordTitle => 'This group has a password';
+
+  @override
+  String get groupPasswordBody => 'Enter it to open the group. This device will remember it.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Open it and enter its password.';
+
+  @override
+  String get groupPassword => 'Group password';
+
+  @override
+  String get groupUnlock => 'Open group';
+
+  @override
+  String get groupPasswordWrong => 'That password isn\'t right.';
+
+  @override
+  String get groupPasswordOnHelp => 'On. The link alone no longer opens the group.';
+
+  @override
+  String get groupPasswordOffHelp => 'Off. Ask for a password before the link opens the group.';
+
+  @override
+  String get groupPasswordSet => 'Set a password';
+
+  @override
+  String get groupPasswordChange => 'Change the password';
+
+  @override
+  String get groupPasswordNew => 'New password';
+
+  @override
+  String get groupPasswordRemove => 'Remove';
+
+  @override
+  String get groupPasswordHelp =>
+      'Anyone opening the group from its link enters it once on each device, people already in the group too. Share it separately from the link.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Members signed in to their accounts don\'t need it.';
+
+  @override
+  String get groupPasswordSetDone => 'Password saved';
+
+  @override
+  String get groupPasswordRemoved => 'Password removed';
+
+  @override
+  String get errorPasswordRequired => 'This group needs its password.';
+
+  @override
+  String get errorNoPassword => 'This group has no password any more.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who set the group password';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who removed the group password';
+  }
 }

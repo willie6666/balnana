@@ -3636,4 +3636,69 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planCurrent => 'Gói hiện tại';
+
+  @override
+  String get groupPasswordTitle => 'Nhóm này có mật khẩu';
+
+  @override
+  String get groupPasswordBody => 'Nhập mật khẩu để mở nhóm. Thiết bị này sẽ ghi nhớ.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Mở nhóm và nhập mật khẩu.';
+
+  @override
+  String get groupPassword => 'Mật khẩu nhóm';
+
+  @override
+  String get groupUnlock => 'Mở nhóm';
+
+  @override
+  String get groupPasswordWrong => 'Mật khẩu không đúng.';
+
+  @override
+  String get groupPasswordOnHelp => 'Bật. Chỉ có đường liên kết thì không mở được nhóm nữa.';
+
+  @override
+  String get groupPasswordOffHelp => 'Tắt. Hỏi mật khẩu trước khi đường liên kết mở nhóm.';
+
+  @override
+  String get groupPasswordSet => 'Đặt mật khẩu';
+
+  @override
+  String get groupPasswordChange => 'Đổi mật khẩu';
+
+  @override
+  String get groupPasswordNew => 'Mật khẩu mới';
+
+  @override
+  String get groupPasswordRemove => 'Gỡ';
+
+  @override
+  String get groupPasswordHelp =>
+      'Ai mở nhóm từ đường liên kết đều nhập một lần trên mỗi thiết bị, kể cả người đã ở trong nhóm. Hãy gửi mật khẩu riêng với đường liên kết.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Thành viên đã đăng nhập tài khoản không cần mật khẩu.';
+
+  @override
+  String get groupPasswordSetDone => 'Đã lưu mật khẩu';
+
+  @override
+  String get groupPasswordRemoved => 'Đã gỡ mật khẩu';
+
+  @override
+  String get errorPasswordRequired => 'Nhóm này cần mật khẩu.';
+
+  @override
+  String get errorNoPassword => 'Nhóm này không còn mật khẩu.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who đã đặt mật khẩu nhóm';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who đã gỡ mật khẩu nhóm';
+  }
 }

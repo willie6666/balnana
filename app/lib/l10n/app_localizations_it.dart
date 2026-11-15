@@ -3686,4 +3686,69 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get planCurrent => 'Piano attuale';
+
+  @override
+  String get groupPasswordTitle => 'Questo gruppo ha una password';
+
+  @override
+  String get groupPasswordBody => 'Inseriscila per aprire il gruppo. Questo dispositivo la ricorderà.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Aprilo e inserisci la sua password.';
+
+  @override
+  String get groupPassword => 'Password del gruppo';
+
+  @override
+  String get groupUnlock => 'Apri gruppo';
+
+  @override
+  String get groupPasswordWrong => 'La password non è corretta.';
+
+  @override
+  String get groupPasswordOnHelp => 'Attiva. Il link da solo non apre più il gruppo.';
+
+  @override
+  String get groupPasswordOffHelp => 'Disattiva. Chiedi una password prima che il link apra il gruppo.';
+
+  @override
+  String get groupPasswordSet => 'Imposta una password';
+
+  @override
+  String get groupPasswordChange => 'Cambia la password';
+
+  @override
+  String get groupPasswordNew => 'Nuova password';
+
+  @override
+  String get groupPasswordRemove => 'Rimuovi';
+
+  @override
+  String get groupPasswordHelp =>
+      'Chi apre il gruppo dal suo link la inserisce una volta su ogni dispositivo, anche chi è già nel gruppo. Condividila separatamente dal link.';
+
+  @override
+  String get groupPasswordMembersHelp => 'I membri che accedono con il proprio account non ne hanno bisogno.';
+
+  @override
+  String get groupPasswordSetDone => 'Password salvata';
+
+  @override
+  String get groupPasswordRemoved => 'Password rimossa';
+
+  @override
+  String get errorPasswordRequired => 'Questo gruppo richiede la sua password.';
+
+  @override
+  String get errorNoPassword => 'Questo gruppo non ha più una password.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who ha impostato la password del gruppo';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who ha rimosso la password del gruppo';
+  }
 }

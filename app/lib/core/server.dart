@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'group_keys.dart';
 import 'offline_cache.dart';
 import 'session.dart';
 import 'settings.dart';
@@ -305,6 +306,13 @@ final apiProvider = Provider<Dio?>((ref) {
   final (token, _) = ref.watch(sessionProvider.select((s) => (s.token, s.generation)));
   final dio = _cachedDio(ref, url, cacheAccount(token));
   if (token != null) dio.options.headers['Authorization'] = 'Bearer $token';
+  // Read at each request, so a key just given is sent without a new client.
+  dio.interceptors.insert(
+    0,
+    GroupKeyInterceptor(
+      (group) => ref.mounted && ref.read(serverUrlProvider) == url ? ref.read(groupKeysProvider)[group] : null,
+    ),
+  );
   ref.onDispose(dio.close);
   return dio;
 });

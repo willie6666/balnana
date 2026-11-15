@@ -30,6 +30,7 @@ import '../groups/group_switcher.dart';
 import '../shell/shell.dart';
 import 'balances.dart';
 import 'expenses_tab.dart';
+import 'group_password.dart';
 import 'identity_sheet.dart';
 import 'share_sheet.dart';
 import 'spending_tab.dart';
@@ -288,6 +289,9 @@ class _GroupPageState extends ConsumerState<GroupPage> {
             });
           }
           return _blank(const CircularProgressIndicator());
+        }
+        if (error is ApiException && error.code == 'password_required') {
+          return _blank(SingleChildScrollView(child: GroupUnlock(token: widget.token)));
         }
         if (error is ApiException && error.code == 'sign_in_required') {
           return _blank(

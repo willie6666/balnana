@@ -3760,4 +3760,69 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planCurrent => 'Текущий план';
+
+  @override
+  String get groupPasswordTitle => 'У этой группы есть пароль';
+
+  @override
+  String get groupPasswordBody => 'Введите его, чтобы открыть группу. Это устройство его запомнит.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Откройте её и введите пароль.';
+
+  @override
+  String get groupPassword => 'Пароль группы';
+
+  @override
+  String get groupUnlock => 'Открыть группу';
+
+  @override
+  String get groupPasswordWrong => 'Неверный пароль.';
+
+  @override
+  String get groupPasswordOnHelp => 'Включён. Одной ссылки больше недостаточно, чтобы открыть группу.';
+
+  @override
+  String get groupPasswordOffHelp => 'Выключен. Спрашивать пароль, прежде чем ссылка откроет группу.';
+
+  @override
+  String get groupPasswordSet => 'Задать пароль';
+
+  @override
+  String get groupPasswordChange => 'Изменить пароль';
+
+  @override
+  String get groupPasswordNew => 'Новый пароль';
+
+  @override
+  String get groupPasswordRemove => 'Удалить';
+
+  @override
+  String get groupPasswordHelp =>
+      'Каждый, кто открывает группу по ссылке, вводит его один раз на каждом устройстве — в том числе те, кто уже в группе. Передайте его отдельно от ссылки.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Участникам, вошедшим в свои аккаунты, он не нужен.';
+
+  @override
+  String get groupPasswordSetDone => 'Пароль сохранён';
+
+  @override
+  String get groupPasswordRemoved => 'Пароль удалён';
+
+  @override
+  String get errorPasswordRequired => 'Для этой группы нужен пароль.';
+
+  @override
+  String get errorNoPassword => 'У этой группы больше нет пароля.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who задаёт пароль группы';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who удаляет пароль группы';
+  }
 }

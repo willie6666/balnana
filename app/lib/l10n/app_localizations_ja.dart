@@ -3512,4 +3512,68 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get planCurrent => '現在のプラン';
+
+  @override
+  String get groupPasswordTitle => 'このグループにはパスワードがあります';
+
+  @override
+  String get groupPasswordBody => 'パスワードを入力するとグループを開けます。この端末が記憶します。';
+
+  @override
+  String get groupPasswordLockedHelp => '開いてパスワードを入力してください。';
+
+  @override
+  String get groupPassword => 'グループのパスワード';
+
+  @override
+  String get groupUnlock => 'グループを開く';
+
+  @override
+  String get groupPasswordWrong => 'パスワードが正しくありません。';
+
+  @override
+  String get groupPasswordOnHelp => 'オン。リンクだけではグループを開けません。';
+
+  @override
+  String get groupPasswordOffHelp => 'オフ。リンクでグループを開く前にパスワードを求めます。';
+
+  @override
+  String get groupPasswordSet => 'パスワードを設定';
+
+  @override
+  String get groupPasswordChange => 'パスワードを変更';
+
+  @override
+  String get groupPasswordNew => '新しいパスワード';
+
+  @override
+  String get groupPasswordRemove => '削除';
+
+  @override
+  String get groupPasswordHelp => 'リンクからグループを開く人は、すでにグループにいる人も含め、端末ごとに一度入力します。リンクとは別に伝えてください。';
+
+  @override
+  String get groupPasswordMembersHelp => 'アカウントにサインインしているメンバーには不要です。';
+
+  @override
+  String get groupPasswordSetDone => 'パスワードを保存しました';
+
+  @override
+  String get groupPasswordRemoved => 'パスワードを削除しました';
+
+  @override
+  String get errorPasswordRequired => 'このグループにはパスワードが必要です。';
+
+  @override
+  String get errorNoPassword => 'このグループにはもうパスワードがありません。';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$whoさんがグループのパスワードを設定しました';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$whoさんがグループのパスワードを削除しました';
+  }
 }

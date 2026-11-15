@@ -637,7 +637,9 @@ class OfflineCache extends Interceptor {
     final data = response.data;
     if (data is! Map) return false;
     return switch ((response.statusCode, data['code'])) {
-      (401, 'sign_in_required') || (403, 'not_a_member' || 'email_unverified') || (404, 'not_found') => true,
+      (401, 'sign_in_required') ||
+      (403, 'not_a_member' || 'email_unverified' || 'password_required') ||
+      (404, 'not_found') => true,
       _ => false,
     };
   }

@@ -3609,4 +3609,69 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planCurrent => 'แผนปัจจุบัน';
+
+  @override
+  String get groupPasswordTitle => 'กลุ่มนี้มีรหัสผ่าน';
+
+  @override
+  String get groupPasswordBody => 'ใส่รหัสผ่านเพื่อเปิดกลุ่ม อุปกรณ์นี้จะจำไว้';
+
+  @override
+  String get groupPasswordLockedHelp => 'เปิดกลุ่มแล้วใส่รหัสผ่าน';
+
+  @override
+  String get groupPassword => 'รหัสผ่านกลุ่ม';
+
+  @override
+  String get groupUnlock => 'เปิดกลุ่ม';
+
+  @override
+  String get groupPasswordWrong => 'รหัสผ่านไม่ถูกต้อง';
+
+  @override
+  String get groupPasswordOnHelp => 'เปิดอยู่ ลิงก์อย่างเดียวเปิดกลุ่มไม่ได้แล้ว';
+
+  @override
+  String get groupPasswordOffHelp => 'ปิดอยู่ ขอรหัสผ่านก่อนที่ลิงก์จะเปิดกลุ่ม';
+
+  @override
+  String get groupPasswordSet => 'ตั้งรหัสผ่าน';
+
+  @override
+  String get groupPasswordChange => 'เปลี่ยนรหัสผ่าน';
+
+  @override
+  String get groupPasswordNew => 'รหัสผ่านใหม่';
+
+  @override
+  String get groupPasswordRemove => 'ลบ';
+
+  @override
+  String get groupPasswordHelp =>
+      'ทุกคนที่เปิดกลุ่มจากลิงก์ต้องใส่รหัสผ่านหนึ่งครั้งในแต่ละอุปกรณ์ รวมถึงคนที่อยู่ในกลุ่มแล้ว ส่งรหัสผ่านแยกจากลิงก์';
+
+  @override
+  String get groupPasswordMembersHelp => 'สมาชิกที่ลงชื่อเข้าใช้บัญชีของตนไม่ต้องใช้';
+
+  @override
+  String get groupPasswordSetDone => 'บันทึกรหัสผ่านแล้ว';
+
+  @override
+  String get groupPasswordRemoved => 'ลบรหัสผ่านแล้ว';
+
+  @override
+  String get errorPasswordRequired => 'กลุ่มนี้ต้องใช้รหัสผ่าน';
+
+  @override
+  String get errorNoPassword => 'กลุ่มนี้ไม่มีรหัสผ่านแล้ว';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who ตั้งรหัสผ่านกลุ่ม';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who ลบรหัสผ่านกลุ่ม';
+  }
 }

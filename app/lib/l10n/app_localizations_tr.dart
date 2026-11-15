@@ -3653,4 +3653,69 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planCurrent => 'Mevcut plan';
+
+  @override
+  String get groupPasswordTitle => 'Bu grubun şifresi var';
+
+  @override
+  String get groupPasswordBody => 'Grubu açmak için şifreyi girin. Bu cihaz onu hatırlar.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Grubu açıp şifresini girin.';
+
+  @override
+  String get groupPassword => 'Grup şifresi';
+
+  @override
+  String get groupUnlock => 'Grubu aç';
+
+  @override
+  String get groupPasswordWrong => 'Bu şifre doğru değil.';
+
+  @override
+  String get groupPasswordOnHelp => 'Açık. Bağlantı tek başına artık grubu açmıyor.';
+
+  @override
+  String get groupPasswordOffHelp => 'Kapalı. Bağlantı grubu açmadan önce şifre sorulsun.';
+
+  @override
+  String get groupPasswordSet => 'Şifre belirle';
+
+  @override
+  String get groupPasswordChange => 'Şifreyi değiştir';
+
+  @override
+  String get groupPasswordNew => 'Yeni şifre';
+
+  @override
+  String get groupPasswordRemove => 'Kaldır';
+
+  @override
+  String get groupPasswordHelp =>
+      'Grubu bağlantısından açan herkes, gruptakiler de dahil, her cihazda bir kez girer. Şifreyi bağlantıdan ayrı paylaşın.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Hesaplarında oturum açmış üyelerin buna ihtiyacı yok.';
+
+  @override
+  String get groupPasswordSetDone => 'Şifre kaydedildi';
+
+  @override
+  String get groupPasswordRemoved => 'Şifre kaldırıldı';
+
+  @override
+  String get errorPasswordRequired => 'Bu grup şifresini istiyor.';
+
+  @override
+  String get errorNoPassword => 'Bu grubun artık şifresi yok.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who grup şifresini belirledi';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who grup şifresini kaldırdı';
+  }
 }

@@ -24,6 +24,14 @@ info:
     link mode. Without a session they answer 401 `sign_in_required`; for a
     signed-in non-member, 403 `not_a_member` (see /g/{token}/join).
 
+    Group passwords: a group with a password (`hasPassword`) opens for
+    someone who is not a member of it, link or no link, only with the key
+    that /g/{token}/unlock trades the password for, sent as
+    `X-Balnana-Group-Key` (or, for /g/{token}/events read by a browser's
+    EventSource, as the `key` query parameter). Without a valid key such
+    requests answer 403 `password_required`. Accounts that are members need
+    no key. A new password makes every older key invalid.
+
     Billing: on a server that charges, adding past a plan's limit answers
     402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
     already stays as it is, even past a limit. Ko-fi posts
@@ -1215,8 +1223,9 @@ paths:
       description: >-
         Replaces what the device was told about before. A signed-in device is
         also told about the account's groups, until the session ends. Groups
-        the link alone does not open, unknown tokens and members not in the
-        group are left out without an error. Only when `push` is on in
+        the link alone does not open, groups with a password given without
+        their current key, unknown tokens and members not in the group are
+        left out without an error. Only when `push` is on in
         /server-info; otherwise `push_off`. A subscription the server cannot
         send to (keys that are not sound, an endpoint that is not an https URL
         on a public address) is `invalid_subscription`. A client registering
@@ -1309,6 +1318,70 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Group"
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/password:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    put:
+      operationId: setGroupPassword
+      summary: Set or change the group's password
+      description: >-
+        Accounts mode: the owner only (403 `owner_only`), or any account
+        member when the group has no owner left. Link mode: anyone the group
+        is open to. Every key handed out before stops working; the answer
+        carries the new one, so this device stays in.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupPasswordInput"
+      responses:
+        "200":
+          description: The key that opens the group now
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupKey"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: removeGroupPassword
+      summary: Remove the group's password, so the link alone opens it again
+      description: Who may is as for setting it.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Removed
+        default:
+          $ref: "#/components/responses/Error"
+  /g/{token}/unlock:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    post:
+      operationId: unlockGroup
+      summary: Trade the group's password for the key that opens it
+      description: >-
+        A wrong password answers 403 `wrong_password`; guesses are rate
+        limited per group as sign-in passwords are per account. A group
+        without a password answers 409 `no_password`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupPasswordInput"
+      responses:
+        "200":
+          description: The key to send as `X-Balnana-Group-Key`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupKey"
         default:
           $ref: "#/components/responses/Error"
   /g/{token}/join:
@@ -2036,8 +2109,17 @@ paths:
         whenever something in the group changes (no data: reload what is
         shown), comments to keep the connection alive, and a `gone` event
         before closing when the request may no longer see the group (link
-        reset, removed from it, signed out). Events missed while not connected
-        are not replayed, so reload after connecting.
+        reset, removed from it, signed out, a new password). Events missed
+        while not connected are not replayed, so reload after connecting.
+      parameters:
+        - name: key
+          in: query
+          required: false
+          description: >-
+            The group's key, for a browser's EventSource, which cannot send
+            `X-Balnana-Group-Key`.
+          schema:
+            type: string
       responses:
         "200":
           description: The event stream
@@ -2317,7 +2399,7 @@ components:
           $ref: "#/components/schemas/GroupFeaturesInput"
     Group:
       type: object
-      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess, features]
+      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess, hasPassword, features]
       properties:
         token:
           type: string
@@ -2350,6 +2432,9 @@ components:
         linkAccess:
           type: boolean
           description: Whether the link alone opens the group (always in link mode).
+        hasPassword:
+          type: boolean
+          description: Someone who is not a member needs the group's password to open it.
         myMemberId:
           type: string
           description: 'Accounts mode: the signed-in account''s member, if any.'
@@ -2463,6 +2548,9 @@ components:
               memberId:
                 type: string
                 description: Who this device is in the group, for `balance`.
+              key:
+                type: string
+                description: The group's key from /g/{token}/unlock, for a group with a password.
     GroupSummaryList:
       type: object
       required: [groups, missing, locked]
@@ -2975,6 +3063,7 @@ components:
           type: string
           description: >-
             group.created, group.imported, group.updated, group.link_reset,
+            group.password_set, group.password_removed,
             member.added, member.updated, member.removed, member.joined,
             category.added, category.updated, category.deleted,
             expense.created, expense.updated, expense.deleted,
@@ -3309,6 +3398,21 @@ components:
           type: integer
         claimed:
           type: boolean
+    GroupPasswordInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 200
+    GroupKey:
+      type: object
+      required: [key]
+      properties:
+        key:
+          type: string
+          description: Send as `X-Balnana-Group-Key` to open the group.
     JoinInput:
       type: object
       properties:
@@ -3996,6 +4100,9 @@ components:
                 type: string
               memberId:
                 type: string
+              key:
+                type: string
+                description: The group's key from /g/{token}/unlock, for a group with a password.
     OAuthProvider:
       type: object
       required: [id, name]

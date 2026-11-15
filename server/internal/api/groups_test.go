@@ -525,6 +525,7 @@ func TestMembersSummariesAndLinkReset(t *testing.T) {
 
 	var sums GroupSummaryList
 	c.must(200, "POST", "/groups/summaries", GroupSummaryRequest{Groups: []struct {
+		Key      *string `json:"key,omitempty"`
 		MemberId *string `json:"memberId,omitempty"`
 		Token    string  `json:"token"`
 	}{{Token: g.Token, MemberId: &ben}, {Token: "AAAAAAAAAAAAAAAAAAAAAA"}}}, &sums)
@@ -661,11 +662,13 @@ func TestDepartedMembers(t *testing.T) {
 func TestSummariesMissesCountOnce(t *testing.T) {
 	c := newClient(t)
 	var groups []struct {
+		Key      *string `json:"key,omitempty"`
 		MemberId *string `json:"memberId,omitempty"`
 		Token    string  `json:"token"`
 	}
 	for i := range 10 {
 		groups = append(groups, struct {
+			Key      *string `json:"key,omitempty"`
 			MemberId *string `json:"memberId,omitempty"`
 			Token    string  `json:"token"`
 		}{Token: fmt.Sprintf("AAAAAAAAAAAAAAAAAAAA%02d", i)})

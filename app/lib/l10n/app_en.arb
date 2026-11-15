@@ -5374,5 +5374,97 @@
   "planCurrent": "Current plan",
   "@planCurrent": {
     "description": "Label on the plan the account currently has."
+  },
+  "groupPasswordTitle": "This group has a password",
+  "@groupPasswordTitle": {
+    "description": "Heading over the prompt for a group's password, and in the group switcher for a group on this device that needs it."
+  },
+  "groupPasswordBody": "Enter it to open the group. This device will remember it.",
+  "@groupPasswordBody": {
+    "description": "Explanation under groupPasswordTitle on the prompt for a group's password."
+  },
+  "groupPasswordLockedHelp": "Open it and enter its password.",
+  "@groupPasswordLockedHelp": {
+    "description": "Subtitle in the group switcher for a group on this device that needs its password; tapping opens the prompt."
+  },
+  "groupPassword": "Group password",
+  "@groupPassword": {
+    "description": "Label of the field for a group's password, and title of the group settings row for it."
+  },
+  "groupUnlock": "Open group",
+  "@groupUnlock": {
+    "description": "Button that sends the entered group password and opens the group."
+  },
+  "groupPasswordWrong": "That password isn't right.",
+  "@groupPasswordWrong": {
+    "description": "Error under the group password field when the password entered is wrong."
+  },
+  "groupPasswordOnHelp": "On. The link alone no longer opens the group.",
+  "@groupPasswordOnHelp": {
+    "description": "Subtitle of the group password settings row when the group has a password."
+  },
+  "groupPasswordOffHelp": "Off. Ask for a password before the link opens the group.",
+  "@groupPasswordOffHelp": {
+    "description": "Subtitle of the group password settings row when the group has none."
+  },
+  "groupPasswordSet": "Set a password",
+  "@groupPasswordSet": {
+    "description": "Title of the dialog that sets a password for a group that has none."
+  },
+  "groupPasswordChange": "Change the password",
+  "@groupPasswordChange": {
+    "description": "Title of the dialog that changes or removes a group's password."
+  },
+  "groupPasswordNew": "New password",
+  "@groupPasswordNew": {
+    "description": "Label of the field for a group's new password when changing it."
+  },
+  "groupPasswordRemove": "Remove",
+  "@groupPasswordRemove": {
+    "description": "Button in the group password dialog that removes the password."
+  },
+  "groupPasswordHelp": "Anyone opening the group from its link enters it once on each device, people already in the group too. Share it separately from the link.",
+  "@groupPasswordHelp": {
+    "description": "Explanation in the group password dialog of who has to enter it."
+  },
+  "groupPasswordMembersHelp": "Members signed in to their accounts don't need it.",
+  "@groupPasswordMembersHelp": {
+    "description": "Shown after groupPasswordHelp on servers with accounts."
+  },
+  "groupPasswordSetDone": "Password saved",
+  "@groupPasswordSetDone": {
+    "description": "Snackbar after setting or changing a group's password."
+  },
+  "groupPasswordRemoved": "Password removed",
+  "@groupPasswordRemoved": {
+    "description": "Snackbar after removing a group's password."
+  },
+  "errorPasswordRequired": "This group needs its password.",
+  "@errorPasswordRequired": {
+    "description": "Message for error password required in API error feedback: the group has a password this device has not entered."
+  },
+  "errorNoPassword": "This group has no password any more.",
+  "@errorNoPassword": {
+    "description": "Message for error no password in API error feedback: entering a password for a group that no longer has one."
+  },
+  "activityGroupPasswordSet": "{who} set the group password",
+  "@activityGroupPasswordSet": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity group password set in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "activityGroupPasswordRemoved": "{who} removed the group password",
+  "@activityGroupPasswordRemoved": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity group password removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   }
 }

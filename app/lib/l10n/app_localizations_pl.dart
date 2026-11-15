@@ -3801,4 +3801,69 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planCurrent => 'Obecny plan';
+
+  @override
+  String get groupPasswordTitle => 'Ta grupa ma hasło';
+
+  @override
+  String get groupPasswordBody => 'Wpisz je, aby otworzyć grupę. To urządzenie je zapamięta.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Otwórz ją i wpisz hasło.';
+
+  @override
+  String get groupPassword => 'Hasło grupy';
+
+  @override
+  String get groupUnlock => 'Otwórz grupę';
+
+  @override
+  String get groupPasswordWrong => 'To hasło jest nieprawidłowe.';
+
+  @override
+  String get groupPasswordOnHelp => 'Włączone. Sam link nie otwiera już grupy.';
+
+  @override
+  String get groupPasswordOffHelp => 'Wyłączone. Pytaj o hasło, zanim link otworzy grupę.';
+
+  @override
+  String get groupPasswordSet => 'Ustaw hasło';
+
+  @override
+  String get groupPasswordChange => 'Zmień hasło';
+
+  @override
+  String get groupPasswordNew => 'Nowe hasło';
+
+  @override
+  String get groupPasswordRemove => 'Usuń';
+
+  @override
+  String get groupPasswordHelp =>
+      'Każdy, kto otwiera grupę z linku, wpisuje je raz na każdym urządzeniu, także osoby już w grupie. Udostępnij je osobno od linku.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Członkowie zalogowani na swoje konta go nie potrzebują.';
+
+  @override
+  String get groupPasswordSetDone => 'Hasło zapisane';
+
+  @override
+  String get groupPasswordRemoved => 'Hasło usunięte';
+
+  @override
+  String get errorPasswordRequired => 'Ta grupa wymaga hasła.';
+
+  @override
+  String get errorNoPassword => 'Ta grupa nie ma już hasła.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who ustawił(a) hasło grupy';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who usunął(-ęła) hasło grupy';
+  }
 }

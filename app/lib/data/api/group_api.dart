@@ -80,6 +80,28 @@ class GroupApi {
   /// owner may.
   Future<void> delete() => _transport.send(() => _dio.delete<Object?>(_base, options: _as), (_) {});
 
+  /// Gives the key that opens the group for [password]; see "Group
+  /// passwords" in api/openapi.yaml.
+  Future<String> unlock(String password) => _transport.send(
+    () => _dio.post<Object?>('$_base/unlock', data: {'password': password}),
+    _groupKey,
+  );
+
+  /// Sets or changes the group's password, which shuts out everyone not a
+  /// member until they enter it. Gives this device's new key.
+  Future<String> setPassword(String password) => _transport.send(
+    () => _dio.put<Object?>('$_base/password', data: {'password': password}, options: _as),
+    _groupKey,
+  );
+
+  Future<void> removePassword() =>
+      _transport.send(() => _dio.delete<Object?>('$_base/password', options: _as), (_) {});
+
+  static String _groupKey(Object? data) => switch (data) {
+    {'key': final String key} => key,
+    _ => throw const FormatException('expected a key'),
+  };
+
   /// Issues a new link; the old one stops working.
   Future<Group> resetLink() =>
       _transport.send(() => _dio.post<Object?>('$_base/reset-link', options: _as), Group.fromJson);

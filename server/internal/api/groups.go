@@ -145,7 +145,7 @@ func (s *Server) GetGroupSummaries(ctx context.Context, req GetGroupSummariesReq
 	out := GroupSummaryList{Missing: []string{}, Locked: []string{}}
 	var groups []*group
 	for _, item := range req.Body.Groups {
-		g, err := s.groupByToken(lookup, s.db, item.Token, false)
+		g, err := s.groupByToken(withGroupKey(lookup, item.Key), s.db, item.Token, false)
 		var ae *apiError
 		if errors.As(err, &ae) && ae.status == http.StatusNotFound {
 			out.Missing = append(out.Missing, item.Token)
@@ -454,25 +454,8 @@ func (s *Server) DeleteGroup(ctx context.Context, req DeleteGroupRequestObject) 
 		if err != nil {
 			return err
 		}
-		if s.conf().AuthMode == config.AuthModeAccounts && !g.owner {
-			// A group whose owner has gone may be deleted by any member; one
-			// that no account is in any more, by anyone its link opens it for.
-			var owned, claimed bool
-			err := tx.QueryRow(ctx, `
-				select exists (select 1 from members
-				               where group_id = $1 and is_owner and user_id is not null and left_at is null),
-				       exists (select 1 from members
-				               where group_id = $1 and user_id is not null and left_at is null)`,
-				g.id).Scan(&owned, &claimed)
-			if err != nil {
-				return err
-			}
-			if g.me == nil && (!g.open || claimed) {
-				return forbidden("not_a_member")
-			}
-			if owned {
-				return forbidden("owner_only")
-			}
+		if err := s.mayManage(ctx, tx, g); err != nil {
+			return err
 		}
 		// Archived: gone for everyone, but kept for a while (see
 		// archiveKeep) so a mistake, or a link holder's mischief, can be

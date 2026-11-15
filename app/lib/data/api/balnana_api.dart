@@ -326,15 +326,18 @@ class BalnanaApi {
 
   /// Summaries of the groups this device knows. [missing] holds the tokens
   /// the server no longer recognizes, [locked] those of groups it has that
-  /// this device may not open as it is, such as without signing in.
+  /// this device may not open as it is, such as without signing in or
+  /// without the key in [keys] for a group with a password.
   Future<({List<GroupSummary> groups, List<String> missing, List<String> locked})> summaries(
-    Map<String, String?> memberByToken,
-  ) => _transport.send(
+    Map<String, String?> memberByToken, {
+    Map<String, String> keys = const {},
+  }) => _transport.send(
     () => _dio.post<Object?>(
       '/groups/summaries',
       data: {
         'groups': [
-          for (final MapEntry(:key, :value) in memberByToken.entries) {'token': key, 'memberId': ?value},
+          for (final MapEntry(:key, :value) in memberByToken.entries)
+            {'token': key, 'memberId': ?value, 'key': ?keys[key]},
         ],
       },
     ),
@@ -361,8 +364,9 @@ class BalnanaApi {
   Future<void> registerPushDevice(
     String device,
     PushSubscription sub,
-    List<({String token, String memberId})> groups,
-  ) => _transport.send(
+    List<({String token, String memberId})> groups, {
+    Map<String, String> keys = const {},
+  }) => _transport.send(
     () => _dio.put<Object?>(
       '/push/devices/${Uri.encodeComponent(device)}',
       data: {
@@ -370,7 +374,7 @@ class BalnanaApi {
         'p256dh': sub.p256dh,
         'auth': sub.auth,
         'groups': [
-          for (final g in groups) {'token': g.token, 'memberId': g.memberId},
+          for (final g in groups) {'token': g.token, 'memberId': g.memberId, 'key': ?keys[g.token]},
         ],
       },
     ),

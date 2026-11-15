@@ -57,6 +57,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 
 	var h http.Handler = mux
 	h = s.sessions(h)
+	h = groupKeys(h)
 	h = checkBodies(h)
 	h = rateLimit(s.conf().RateLimit, s.conf().ProxyHeader, h)
 	h = cors(s.conf().CORSOrigins, h)
@@ -172,7 +173,7 @@ func cors(origins []string, next http.Handler) http.Handler {
 		h.Set("Access-Control-Expose-Headers", "Retry-After, Content-Disposition")
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
-			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key, X-Balnana-Member, X-Balnana-Admin")
+			h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key, X-Balnana-Member, X-Balnana-Admin, X-Balnana-Group-Key")
 			h.Set("Access-Control-Max-Age", "600")
 			w.WriteHeader(http.StatusNoContent)
 			return

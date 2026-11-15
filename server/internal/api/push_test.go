@@ -96,9 +96,10 @@ func deviceID(phone string) string { return phone + "-0123456789abcdef" }
 func follow(token, member string) PushDeviceInput {
 	in := PushDeviceInput{}
 	in.Groups = append(in.Groups, struct {
-		MemberId string `json:"memberId"`
-		Token    string `json:"token"`
-	}{member, token})
+		Key      *string `json:"key,omitempty"`
+		MemberId string  `json:"memberId"`
+		Token    string  `json:"token"`
+	}{MemberId: member, Token: token})
 	return in
 }
 

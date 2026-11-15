@@ -9,7 +9,8 @@ import (
 )
 
 // Joining needs only the group's token and a signed-in account: the link is
-// the invitation, whether or not the group has link access.
+// the invitation, whether or not the group has link access. A group with a
+// password needs its key as well.
 
 func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) (GetJoinInfoResponseObject, error) {
 	u, err := s.requireUser(ctx)
@@ -18,6 +19,9 @@ func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) 
 	}
 	g, err := s.findGroup(ctx, s.db, req.Token, false)
 	if err != nil {
+		return nil, err
+	}
+	if err := checkGroupKey(ctx, g); err != nil {
 		return nil, err
 	}
 	members, err := groupMembers(ctx, s.db, g.id)
@@ -66,6 +70,9 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 		}
 		g, err := s.findGroup(ctx, tx, req.Token, true)
 		if err != nil {
+			return err
+		}
+		if err := checkGroupKey(ctx, g); err != nil {
 			return err
 		}
 		if g.me == nil {

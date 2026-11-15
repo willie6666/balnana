@@ -3494,6 +3494,70 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planCurrent => '当前方案';
+
+  @override
+  String get groupPasswordTitle => '这个群组设有密码';
+
+  @override
+  String get groupPasswordBody => '输入密码即可打开群组，这台设备会记住它。';
+
+  @override
+  String get groupPasswordLockedHelp => '打开群组并输入密码。';
+
+  @override
+  String get groupPassword => '群组密码';
+
+  @override
+  String get groupUnlock => '打开群组';
+
+  @override
+  String get groupPasswordWrong => '密码不正确。';
+
+  @override
+  String get groupPasswordOnHelp => '已开启。仅凭链接已无法打开群组。';
+
+  @override
+  String get groupPasswordOffHelp => '已关闭。通过链接打开群组前先要求输入密码。';
+
+  @override
+  String get groupPasswordSet => '设置密码';
+
+  @override
+  String get groupPasswordChange => '更改密码';
+
+  @override
+  String get groupPasswordNew => '新密码';
+
+  @override
+  String get groupPasswordRemove => '移除';
+
+  @override
+  String get groupPasswordHelp => '通过链接打开群组的人，每台设备都需输入一次，已在群组中的人也一样。请与链接分开发送。';
+
+  @override
+  String get groupPasswordMembersHelp => '已登录自己账号的成员不需要密码。';
+
+  @override
+  String get groupPasswordSetDone => '密码已保存';
+
+  @override
+  String get groupPasswordRemoved => '密码已移除';
+
+  @override
+  String get errorPasswordRequired => '这个群组需要密码。';
+
+  @override
+  String get errorNoPassword => '这个群组已没有密码。';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who 设置了群组密码';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who 移除了群组密码';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6985,4 +7049,68 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get planCurrent => '目前方案';
+
+  @override
+  String get groupPasswordTitle => '這個群組設有密碼';
+
+  @override
+  String get groupPasswordBody => '輸入密碼即可開啟群組，這台裝置會記住它。';
+
+  @override
+  String get groupPasswordLockedHelp => '開啟群組並輸入密碼。';
+
+  @override
+  String get groupPassword => '群組密碼';
+
+  @override
+  String get groupUnlock => '開啟群組';
+
+  @override
+  String get groupPasswordWrong => '密碼不正確。';
+
+  @override
+  String get groupPasswordOnHelp => '已開啟。只靠連結已無法進入群組。';
+
+  @override
+  String get groupPasswordOffHelp => '已關閉。透過連結開啟群組前先要求輸入密碼。';
+
+  @override
+  String get groupPasswordSet => '設定密碼';
+
+  @override
+  String get groupPasswordChange => '變更密碼';
+
+  @override
+  String get groupPasswordNew => '新密碼';
+
+  @override
+  String get groupPasswordRemove => '移除';
+
+  @override
+  String get groupPasswordHelp => '從連結開啟群組的人，每台裝置都要輸入一次，已在群組中的人也一樣。請和連結分開傳送。';
+
+  @override
+  String get groupPasswordMembersHelp => '已登入自己帳號的成員不需要密碼。';
+
+  @override
+  String get groupPasswordSetDone => '密碼已儲存';
+
+  @override
+  String get groupPasswordRemoved => '密碼已移除';
+
+  @override
+  String get errorPasswordRequired => '這個群組需要密碼。';
+
+  @override
+  String get errorNoPassword => '這個群組已經沒有密碼了。';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who 設定了群組密碼';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who 移除了群組密碼';
+  }
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors.dart';
+import '../../core/group_keys.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../data/api.dart';
@@ -25,6 +26,7 @@ import '../../ui/widgets/symbol_field.dart';
 import '../settings/plan_page.dart';
 import 'feature_switches.dart';
 import 'group_page.dart';
+import 'group_password.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
 import 'payment_details.dart';
@@ -122,6 +124,7 @@ class _Settings extends ConsumerWidget {
     try {
       final updated = await groupApiOf(ref, group.token).resetLink();
       container.read(knownGroupsProvider.notifier).replaceToken(group.token, updated.token);
+      container.read(groupKeysProvider.notifier).replaceToken(group.token, updated.token);
       container.invalidate(summariesProvider);
       container.invalidate(activityFeedProvider);
       if (!context.mounted) return;
@@ -368,6 +371,13 @@ class _Settings extends ConsumerWidget {
                 subtitle: l10n.linkAccessHelp,
                 value: group.linkAccess,
                 onChanged: (open) => _setLinkAccess(context, ref, open),
+              ),
+            if (canDelete)
+              GroupedTile(
+                icon: Icons.password,
+                title: l10n.groupPassword,
+                subtitle: group.hasPassword ? l10n.groupPasswordOnHelp : l10n.groupPasswordOffHelp,
+                onTap: () => showGroupPasswordDialog(context, group, accounts: accounts),
               ),
             if (member)
               GroupedTile(

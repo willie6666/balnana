@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable, ProviderOrFamily;
 
+import '../core/group_keys.dart';
 import '../core/offline_cache.dart';
 import '../core/server.dart';
 import '../core/session.dart';
@@ -235,10 +236,11 @@ final summariesProvider = FutureProvider<Summaries>((ref) async {
   }
   final known = ref.watch(knownGroupsProvider);
   if (known.isEmpty) return _mark(who, Summaries(groups: [], missing: []));
+  final keys = ref.watch(groupKeysProvider);
   final groups = <GroupSummary>[], missing = <String>[], locked = <String>[];
   for (var i = 0; i < known.length; i += summariesBatch) {
     final batch = known.skip(i).take(summariesBatch);
-    final part = await api.summaries({for (final g in batch) g.token: g.memberId});
+    final part = await api.summaries({for (final g in batch) g.token: g.memberId}, keys: keys);
     groups.addAll(part.groups);
     missing.addAll(part.missing);
     locked.addAll(part.locked);
@@ -409,7 +411,7 @@ final activityFeedProvider = FutureProvider<ActivityFeed>((ref) async {
         final page = await api.group(g.token).activity(limit: 30);
         return [for (final a in page.items) (activity: a, group: group)];
       } on ApiException catch (e) {
-        if (e.isNotFound || e.code == 'not_a_member') {
+        if (e.isNotFound || e.code == 'not_a_member' || e.code == 'password_required') {
           gone = true;
           return <FeedItem>[];
         }

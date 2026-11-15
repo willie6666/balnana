@@ -152,6 +152,8 @@ String activitySentence(BuildContext context, FeedItem item) {
     'group.imported' => l10n.activityGroupImported(who, a.number('count') ?? 0, a.text('from') ?? ''),
     'group.updated' => l10n.activityGroupUpdated(who),
     'group.link_reset' => l10n.activityLinkReset(who),
+    'group.password_set' => l10n.activityGroupPasswordSet(who),
+    'group.password_removed' => l10n.activityGroupPasswordRemoved(who),
     'member.added' => l10n.activityMemberAdded(who, name),
     'member.updated' => l10n.activityMemberRenamed(who, a.text('oldName') ?? name, name),
     'member.removed' => l10n.activityMemberRemoved(who, name),

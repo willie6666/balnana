@@ -144,7 +144,7 @@ type AccountDelete struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.imported, group.updated, group.link_reset, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
+	// Action group.created, group.imported, group.updated, group.link_reset, group.password_set, group.password_removed, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -484,6 +484,9 @@ type Group struct {
 	// Features What the group offers when adding expenses. One that is off is refused for new expenses (409 `feature_off`, with the `feature`); what is there already stays, and an edit may keep it. With `recurring` off no schedule adds anything, and switching it on again skips what came due meanwhile.
 	Features GroupFeatures `json:"features"`
 
+	// HasPassword Someone who is not a member needs the group's password to open it.
+	HasPassword bool `json:"hasPassword"`
+
 	// LinkAccess Whether the link alone opens the group (always in link mode).
 	LinkAccess bool `json:"linkAccess"`
 
@@ -541,6 +544,17 @@ type GroupFeaturesInput struct {
 	Places          *bool `json:"places,omitempty"`
 	Receipts        *bool `json:"receipts,omitempty"`
 	Recurring       *bool `json:"recurring,omitempty"`
+}
+
+// GroupKey defines model for GroupKey.
+type GroupKey struct {
+	// Key Send as `X-Balnana-Group-Key` to open the group.
+	Key string `json:"key"`
+}
+
+// GroupPasswordInput defines model for GroupPasswordInput.
+type GroupPasswordInput struct {
+	Password string `json:"password"`
 }
 
 // GroupPlan defines model for GroupPlan.
@@ -614,6 +628,9 @@ type GroupSummaryList struct {
 // GroupSummaryRequest defines model for GroupSummaryRequest.
 type GroupSummaryRequest struct {
 	Groups []struct {
+		// Key The group's key from /g/{token}/unlock, for a group with a password.
+		Key *string `json:"key,omitempty"`
+
 		// MemberId Who this device is in the group, for `balance`.
 		MemberId *string `json:"memberId,omitempty"`
 		Token    string  `json:"token"`
@@ -1163,8 +1180,10 @@ type PushDeviceInput struct {
 
 	// Groups The link groups this device knows, and who it is in each.
 	Groups []struct {
-		MemberId string `json:"memberId"`
-		Token    string `json:"token"`
+		// Key The group's key from /g/{token}/unlock, for a group with a password.
+		Key      *string `json:"key,omitempty"`
+		MemberId string  `json:"memberId"`
+		Token    string  `json:"token"`
 	} `json:"groups"`
 
 	// P256dh The device's P-256 public key, uncompressed, in base64url.
@@ -1651,6 +1670,12 @@ type UpdateCategoryParams struct {
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
 
+// GroupEventsParams defines parameters for GroupEvents.
+type GroupEventsParams struct {
+	// Key The group's key, for a browser's EventSource, which cannot send `X-Balnana-Group-Key`.
+	Key *string `form:"key,omitempty" json:"key,omitempty"`
+}
+
 // ListExpensesParams defines parameters for ListExpenses.
 type ListExpensesParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -1744,6 +1769,18 @@ type UpdateMemberParams struct {
 
 // RemindMemberParams defines parameters for RemindMember.
 type RemindMemberParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// RemoveGroupPasswordParams defines parameters for RemoveGroupPassword.
+type RemoveGroupPasswordParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// SetGroupPasswordParams defines parameters for SetGroupPassword.
+type SetGroupPasswordParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
 }
@@ -1883,6 +1920,9 @@ type AddMemberJSONRequestBody = MemberInput
 // UpdateMemberJSONRequestBody defines body for UpdateMember for application/json ContentType.
 type UpdateMemberJSONRequestBody = MemberInput
 
+// SetGroupPasswordJSONRequestBody defines body for SetGroupPassword for application/json ContentType.
+type SetGroupPasswordJSONRequestBody = GroupPasswordInput
+
 // CreatePaymentJSONRequestBody defines body for CreatePayment for application/json ContentType.
 type CreatePaymentJSONRequestBody = PaymentInput
 
@@ -1894,6 +1934,9 @@ type PauseRecurringExpenseJSONRequestBody = RecurringPause
 
 // UpdateRecurringExpenseJSONRequestBody defines body for UpdateRecurringExpense for application/json ContentType.
 type UpdateRecurringExpenseJSONRequestBody = RecurringExpenseInput
+
+// UnlockGroupJSONRequestBody defines body for UnlockGroup for application/json ContentType.
+type UnlockGroupJSONRequestBody = GroupPasswordInput
 
 // CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
 type CreateGroupJSONRequestBody = GroupCreate
@@ -2064,7 +2107,7 @@ type ServerInterface interface {
 	UpdateCategory(w http.ResponseWriter, r *http.Request, token Token, categoryId CategoryId, params UpdateCategoryParams)
 	// Live notices that the group changed (server-sent events)
 	// (GET /g/{token}/events)
-	GroupEvents(w http.ResponseWriter, r *http.Request, token Token)
+	GroupEvents(w http.ResponseWriter, r *http.Request, token Token, params GroupEventsParams)
 	// Expenses and payments, newest first
 	// (GET /g/{token}/expenses)
 	ListExpenses(w http.ResponseWriter, r *http.Request, token Token, params ListExpensesParams)
@@ -2116,6 +2159,12 @@ type ServerInterface interface {
 	// Remind a member of what they owe you
 	// (POST /g/{token}/members/{memberId}/remind)
 	RemindMember(w http.ResponseWriter, r *http.Request, token Token, memberId MemberId, params RemindMemberParams)
+	// Remove the group's password, so the link alone opens it again
+	// (DELETE /g/{token}/password)
+	RemoveGroupPassword(w http.ResponseWriter, r *http.Request, token Token, params RemoveGroupPasswordParams)
+	// Set or change the group's password
+	// (PUT /g/{token}/password)
+	SetGroupPassword(w http.ResponseWriter, r *http.Request, token Token, params SetGroupPasswordParams)
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams)
@@ -2152,6 +2201,9 @@ type ServerInterface interface {
 	// What the group spent, by category, member and month
 	// (GET /g/{token}/stats)
 	GetStats(w http.ResponseWriter, r *http.Request, token Token, params GetStatsParams)
+	// Trade the group's password for the key that opens it
+	// (POST /g/{token}/unlock)
+	UnlockGroup(w http.ResponseWriter, r *http.Request, token Token)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(w http.ResponseWriter, r *http.Request)
@@ -3943,8 +3995,19 @@ func (siw *ServerInterfaceWrapper) GroupEvents(w http.ResponseWriter, r *http.Re
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GroupEventsParams
+
+	// ------------- Optional query parameter "key" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "key", r.URL.Query(), &params.Key)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "key", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GroupEvents(w, r, token)
+		siw.Handler.GroupEvents(w, r, token, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4950,6 +5013,120 @@ func (siw *ServerInterfaceWrapper) RemindMember(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// RemoveGroupPassword operation middleware
+func (siw *ServerInterfaceWrapper) RemoveGroupPassword(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RemoveGroupPasswordParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveGroupPassword(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetGroupPassword operation middleware
+func (siw *ServerInterfaceWrapper) SetGroupPassword(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SetGroupPasswordParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetGroupPassword(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreatePayment operation middleware
 func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.Request) {
 
@@ -5590,6 +5767,39 @@ func (siw *ServerInterfaceWrapper) GetStats(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetStats(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlockGroup operation middleware
+func (siw *ServerInterfaceWrapper) UnlockGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlockGroup(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6347,6 +6557,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.RemoveMember)
 	m.HandleFunc("PATCH "+options.BaseURL+"/g/{token}/members/{memberId}", wrapper.UpdateMember)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members/{memberId}/remind", wrapper.RemindMember)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/password", wrapper.RemoveGroupPassword)
+	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/password", wrapper.SetGroupPassword)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/plan", wrapper.GetGroupPlan)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/recurring", wrapper.ListRecurringExpenses)
@@ -6359,6 +6571,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/sponsor", wrapper.UnsponsorGroup)
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/sponsor", wrapper.SponsorGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/stats", wrapper.GetStats)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/unlock", wrapper.UnlockGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/import", wrapper.ImportGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
@@ -7515,7 +7728,8 @@ func (response UpdateCategorydefaultJSONResponse) VisitUpdateCategoryResponse(w 
 }
 
 type GroupEventsRequestObject struct {
-	Token Token `json:"token"`
+	Token  Token `json:"token"`
+	Params GroupEventsParams
 }
 
 type GroupEventsResponseObject interface {
@@ -8098,6 +8312,66 @@ func (response RemindMemberdefaultJSONResponse) VisitRemindMemberResponse(w http
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type RemoveGroupPasswordRequestObject struct {
+	Token  Token `json:"token"`
+	Params RemoveGroupPasswordParams
+}
+
+type RemoveGroupPasswordResponseObject interface {
+	VisitRemoveGroupPasswordResponse(w http.ResponseWriter) error
+}
+
+type RemoveGroupPassword204Response struct {
+}
+
+func (response RemoveGroupPassword204Response) VisitRemoveGroupPasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveGroupPassworddefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response RemoveGroupPassworddefaultJSONResponse) VisitRemoveGroupPasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type SetGroupPasswordRequestObject struct {
+	Token  Token `json:"token"`
+	Params SetGroupPasswordParams
+	Body   *SetGroupPasswordJSONRequestBody
+}
+
+type SetGroupPasswordResponseObject interface {
+	VisitSetGroupPasswordResponse(w http.ResponseWriter) error
+}
+
+type SetGroupPassword200JSONResponse GroupKey
+
+func (response SetGroupPassword200JSONResponse) VisitSetGroupPasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetGroupPassworddefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response SetGroupPassworddefaultJSONResponse) VisitSetGroupPasswordResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type CreatePaymentRequestObject struct {
 	Token  Token `json:"token"`
 	Params CreatePaymentParams
@@ -8454,6 +8728,36 @@ type GetStatsdefaultJSONResponse struct {
 }
 
 func (response GetStatsdefaultJSONResponse) VisitGetStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UnlockGroupRequestObject struct {
+	Token Token `json:"token"`
+	Body  *UnlockGroupJSONRequestBody
+}
+
+type UnlockGroupResponseObject interface {
+	VisitUnlockGroupResponse(w http.ResponseWriter) error
+}
+
+type UnlockGroup200JSONResponse GroupKey
+
+func (response UnlockGroup200JSONResponse) VisitUnlockGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnlockGroupdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UnlockGroupdefaultJSONResponse) VisitUnlockGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -9314,6 +9618,12 @@ type StrictServerInterface interface {
 	// Remind a member of what they owe you
 	// (POST /g/{token}/members/{memberId}/remind)
 	RemindMember(ctx context.Context, request RemindMemberRequestObject) (RemindMemberResponseObject, error)
+	// Remove the group's password, so the link alone opens it again
+	// (DELETE /g/{token}/password)
+	RemoveGroupPassword(ctx context.Context, request RemoveGroupPasswordRequestObject) (RemoveGroupPasswordResponseObject, error)
+	// Set or change the group's password
+	// (PUT /g/{token}/password)
+	SetGroupPassword(ctx context.Context, request SetGroupPasswordRequestObject) (SetGroupPasswordResponseObject, error)
 	// Record that one member paid another
 	// (POST /g/{token}/payments)
 	CreatePayment(ctx context.Context, request CreatePaymentRequestObject) (CreatePaymentResponseObject, error)
@@ -9350,6 +9660,9 @@ type StrictServerInterface interface {
 	// What the group spent, by category, member and month
 	// (GET /g/{token}/stats)
 	GetStats(ctx context.Context, request GetStatsRequestObject) (GetStatsResponseObject, error)
+	// Trade the group's password for the key that opens it
+	// (POST /g/{token}/unlock)
+	UnlockGroup(ctx context.Context, request UnlockGroupRequestObject) (UnlockGroupResponseObject, error)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
@@ -10575,10 +10888,11 @@ func (sh *strictHandler) UpdateCategory(w http.ResponseWriter, r *http.Request, 
 }
 
 // GroupEvents operation middleware
-func (sh *strictHandler) GroupEvents(w http.ResponseWriter, r *http.Request, token Token) {
+func (sh *strictHandler) GroupEvents(w http.ResponseWriter, r *http.Request, token Token, params GroupEventsParams) {
 	var request GroupEventsRequestObject
 
 	request.Token = token
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.GroupEvents(ctx, request.(GroupEventsRequestObject))
@@ -11109,6 +11423,67 @@ func (sh *strictHandler) RemindMember(w http.ResponseWriter, r *http.Request, to
 	}
 }
 
+// RemoveGroupPassword operation middleware
+func (sh *strictHandler) RemoveGroupPassword(w http.ResponseWriter, r *http.Request, token Token, params RemoveGroupPasswordParams) {
+	var request RemoveGroupPasswordRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveGroupPassword(ctx, request.(RemoveGroupPasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveGroupPassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveGroupPasswordResponseObject); ok {
+		if err := validResponse.VisitRemoveGroupPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetGroupPassword operation middleware
+func (sh *strictHandler) SetGroupPassword(w http.ResponseWriter, r *http.Request, token Token, params SetGroupPasswordParams) {
+	var request SetGroupPasswordRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body SetGroupPasswordJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetGroupPassword(ctx, request.(SetGroupPasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetGroupPassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetGroupPasswordResponseObject); ok {
+		if err := validResponse.VisitSetGroupPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreatePayment operation middleware
 func (sh *strictHandler) CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams) {
 	var request CreatePaymentRequestObject
@@ -11453,6 +11828,39 @@ func (sh *strictHandler) GetStats(w http.ResponseWriter, r *http.Request, token 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetStatsResponseObject); ok {
 		if err := validResponse.VisitGetStatsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlockGroup operation middleware
+func (sh *strictHandler) UnlockGroup(w http.ResponseWriter, r *http.Request, token Token) {
+	var request UnlockGroupRequestObject
+
+	request.Token = token
+
+	var body UnlockGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlockGroup(ctx, request.(UnlockGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlockGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlockGroupResponseObject); ok {
+		if err := validResponse.VisitUnlockGroupResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

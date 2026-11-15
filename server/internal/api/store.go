@@ -62,6 +62,9 @@ type group struct {
 	linkAccess bool
 	createdAt  time.Time
 	features   GroupFeatures
+	// The password's hash, which someone who is not a member must give the
+	// key of (see group_password.go); nil for none.
+	passwordHash *string
 
 	open     bool    // the link alone opens the group
 	accounts bool    // accounts mode: members claimed by accounts are theirs
@@ -70,13 +73,13 @@ type group struct {
 }
 
 const groupColumns = `id::text, token, name, emoji, color, currency, symbol, minor_digits, link_access, created_at, ` +
-	`foreign_currency, recurring, places, receipts`
+	`foreign_currency, recurring, places, receipts, password_hash`
 
 // columns are where a row of groupColumns goes, followed by more.
 func (g *group) columns(more ...any) []any {
 	f := &g.features
 	return append([]any{&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.symbol, &g.digits,
-		&g.linkAccess, &g.createdAt, &f.ForeignCurrency, &f.Recurring, &f.Places, &f.Receipts}, more...)
+		&g.linkAccess, &g.createdAt, &f.ForeignCurrency, &f.Recurring, &f.Places, &f.Receipts, &g.passwordHash}, more...)
 }
 
 func scanGroup(row pgx.Row) (*group, error) {
@@ -145,21 +148,30 @@ func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
 
 // groupByToken finds a group the request may use: in link mode, or with link
 // access, the token is enough; otherwise the signed-in account must be a
-// member.
+// member. Someone who is not a member also needs the key of a group with a
+// password.
 func (s *Server) groupByToken(ctx context.Context, q querier, token string, lock bool) (*group, error) {
 	g, err := s.findGroup(ctx, q, token, lock)
 	if err != nil {
 		return nil, err
 	}
-	if g.open || g.me != nil {
+	if g.me != nil {
 		return g, nil
 	}
-	if u, err := s.currentUser(ctx); err != nil {
+	if !g.open {
+		if u, err := s.currentUser(ctx); err != nil {
+			return nil, err
+		} else if u == nil {
+			return nil, &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
+		} else if s.restricted(u) {
+			return nil, forbidden("email_unverified")
+		}
+	}
+	if err := checkGroupKey(ctx, g); err != nil {
 		return nil, err
-	} else if u == nil {
-		return nil, &apiError{status: http.StatusUnauthorized, code: "sign_in_required"}
-	} else if s.restricted(u) {
-		return nil, forbidden("email_unverified")
+	}
+	if g.open {
+		return g, nil
 	}
 	return nil, forbidden("not_a_member")
 }
@@ -397,6 +409,7 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 		Members:     make([]Member, 0, len(members)),
 		Categories:  categories,
 		LinkAccess:  g.open,
+		HasPassword: g.passwordHash != nil,
 		MyMemberId:  g.me,
 		Features:    g.features,
 	}

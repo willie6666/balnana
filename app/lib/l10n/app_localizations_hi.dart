@@ -3693,4 +3693,69 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get planCurrent => 'मौजूदा प्लान';
+
+  @override
+  String get groupPasswordTitle => 'इस ग्रुप में पासवर्ड है';
+
+  @override
+  String get groupPasswordBody => 'ग्रुप खोलने के लिए इसे डालें। यह डिवाइस इसे याद रखेगा।';
+
+  @override
+  String get groupPasswordLockedHelp => 'इसे खोलें और पासवर्ड डालें।';
+
+  @override
+  String get groupPassword => 'ग्रुप पासवर्ड';
+
+  @override
+  String get groupUnlock => 'ग्रुप खोलें';
+
+  @override
+  String get groupPasswordWrong => 'यह पासवर्ड सही नहीं है।';
+
+  @override
+  String get groupPasswordOnHelp => 'चालू। अब सिर्फ़ लिंक से ग्रुप नहीं खुलता।';
+
+  @override
+  String get groupPasswordOffHelp => 'बंद। लिंक से ग्रुप खुलने से पहले पासवर्ड पूछें।';
+
+  @override
+  String get groupPasswordSet => 'पासवर्ड सेट करें';
+
+  @override
+  String get groupPasswordChange => 'पासवर्ड बदलें';
+
+  @override
+  String get groupPasswordNew => 'नया पासवर्ड';
+
+  @override
+  String get groupPasswordRemove => 'हटाएँ';
+
+  @override
+  String get groupPasswordHelp =>
+      'जो भी लिंक से ग्रुप खोलता है, उसे हर डिवाइस पर एक बार डालना होगा, ग्रुप में पहले से मौजूद लोगों को भी। इसे लिंक से अलग शेयर करें।';
+
+  @override
+  String get groupPasswordMembersHelp => 'अपने खाते में साइन इन किए सदस्यों को इसकी ज़रूरत नहीं है।';
+
+  @override
+  String get groupPasswordSetDone => 'पासवर्ड सेव हो गया';
+
+  @override
+  String get groupPasswordRemoved => 'पासवर्ड हटा दिया गया';
+
+  @override
+  String get errorPasswordRequired => 'इस ग्रुप के लिए पासवर्ड चाहिए।';
+
+  @override
+  String get errorNoPassword => 'इस ग्रुप में अब पासवर्ड नहीं है।';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who ने ग्रुप पासवर्ड सेट किया';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who ने ग्रुप पासवर्ड हटाया';
+  }
 }

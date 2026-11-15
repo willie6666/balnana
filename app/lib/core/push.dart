@@ -15,6 +15,7 @@ import '../data/api.dart';
 import '../data/known_groups.dart';
 import '../data/providers.dart';
 import '../ui/colors.dart';
+import 'group_keys.dart';
 import 'l10n.dart';
 import 'prefs.dart';
 import 'push_io.dart' if (dart.library.js_interop) 'push_web.dart';
@@ -385,6 +386,7 @@ final pushSyncProvider = Provider<void>((ref) {
       for (final g in ref.watch(knownGroupsProvider))
         if (g.memberId case final member?) (token: g.token, memberId: member),
     ],
+    keys: ref.watch(groupKeysProvider),
   );
 
   // The browser's push worker words notifications in the language it was
@@ -428,6 +430,7 @@ class _PushWant {
     required this.api,
     required this.signedIn,
     required this.groups,
+    this.keys = const {},
   });
 
   final PushService push;
@@ -439,6 +442,9 @@ class _PushWant {
   final BalnanaApi? api;
   final bool signedIn;
   final List<({String token, String memberId})> groups;
+
+  /// The keys for those of [groups] with a password.
+  final Map<String, String> keys;
 
   bool get register =>
       on && vapid != null && api != null && server != null && (groups.isNotEmpty || signedIn);
@@ -504,7 +510,7 @@ class _PushReconciler {
     if (_stale(want)) return;
     final sub = await want.push.subscribe(server!, want.vapid!);
     if (sub == null || _stale(want)) return;
-    await want.api!.registerPushDevice(device, sub, want.groups.take(maxPushGroups).toList());
+    await want.api!.registerPushDevice(device, sub, want.groups.take(maxPushGroups).toList(), keys: want.keys);
     // Saved even when overtaken meanwhile: the next run may need to undo it.
     await _prefs.setString(_registeredOn, server);
   }

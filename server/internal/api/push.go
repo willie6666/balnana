@@ -135,7 +135,7 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 		if err != nil {
 			return nil, err
 		}
-		if !g.open || !validUUID(item.MemberId) {
+		if !g.open || !validUUID(item.MemberId) || g.passwordHash != nil && (item.Key == nil || !keyOpens(g, *item.Key)) {
 			continue
 		}
 		var ok bool

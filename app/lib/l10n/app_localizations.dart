@@ -6326,6 +6326,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current plan'**
   String get planCurrent;
+
+  /// Heading over the prompt for a group's password, and in the group switcher for a group on this device that needs it.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has a password'**
+  String get groupPasswordTitle;
+
+  /// Explanation under groupPasswordTitle on the prompt for a group's password.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter it to open the group. This device will remember it.'**
+  String get groupPasswordBody;
+
+  /// Subtitle in the group switcher for a group on this device that needs its password; tapping opens the prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Open it and enter its password.'**
+  String get groupPasswordLockedHelp;
+
+  /// Label of the field for a group's password, and title of the group settings row for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Group password'**
+  String get groupPassword;
+
+  /// Button that sends the entered group password and opens the group.
+  ///
+  /// In en, this message translates to:
+  /// **'Open group'**
+  String get groupUnlock;
+
+  /// Error under the group password field when the password entered is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That password isn\'t right.'**
+  String get groupPasswordWrong;
+
+  /// Subtitle of the group password settings row when the group has a password.
+  ///
+  /// In en, this message translates to:
+  /// **'On. The link alone no longer opens the group.'**
+  String get groupPasswordOnHelp;
+
+  /// Subtitle of the group password settings row when the group has none.
+  ///
+  /// In en, this message translates to:
+  /// **'Off. Ask for a password before the link opens the group.'**
+  String get groupPasswordOffHelp;
+
+  /// Title of the dialog that sets a password for a group that has none.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password'**
+  String get groupPasswordSet;
+
+  /// Title of the dialog that changes or removes a group's password.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the password'**
+  String get groupPasswordChange;
+
+  /// Label of the field for a group's new password when changing it.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get groupPasswordNew;
+
+  /// Button in the group password dialog that removes the password.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get groupPasswordRemove;
+
+  /// Explanation in the group password dialog of who has to enter it.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone opening the group from its link enters it once on each device, people already in the group too. Share it separately from the link.'**
+  String get groupPasswordHelp;
+
+  /// Shown after groupPasswordHelp on servers with accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Members signed in to their accounts don\'t need it.'**
+  String get groupPasswordMembersHelp;
+
+  /// Snackbar after setting or changing a group's password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password saved'**
+  String get groupPasswordSetDone;
+
+  /// Snackbar after removing a group's password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password removed'**
+  String get groupPasswordRemoved;
+
+  /// Message for error password required in API error feedback: the group has a password this device has not entered.
+  ///
+  /// In en, this message translates to:
+  /// **'This group needs its password.'**
+  String get errorPasswordRequired;
+
+  /// Message for error no password in API error feedback: entering a password for a group that no longer has one.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has no password any more.'**
+  String get errorNoPassword;
+
+  /// Message for activity group password set in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} set the group password'**
+  String activityGroupPasswordSet(String who);
+
+  /// Message for activity group password removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} removed the group password'**
+  String activityGroupPasswordRemoved(String who);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

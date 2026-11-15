@@ -3649,4 +3649,69 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get planCurrent => 'Paket saat ini';
+
+  @override
+  String get groupPasswordTitle => 'Grup ini punya kata sandi';
+
+  @override
+  String get groupPasswordBody => 'Masukkan untuk membuka grup. Perangkat ini akan mengingatnya.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Buka dan masukkan kata sandinya.';
+
+  @override
+  String get groupPassword => 'Kata sandi grup';
+
+  @override
+  String get groupUnlock => 'Buka grup';
+
+  @override
+  String get groupPasswordWrong => 'Kata sandi itu salah.';
+
+  @override
+  String get groupPasswordOnHelp => 'Aktif. Tautan saja tidak lagi membuka grup.';
+
+  @override
+  String get groupPasswordOffHelp => 'Nonaktif. Minta kata sandi sebelum tautan membuka grup.';
+
+  @override
+  String get groupPasswordSet => 'Pasang kata sandi';
+
+  @override
+  String get groupPasswordChange => 'Ubah kata sandi';
+
+  @override
+  String get groupPasswordNew => 'Kata sandi baru';
+
+  @override
+  String get groupPasswordRemove => 'Hapus';
+
+  @override
+  String get groupPasswordHelp =>
+      'Siapa pun yang membuka grup dari tautannya memasukkannya sekali di tiap perangkat, termasuk yang sudah ada di grup. Bagikan terpisah dari tautan.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Anggota yang masuk ke akunnya tidak memerlukannya.';
+
+  @override
+  String get groupPasswordSetDone => 'Kata sandi disimpan';
+
+  @override
+  String get groupPasswordRemoved => 'Kata sandi dihapus';
+
+  @override
+  String get errorPasswordRequired => 'Grup ini memerlukan kata sandinya.';
+
+  @override
+  String get errorNoPassword => 'Grup ini tidak lagi punya kata sandi.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who memasang kata sandi grup';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who menghapus kata sandi grup';
+  }
 }

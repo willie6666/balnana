@@ -14,6 +14,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
+import 'group_password.dart';
 import 'identity_sheet.dart';
 
 final _joinInfoProvider = FutureProvider.autoDispose.family<JoinInfo, String>(
@@ -100,6 +101,13 @@ class _JoinPageState extends ConsumerState<JoinPage> {
           padding: const EdgeInsets.all(BSpace.s16),
           child: error == null || async.isLoading
               ? const CircularProgressIndicator()
+              : error is ApiException && error.code == 'password_required'
+              ? SingleChildScrollView(
+                  child: GroupUnlock(
+                    token: widget.token,
+                    onUnlocked: () => ref.invalidate(_joinInfoProvider(widget.token)),
+                  ),
+                )
               : EmptyState(
                   icon: Icons.link_off,
                   title: error is ApiException && error.isNotFound

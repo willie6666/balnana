@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:balnana/app.dart';
+import 'package:balnana/core/group_keys.dart';
 import 'package:balnana/core/money.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
@@ -1406,7 +1407,11 @@ void main() {
       groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
     ]);
     await _go(tester, container, '/g/tok/settings');
-    final menu = find.byType(PopupMenuButton<String>).first;
+    // Not .first: it throws while the list has not built the members yet.
+    final menu = find.descendant(
+      of: find.widgetWithText(ListTile, 'Ana (you)'),
+      matching: find.byType(PopupMenuButton<String>),
+    );
     await tester.scrollUntilVisible(
       menu,
       200,
@@ -1435,6 +1440,65 @@ void main() {
       {'label': 'Bank transfer', 'value': '012-345678'},
     ]));
     expect(find.text('Account, ID or link'), findsNothing);
+  });
+
+  testWidgets('a group with a password asks for it, then opens with the key it gives', (tester) async {
+    final unlocks = <Object?>[];
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    // The app asks before _boot gives the container back.
+    ProviderContainer? container;
+    DioException refuse(RequestOptions options, String code) => DioException.badResponse(
+      statusCode: 403,
+      requestOptions: options,
+      response: Response(requestOptions: options, statusCode: 403, data: {'code': code, 'message': 'no'}),
+    );
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..interceptors.add(GroupKeyInterceptor((token) => container?.read(groupKeysProvider)[token]))
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final key = options.headers[groupKeyHeader];
+            if (options.path == '/g/tok/unlock') {
+              unlocks.add(options.data);
+              if ((options.data as Map)['password'] == 'open sesame') {
+                return handler.resolve(Response(requestOptions: options, statusCode: 200, data: {'key': 'k1'}));
+              }
+              return handler.reject(refuse(options, 'wrong_password'));
+            }
+            if (options.path.startsWith('/g/tok') && key != 'k1') {
+              return handler.reject(refuse(options, 'password_required'));
+            }
+            handler.next(options);
+          },
+        ),
+      )
+      ..httpClientAdapter = server;
+    container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+
+    expect(find.text('This group has a password'), findsOneWidget);
+    expect(find.text('Flat'), findsNothing);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Group password'), 'guess');
+    await tester.tap(find.widgetWithText(FilledButton, 'Open group'));
+    await tester.pumpAndSettle();
+    expect(find.text("That password isn't right."), findsOneWidget);
+    expect(container.read(groupKeysProvider), isEmpty);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Group password'), 'open sesame');
+    await tester.tap(find.widgetWithText(FilledButton, 'Open group'));
+    await tester.pumpAndSettle();
+
+    expect(unlocks, [
+      {'password': 'guess'},
+      {'password': 'open sesame'},
+    ]);
+    expect(container.read(groupKeysProvider), {'tok': 'k1'});
+    expect(find.text('This group has a password'), findsNothing);
+    expect(find.text('Flat'), findsWidgets);
   });
 
   testWidgets('a balance beyond one transaction still shows, and pays at most one', (tester) async {

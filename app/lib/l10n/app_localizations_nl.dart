@@ -3682,4 +3682,69 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get planCurrent => 'Huidig abonnement';
+
+  @override
+  String get groupPasswordTitle => 'Deze groep heeft een wachtwoord';
+
+  @override
+  String get groupPasswordBody => 'Voer het in om de groep te openen. Dit apparaat onthoudt het.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Open haar en voer het wachtwoord in.';
+
+  @override
+  String get groupPassword => 'Groepswachtwoord';
+
+  @override
+  String get groupUnlock => 'Groep openen';
+
+  @override
+  String get groupPasswordWrong => 'Dat wachtwoord klopt niet.';
+
+  @override
+  String get groupPasswordOnHelp => 'Aan. De link alleen opent de groep niet meer.';
+
+  @override
+  String get groupPasswordOffHelp => 'Uit. Vraag om een wachtwoord voordat de link de groep opent.';
+
+  @override
+  String get groupPasswordSet => 'Wachtwoord instellen';
+
+  @override
+  String get groupPasswordChange => 'Wachtwoord wijzigen';
+
+  @override
+  String get groupPasswordNew => 'Nieuw wachtwoord';
+
+  @override
+  String get groupPasswordRemove => 'Verwijderen';
+
+  @override
+  String get groupPasswordHelp =>
+      'Wie de groep via de link opent, voert het één keer per apparaat in, ook wie al in de groep zit. Deel het los van de link.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Leden die met hun account zijn ingelogd hebben het niet nodig.';
+
+  @override
+  String get groupPasswordSetDone => 'Wachtwoord opgeslagen';
+
+  @override
+  String get groupPasswordRemoved => 'Wachtwoord verwijderd';
+
+  @override
+  String get errorPasswordRequired => 'Deze groep vraagt om haar wachtwoord.';
+
+  @override
+  String get errorNoPassword => 'Deze groep heeft geen wachtwoord meer.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who heeft het groepswachtwoord ingesteld';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who heeft het groepswachtwoord verwijderd';
+  }
 }

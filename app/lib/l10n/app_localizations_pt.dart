@@ -3710,4 +3710,69 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get planCurrent => 'Plano atual';
+
+  @override
+  String get groupPasswordTitle => 'Este grupo tem senha';
+
+  @override
+  String get groupPasswordBody => 'Digite-a para abrir o grupo. Este dispositivo vai lembrar dela.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Abra-o e digite a senha.';
+
+  @override
+  String get groupPassword => 'Senha do grupo';
+
+  @override
+  String get groupUnlock => 'Abrir grupo';
+
+  @override
+  String get groupPasswordWrong => 'Essa senha não está certa.';
+
+  @override
+  String get groupPasswordOnHelp => 'Ativada. Só o link não abre mais o grupo.';
+
+  @override
+  String get groupPasswordOffHelp => 'Desativada. Peça uma senha antes de o link abrir o grupo.';
+
+  @override
+  String get groupPasswordSet => 'Definir uma senha';
+
+  @override
+  String get groupPasswordChange => 'Alterar a senha';
+
+  @override
+  String get groupPasswordNew => 'Nova senha';
+
+  @override
+  String get groupPasswordRemove => 'Remover';
+
+  @override
+  String get groupPasswordHelp =>
+      'Quem abrir o grupo pelo link digita a senha uma vez em cada dispositivo, inclusive quem já está no grupo. Compartilhe-a separadamente do link.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Membros conectados às suas contas não precisam dela.';
+
+  @override
+  String get groupPasswordSetDone => 'Senha salva';
+
+  @override
+  String get groupPasswordRemoved => 'Senha removida';
+
+  @override
+  String get errorPasswordRequired => 'Este grupo precisa da senha.';
+
+  @override
+  String get errorNoPassword => 'Este grupo não tem mais senha.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who definiu a senha do grupo';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who removeu a senha do grupo';
+  }
 }

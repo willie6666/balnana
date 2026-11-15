@@ -3677,4 +3677,69 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planCurrent => 'Plan actual';
+
+  @override
+  String get groupPasswordTitle => 'Este grupo tiene contraseña';
+
+  @override
+  String get groupPasswordBody => 'Escríbela para abrir el grupo. Este dispositivo la recordará.';
+
+  @override
+  String get groupPasswordLockedHelp => 'Ábrelo y escribe su contraseña.';
+
+  @override
+  String get groupPassword => 'Contraseña del grupo';
+
+  @override
+  String get groupUnlock => 'Abrir grupo';
+
+  @override
+  String get groupPasswordWrong => 'Esa contraseña no es correcta.';
+
+  @override
+  String get groupPasswordOnHelp => 'Activada. El enlace por sí solo ya no abre el grupo.';
+
+  @override
+  String get groupPasswordOffHelp => 'Desactivada. Pide una contraseña antes de que el enlace abra el grupo.';
+
+  @override
+  String get groupPasswordSet => 'Poner una contraseña';
+
+  @override
+  String get groupPasswordChange => 'Cambiar la contraseña';
+
+  @override
+  String get groupPasswordNew => 'Nueva contraseña';
+
+  @override
+  String get groupPasswordRemove => 'Quitar';
+
+  @override
+  String get groupPasswordHelp =>
+      'Quien abra el grupo desde su enlace la escribirá una vez en cada dispositivo, también quien ya está en el grupo. Compártela aparte del enlace.';
+
+  @override
+  String get groupPasswordMembersHelp => 'Los miembros que inician sesión con su cuenta no la necesitan.';
+
+  @override
+  String get groupPasswordSetDone => 'Contraseña guardada';
+
+  @override
+  String get groupPasswordRemoved => 'Contraseña quitada';
+
+  @override
+  String get errorPasswordRequired => 'Este grupo necesita su contraseña.';
+
+  @override
+  String get errorNoPassword => 'Este grupo ya no tiene contraseña.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return '$who puso la contraseña del grupo';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return '$who quitó la contraseña del grupo';
+  }
 }

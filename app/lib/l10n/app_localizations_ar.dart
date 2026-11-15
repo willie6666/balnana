@@ -3747,4 +3747,69 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get planCurrent => 'الخطة الحالية';
+
+  @override
+  String get groupPasswordTitle => 'لهذه المجموعة كلمة مرور';
+
+  @override
+  String get groupPasswordBody => 'أدخلها لفتح المجموعة. سيتذكرها هذا الجهاز.';
+
+  @override
+  String get groupPasswordLockedHelp => 'افتحها وأدخل كلمة مرورها.';
+
+  @override
+  String get groupPassword => 'كلمة مرور المجموعة';
+
+  @override
+  String get groupUnlock => 'فتح المجموعة';
+
+  @override
+  String get groupPasswordWrong => 'كلمة المرور هذه غير صحيحة.';
+
+  @override
+  String get groupPasswordOnHelp => 'مفعّلة. لم يعد الرابط وحده يفتح المجموعة.';
+
+  @override
+  String get groupPasswordOffHelp => 'معطّلة. اطلب كلمة مرور قبل أن يفتح الرابط المجموعة.';
+
+  @override
+  String get groupPasswordSet => 'تعيين كلمة مرور';
+
+  @override
+  String get groupPasswordChange => 'تغيير كلمة المرور';
+
+  @override
+  String get groupPasswordNew => 'كلمة المرور الجديدة';
+
+  @override
+  String get groupPasswordRemove => 'إزالة';
+
+  @override
+  String get groupPasswordHelp =>
+      'كل من يفتح المجموعة من رابطها يُدخلها مرة واحدة على كل جهاز، حتى من هم في المجموعة بالفعل. شاركها بعيدًا عن الرابط.';
+
+  @override
+  String get groupPasswordMembersHelp => 'لا يحتاجها الأعضاء الذين سجّلوا الدخول إلى حساباتهم.';
+
+  @override
+  String get groupPasswordSetDone => 'تم حفظ كلمة المرور';
+
+  @override
+  String get groupPasswordRemoved => 'تمت إزالة كلمة المرور';
+
+  @override
+  String get errorPasswordRequired => 'تحتاج هذه المجموعة إلى كلمة مرورها.';
+
+  @override
+  String get errorNoPassword => 'لم تعد لهذه المجموعة كلمة مرور.';
+
+  @override
+  String activityGroupPasswordSet(String who) {
+    return 'عيّن $who كلمة مرور المجموعة';
+  }
+
+  @override
+  String activityGroupPasswordRemoved(String who) {
+    return 'أزال $who كلمة مرور المجموعة';
+  }
 }
