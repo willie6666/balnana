@@ -1,8 +1,11 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // withKey is a client of the same server sending key as the group key.
@@ -158,5 +161,67 @@ func TestGroupPasswordAccountsMode(t *testing.T) {
 	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(false)}, nil)
 	if code := anon.errorCode(401, "GET", path, nil); code != "sign_in_required" {
 		t.Fatal(code)
+	}
+}
+
+func TestSetGroupPasswordRejectsBeforeHashing(t *testing.T) {
+	ana := accountsClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	g := createGroup(ana, "Ana", "Ben")
+	base := "/g/" + g.Token
+	ben := ana.another()
+	register(ben, "ben@example.com", "Ben")
+	ben.must(200, "POST", base+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
+	var key GroupKey
+	ana.must(200, "PUT", base+"/password", GroupPasswordInput{Password: "secret"}, &key)
+	ana.must(200, "PATCH", base, GroupUpdate{LinkAccess: ptr(true)}, nil)
+	closed := createGroup(ana, "Ana", "Ben")
+
+	for _, tc := range []struct {
+		name, token, code string
+		client            *client
+		status            int
+	}{
+		{"malformed token", "not-a-token", "not_found", ana.another(), 404},
+		{"unknown token", newToken(), "not_found", ana.another(), 404},
+		{"signed out", closed.Token, "sign_in_required", ana.another(), 401},
+		{"missing key", g.Token, "password_required", ana.another(), 403},
+		{"wrong key", g.Token, "password_required", ana.another().withKey("wrong"), 403},
+		{"non-member", g.Token, "not_a_member", ana.another().withKey(key.Key), 403},
+		{"non-owner", g.Token, "owner_only", ben, 403},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Denied requests must finish even while every hashing slot is
+			// occupied by other password operations.
+			for range cap(hashSlots) {
+				hashSlots <- struct{}{}
+			}
+			done := make(chan *httptest.ResponseRecorder, 1)
+			go func() {
+				done <- tc.client.do("PUT", "/g/"+tc.token+"/password", GroupPasswordInput{Password: "anything"})
+			}()
+			var response *httptest.ResponseRecorder
+			select {
+			case response = <-done:
+			case <-time.After(2 * time.Second):
+				t.Error("an unauthorized request waited for a hashing slot")
+			}
+			for range cap(hashSlots) {
+				<-hashSlots
+			}
+			if response == nil {
+				response = <-done
+			}
+			if response.Code != tc.status {
+				t.Fatalf("status %d, want %d: %s", response.Code, tc.status, response.Body)
+			}
+			var body Error
+			if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Code != tc.code {
+				t.Fatalf("code %q, want %q", body.Code, tc.code)
+			}
+		})
 	}
 }

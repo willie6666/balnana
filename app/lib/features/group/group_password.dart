@@ -49,19 +49,22 @@ class _GroupUnlockState extends ConsumerState<GroupUnlock> {
       final key = await groupApiOf(ref, widget.token).unlock(_password.text);
       if (!mounted) return;
       ref.read(groupKeysProvider.notifier).set(widget.token, key);
-      refreshGroup(ref, widget.token);
-      ref
-        ..invalidate(summariesProvider)
-        ..invalidate(activityFeedProvider);
-      widget.onUnlocked?.call();
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = e.code == 'wrong_password' ? l10n.groupPasswordWrong : errorMessage(l10n, e);
-      });
-      return;
+      if (e.code == 'no_password') {
+        // Someone removed it while this prompt was open. The group can
+        // load without a key, and the join page needs to reload too.
+        ref.read(groupKeysProvider.notifier).remove(widget.token);
+      } else {
+        setState(() {
+          _busy = false;
+          _error = e.code == 'wrong_password' ? l10n.groupPasswordWrong : errorMessage(l10n, e);
+        });
+        return;
+      }
     }
+    refreshGroup(ref, widget.token);
+    widget.onUnlocked?.call();
     // Stays on the screen until the group has loaded in its place.
     if (mounted) setState(() => _busy = false);
   }

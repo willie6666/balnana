@@ -330,11 +330,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This group was deleted, or its link was reset. Ask someone in the group for the new link.';
 
   @override
-  String get groupLockedTitle => 'Sign in to open this group';
+  String get groupLockedTitle => 'This group is locked';
 
   @override
-  String get groupLockedBody =>
-      'This group is only open to its members\' accounts. Sign in to the account that belongs to it.';
+  String get groupLockedBody => 'Open it to sign in or enter its password.';
 
   @override
   String get groupForget => 'Remove from this device';

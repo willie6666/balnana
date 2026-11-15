@@ -24,6 +24,7 @@ import 'package:balnana/features/group/group_settings_page.dart';
 import 'package:balnana/features/group/pending_tile.dart';
 import 'package:balnana/features/group/reminder.dart';
 import 'package:balnana/features/group/share_sheet.dart';
+import 'package:balnana/features/groups/group_switcher.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/colors.dart';
 import 'package:balnana/ui/widgets/usage_tile.dart';
@@ -355,6 +356,7 @@ Future<ProviderContainer> _boot(
   List<Override> overrides, {
   Balances balances = const Balances(nets: {}, transfers: []),
   ServerInfo info = const ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server),
+  Summaries summaries = const Summaries(groups: [], missing: []),
   CacheDb? db,
 }) async {
   SharedPreferences.setMockInitialValues({
@@ -369,7 +371,7 @@ Future<ProviderContainer> _boot(
         prefsProvider.overrideWithValue(prefs),
         cacheDbProvider.overrideWithValue(db),
         serverInfoProvider.overrideWithValue(AsyncValue.data(info)),
-        summariesProvider.overrideWith((ref) async => const Summaries(groups: [], missing: [])),
+        summariesProvider.overrideWith((ref) async => summaries),
         balancesProvider.overrideWith((ref, token) async => balances),
         ...overrides,
       ],
@@ -1500,6 +1502,139 @@ void main() {
     expect(find.text('This group has a password'), findsNothing);
     expect(find.text('Flat'), findsWidgets);
   });
+
+  testWidgets('removing a password lets an open unlock prompt reload the group', (tester) async {
+    var protected = true;
+    final server = _GroupServer(() async => _GroupServer.named('Flat'));
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final code = options.path == '/g/tok/unlock'
+                ? 'no_password'
+                : protected && options.path.startsWith('/g/tok')
+                ? 'password_required'
+                : null;
+            if (code == null) return handler.next(options);
+            final status = code == 'no_password' ? 409 : 403;
+            handler.reject(
+              DioException.badResponse(
+                statusCode: status,
+                requestOptions: options,
+                response: Response(requestOptions: options, statusCode: status, data: {'code': code}),
+              ),
+            );
+          },
+        ),
+      )
+      ..httpClientAdapter = server;
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    container.read(groupKeysProvider.notifier).set('tok', 'old-key');
+    await _go(tester, container, '/g/tok');
+    expect(find.text('This group has a password'), findsOneWidget);
+
+    protected = false;
+    await tester.enterText(find.widgetWithText(TextFormField, 'Group password'), 'old password');
+    await tester.tap(find.widgetWithText(FilledButton, 'Open group'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('This group has a password'), findsNothing);
+    expect(find.text('This group has no password any more.'), findsNothing);
+    expect(find.text('Flat'), findsWidgets);
+    expect(container.read(groupKeysProvider), isEmpty);
+  });
+
+  testWidgets('removing a password lets the join page reload its invitation', (tester) async {
+    var protected = true;
+    var joinRequests = 0;
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final (status, data) = switch (options.path) {
+              '/g/tok/unlock' => (409, <String, Object?>{'code': 'no_password'}),
+              '/g/tok/join' when !protected => (
+                200,
+                <String, Object?>{
+                  'name': 'Flat',
+                  'currency': 'USD',
+                  'member': false,
+                  'members': [
+                    {'id': 'a', 'name': 'Ana', 'claimed': false},
+                  ],
+                },
+              ),
+              _ => (403, <String, Object?>{'code': 'password_required'}),
+            };
+            if (options.path == '/g/tok/join') joinRequests++;
+            if (status == 200) {
+              return handler.resolve(Response(requestOptions: options, statusCode: status, data: data));
+            }
+            handler.reject(
+              DioException.badResponse(
+                statusCode: status,
+                requestOptions: options,
+                response: Response(requestOptions: options, statusCode: status, data: data),
+              ),
+            );
+          },
+        ),
+      );
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      accountProvider.overrideWith((ref) async => const User(id: 'u', name: 'Ana', hasPassword: true)),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ], info: const ServerInfo(version: '1', authMode: AuthMode.accounts, publicUrl: _server));
+    await _go(tester, container, '/g/tok/join');
+    expect(find.text('This group has a password'), findsOneWidget);
+    expect(joinRequests, 1);
+
+    protected = false;
+    await tester.enterText(find.widgetWithText(TextFormField, 'Group password'), 'old password');
+    await tester.tap(find.widgetWithText(FilledButton, 'Open group'));
+    await tester.pumpAndSettle();
+
+    expect(joinRequests, 2);
+    expect(find.text('This group has a password'), findsNothing);
+    expect(find.text('Ana'), findsOneWidget);
+  });
+
+  for (final reason in ['password_required', 'sign_in_required']) {
+    testWidgets('the accounts switcher opens a group that needs $reason', (tester) async {
+      final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1'))
+        ..httpClientAdapter = _GroupServer(() async => _GroupServer.named('Flat'));
+      final container = await _boot(
+        tester,
+        [
+          apiProvider.overrideWithValue(dio),
+          accountProvider.overrideWith((ref) async => null),
+          groupProvider.overrideWith((ref, token) async {
+            if (token == 'tok') return _group('Flat');
+            throw ApiException(reason, status: reason == 'sign_in_required' ? 401 : 403);
+          }),
+          groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+        ],
+        info: const ServerInfo(version: '1', authMode: AuthMode.accounts, publicUrl: _server),
+        summaries: const Summaries(groups: [], missing: [], locked: ['other']),
+      );
+      await _go(tester, container, '/g/tok');
+      await tester.tap(find.byType(GroupSwitcher));
+      await tester.pumpAndSettle();
+      expect(find.text('Open it to sign in or enter its password.'), findsOneWidget);
+
+      await tester.tap(find.text('This group is locked'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(routerProvider).routeInformationProvider.value.uri.path, '/g/other');
+      expect(
+        find.text(reason == 'password_required' ? 'This group has a password' : 'Sign in to open this group'),
+        findsOneWidget,
+      );
+    });
+  }
 
   testWidgets('a balance beyond one transaction still shows, and pays at most one', (tester) async {
     final big = maxMinor + BigInt.from(500);

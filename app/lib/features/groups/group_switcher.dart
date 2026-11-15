@@ -12,7 +12,6 @@ import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/member_avatar.dart';
-import '../account/sign_in_page.dart';
 import 'open_link.dart';
 
 /// The title of a group page: the group's badge and name, which opens the
@@ -121,25 +120,15 @@ class _GroupsSheet extends ConsumerWidget {
         ),
         footer: Column(
           children: [
-            // Without accounts, only a password keeps a group shut, and the
-            // group asks for it.
+            // The group page determines whether a locked group needs a
+            // password or signing in; accounts servers can need either.
             for (final token in data.locked)
-              accounts
-                  ? ListTile(
-                      leading: const Icon(Icons.lock_outline),
-                      title: Text(l10n.groupLockedTitle),
-                      subtitle: Text(l10n.groupLockedBody),
-                      trailing: TextButton(
-                        onPressed: () => _then(context, (home) => home.go(signInPath('/g/$token'))),
-                        child: Text(l10n.signIn),
-                      ),
-                    )
-                  : ListTile(
-                      leading: const Icon(Icons.lock_outline),
-                      title: Text(l10n.groupPasswordTitle),
-                      subtitle: Text(l10n.groupPasswordLockedHelp),
-                      onTap: () => _then(context, (home) => home.go('/g/$token')),
-                    ),
+              ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: Text(accounts ? l10n.groupLockedTitle : l10n.groupPasswordTitle),
+                subtitle: Text(accounts ? l10n.groupLockedBody : l10n.groupPasswordLockedHelp),
+                onTap: () => _then(context, (home) => home.go('/g/$token')),
+              ),
           ],
         ),
       );

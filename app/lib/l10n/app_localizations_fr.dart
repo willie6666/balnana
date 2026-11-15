@@ -340,11 +340,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce groupe a été supprimé ou son lien a été réinitialisé. Demandez le nouveau lien à une personne du groupe.';
 
   @override
-  String get groupLockedTitle => 'Connectez-vous pour ouvrir ce groupe';
+  String get groupLockedTitle => 'Ce groupe est verrouillé';
 
   @override
-  String get groupLockedBody =>
-      'Ce groupe est réservé aux comptes de ses membres. Connectez-vous au compte qui en fait partie.';
+  String get groupLockedBody => 'Ouvrez-le pour vous connecter ou saisir son mot de passe.';
 
   @override
   String get groupForget => 'Retirer de cet appareil';

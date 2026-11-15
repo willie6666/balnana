@@ -424,11 +424,11 @@
   "@groupMissingBody": {
     "description": "Explanatory text for group missing body in group creation, settings, or switching."
   },
-  "groupLockedTitle": "Sign in to open this group",
+  "groupLockedTitle": "This group is locked",
   "@groupLockedTitle": {
-    "description": "Heading in the group switcher for a group on this device that the server keeps for signed-in members."
+    "description": "Heading in the group switcher for a group that needs signing in or its password."
   },
-  "groupLockedBody": "This group is only open to its members' accounts. Sign in to the account that belongs to it.",
+  "groupLockedBody": "Open it to sign in or enter its password.",
   "@groupLockedBody": {
     "description": "Explanation under groupLockedTitle."
   },

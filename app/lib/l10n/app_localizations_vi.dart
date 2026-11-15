@@ -326,11 +326,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Nhóm này đã bị xóa hoặc liên kết đã được đặt lại. Hãy hỏi người trong nhóm để xin liên kết mới.';
 
   @override
-  String get groupLockedTitle => 'Đăng nhập để mở nhóm này';
+  String get groupLockedTitle => 'Nhóm này đã bị khóa';
 
   @override
-  String get groupLockedBody =>
-      'Chỉ tài khoản thành viên mới mở được nhóm này. Hãy đăng nhập vào tài khoản thuộc nhóm.';
+  String get groupLockedBody => 'Mở nhóm để đăng nhập hoặc nhập mật khẩu.';
 
   @override
   String get groupForget => 'Gỡ khỏi thiết bị này';

@@ -341,11 +341,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Групу видалили або її посилання скинули. Попросіть когось із групи надіслати нове посилання.';
 
   @override
-  String get groupLockedTitle => 'Увійдіть, щоб відкрити цю групу';
+  String get groupLockedTitle => 'Цю групу заблоковано';
 
   @override
-  String get groupLockedBody =>
-      'Цю групу можуть відкрити лише облікові записи її учасників. Увійдіть в обліковий запис учасника групи.';
+  String get groupLockedBody => 'Відкрийте її, щоб увійти в обліковий запис або ввести пароль групи.';
 
   @override
   String get groupForget => 'Прибрати з цього пристрою';

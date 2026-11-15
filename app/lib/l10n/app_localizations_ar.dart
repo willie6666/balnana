@@ -343,10 +343,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'حُذفت هذه المجموعة أو أُعيد تعيين رابطها. اطلب الرابط الجديد من أحد أفراد المجموعة.';
 
   @override
-  String get groupLockedTitle => 'سجّل الدخول لفتح هذه المجموعة';
+  String get groupLockedTitle => 'هذه المجموعة مقفلة';
 
   @override
-  String get groupLockedBody => 'هذه المجموعة متاحة فقط لحسابات أعضائها. سجّل الدخول إلى الحساب المرتبط بها.';
+  String get groupLockedBody => 'افتحها لتسجيل الدخول أو إدخال كلمة مرورها.';
 
   @override
   String get groupForget => 'إزالة من هذا الجهاز';

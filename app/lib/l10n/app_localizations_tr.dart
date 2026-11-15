@@ -330,11 +330,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu grup silinmiş veya bağlantısı sıfırlanmış. Yeni bağlantıyı gruptan birinden isteyin.';
 
   @override
-  String get groupLockedTitle => 'Bu grubu açmak için oturum açın';
+  String get groupLockedTitle => 'Bu grup kilitli';
 
   @override
-  String get groupLockedBody =>
-      'Bu grubu yalnızca üyelerinin hesapları açabilir. Gruba ait hesapla oturum açın.';
+  String get groupLockedBody => 'Oturum açmak veya parolasını girmek için grubu açın.';
 
   @override
   String get groupForget => 'Bu cihazdan kaldır';

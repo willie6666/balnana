@@ -723,16 +723,16 @@ abstract class AppLocalizations {
   /// **'This group was deleted, or its link was reset. Ask someone in the group for the new link.'**
   String get groupMissingBody;
 
-  /// Heading in the group switcher for a group on this device that the server keeps for signed-in members.
+  /// Heading in the group switcher for a group that needs signing in or its password.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to open this group'**
+  /// **'This group is locked'**
   String get groupLockedTitle;
 
   /// Explanation under groupLockedTitle.
   ///
   /// In en, this message translates to:
-  /// **'This group is only open to its members\' accounts. Sign in to the account that belongs to it.'**
+  /// **'Open it to sign in or enter its password.'**
   String get groupLockedBody;
 
   /// Label or control text for group forget in group creation, settings, or switching.

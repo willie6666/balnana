@@ -323,11 +323,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get groupMissingBody => 'กลุ่มนี้ถูกลบหรือลิงก์ถูกรีเซ็ต ขอรับลิงก์ใหม่จากคนในกลุ่ม';
 
   @override
-  String get groupLockedTitle => 'ลงชื่อเข้าใช้เพื่อเปิดกลุ่มนี้';
+  String get groupLockedTitle => 'กลุ่มนี้ถูกล็อก';
 
   @override
-  String get groupLockedBody =>
-      'กลุ่มนี้เปิดให้เฉพาะบัญชีของสมาชิกเท่านั้น ลงชื่อเข้าใช้บัญชีที่เป็นสมาชิกกลุ่มนี้';
+  String get groupLockedBody => 'เปิดกลุ่มเพื่อลงชื่อเข้าใช้หรือป้อนรหัสผ่านของกลุ่ม';
 
   @override
   String get groupForget => 'นำออกจากอุปกรณ์นี้';

@@ -336,11 +336,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze groep is verwijderd of de link is opnieuw ingesteld. Vraag iemand uit de groep om de nieuwe link.';
 
   @override
-  String get groupLockedTitle => 'Meld je aan om deze groep te openen';
+  String get groupLockedTitle => 'Deze groep is vergrendeld';
 
   @override
-  String get groupLockedBody =>
-      'Deze groep is alleen toegankelijk voor de accounts van de leden. Meld je aan bij het account dat bij deze groep hoort.';
+  String get groupLockedBody => 'Open de groep om je aan te melden of het wachtwoord in te voeren.';
 
   @override
   String get groupForget => 'Van dit apparaat verwijderen';

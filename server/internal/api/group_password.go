@@ -111,7 +111,16 @@ func (s *Server) SetGroupPassword(ctx context.Context, req SetGroupPasswordReque
 	if err != nil {
 		return nil, err
 	}
-	// Hashing is slow: not while the group is locked.
+	// Reject requests that cannot manage the group before spending a hash
+	// slot. The transaction checks again after hashing, without holding the
+	// group locked through that slow work.
+	g, err := s.groupByToken(ctx, s.db, req.Token, false)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.mayManage(ctx, s.db, g); err != nil {
+		return nil, err
+	}
 	hash := hashPassword(password)
 	err = s.changeGroupPassword(ctx, req.Token, req.Params.XBalnanaMember, &hash)
 	if err != nil {
@@ -143,10 +152,13 @@ func (s *Server) changeGroupPassword(ctx context.Context, token string, member *
 		if _, err := tx.Exec(ctx, `update groups set password_hash = $2 where id = $1`, g.id, hash); err != nil {
 			return err
 		}
-		// Phones following by link followed with the old key; they follow
-		// again once they have the new one.
-		if _, err := tx.Exec(ctx, `delete from push_follows where group_id = $1`, g.id); err != nil {
-			return err
+		if hash != nil {
+			// A new password revokes link follows; removing it keeps them.
+			// Follows registered concurrently carry the old hash, which
+			// pushDevices also checks before sending.
+			if _, err := tx.Exec(ctx, `delete from push_follows where group_id = $1`, g.id); err != nil {
+				return err
+			}
 		}
 		action := "group.password_set"
 		if hash == nil {

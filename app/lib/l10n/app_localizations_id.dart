@@ -326,11 +326,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Grup ini telah dihapus atau tautannya direset. Minta tautan baru kepada anggota grup.';
 
   @override
-  String get groupLockedTitle => 'Login untuk membuka grup ini';
+  String get groupLockedTitle => 'Grup ini terkunci';
 
   @override
-  String get groupLockedBody =>
-      'Grup ini hanya dapat dibuka oleh akun anggotanya. Login ke akun yang terhubung dengan grup ini.';
+  String get groupLockedBody => 'Buka untuk login atau memasukkan kata sandinya.';
 
   @override
   String get groupForget => 'Hapus dari perangkat ini';

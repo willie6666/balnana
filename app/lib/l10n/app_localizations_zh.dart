@@ -319,10 +319,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupMissingBody => '此群组已被删除，或其链接已重置。请向群组中的成员索取新链接。';
 
   @override
-  String get groupLockedTitle => '登录后打开此群组';
+  String get groupLockedTitle => '此群组已锁定';
 
   @override
-  String get groupLockedBody => '此群组仅对其成员账号开放。请登录关联此群组的账号。';
+  String get groupLockedBody => '打开群组以登录或输入群组密码。';
 
   @override
   String get groupForget => '从此设备移除';
@@ -3874,10 +3874,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get groupMissingBody => '這個群組已刪除，或連結已重設。請向群組中的人索取新連結。';
 
   @override
-  String get groupLockedTitle => '登入以開啟這個群組';
+  String get groupLockedTitle => '這個群組已鎖定';
 
   @override
-  String get groupLockedBody => '只有群組成員的帳戶能開啟這個群組。請登入加入此群組的帳戶。';
+  String get groupLockedBody => '開啟群組以登入或輸入群組密碼。';
 
   @override
   String get groupForget => '從這部裝置移除';

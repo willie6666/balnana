@@ -319,10 +319,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groupMissingBody => '그룹이 삭제됐거나 링크가 재설정됐어요. 그룹 멤버에게 새 링크를 요청해 주세요.';
 
   @override
-  String get groupLockedTitle => '로그인해서 그룹 열기';
+  String get groupLockedTitle => '이 그룹은 잠겨 있어요';
 
   @override
-  String get groupLockedBody => '이 그룹은 멤버 계정으로만 열 수 있어요. 그룹 멤버의 계정으로 로그인해 주세요.';
+  String get groupLockedBody => '그룹을 열어 로그인하거나 비밀번호를 입력하세요.';
 
   @override
   String get groupForget => '이 기기에서 삭제';

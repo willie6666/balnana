@@ -337,11 +337,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह समूह मिटा दिया गया है या इसका लिंक रीसेट हुआ है। समूह में किसी से नया लिंक माँगें।';
 
   @override
-  String get groupLockedTitle => 'यह समूह खोलने के लिए साइन इन करें';
+  String get groupLockedTitle => 'यह समूह लॉक है';
 
   @override
-  String get groupLockedBody =>
-      'यह समूह सिर्फ़ इसके सदस्यों के खातों से खुलता है। उस खाते में साइन इन करें जो इस समूह का सदस्य है।';
+  String get groupLockedBody => 'साइन इन करने या इसका पासवर्ड डालने के लिए इसे खोलें।';
 
   @override
   String get groupForget => 'इस डिवाइस से हटाएँ';

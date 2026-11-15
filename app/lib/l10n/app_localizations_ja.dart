@@ -319,10 +319,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groupMissingBody => 'このグループは削除されたか、リンクがリセットされています。グループのメンバーに新しいリンクを聞いてください。';
 
   @override
-  String get groupLockedTitle => 'サインインしてこのグループを開く';
+  String get groupLockedTitle => 'このグループはロックされています';
 
   @override
-  String get groupLockedBody => 'このグループはメンバーのアカウントでのみ開けます。グループに参加しているアカウントでサインインしてください。';
+  String get groupLockedBody => '開いてサインインするか、グループのパスワードを入力してください。';
 
   @override
   String get groupForget => 'このデバイスから削除';

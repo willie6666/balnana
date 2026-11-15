@@ -124,7 +124,10 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 			return nil, err
 		}
 	}
-	type follow struct{ group, member, link string }
+	type follow struct {
+		group, member, link string
+		passwordHash        *string
+	}
 	var follows []follow
 	for _, item := range req.Body.Groups {
 		g, err := s.findGroup(ctx, s.db, item.Token, false)
@@ -146,7 +149,7 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 			return nil, err
 		}
 		if ok {
-			follows = append(follows, follow{g.id, item.MemberId, item.Token})
+			follows = append(follows, follow{g.id, item.MemberId, item.Token, g.passwordHash})
 		}
 	}
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -169,10 +172,10 @@ func (s *Server) RegisterPushDevice(ctx context.Context, req RegisterPushDeviceR
 		for _, f := range follows {
 			// A group already full keeps the phones that came first.
 			_, err := tx.Exec(ctx, `
-				insert into push_follows (device, group_id, member_id, link_token)
-				select $1, $2, $3, $4
-				where (select count(*) from push_follows where group_id = $2) < $5
-				on conflict do nothing`, req.Device, f.group, f.member, f.link, maxGroupDevices)
+				insert into push_follows (device, group_id, member_id, link_token, password_hash)
+				select $1, $2, $3, $4, $5
+				where (select count(*) from push_follows where group_id = $2) < $6
+				on conflict do nothing`, req.Device, f.group, f.member, f.link, f.passwordHash, maxGroupDevices)
 			if err != nil {
 				return err
 			}
@@ -363,7 +366,9 @@ type pushDevice struct {
 // pushDevices lists the phones of the members of g listed in ids: those
 // following the group by its current link while the link opens it, and
 // those signed in to a member's account. A follow made with a link that has
-// since been reset is left out, even when it was made while the reset ran.
+// since been reset, or with a password since changed, is left out even
+// when registration overlapped that change. Removing a password allows
+// existing follows to keep hearing.
 func (s *Server) pushDevices(ctx context.Context, g *group, ids []string) ([]pushDevice, error) {
 	linkOpen := g.open
 	rows, err := s.db.Query(ctx, `
@@ -372,6 +377,7 @@ func (s *Server) pushDevices(ctx context.Context, g *group, ids []string) ([]pus
 			select f.device from push_follows f
 			join groups g on g.id = f.group_id and g.token = f.link_token
 			where $3 and f.group_id = $1 and f.member_id = any($2::uuid[])
+			  and (g.password_hash is null or g.password_hash = f.password_hash)
 			union
 			select d.token from push_devices d
 			join sessions se on se.id = d.session_id and se.expires_at > now()

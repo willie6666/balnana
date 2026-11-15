@@ -342,11 +342,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Эта группа удалена или её ссылка сброшена. Попросите новую ссылку у кого-нибудь из участников.';
 
   @override
-  String get groupLockedTitle => 'Войдите, чтобы открыть эту группу';
+  String get groupLockedTitle => 'Эта группа заблокирована';
 
   @override
-  String get groupLockedBody =>
-      'Группа доступна только участникам, у которых есть аккаунт. Войдите в аккаунт, связанный с группой.';
+  String get groupLockedBody => 'Откройте её, чтобы войти в аккаунт или ввести пароль группы.';
 
   @override
   String get groupForget => 'Убрать с этого устройства';
