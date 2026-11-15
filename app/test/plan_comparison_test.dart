@@ -52,31 +52,46 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
+/// A value drawn as an icon, which the row reads out by [label].
+Finder _mark(String label) => find.byWidgetPredicate((w) => w is Icon && w.semanticLabel == label);
+
 void main() {
   final l10n = AppLocalizationsEn();
 
-  testWidgets('a phone can scroll to each plan without clipping the rows', (tester) async {
+  testWidgets('three plans fit side by side on a small phone, with no sideways scrolling', (tester) async {
     await _pump(tester);
     expect(tester.takeException(), isNull);
+    expect(find.text(l10n.planCompareScroll), findsNothing);
+    for (final name in ['Email unverified', 'Free', 'Plus', '2,000']) {
+      expect(find.text(name).hitTestable(), findsOneWidget, reason: name);
+    }
+    expect(_mark(l10n.planIncluded), findsOneWidget);
+    // Each plan's value sits under its own heading.
+    final plus = tester.getCenter(find.text('Plus')).dx;
+    expect(tester.getCenter(find.text('2,000')).dx, moreOrLessEquals(plus, epsilon: 1));
+    expect(tester.getCenter(_mark(l10n.planIncluded)).dx, moreOrLessEquals(plus, epsilon: 1));
+  });
+
+  testWidgets('large text scrolls sideways rather than squeezing the columns', (tester) async {
+    await _pump(tester, scale: 2);
+    expect(tester.takeException(), isNull);
     expect(find.text(l10n.planCompareScroll), findsOneWidget);
-    // Nonzero row height catches TableCell.fill collapsing all cells.
-    expect(tester.getSize(find.byType(Table)).height, greaterThan(350));
     final scroll = find.byWidgetPredicate(
       (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
     );
     await tester.drag(scroll, const Offset(-700, 0));
     await tester.pumpAndSettle();
     expect(find.text('Plus').hitTestable(), findsOneWidget);
-    expect(find.text('2000').hitTestable(), findsOneWidget);
-    expect(find.text(l10n.planIncluded).hitTestable(), findsOneWidget);
+    expect(find.text('2,000').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('large text and long plan names fit in dark mode', (tester) async {
+  testWidgets('long plan names wrap in dark mode', (tester) async {
     await _pump(
       tester,
       scale: 2,
       dark: true,
+      width: 390,
       comparison: const PlanComparisonData(
         currentPlanId: 'a',
         plans: [
@@ -86,25 +101,11 @@ void main() {
       ),
     );
     expect(find.text(l10n.planCurrent), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    final table = find.byType(Table);
-    expect(tester.getSize(table).height, greaterThan(700));
-  });
-
-  testWidgets('two plans fit side by side on a regular phone', (tester) async {
-    await _pump(
-      tester,
-      width: 390,
-      comparison: PlanComparisonData(currentPlanId: 'free', plans: _comparison.plans.skip(1).toList()),
-    );
-    expect(find.text('Free').hitTestable(), findsOneWidget);
-    expect(find.text('Plus').hitTestable(), findsOneWidget);
-    expect(find.text('2000').hitTestable(), findsOneWidget);
     expect(find.text(l10n.planCompareScroll), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('current plan uses the ID and zero differs from unlimited', (tester) async {
+  testWidgets('the current plan goes by its ID, and none differs from no limit', (tester) async {
     await _pump(
       tester,
       width: 1200,
@@ -117,14 +118,13 @@ void main() {
       ),
     );
     expect(find.text(l10n.planCurrent), findsOneWidget);
-    expect(find.text(l10n.planCompareScroll), findsNothing);
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text(l10n.planUnlimited), findsWidgets);
-    expect(find.text(l10n.planNotIncluded), findsNWidgets(2));
-    final badge = tester.getTopLeft(find.text(l10n.planCurrent));
-    final names = tester.getTopLeft(find.text('Same name').last);
+    expect(_mark('0'), findsOneWidget);
+    expect(find.text(l10n.planUnlimited), findsNWidgets(9));
+    expect(_mark(l10n.planNotIncluded), findsNWidgets(2));
+    final badge = tester.getCenter(find.text(l10n.planCurrent));
+    final names = tester.getCenter(find.text('Same name').last);
     expect(badge.dx, greaterThan(600));
-    expect((badge.dx - names.dx).abs(), lessThan(100));
+    expect(badge.dx, moreOrLessEquals(names.dx, epsilon: 1));
     expect(tester.takeException(), isNull);
   });
 }
