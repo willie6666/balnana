@@ -3678,4 +3678,19 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminExportDone => 'सेटिंग एक्सपोर्ट की गईं';
+
+  @override
+  String get planCompare => 'प्लान की तुलना करें';
+
+  @override
+  String get planCompareHelp => 'हर समूह की सीमाएँ उसे कवर करने वाले प्लान पर निर्भर करती हैं।';
+
+  @override
+  String get planCompareFeature => 'सुविधा';
+
+  @override
+  String get planCompareScroll => 'सभी प्लान की तुलना करने के लिए बगल में स्वाइप करें।';
+
+  @override
+  String get planCurrent => 'मौजूदा प्लान';
 }

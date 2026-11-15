@@ -1027,5 +1027,10 @@
   "adminExport": "Exporteren als .env",
   "adminExportHelp": "Download de hier opgeslagen instellingen als regels voor het .env-bestand van de server",
   "adminExportBody": "Het bestand bevat alle opgeslagen instellingen, inclusief wachtwoorden en sleutels. Voer het beheerderswachtwoord in om het te downloaden.",
-  "adminExportDone": "Instellingen geëxporteerd"
+  "adminExportDone": "Instellingen geëxporteerd",
+  "planCompare": "Abonnementen vergelijken",
+  "planCompareHelp": "De limieten van elke groep volgen het abonnement dat de groep dekt.",
+  "planCompareFeature": "Functie",
+  "planCompareScroll": "Veeg opzij om alle abonnementen te vergelijken.",
+  "planCurrent": "Huidig abonnement"
 }

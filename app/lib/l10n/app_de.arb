@@ -1027,5 +1027,10 @@
   "adminExport": "Als .env exportieren",
   "adminExportHelp": "Die hier gespeicherten Einstellungen als Zeilen für die .env-Datei des Servers herunterladen",
   "adminExportBody": "Die Datei enthält alle gespeicherten Einstellungen, auch Passwörter und Schlüssel. Gib das Administratorpasswort ein, um sie herunterzuladen.",
-  "adminExportDone": "Einstellungen exportiert"
+  "adminExportDone": "Einstellungen exportiert",
+  "planCompare": "Tarife vergleichen",
+  "planCompareHelp": "Die Gruppenlimits richten sich nach dem Tarif der jeweiligen Gruppe.",
+  "planCompareFeature": "Funktion",
+  "planCompareScroll": "Wische seitwärts, um alle Tarife zu vergleichen.",
+  "planCurrent": "Aktueller Tarif"
 }

@@ -17,6 +17,7 @@ import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../../ui/widgets/play_purchases.dart';
 import '../../ui/widgets/usage_tile.dart';
+import 'plan_comparison.dart';
 
 /// "3 of 20", or just what is used when there is no limit.
 String planUsage(AppLocalizations l10n, PlanUsage usage) {
@@ -190,7 +191,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
     setState(() => _buying = true);
     try {
-      final url = await ref.read(balnanaApiProvider)!.paypalCheckout(offer.product, kIsWeb ? 'web' : 'android');
+      final url = await ref
+          .read(balnanaApiProvider)!
+          .paypalCheckout(offer.product, kIsWeb ? 'web' : 'android');
       // On the web the page goes to PayPal, which sends it back here.
       _checkedOut = true;
       final opened = await launchUrl(
@@ -320,6 +323,8 @@ class _PlanPageState extends ConsumerState<PlanPage> {
             ),
           ],
         ),
+        if (plan.comparison case final comparison? when comparison.plans.length > 1)
+          PlanComparisonTable(comparison: comparison),
         if (offers.isNotEmpty || paypalOffers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))
           GroupedList(
             title: l10n.planGet,

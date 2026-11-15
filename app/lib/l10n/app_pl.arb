@@ -1027,5 +1027,10 @@
   "adminExport": "Eksportuj jako .env",
   "adminExportHelp": "Pobierz zapisane tutaj ustawienia jako wiersze do pliku .env serwera",
   "adminExportBody": "Plik zawiera wszystkie zapisane ustawienia, w tym hasła i klucze. Wpisz hasło administratora, aby go pobrać.",
-  "adminExportDone": "Wyeksportowano ustawienia"
+  "adminExportDone": "Wyeksportowano ustawienia",
+  "planCompare": "Porównaj plany",
+  "planCompareHelp": "Limity każdej grupy zależą od planu, który ją obejmuje.",
+  "planCompareFeature": "Funkcja",
+  "planCompareScroll": "Przesuń w bok, aby porównać wszystkie plany.",
+  "planCurrent": "Obecny plan"
 }

@@ -3662,4 +3662,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Configuración exportada';
+
+  @override
+  String get planCompare => 'Comparar planes';
+
+  @override
+  String get planCompareHelp => 'Los límites de cada grupo dependen del plan que lo cubre.';
+
+  @override
+  String get planCompareFeature => 'Función';
+
+  @override
+  String get planCompareScroll => 'Desliza hacia los lados para comparar todos los planes.';
+
+  @override
+  String get planCurrent => 'Plan actual';
 }

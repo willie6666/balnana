@@ -21,12 +21,21 @@ String? get defaultServerUrl {
   return null;
 }
 
-/// Whether this build may send people to pay outside an app store. Google
-/// Play doesn't allow it, so an app shows no such link unless it is built
-/// with `--dart-define=BALNANA_EXTERNAL_PAYMENTS=true`, and the Play build
-/// never does, whatever it is built with. The web has no store.
-bool get externalPayments =>
-    kIsWeb || (const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS') && appFlavor != 'play');
+/// Whether this build may send people to pay outside an app store.
+///
+/// The FOSS build enables these links by default. An explicit
+/// `BALNANA_EXTERNAL_PAYMENTS` overrides that default outside Google Play.
+bool get externalPayments => externalPaymentsFor(
+  web: kIsWeb,
+  flavor: appFlavor,
+  enabled: const bool.hasEnvironment('BALNANA_EXTERNAL_PAYMENTS')
+      ? const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS')
+      : null,
+);
+
+/// Whether a distribution permits links to external payment providers.
+bool externalPaymentsFor({required bool web, required String? flavor, bool? enabled}) =>
+    web || (flavor != 'play' && (enabled ?? flavor == 'foss'));
 
 /// Whether the session lives in [serverUrl]'s cookie: only in the web app it
 /// serves. A web app on another origin cannot use that cookie, so it keeps a

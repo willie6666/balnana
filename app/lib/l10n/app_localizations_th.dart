@@ -3594,4 +3594,19 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminExportDone => 'ส่งออกการตั้งค่าแล้ว';
+
+  @override
+  String get planCompare => 'เปรียบเทียบแผน';
+
+  @override
+  String get planCompareHelp => 'ขีดจำกัดของแต่ละกลุ่มขึ้นอยู่กับแผนที่ใช้กับกลุ่มนั้น';
+
+  @override
+  String get planCompareFeature => 'ฟีเจอร์';
+
+  @override
+  String get planCompareScroll => 'ปัดไปด้านข้างเพื่อเปรียบเทียบทุกแผน';
+
+  @override
+  String get planCurrent => 'แผนปัจจุบัน';
 }

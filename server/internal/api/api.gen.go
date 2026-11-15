@@ -811,6 +811,9 @@ type MonthStats struct {
 
 // MyPlan defines model for MyPlan.
 type MyPlan struct {
+	// Comparison Current, automatic and purchasable plans, without unrelated administrator-only plans or product mappings.
+	Comparison *PlanComparison `json:"comparison,omitempty"`
+
 	// ExpiresAt When the current plan ends. Left out when it does not.
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 	JoinedGroups Usage      `json:"joinedGroups"`
@@ -1080,6 +1083,14 @@ type PlanCatalog struct {
 
 	// VerifiedPlanId Automatic plan for accounts with a verified email. Active entitlements take precedence. Omitted on update to keep the assignment.
 	VerifiedPlanId *string `json:"verifiedPlanId,omitempty"`
+}
+
+// PlanComparison Current, automatic and purchasable plans, without unrelated administrator-only plans or product mappings.
+type PlanComparison struct {
+	CurrentPlanId    string  `json:"currentPlanId"`
+	Plans            []Plan  `json:"plans"`
+	UnverifiedPlanId *string `json:"unverifiedPlanId,omitempty"`
+	VerifiedPlanId   *string `json:"verifiedPlanId,omitempty"`
 }
 
 // PlanLimits How much a plan allows. Left out means no limit.

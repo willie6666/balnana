@@ -1027,5 +1027,10 @@
   "adminExport": "Ekspor sebagai .env",
   "adminExportHelp": "Unduh pengaturan yang disimpan di sini sebagai baris untuk file .env server",
   "adminExportBody": "File ini berisi semua pengaturan yang disimpan, termasuk kata sandi dan kunci. Masukkan kata sandi administrator untuk mengunduhnya.",
-  "adminExportDone": "Pengaturan diekspor"
+  "adminExportDone": "Pengaturan diekspor",
+  "planCompare": "Bandingkan paket",
+  "planCompareHelp": "Batas setiap grup mengikuti paket yang mencakup grup tersebut.",
+  "planCompareFeature": "Fitur",
+  "planCompareScroll": "Geser ke samping untuk membandingkan semua paket.",
+  "planCurrent": "Paket saat ini"
 }

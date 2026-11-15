@@ -141,6 +141,11 @@ See the [CI workflow](.github/workflows/ci.yml).
 - In `app/`, run `flutter pub get`, `flutter analyze` and `flutter test`.
   On Linux x64, CI primes SQLite's native library cache with
   `python3 ../.github/scripts/prepare_sqlite.py .` after `flutter pub get`.
+- The `foss` Android flavor shows configured PayPal and Ko-fi links by
+  default. Build it with `flutter build apk --release --flavor foss`.
+  `--dart-define=BALNANA_EXTERNAL_PAYMENTS=false` hides those links. The
+  `play` flavor always hides external payment links. The server must also
+  have the corresponding payment provider and products configured.
 - After editing `api/openapi.yaml`, run `go generate ./internal/api` in
   `server/` with the `oapi-codegen` version pinned in CI. After editing
   `app/lib/l10n/*.arb`, run `flutter gen-l10n` in `app/`. If any push

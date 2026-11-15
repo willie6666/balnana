@@ -6296,6 +6296,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings exported'**
   String get adminExportDone;
+
+  /// Heading above a comparison of plan limits.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare plans'**
+  String get planCompare;
+
+  /// Explains which groups receive the plan limits.
+  ///
+  /// In en, this message translates to:
+  /// **'Group limits follow the plan covering each group.'**
+  String get planCompareHelp;
+
+  /// Column heading for the feature names in the plan comparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature'**
+  String get planCompareFeature;
+
+  /// Hint for the horizontally scrolling plan comparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe sideways to compare all plans.'**
+  String get planCompareScroll;
+
+  /// Label on the plan the account currently has.
+  ///
+  /// In en, this message translates to:
+  /// **'Current plan'**
+  String get planCurrent;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -67,6 +67,7 @@ class MyPlan {
     this.reminders = false,
     this.play,
     this.paypal,
+    this.comparison,
   });
 
   factory MyPlan.fromJson(Object? data) {
@@ -83,6 +84,7 @@ class MyPlan {
       reminders: optionalField<bool>(json, 'reminders') ?? false,
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
       paypal: json['paypal'] == null ? null : PayPalBilling.fromJson(json['paypal']),
+      comparison: json['comparison'] == null ? null : PlanComparisonData.fromJson(json['comparison']),
     );
   }
 
@@ -114,6 +116,34 @@ class MyPlan {
 
   /// Null when nothing can be bought through PayPal.
   final PayPalBilling? paypal;
+
+  /// The current, automatic and purchasable plans for comparing their limits.
+  final PlanComparisonData? comparison;
+}
+
+/// The plans this account can use, with their automatic eligibility rules.
+class PlanComparisonData {
+  const PlanComparisonData({
+    required this.currentPlanId,
+    required this.plans,
+    this.unverifiedPlanId,
+    this.verifiedPlanId,
+  });
+
+  factory PlanComparisonData.fromJson(Object? data) {
+    final json = jsonObject(data);
+    return PlanComparisonData(
+      currentPlanId: requiredField(json, 'currentPlanId'),
+      plans: [for (final plan in requiredField<List<Object?>>(json, 'plans')) Plan.fromJson(plan)],
+      unverifiedPlanId: optionalField(json, 'unverifiedPlanId'),
+      verifiedPlanId: optionalField(json, 'verifiedPlanId'),
+    );
+  }
+
+  final String currentPlanId;
+  final List<Plan> plans;
+  final String? unverifiedPlanId;
+  final String? verifiedPlanId;
 }
 
 /// What the account can buy through PayPal.

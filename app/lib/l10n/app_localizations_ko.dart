@@ -3499,4 +3499,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminExportDone => '설정을 내보냈습니다';
+
+  @override
+  String get planCompare => '요금제 비교';
+
+  @override
+  String get planCompareHelp => '각 그룹의 한도는 해당 그룹에 적용되는 요금제를 따릅니다.';
+
+  @override
+  String get planCompareFeature => '기능';
+
+  @override
+  String get planCompareScroll => '좌우로 밀어 모든 요금제를 비교하세요.';
+
+  @override
+  String get planCurrent => '현재 요금제';
 }

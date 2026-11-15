@@ -3621,4 +3621,19 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Đã xuất cài đặt';
+
+  @override
+  String get planCompare => 'So sánh gói';
+
+  @override
+  String get planCompareHelp => 'Giới hạn của mỗi nhóm tuân theo gói áp dụng cho nhóm đó.';
+
+  @override
+  String get planCompareFeature => 'Tính năng';
+
+  @override
+  String get planCompareScroll => 'Vuốt ngang để so sánh tất cả các gói.';
+
+  @override
+  String get planCurrent => 'Gói hiện tại';
 }

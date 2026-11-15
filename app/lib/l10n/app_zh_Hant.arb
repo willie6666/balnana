@@ -1027,5 +1027,10 @@
   "adminExport": "匯出為 .env",
   "adminExportHelp": "將這裡儲存的設定下載成伺服器 .env 檔可用的內容",
   "adminExportBody": "檔案包含所有已儲存的設定，包括密碼和金鑰。輸入管理員密碼以下載。",
-  "adminExportDone": "已匯出設定"
+  "adminExportDone": "已匯出設定",
+  "planCompare": "比較方案",
+  "planCompareHelp": "每個群組的額度取決於該群組使用的方案。",
+  "planCompareFeature": "功能",
+  "planCompareScroll": "左右滑動比較所有方案。",
+  "planCurrent": "目前方案"
 }

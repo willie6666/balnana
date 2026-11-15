@@ -1027,5 +1027,10 @@
   "adminExport": ".env olarak dışa aktar",
   "adminExportHelp": "Burada kaydedilen ayarları sunucunun .env dosyası için satırlar olarak indir",
   "adminExportBody": "Dosya, parolalar ve anahtarlar dahil kaydedilen tüm ayarları içerir. İndirmek için yönetici parolasını gir.",
-  "adminExportDone": "Ayarlar dışa aktarıldı"
+  "adminExportDone": "Ayarlar dışa aktarıldı",
+  "planCompare": "Planları karşılaştır",
+  "planCompareHelp": "Her grubun sınırları, grubu kapsayan plana göre belirlenir.",
+  "planCompareFeature": "Özellik",
+  "planCompareScroll": "Tüm planları karşılaştırmak için yana kaydırın.",
+  "planCurrent": "Mevcut plan"
 }

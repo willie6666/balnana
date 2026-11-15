@@ -3732,4 +3732,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminExportDone => 'تم تصدير الإعدادات';
+
+  @override
+  String get planCompare => 'مقارنة الخطط';
+
+  @override
+  String get planCompareHelp => 'تتبع حدود المجموعة الخطة التي تغطي كل مجموعة.';
+
+  @override
+  String get planCompareFeature => 'الميزة';
+
+  @override
+  String get planCompareScroll => 'اسحب أفقيًا لمقارنة جميع الخطط.';
+
+  @override
+  String get planCurrent => 'الخطة الحالية';
 }

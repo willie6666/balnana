@@ -1027,5 +1027,10 @@
   "adminExport": "Exportar como .env",
   "adminExportHelp": "Baixe as configurações salvas aqui como linhas para o arquivo .env do servidor",
   "adminExportBody": "O arquivo contém todas as configurações salvas, incluindo senhas e chaves. Digite a senha de administrador para baixá-lo.",
-  "adminExportDone": "Configurações exportadas"
+  "adminExportDone": "Configurações exportadas",
+  "planCompare": "Comparar planos",
+  "planCompareHelp": "Os limites de cada grupo seguem o plano que o cobre.",
+  "planCompareFeature": "Recurso",
+  "planCompareScroll": "Deslize para os lados para comparar todos os planos.",
+  "planCurrent": "Plano atual"
 }

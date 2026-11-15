@@ -3687,4 +3687,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Einstellungen exportiert';
+
+  @override
+  String get planCompare => 'Tarife vergleichen';
+
+  @override
+  String get planCompareHelp => 'Die Gruppenlimits richten sich nach dem Tarif der jeweiligen Gruppe.';
+
+  @override
+  String get planCompareFeature => 'Funktion';
+
+  @override
+  String get planCompareScroll => 'Wische seitwärts, um alle Tarife zu vergleichen.';
+
+  @override
+  String get planCurrent => 'Aktueller Tarif';
 }

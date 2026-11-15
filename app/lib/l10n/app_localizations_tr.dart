@@ -3638,4 +3638,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Ayarlar dışa aktarıldı';
+
+  @override
+  String get planCompare => 'Planları karşılaştır';
+
+  @override
+  String get planCompareHelp => 'Her grubun sınırları, grubu kapsayan plana göre belirlenir.';
+
+  @override
+  String get planCompareFeature => 'Özellik';
+
+  @override
+  String get planCompareScroll => 'Tüm planları karşılaştırmak için yana kaydırın.';
+
+  @override
+  String get planCurrent => 'Mevcut plan';
 }

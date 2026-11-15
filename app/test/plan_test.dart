@@ -7,6 +7,7 @@ import 'package:balnana/core/server.dart';
 import 'package:balnana/data/api.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
+import 'package:balnana/features/settings/plan_comparison.dart';
 import 'package:balnana/features/settings/plan_page.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:balnana/ui/widgets/play_purchases.dart';
@@ -26,12 +27,24 @@ const _plan = MyPlan(
   membersPerGroup: 100,
 );
 
-const _offer = PlayOffer(productId: 'plus_monthly', offerToken: 'offer', name: 'Plus', price: r'$3', period: 'P3M');
+const _offer = PlayOffer(
+  productId: 'plus_monthly',
+  offerToken: 'offer',
+  name: 'Plus',
+  price: r'$3',
+  period: 'P3M',
+);
 
 const _play = PlayBilling(accountId: 'hash', packageName: 'me.devvillie.balnana', products: ['plus_monthly']);
 
 class _FakePlay extends GooglePlay {
-  _FakePlay({this.held = const [], this.tokens = const [], this.owned = false, this.paying, this.unreachable = false});
+  _FakePlay({
+    this.held = const [],
+    this.tokens = const [],
+    this.owned = false,
+    this.paying,
+    this.unreachable = false,
+  });
 
   final List<String> held;
   final List<String> tokens;
@@ -92,7 +105,14 @@ class _FakeApi extends BalnanaApi {
   }
 }
 
-Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, BalnanaApi? api, String? paypal}) async {
+Future<void> _pump(
+  WidgetTester tester,
+  MyPlan plan, {
+  GooglePlay? store,
+  BalnanaApi? api,
+  String? paypal,
+  bool externalLinks = false,
+}) async {
   // Tall enough for the whole page: its lists only build what is on screen.
   tester.view.physicalSize = const Size(1200, 3600);
   addTearDown(tester.view.reset);
@@ -109,7 +129,7 @@ Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, Balnana
               authMode: AuthMode.accounts,
               publicUrl: _server,
               billing: true,
-              kofiUrl: Uri.parse('https://ko-fi.com/example'),
+              kofiUrl: externalLinks ? Uri.parse('https://ko-fi.com/example') : null,
             ),
           ),
         ),
@@ -126,6 +146,48 @@ Future<void> _pump(WidgetTester tester, MyPlan plan, {GooglePlay? store, Balnana
 
 void main() {
   final l10n = AppLocalizationsEn();
+
+  test('external payments follow the distribution and explicit override', () {
+    expect(externalPaymentsFor(web: false, flavor: 'foss'), isTrue);
+    expect(externalPaymentsFor(web: false, flavor: 'foss', enabled: false), isFalse);
+    expect(externalPaymentsFor(web: false, flavor: 'play'), isFalse);
+    expect(externalPaymentsFor(web: false, flavor: 'play', enabled: true), isFalse);
+    expect(externalPaymentsFor(web: false, flavor: null), isFalse);
+    expect(externalPaymentsFor(web: false, flavor: null, enabled: true), isTrue);
+    expect(externalPaymentsFor(web: true, flavor: 'play', enabled: false), isTrue);
+  });
+
+  test('a plan reads comparison limits and automatic eligibility', () {
+    final plan = MyPlan.fromJson({
+      'planName': 'Free',
+      'joinedGroups': {'used': 0},
+      'sponsoredGroups': {'used': 0},
+      'comparison': {
+        'currentPlanId': 'free',
+        'unverifiedPlanId': 'unverified',
+        'verifiedPlanId': 'free',
+        'plans': [
+          {
+            'id': 'free',
+            'name': 'Free',
+            'limits': {'receiptsPerGroup': 0, 'reminders': false},
+          },
+          {
+            'id': 'plus',
+            'name': 'Plus',
+            'limits': {'reminders': true},
+          },
+        ],
+      },
+    });
+    final comparison = plan.comparison!;
+    expect(comparison.currentPlanId, 'free');
+    expect(comparison.unverifiedPlanId, 'unverified');
+    expect(comparison.verifiedPlanId, 'free');
+    expect(comparison.plans.first.limits.receiptsPerGroup, 0);
+    expect(comparison.plans.last.limits.receiptsPerGroup, isNull);
+    expect(comparison.plans.last.limits.reminders, isTrue);
+  });
 
   group('server info', () {
     Map<String, Object?> json([Map<String, Object?> extra = const {}]) => {
@@ -192,6 +254,7 @@ void main() {
     expect(plan.receiptsPerGroup, 20);
     expect(plan.recurringPerGroup, isNull);
     expect(plan.paypal, isNull);
+    expect(plan.comparison, isNull);
   });
 
   test('a plan reads what PayPal sells', () {
@@ -202,7 +265,14 @@ void main() {
       'paypal': {
         'offers': [
           {'product': 'P-ABC', 'planName': 'Plus', 'days': 30, 'subscription': true},
-          {'product': 'plus90', 'planName': 'Plus', 'days': 90, 'subscription': false, 'amount': '9.00', 'currency': 'USD'},
+          {
+            'product': 'plus90',
+            'planName': 'Plus',
+            'days': 90,
+            'subscription': false,
+            'amount': '9.00',
+            'currency': 'USD',
+          },
         ],
         'subscribed': ['P-ABC'],
       },
@@ -224,17 +294,52 @@ void main() {
     expect(find.text(l10n.planUnlimited), findsOneWidget);
   });
 
+  testWidgets('the plan page shows the server comparison alongside its limits', (tester) async {
+    await _pump(
+      tester,
+      const MyPlan(
+        planName: 'Free',
+        joinedGroups: PlanUsage(used: 0),
+        sponsoredGroups: PlanUsage(used: 0),
+        comparison: PlanComparisonData(
+          currentPlanId: 'free',
+          plans: [
+            Plan(id: 'free', name: 'Free'),
+            Plan(id: 'plus', name: 'Plus'),
+          ],
+        ),
+      ),
+    );
+    expect(find.byType(PlanComparisonTable), findsOneWidget);
+    expect(find.text(l10n.planCurrent), findsOneWidget);
+    expect(find.text(l10n.planLimits), findsOneWidget);
+  });
+
   // Google Play doesn't allow pointing people elsewhere to pay.
   testWidgets('a build without external payments has no way to pay', (tester) async {
     expect(externalPayments, isFalse);
-    await _pump(tester, _plan);
+    await _pump(
+      tester,
+      const MyPlan(
+        planName: 'Free',
+        joinedGroups: PlanUsage(used: 0),
+        sponsoredGroups: PlanUsage(used: 0),
+        paypal: PayPalBilling(
+          offers: [PayPalOffer(product: 'P-ABC', planName: 'Plus monthly', days: 30, subscription: true)],
+          subscribed: ['P-ABC'],
+        ),
+      ),
+      externalLinks: true,
+    );
 
+    expect(find.text('Plus monthly'), findsNothing);
+    expect(find.text(l10n.planPayPalManage), findsNothing);
     expect(find.text(l10n.planKofi), findsNothing);
     expect(find.text(l10n.planGet), findsNothing);
     expect(find.text(l10n.planPaymentClaim), findsNothing);
-  });
+  }, skip: externalPayments);
 
-  // Runs with --dart-define=BALNANA_EXTERNAL_PAYMENTS=true.
+  // Runs in FOSS by default, or with BALNANA_EXTERNAL_PAYMENTS=true.
   testWidgets('a build with external payments shows Ko-fi and PayPal', (tester) async {
     await _pump(
       tester,
@@ -251,6 +356,7 @@ void main() {
         ),
       ),
       api: _FakeApi(),
+      externalLinks: true,
     );
 
     expect(find.text(l10n.planKofiHelp), findsOneWidget);
@@ -322,7 +428,8 @@ void main() {
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
-                  onPressed: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
+                  onPressed: () =>
+                      showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
                   child: const Text('open'),
                 ),
               ),
@@ -436,13 +543,18 @@ void main() {
     testWidgets('a purchase is reported after the page has closed', (tester) async {
       final paying = Completer<void>();
       final api = _FakeApi();
-      await _pump(tester, withPlay(_play), store: _FakePlay(tokens: ['token'], paying: paying), api: api);
+      await _pump(
+        tester,
+        withPlay(_play),
+        store: _FakePlay(tokens: ['token'], paying: paying),
+        api: api,
+      );
 
       await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
       await tester.pump();
-      tester.state<NavigatorState>(find.byType(Navigator)).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const SizedBox()),
-      );
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .pushReplacement(MaterialPageRoute<void>(builder: (_) => const SizedBox()));
       await tester.pumpAndSettle();
       expect(find.byType(PlanPage), findsNothing);
 
@@ -465,7 +577,12 @@ void main() {
 
     testWidgets('a subscription someone else holds says so', (tester) async {
       final api = _FakeApi(failure: const ApiException('play_other_account'));
-      await _pump(tester, withPlay(_play), store: _FakePlay(owned: true, held: ['theirs']), api: api);
+      await _pump(
+        tester,
+        withPlay(_play),
+        store: _FakePlay(owned: true, held: ['theirs']),
+        api: api,
+      );
       expect(api.reported, ['theirs']);
 
       await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
@@ -476,7 +593,12 @@ void main() {
 
     testWidgets('opening the page reports what Play holds', (tester) async {
       final api = _FakeApi();
-      await _pump(tester, withPlay(_play), store: _FakePlay(held: ['renewed']), api: api);
+      await _pump(
+        tester,
+        withPlay(_play),
+        store: _FakePlay(held: ['renewed']),
+        api: api,
+      );
 
       expect(api.reported, ['renewed']);
     });

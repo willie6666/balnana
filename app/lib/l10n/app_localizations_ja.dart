@@ -3497,4 +3497,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminExportDone => '設定をエクスポートしました';
+
+  @override
+  String get planCompare => 'プランを比較';
+
+  @override
+  String get planCompareHelp => '各グループの上限は、そのグループに適用されるプランに従います。';
+
+  @override
+  String get planCompareFeature => '機能';
+
+  @override
+  String get planCompareScroll => '左右にスワイプしてすべてのプランを比較できます。';
+
+  @override
+  String get planCurrent => '現在のプラン';
 }

@@ -3634,4 +3634,19 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Pengaturan diekspor';
+
+  @override
+  String get planCompare => 'Bandingkan paket';
+
+  @override
+  String get planCompareHelp => 'Batas setiap grup mengikuti paket yang mencakup grup tersebut.';
+
+  @override
+  String get planCompareFeature => 'Fitur';
+
+  @override
+  String get planCompareScroll => 'Geser ke samping untuk membandingkan semua paket.';
+
+  @override
+  String get planCurrent => 'Paket saat ini';
 }

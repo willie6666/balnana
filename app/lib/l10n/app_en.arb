@@ -5354,5 +5354,25 @@
   "adminExportDone": "Settings exported",
   "@adminExportDone": {
     "description": "Snackbar after the settings file was saved."
+  },
+  "planCompare": "Compare plans",
+  "@planCompare": {
+    "description": "Heading above a comparison of plan limits."
+  },
+  "planCompareHelp": "Group limits follow the plan covering each group.",
+  "@planCompareHelp": {
+    "description": "Explains which groups receive the plan limits."
+  },
+  "planCompareFeature": "Feature",
+  "@planCompareFeature": {
+    "description": "Column heading for the feature names in the plan comparison."
+  },
+  "planCompareScroll": "Swipe sideways to compare all plans.",
+  "@planCompareScroll": {
+    "description": "Hint for the horizontally scrolling plan comparison."
+  },
+  "planCurrent": "Current plan",
+  "@planCurrent": {
+    "description": "Label on the plan the account currently has."
   }
 }

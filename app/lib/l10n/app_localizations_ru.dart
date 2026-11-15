@@ -3745,4 +3745,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Настройки экспортированы';
+
+  @override
+  String get planCompare => 'Сравнение планов';
+
+  @override
+  String get planCompareHelp => 'Лимиты каждой группы определяются действующим для неё планом.';
+
+  @override
+  String get planCompareFeature => 'Возможность';
+
+  @override
+  String get planCompareScroll => 'Проведите в сторону, чтобы сравнить все планы.';
+
+  @override
+  String get planCurrent => 'Текущий план';
 }

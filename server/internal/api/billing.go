@@ -15,6 +15,7 @@ const entitlementActive = `e.revoked_at is null and e.starts_at <= now() and (e.
 
 // plan is what someone may use. A nil limit is no limit.
 type plan struct {
+	id        string
 	name      string
 	paid      bool
 	receipts  *int
@@ -32,7 +33,7 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 	var p plan
 	var ends *time.Time
 	err := q.QueryRow(ctx, `
-		select p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
+		select p.id, p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
 		       p.members_per_group, p.sponsored_groups, p.reminders, e.expires_at
 		from plans p
 		cross join automatic_plans a
@@ -43,7 +44,7 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 		       else p.id = a.unverified_plan_id end) or e.id is not null
 		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
 		limit 1`, userID).
-		Scan(&p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
+		Scan(&p.id, &p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -312,6 +313,47 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	}
 	if out.Paypal, err = s.paypalOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
+	}
+	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.Paypal != nil); err != nil {
+		return MyPlan{}, err
+	}
+	return out, nil
+}
+
+// planComparison exposes the plans this account can use or buy. Product
+// mappings and unrelated administrator-only plans stay in the admin API.
+func (s *Server) planComparison(ctx context.Context, q querier, current string, play, paypal bool) (*PlanComparison, error) {
+	catalog, err := planCatalog(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	visible := map[string]bool{current: true}
+	// Verification can unlock this plan. The unverified plan is relevant
+	// only while it is the account's current plan.
+	if catalog.VerifiedPlanId != nil {
+		visible[*catalog.VerifiedPlanId] = true
+	}
+	for _, product := range catalog.Products {
+		if (product.Provider == Kofi && s.conf().KofiURL != nil) ||
+			(product.Provider == Play && play) || (product.Provider == Paypal && paypal) {
+			visible[product.PlanId] = true
+		}
+	}
+	out := &PlanComparison{
+		CurrentPlanId: current, UnverifiedPlanId: catalog.UnverifiedPlanId,
+		VerifiedPlanId: catalog.VerifiedPlanId, Plans: []Plan{},
+	}
+	for _, option := range catalog.Plans {
+		if !option.IsDefault && !visible[option.Id] {
+			continue
+		}
+		// The group API's hard member cap applies even to an unlimited plan.
+		members := maxMembers
+		if option.Limits.MembersPerGroup != nil {
+			members = min(members, *option.Limits.MembersPerGroup)
+		}
+		option.Limits.MembersPerGroup = &members
+		out.Plans = append(out.Plans, option)
 	}
 	return out, nil
 }

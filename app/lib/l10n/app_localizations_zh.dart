@@ -3479,6 +3479,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminExportDone => '设置已导出';
+
+  @override
+  String get planCompare => '比较方案';
+
+  @override
+  String get planCompareHelp => '每个群组的额度取决于该群组使用的方案。';
+
+  @override
+  String get planCompareFeature => '功能';
+
+  @override
+  String get planCompareScroll => '左右滑动比较所有方案。';
+
+  @override
+  String get planCurrent => '当前方案';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -6955,4 +6970,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminExportDone => '已匯出設定';
+
+  @override
+  String get planCompare => '比較方案';
+
+  @override
+  String get planCompareHelp => '每個群組的額度取決於該群組使用的方案。';
+
+  @override
+  String get planCompareFeature => '功能';
+
+  @override
+  String get planCompareScroll => '左右滑動比較所有方案。';
+
+  @override
+  String get planCurrent => '目前方案';
 }

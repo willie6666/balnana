@@ -1027,5 +1027,10 @@
   "adminExport": "Exporter en .env",
   "adminExportHelp": "Télécharger les réglages enregistrés ici sous forme de lignes pour le fichier .env du serveur",
   "adminExportBody": "Le fichier contient tous les réglages enregistrés, mots de passe et clés compris. Saisissez le mot de passe administrateur pour le télécharger.",
-  "adminExportDone": "Réglages exportés"
+  "adminExportDone": "Réglages exportés",
+  "planCompare": "Comparer les offres",
+  "planCompareHelp": "Les limites de chaque groupe dépendent de l’offre qui le couvre.",
+  "planCompareFeature": "Fonctionnalité",
+  "planCompareScroll": "Faites défiler horizontalement pour comparer toutes les offres.",
+  "planCurrent": "Offre actuelle"
 }

@@ -3794,6 +3794,23 @@ components:
           $ref: "#/components/schemas/PlayBilling"
         paypal:
           $ref: "#/components/schemas/PayPalBilling"
+        comparison:
+          $ref: "#/components/schemas/PlanComparison"
+    PlanComparison:
+      type: object
+      description: Current, automatic and purchasable plans, without unrelated administrator-only plans or product mappings.
+      required: [currentPlanId, plans]
+      properties:
+        currentPlanId:
+          type: string
+        unverifiedPlanId:
+          type: string
+        verifiedPlanId:
+          type: string
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/Plan"
     PayPalBilling:
       type: object
       description: What can be bought through PayPal. Left out when nothing can.

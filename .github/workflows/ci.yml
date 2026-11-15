@@ -75,8 +75,11 @@ jobs:
       - run: git diff --exit-code lib/l10n
       - run: flutter analyze
       - run: flutter test
-      # The build that may link to Ko-fi, which the Play build must never do.
-      - run: flutter test --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --plain-name "a build with external payments shows Ko-fi and PayPal" test/plan_test.dart
+      # FOSS shows external payment links by default. Play must hide them even
+      # when explicitly enabled; other distributions can explicitly opt out.
+      - run: flutter test --flavor foss --plain-name "a build with external payments shows Ko-fi and PayPal" test/plan_test.dart
+      - run: flutter test --flavor play --dart-define=BALNANA_EXTERNAL_PAYMENTS=true --plain-name "a build without external payments has no way to pay" test/plan_test.dart
+      - run: flutter test --flavor foss --dart-define=BALNANA_EXTERNAL_PAYMENTS=false --plain-name "a build without external payments has no way to pay" test/plan_test.dart
       # Compile the browser-only code and each native billing implementation.
       - run: flutter build web --release --no-web-resources-cdn --no-pub
       - uses: actions/setup-java@v4

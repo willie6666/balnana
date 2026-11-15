@@ -3626,4 +3626,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Settings exported';
+
+  @override
+  String get planCompare => 'Compare plans';
+
+  @override
+  String get planCompareHelp => 'Group limits follow the plan covering each group.';
+
+  @override
+  String get planCompareFeature => 'Feature';
+
+  @override
+  String get planCompareScroll => 'Swipe sideways to compare all plans.';
+
+  @override
+  String get planCurrent => 'Current plan';
 }

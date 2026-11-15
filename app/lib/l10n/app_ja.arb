@@ -1027,5 +1027,10 @@
   "adminExport": ".env としてエクスポート",
   "adminExportHelp": "ここに保存された設定を、サーバーの .env ファイル用の行としてダウンロードします",
   "adminExportBody": "ファイルには、パスワードやキーを含む保存済みの設定がすべて含まれます。ダウンロードするには管理者パスワードを入力してください。",
-  "adminExportDone": "設定をエクスポートしました"
+  "adminExportDone": "設定をエクスポートしました",
+  "planCompare": "プランを比較",
+  "planCompareHelp": "各グループの上限は、そのグループに適用されるプランに従います。",
+  "planCompareFeature": "機能",
+  "planCompareScroll": "左右にスワイプしてすべてのプランを比較できます。",
+  "planCurrent": "現在のプラン"
 }

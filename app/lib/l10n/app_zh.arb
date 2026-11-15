@@ -1027,5 +1027,10 @@
   "adminExport": "导出为 .env",
   "adminExportHelp": "将此处保存的设置下载为服务器 .env 文件可用的内容",
   "adminExportBody": "文件包含所有已保存的设置，包括密码和密钥。输入管理员密码以下载。",
-  "adminExportDone": "设置已导出"
+  "adminExportDone": "设置已导出",
+  "planCompare": "比较方案",
+  "planCompareHelp": "每个群组的额度取决于该群组使用的方案。",
+  "planCompareFeature": "功能",
+  "planCompareScroll": "左右滑动比较所有方案。",
+  "planCurrent": "当前方案"
 }

@@ -3667,4 +3667,19 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Instellingen geëxporteerd';
+
+  @override
+  String get planCompare => 'Abonnementen vergelijken';
+
+  @override
+  String get planCompareHelp => 'De limieten van elke groep volgen het abonnement dat de groep dekt.';
+
+  @override
+  String get planCompareFeature => 'Functie';
+
+  @override
+  String get planCompareScroll => 'Veeg opzij om alle abonnementen te vergelijken.';
+
+  @override
+  String get planCurrent => 'Huidig abonnement';
 }

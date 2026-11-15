@@ -3776,4 +3776,19 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Налаштування експортовано';
+
+  @override
+  String get planCompare => 'Порівняння планів';
+
+  @override
+  String get planCompareHelp => 'Обмеження кожної групи визначає план, що її покриває.';
+
+  @override
+  String get planCompareFeature => 'Можливість';
+
+  @override
+  String get planCompareScroll => 'Проведіть убік, щоб порівняти всі плани.';
+
+  @override
+  String get planCurrent => 'Поточний план';
 }

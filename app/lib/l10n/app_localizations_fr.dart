@@ -3728,4 +3728,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminExportDone => 'Réglages exportés';
+
+  @override
+  String get planCompare => 'Comparer les offres';
+
+  @override
+  String get planCompareHelp => 'Les limites de chaque groupe dépendent de l’offre qui le couvre.';
+
+  @override
+  String get planCompareFeature => 'Fonctionnalité';
+
+  @override
+  String get planCompareScroll => 'Faites défiler horizontalement pour comparer toutes les offres.';
+
+  @override
+  String get planCurrent => 'Offre actuelle';
 }

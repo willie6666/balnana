@@ -1027,5 +1027,10 @@
   "adminExport": ".env로 내보내기",
   "adminExportHelp": "여기에 저장된 설정을 서버의 .env 파일에 넣을 줄로 내려받습니다",
   "adminExportBody": "파일에는 비밀번호와 키를 포함해 저장된 모든 설정이 들어 있습니다. 내려받으려면 관리자 비밀번호를 입력하세요.",
-  "adminExportDone": "설정을 내보냈습니다"
+  "adminExportDone": "설정을 내보냈습니다",
+  "planCompare": "요금제 비교",
+  "planCompareHelp": "각 그룹의 한도는 해당 그룹에 적용되는 요금제를 따릅니다.",
+  "planCompareFeature": "기능",
+  "planCompareScroll": "좌우로 밀어 모든 요금제를 비교하세요.",
+  "planCurrent": "현재 요금제"
 }

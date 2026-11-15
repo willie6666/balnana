@@ -1027,5 +1027,10 @@
   "adminExport": "Xuất thành .env",
   "adminExportHelp": "Tải các cài đặt đã lưu ở đây dưới dạng các dòng cho tệp .env của máy chủ",
   "adminExportBody": "Tệp chứa mọi cài đặt đã lưu, kể cả mật khẩu và khóa. Nhập mật khẩu quản trị viên để tải xuống.",
-  "adminExportDone": "Đã xuất cài đặt"
+  "adminExportDone": "Đã xuất cài đặt",
+  "planCompare": "So sánh gói",
+  "planCompareHelp": "Giới hạn của mỗi nhóm tuân theo gói áp dụng cho nhóm đó.",
+  "planCompareFeature": "Tính năng",
+  "planCompareScroll": "Vuốt ngang để so sánh tất cả các gói.",
+  "planCurrent": "Gói hiện tại"
 }
