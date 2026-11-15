@@ -4718,7 +4718,7 @@
   "@errorBillingOff": {
     "description": "Label or control text for error billing off in an error message."
   },
-  "errorAlreadySponsored": "Another member's plan already covers this group.",
+  "errorAlreadySponsored": "Another member has already upgraded this group.",
   "@errorAlreadySponsored": {
     "description": "Label or control text for error already sponsored in an error message."
   },
@@ -4794,7 +4794,7 @@
       }
     }
   },
-  "errorLimitSponsored": "Your plan can't be shared with more than {max} groups.",
+  "errorLimitSponsored": "Your plan can upgrade up to {max} groups.",
   "@errorLimitSponsored": {
     "description": "Label or control text for error limit sponsored in an error message.",
     "placeholders": {
@@ -4881,9 +4881,9 @@
   "@planLimitMembers": {
     "description": "The limit on how many people a group can have, in the plan screens."
   },
-  "planLimitSponsored": "Groups sharing your plan",
+  "planLimitSponsored": "Upgraded groups",
   "@planLimitSponsored": {
-    "description": "Label or control text for plan limit sponsored in the plan screens."
+    "description": "Label of how many groups the account upgrades to its plan, of how many it may."
   },
   "planLimitReminders": "Payment reminders",
   "@planLimitReminders": {
@@ -4983,26 +4983,17 @@
   "@planPayPalFailed": {
     "description": "Text about paying for a plan with PayPal in the plan screens."
   },
-  "groupPlanUsage": "People: {members} · Receipt photos: {receipts} · Recurring: {recurring}",
-  "@groupPlanUsage": {
-    "description": "Label or control text for group plan usage in the plan screens.",
+  "groupSponsor": "Upgrade this group to {plan}",
+  "@groupSponsor": {
+    "description": "Switch that upgrades a group to the signed-in account's plan, so everyone in the group gets its limits.",
     "placeholders": {
-      "members": {
-        "type": "String"
-      },
-      "receipts": {
-        "type": "String"
-      },
-      "recurring": {
-        "type": "String"
+      "plan": {
+        "type": "String",
+        "description": "The name of the account's plan, such as Plus."
       }
     }
   },
-  "groupSponsor": "Share my plan with this group",
-  "@groupSponsor": {
-    "description": "Label or control text for group sponsor in the plan screens."
-  },
-  "groupSponsoredBy": "Uses {name}'s plan",
+  "groupSponsoredBy": "Upgraded by {name}",
   "@groupSponsoredBy": {
     "description": "Label or control text for group sponsored by in the plan screens.",
     "placeholders": {
@@ -5010,6 +5001,10 @@
         "type": "String"
       }
     }
+  },
+  "groupPlanReceipts": "Receipt photos",
+  "@groupPlanReceipts": {
+    "description": "Label of a group's receipt-photo usage bar in the group's plan section."
   },
   "accountDeletePlayNote": "A Google Play subscription doesn't end with your account. Cancel it on Google Play first.",
   "@accountDeletePlayNote": {
@@ -5202,31 +5197,21 @@
   "@refreshFailed": {
     "description": "Shown when reloading a group failed and the older data stays on screen."
   },
-  "sharePlanTitle": "Plan sharing",
+  "sharePlanTitle": "Group upgrades",
   "@sharePlanTitle": {
-    "description": "Title of the settings page where an account picks which of its groups use its plan, and of the tile that opens it."
+    "description": "Title of the settings page where an account picks which of its groups to upgrade to its plan, and of the tile that opens it."
   },
-  "sharePlanSettingsHelp": "Choose which groups use your plan",
+  "sharePlanSettingsHelp": "Choose which groups to upgrade with your plan",
   "@sharePlanSettingsHelp": {
-    "description": "Subtitle of the settings tile that opens the plan sharing page."
+    "description": "Subtitle of the settings tile that opens the group upgrades page."
   },
-  "sharePlanHelp": "A group you share your plan with gets its limits, for everyone in it.",
+  "sharePlanHelp": "An upgraded group gets your plan's limits, for everyone in it.",
   "@sharePlanHelp": {
-    "description": "Explains on the plan sharing page what sharing a plan with a group does."
-  },
-  "sharePlanUsage": "Groups sharing your plan: {usage}",
-  "@sharePlanUsage": {
-    "description": "How many groups share the plan, on the plan sharing page.",
-    "placeholders": {
-      "usage": {
-        "type": "String",
-        "description": "Already formatted, such as \"2 of 10\"."
-      }
-    }
+    "description": "Explains on the group upgrades page what upgrading a group to the account's plan does."
   },
   "groupSponsorHelp": "Everyone in the group gets the limits of your {plan} plan.",
   "@groupSponsorHelp": {
-    "description": "Subtitle of the share-my-plan switch when creating a group.",
+    "description": "Subtitle of the switch that upgrades a group to the account's plan.",
     "placeholders": {
       "plan": {
         "type": "String",

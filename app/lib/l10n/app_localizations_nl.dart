@@ -3207,7 +3207,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get errorBillingOff => 'Deze server heeft geen abonnementen.';
 
   @override
-  String get errorAlreadySponsored => 'Het abonnement van een ander lid dekt deze groep al.';
+  String get errorAlreadySponsored => 'Een ander lid heeft deze groep al geüpgraded.';
 
   @override
   String get errorPlanInUse => 'Accounts of producten gebruiken dit abonnement nog.';
@@ -3257,7 +3257,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Je abonnement kan met maximaal $max groepen worden gedeeld.';
+    return 'Je abonnement kan maximaal $max groepen upgraden.';
   }
 
   @override
@@ -3310,7 +3310,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planLimitMembers => 'Personen per groep';
 
   @override
-  String get planLimitSponsored => 'Groepen die je abonnement delen';
+  String get planLimitSponsored => 'Geüpgradede groepen';
 
   @override
   String get planLimitReminders => 'Betalingsherinneringen';
@@ -3381,17 +3381,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planPayPalFailed => 'De PayPal-betaling is niet gelukt.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Personen: $members · Bonfoto\'s: $receipts · Terugkerend: $recurring';
+  String groupSponsor(String plan) {
+    return 'Deze groep upgraden naar $plan';
   }
-
-  @override
-  String get groupSponsor => 'Mijn abonnement met deze groep delen';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Gebruikt het abonnement van $name';
+    return 'Geüpgraded door $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'Bonfoto\'s';
 
   @override
   String get accountDeletePlayNote =>
@@ -3548,19 +3548,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get refreshFailed => 'Bijwerken is mislukt. Dit is mogelijk verouderd.';
 
   @override
-  String get sharePlanTitle => 'Abonnement delen';
+  String get sharePlanTitle => 'Groepsupgrades';
 
   @override
-  String get sharePlanSettingsHelp => 'Kies welke groepen je abonnement gebruiken';
+  String get sharePlanSettingsHelp => 'Kies welke groepen je met je abonnement upgradet';
 
   @override
   String get sharePlanHelp =>
-      'Een groep waarmee je je abonnement deelt, krijgt de limieten ervan voor iedereen in de groep.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Groepen die je abonnement delen: $usage';
-  }
+      'Een geüpgradede groep krijgt de limieten van je abonnement, voor iedereen erin.';
 
   @override
   String groupSponsorHelp(String plan) {

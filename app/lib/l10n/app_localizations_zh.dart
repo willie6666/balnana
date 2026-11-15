@@ -3053,7 +3053,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorBillingOff => '此服务器没有方案。';
 
   @override
-  String get errorAlreadySponsored => '此群组已由其他成员的方案覆盖。';
+  String get errorAlreadySponsored => '其他成员已经升级了这个群组。';
 
   @override
   String get errorPlanInUse => '仍有账号或商品在使用此方案。';
@@ -3101,7 +3101,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return '你的方案最多只能共享给 $max 个群组。';
+    return '你的方案最多只能升级 $max 个群组。';
   }
 
   @override
@@ -3153,7 +3153,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planLimitMembers => '每个群组的人数';
 
   @override
-  String get planLimitSponsored => '共享你方案的群组';
+  String get planLimitSponsored => '已升级的群组';
 
   @override
   String get planLimitReminders => '付款提醒';
@@ -3222,17 +3222,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planPayPalFailed => 'PayPal 付款未成功。';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return '人数：$members · 收据照片：$receipts · 周期性支出：$recurring';
+  String groupSponsor(String plan) {
+    return '将群组升级为 $plan';
   }
-
-  @override
-  String get groupSponsor => '与此群组共享我的方案';
 
   @override
   String groupSponsoredBy(String name) {
-    return '使用 $name 的方案';
+    return '由 $name 升级';
   }
+
+  @override
+  String get groupPlanReceipts => '收据照片';
 
   @override
   String get accountDeletePlayNote => 'Google Play 订阅不会随账号一起结束，请先到 Google Play 取消。';
@@ -3370,18 +3370,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get refreshFailed => '无法更新，显示的内容可能不是最新的。';
 
   @override
-  String get sharePlanTitle => '方案共享';
+  String get sharePlanTitle => '群组升级';
 
   @override
-  String get sharePlanSettingsHelp => '选择哪些群组使用你的方案';
+  String get sharePlanSettingsHelp => '选择要用你的方案升级哪些群组';
 
   @override
-  String get sharePlanHelp => '与群组共享方案后，群组里的每个人都适用你方案的上限。';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return '共享你方案的群组：$usage';
-  }
+  String get sharePlanHelp => '升级后的群组，里面的每个人都适用你方案的上限。';
 
   @override
   String groupSponsorHelp(String plan) {
@@ -6534,7 +6529,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get errorBillingOff => '這台伺服器沒有方案。';
 
   @override
-  String get errorAlreadySponsored => '這個群組已由其他成員的方案涵蓋。';
+  String get errorAlreadySponsored => '其他成員已經升級了這個群組。';
 
   @override
   String get errorPlanInUse => '仍有帳戶或商品在使用這個方案。';
@@ -6582,7 +6577,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String errorLimitSponsored(int max) {
-    return '你的方案最多只能分享給 $max 個群組。';
+    return '你的方案最多只能升級 $max 個群組。';
   }
 
   @override
@@ -6634,7 +6629,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planLimitMembers => '每個群組的人數';
 
   @override
-  String get planLimitSponsored => '分享你方案的群組';
+  String get planLimitSponsored => '已升級的群組';
 
   @override
   String get planLimitReminders => '付款提醒';
@@ -6703,17 +6698,17 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planPayPalFailed => 'PayPal 付款沒有成功。';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return '人數：$members · 收據照片：$receipts · 定期支出：$recurring';
+  String groupSponsor(String plan) {
+    return '將群組升級為 $plan';
   }
-
-  @override
-  String get groupSponsor => '與這個群組分享我的方案';
 
   @override
   String groupSponsoredBy(String name) {
-    return '使用 $name 的方案';
+    return '由 $name 升級';
   }
+
+  @override
+  String get groupPlanReceipts => '收據照片';
 
   @override
   String get accountDeletePlayNote => 'Google Play 訂閱不會隨帳號一起結束，請先到 Google Play 取消。';
@@ -6851,18 +6846,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get refreshFailed => '無法更新，顯示的內容可能不是最新的。';
 
   @override
-  String get sharePlanTitle => '方案分享';
+  String get sharePlanTitle => '群組升級';
 
   @override
-  String get sharePlanSettingsHelp => '選擇哪些群組使用你的方案';
+  String get sharePlanSettingsHelp => '選擇要用你的方案升級哪些群組';
 
   @override
-  String get sharePlanHelp => '與群組分享方案後，群組裡的每個人都適用你方案的上限。';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return '分享你方案的群組：$usage';
-  }
+  String get sharePlanHelp => '升級後的群組，裡面的每個人都適用你方案的上限。';
 
   @override
   String groupSponsorHelp(String plan) {

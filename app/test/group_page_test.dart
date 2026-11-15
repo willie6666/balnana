@@ -25,6 +25,7 @@ import 'package:balnana/features/group/reminder.dart';
 import 'package:balnana/features/group/share_sheet.dart';
 import 'package:balnana/l10n/app_localizations.dart';
 import 'package:balnana/ui/colors.dart';
+import 'package:balnana/ui/widgets/usage_tile.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
@@ -831,6 +832,51 @@ void main() {
     expect(container.read(expenseFilterProvider('tok')), const ExpenseFilter(category: 'transport'));
     expect(search.queries.last['category'], 'transport');
     expect(find.text('Clear filters'), findsOneWidget);
+  });
+
+  testWidgets("the group's plan shows how much of each limit is used", (tester) async {
+    final container = await _boot(
+      tester,
+      [
+        groupProvider.overrideWith((ref, token) async => _group('Flat')),
+        expensesProvider.overrideWith2((token) => _Listed(token, const [])),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+        groupPlanProvider.overrideWith(
+          (ref, token) async => const GroupPlan(
+            planName: 'Plus',
+            sponsorMemberId: 'b',
+            members: PlanUsage(used: 2, limit: 50),
+            receipts: PlanUsage(used: 20, limit: 20),
+            recurring: PlanUsage(used: 1),
+            reminders: true,
+          ),
+        ),
+      ],
+      info: const ServerInfo(version: '1.0.0', authMode: AuthMode.link, publicUrl: _server, billing: true),
+    );
+    await _go(tester, container, '/g/tok/settings');
+    final scrollable = find.descendant(of: find.byType(GroupSettingsPage), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.text('Upgraded by Ben'), 200, scrollable: scrollable);
+    await tester.pumpAndSettle();
+    expect(find.text('Plus'), findsOneWidget);
+
+    double? bar(String title) {
+      final tile = find.widgetWithText(GroupedLimitTile, title);
+      final bars = find.descendant(of: tile, matching: find.byType(LinearProgressIndicator));
+      return bars.evaluate().isEmpty ? null : tester.widget<LinearProgressIndicator>(bars).value;
+    }
+
+    await tester.scrollUntilVisible(find.text('1 used'), 200, scrollable: scrollable);
+    await tester.pumpAndSettle();
+    expect(find.text('2 of 50'), findsOneWidget);
+    expect(bar('People'), closeTo(0.04, 1e-9));
+    expect(find.text('20 of 20'), findsOneWidget);
+    expect(bar('Receipt photos'), 1.0);
+    // No limit, so nothing to fill.
+    expect(find.text('1 used'), findsOneWidget);
+    expect(bar('Recurring expenses'), isNull);
+    // Only the one who upgraded it, signed in, can stop it.
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('a group exports as a CSV file', (tester) async {

@@ -3142,7 +3142,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorBillingOff => 'เซิร์ฟเวอร์นี้ไม่มีแพ็กเกจ';
 
   @override
-  String get errorAlreadySponsored => 'แพ็กเกจของสมาชิกคนอื่นครอบคลุมกลุ่มนี้อยู่แล้ว';
+  String get errorAlreadySponsored => 'สมาชิกคนอื่นอัปเกรดกลุ่มนี้แล้ว';
 
   @override
   String get errorPlanInUse => 'ยังมีบัญชีหรือสินค้าที่ใช้แพ็กเกจนี้';
@@ -3191,7 +3191,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'แชร์แพ็กเกจของคุณได้ไม่เกิน $max กลุ่ม';
+    return 'แพ็กเกจของคุณอัปเกรดได้ไม่เกิน $max กลุ่ม';
   }
 
   @override
@@ -3244,7 +3244,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planLimitMembers => 'จำนวนคนต่อกลุ่ม';
 
   @override
-  String get planLimitSponsored => 'กลุ่มที่ใช้แพ็กเกจของคุณ';
+  String get planLimitSponsored => 'กลุ่มที่อัปเกรดแล้ว';
 
   @override
   String get planLimitReminders => 'การเตือนชำระเงิน';
@@ -3313,17 +3313,17 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planPayPalFailed => 'การชำระเงิน PayPal ไม่สำเร็จ';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'จำนวนคน: $members · รูปใบเสร็จ: $receipts · ค่าใช้จ่ายประจำ: $recurring';
+  String groupSponsor(String plan) {
+    return 'อัปเกรดกลุ่มนี้เป็น $plan';
   }
-
-  @override
-  String get groupSponsor => 'แชร์แพ็กเกจของฉันกับกลุ่มนี้';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'ใช้แพ็กเกจของ $name';
+    return 'อัปเกรดโดย $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'รูปใบเสร็จ';
 
   @override
   String get accountDeletePlayNote =>
@@ -3478,18 +3478,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get refreshFailed => 'อัปเดตไม่ได้ ข้อมูลนี้อาจไม่เป็นปัจจุบัน';
 
   @override
-  String get sharePlanTitle => 'การแชร์แพ็กเกจ';
+  String get sharePlanTitle => 'อัปเกรดกลุ่ม';
 
   @override
-  String get sharePlanSettingsHelp => 'เลือกกลุ่มที่จะใช้แพ็กเกจของคุณ';
+  String get sharePlanSettingsHelp => 'เลือกกลุ่มที่จะอัปเกรดด้วยแพ็กเกจของคุณ';
 
   @override
-  String get sharePlanHelp => 'กลุ่มที่คุณแชร์แพ็กเกจให้จะได้ขีดจำกัดของแพ็กเกจนั้นสำหรับทุกคนในกลุ่ม';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'กลุ่มที่ใช้แพ็กเกจของคุณ: $usage';
-  }
+  String get sharePlanHelp => 'กลุ่มที่อัปเกรดแล้วจะได้ขีดจำกัดของแพ็กเกจคุณ สำหรับทุกคนในกลุ่ม';
 
   @override
   String groupSponsorHelp(String plan) {

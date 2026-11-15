@@ -263,8 +263,8 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                   title: l10n.planTitle,
                   children: [
                     GroupedSwitchTile(
-                      icon: Icons.workspace_premium_outlined,
-                      title: l10n.groupSponsor,
+                      icon: Icons.upgrade,
+                      title: l10n.groupSponsor(plan.planName),
                       subtitle: _mayShare
                           ? l10n.groupSponsorHelp(plan.planName)
                           : l10n.errorLimitSponsored(plan.sponsoredGroups.limit ?? 0),

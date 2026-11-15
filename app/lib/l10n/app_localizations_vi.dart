@@ -3167,7 +3167,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorBillingOff => 'Máy chủ này không có gói nào.';
 
   @override
-  String get errorAlreadySponsored => 'Gói của một thành viên khác đã bao gồm nhóm này.';
+  String get errorAlreadySponsored => 'Một thành viên khác đã nâng cấp nhóm này.';
 
   @override
   String get errorPlanInUse => 'Vẫn có tài khoản hoặc sản phẩm dùng gói này.';
@@ -3217,7 +3217,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Gói của bạn chỉ có thể chia sẻ với tối đa $max nhóm.';
+    return 'Gói của bạn chỉ nâng cấp được tối đa $max nhóm.';
   }
 
   @override
@@ -3270,7 +3270,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planLimitMembers => 'Số người mỗi nhóm';
 
   @override
-  String get planLimitSponsored => 'Nhóm dùng chung gói của bạn';
+  String get planLimitSponsored => 'Nhóm đã nâng cấp';
 
   @override
   String get planLimitReminders => 'Nhắc thanh toán';
@@ -3340,17 +3340,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planPayPalFailed => 'Thanh toán PayPal không thành công.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Số người: $members · Ảnh hóa đơn: $receipts · Định kỳ: $recurring';
+  String groupSponsor(String plan) {
+    return 'Nâng cấp nhóm này lên $plan';
   }
-
-  @override
-  String get groupSponsor => 'Chia sẻ gói của tôi với nhóm này';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Dùng gói của $name';
+    return 'Được $name nâng cấp';
   }
+
+  @override
+  String get groupPlanReceipts => 'Ảnh hóa đơn';
 
   @override
   String get accountDeletePlayNote =>
@@ -3506,18 +3506,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get refreshFailed => 'Không thể cập nhật. Nội dung này có thể đã cũ.';
 
   @override
-  String get sharePlanTitle => 'Chia sẻ gói';
+  String get sharePlanTitle => 'Nâng cấp nhóm';
 
   @override
-  String get sharePlanSettingsHelp => 'Chọn nhóm nào dùng gói của bạn';
+  String get sharePlanSettingsHelp => 'Chọn nhóm để nâng cấp bằng gói của bạn';
 
   @override
-  String get sharePlanHelp => 'Nhóm được bạn chia sẻ gói sẽ có các giới hạn của gói đó cho mọi thành viên.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Nhóm đang dùng gói của bạn: $usage';
-  }
+  String get sharePlanHelp => 'Nhóm được nâng cấp có giới hạn của gói bạn, cho mọi người trong nhóm.';
 
   @override
   String groupSponsorHelp(String plan) {

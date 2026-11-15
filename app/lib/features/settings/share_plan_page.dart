@@ -12,8 +12,8 @@ import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
 import 'plan_page.dart';
 
-/// The account's groups, each with a switch that shares the account's plan
-/// with it.
+/// The account's groups, each with a switch that upgrades it to the
+/// account's plan.
 class SharePlanPage extends ConsumerStatefulWidget {
   const SharePlanPage({super.key});
 
@@ -94,11 +94,15 @@ class _SharePlanPageState extends ConsumerState<SharePlanPage> {
         GroupedList(
           children: [
             GroupedTile(
-              icon: Icons.volunteer_activism_outlined,
+              icon: Icons.workspace_premium_outlined,
               title: mine.planName,
-              subtitle:
-                  '${l10n.sharePlanHelp}\n'
-                  '${l10n.sharePlanUsage(planUsage(l10n, PlanUsage(used: used, limit: limit)))}',
+              subtitle: l10n.sharePlanHelp,
+            ),
+            planUsageTile(
+              l10n,
+              icon: Icons.upgrade,
+              title: l10n.planLimitSponsored,
+              usage: PlanUsage(used: used, limit: limit),
             ),
           ],
         ),

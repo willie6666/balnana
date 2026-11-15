@@ -3227,7 +3227,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorBillingOff => 'Dieser Server hat keine Tarife.';
 
   @override
-  String get errorAlreadySponsored => 'Der Tarif eines anderen Mitglieds gilt bereits für diese Gruppe.';
+  String get errorAlreadySponsored => 'Ein anderes Mitglied hat diese Gruppe schon upgegradet.';
 
   @override
   String get errorPlanInUse => 'Konten oder Produkte nutzen diesen Tarif noch.';
@@ -3277,7 +3277,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Dein Tarif lässt sich mit höchstens $max Gruppen teilen.';
+    return 'Dein Tarif kann höchstens $max Gruppen upgraden.';
   }
 
   @override
@@ -3330,7 +3330,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get planLimitMembers => 'Personen pro Gruppe';
 
   @override
-  String get planLimitSponsored => 'Gruppen, die deinen Tarif teilen';
+  String get planLimitSponsored => 'Upgegradete Gruppen';
 
   @override
   String get planLimitReminders => 'Zahlungserinnerungen';
@@ -3401,17 +3401,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get planPayPalFailed => 'Die PayPal-Zahlung ist nicht durchgegangen.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Personen: $members · Belegfotos: $receipts · Wiederkehrend: $recurring';
+  String groupSponsor(String plan) {
+    return 'Gruppe auf $plan upgraden';
   }
-
-  @override
-  String get groupSponsor => 'Meinen Tarif mit dieser Gruppe teilen';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Nutzt den Tarif von $name';
+    return 'Upgegradet von $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'Belegfotos';
 
   @override
   String get accountDeletePlayNote =>
@@ -3569,19 +3569,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get refreshFailed => 'Aktualisierung fehlgeschlagen. Die Angaben sind möglicherweise veraltet.';
 
   @override
-  String get sharePlanTitle => 'Tarif teilen';
+  String get sharePlanTitle => 'Gruppen-Upgrades';
 
   @override
-  String get sharePlanSettingsHelp => 'Wähle, welche Gruppen deinen Tarif nutzen';
+  String get sharePlanSettingsHelp => 'Wähle, welche Gruppen dein Tarif upgradet';
 
   @override
-  String get sharePlanHelp =>
-      'Eine Gruppe, mit der du deinen Tarif teilst, bekommt dessen Limits für alle Mitglieder.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Gruppen, die deinen Tarif nutzen: $usage';
-  }
+  String get sharePlanHelp => 'In einer upgegradeten Gruppe gelten für alle die Grenzen deines Tarifs.';
 
   @override
   String groupSponsorHelp(String plan) {

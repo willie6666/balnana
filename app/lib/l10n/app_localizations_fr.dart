@@ -3266,7 +3266,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorBillingOff => 'Ce serveur n’a pas de formules.';
 
   @override
-  String get errorAlreadySponsored => 'La formule d’un autre membre couvre déjà ce groupe.';
+  String get errorAlreadySponsored => 'Un autre membre a déjà surclassé ce groupe.';
 
   @override
   String get errorPlanInUse => 'Des comptes ou des produits utilisent encore cette formule.';
@@ -3316,7 +3316,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Votre formule ne peut pas être partagée avec plus de $max groupes.';
+    return 'Votre formule peut surclasser jusqu\'à $max groupes.';
   }
 
   @override
@@ -3369,7 +3369,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get planLimitMembers => 'Personnes par groupe';
 
   @override
-  String get planLimitSponsored => 'Groupes partageant votre formule';
+  String get planLimitSponsored => 'Groupes surclassés';
 
   @override
   String get planLimitReminders => 'Relances de paiement';
@@ -3440,17 +3440,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get planPayPalFailed => 'Le paiement PayPal n\'a pas abouti.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Personnes : $members · Photos de justificatifs : $receipts · Récurrentes : $recurring';
+  String groupSponsor(String plan) {
+    return 'Passer ce groupe en $plan';
   }
-
-  @override
-  String get groupSponsor => 'Partager ma formule avec ce groupe';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Utilise la formule de $name';
+    return 'Surclassé par $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'Photos de justificatifs';
 
   @override
   String get accountDeletePlayNote =>
@@ -3608,19 +3608,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get refreshFailed => 'Impossible d\'actualiser. Ces informations ne sont peut-être plus à jour.';
 
   @override
-  String get sharePlanTitle => 'Partage de formule';
+  String get sharePlanTitle => 'Groupes surclassés';
 
   @override
-  String get sharePlanSettingsHelp => 'Choisissez les groupes qui utilisent votre formule';
+  String get sharePlanSettingsHelp => 'Choisissez les groupes à surclasser avec votre formule';
 
   @override
   String get sharePlanHelp =>
-      'Un groupe avec lequel vous partagez votre formule profite de ses limites, pour tous ses membres.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Groupes partageant votre formule : $usage';
-  }
+      'Un groupe surclassé profite des limites de votre formule, pour tous ses membres.';
 
   @override
   String groupSponsorHelp(String plan) {

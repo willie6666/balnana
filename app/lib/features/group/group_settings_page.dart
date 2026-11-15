@@ -422,6 +422,7 @@ class _Settings extends ConsumerWidget {
         ),
         if (member)
           FeatureSwitches(features: group.features, onChanged: (f) => _setFeatures(context, ref, f)),
+        if (ref.watch(serverInfoProvider).value?.billing ?? false) _GroupPlanSection(group: group, me: me?.id),
         GroupedList(
           title: l10n.groupData,
           children: [
@@ -440,8 +441,6 @@ class _Settings extends ConsumerWidget {
                 subtitle: l10n.recurringHelp,
                 onTap: () => context.go('/g/${group.token}/settings/recurring'),
               ),
-            if (ref.watch(serverInfoProvider).value?.billing ?? false)
-              _GroupPlanTile(group: group, me: me?.id),
             GroupedTile(
               icon: Icons.download_outlined,
               title: l10n.exportCsv,
@@ -653,10 +652,10 @@ class _DeleteGroupDialogState extends State<_DeleteGroupDialog> {
   }
 }
 
-/// What the group may hold and who pays for it. A signed-in member can share
-/// their plan with the group, or stop.
-class _GroupPlanTile extends ConsumerStatefulWidget {
-  const _GroupPlanTile({required this.group, required this.me});
+/// What the group may hold and who pays for it. A signed-in member can
+/// upgrade the group to their plan, or stop.
+class _GroupPlanSection extends ConsumerStatefulWidget {
+  const _GroupPlanSection({required this.group, required this.me});
 
   final Group group;
 
@@ -664,10 +663,10 @@ class _GroupPlanTile extends ConsumerStatefulWidget {
   final String? me;
 
   @override
-  ConsumerState<_GroupPlanTile> createState() => _GroupPlanTileState();
+  ConsumerState<_GroupPlanSection> createState() => _GroupPlanSectionState();
 }
 
-class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
+class _GroupPlanSectionState extends ConsumerState<_GroupPlanSection> {
   bool _busy = false;
 
   Future<void> _sponsor({required bool stop}) async {
@@ -679,7 +678,7 @@ class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
       final api = groupApiOf(ref, token);
       await (stop ? api.unsponsor() : api.sponsor());
       ref.invalidate(groupPlanProvider(token));
-      // The account's plan and its list of groups say who shares with what.
+      // The account's plan and its list of groups say which groups it upgrades.
       ref.invalidate(myPlanProvider);
       ref.invalidate(summariesProvider);
     } on ApiException catch (e) {
@@ -698,24 +697,31 @@ class _GroupPlanTileState extends ConsumerState<_GroupPlanTile> {
         .where((m) => m.id == sponsor)
         .map((m) => m.name)
         .firstOrNull;
-    final usage = l10n.groupPlanUsage(
-      planUsage(l10n, plan.members),
-      planUsage(l10n, plan.receipts),
-      planUsage(l10n, plan.recurring),
-    );
     final mine = sponsor != null && sponsor == widget.me;
     final signedIn = ref.watch(signedInProvider);
-    final subtitle = sponsorName == null ? usage : '${l10n.groupSponsoredBy(sponsorName)}\n$usage';
-    // A switch for whoever shares their plan with the group, or could.
-    if (mine || sponsor == null && signedIn && plan.canSponsor) {
-      return GroupedSwitchTile(
-        icon: Icons.workspace_premium_outlined,
-        title: l10n.groupSponsor,
-        subtitle: subtitle,
-        value: mine,
-        onChanged: _busy ? null : (on) => _sponsor(stop: !on),
-      );
-    }
-    return GroupedTile(icon: Icons.workspace_premium_outlined, title: plan.planName, subtitle: subtitle);
+    // The plan the switch upgrades to: the group's already when it is ours.
+    final myPlan = mine ? plan.planName : (signedIn ? ref.watch(myPlanProvider).value?.planName : null);
+    final canSwitch = mine || sponsor == null && signedIn && plan.canSponsor && myPlan != null;
+    return GroupedList(
+      title: l10n.planTitle,
+      children: [
+        GroupedTile(
+          icon: Icons.workspace_premium_outlined,
+          title: plan.planName,
+          subtitle: sponsorName == null ? null : l10n.groupSponsoredBy(sponsorName),
+        ),
+        planUsageTile(l10n, icon: Icons.groups_outlined, title: l10n.groupPeople, usage: plan.members),
+        planUsageTile(l10n, icon: Icons.receipt_outlined, title: l10n.groupPlanReceipts, usage: plan.receipts),
+        planUsageTile(l10n, icon: Icons.repeat, title: l10n.recurringTitle, usage: plan.recurring),
+        if (canSwitch)
+          GroupedSwitchTile(
+            icon: Icons.upgrade,
+            title: l10n.groupSponsor(myPlan!),
+            subtitle: l10n.groupSponsorHelp(myPlan),
+            value: mine,
+            onChanged: _busy ? null : (on) => _sponsor(stop: !on),
+          ),
+      ],
+    );
   }
 }

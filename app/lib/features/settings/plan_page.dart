@@ -16,12 +16,27 @@ import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../../ui/widgets/play_purchases.dart';
+import '../../ui/widgets/usage_tile.dart';
 
 /// "3 of 20", or just what is used when there is no limit.
 String planUsage(AppLocalizations l10n, PlanUsage usage) {
   final limit = usage.limit;
   return limit == null ? l10n.planUsed(usage.used) : l10n.planUsage(usage.used, limit);
 }
+
+/// A row with a bar for how much of [usage] is used.
+GroupedLimitTile planUsageTile(
+  AppLocalizations l10n, {
+  required IconData icon,
+  required String title,
+  required PlanUsage usage,
+}) => GroupedLimitTile(
+  icon: icon,
+  title: title,
+  label: planUsage(l10n, usage),
+  used: usage.used,
+  limit: usage.limit,
+);
 
 /// The account's plan, what it allows, and where to get one.
 class PlanPage extends ConsumerStatefulWidget {
@@ -271,35 +286,37 @@ class _PlanPageState extends ConsumerState<PlanPage> {
         GroupedList(
           title: l10n.planLimits,
           children: [
-            GroupedTile(
+            planUsageTile(
+              l10n,
               icon: Icons.group_outlined,
               title: l10n.planLimitJoinedGroups,
-              subtitle: planUsage(l10n, plan.joinedGroups),
+              usage: plan.joinedGroups,
             ),
-            GroupedTile(
-              icon: Icons.volunteer_activism_outlined,
+            planUsageTile(
+              l10n,
+              icon: Icons.upgrade,
               title: l10n.planLimitSponsored,
-              subtitle: planUsage(l10n, plan.sponsoredGroups),
+              usage: plan.sponsoredGroups,
             ),
-            GroupedTile(
+            GroupedLimitTile(
               icon: Icons.groups_outlined,
               title: l10n.planLimitMembers,
-              subtitle: limit(plan.membersPerGroup),
+              label: limit(plan.membersPerGroup),
             ),
-            GroupedTile(
+            GroupedLimitTile(
               icon: Icons.receipt_outlined,
               title: l10n.planLimitReceipts,
-              subtitle: limit(plan.receiptsPerGroup),
+              label: limit(plan.receiptsPerGroup),
             ),
-            GroupedTile(
+            GroupedLimitTile(
               icon: Icons.repeat,
               title: l10n.planLimitRecurring,
-              subtitle: limit(plan.recurringPerGroup),
+              label: limit(plan.recurringPerGroup),
             ),
-            GroupedTile(
+            GroupedLimitTile(
               icon: Icons.notifications_active_outlined,
               title: l10n.planLimitReminders,
-              subtitle: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
+              label: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
             ),
           ],
         ),

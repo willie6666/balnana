@@ -5526,7 +5526,7 @@ abstract class AppLocalizations {
   /// Label or control text for error already sponsored in an error message.
   ///
   /// In en, this message translates to:
-  /// **'Another member\'s plan already covers this group.'**
+  /// **'Another member has already upgraded this group.'**
   String get errorAlreadySponsored;
 
   /// Label or control text for error plan in use in an error message.
@@ -5604,7 +5604,7 @@ abstract class AppLocalizations {
   /// Label or control text for error limit sponsored in an error message.
   ///
   /// In en, this message translates to:
-  /// **'Your plan can\'t be shared with more than {max} groups.'**
+  /// **'Your plan can upgrade up to {max} groups.'**
   String errorLimitSponsored(int max);
 
   /// Error when the group's plan does not include payment reminders.
@@ -5691,10 +5691,10 @@ abstract class AppLocalizations {
   /// **'People per group'**
   String get planLimitMembers;
 
-  /// Label or control text for plan limit sponsored in the plan screens.
+  /// Label of how many groups the account upgrades to its plan, of how many it may.
   ///
   /// In en, this message translates to:
-  /// **'Groups sharing your plan'**
+  /// **'Upgraded groups'**
   String get planLimitSponsored;
 
   /// Row in the plan's limits: whether groups can send payment reminders as notifications.
@@ -5817,23 +5817,23 @@ abstract class AppLocalizations {
   /// **'The PayPal payment didn\'t go through.'**
   String get planPayPalFailed;
 
-  /// Label or control text for group plan usage in the plan screens.
+  /// Switch that upgrades a group to the signed-in account's plan, so everyone in the group gets its limits.
   ///
   /// In en, this message translates to:
-  /// **'People: {members} · Receipt photos: {receipts} · Recurring: {recurring}'**
-  String groupPlanUsage(String members, String receipts, String recurring);
-
-  /// Label or control text for group sponsor in the plan screens.
-  ///
-  /// In en, this message translates to:
-  /// **'Share my plan with this group'**
-  String get groupSponsor;
+  /// **'Upgrade this group to {plan}'**
+  String groupSponsor(String plan);
 
   /// Label or control text for group sponsored by in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Uses {name}\'s plan'**
+  /// **'Upgraded by {name}'**
   String groupSponsoredBy(String name);
+
+  /// Label of a group's receipt-photo usage bar in the group's plan section.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt photos'**
+  String get groupPlanReceipts;
 
   /// Label or control text for account delete play note in the account screens.
   ///
@@ -6087,31 +6087,25 @@ abstract class AppLocalizations {
   /// **'Couldn\'t update. This may be out of date.'**
   String get refreshFailed;
 
-  /// Title of the settings page where an account picks which of its groups use its plan, and of the tile that opens it.
+  /// Title of the settings page where an account picks which of its groups to upgrade to its plan, and of the tile that opens it.
   ///
   /// In en, this message translates to:
-  /// **'Plan sharing'**
+  /// **'Group upgrades'**
   String get sharePlanTitle;
 
-  /// Subtitle of the settings tile that opens the plan sharing page.
+  /// Subtitle of the settings tile that opens the group upgrades page.
   ///
   /// In en, this message translates to:
-  /// **'Choose which groups use your plan'**
+  /// **'Choose which groups to upgrade with your plan'**
   String get sharePlanSettingsHelp;
 
-  /// Explains on the plan sharing page what sharing a plan with a group does.
+  /// Explains on the group upgrades page what upgrading a group to the account's plan does.
   ///
   /// In en, this message translates to:
-  /// **'A group you share your plan with gets its limits, for everyone in it.'**
+  /// **'An upgraded group gets your plan\'s limits, for everyone in it.'**
   String get sharePlanHelp;
 
-  /// How many groups share the plan, on the plan sharing page.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups sharing your plan: {usage}'**
-  String sharePlanUsage(String usage);
-
-  /// Subtitle of the share-my-plan switch when creating a group.
+  /// Subtitle of the switch that upgrades a group to the account's plan.
   ///
   /// In en, this message translates to:
   /// **'Everyone in the group gets the limits of your {plan} plan.'**

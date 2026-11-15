@@ -70,7 +70,7 @@ class SettingsPage extends ConsumerWidget {
                 onTap: () => context.go('/settings/plan'),
               ),
               GroupedTile(
-                icon: Icons.volunteer_activism_outlined,
+                icon: Icons.upgrade,
                 title: l10n.sharePlanTitle,
                 subtitle: l10n.sharePlanSettingsHelp,
                 trailing: const Icon(Icons.chevron_right),

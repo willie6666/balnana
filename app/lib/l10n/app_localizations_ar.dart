@@ -3282,7 +3282,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorBillingOff => 'لا توجد خطط على هذا الخادم.';
 
   @override
-  String get errorAlreadySponsored => 'خطة عضو آخر تغطي هذه المجموعة بالفعل.';
+  String get errorAlreadySponsored => 'رقّى عضو آخر هذه المجموعة بالفعل.';
 
   @override
   String get errorPlanInUse => 'ما زالت حسابات أو منتجات تستخدم هذه الخطة.';
@@ -3331,7 +3331,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'الحد الأقصى للمجموعات التي يمكن مشاركة خطتك معها: $max.';
+    return 'الحد الأقصى للمجموعات التي يمكن لخطتك ترقيتها: $max.';
   }
 
   @override
@@ -3384,7 +3384,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planLimitMembers => 'الأشخاص في كل مجموعة';
 
   @override
-  String get planLimitSponsored => 'المجموعات التي تشارك خطتك';
+  String get planLimitSponsored => 'المجموعات المُرقّاة';
 
   @override
   String get planLimitReminders => 'تذكيرات الدفع';
@@ -3453,17 +3453,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planPayPalFailed => 'لم تكتمل دفعة PayPal.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'الأشخاص: $members · صور الإيصالات: $receipts · المتكررة: $recurring';
+  String groupSponsor(String plan) {
+    return 'ترقية هذه المجموعة إلى $plan';
   }
-
-  @override
-  String get groupSponsor => 'مشاركة خطتي مع هذه المجموعة';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'تستخدم خطة $name';
+    return 'رقّاها $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'صور الإيصالات';
 
   @override
   String get accountDeletePlayNote => 'لا ينتهي اشتراك Google Play مع حسابك. ألغِه أولًا على Google Play.';
@@ -3617,18 +3617,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get refreshFailed => 'تعذّر التحديث. قد تكون هذه البيانات قديمة.';
 
   @override
-  String get sharePlanTitle => 'مشاركة الخطة';
+  String get sharePlanTitle => 'ترقية المجموعات';
 
   @override
-  String get sharePlanSettingsHelp => 'اختر المجموعات التي تستخدم خطتك';
+  String get sharePlanSettingsHelp => 'اختر المجموعات التي تريد ترقيتها بخطتك';
 
   @override
-  String get sharePlanHelp => 'المجموعة التي تشارك خطتك معها تحصل على حدودها لجميع أعضائها.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'المجموعات التي تشارك خطتك: $usage';
-  }
+  String get sharePlanHelp => 'تحصل المجموعة المُرقّاة على حدود خطتك، لكل من فيها.';
 
   @override
   String groupSponsorHelp(String plan) {

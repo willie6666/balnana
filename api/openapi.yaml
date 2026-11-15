@@ -1395,6 +1395,8 @@ paths:
       description: >-
         `already_sponsored` while another member's plan covers it, and
         `plan_limit` when the account sponsors all that its plan allows.
+        Sponsoring ends for good once the account's plan no longer sponsors
+        groups; paying again takes sponsoring anew.
       responses:
         "200":
           description: OK

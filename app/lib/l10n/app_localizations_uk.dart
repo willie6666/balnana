@@ -3320,7 +3320,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorBillingOff => 'На цьому сервері немає тарифів.';
 
   @override
-  String get errorAlreadySponsored => 'Цю групу вже покриває тариф іншого учасника.';
+  String get errorAlreadySponsored => 'Інший учасник уже покращив цю групу.';
 
   @override
   String get errorPlanInUse => 'Цей тариф ще використовують облікові записи або продукти.';
@@ -3370,7 +3370,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Тарифом можна поділитися максимум із такою кількістю груп: $max.';
+    return 'Тариф дозволяє покращити не більше груп, ніж $max.';
   }
 
   @override
@@ -3423,7 +3423,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get planLimitMembers => 'Людей у групі';
 
   @override
-  String get planLimitSponsored => 'Групи з вашим тарифом';
+  String get planLimitSponsored => 'Покращені групи';
 
   @override
   String get planLimitReminders => 'Нагадування про оплату';
@@ -3493,17 +3493,17 @@ class AppLocalizationsUk extends AppLocalizations {
   String get planPayPalFailed => 'Платіж PayPal не пройшов.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Люди: $members · Фото чеків: $receipts · Регулярні: $recurring';
+  String groupSponsor(String plan) {
+    return 'Покращити групу до $plan';
   }
-
-  @override
-  String get groupSponsor => 'Поділитися тарифом із цією групою';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Використовує тариф учасника $name';
+    return 'Покращено: $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'Фото чеків';
 
   @override
   String get accountDeletePlayNote =>
@@ -3661,18 +3661,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get refreshFailed => 'Не вдалося оновити. Ці дані можуть бути застарілими.';
 
   @override
-  String get sharePlanTitle => 'Спільний доступ до тарифу';
+  String get sharePlanTitle => 'Покращення груп';
 
   @override
-  String get sharePlanSettingsHelp => 'Виберіть, які групи користуються вашим тарифом';
+  String get sharePlanSettingsHelp => 'Виберіть, які групи покращити своїм тарифом';
 
   @override
-  String get sharePlanHelp => 'Група, з якою ви ділитеся тарифом, отримує його ліміти для всіх учасників.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Групи, що користуються вашим тарифом: $usage';
-  }
+  String get sharePlanHelp => 'У покращеній групі для всіх діють ліміти вашого тарифу.';
 
   @override
   String groupSponsorHelp(String plan) {

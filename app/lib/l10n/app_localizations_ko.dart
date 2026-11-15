@@ -3069,7 +3069,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorBillingOff => '이 서버에는 요금제가 없어요.';
 
   @override
-  String get errorAlreadySponsored => '이 그룹에는 이미 다른 멤버의 요금제가 적용되어 있어요.';
+  String get errorAlreadySponsored => '다른 구성원이 이미 이 그룹을 업그레이드했어요.';
 
   @override
   String get errorPlanInUse => '이 요금제를 사용하는 계정이나 상품이 있어요.';
@@ -3117,7 +3117,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return '요금제는 최대 $max개 그룹에만 공유할 수 있어요.';
+    return '요금제로는 최대 $max개 그룹만 업그레이드할 수 있어요.';
   }
 
   @override
@@ -3169,7 +3169,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planLimitMembers => '그룹당 인원';
 
   @override
-  String get planLimitSponsored => '내 요금제를 공유하는 그룹';
+  String get planLimitSponsored => '업그레이드한 그룹';
 
   @override
   String get planLimitReminders => '결제 알림';
@@ -3238,17 +3238,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planPayPalFailed => 'PayPal 결제가 완료되지 않았습니다.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return '인원: $members · 영수증 사진: $receipts · 반복 지출: $recurring';
+  String groupSponsor(String plan) {
+    return '이 그룹을 $plan(으)로 업그레이드';
   }
-
-  @override
-  String get groupSponsor => '이 그룹에 내 요금제 공유';
 
   @override
   String groupSponsoredBy(String name) {
-    return '$name의 요금제 사용 중';
+    return '$name 님이 업그레이드함';
   }
+
+  @override
+  String get groupPlanReceipts => '영수증 사진';
 
   @override
   String get accountDeletePlayNote => 'Google Play 구독은 계정을 삭제해도 끝나지 않습니다. 먼저 Google Play에서 해지하세요.';
@@ -3389,18 +3389,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get refreshFailed => '업데이트하지 못했습니다. 표시된 내용이 오래되었을 수 있습니다.';
 
   @override
-  String get sharePlanTitle => '요금제 공유';
+  String get sharePlanTitle => '그룹 업그레이드';
 
   @override
-  String get sharePlanSettingsHelp => '내 요금제를 사용할 그룹을 선택하세요';
+  String get sharePlanSettingsHelp => '내 요금제로 업그레이드할 그룹을 선택하세요';
 
   @override
-  String get sharePlanHelp => '요금제를 공유한 그룹은 구성원 모두에게 그 요금제의 한도가 적용됩니다.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return '내 요금제를 공유하는 그룹: $usage';
-  }
+  String get sharePlanHelp => '업그레이드한 그룹에서는 모든 구성원에게 내 요금제의 한도가 적용돼요.';
 
   @override
   String groupSponsorHelp(String plan) {

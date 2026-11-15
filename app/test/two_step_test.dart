@@ -194,7 +194,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('the plan sharing page switches the plan on for a group, up to what the plan shares', (tester) async {
+  testWidgets('the group upgrades page upgrades a group, up to what the plan allows', (tester) async {
     tester.view.physicalSize = const Size(900, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -255,18 +255,19 @@ void main() {
 
     GroupedSwitchTile tile(String name) =>
         tester.widget<GroupedSwitchTile>(find.widgetWithText(GroupedSwitchTile, name));
-    expect(find.textContaining('Groups sharing your plan: 1 of 2'), findsOneWidget);
+    expect(find.text('Upgraded groups'), findsOneWidget);
+    expect(find.text('1 of 2'), findsOneWidget);
     expect(tile('Flat').value, isTrue);
     expect(tile('Trip').value, isFalse);
     // Another member's plan covers it already.
     expect(tile('Club').onChanged, isNull);
-    expect(find.text("Another member's plan already covers this group."), findsOneWidget);
+    expect(find.text('Another member has already upgraded this group.'), findsOneWidget);
 
     await tester.tap(find.text('Trip'));
     await tester.pumpAndSettle();
     expect(sent.where((r) => r.method == 'PUT' && r.path == '/g/trip/sponsor'), hasLength(1));
     expect(tile('Trip').value, isTrue);
-    expect(find.textContaining('Groups sharing your plan: 2 of 2'), findsOneWidget);
+    expect(find.text('2 of 2'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 }

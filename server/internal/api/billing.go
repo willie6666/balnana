@@ -298,6 +298,12 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.JoinedGroups.Used, err = countJoinedGroups(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
+	// A plan that no longer sponsors ends the sponsoring it did.
+	if !p.sponsors() {
+		if _, err := dropSponsoring(ctx, q, userID); err != nil {
+			return MyPlan{}, err
+		}
+	}
 	if out.SponsoredGroups.Used, err = countSponsored(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
@@ -405,15 +411,28 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 	if out.Recurring.Used, err = countRecurring(ctx, q, g.id); err != nil {
 		return GroupPlan{}, err
 	}
-	// A sponsor who stopped paying still sees the group as theirs, to stop.
-	if sponsor != nil && g.me != nil && *sponsor == *g.me {
-		return out, nil
-	}
 	// p is the sponsor's plan when there is one.
 	if sponsor != nil && p.sponsors() {
 		return out, nil
 	}
-	out.SponsorMemberId = nil // to everyone else, nobody sponsors it now
+	if sponsor != nil {
+		// The sponsor's plan no longer sponsors: the upgrade ends for good,
+		// and the group is on the default plan.
+		userID, _, err := groupSponsor(ctx, q, g)
+		if err != nil {
+			return GroupPlan{}, err
+		}
+		if _, err := dropSponsoring(ctx, q, *userID); err != nil {
+			return GroupPlan{}, err
+		}
+		if p, _, err = userPlan(ctx, q, nilUUID); err != nil {
+			return GroupPlan{}, err
+		}
+		out.PlanName = p.name
+		out.Members.Limit, out.Receipts.Limit, out.Recurring.Limit = p.members, p.receipts, p.recurring
+		out.Reminders = p.reminders
+		out.SponsorMemberId = nil
+	}
 	u, err := s.currentUser(ctx)
 	if err != nil || u == nil || g.me == nil {
 		return out, err
@@ -428,7 +447,8 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 
 // sharedPlans says whose plan covers each of userID's groups, by group ID:
 // their own, or another member's that still sponsors. Groups nobody's plan
-// covers are left out.
+// covers are left out, and a sponsor whose plan stopped sponsoring stops
+// sponsoring them.
 func sharedPlans(ctx context.Context, q querier, userID string, groups []*group) (map[string]GroupSummarySharedPlan, error) {
 	ids := make([]string, len(groups))
 	for i, g := range groups {
@@ -452,23 +472,67 @@ func sharedPlans(ctx context.Context, q querier, userID string, groups []*group)
 	out := map[string]GroupSummarySharedPlan{}
 	covers := map[string]bool{}
 	for id, sponsor := range sponsors {
-		// The account's own stays theirs to stop, whatever their plan is now.
-		if sponsor == userID {
-			out[id] = Mine
-			continue
-		}
 		covered, known := covers[sponsor]
 		if !known {
 			if covered, err = sponsorCovers(ctx, q, &sponsor); err != nil {
 				return nil, err
 			}
+			if !covered {
+				if _, err := dropSponsoring(ctx, q, sponsor); err != nil {
+					return nil, err
+				}
+			}
 			covers[sponsor] = covered
 		}
-		if covered {
+		switch {
+		case !covered:
+		case sponsor == userID:
+			out[id] = Mine
+		default:
 			out[id] = Other
 		}
 	}
 	return out, nil
+}
+
+// dropSponsoring ends userID's sponsoring of every group, for a plan that no
+// longer sponsors any: paying again later doesn't bring it back.
+// It returns how many groups that was.
+func dropSponsoring(ctx context.Context, q querier, userID string) (int64, error) {
+	tag, err := q.Exec(ctx, `
+		with dropped as (
+			update groups set sponsor_user_id = null where sponsor_user_id = $2 returning id)
+		select pg_notify($1, id::text) from dropped`, changeChannel, userID)
+	return tag.RowsAffected(), err
+}
+
+// dropLapsedSponsors ends the sponsoring of everyone whose plan no longer
+// sponsors groups, and returns how many groups that was.
+func dropLapsedSponsors(ctx context.Context, q querier) (int64, error) {
+	rows, err := q.Query(ctx, `select distinct sponsor_user_id::text from groups where sponsor_user_id is not null`)
+	if err != nil {
+		return 0, err
+	}
+	sponsors, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return 0, err
+	}
+	var n int64
+	for _, id := range sponsors {
+		p, _, err := userPlan(ctx, q, id)
+		if err != nil {
+			return n, err
+		}
+		if p.sponsors() {
+			continue
+		}
+		dropped, err := dropSponsoring(ctx, q, id)
+		n += dropped
+		if err != nil {
+			return n, err
+		}
+	}
+	return n, nil
 }
 
 // sponsors reports whether the plan sponsors groups. A sponsor who stopped

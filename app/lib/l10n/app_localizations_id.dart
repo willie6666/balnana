@@ -3178,7 +3178,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get errorBillingOff => 'Server ini tidak memiliki paket.';
 
   @override
-  String get errorAlreadySponsored => 'Paket anggota lain sudah mencakup grup ini.';
+  String get errorAlreadySponsored => 'Anggota lain sudah meng-upgrade grup ini.';
 
   @override
   String get errorPlanInUse => 'Akun atau produk masih menggunakan paket ini.';
@@ -3228,7 +3228,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Paket Anda tidak dapat dibagikan ke lebih dari $max grup.';
+    return 'Paket Anda dapat meng-upgrade maksimal $max grup.';
   }
 
   @override
@@ -3281,7 +3281,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get planLimitMembers => 'Orang per grup';
 
   @override
-  String get planLimitSponsored => 'Grup yang memakai paket Anda';
+  String get planLimitSponsored => 'Grup yang di-upgrade';
 
   @override
   String get planLimitReminders => 'Pengingat pembayaran';
@@ -3351,17 +3351,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get planPayPalFailed => 'Pembayaran PayPal tidak berhasil.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Orang: $members · Foto struk: $receipts · Berulang: $recurring';
+  String groupSponsor(String plan) {
+    return 'Upgrade grup ini ke $plan';
   }
-
-  @override
-  String get groupSponsor => 'Bagikan paket saya ke grup ini';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Memakai paket $name';
+    return 'Di-upgrade oleh $name';
   }
+
+  @override
+  String get groupPlanReceipts => 'Foto struk';
 
   @override
   String get accountDeletePlayNote =>
@@ -3517,19 +3517,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get refreshFailed => 'Tidak dapat memperbarui. Ini mungkin sudah tidak terbaru.';
 
   @override
-  String get sharePlanTitle => 'Berbagi paket';
+  String get sharePlanTitle => 'Upgrade grup';
 
   @override
-  String get sharePlanSettingsHelp => 'Pilih grup mana yang memakai paket Anda';
+  String get sharePlanSettingsHelp => 'Pilih grup yang akan di-upgrade dengan paket Anda';
 
   @override
   String get sharePlanHelp =>
-      'Grup yang Anda bagikan paket akan mendapat batas paket itu untuk semua anggotanya.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Grup yang memakai paket Anda: $usage';
-  }
+      'Grup yang di-upgrade mendapat batas paket Anda, untuk semua orang di dalamnya.';
 
   @override
   String groupSponsorHelp(String plan) {

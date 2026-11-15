@@ -3181,7 +3181,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorBillingOff => 'Bu sunucuda plan yok.';
 
   @override
-  String get errorAlreadySponsored => 'Bu grup zaten başka bir üyenin planı kapsamında.';
+  String get errorAlreadySponsored => 'Bu grubu başka bir üye zaten yükseltti.';
 
   @override
   String get errorPlanInUse => 'Hesaplar veya ürünler bu planı hâlâ kullanıyor.';
@@ -3231,7 +3231,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String errorLimitSponsored(int max) {
-    return 'Planınız en fazla $max grupla paylaşılabilir.';
+    return 'Planınız en fazla $max grubu yükseltebilir.';
   }
 
   @override
@@ -3284,7 +3284,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planLimitMembers => 'Grup başına kişi';
 
   @override
-  String get planLimitSponsored => 'Planınızı paylaşan gruplar';
+  String get planLimitSponsored => 'Yükseltilen gruplar';
 
   @override
   String get planLimitReminders => 'Ödeme hatırlatmaları';
@@ -3354,17 +3354,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPayPalFailed => 'PayPal ödemesi tamamlanmadı.';
 
   @override
-  String groupPlanUsage(String members, String receipts, String recurring) {
-    return 'Kişiler: $members · Fiş fotoğrafları: $receipts · Tekrarlayan: $recurring';
+  String groupSponsor(String plan) {
+    return 'Bu grubu $plan planına yükselt';
   }
-
-  @override
-  String get groupSponsor => 'Planımı bu grupla paylaş';
 
   @override
   String groupSponsoredBy(String name) {
-    return 'Planı kullanılan üye: $name';
+    return '$name tarafından yükseltildi';
   }
+
+  @override
+  String get groupPlanReceipts => 'Fiş fotoğrafları';
 
   @override
   String get accountDeletePlayNote =>
@@ -3522,18 +3522,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get refreshFailed => 'Güncellenemedi. Bu bilgiler eski olabilir.';
 
   @override
-  String get sharePlanTitle => 'Plan paylaşımı';
+  String get sharePlanTitle => 'Grup yükseltmeleri';
 
   @override
-  String get sharePlanSettingsHelp => 'Planını hangi grupların kullanacağını seç';
+  String get sharePlanSettingsHelp => 'Planınızla hangi grupların yükseltileceğini seçin';
 
   @override
-  String get sharePlanHelp => 'Planını paylaştığın grup, içindeki herkes için planın sınırlarını alır.';
-
-  @override
-  String sharePlanUsage(String usage) {
-    return 'Planını paylaşan gruplar: $usage';
-  }
+  String get sharePlanHelp => 'Yükseltilen bir grupta herkes planınızın sınırlarından yararlanır.';
 
   @override
   String groupSponsorHelp(String plan) {

@@ -103,6 +103,15 @@ func (s *Server) sweepExpired(ctx context.Context) (int64, error) {
 	if err != nil {
 		return total, err
 	}
+	// Plans run out without a request to notice it: their sponsoring ends here
+	// for groups nobody looked at since.
+	if s.conf().Billing {
+		n, err = dropLapsedSponsors(ctx, s.db)
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
 	days := s.conf().PaymentKeepDays
 	if days <= 0 {
 		return total, nil

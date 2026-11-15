@@ -363,19 +363,25 @@ func TestSponsor(t *testing.T) {
 		t.Fatal(code)
 	}
 
-	// A sponsor without a plan stops counting, and another member can step in.
+	// A sponsor without a plan stops sponsoring, and another member can step in.
 	exec(t, s, `update entitlements set revoked_at = now() where user_id = $1`, anaUser.Id)
 	var lapsed GroupPlan
 	ben.must(200, "GET", base+"/plan", nil, &lapsed)
 	if lapsed.PlanName != "Free" || !lapsed.CanSponsor || lapsed.SponsorMemberId != nil {
 		t.Fatalf("%+v", lapsed)
 	}
-	// To the one who stopped paying it stays theirs to stop.
+	// Also to the one who stopped paying, and paying again doesn't bring it back.
 	var own GroupPlan
 	c.must(200, "GET", base+"/plan", nil, &own)
-	if own.SponsorMemberId == nil || *own.SponsorMemberId != g.Members[0].Id {
+	if own.SponsorMemberId != nil || own.PlanName != "Free" {
 		t.Fatalf("%+v", own)
 	}
+	grant(t, s, anaUser.Id, "plus")
+	c.must(200, "GET", base+"/plan", nil, &own)
+	if own.SponsorMemberId != nil || own.PlanName != "Free" {
+		t.Fatalf("%+v", own)
+	}
+	exec(t, s, `update entitlements set revoked_at = now() where user_id = $1`, anaUser.Id)
 	ben.must(200, "PUT", base+"/sponsor", nil, &plan)
 	if plan.SponsorMemberId == nil || *plan.SponsorMemberId != g.Members[1].Id {
 		t.Fatalf("%+v", plan)
@@ -780,6 +786,52 @@ func TestSponsorDoesNotComeBackWithItsMember(t *testing.T) {
 	}
 }
 
+// A plan that runs out ends its sponsoring even when nobody looks at the
+// group: the hourly sweep finds it, and paying again doesn't bring it back.
+func TestLapsedSponsorIsDropped(t *testing.T) {
+	c, _, s := billingServer(t)
+	u := register(c, "ana@example.test", "Ana")
+	grant(t, s, u.Id, "plus")
+	var g, kept Group
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Trip", Currency: "EUR", Members: []string{"Ana"}}, &g)
+	c.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana"}}, &kept)
+	c.must(200, "PUT", "/g/"+g.Token+"/sponsor", nil, nil)
+	ben := c.another()
+	bu := register(ben, "ben@example.test", "Ben")
+	grant(t, s, bu.Id, "plus")
+	ben.must(200, "POST", "/g/"+kept.Token+"/join", JoinInput{}, nil)
+	ben.must(200, "PUT", "/g/"+kept.Token+"/sponsor", nil, nil)
+
+	ctx := context.Background()
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	sponsored := func(token string) (yes bool) {
+		t.Helper()
+		if err := s.db.QueryRow(ctx, `select sponsor_user_id is not null from groups where token = $1`, token).Scan(&yes); err != nil {
+			t.Fatal(err)
+		}
+		return yes
+	}
+	if !sponsored(g.Token) || !sponsored(kept.Token) {
+		t.Fatal("a paying sponsor was dropped")
+	}
+
+	exec(t, s, `update entitlements set expires_at = now() where user_id = $1`, u.Id)
+	if _, err := s.sweepExpired(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if sponsored(g.Token) || !sponsored(kept.Token) {
+		t.Fatal("only the lapsed sponsor should be dropped")
+	}
+	grant(t, s, u.Id, "plus")
+	var plan GroupPlan
+	c.must(200, "GET", "/g/"+g.Token+"/plan", nil, &plan)
+	if plan.PlanName != "Free" || plan.SponsorMemberId != nil || !plan.CanSponsor {
+		t.Fatalf("%+v", plan)
+	}
+}
+
 // Taking over a group nobody with an account is left in makes the joiner its
 // owner, which counts against their plan as creating one does.
 func TestJoiningAnEmptyGroupCountsAsOwningIt(t *testing.T) {
@@ -1090,12 +1142,12 @@ func TestSharePlanWithNewGroup(t *testing.T) {
 	if got := whose(ben); len(got) != 1 || got["Flat"] != "other" {
 		t.Fatalf("%v", got)
 	}
-	// A plan that ended covers no group for the others, and stays its owner's to stop.
+	// A plan that ended covers no group, for anyone: its upgrade is gone.
 	exec(t, s, `update entitlements set revoked_at = now()`)
 	if got := whose(ben); len(got) != 0 {
 		t.Fatalf("%v", got)
 	}
-	if got := whose(c); got["Flat"] != "mine" {
+	if got := whose(c); len(got) != 0 {
 		t.Fatalf("%v", got)
 	}
 }
