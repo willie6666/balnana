@@ -31,7 +31,7 @@ const (
 	// settingsChannel is the Postgres channel that announces saved settings.
 	settingsChannel = "balnana_settings"
 	// androidPackage is the Android app's application ID (build.gradle.kts).
-	androidPackage = "me.devvillie.balnana"
+	androidPackage = "com.balnana.app"
 )
 
 // Setup codes avoid letters and digits that look alike.

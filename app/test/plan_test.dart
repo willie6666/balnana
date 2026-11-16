@@ -35,7 +35,7 @@ const _offer = PlayOffer(
   period: 'P3M',
 );
 
-const _play = PlayBilling(accountId: 'hash', packageName: 'me.devvillie.balnana', products: ['plus_monthly']);
+const _play = PlayBilling(accountId: 'hash', packageName: 'com.balnana.app', products: ['plus_monthly']);
 
 class _FakePlay extends GooglePlay {
   _FakePlay({
@@ -596,7 +596,7 @@ void main() {
     testWidgets('a subscriber can manage it and is not sold another', (tester) async {
       const play = PlayBilling(
         accountId: 'hash',
-        packageName: 'me.devvillie.balnana',
+        packageName: 'com.balnana.app',
         products: ['plus_monthly'],
         subscribed: ['plus_monthly'],
       );
@@ -609,7 +609,7 @@ void main() {
     testWidgets('a subscription that stopped being charged says how to fix it', (tester) async {
       const play = PlayBilling(
         accountId: 'hash',
-        packageName: 'me.devvillie.balnana',
+        packageName: 'com.balnana.app',
         products: ['plus_monthly'],
         onHold: ['plus_monthly'],
       );

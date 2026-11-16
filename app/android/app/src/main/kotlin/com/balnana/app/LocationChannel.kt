@@ -1,4 +1,4 @@
-package me.devvillie.balnana
+package com.balnana.app
 
 import android.Manifest
 import android.annotation.SuppressLint

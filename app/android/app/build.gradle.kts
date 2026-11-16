@@ -73,7 +73,7 @@ val linkServer: URI? =
         ?.takeIf { (it.scheme == "https" || it.scheme == "http") && !it.host.isNullOrEmpty() }
 
 android {
-    namespace = "me.devvillie.balnana"
+    namespace = "com.balnana.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -85,7 +85,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.devvillie.balnana"
+        applicationId = "com.balnana.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

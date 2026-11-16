@@ -2,7 +2,7 @@
 <!-- Nothing is updated on a timer: the app redraws the widgets whenever it
      loads its groups (HomeScreen.kt). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:configure="me.devvillie.balnana.GroupWidgetPicker"
+    android:configure="com.balnana.app.GroupWidgetPicker"
     android:initialLayout="@layout/group_widget"
     android:minWidth="180dp"
     android:minHeight="56dp"

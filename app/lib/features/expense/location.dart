@@ -17,7 +17,7 @@ import '../../data/models.dart';
 import '../../ui/tokens.dart';
 
 /// Sent with every tile request, as tile servers ask apps to say who they are.
-const _userAgentPackage = 'me.devvillie.balnana';
+const _userAgentPackage = 'com.balnana.app';
 
 /// A map style, read once per style URL while the app runs.
 final _styleProvider = FutureProvider.family<vt.Style, String>((ref, uri) async {

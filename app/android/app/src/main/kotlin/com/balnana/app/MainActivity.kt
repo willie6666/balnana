@@ -1,4 +1,4 @@
-package me.devvillie.balnana
+package com.balnana.app
 
 import android.content.Intent
 import android.content.res.Resources
