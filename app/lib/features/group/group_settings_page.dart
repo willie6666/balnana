@@ -199,11 +199,22 @@ class _Settings extends ConsumerWidget {
     }
   }
 
+  /// Reloads the group after a change, done once it is back, so a switch
+  /// shows the change until the group does.
+  Future<void> _reload(WidgetRef ref) async {
+    refreshGroup(ref, group.token);
+    try {
+      await ref.read(groupProvider(group.token).future);
+    } on Object {
+      // The page shows it.
+    }
+  }
+
   Future<void> _setLinkClosed(BuildContext context, WidgetRef ref, bool closed) async {
     final l10n = context.l10n;
     try {
       await groupApiOf(ref, group.token).update(linkClosed: closed);
-      refreshGroup(ref, group.token);
+      await _reload(ref);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
     }
@@ -213,7 +224,7 @@ class _Settings extends ConsumerWidget {
     final l10n = context.l10n;
     try {
       await groupApiOf(ref, group.token).update(linkAccess: open);
-      refreshGroup(ref, group.token);
+      await _reload(ref);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
     }
@@ -223,7 +234,7 @@ class _Settings extends ConsumerWidget {
     final l10n = context.l10n;
     try {
       await groupApiOf(ref, group.token).update(features: features);
-      refreshGroup(ref, group.token);
+      await _reload(ref);
     } on ApiException catch (e) {
       if (context.mounted) _snack(context, errorMessage(l10n, e));
     }
@@ -373,20 +384,20 @@ class _Settings extends ConsumerWidget {
                 onTap: () => showInviteDialog(context, group),
               ),
             if (accounts && canDelete)
-              GroupedSwitchTile(
+              GroupedSwitchTile.saving(
                 icon: Icons.link_off,
                 title: l10n.linkClosedTitle,
                 subtitle: l10n.linkClosedHelp,
                 value: group.linkClosed,
-                onChanged: (closed) => _setLinkClosed(context, ref, closed),
+                onSave: (closed) => _setLinkClosed(context, ref, closed),
               ),
             if (accounts && linkGroups && me != null && me.owner && !group.linkClosed)
-              GroupedSwitchTile(
+              GroupedSwitchTile.saving(
                 icon: Icons.public,
                 title: l10n.linkAccessTitle,
                 subtitle: l10n.linkAccessHelp,
                 value: group.linkAccess,
-                onChanged: (open) => _setLinkAccess(context, ref, open),
+                onSave: (open) => _setLinkAccess(context, ref, open),
               ),
             if (canDelete)
               GroupedTile(
@@ -693,13 +704,10 @@ class _GroupPlanSection extends ConsumerStatefulWidget {
 }
 
 class _GroupPlanSectionState extends ConsumerState<_GroupPlanSection> {
-  bool _busy = false;
-
   Future<void> _sponsor({required bool stop}) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final token = widget.group.token;
-    setState(() => _busy = true);
     try {
       final api = groupApiOf(ref, token);
       await (stop ? api.unsponsor() : api.sponsor());
@@ -707,10 +715,13 @@ class _GroupPlanSectionState extends ConsumerState<_GroupPlanSection> {
       // The account's plan and its list of groups say which groups it upgrades.
       ref.invalidate(myPlanProvider);
       ref.invalidate(summariesProvider);
+      // The switch shows the change until the plan does.
+      await ref.read(groupPlanProvider(token).future);
     } on ApiException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+    } on Object {
+      // The plan failing to load again leaves the section as it was.
     }
-    if (mounted) setState(() => _busy = false);
   }
 
   @override
@@ -740,12 +751,12 @@ class _GroupPlanSectionState extends ConsumerState<_GroupPlanSection> {
         planUsageTile(l10n, icon: Icons.receipt_outlined, title: l10n.groupPlanReceipts, usage: plan.receipts),
         planUsageTile(l10n, icon: Icons.repeat, title: l10n.recurringTitle, usage: plan.recurring),
         if (canSwitch)
-          GroupedSwitchTile(
+          GroupedSwitchTile.saving(
             icon: Icons.upgrade,
             title: l10n.groupSponsor(myPlan!),
             subtitle: l10n.groupSponsorHelp(myPlan),
             value: mine,
-            onChanged: _busy ? null : (on) => _sponsor(stop: !on),
+            onSave: (on) => _sponsor(stop: !on),
           ),
       ],
     );

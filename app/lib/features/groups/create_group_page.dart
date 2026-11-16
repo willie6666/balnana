@@ -257,7 +257,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                 ),
               ),
               const SizedBox(height: BSpace.s24),
-              FeatureSwitches(features: _features, onChanged: (f) => setState(() => _features = f)),
+              FeatureSwitches(features: _features, onChanged: (f) async => setState(() => _features = f)),
               if (_plan case final plan?)
                 GroupedList(
                   title: l10n.planTitle,

@@ -96,7 +96,7 @@ class GroupedTile extends StatelessWidget {
 
 /// A [GroupedTile] with a switch; the whole row toggles it. Without
 /// [onChanged] it is dimmed and shows what is, which cannot be changed here.
-class GroupedSwitchTile extends StatelessWidget {
+class GroupedSwitchTile extends StatefulWidget {
   const GroupedSwitchTile({
     super.key,
     required this.icon,
@@ -105,27 +105,63 @@ class GroupedSwitchTile extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.leading,
-  });
+  }) : onSave = null;
+
+  /// A switch whose change [onSave] sends somewhere slow, such as the server.
+  /// It moves at once and stays there while that runs, then shows [value]
+  /// again: the saved state, or the old one if saving failed.
+  const GroupedSwitchTile.saving({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.onSave,
+    this.leading,
+  }) : onChanged = null;
 
   final IconData icon;
   final String title;
   final String? subtitle;
   final bool value;
   final ValueChanged<bool>? onChanged;
+  final Future<void> Function(bool)? onSave;
 
   /// Shown in place of [icon] in its circle.
   final Widget? leading;
 
   @override
+  State<GroupedSwitchTile> createState() => _GroupedSwitchTileState();
+}
+
+class _GroupedSwitchTileState extends State<GroupedSwitchTile> {
+  /// What it was switched to while that is saving.
+  bool? _saving;
+
+  Future<void> _save(Future<void> Function(bool) save, bool value) async {
+    setState(() => _saving = value);
+    try {
+      await save(value);
+    } finally {
+      if (mounted) setState(() => _saving = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final onChanged = this.onChanged;
+    final value = _saving ?? widget.value;
+    final save = widget.onSave;
+    final ValueChanged<bool>? onChanged = save != null
+        // One change at a time.
+        ? (on) => _saving == null ? _save(save, on) : null
+        : widget.onChanged;
     // One node for the row and its switch, so a screen reader reads the title with the state.
     return MergeSemantics(
       child: GroupedTile(
-        icon: icon,
-        leading: leading,
-        title: title,
-        subtitle: subtitle,
+        icon: widget.icon,
+        leading: widget.leading,
+        title: widget.title,
+        subtitle: widget.subtitle,
         enabled: onChanged != null,
         onTap: onChanged == null ? null : () => onChanged(!value),
         trailing: Switch(value: value, onChanged: onChanged),
