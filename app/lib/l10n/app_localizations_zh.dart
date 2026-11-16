@@ -526,10 +526,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupCopyLink => '复制链接';
 
   @override
-  String get groupQrCode => '显示二维码';
-
-  @override
-  String get groupQrCodeHelp => '让其他人用手机相机扫描链接。';
+  String get groupShareLink => '分享群组链接';
 
   @override
   String groupQrLabel(String group) {
@@ -543,10 +540,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => '拥有链接的人登录后可以申请加入。';
 
   @override
+  String get groupLinkClosedHelp => '已停用链接加入，请通过邮箱邀请。';
+
+  @override
   String get linkAccessTitle => '任何拥有链接的人都可以打开';
 
   @override
   String get linkAccessHelp => '允许他人无需账号即可查看和编辑';
+
+  @override
+  String get linkClosedTitle => '禁止通过链接加入';
+
+  @override
+  String get linkClosedHelp => '只有现有成员和通过邮箱受邀的人能进入';
 
   @override
   String get groupFeatures => '功能';
@@ -1124,6 +1130,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who 重置了群组链接';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who 停用了链接加入';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who 启用了链接加入';
   }
 
   @override
@@ -3547,6 +3563,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorPasswordRequired => '这个群组需要密码。';
 
   @override
+  String get errorLinkClosed => '这个群组只让通过邮箱受邀的人加入，请向成员索取邀请。';
+
+  @override
+  String get joinLinkClosedTitle => '已停用链接加入';
+
+  @override
   String get errorNoPassword => '这个群组已没有密码。';
 
   @override
@@ -4081,10 +4103,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get groupCopyLink => '複製連結';
 
   @override
-  String get groupQrCode => '顯示 QR code';
-
-  @override
-  String get groupQrCodeHelp => '讓大家用手機相機掃描連結。';
+  String get groupShareLink => '分享群組連結';
 
   @override
   String groupQrLabel(String group) {
@@ -4098,10 +4117,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get groupCopyLinkHelpAccounts => '取得連結的人登入後可以申請加入。';
 
   @override
+  String get groupLinkClosedHelp => '已停用連結加入，請透過電子郵件邀請。';
+
+  @override
   String get linkAccessTitle => '任何有連結的人都能開啟';
 
   @override
   String get linkAccessHelp => '讓大家不必建立帳戶也能查看及編輯';
+
+  @override
+  String get linkClosedTitle => '禁止用連結加入';
+
+  @override
+  String get linkClosedHelp => '只有現有成員和透過電子郵件受邀的人能進入';
 
   @override
   String get groupFeatures => '功能';
@@ -4679,6 +4707,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String activityLinkReset(String who) {
     return '$who 重設了群組連結';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who 停用了連結加入';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who 啟用了連結加入';
   }
 
   @override
@@ -7100,6 +7138,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorPasswordRequired => '這個群組需要密碼。';
+
+  @override
+  String get errorLinkClosed => '這個群組只讓透過電子郵件受邀的人加入，請向成員索取邀請。';
+
+  @override
+  String get joinLinkClosedTitle => '已停用連結加入';
 
   @override
   String get errorNoPassword => '這個群組已經沒有密碼了。';

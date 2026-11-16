@@ -552,10 +552,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get groupCopyLink => 'Скопіювати посилання';
 
   @override
-  String get groupQrCode => 'Показати QR-код';
-
-  @override
-  String get groupQrCodeHelp => 'Учасники можуть відсканувати посилання камерою телефона.';
+  String get groupShareLink => 'Поділитися посиланням на групу';
 
   @override
   String groupQrLabel(String group) {
@@ -569,10 +566,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'Ті, хто має посилання, можуть попросити приєднатися після входу.';
 
   @override
+  String get groupLinkClosedHelp => 'Приєднання за посиланням вимкнено. Запрошуйте електронною поштою.';
+
+  @override
   String get linkAccessTitle => 'Доступ для всіх за посиланням';
 
   @override
   String get linkAccessHelp => 'Дозволити переглядати й редагувати без облікового запису';
+
+  @override
+  String get linkClosedTitle => 'Заборонити приєднання за посиланням';
+
+  @override
+  String get linkClosedHelp => 'Увійти можуть лише поточні учасники та запрошені електронною поштою';
 
   @override
   String get groupFeatures => 'Функції';
@@ -1199,6 +1205,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return 'Посилання на групу скинуто · $who';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return 'Приєднання за посиланням вимкнено · $who';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return 'Приєднання за посиланням увімкнено · $who';
   }
 
   @override
@@ -3842,6 +3858,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Для цієї групи потрібен пароль.';
+
+  @override
+  String get errorLinkClosed =>
+      'До цієї групи можна приєднатися лише за запрошенням електронною поштою. Попросіть учасника запросити вас.';
+
+  @override
+  String get joinLinkClosedTitle => 'Приєднання за посиланням вимкнено';
 
   @override
   String get errorNoPassword => 'Ця група більше не має пароля.';

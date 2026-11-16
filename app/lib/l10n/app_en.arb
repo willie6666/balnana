@@ -732,13 +732,9 @@
   "@groupCopyLink": {
     "description": "Label or control text for group copy link in group creation, settings, or switching."
   },
-  "groupQrCode": "Show QR code",
-  "@groupQrCode": {
-    "description": "Settings tile that shows the group's link as a QR code to scan."
-  },
-  "groupQrCodeHelp": "Let people scan the link with their phone's camera.",
-  "@groupQrCodeHelp": {
-    "description": "Help text under the tile that shows the group's QR code."
+  "groupShareLink": "Share group link",
+  "@groupShareLink": {
+    "description": "Settings tile that opens the group's link to share, as a QR code with copy and share buttons."
   },
   "groupQrLabel": "QR code for the link to {group}",
   "@groupQrLabel": {
@@ -757,6 +753,10 @@
   "@groupCopyLinkHelpAccounts": {
     "description": "Label or control text for group copy link help accounts in group creation, settings, or switching."
   },
+  "groupLinkClosedHelp": "Joining by link is off. Invite people by email.",
+  "@groupLinkClosedHelp": {
+    "description": "Help text under the dimmed share tile when the group's link no longer lets anyone join."
+  },
   "linkAccessTitle": "Open to anyone with the link",
   "@linkAccessTitle": {
     "description": "Heading for link access title in group link-access permissions."
@@ -764,6 +764,14 @@
   "linkAccessHelp": "Let people see and edit without an account",
   "@linkAccessHelp": {
     "description": "Help text for link access help in group link-access permissions."
+  },
+  "linkClosedTitle": "Block joining by link",
+  "@linkClosedTitle": {
+    "description": "Settings switch that stops anyone joining the group by its link; email invitations still work."
+  },
+  "linkClosedHelp": "Only current members and people invited by email can get in",
+  "@linkClosedHelp": {
+    "description": "Help text under the switch that stops anyone joining the group by its link."
   },
   "groupFeatures": "Features",
   "@groupFeatures": {
@@ -1684,6 +1692,26 @@
       }
     },
     "description": "Message for activity link reset in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "activityLinkClosed": "{who} turned off joining by link",
+  "@activityLinkClosed": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity link closed (joining by link turned off) in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "activityLinkOpened": "{who} turned on joining by link",
+  "@activityLinkOpened": {
+    "placeholders": {
+      "who": {
+        "type": "String",
+        "description": "Display name of the person who performed the action."
+      }
+    },
+    "description": "Message for activity link opened (joining by link turned back on) in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
   "activityMemberAdded": "{who} added {name}",
   "@activityMemberAdded": {
@@ -5442,6 +5470,14 @@
   "errorPasswordRequired": "This group needs its password.",
   "@errorPasswordRequired": {
     "description": "Message for error password required in API error feedback: the group has a password this device has not entered."
+  },
+  "errorLinkClosed": "Only people invited by email can join this group. Ask a member to invite you.",
+  "@errorLinkClosed": {
+    "description": "Message for error link closed in API error feedback: the group lets in only people invited by email."
+  },
+  "joinLinkClosedTitle": "Joining by link is off",
+  "@joinLinkClosedTitle": {
+    "description": "Title on the join page when the group's link no longer lets anyone join."
   },
   "errorNoPassword": "This group has no password any more.",
   "@errorNoPassword": {

@@ -199,6 +199,16 @@ class _Settings extends ConsumerWidget {
     }
   }
 
+  Future<void> _setLinkClosed(BuildContext context, WidgetRef ref, bool closed) async {
+    final l10n = context.l10n;
+    try {
+      await groupApiOf(ref, group.token).update(linkClosed: closed);
+      refreshGroup(ref, group.token);
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, errorMessage(l10n, e));
+    }
+  }
+
   Future<void> _setLinkAccess(BuildContext context, WidgetRef ref, bool open) async {
     final l10n = context.l10n;
     try {
@@ -345,17 +355,15 @@ class _Settings extends ConsumerWidget {
         GroupedList(
           title: l10n.groupSharing,
           children: [
+            // A closed link lets no one in, so there is nothing to share.
             GroupedTile(
-              icon: Icons.link,
-              title: l10n.groupCopyLink,
-              subtitle: groupLinkHelp(l10n, accounts: accounts, group: group),
-              onTap: () => copyGroupLink(context, ref, group.token),
-            ),
-            GroupedTile(
-              icon: Icons.qr_code_2,
-              title: l10n.groupQrCode,
-              subtitle: l10n.groupQrCodeHelp,
-              onTap: () => showShareSheet(context, group),
+              icon: Icons.share_outlined,
+              title: l10n.groupShareLink,
+              subtitle: group.linkClosed
+                  ? l10n.groupLinkClosedHelp
+                  : groupLinkHelp(l10n, accounts: accounts, group: group),
+              enabled: !group.linkClosed,
+              onTap: group.linkClosed ? null : () => showShareSheet(context, group),
             ),
             if (signedIn && email && me != null)
               GroupedTile(
@@ -364,7 +372,15 @@ class _Settings extends ConsumerWidget {
                 subtitle: l10n.inviteByEmailHelp,
                 onTap: () => showInviteDialog(context, group),
               ),
-            if (accounts && linkGroups && me != null && me.owner)
+            if (accounts && canDelete)
+              GroupedSwitchTile(
+                icon: Icons.link_off,
+                title: l10n.linkClosedTitle,
+                subtitle: l10n.linkClosedHelp,
+                value: group.linkClosed,
+                onChanged: (closed) => _setLinkClosed(context, ref, closed),
+              ),
+            if (accounts && linkGroups && me != null && me.owner && !group.linkClosed)
               GroupedSwitchTile(
                 icon: Icons.public,
                 title: l10n.linkAccessTitle,

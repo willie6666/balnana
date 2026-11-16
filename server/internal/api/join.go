@@ -10,7 +10,8 @@ import (
 
 // Joining needs only the group's token and a signed-in account: the link is
 // the invitation, whether or not the group has link access. A group with a
-// password needs its key as well.
+// password needs its key as well, and one whose link is closed lets in only
+// those invited by email.
 
 func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) (GetJoinInfoResponseObject, error) {
 	u, err := s.requireUser(ctx)
@@ -19,6 +20,9 @@ func (s *Server) GetJoinInfo(ctx context.Context, req GetJoinInfoRequestObject) 
 	}
 	g, err := s.findGroup(ctx, s.db, req.Token, false)
 	if err != nil {
+		return nil, err
+	}
+	if err := checkLinkClosed(ctx, s.db, g, u); err != nil {
 		return nil, err
 	}
 	if err := checkGroupKey(ctx, g); err != nil {
@@ -70,6 +74,9 @@ func (s *Server) JoinGroup(ctx context.Context, req JoinGroupRequestObject) (Joi
 		}
 		g, err := s.findGroup(ctx, tx, req.Token, true)
 		if err != nil {
+			return err
+		}
+		if err := checkLinkClosed(ctx, tx, g, u); err != nil {
 			return err
 		}
 		if err := checkGroupKey(ctx, g); err != nil {
@@ -182,4 +189,27 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 		}
 	}
 	return logActivity(ctx, tx, g.id, &m.id, "member.joined", &m.id, map[string]any{"name": m.name, "claimed": claimed})
+}
+
+// checkLinkClosed lets u past a closed link only as a member or with a live
+// email invitation to g (403 link_closed otherwise). Someone who left needs
+// a new invitation too.
+func checkLinkClosed(ctx context.Context, q querier, g *group, u *user) error {
+	if !g.linkClosed || g.me != nil {
+		return nil
+	}
+	invited := false
+	if u.email != nil && u.verified {
+		err := q.QueryRow(ctx, `
+			select exists (select 1 from invites
+			               where group_id = $1 and email = $2 and expires_at > now())`,
+			g.id, *u.email).Scan(&invited)
+		if err != nil {
+			return err
+		}
+	}
+	if !invited {
+		return forbidden("link_closed")
+	}
+	return nil
 }

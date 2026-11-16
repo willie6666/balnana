@@ -552,10 +552,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get groupCopyLink => 'Скопировать ссылку';
 
   @override
-  String get groupQrCode => 'Показать QR-код';
-
-  @override
-  String get groupQrCodeHelp => 'Участники смогут отсканировать ссылку камерой телефона.';
+  String get groupShareLink => 'Поделиться ссылкой на группу';
 
   @override
   String groupQrLabel(String group) {
@@ -571,10 +568,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Участники со ссылкой могут попросить доступ после входа в аккаунт.';
 
   @override
+  String get groupLinkClosedHelp => 'Вступление по ссылке отключено. Приглашайте по электронной почте.';
+
+  @override
   String get linkAccessTitle => 'Доступна всем по ссылке';
 
   @override
   String get linkAccessHelp => 'Разрешить просматривать и редактировать без аккаунта';
+
+  @override
+  String get linkClosedTitle => 'Запретить вступление по ссылке';
+
+  @override
+  String get linkClosedHelp => 'Войти могут только текущие участники и приглашённые по электронной почте';
 
   @override
   String get groupFeatures => 'Функции';
@@ -1166,6 +1172,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who сбросил(а) ссылку на группу';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who отключил(а) вступление по ссылке';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who включил(а) вступление по ссылке';
   }
 
   @override
@@ -3811,6 +3827,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Для этой группы нужен пароль.';
+
+  @override
+  String get errorLinkClosed =>
+      'В эту группу можно вступить только по приглашению на электронную почту. Попросите участника пригласить вас.';
+
+  @override
+  String get joinLinkClosedTitle => 'Вступление по ссылке отключено';
 
   @override
   String get errorNoPassword => 'У этой группы больше нет пароля.';

@@ -538,10 +538,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get groupCopyLink => 'Salin tautan';
 
   @override
-  String get groupQrCode => 'Tampilkan kode QR';
-
-  @override
-  String get groupQrCodeHelp => 'Biarkan orang memindai tautan dengan kamera ponsel mereka.';
+  String get groupShareLink => 'Bagikan tautan grup';
 
   @override
   String groupQrLabel(String group) {
@@ -555,10 +552,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'Orang yang memiliki tautan dapat meminta bergabung setelah login.';
 
   @override
+  String get groupLinkClosedHelp => 'Bergabung lewat tautan dinonaktifkan. Undang orang lewat email.';
+
+  @override
   String get linkAccessTitle => 'Terbuka untuk siapa pun yang memiliki tautan';
 
   @override
   String get linkAccessHelp => 'Izinkan orang melihat dan mengedit tanpa akun';
+
+  @override
+  String get linkClosedTitle => 'Blokir bergabung lewat tautan';
+
+  @override
+  String get linkClosedHelp => 'Hanya anggota saat ini dan orang yang diundang lewat email yang bisa masuk';
 
   @override
   String get groupFeatures => 'Fitur';
@@ -1148,6 +1154,16 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who mereset tautan grup';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who menonaktifkan bergabung lewat tautan';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who mengaktifkan bergabung lewat tautan';
   }
 
   @override
@@ -3700,6 +3716,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Grup ini memerlukan kata sandinya.';
+
+  @override
+  String get errorLinkClosed =>
+      'Hanya orang yang diundang lewat email yang bisa bergabung ke grup ini. Minta anggota untuk mengundangmu.';
+
+  @override
+  String get joinLinkClosedTitle => 'Bergabung lewat tautan dinonaktifkan';
 
   @override
   String get errorNoPassword => 'Grup ini tidak lagi punya kata sandi.';

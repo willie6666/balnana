@@ -351,6 +351,11 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 	if in.LinkAccess != nil && accounts && *in.LinkAccess && !s.conf().LinkGroups {
 		return nil, forbidden("link_groups_off")
 	}
+	if in.LinkClosed != nil && *in.LinkClosed {
+		if err := s.requireAccounts(); err != nil {
+			return nil, err
+		}
+	}
 
 	var out Group
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
@@ -369,6 +374,25 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 			}
 			linkAccess = in.LinkAccess
 		}
+		var linkClosed *bool
+		if in.LinkClosed != nil && *in.LinkClosed != g.linkClosed {
+			if err := s.mayManage(ctx, tx, g); err != nil {
+				return err
+			}
+			linkClosed = in.LinkClosed
+		}
+		// A closed link lets no one in, so link access goes with it.
+		closed := g.linkClosed
+		if linkClosed != nil {
+			closed = *linkClosed
+		}
+		if closed && (linkAccess != nil && *linkAccess || linkAccess == nil && g.linkAccess) {
+			if linkAccess != nil {
+				return conflict("link_closed")
+			}
+			off := false
+			linkAccess = &off
+		}
 		features := withFeatures(g.features, in.Features)
 		// What came due while it was off is skipped, as on resuming.
 		if features.Recurring && !g.features.Recurring {
@@ -383,17 +407,25 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 				color = coalesce($5, color),
 				link_access = coalesce($6, link_access),
 				symbol = case when $8 then null else coalesce($7, symbol) end,
-				foreign_currency = $9, recurring = $10, places = $11, receipts = $12
+				foreign_currency = $9, recurring = $10, places = $11, receipts = $12,
+				link_closed = coalesce($13, link_closed)
 			where id = $1
 			returning `+groupColumns, g.id, name, emoji, clearEmoji, in.Color, linkAccess, symbol, clearSymbol,
-			features.ForeignCurrency, features.Recurring, features.Places, features.Receipts))
+			features.ForeignCurrency, features.Recurring, features.Places, features.Receipts, linkClosed))
 		if err != nil {
 			return err
 		}
 		if err := s.resolveAccess(ctx, tx, g); err != nil {
 			return err
 		}
-		if err := logActivity(ctx, tx, g.id, who, "group.updated", nil, map[string]any{"name": g.name}); err != nil {
+		// Closing or opening the link is logged as that, not as an edit.
+		action := "group.updated"
+		if linkClosed != nil && *linkClosed {
+			action = "group.link_closed"
+		} else if linkClosed != nil {
+			action = "group.link_opened"
+		}
+		if err := logActivity(ctx, tx, g.id, who, action, nil, map[string]any{"name": g.name}); err != nil {
 			return err
 		}
 		out, err = loadGroup(ctx, tx, g)

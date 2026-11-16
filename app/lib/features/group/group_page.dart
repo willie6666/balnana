@@ -348,11 +348,13 @@ class _GroupPageState extends ConsumerState<GroupPage> {
               titleSpacing: BSpace.s8,
               title: GroupSwitcher(group: group),
               actions: [
-                IconButton(
-                  tooltip: l10n.groupShare,
-                  icon: const Icon(Icons.share_outlined),
-                  onPressed: () => showShareSheet(context, group),
-                ),
+                // A closed link lets no one in, so there is nothing to share.
+                if (!group.linkClosed)
+                  IconButton(
+                    tooltip: l10n.groupShare,
+                    icon: const Icon(Icons.share_outlined),
+                    onPressed: () => showShareSheet(context, group),
+                  ),
                 IconButton(
                   tooltip: l10n.groupSettings,
                   icon: const Icon(Icons.settings_outlined),

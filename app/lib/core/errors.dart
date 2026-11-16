@@ -47,6 +47,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_credentials' => l10n.errorInvalidCredentials,
     'wrong_password' => l10n.errorWrongPassword,
     'password_required' => l10n.errorPasswordRequired,
+    'link_closed' => l10n.errorLinkClosed,
     'no_password' => l10n.errorNoPassword,
     'invalid_code' => l10n.errorInvalidCode,
     'email_needed' => l10n.errorEmailNeeded,

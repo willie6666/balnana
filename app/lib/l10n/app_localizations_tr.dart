@@ -541,10 +541,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groupCopyLink => 'Bağlantıyı kopyala';
 
   @override
-  String get groupQrCode => 'QR kodunu göster';
-
-  @override
-  String get groupQrCodeHelp => 'Başkaları telefon kamerasıyla bağlantıyı tarayabilir.';
+  String get groupShareLink => 'Grup bağlantısını paylaş';
 
   @override
   String groupQrLabel(String group) {
@@ -559,10 +556,19 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bağlantıya sahip kişiler oturum açtıktan sonra katılma isteği gönderebilir.';
 
   @override
+  String get groupLinkClosedHelp => 'Bağlantıyla katılma kapalı. Kişileri e-posta ile davet edin.';
+
+  @override
   String get linkAccessTitle => 'Bağlantıya sahip herkes erişebilir';
 
   @override
   String get linkAccessHelp => 'Hesap olmadan grubu görüp düzenleyebilsinler.';
+
+  @override
+  String get linkClosedTitle => 'Bağlantıyla katılmayı engelle';
+
+  @override
+  String get linkClosedHelp => 'Yalnızca mevcut üyeler ve e-posta ile davet edilenler girebilir';
 
   @override
   String get groupFeatures => 'Özellikler';
@@ -1149,6 +1155,16 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who, grup bağlantısını sıfırladı';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who, bağlantıyla katılmayı kapattı';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who, bağlantıyla katılmayı açtı';
   }
 
   @override
@@ -3704,6 +3720,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Bu grup şifresini istiyor.';
+
+  @override
+  String get errorLinkClosed =>
+      'Bu gruba yalnızca e-posta ile davet edilenler katılabilir. Bir üyeden sizi davet etmesini isteyin.';
+
+  @override
+  String get joinLinkClosedTitle => 'Bağlantıyla katılma kapalı';
 
   @override
   String get errorNoPassword => 'Bu grubun artık şifresi yok.';

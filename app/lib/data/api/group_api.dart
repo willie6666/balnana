@@ -35,7 +35,8 @@ class GroupApi {
   Future<GroupPlan> unsponsor() =>
       _transport.send(() => _dio.delete<Object?>('$_base/sponsor'), GroupPlan.fromJson);
 
-  /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode.
+  /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode,
+  /// [linkClosed] for whoever may manage the group there.
   /// An empty [emoji] or [symbol] clears it.
   Future<Group> update({
     String? name,
@@ -43,6 +44,7 @@ class GroupApi {
     int? color,
     String? symbol,
     bool? linkAccess,
+    bool? linkClosed,
     GroupFeatures? features,
   }) => _transport.send(
     () => _dio.patch<Object?>(
@@ -53,6 +55,7 @@ class GroupApi {
         'color': ?color,
         'symbol': ?symbol,
         'linkAccess': ?linkAccess,
+        'linkClosed': ?linkClosed,
         'features': ?features?.toJson(),
       },
       options: _as,

@@ -533,10 +533,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get groupCopyLink => 'คัดลอกลิงก์';
 
   @override
-  String get groupQrCode => 'แสดง QR code';
-
-  @override
-  String get groupQrCodeHelp => 'ให้คนอื่นสแกนลิงก์ด้วยกล้องโทรศัพท์';
+  String get groupShareLink => 'แชร์ลิงก์กลุ่ม';
 
   @override
   String groupQrLabel(String group) {
@@ -550,10 +547,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'คนที่มีลิงก์ขอเข้าร่วมได้หลังลงชื่อเข้าใช้';
 
   @override
+  String get groupLinkClosedHelp => 'ปิดการเข้าร่วมผ่านลิงก์อยู่ เชิญคนทางอีเมลแทน';
+
+  @override
   String get linkAccessTitle => 'เปิดให้ทุกคนที่มีลิงก์';
 
   @override
   String get linkAccessHelp => 'ให้คนอื่นดูและแก้ไขได้โดยไม่ต้องมีบัญชี';
+
+  @override
+  String get linkClosedTitle => 'บล็อกการเข้าร่วมผ่านลิงก์';
+
+  @override
+  String get linkClosedHelp => 'เฉพาะสมาชิกปัจจุบันและคนที่ได้รับเชิญทางอีเมลเท่านั้นที่เข้าได้';
 
   @override
   String get groupFeatures => 'ฟีเจอร์';
@@ -1140,6 +1146,16 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who รีเซ็ตลิงก์กลุ่ม';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who ปิดการเข้าร่วมผ่านลิงก์';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who เปิดการเข้าร่วมผ่านลิงก์';
   }
 
   @override
@@ -3660,6 +3676,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'กลุ่มนี้ต้องใช้รหัสผ่าน';
+
+  @override
+  String get errorLinkClosed => 'กลุ่มนี้ให้เข้าร่วมได้เฉพาะคนที่ได้รับเชิญทางอีเมล ขอให้สมาชิกเชิญคุณ';
+
+  @override
+  String get joinLinkClosedTitle => 'ปิดการเข้าร่วมผ่านลิงก์อยู่';
 
   @override
   String get errorNoPassword => 'กลุ่มนี้ไม่มีรหัสผ่านแล้ว';

@@ -526,10 +526,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groupCopyLink => 'リンクをコピー';
 
   @override
-  String get groupQrCode => 'QRコードを表示';
-
-  @override
-  String get groupQrCodeHelp => 'スマートフォンのカメラでリンクを読み取ってもらえます。';
+  String get groupShareLink => 'グループのリンクを共有';
 
   @override
   String groupQrLabel(String group) {
@@ -543,10 +540,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'リンクを知っている人は、サインイン後に参加をリクエストできます。';
 
   @override
+  String get groupLinkClosedHelp => 'リンクでの参加はオフです。メールで招待してください。';
+
+  @override
   String get linkAccessTitle => 'リンクを知っている人に公開';
 
   @override
   String get linkAccessHelp => 'アカウントなしで表示・編集できるようにする';
+
+  @override
+  String get linkClosedTitle => 'リンクでの参加をブロック';
+
+  @override
+  String get linkClosedHelp => '今のメンバーとメールで招待された人だけが入れます';
 
   @override
   String get groupFeatures => '機能';
@@ -1124,6 +1130,16 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$whoがグループのリンクをリセットしました';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$whoがリンクでの参加をオフにしました';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$whoがリンクでの参加をオンにしました';
   }
 
   @override
@@ -3563,6 +3579,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'このグループにはパスワードが必要です。';
+
+  @override
+  String get errorLinkClosed => 'このグループにはメールで招待された人だけが参加できます。メンバーに招待を頼んでください。';
+
+  @override
+  String get joinLinkClosedTitle => 'リンクでの参加はオフです';
 
   @override
   String get errorNoPassword => 'このグループにはもうパスワードがありません。';

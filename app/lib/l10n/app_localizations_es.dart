@@ -548,10 +548,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get groupCopyLink => 'Copiar enlace';
 
   @override
-  String get groupQrCode => 'Mostrar código QR';
-
-  @override
-  String get groupQrCodeHelp => 'Para que otras personas escaneen el enlace con la cámara de su teléfono.';
+  String get groupShareLink => 'Compartir enlace del grupo';
 
   @override
   String groupQrLabel(String group) {
@@ -566,10 +563,20 @@ class AppLocalizationsEs extends AppLocalizations {
       'Quienes tengan el enlace pueden solicitar unirse después de iniciar sesión.';
 
   @override
+  String get groupLinkClosedHelp => 'Unirse por enlace está desactivado. Invita por correo.';
+
+  @override
   String get linkAccessTitle => 'Abierto a cualquiera que tenga el enlace';
 
   @override
   String get linkAccessHelp => 'Permite ver y editar sin una cuenta';
+
+  @override
+  String get linkClosedTitle => 'Bloquear unirse por enlace';
+
+  @override
+  String get linkClosedHelp =>
+      'Solo los miembros actuales y quienes reciban una invitación por correo pueden entrar';
 
   @override
   String get groupFeatures => 'Funciones';
@@ -1155,6 +1162,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who restableció el enlace del grupo';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who desactivó unirse por enlace';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who activó unirse por enlace';
   }
 
   @override
@@ -3728,6 +3745,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Este grupo necesita su contraseña.';
+
+  @override
+  String get errorLinkClosed =>
+      'Solo quienes reciben una invitación por correo pueden unirse a este grupo. Pide a un miembro que te invite.';
+
+  @override
+  String get joinLinkClosedTitle => 'Unirse por enlace está desactivado';
 
   @override
   String get errorNoPassword => 'Este grupo ya no tiene contraseña.';

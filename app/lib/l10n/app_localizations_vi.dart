@@ -535,10 +535,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groupCopyLink => 'Sao chép liên kết';
 
   @override
-  String get groupQrCode => 'Hiện mã QR';
-
-  @override
-  String get groupQrCodeHelp => 'Mọi người có thể dùng camera điện thoại quét liên kết.';
+  String get groupShareLink => 'Chia sẻ liên kết nhóm';
 
   @override
   String groupQrLabel(String group) {
@@ -552,10 +549,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'Người có liên kết có thể xin tham gia sau khi đăng nhập.';
 
   @override
+  String get groupLinkClosedHelp => 'Đã tắt tham gia bằng liên kết. Hãy mời qua email.';
+
+  @override
   String get linkAccessTitle => 'Ai có liên kết đều mở được';
 
   @override
   String get linkAccessHelp => 'Cho phép mọi người xem và chỉnh sửa mà không cần tài khoản';
+
+  @override
+  String get linkClosedTitle => 'Chặn tham gia bằng liên kết';
+
+  @override
+  String get linkClosedHelp => 'Chỉ thành viên hiện tại và người được mời qua email mới vào được';
 
   @override
   String get groupFeatures => 'Tính năng';
@@ -1143,6 +1149,16 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who đã đặt lại liên kết nhóm';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who đã tắt tham gia bằng liên kết';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who đã bật tham gia bằng liên kết';
   }
 
   @override
@@ -3687,6 +3703,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Nhóm này cần mật khẩu.';
+
+  @override
+  String get errorLinkClosed =>
+      'Chỉ người được mời qua email mới tham gia được nhóm này. Hãy nhờ một thành viên mời bạn.';
+
+  @override
+  String get joinLinkClosedTitle => 'Đã tắt tham gia bằng liên kết';
 
   @override
   String get errorNoPassword => 'Nhóm này không còn mật khẩu.';

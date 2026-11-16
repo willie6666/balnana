@@ -547,10 +547,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get groupCopyLink => 'Link kopiëren';
 
   @override
-  String get groupQrCode => 'QR-code tonen';
-
-  @override
-  String get groupQrCodeHelp => 'Laat anderen de link scannen met de camera van hun telefoon.';
+  String get groupShareLink => 'Groepslink delen';
 
   @override
   String groupQrLabel(String group) {
@@ -564,10 +561,19 @@ class AppLocalizationsNl extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'Mensen met de link kunnen na aanmelding vragen om lid te worden.';
 
   @override
+  String get groupLinkClosedHelp => 'Lid worden via de link staat uit. Nodig mensen uit via e-mail.';
+
+  @override
   String get linkAccessTitle => 'Toegankelijk voor iedereen met de link';
 
   @override
   String get linkAccessHelp => 'Laat mensen zonder account de groep bekijken en bewerken.';
+
+  @override
+  String get linkClosedTitle => 'Lid worden via link blokkeren';
+
+  @override
+  String get linkClosedHelp => 'Alleen huidige leden en mensen die per e-mail zijn uitgenodigd kunnen erin';
 
   @override
   String get groupFeatures => 'Functies';
@@ -1157,6 +1163,16 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who heeft de groepslink opnieuw ingesteld';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who heeft lid worden via de link uitgezet';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who heeft lid worden via de link aangezet';
   }
 
   @override
@@ -3733,6 +3749,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Deze groep vraagt om haar wachtwoord.';
+
+  @override
+  String get errorLinkClosed =>
+      'Alleen mensen die per e-mail zijn uitgenodigd kunnen lid worden van deze groep. Vraag een lid om je uit te nodigen.';
+
+  @override
+  String get joinLinkClosedTitle => 'Lid worden via de link staat uit';
 
   @override
   String get errorNoPassword => 'Deze groep heeft geen wachtwoord meer.';

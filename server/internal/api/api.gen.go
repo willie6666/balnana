@@ -144,7 +144,7 @@ type AccountDelete struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.imported, group.updated, group.link_reset, group.password_set, group.password_removed, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
+	// Action group.created, group.imported, group.updated, group.link_reset, group.password_set, group.password_removed, group.link_closed, group.link_opened, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -490,6 +490,9 @@ type Group struct {
 	// LinkAccess Whether the link alone opens the group (always in link mode).
 	LinkAccess bool `json:"linkAccess"`
 
+	// LinkClosed Accounts mode: no one joins by the link, only by an email invitation (always false in link mode).
+	LinkClosed bool `json:"linkClosed"`
+
 	// Members Everyone, including members who left, oldest first.
 	Members     []Member `json:"members"`
 	MinorDigits int      `json:"minorDigits"`
@@ -647,8 +650,11 @@ type GroupUpdate struct {
 	// Features Those left out stay as they are, or on for a new group.
 	Features *GroupFeaturesInput `json:"features,omitempty"`
 
-	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`).
-	LinkAccess *bool   `json:"linkAccess,omitempty"`
+	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`). 409 `link_closed` to turn it on while the link is closed.
+	LinkAccess *bool `json:"linkAccess,omitempty"`
+
+	// LinkClosed Accounts mode only (otherwise 403 `accounts_off`): close the link, so only members use the group and only people invited by email join it. Who may change it as for the password; closing also turns link access off.
+	LinkClosed *bool   `json:"linkClosed,omitempty"`
 	Name       *string `json:"name,omitempty"`
 
 	// Symbol Empty string goes back to the currency's own symbol.

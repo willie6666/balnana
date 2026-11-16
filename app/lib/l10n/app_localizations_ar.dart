@@ -551,10 +551,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupCopyLink => 'نسخ الرابط';
 
   @override
-  String get groupQrCode => 'إظهار رمز QR';
-
-  @override
-  String get groupQrCodeHelp => 'دع الآخرين يمسحون الرابط بكاميرا هواتفهم.';
+  String get groupShareLink => 'مشاركة رابط المجموعة';
 
   @override
   String groupQrLabel(String group) {
@@ -568,10 +565,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => 'يمكن لمن لديه الرابط طلب الانضمام بعد تسجيل الدخول.';
 
   @override
+  String get groupLinkClosedHelp => 'الانضمام عبر الرابط متوقف. ادعُ الأشخاص عبر البريد الإلكتروني.';
+
+  @override
   String get linkAccessTitle => 'متاحة لكل من لديه الرابط';
 
   @override
   String get linkAccessHelp => 'السماح للآخرين بالعرض والتعديل دون حساب';
+
+  @override
+  String get linkClosedTitle => 'منع الانضمام عبر الرابط';
+
+  @override
+  String get linkClosedHelp => 'لا يدخل إلا الأعضاء الحاليون ومن تمت دعوتهم عبر البريد الإلكتروني';
 
   @override
   String get groupFeatures => 'الميزات';
@@ -1162,6 +1168,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return 'أعاد $who تعيين رابط المجموعة';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return 'أوقف $who الانضمام عبر الرابط';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return 'أتاح $who الانضمام عبر الرابط';
   }
 
   @override
@@ -3799,6 +3815,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'تحتاج هذه المجموعة إلى كلمة مرورها.';
+
+  @override
+  String get errorLinkClosed =>
+      'لا يمكن الانضمام إلى هذه المجموعة إلا بدعوة عبر البريد الإلكتروني. اطلب من أحد الأعضاء دعوتك.';
+
+  @override
+  String get joinLinkClosedTitle => 'الانضمام عبر الرابط متوقف';
 
   @override
   String get errorNoPassword => 'لم تعد لهذه المجموعة كلمة مرور.';

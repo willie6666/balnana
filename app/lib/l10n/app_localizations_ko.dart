@@ -526,10 +526,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groupCopyLink => '링크 복사';
 
   @override
-  String get groupQrCode => 'QR 코드 보기';
-
-  @override
-  String get groupQrCodeHelp => '휴대폰 카메라로 링크를 스캔할 수 있어요.';
+  String get groupShareLink => '그룹 링크 공유';
 
   @override
   String groupQrLabel(String group) {
@@ -543,10 +540,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groupCopyLinkHelpAccounts => '링크가 있는 사람은 로그인한 뒤 참여를 요청할 수 있어요.';
 
   @override
+  String get groupLinkClosedHelp => '링크로 참여할 수 없어요. 이메일로 초대하세요.';
+
+  @override
   String get linkAccessTitle => '링크가 있으면 누구나 참여 가능';
 
   @override
   String get linkAccessHelp => '계정 없이도 그룹을 보고 수정할 수 있게 해요';
+
+  @override
+  String get linkClosedTitle => '링크로 참여 막기';
+
+  @override
+  String get linkClosedHelp => '지금 멤버와 이메일로 초대받은 사람만 들어올 수 있어요';
 
   @override
   String get groupFeatures => '기능';
@@ -1124,6 +1130,16 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who님이 그룹 링크를 재설정했어요';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who님이 링크 참여를 껐어요';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who님이 링크 참여를 켰어요';
   }
 
   @override
@@ -3565,6 +3581,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => '이 그룹은 비밀번호가 필요합니다.';
+
+  @override
+  String get errorLinkClosed => '이 그룹은 이메일로 초대받은 사람만 참여할 수 있어요. 멤버에게 초대를 요청하세요.';
+
+  @override
+  String get joinLinkClosedTitle => '링크로 참여할 수 없어요';
 
   @override
   String get errorNoPassword => '이 그룹에는 더 이상 비밀번호가 없습니다.';

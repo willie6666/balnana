@@ -1126,10 +1126,44 @@ void main() {
     expect(find.byType(QrCodeView), findsNothing);
 
     await _go(tester, container, '/g/tok/settings');
-    await tester.scrollUntilVisible(find.text('Show QR code'), 100, scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.text('Show QR code'));
+    await tester.scrollUntilVisible(find.text('Share group link'), 100, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Copy link'), findsNothing);
+    await tester.tap(find.text('Share group link'));
     await tester.pumpAndSettle();
     expect(tester.widget<QrCodeView>(find.byType(QrCodeView)).data, '$_server/g/tok');
+  });
+
+  testWidgets('a closed link hides the share button and dims sharing in settings', (tester) async {
+    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
+      ..httpClientAdapter = _GroupServer(
+        () async => _GroupServer.reply({
+          'token': 'tok',
+          'name': 'Flat',
+          'currency': 'USD',
+          'minorDigits': 2,
+          'createdAt': '2026-01-01T00:00:00Z',
+          'members': [
+            {'id': 'a', 'name': 'Ana', 'balance': '0.00'},
+          ],
+          'linkClosed': true,
+        }, 200),
+      );
+    final container = await _boot(tester, [
+      apiProvider.overrideWithValue(dio),
+      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+    ]);
+    await _go(tester, container, '/g/tok');
+    expect(find.byTooltip('Share link'), findsNothing);
+    expect(find.byTooltip('Group settings'), findsOneWidget);
+
+    await _go(tester, container, '/g/tok/settings');
+    await tester.scrollUntilVisible(find.text('Share group link'), 100, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Joining by link is off. Invite people by email.'), findsOneWidget);
+    final tile = find.widgetWithText(ListTile, 'Share group link');
+    expect(tester.widget<ListTile>(tile).enabled, isFalse);
+    await tester.tap(tile, warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(QrCodeView), findsNothing);
   });
 
   testWidgets('a notification opens its group only on the server it came from', (tester) async {

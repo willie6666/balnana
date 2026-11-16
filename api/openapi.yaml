@@ -32,6 +32,12 @@ info:
     requests answer 403 `password_required`. Accounts that are members need
     no key. A new password makes every older key invalid.
 
+    Closed links (accounts mode): a group with `linkClosed` lets no one in by
+    its link. Only its members may use it, and only someone with a live email
+    invitation to it may join: /g/{token}/join answers others 403
+    `link_closed`. Closing the link also turns link access off, and link
+    access cannot be turned on again while it is closed (409 `link_closed`).
+
     Billing: on a server that charges, adding past a plan's limit answers
     402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
     already stays as it is, even past a limit. Ko-fi posts
@@ -2394,12 +2400,21 @@ components:
           type: boolean
           description: >-
             Accounts mode, owners only, when the server allows it
-            (`linkGroups`).
+            (`linkGroups`). 409 `link_closed` to turn it on while the link
+            is closed.
+        linkClosed:
+          type: boolean
+          description: >-
+            Accounts mode only (otherwise 403 `accounts_off`): close the
+            link, so only members use the group and only people invited by
+            email join it. Who may change it as for the password; closing
+            also turns link access off.
         features:
           $ref: "#/components/schemas/GroupFeaturesInput"
     Group:
       type: object
-      required: [token, name, currency, minorDigits, createdAt, members, categories, linkAccess, hasPassword, features]
+      required:
+        [token, name, currency, minorDigits, createdAt, members, categories, linkAccess, linkClosed, hasPassword, features]
       properties:
         token:
           type: string
@@ -2432,6 +2447,11 @@ components:
         linkAccess:
           type: boolean
           description: Whether the link alone opens the group (always in link mode).
+        linkClosed:
+          type: boolean
+          description: >-
+            Accounts mode: no one joins by the link, only by an email
+            invitation (always false in link mode).
         hasPassword:
           type: boolean
           description: Someone who is not a member needs the group's password to open it.
@@ -3063,7 +3083,8 @@ components:
           type: string
           description: >-
             group.created, group.imported, group.updated, group.link_reset,
-            group.password_set, group.password_removed,
+            group.password_set, group.password_removed, group.link_closed,
+            group.link_opened,
             member.added, member.updated, member.removed, member.joined,
             category.added, category.updated, category.deleted,
             expense.created, expense.updated, expense.deleted,

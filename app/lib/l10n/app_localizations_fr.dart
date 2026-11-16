@@ -553,11 +553,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get groupCopyLink => 'Copier le lien';
 
   @override
-  String get groupQrCode => 'Afficher le QR code';
-
-  @override
-  String get groupQrCodeHelp =>
-      'Les personnes peuvent scanner le lien avec l’appareil photo de leur téléphone.';
+  String get groupShareLink => 'Partager le lien du groupe';
 
   @override
   String groupQrLabel(String group) {
@@ -572,10 +568,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les personnes qui ont le lien peuvent demander à rejoindre le groupe après s’être connectées.';
 
   @override
+  String get groupLinkClosedHelp => 'Rejoindre par lien est désactivé. Invitez par e-mail.';
+
+  @override
   String get linkAccessTitle => 'Accessible à toute personne ayant le lien';
 
   @override
   String get linkAccessHelp => 'Permettre de voir et modifier le groupe sans compte';
+
+  @override
+  String get linkClosedTitle => 'Bloquer l’accès par lien';
+
+  @override
+  String get linkClosedHelp =>
+      'Seuls les membres actuels et les personnes invitées par e-mail peuvent entrer';
 
   @override
   String get groupFeatures => 'Fonctionnalités';
@@ -1168,6 +1174,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who a réinitialisé le lien du groupe';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who a désactivé l’accès par lien';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who a réactivé l’accès par lien';
   }
 
   @override
@@ -3794,6 +3810,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Ce groupe demande son mot de passe.';
+
+  @override
+  String get errorLinkClosed =>
+      'Seules les personnes invitées par e-mail peuvent rejoindre ce groupe. Demandez à un membre de vous inviter.';
+
+  @override
+  String get joinLinkClosedTitle => 'Rejoindre par lien est désactivé';
 
   @override
   String get errorNoPassword => 'Ce groupe n\'a plus de mot de passe.';

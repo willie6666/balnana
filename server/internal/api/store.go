@@ -65,6 +65,8 @@ type group struct {
 	// The password's hash, which someone who is not a member must give the
 	// key of (see group_password.go); nil for none.
 	passwordHash *string
+	// Accounts mode: no one joins by the link, only by an email invitation.
+	linkClosed bool
 
 	open     bool    // the link alone opens the group
 	accounts bool    // accounts mode: members claimed by accounts are theirs
@@ -73,13 +75,14 @@ type group struct {
 }
 
 const groupColumns = `id::text, token, name, emoji, color, currency, symbol, minor_digits, link_access, created_at, ` +
-	`foreign_currency, recurring, places, receipts, password_hash`
+	`foreign_currency, recurring, places, receipts, password_hash, link_closed`
 
 // columns are where a row of groupColumns goes, followed by more.
 func (g *group) columns(more ...any) []any {
 	f := &g.features
 	return append([]any{&g.id, &g.token, &g.name, &g.emoji, &g.color, &g.currency, &g.symbol, &g.digits,
-		&g.linkAccess, &g.createdAt, &f.ForeignCurrency, &f.Recurring, &f.Places, &f.Receipts, &g.passwordHash}, more...)
+		&g.linkAccess, &g.createdAt, &f.ForeignCurrency, &f.Recurring, &f.Places, &f.Receipts, &g.passwordHash,
+		&g.linkClosed}, more...)
 }
 
 func scanGroup(row pgx.Row) (*group, error) {
@@ -410,6 +413,7 @@ func loadGroup(ctx context.Context, q querier, g *group) (Group, error) {
 		Categories:  categories,
 		LinkAccess:  g.open,
 		HasPassword: g.passwordHash != nil,
+		LinkClosed:  g.linkClosed,
 		MyMemberId:  g.me,
 		Features:    g.features,
 	}

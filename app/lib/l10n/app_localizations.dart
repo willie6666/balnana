@@ -1101,17 +1101,11 @@ abstract class AppLocalizations {
   /// **'Copy link'**
   String get groupCopyLink;
 
-  /// Settings tile that shows the group's link as a QR code to scan.
+  /// Settings tile that opens the group's link to share, as a QR code with copy and share buttons.
   ///
   /// In en, this message translates to:
-  /// **'Show QR code'**
-  String get groupQrCode;
-
-  /// Help text under the tile that shows the group's QR code.
-  ///
-  /// In en, this message translates to:
-  /// **'Let people scan the link with their phone\'s camera.'**
-  String get groupQrCodeHelp;
+  /// **'Share group link'**
+  String get groupShareLink;
 
   /// Screen reader label of the QR code that encodes a group's link.
   ///
@@ -1131,6 +1125,12 @@ abstract class AppLocalizations {
   /// **'People with the link can ask to join after signing in.'**
   String get groupCopyLinkHelpAccounts;
 
+  /// Help text under the dimmed share tile when the group's link no longer lets anyone join.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining by link is off. Invite people by email.'**
+  String get groupLinkClosedHelp;
+
   /// Heading for link access title in group link-access permissions.
   ///
   /// In en, this message translates to:
@@ -1142,6 +1142,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Let people see and edit without an account'**
   String get linkAccessHelp;
+
+  /// Settings switch that stops anyone joining the group by its link; email invitations still work.
+  ///
+  /// In en, this message translates to:
+  /// **'Block joining by link'**
+  String get linkClosedTitle;
+
+  /// Help text under the switch that stops anyone joining the group by its link.
+  ///
+  /// In en, this message translates to:
+  /// **'Only current members and people invited by email can get in'**
+  String get linkClosedHelp;
 
   /// Heading for the switches that turn group features (other currencies, recurring expenses, locations, receipts) on or off, in group creation and settings.
   ///
@@ -2168,6 +2180,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{who} reset the group link'**
   String activityLinkReset(String who);
+
+  /// Message for activity link closed (joining by link turned off) in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} turned off joining by link'**
+  String activityLinkClosed(String who);
+
+  /// Message for activity link opened (joining by link turned back on) in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} turned on joining by link'**
+  String activityLinkOpened(String who);
 
   /// Message for activity member added in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
@@ -6428,6 +6452,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This group needs its password.'**
   String get errorPasswordRequired;
+
+  /// Message for error link closed in API error feedback: the group lets in only people invited by email.
+  ///
+  /// In en, this message translates to:
+  /// **'Only people invited by email can join this group. Ask a member to invite you.'**
+  String get errorLinkClosed;
+
+  /// Title on the join page when the group's link no longer lets anyone join.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining by link is off'**
+  String get joinLinkClosedTitle;
 
   /// Message for error no password in API error feedback: entering a password for a group that no longer has one.
   ///

@@ -103,6 +103,7 @@ class Group {
     this.categories = const [],
     this.linkAccess = true,
     this.hasPassword = false,
+    this.linkClosed = false,
     this.myMemberId,
     this.features = const GroupFeatures(),
   });
@@ -126,6 +127,7 @@ class Group {
       ],
       linkAccess: optionalField<bool>(json, 'linkAccess') ?? true,
       hasPassword: optionalField<bool>(json, 'hasPassword') ?? false,
+      linkClosed: optionalField<bool>(json, 'linkClosed') ?? false,
       myMemberId: optionalField(json, 'myMemberId'),
       features: switch (json['features']) {
         null => const GroupFeatures(),
@@ -157,6 +159,9 @@ class Group {
 
   /// Opening it takes a password, except for its members' accounts.
   final bool hasPassword;
+
+  /// No one joins by the link, only by an email invitation (accounts mode).
+  final bool linkClosed;
 
   /// The signed-in account's member (accounts mode).
   final String? myMemberId;

@@ -154,6 +154,8 @@ String activitySentence(BuildContext context, FeedItem item) {
     'group.link_reset' => l10n.activityLinkReset(who),
     'group.password_set' => l10n.activityGroupPasswordSet(who),
     'group.password_removed' => l10n.activityGroupPasswordRemoved(who),
+    'group.link_closed' => l10n.activityLinkClosed(who),
+    'group.link_opened' => l10n.activityLinkOpened(who),
     'member.added' => l10n.activityMemberAdded(who, name),
     'member.updated' => l10n.activityMemberRenamed(who, a.text('oldName') ?? name, name),
     'member.removed' => l10n.activityMemberRemoved(who, name),

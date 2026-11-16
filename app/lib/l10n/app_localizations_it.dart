@@ -549,10 +549,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get groupCopyLink => 'Copia link';
 
   @override
-  String get groupQrCode => 'Mostra codice QR';
-
-  @override
-  String get groupQrCodeHelp => 'Le persone possono inquadrare il link con la fotocamera del telefono.';
+  String get groupShareLink => 'Condividi il link del gruppo';
 
   @override
   String groupQrLabel(String group) {
@@ -567,10 +564,19 @@ class AppLocalizationsIt extends AppLocalizations {
       'Chi ha il link può chiedere di unirsi dopo aver effettuato l\'accesso.';
 
   @override
+  String get groupLinkClosedHelp => 'Unirsi tramite link è disattivato. Invita via email.';
+
+  @override
   String get linkAccessTitle => 'Accessibile a chiunque abbia il link';
 
   @override
   String get linkAccessHelp => 'Consenti di vedere e modificare senza un account';
+
+  @override
+  String get linkClosedTitle => 'Blocca l\'accesso tramite link';
+
+  @override
+  String get linkClosedHelp => 'Possono entrare solo i membri attuali e chi è invitato via email';
 
   @override
   String get groupFeatures => 'Funzioni';
@@ -1158,6 +1164,16 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who ha reimpostato il link del gruppo';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who ha disattivato l\'accesso tramite link';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who ha riattivato l\'accesso tramite link';
   }
 
   @override
@@ -3737,6 +3753,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Questo gruppo richiede la sua password.';
+
+  @override
+  String get errorLinkClosed =>
+      'Solo chi è invitato via email può unirsi a questo gruppo. Chiedi a un membro di invitarti.';
+
+  @override
+  String get joinLinkClosedTitle => 'Unirsi tramite link è disattivato';
 
   @override
   String get errorNoPassword => 'Questo gruppo non ha più una password.';

@@ -112,6 +112,8 @@ class _JoinPageState extends ConsumerState<JoinPage> {
                   icon: Icons.link_off,
                   title: error is ApiException && error.isNotFound
                       ? l10n.groupMissingTitle
+                      : error is ApiException && error.code == 'link_closed'
+                      ? l10n.joinLinkClosedTitle
                       : l10n.groupsUnreachableTitle,
                   body: error is ApiException && error.isNotFound
                       ? l10n.groupMissingBody

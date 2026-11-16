@@ -556,10 +556,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupCopyLink => 'Link kopieren';
 
   @override
-  String get groupQrCode => 'QR-Code anzeigen';
-
-  @override
-  String get groupQrCodeHelp => 'Andere können den Link mit ihrer Handykamera scannen.';
+  String get groupShareLink => 'Gruppenlink teilen';
 
   @override
   String groupQrLabel(String group) {
@@ -574,10 +571,19 @@ class AppLocalizationsDe extends AppLocalizations {
       'Personen mit diesem Link können nach der Anmeldung den Beitritt beantragen.';
 
   @override
+  String get groupLinkClosedHelp => 'Beitreten per Link ist aus. Lade Leute per E-Mail ein.';
+
+  @override
   String get linkAccessTitle => 'Für alle mit dem Link zugänglich';
 
   @override
   String get linkAccessHelp => 'Personen können die Gruppe ohne Konto ansehen und bearbeiten';
+
+  @override
+  String get linkClosedTitle => 'Beitreten per Link sperren';
+
+  @override
+  String get linkClosedHelp => 'Nur aktuelle Mitglieder und per E-Mail Eingeladene kommen hinein';
 
   @override
   String get groupFeatures => 'Funktionen';
@@ -1170,6 +1176,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String activityLinkReset(String who) {
     return '$who hat den Gruppenlink zurückgesetzt';
+  }
+
+  @override
+  String activityLinkClosed(String who) {
+    return '$who hat das Beitreten per Link gesperrt';
+  }
+
+  @override
+  String activityLinkOpened(String who) {
+    return '$who hat das Beitreten per Link erlaubt';
   }
 
   @override
@@ -3754,6 +3770,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get errorPasswordRequired => 'Diese Gruppe braucht ihr Passwort.';
+
+  @override
+  String get errorLinkClosed =>
+      'Dieser Gruppe können nur per E-Mail Eingeladene beitreten. Bitte ein Mitglied, dich einzuladen.';
+
+  @override
+  String get joinLinkClosedTitle => 'Beitreten per Link ist aus';
 
   @override
   String get errorNoPassword => 'Diese Gruppe hat kein Passwort mehr.';
