@@ -279,6 +279,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get categoryGifts => '선물';
 
   @override
+  String get categoryTransfer => '송금';
+
+  @override
   String get categoryOther => '기타';
 
   @override
@@ -457,41 +460,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get memberRename => '이름 변경';
 
   @override
-  String get memberPaymentDetails => '결제 정보';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return '이 그룹의 다른 사람들이 $name님에게 돈을 보내는 방법: 은행 계좌, 결제 앱 또는 링크. 그룹의 모두가 볼 수 있어요.';
-  }
-
-  @override
-  String get paymentDetailLabel => '방법';
-
-  @override
-  String get paymentDetailValue => '계좌, ID 또는 링크';
-
-  @override
-  String get paymentDetailAdd => '결제 방법 추가';
-
-  @override
-  String get paymentDetailBank => '계좌 이체';
-
-  @override
-  String get paymentDetailSuggestions => '추천';
-
-  @override
   String get paymentDetailCopy => '복사';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$label 복사됨';
-  }
-
-  @override
-  String get paymentDetailOpen => '링크 열기';
-
-  @override
-  String get errorInvalidPaymentDetails => '결제 방법마다 방법과 계좌·ID·링크가 필요하며, 각각 한 줄이어야 해요.';
 
   @override
   String get errorNothingOwed => '지금은 갚을 금액이 없습니다.';
@@ -756,9 +725,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get filterAnyCategory => '모든 카테고리';
 
   @override
-  String get filterPayments => '송금';
-
-  @override
   String get filterClear => '필터 지우기';
 
   @override
@@ -819,11 +785,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dateYesterday => '어제';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from님이 $to님에게 송금했어요';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name님이 결제한 금액: $amount';
   }
@@ -868,12 +829,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get transactionIncome => '수입';
-
-  @override
-  String get paymentDelete => '송금 삭제';
-
-  @override
-  String get paymentDeleted => '송금을 삭제했어요';
 
   @override
   String expenseDeleted(String title) {
@@ -1104,18 +1059,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return '알림: $group에서 $payee님에게 $amount을(를) 갚아야 합니다.';
   }
-
-  @override
-  String get reminderHowToPay => '결제 방법:';
-
-  @override
-  String get recordPaymentTitle => '송금 기록';
-
-  @override
-  String get recordPaymentHelp => 'Balnana 밖에서 실제로 송금한 금액만 기록해 주세요.';
-
-  @override
-  String get paymentRecorded => '송금을 기록했어요';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3395,11 +3338,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorPushOff => '이 서버는 알림을 보내지 않습니다.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return '이전 시도에서 이미 $amount이(가) 기록되었습니다. 새로 추가된 항목은 없습니다.';
-  }
 
   @override
   String get refreshFailed => '업데이트하지 못했습니다. 표시된 내용이 오래되었을 수 있습니다.';

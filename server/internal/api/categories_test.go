@@ -11,7 +11,7 @@ func TestGroupCategories(t *testing.T) {
 	g := createGroup(c, "Ana", "Ben")
 	other := createGroup(c, "Zed")
 	ana := g.Members[0].Id
-	if len(g.Categories) != 12 || g.Categories[0].Id != "food" || !g.Categories[0].BuiltIn {
+	if len(g.Categories) != 13 || g.Categories[0].Id != "food" || !g.Categories[0].BuiltIn {
 		t.Fatalf("built-in categories: %+v", g.Categories)
 	}
 
@@ -62,11 +62,11 @@ func TestGroupCategories(t *testing.T) {
 	for _, cat := range got.Categories {
 		hidden[cat.Id] = cat.Hidden
 	}
-	if !hidden["rent"] || hidden["food"] || len(got.Categories) != 13 || got.Categories[12].Id != pets.Id {
+	if !hidden["rent"] || hidden["food"] || len(got.Categories) != 14 || got.Categories[13].Id != pets.Id {
 		t.Errorf("after hiding: %+v", got.Categories)
 	}
 	c.must(200, "GET", "/g/"+other.Token, nil, &got)
-	if len(got.Categories) != 12 || got.Categories[5].Hidden {
+	if len(got.Categories) != 13 || got.Categories[5].Hidden {
 		t.Errorf("other group sees: %+v", got.Categories)
 	}
 

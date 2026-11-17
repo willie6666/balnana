@@ -285,6 +285,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get categoryGifts => 'Hadiah';
 
   @override
+  String get categoryTransfer => 'Transfer';
+
+  @override
   String get categoryOther => 'Lainnya';
 
   @override
@@ -468,42 +471,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get memberRename => 'Ganti nama';
 
   @override
-  String get memberPaymentDetails => 'Detail pembayaran';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Cara orang lain di grup ini membayar $name: rekening bank, aplikasi pembayaran, atau tautan. Semua orang di grup dapat melihatnya.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Metode';
-
-  @override
-  String get paymentDetailValue => 'Rekening, ID, atau tautan';
-
-  @override
-  String get paymentDetailAdd => 'Tambah cara bayar';
-
-  @override
-  String get paymentDetailBank => 'Transfer bank';
-
-  @override
-  String get paymentDetailSuggestions => 'Saran';
-
-  @override
   String get paymentDetailCopy => 'Salin';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$label disalin';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Buka tautan';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Setiap cara bayar perlu metode dan rekening, ID, atau tautan, masing-masing dalam satu baris.';
 
   @override
   String get errorNothingOwed => 'Saat ini dia tidak berutang apa pun padamu.';
@@ -773,9 +741,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get filterAnyCategory => 'Kategori apa saja';
 
   @override
-  String get filterPayments => 'Pembayaran';
-
-  @override
   String get filterClear => 'Hapus filter';
 
   @override
@@ -841,11 +806,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get dateYesterday => 'Kemarin';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from membayar $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name membayar $amount';
   }
@@ -890,12 +850,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Pemasukan';
-
-  @override
-  String get paymentDelete => 'Hapus pembayaran';
-
-  @override
-  String get paymentDeleted => 'Pembayaran dihapus';
 
   @override
   String expenseDeleted(String title) {
@@ -1128,18 +1082,6 @@ class AppLocalizationsId extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Pengingat: kamu berutang $amount ke $payee di $group.';
   }
-
-  @override
-  String get reminderHowToPay => 'Cara membayar:';
-
-  @override
-  String get recordPaymentTitle => 'Catat pembayaran';
-
-  @override
-  String get recordPaymentHelp => 'Catat hanya uang yang benar-benar dibayarkan di luar Balnana.';
-
-  @override
-  String get paymentRecorded => 'Pembayaran dicatat';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3522,11 +3464,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Server ini tidak mengirim notifikasi.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Percobaan sebelumnya sudah mencatat $amount. Tidak ada yang ditambahkan.';
-  }
 
   @override
   String get refreshFailed => 'Tidak dapat memperbarui. Ini mungkin sudah tidak terbaru.';

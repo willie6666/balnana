@@ -145,18 +145,6 @@ func TestForeignExpenseValidation(t *testing.T) {
 		}
 	}
 
-	// Payments stay in the group's currency.
-	var p Expense
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: ben, ToMemberId: ana, Amount: "5.00"}, &p)
-	edit := ExpenseInput{
-		Title: p.Title, Amount: "5.00", Foreign: &ForeignInput{Currency: "JPY", Amount: "800"},
-		OccurredAt: p.OccurredAt, Version: &p.Version,
-		Payers:      []PayerInput{{MemberId: ben, Amount: "800"}},
-		SplitMethod: "equal", Splits: []Share{{MemberId: ana}},
-	}
-	if code := c.errorCode(400, "PUT", base+"/expenses/"+p.Id, edit); code != "invalid_payment" {
-		t.Errorf("foreign payment: %q", code)
-	}
 }
 
 func TestForeignTotalsConstraint(t *testing.T) {

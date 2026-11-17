@@ -657,6 +657,12 @@ abstract class AppLocalizations {
   /// **'Gifts'**
   String get categoryGifts;
 
+  /// Built-in category for money one member hands another, settling up.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get categoryTransfer;
+
   /// Label or control text for category other in built-in category names or category management.
   ///
   /// In en, this message translates to:
@@ -975,71 +981,11 @@ abstract class AppLocalizations {
   /// **'Rename'**
   String get memberRename;
 
-  /// Menu item on a group member, and the title of the sheet where how that member can be paid is entered.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment details'**
-  String get memberPaymentDetails;
-
-  /// Help text in the payment details sheet. {name} is the member whose details they are.
-  ///
-  /// In en, this message translates to:
-  /// **'How others in this group can pay {name}: a bank account, a payment app or a link. Everyone in the group can see them.'**
-  String paymentDetailsHelp(String name);
-
-  /// Label of the field naming a way to pay, such as a bank or a payment app.
-  ///
-  /// In en, this message translates to:
-  /// **'Method'**
-  String get paymentDetailLabel;
-
-  /// Label of the field holding the account number, handle or link of a way to pay.
-  ///
-  /// In en, this message translates to:
-  /// **'Account, ID or link'**
-  String get paymentDetailValue;
-
-  /// Button that adds another way to pay to a member's payment details.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a way to pay'**
-  String get paymentDetailAdd;
-
-  /// Suggested name for a way to pay: a transfer to a bank account.
-  ///
-  /// In en, this message translates to:
-  /// **'Bank transfer'**
-  String get paymentDetailBank;
-
-  /// Tooltip of the button listing suggested names for a way to pay.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggestions'**
-  String get paymentDetailSuggestions;
-
   /// Tooltip of the button that copies one of a member's payment details.
   ///
   /// In en, this message translates to:
   /// **'Copy'**
   String get paymentDetailCopy;
-
-  /// Snackbar after a payment detail was copied. {label} is its name, such as Bank transfer.
-  ///
-  /// In en, this message translates to:
-  /// **'{label} copied'**
-  String paymentDetailCopied(String label);
-
-  /// Tooltip of the button that opens a payment detail that is a web link.
-  ///
-  /// In en, this message translates to:
-  /// **'Open link'**
-  String get paymentDetailOpen;
-
-  /// Error when payment details are refused: each needs a method and a value, each on one line, within the length limits.
-  ///
-  /// In en, this message translates to:
-  /// **'Each way to pay needs a method and an account, ID or link, each on one line.'**
-  String get errorInvalidPaymentDetails;
 
   /// Error when sending a reminder to someone who no longer owes you anything.
   ///
@@ -1545,12 +1491,6 @@ abstract class AppLocalizations {
   /// **'Any category'**
   String get filterAnyCategory;
 
-  /// Filter choice: only payments between members, not expenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Payments'**
-  String get filterPayments;
-
   /// Label or control text for filter clear in expense filters.
   ///
   /// In en, this message translates to:
@@ -1665,12 +1605,6 @@ abstract class AppLocalizations {
   /// **'Yesterday'**
   String get dateYesterday;
 
-  /// Heading for payment title in recorded member-to-member payments. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
-  ///
-  /// In en, this message translates to:
-  /// **'{from} paid {to}'**
-  String paymentTitle(String from, String to);
-
   /// Caption naming who originally paid an outgoing expense, followed by a preformatted amount. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
   /// In en, this message translates to:
@@ -1730,18 +1664,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income'**
   String get transactionIncome;
-
-  /// Label or control text for payment delete in recorded member-to-member payments.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete payment'**
-  String get paymentDelete;
-
-  /// Label or control text for payment deleted in recorded member-to-member payments.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment deleted'**
-  String get paymentDeleted;
 
   /// Label or control text for expense deleted in the expense editor or expense list. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
@@ -2138,30 +2060,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminder: you owe {payee} {amount} in {group}.'**
   String reminderMessage(String payee, String amount, String group);
-
-  /// Heading in the shared reminder message before the payee's ways to pay.
-  ///
-  /// In en, this message translates to:
-  /// **'How to pay:'**
-  String get reminderHowToPay;
-
-  /// Heading for record payment title in the settlement dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Record a payment'**
-  String get recordPaymentTitle;
-
-  /// Help text for record payment help in the settlement dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Only record money that was actually paid, outside Balnana.'**
-  String get recordPaymentHelp;
-
-  /// Label or control text for payment recorded in recorded member-to-member payments.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment recorded'**
-  String get paymentRecorded;
 
   /// Message for activity group created in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale.
   ///
@@ -6098,12 +5996,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This server doesn\'t send notifications.'**
   String get errorPushOff;
-
-  /// Shown when retrying a payment found an earlier try had recorded a different amount.
-  ///
-  /// In en, this message translates to:
-  /// **'An earlier try had already recorded {amount}. Nothing new was added.'**
-  String paymentRecordedEarlier(String amount);
 
   /// Shown when reloading a group failed and the older data stays on screen.
   ///

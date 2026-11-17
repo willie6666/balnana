@@ -268,7 +268,7 @@ func TestAccountsGroupAccess(t *testing.T) {
 	// The owner leaving hands the group on, and coming back by the link does
 	// not make them an owner again.
 	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, nil)
-	ben.must(201, "POST", path+"/payments", PaymentInput{FromMemberId: g.Members[0].Id, ToMemberId: g.Members[1].Id, Amount: "50.00"}, nil)
+	ben.must(201, "POST", path+"/expenses", transfer(g.Members[0].Id, g.Members[1].Id, "50.00"), nil)
 	ana.must(204, "DELETE", path+"/members/"+g.Members[0].Id, nil, nil)
 	ben.must(200, "GET", path, nil, &g)
 	if g.Members[0].Owner || !g.Members[1].Owner {

@@ -362,6 +362,10 @@
   "@categoryGifts": {
     "description": "Label or control text for category gifts in built-in category names or category management."
   },
+  "categoryTransfer": "Transfer",
+  "@categoryTransfer": {
+    "description": "Built-in category for money one member hands another, settling up."
+  },
   "categoryOther": "Other",
   "@categoryOther": {
     "description": "Label or control text for category other in built-in category names or category management."
@@ -632,59 +636,9 @@
   "@memberRename": {
     "description": "Label or control text for member rename in group member management."
   },
-  "memberPaymentDetails": "Payment details",
-  "@memberPaymentDetails": {
-    "description": "Menu item on a group member, and the title of the sheet where how that member can be paid is entered."
-  },
-  "paymentDetailsHelp": "How others in this group can pay {name}: a bank account, a payment app or a link. Everyone in the group can see them.",
-  "@paymentDetailsHelp": {
-    "description": "Help text in the payment details sheet. {name} is the member whose details they are.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "paymentDetailLabel": "Method",
-  "@paymentDetailLabel": {
-    "description": "Label of the field naming a way to pay, such as a bank or a payment app."
-  },
-  "paymentDetailValue": "Account, ID or link",
-  "@paymentDetailValue": {
-    "description": "Label of the field holding the account number, handle or link of a way to pay."
-  },
-  "paymentDetailAdd": "Add a way to pay",
-  "@paymentDetailAdd": {
-    "description": "Button that adds another way to pay to a member's payment details."
-  },
-  "paymentDetailBank": "Bank transfer",
-  "@paymentDetailBank": {
-    "description": "Suggested name for a way to pay: a transfer to a bank account."
-  },
-  "paymentDetailSuggestions": "Suggestions",
-  "@paymentDetailSuggestions": {
-    "description": "Tooltip of the button listing suggested names for a way to pay."
-  },
   "paymentDetailCopy": "Copy",
   "@paymentDetailCopy": {
     "description": "Tooltip of the button that copies one of a member's payment details."
-  },
-  "paymentDetailCopied": "{label} copied",
-  "@paymentDetailCopied": {
-    "description": "Snackbar after a payment detail was copied. {label} is its name, such as Bank transfer.",
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "paymentDetailOpen": "Open link",
-  "@paymentDetailOpen": {
-    "description": "Tooltip of the button that opens a payment detail that is a web link."
-  },
-  "errorInvalidPaymentDetails": "Each way to pay needs a method and an account, ID or link, each on one line.",
-  "@errorInvalidPaymentDetails": {
-    "description": "Error when payment details are refused: each needs a method and a value, each on one line, within the length limits."
   },
   "errorNothingOwed": "They don't owe you anything now.",
   "@errorNothingOwed": {
@@ -1051,10 +1005,6 @@
   "@filterAnyCategory": {
     "description": "Label or control text for filter any category in expense filters."
   },
-  "filterPayments": "Payments",
-  "@filterPayments": {
-    "description": "Filter choice: only payments between members, not expenses."
-  },
   "filterClear": "Clear filters",
   "@filterClear": {
     "description": "Label or control text for filter clear in expense filters."
@@ -1136,20 +1086,6 @@
   "dateYesterday": "Yesterday",
   "@dateYesterday": {
     "description": "Label or control text for date yesterday in expense date headings."
-  },
-  "paymentTitle": "{from} paid {to}",
-  "@paymentTitle": {
-    "placeholders": {
-      "from": {
-        "type": "String",
-        "description": "Display name of the person paying, or the source named by the message."
-      },
-      "to": {
-        "type": "String",
-        "description": "Display name of the recipient, or the end named by the message."
-      }
-    },
-    "description": "Heading for payment title in recorded member-to-member payments. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
   },
   "expensePaidBy": "{name} paid {amount}",
   "@expensePaidBy": {
@@ -1254,14 +1190,6 @@
   "transactionIncome": "Income",
   "@transactionIncome": {
     "description": "Label or control text for transaction income in imported transaction direction."
-  },
-  "paymentDelete": "Delete payment",
-  "@paymentDelete": {
-    "description": "Label or control text for payment delete in recorded member-to-member payments."
-  },
-  "paymentDeleted": "Payment deleted",
-  "@paymentDeleted": {
-    "description": "Label or control text for payment deleted in recorded member-to-member payments."
   },
   "expenseDeleted": "Deleted “{title}”",
   "@expenseDeleted": {
@@ -1642,22 +1570,6 @@
         "description": "The group's name."
       }
     }
-  },
-  "reminderHowToPay": "How to pay:",
-  "@reminderHowToPay": {
-    "description": "Heading in the shared reminder message before the payee's ways to pay."
-  },
-  "recordPaymentTitle": "Record a payment",
-  "@recordPaymentTitle": {
-    "description": "Heading for record payment title in the settlement dialog."
-  },
-  "recordPaymentHelp": "Only record money that was actually paid, outside Balnana.",
-  "@recordPaymentHelp": {
-    "description": "Help text for record payment help in the settlement dialog."
-  },
-  "paymentRecorded": "Payment recorded",
-  "@paymentRecorded": {
-    "description": "Label or control text for payment recorded in recorded member-to-member payments."
   },
   "activityGroupCreated": "{who} created {group}",
   "@activityGroupCreated": {
@@ -5211,15 +5123,6 @@
   "errorPushOff": "This server doesn't send notifications.",
   "@errorPushOff": {
     "description": "Message when the server has push notifications turned off."
-  },
-  "paymentRecordedEarlier": "An earlier try had already recorded {amount}. Nothing new was added.",
-  "@paymentRecordedEarlier": {
-    "description": "Shown when retrying a payment found an earlier try had recorded a different amount.",
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
   },
   "refreshFailed": "Couldn't update. This may be out of date.",
   "@refreshFailed": {

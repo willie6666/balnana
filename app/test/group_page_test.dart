@@ -1222,10 +1222,9 @@ void main() {
     expect(const ExpenseFilter().query, isEmpty);
     expect(const ExpenseFilter(text: '   ').isEmpty, isTrue);
     final from = DateTime(2026, 10), to = DateTime(2026, 11);
-    expect(ExpenseFilter(text: ' taxi ', member: 'a', payments: true, period: (from: from, to: to)).query, {
+    expect(ExpenseFilter(text: ' taxi ', member: 'a', period: (from: from, to: to)).query, {
       'q': 'taxi',
       'member': 'a',
-      'kind': 'payment',
       'from': from.toUtc().toIso8601String(),
       'to': to.toUtc().toIso8601String(),
     });
@@ -1285,7 +1284,7 @@ void main() {
     });
   }
 
-  testWidgets('whoever pays sees how, and can copy it', (tester) async {
+  testWidgets('recording a suggested payment opens a transfer expense filled in', (tester) async {
     final ten = BigInt.from(1000);
     final flat = _group('Flat');
     final group = Group(
@@ -1295,17 +1294,11 @@ void main() {
       minorDigits: flat.minorDigits,
       createdAt: flat.createdAt,
       members: [
-        Member(id: 'a', name: 'Ana', balance: -ten, paymentDetails: const [PaymentDetail(label: 'Bank', value: '111')]),
-        Member(
-          id: 'b',
-          name: 'Ben',
-          balance: ten,
-          paymentDetails: const [
-            PaymentDetail(label: 'LINE Pay', value: 'ben.tw'),
-            PaymentDetail(label: 'PayPal', value: 'https://paypal.me/ben'),
-          ],
-        ),
+        Member(id: 'a', name: 'Ana', balance: -ten),
+        Member(id: 'b', name: 'Ben', balance: ten),
+        Member(id: 'c', name: 'Cy', balance: BigInt.zero),
       ],
+      categories: const [GroupCategory(id: 'transfer', emoji: '💸', rgb: 0x2E8B8B, builtIn: true)],
     );
     final container = await _boot(
       tester,
@@ -1316,25 +1309,19 @@ void main() {
       balances: Balances(nets: {'a': -ten, 'b': ten}, transfers: [Transfer('a', 'b', ten)]),
     );
     await _go(tester, container, '/g/tok');
-    expect(find.textContaining('ben.tw', findRichText: true), findsOneWidget);
-    // Ana's own are no use to her here.
-    expect(find.textContaining('111', findRichText: true), findsNothing);
-    expect(find.byTooltip('Open link'), findsOneWidget);
     // Reminding is for whoever is owed.
     expect(find.byTooltip('Remind'), findsNothing);
 
-    String? clipboard;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') clipboard = (call.arguments as Map)['text'] as String;
-      return null;
-    });
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null),
-    );
-    await tester.tap(find.byTooltip('Copy').first);
+    await tester.tap(find.widgetWithText(TextButton, 'Record'));
     await tester.pumpAndSettle();
-    expect(clipboard, 'ben.tw');
-    expect(find.text('LINE Pay copied'), findsOneWidget);
+    expect(
+      container.read(routerProvider).state.uri.toString(),
+      '/g/tok/expenses/new?from=a&to=b&amount=1000',
+    );
+    expect(find.widgetWithText(TextField, 'Ana → Ben'), findsOneWidget);
+    expect(find.widgetWithText(TextField, formatAmount(ten, 2)), findsOneWidget);
+    final chip = find.widgetWithText(ChoiceChip, 'Transfer');
+    expect(tester.widget<ChoiceChip>(chip).selected, isTrue);
   });
 
   group('reminders', () {
@@ -1350,7 +1337,7 @@ void main() {
         minorDigits: flat.minorDigits,
         createdAt: flat.createdAt,
         members: [
-          Member(id: 'a', name: 'Ana', balance: ten, paymentDetails: const [PaymentDetail(label: 'Bank', value: '111')]),
+          Member(id: 'a', name: 'Ana', balance: ten),
           Member(id: 'b', name: 'Ben', balance: -ten),
         ],
       );
@@ -1419,63 +1406,18 @@ void main() {
       expect(server.sent, ['POST /api/v1/g/tok/members/b/remind']);
     });
 
-    test('the message says how to pay', () async {
+    test('the message says whom and how much, and links the group', () async {
       final l10n = await lookupAppLocalizations(const Locale('en'));
       final group = flat();
       expect(
         reminderText(l10n, group, group.member('a')!, r'$10.00', 'https://example.test/g/tok'),
-        'Reminder: you owe Ana \$10.00 in Flat.\n\nHow to pay:\nBank: 111\n\nhttps://example.test/g/tok',
+        'Reminder: you owe Ana \$10.00 in Flat.\n\nhttps://example.test/g/tok',
       );
       expect(
         reminderText(l10n, group, group.member('b')!, r'$10.00', 'https://example.test/g/tok'),
         'Reminder: you owe Ben \$10.00 in Flat.\n\nhttps://example.test/g/tok',
       );
     });
-  });
-
-  testWidgets('payment details are entered from the member menu', (tester) async {
-    final server = _Members();
-    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
-      ..httpClientAdapter = server;
-    final container = await _boot(tester, [
-      apiProvider.overrideWithValue(dio),
-      groupProvider.overrideWith((ref, token) async => _group('Flat')),
-      groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
-    ]);
-    await _go(tester, container, '/g/tok/settings');
-    // Not .first: it throws while the list has not built the members yet.
-    final menu = find.descendant(
-      of: find.widgetWithText(ListTile, 'Ana (you)'),
-      matching: find.byType(PopupMenuButton<String>),
-    );
-    await tester.scrollUntilVisible(
-      menu,
-      200,
-      scrollable: find.descendant(of: find.byType(GroupSettingsPage), matching: find.byType(Scrollable)).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(menu);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Payment details'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('Suggestions'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Bank transfer').last);
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextFormField, 'Account, ID or link'), ' 012-345678 ');
-    // A second one left blank is not sent.
-    await tester.tap(find.text('Add a way to pay'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-
-    final patch = server.sent.singleWhere((r) => r.$1.startsWith('PATCH'));
-    expect(patch.$1, 'PATCH /api/v1/g/tok/members/a');
-    expect(patch.$2, containsPair('paymentDetails', [
-      {'label': 'Bank transfer', 'value': '012-345678'},
-    ]));
-    expect(find.text('Account, ID or link'), findsNothing);
   });
 
   testWidgets('a group with a password asks for it, then opens with the key it gives', (tester) async {
@@ -1670,7 +1612,7 @@ void main() {
     });
   }
 
-  testWidgets('a balance beyond one transaction still shows, and pays at most one', (tester) async {
+  testWidgets('a balance beyond one transaction still shows, and starts a transfer of at most one', (tester) async {
     final big = maxMinor + BigInt.from(500);
     final container = await _boot(
       tester,
@@ -1683,51 +1625,7 @@ void main() {
     await _go(tester, container, '/g/tok');
     await tester.tap(find.widgetWithText(TextButton, 'Record').first);
     await tester.pumpAndSettle();
-    final field = find.descendant(of: find.byType(AlertDialog), matching: find.byType(EditableText));
-    expect(tester.widget<EditableText>(field).controller.text, formatAmount(maxMinor, 2));
-    // What it suggests is accepted as it is.
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byType(FilledButton)));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('too large'), findsNothing);
-  });
-
-  testWidgets('a payment tried again for less says what the first try recorded', (tester) async {
-    final server = _Saves()..lost = 1;
-    final dio = Dio(BaseOptions(baseUrl: '$_server/api/v1', responseType: ResponseType.json))
-      ..httpClientAdapter = server;
-    final ten = BigInt.from(1000);
-    final container = await _boot(
-      tester,
-      [
-        apiProvider.overrideWithValue(dio),
-        groupProvider.overrideWith((ref, token) async => _group('Flat')),
-        expensesProvider.overrideWith2((token) => _Listed(token, const [])),
-        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
-      ],
-      balances: Balances(nets: {'a': ten, 'b': -ten}, transfers: [Transfer('b', 'a', ten)]),
-    );
-    await _go(tester, container, '/g/tok');
-    final dialog = find.byType(AlertDialog);
-
-    await tester.tap(find.widgetWithText(TextButton, 'Record').first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.descendant(of: dialog, matching: find.byType(FilledButton)));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.widgetWithText(TextButton, 'Record').first);
-    await tester.pumpAndSettle();
-    await tester.enterText(find.descendant(of: dialog, matching: find.byType(EditableText)), '8.00');
-    await tester.tap(find.descendant(of: dialog, matching: find.byType(FilledButton)));
-    await tester.pumpAndSettle();
-
-    expect(server.keys, hasLength(2));
-    expect(server.keys.first, isNotNull);
-    expect(server.keys.last, server.keys.first);
-    // The message of the first try goes first.
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-    expect(find.text('An earlier try had already recorded \$10.00. Nothing new was added.'), findsOneWidget);
-    expect(find.text('Payment recorded'), findsNothing);
+    expect(find.widgetWithText(TextField, formatAmount(maxMinor, 2)), findsOneWidget);
   });
 
   testWidgets('a failed refresh says what is shown may be old, unless offline', (tester) async {
@@ -2023,31 +1921,6 @@ class _Saves implements HttpClientAdapter {
       return _GroupServer.reply({'code': 'invalid_amount', 'message': 'no'}, 400);
     }
     return _GroupServer.reply(_expenseJson('e2'), options.method == 'POST' ? 201 : 200);
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
-/// Answers every request with Ana as she was, which is all a member change needs.
-class _Members implements HttpClientAdapter {
-  final sent = <(String, Object?)>[];
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    sent.add(('${options.method} ${options.uri.path}', options.data));
-    return _GroupServer.reply({
-      'id': 'a',
-      'name': 'Ana',
-      'left': false,
-      'owner': false,
-      'claimed': false,
-      'balance': '0.00',
-    }, 200);
   }
 
   @override

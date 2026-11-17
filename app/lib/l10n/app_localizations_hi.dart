@@ -290,6 +290,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get categoryGifts => 'तोहफ़े';
 
   @override
+  String get categoryTransfer => 'ट्रांसफ़र';
+
+  @override
   String get categoryOther => 'अन्य';
 
   @override
@@ -478,42 +481,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get memberRename => 'नाम बदलें';
 
   @override
-  String get memberPaymentDetails => 'भुगतान विवरण';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'इस समूह के अन्य लोग $name को कैसे भुगतान करें: बैंक खाता, भुगतान ऐप या लिंक। समूह में सभी इन्हें देख सकते हैं।';
-  }
-
-  @override
-  String get paymentDetailLabel => 'तरीका';
-
-  @override
-  String get paymentDetailValue => 'खाता, आईडी या लिंक';
-
-  @override
-  String get paymentDetailAdd => 'भुगतान का तरीका जोड़ें';
-
-  @override
-  String get paymentDetailBank => 'बैंक ट्रांसफ़र';
-
-  @override
-  String get paymentDetailSuggestions => 'सुझाव';
-
-  @override
   String get paymentDetailCopy => 'कॉपी करें';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$label कॉपी हो गया';
-  }
-
-  @override
-  String get paymentDetailOpen => 'लिंक खोलें';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'हर भुगतान तरीके में एक नाम और एक खाता, आईडी या लिंक होना चाहिए, हर एक एक ही पंक्ति में।';
 
   @override
   String get errorNothingOwed => 'अब उन पर आपका कुछ बकाया नहीं है।';
@@ -783,9 +751,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get filterAnyCategory => 'कोई भी श्रेणी';
 
   @override
-  String get filterPayments => 'भुगतान';
-
-  @override
   String get filterClear => 'फ़िल्टर साफ़ करें';
 
   @override
@@ -852,11 +817,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dateYesterday => 'कल';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from ने $to को पैसे दिए';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name ने $amount दिए';
   }
@@ -901,12 +861,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get transactionIncome => 'आमदनी';
-
-  @override
-  String get paymentDelete => 'भुगतान मिटाएँ';
-
-  @override
-  String get paymentDeleted => 'भुगतान मिटा दिया';
 
   @override
   String expenseDeleted(String title) {
@@ -1139,18 +1093,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'रिमाइंडर: $group में आपको $payee को $amount देने हैं।';
   }
-
-  @override
-  String get reminderHowToPay => 'भुगतान कैसे करें:';
-
-  @override
-  String get recordPaymentTitle => 'भुगतान दर्ज करें';
-
-  @override
-  String get recordPaymentHelp => 'यहाँ सिर्फ़ वही पैसे दर्ज करें जिनका भुगतान Balnana के बाहर सचमुच हुआ है।';
-
-  @override
-  String get paymentRecorded => 'भुगतान दर्ज हो गया';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3567,11 +3509,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get errorPushOff => 'यह सर्वर सूचनाएँ नहीं भेजता।';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'पिछली कोशिश में $amount पहले ही दर्ज हो चुका था। कुछ नया नहीं जोड़ा गया।';
-  }
 
   @override
   String get refreshFailed => 'अपडेट नहीं हो सका। यह जानकारी पुरानी हो सकती है।';

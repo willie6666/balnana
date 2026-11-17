@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -13,34 +12,6 @@ import (
 // there are no accounts to tell them apart, and anyone with the link may.
 func mayChange(g *group, m *member) error {
 	if g.accounts && m.userID != nil && (g.me == nil || *g.me != m.id) && !g.owner {
-		return forbidden("not_allowed")
-	}
-	return nil
-}
-
-// cleanPayDetails checks a member's payment details. Each is one line, as a
-// value with a line break would show in a share message as something else.
-func cleanPayDetails(in []PaymentDetail) ([]PaymentDetail, error) {
-	if len(in) > maxPayDetails {
-		return nil, badRequest("invalid_payment_details")
-	}
-	out := make([]PaymentDetail, len(in))
-	for i, d := range in {
-		label, ok := cleanText(d.Label, 1, maxPayLabel)
-		value, ok2 := cleanText(d.Value, 1, maxPayValue)
-		if !ok || !ok2 || strings.Contains(label+value, "\n") {
-			return nil, badRequest("invalid_payment_details")
-		}
-		out[i] = PaymentDetail{Label: label, Value: value}
-	}
-	return out, nil
-}
-
-// mayChangePay refuses a change to how a member is paid unless, in accounts
-// mode, it is their own account making it: not even the group's owner may,
-// or they could send someone's debtors to an account of their choosing.
-func mayChangePay(g *group, m *member) error {
-	if g.accounts && (g.me == nil || *g.me != m.id || m.userID == nil) {
 		return forbidden("not_allowed")
 	}
 	return nil
@@ -89,21 +60,11 @@ func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (Add
 	if err := validColor(req.Body.Color); err != nil {
 		return nil, err
 	}
-	var pay []PaymentDetail
-	if req.Body.PaymentDetails != nil {
-		if pay, err = cleanPayDetails(*req.Body.PaymentDetails); err != nil {
-			return nil, err
-		}
-	}
 	var out Member
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		g, err := s.groupByToken(ctx, tx, req.Token, true)
 		if err != nil {
 			return err
-		}
-		// Nobody's account is theirs yet.
-		if len(pay) > 0 && g.accounts {
-			return forbidden("not_allowed")
 		}
 		members, err := groupMembers(ctx, tx, g.id)
 		if err != nil {
@@ -119,10 +80,10 @@ func (s *Server) AddMember(ctx context.Context, req AddMemberRequestObject) (Add
 		if err != nil {
 			return err
 		}
-		m := member{name: name, color: req.Body.Color, pay: pay}
+		m := member{name: name, color: req.Body.Color}
 		err = tx.QueryRow(ctx, `
-			insert into members (group_id, display_name, color, payment_details, created_at)
-			values ($1, $2, $3, $4, clock_timestamp()) returning id::text`, g.id, name, req.Body.Color, listed(pay)).Scan(&m.id)
+			insert into members (group_id, display_name, color, created_at)
+			values ($1, $2, $3, clock_timestamp()) returning id::text`, g.id, name, req.Body.Color).Scan(&m.id)
 		if err != nil {
 			return err
 		}
@@ -150,12 +111,6 @@ func (s *Server) UpdateMember(ctx context.Context, req UpdateMemberRequestObject
 	if err := validColor(req.Body.Color); err != nil {
 		return nil, err
 	}
-	var pay []PaymentDetail
-	if req.Body.PaymentDetails != nil {
-		if pay, err = cleanPayDetails(*req.Body.PaymentDetails); err != nil {
-			return nil, err
-		}
-	}
 	var out Member
 	err = pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		g, err := s.groupByToken(ctx, tx, req.Token, true)
@@ -173,12 +128,6 @@ func (s *Server) UpdateMember(ctx context.Context, req UpdateMemberRequestObject
 		if err := mayChange(g, m); err != nil {
 			return err
 		}
-		// The same list sent back with a new name is no change to them.
-		if pay == nil || slices.Equal(pay, m.pay) {
-			pay = m.pay
-		} else if err := mayChangePay(g, m); err != nil {
-			return err
-		}
 		if err := checkNameFree(members, name, m.id); err != nil {
 			return err
 		}
@@ -191,8 +140,8 @@ func (s *Server) UpdateMember(ctx context.Context, req UpdateMemberRequestObject
 			color = req.Body.Color
 		}
 		oldName := m.name
-		m.name, m.color, m.pay = name, color, pay
-		if _, err := tx.Exec(ctx, `update members set display_name = $2, color = $3, payment_details = $4 where id = $1`, m.id, name, color, listed(pay)); err != nil {
+		m.name, m.color = name, color
+		if _, err := tx.Exec(ctx, `update members set display_name = $2, color = $3 where id = $1`, m.id, name, color); err != nil {
 			return err
 		}
 		if err := logActivity(ctx, tx, g.id, who, "member.updated", &m.id, map[string]any{"name": name, "oldName": oldName}); err != nil {

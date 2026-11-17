@@ -78,7 +78,7 @@ class _ExpenseDetailPageState extends ConsumerState<ExpenseDetailPage> {
         child: Scaffold(
           appBar: AppBar(
             actions: [
-              if (!e.isPayment && e.editable)
+              if (e.editable)
                 IconButton(
                   tooltip: l10n.expenseEdit,
                   icon: const Icon(Icons.edit_outlined),
@@ -150,15 +150,9 @@ class _Details extends ConsumerWidget {
     final e = expense, f = e.foreign;
     final me = myMemberId(ref, group.token);
     String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency, symbol: group.symbol);
-    String name(String id) => group.member(id)?.name ?? l10n.someone;
 
-    final String title;
-    if (e.isPayment) {
-      title = l10n.paymentTitle(name(e.payers.first.memberId), name(e.splits.first.memberId));
-    } else {
-      title = e.title;
-    }
-    final category = e.isPayment ? null : group.category(e.categoryId);
+    final title = e.title;
+    final category = group.category(e.categoryId);
     final type = !e.isReceived
         ? null
         : e.transactionType == 'income'

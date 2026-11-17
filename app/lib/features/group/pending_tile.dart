@@ -84,7 +84,7 @@ class PendingTile extends ConsumerWidget {
   final body = w.decodeBody() ?? const {};
   String name(Object? id) => (id is String ? group.member(id)?.name : null) ?? l10n.someone;
   final title = w.path == PendingPath.payments
-      ? l10n.paymentTitle(name(body['fromMemberId']), name(body['toMemberId']))
+      ? '${name(body['fromMemberId'])} → ${name(body['toMemberId'])}'
       : switch (body['title']) {
           final String title => title,
           _ => l10n.someone,

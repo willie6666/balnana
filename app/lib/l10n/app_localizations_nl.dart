@@ -290,6 +290,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get categoryGifts => 'Cadeaus';
 
   @override
+  String get categoryTransfer => 'Overboeking';
+
+  @override
   String get categoryOther => 'Overig';
 
   @override
@@ -477,42 +480,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get memberRename => 'Naam wijzigen';
 
   @override
-  String get memberPaymentDetails => 'Betaalgegevens';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Hoe anderen in deze groep $name kunnen betalen: een bankrekening, een betaalapp of een link. Iedereen in de groep kan ze zien.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Methode';
-
-  @override
-  String get paymentDetailValue => 'Rekening, ID of link';
-
-  @override
-  String get paymentDetailAdd => 'Betaalmethode toevoegen';
-
-  @override
-  String get paymentDetailBank => 'Bankoverschrijving';
-
-  @override
-  String get paymentDetailSuggestions => 'Suggesties';
-
-  @override
   String get paymentDetailCopy => 'Kopiëren';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$label gekopieerd';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Link openen';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Elke betaalmethode heeft een methode en een rekening, ID of link nodig, elk op één regel.';
 
   @override
   String get errorNothingOwed => 'Diegene is je nu niets schuldig.';
@@ -781,9 +749,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get filterAnyCategory => 'Elke categorie';
 
   @override
-  String get filterPayments => 'Betalingen';
-
-  @override
   String get filterClear => 'Filters wissen';
 
   @override
@@ -849,11 +814,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dateYesterday => 'Gisteren';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from heeft aan $to betaald';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name heeft $amount betaald';
   }
@@ -898,12 +858,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Inkomsten';
-
-  @override
-  String get paymentDelete => 'Betaling verwijderen';
-
-  @override
-  String get paymentDeleted => 'Betaling verwijderd';
 
   @override
   String expenseDeleted(String title) {
@@ -1137,18 +1091,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Herinnering: je bent $payee $amount schuldig in $group.';
   }
-
-  @override
-  String get reminderHowToPay => 'Zo kun je betalen:';
-
-  @override
-  String get recordPaymentTitle => 'Betaling vastleggen';
-
-  @override
-  String get recordPaymentHelp => 'Leg alleen geld vast dat echt is betaald, buiten Balnana om.';
-
-  @override
-  String get paymentRecorded => 'Betaling vastgelegd';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3553,11 +3495,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Deze server verstuurt geen meldingen.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Een eerdere poging had $amount al vastgelegd. Er is niets nieuws toegevoegd.';
-  }
 
   @override
   String get refreshFailed => 'Bijwerken is mislukt. Dit is mogelijk verouderd.';

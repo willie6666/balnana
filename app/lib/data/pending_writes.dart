@@ -41,7 +41,7 @@ PendingTarget pendingTarget(WidgetRef ref, String token) => (
   member: ref.read(knownGroupsProvider.notifier).byToken(token)?.memberId,
 );
 
-/// Keeps new expenses and payments made while the server is out of reach,
+/// Keeps new expenses made while the server is out of reach,
 /// and sends them in order once it is back: when the app comes online, is
 /// opened again, or [send] is asked for.
 ///
@@ -127,12 +127,20 @@ class PendingSender extends Notifier<void> {
         final api = ref.read(balnanaApiProvider);
         if (api == null) return;
         try {
-          final body = w.decodeBody();
+          var body = w.decodeBody();
           if (!PendingPath.supports(w.path) || body == null) {
             await db.parkPending(w.id, 'bad_request');
             continue;
           }
-          await api.group(w.groupToken, memberId: w.member).resend(w.path, body, key: w.key);
+          var path = w.path;
+          if (path == PendingPath.payments) {
+            // Names only from a group already loaded, without asking the server.
+            final loaded = groupProvider(w.groupToken);
+            final group = ref.exists(loaded) ? ref.read(loaded).value : null;
+            path = PendingPath.expenses;
+            body = PendingPath.paymentAsExpense(body, (id) => id is String ? group?.member(id)?.name : null);
+          }
+          await api.group(w.groupToken, memberId: w.member).resend(path, body, key: w.key);
         } on ApiException catch (e) {
           // Authentication can expire while offline. Keep every draft for
           // its owner to send after signing in again.

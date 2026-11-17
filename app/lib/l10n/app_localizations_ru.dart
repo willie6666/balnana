@@ -293,6 +293,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryGifts => 'Подарки';
 
   @override
+  String get categoryTransfer => 'Перевод';
+
+  @override
   String get categoryOther => 'Другое';
 
   @override
@@ -482,42 +485,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get memberRename => 'Переименовать';
 
   @override
-  String get memberPaymentDetails => 'Реквизиты для оплаты';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Как другие участники группы могут заплатить $name: банковский счёт, платёжное приложение или ссылка. Их видят все в группе.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Способ';
-
-  @override
-  String get paymentDetailValue => 'Счёт, ID или ссылка';
-
-  @override
-  String get paymentDetailAdd => 'Добавить способ оплаты';
-
-  @override
-  String get paymentDetailBank => 'Банковский перевод';
-
-  @override
-  String get paymentDetailSuggestions => 'Варианты';
-
-  @override
   String get paymentDetailCopy => 'Копировать';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return 'Скопировано: $label';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Открыть ссылку';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Для каждого способа оплаты нужны название и счёт, ID или ссылка, каждое в одну строку.';
 
   @override
   String get errorNothingOwed => 'Сейчас этот человек вам ничего не должен.';
@@ -787,9 +755,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filterAnyCategory => 'Любая категория';
 
   @override
-  String get filterPayments => 'Платежи';
-
-  @override
   String get filterClear => 'Сбросить фильтры';
 
   @override
@@ -858,11 +823,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dateYesterday => 'Вчера';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from отправил(а) платёж участнику $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name заплатил(а) $amount';
   }
@@ -907,12 +867,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Доход';
-
-  @override
-  String get paymentDelete => 'Удалить платёж';
-
-  @override
-  String get paymentDeleted => 'Платёж удалён';
 
   @override
   String expenseDeleted(String title) {
@@ -1146,18 +1100,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Напоминание: вы должны $payee $amount в группе «$group».';
   }
-
-  @override
-  String get reminderHowToPay => 'Как оплатить:';
-
-  @override
-  String get recordPaymentTitle => 'Записать платёж';
-
-  @override
-  String get recordPaymentHelp => 'Записывайте только деньги, которые уже передали вне Balnana.';
-
-  @override
-  String get paymentRecorded => 'Платёж записан';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3635,11 +3577,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Этот сервер не отправляет уведомления.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Предыдущая попытка уже записала $amount. Ничего нового не добавлено.';
-  }
 
   @override
   String get refreshFailed => 'Не удалось обновить. Эти данные могут быть устаревшими.';

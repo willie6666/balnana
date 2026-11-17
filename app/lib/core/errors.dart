@@ -19,7 +19,6 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_location' => l10n.errorInvalidLocation,
     'invalid_symbol' => l10n.errorInvalidSymbol,
     'invalid_emoji' => l10n.errorInvalidEmoji,
-    'invalid_payment_details' => l10n.errorInvalidPaymentDetails,
     'nothing_owed' => l10n.errorNothingOwed,
     'invalid_color' => l10n.errorInvalidColor,
     'invalid_time_zone' => l10n.errorInvalidTimeZone,

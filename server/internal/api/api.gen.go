@@ -40,7 +40,6 @@ const (
 // Defines values for ExpenseKind.
 const (
 	ExpenseKindExpense ExpenseKind = "expense"
-	ExpenseKindPayment ExpenseKind = "payment"
 )
 
 // Defines values for ExpenseTransactionType.
@@ -130,12 +129,6 @@ const (
 	StartOAuthParamsAppWeb     StartOAuthParamsApp = "web"
 )
 
-// Defines values for ListExpensesParamsKind.
-const (
-	ListExpensesParamsKindExpense ListExpensesParamsKind = "expense"
-	ListExpensesParamsKindPayment ListExpensesParamsKind = "payment"
-)
-
 // AccountDelete defines model for AccountDelete.
 type AccountDelete struct {
 	// Password Required when the account has a password.
@@ -144,7 +137,7 @@ type AccountDelete struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	// Action group.created, group.imported, group.updated, group.link_reset, group.password_set, group.password_removed, group.link_closed, group.link_opened, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Payments use the expense actions with `kind: payment` in the payload. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
+	// Action group.created, group.imported, group.updated, group.link_reset, group.password_set, group.password_removed, group.link_closed, group.link_opened, member.added, member.updated, member.removed, member.joined, category.added, category.updated, category.deleted, expense.created, expense.updated, expense.deleted, expense.restored, receipt.added, receipt.removed, recurring.created, recurring.updated, recurring.paused, recurring.resumed, recurring.deleted. Entries older than the `transfer` category may carry `kind: payment` in an expense action's payload, with `from` and `to` names. An expense a recurring expense added has `recurring: true` in its payload; a recurring expense the server paused has no actor and the error code as `reason`.
 	Action        string    `json:"action"`
 	ActorMemberId *string   `json:"actorMemberId,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -382,9 +375,11 @@ type Expense struct {
 	Foreign *Foreign `json:"foreign,omitempty"`
 
 	// HasReceipt Whether a photo of the receipt is attached (`/receipt`).
-	HasReceipt bool        `json:"hasReceipt"`
-	Id         string      `json:"id"`
-	Kind       ExpenseKind `json:"kind"`
+	HasReceipt bool   `json:"hasReceipt"`
+	Id         string `json:"id"`
+
+	// Kind Always `expense`. Money one member hands another is an expense in the built-in `transfer` category.
+	Kind ExpenseKind `json:"kind"`
 
 	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
 	Location   *Location `json:"location,omitempty"`
@@ -406,7 +401,7 @@ type Expense struct {
 	Version         int                    `json:"version"`
 }
 
-// ExpenseKind defines model for Expense.Kind.
+// ExpenseKind Always `expense`. Money one member hands another is an expense in the built-in `transfer` category.
 type ExpenseKind string
 
 // ExpenseTransactionType Imported transaction direction. Refunds offset spending; income is
@@ -420,7 +415,7 @@ type ExpenseInput struct {
 	Amount     Money   `json:"amount"`
 	CategoryId *string `json:"categoryId,omitempty"`
 
-	// Foreign What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, `invalid_payment` on a payment, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
+	// Foreign What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
 	Foreign *ForeignInput `json:"foreign,omitempty"`
 
 	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
@@ -454,7 +449,7 @@ type Foreign struct {
 	MinorDigits int `json:"minorDigits"`
 }
 
-// ForeignInput What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, `invalid_payment` on a payment, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
+// ForeignInput What an expense came to in another currency than the group's. The expense's `amount` is then what was paid in the group's currency, such as what a card was charged, while payer amounts and `exact` split values are in this currency and add up to this `amount`, with the currency's usual decimals. The server spreads the group-currency amount over the payers and the split in proportion to their amounts in this currency, largest remainders first, so every balance stays in the group's currency. Errors: `invalid_currency` for a code that is not three letters or is the group's own, and `payer_too_small` when a payer's part comes to nothing in the group's currency.
 type ForeignInput struct {
 	// Amount Decimal amount with up to the currency's usual decimals.
 	Amount string `json:"amount"`
@@ -576,7 +571,7 @@ type GroupPlan struct {
 	SponsorMemberId *string `json:"sponsorMemberId,omitempty"`
 }
 
-// GroupStats Net spending: expenses minus refunds, excluding payments and income.
+// GroupStats Net spending: expenses minus refunds, excluding transfers (category `transfer`) and income.
 // Refund paid/share figures negate the original receiver/beneficiary amounts.
 // Date filters apply independently to each entry, including refunds.
 type GroupStats struct {
@@ -698,7 +693,9 @@ type ImportPreview struct {
 	// Members In the order they first appear in the file.
 	Members     []ImportMember `json:"members"`
 	MinorDigits int            `json:"minorDigits"`
-	Payments    int            `json:"payments"`
+
+	// Payments Rows that are transfers between two people, kept as expenses in the `transfer` category.
+	Payments int `json:"payments"`
 
 	// Skipped Rows with a zero amount, which are left out.
 	Skipped int        `json:"skipped"`
@@ -788,9 +785,6 @@ type Member struct {
 	Left    bool   `json:"left"`
 	Name    string `json:"name"`
 	Owner   bool   `json:"owner"`
-
-	// PaymentDetails How to pay this member, in the order they listed them.
-	PaymentDetails []PaymentDetail `json:"paymentDetails"`
 }
 
 // MemberBalance defines model for MemberBalance.
@@ -804,9 +798,6 @@ type MemberBalance struct {
 type MemberInput struct {
 	Color *int   `json:"color,omitempty"`
 	Name  string `json:"name"`
-
-	// PaymentDetails Replaces the member's payment details; left out, they stay as they are. In accounts mode only the member's own account may change them, so nobody else can send their debtors to another account.
-	PaymentDetails *[]PaymentDetail `json:"paymentDetails,omitempty"`
 }
 
 // MemberStats defines model for MemberStats.
@@ -1044,26 +1035,6 @@ type PaymentAssign struct {
 type PaymentClaim struct {
 	// Reference The transaction ID, or the link to the payment.
 	Reference string `json:"reference"`
-}
-
-// PaymentDetail defines model for PaymentDetail.
-type PaymentDetail struct {
-	// Label What it is, such as a bank or a payment app.
-	Label string `json:"label"`
-
-	// Value The account number, handle or link.
-	Value string `json:"value"`
-}
-
-// PaymentInput defines model for PaymentInput.
-type PaymentInput struct {
-	// Amount Decimal amount with up to the group's `minorDigits` decimals.
-	Amount       Money  `json:"amount"`
-	FromMemberId string `json:"fromMemberId"`
-
-	// OccurredAt Defaults to now.
-	OccurredAt *time.Time `json:"occurredAt,omitempty"`
-	ToMemberId string     `json:"toMemberId"`
 }
 
 // PaymentItem defines model for PaymentItem.
@@ -1693,8 +1664,7 @@ type ListExpensesParams struct {
 	Member *string `form:"member,omitempty" json:"member,omitempty"`
 
 	// Category Only expenses of this category.
-	Category *string                 `form:"category,omitempty" json:"category,omitempty"`
-	Kind     *ListExpensesParamsKind `form:"kind,omitempty" json:"kind,omitempty"`
+	Category *string `form:"category,omitempty" json:"category,omitempty"`
 
 	// From Only what happened at or after this time.
 	From *From `form:"from,omitempty" json:"from,omitempty"`
@@ -1703,9 +1673,6 @@ type ListExpensesParams struct {
 	To    *To  `form:"to,omitempty" json:"to,omitempty"`
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
-
-// ListExpensesParamsKind defines parameters for ListExpenses.
-type ListExpensesParamsKind string
 
 // CreateExpenseParams defines parameters for CreateExpense.
 type CreateExpenseParams struct {
@@ -1789,15 +1756,6 @@ type RemoveGroupPasswordParams struct {
 type SetGroupPasswordParams struct {
 	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
 	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
-}
-
-// CreatePaymentParams defines parameters for CreatePayment.
-type CreatePaymentParams struct {
-	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
-	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
-
-	// IdempotencyKey A UUID the client makes up once for what it is creating and sends again with every retry. A key this group has seen returns what it created then, whatever else the request says, and creates nothing.
-	IdempotencyKey *IdempotencyKey `json:"Idempotency-Key,omitempty"`
 }
 
 // CreateRecurringExpenseParams defines parameters for CreateRecurringExpense.
@@ -1928,9 +1886,6 @@ type UpdateMemberJSONRequestBody = MemberInput
 
 // SetGroupPasswordJSONRequestBody defines body for SetGroupPassword for application/json ContentType.
 type SetGroupPasswordJSONRequestBody = GroupPasswordInput
-
-// CreatePaymentJSONRequestBody defines body for CreatePayment for application/json ContentType.
-type CreatePaymentJSONRequestBody = PaymentInput
 
 // CreateRecurringExpenseJSONRequestBody defines body for CreateRecurringExpense for application/json ContentType.
 type CreateRecurringExpenseJSONRequestBody = RecurringExpenseInput
@@ -2114,7 +2069,7 @@ type ServerInterface interface {
 	// Live notices that the group changed (server-sent events)
 	// (GET /g/{token}/events)
 	GroupEvents(w http.ResponseWriter, r *http.Request, token Token, params GroupEventsParams)
-	// Expenses and payments, newest first
+	// Expenses, newest first
 	// (GET /g/{token}/expenses)
 	ListExpenses(w http.ResponseWriter, r *http.Request, token Token, params ListExpensesParams)
 
@@ -2141,7 +2096,7 @@ type ServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(w http.ResponseWriter, r *http.Request, token Token, expenseId ExpenseId, params RestoreExpenseParams)
-	// Every expense and payment of the group as a spreadsheet
+	// Every expense of the group as a spreadsheet
 	// (GET /g/{token}/export.csv)
 	ExportCsv(w http.ResponseWriter, r *http.Request, token Token, params ExportCsvParams)
 	// Email someone an invitation to the group (accounts mode)
@@ -2171,9 +2126,6 @@ type ServerInterface interface {
 	// Set or change the group's password
 	// (PUT /g/{token}/password)
 	SetGroupPassword(w http.ResponseWriter, r *http.Request, token Token, params SetGroupPasswordParams)
-	// Record that one member paid another
-	// (POST /g/{token}/payments)
-	CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams)
 	// The limits that apply to the group and how much of them is used
 	// (GET /g/{token}/plan)
 	GetGroupPlan(w http.ResponseWriter, r *http.Request, token Token)
@@ -4080,14 +4032,6 @@ func (siw *ServerInterfaceWrapper) ListExpenses(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// ------------- Optional query parameter "kind" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "kind", r.URL.Query(), &params.Kind)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
-		return
-	}
-
 	// ------------- Optional query parameter "from" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
@@ -5124,82 +5068,6 @@ func (siw *ServerInterfaceWrapper) SetGroupPassword(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetGroupPassword(w, r, token, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreatePayment operation middleware
-func (siw *ServerInterfaceWrapper) CreatePayment(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "token" -------------
-	var token Token
-
-	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, CookieScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params CreatePaymentParams
-
-	headers := r.Header
-
-	// ------------- Optional header parameter "X-Balnana-Member" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
-		var XBalnanaMember ActingMember
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
-			return
-		}
-
-		params.XBalnanaMember = &XBalnanaMember
-
-	}
-
-	// ------------- Optional header parameter "Idempotency-Key" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
-		var IdempotencyKey IdempotencyKey
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
-			return
-		}
-
-		params.IdempotencyKey = &IdempotencyKey
-
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreatePayment(w, r, token, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6565,7 +6433,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/members/{memberId}/remind", wrapper.RemindMember)
 	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/password", wrapper.RemoveGroupPassword)
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/password", wrapper.SetGroupPassword)
-	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/payments", wrapper.CreatePayment)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/plan", wrapper.GetGroupPlan)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/recurring", wrapper.ListRecurringExpenses)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/recurring", wrapper.CreateRecurringExpense)
@@ -8378,37 +8245,6 @@ func (response SetGroupPassworddefaultJSONResponse) VisitSetGroupPasswordRespons
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
-type CreatePaymentRequestObject struct {
-	Token  Token `json:"token"`
-	Params CreatePaymentParams
-	Body   *CreatePaymentJSONRequestBody
-}
-
-type CreatePaymentResponseObject interface {
-	VisitCreatePaymentResponse(w http.ResponseWriter) error
-}
-
-type CreatePayment201JSONResponse Expense
-
-func (response CreatePayment201JSONResponse) VisitCreatePaymentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreatePaymentdefaultJSONResponse struct {
-	Body       Error
-	StatusCode int
-}
-
-func (response CreatePaymentdefaultJSONResponse) VisitCreatePaymentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
-}
-
 type GetGroupPlanRequestObject struct {
 	Token Token `json:"token"`
 }
@@ -9573,7 +9409,7 @@ type StrictServerInterface interface {
 	// Live notices that the group changed (server-sent events)
 	// (GET /g/{token}/events)
 	GroupEvents(ctx context.Context, request GroupEventsRequestObject) (GroupEventsResponseObject, error)
-	// Expenses and payments, newest first
+	// Expenses, newest first
 	// (GET /g/{token}/expenses)
 	ListExpenses(ctx context.Context, request ListExpensesRequestObject) (ListExpensesResponseObject, error)
 
@@ -9600,7 +9436,7 @@ type StrictServerInterface interface {
 	// Undo a delete
 	// (POST /g/{token}/expenses/{expenseId}/restore)
 	RestoreExpense(ctx context.Context, request RestoreExpenseRequestObject) (RestoreExpenseResponseObject, error)
-	// Every expense and payment of the group as a spreadsheet
+	// Every expense of the group as a spreadsheet
 	// (GET /g/{token}/export.csv)
 	ExportCsv(ctx context.Context, request ExportCsvRequestObject) (ExportCsvResponseObject, error)
 	// Email someone an invitation to the group (accounts mode)
@@ -9630,9 +9466,6 @@ type StrictServerInterface interface {
 	// Set or change the group's password
 	// (PUT /g/{token}/password)
 	SetGroupPassword(ctx context.Context, request SetGroupPasswordRequestObject) (SetGroupPasswordResponseObject, error)
-	// Record that one member paid another
-	// (POST /g/{token}/payments)
-	CreatePayment(ctx context.Context, request CreatePaymentRequestObject) (CreatePaymentResponseObject, error)
 	// The limits that apply to the group and how much of them is used
 	// (GET /g/{token}/plan)
 	GetGroupPlan(ctx context.Context, request GetGroupPlanRequestObject) (GetGroupPlanResponseObject, error)
@@ -11483,40 +11316,6 @@ func (sh *strictHandler) SetGroupPassword(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetGroupPasswordResponseObject); ok {
 		if err := validResponse.VisitSetGroupPasswordResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// CreatePayment operation middleware
-func (sh *strictHandler) CreatePayment(w http.ResponseWriter, r *http.Request, token Token, params CreatePaymentParams) {
-	var request CreatePaymentRequestObject
-
-	request.Token = token
-	request.Params = params
-
-	var body CreatePaymentJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.CreatePayment(ctx, request.(CreatePaymentRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreatePayment")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(CreatePaymentResponseObject); ok {
-		if err := validResponse.VisitCreatePaymentResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

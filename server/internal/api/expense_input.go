@@ -10,7 +10,10 @@ import (
 
 const (
 	kindExpense = "expense"
-	kindPayment = "payment"
+
+	// categoryTransfer is the built-in category of money handed from one
+	// member to another. It settles debts and is not spending.
+	categoryTransfer = "transfer"
 )
 
 // expenseData is a validated expense, ready to store.
@@ -69,15 +72,11 @@ func checkExpenseDate(t time.Time) error {
 // belong to it, payers must add up to the amount and the split must work.
 // Members who left still belong: their balance has to stay possible to settle.
 // members is the group's, or nil to load them.
-func validateExpense(ctx context.Context, q querier, g *group, kind string, in ExpenseInput,
+func validateExpense(ctx context.Context, q querier, g *group, in ExpenseInput,
 	members []member) (*expenseData, error) {
-	d := &expenseData{kind: kind, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
+	d := &expenseData{kind: kindExpense, transactionType: "expense", occurredAt: in.OccurredAt, method: domain.SplitMethod(in.SplitMethod)}
 
-	minTitle := 1
-	if kind == kindPayment {
-		minTitle = 0
-	}
-	title, ok := cleanText(in.Title, minTitle, maxTitleLen)
+	title, ok := cleanText(in.Title, 1, maxTitleLen)
 	if !ok || strings.Contains(title, "\n") {
 		return nil, badRequest("invalid_title")
 	}
@@ -129,9 +128,6 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 	// in: the group's, or the foreign one.
 	total, digits := amount, g.digits
 	if in.Foreign != nil {
-		if kind == kindPayment {
-			return nil, badRequest("invalid_payment")
-		}
 		currency, err := foreignCurrency(g, *in.Foreign)
 		if err != nil {
 			return nil, err
@@ -226,16 +222,6 @@ func validateExpense(ctx context.Context, q querier, g *group, kind string, in E
 		}
 	}
 
-	if kind == kindPayment {
-		if len(d.payers) != 1 || len(d.splits) != 1 || d.method != domain.SplitExact {
-			return nil, badRequest("invalid_payment")
-		}
-		for from := range d.payers {
-			if _, self := d.splits[from]; self {
-				return nil, badRequest("invalid_payment")
-			}
-		}
-	}
 	return d, nil
 }
 

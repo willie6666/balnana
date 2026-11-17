@@ -2,23 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/money.dart';
-import '../../core/offline_cache.dart';
-import '../../data/api.dart';
 import '../../data/models.dart';
-import '../../data/pending_writes.dart';
 import '../../data/providers.dart';
 import '../../ui/money.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
-import '../../ui/widgets/amount_field.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 import 'group_page.dart';
 import 'identity_sheet.dart';
-import 'payment_details.dart';
 import 'reminder.dart';
 
 /// The top of a group page: where this device's member stands, everyone's
@@ -473,17 +467,11 @@ class _TransferTile extends ConsumerWidget {
                       icon: const Icon(Icons.notifications_active_outlined),
                     ),
                   TextButton(
-                    onPressed: () => recordPayment(context, ref, group, transfer),
+                    onPressed: () => recordPayment(context, group, transfer),
                     child: Text(l10n.recordPayment),
                   ),
                 ],
               ),
-              // Who pays sees how, without asking.
-              if (transfer.from == me && to.paymentDetails.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(top: BSpace.s4, start: BSpace.s4),
-                  child: PaymentDetailList(member: to),
-                ),
             ],
           ),
         ),
@@ -492,140 +480,11 @@ class _TransferTile extends ConsumerWidget {
   }
 }
 
-/// Keys of payments whose answer never came, so trying again records one,
-/// whatever amount the next try asks for.
-final _paymentKeys = <String, String>{};
-
-/// Confirms a payment (the amount can be changed) and records it.
-Future<void> recordPayment(BuildContext context, WidgetRef ref, Group group, Transfer suggested) async {
-  final l10n = context.l10n;
-  final messenger = ScaffoldMessenger.of(context);
-  final amount = await showDialog<BigInt>(
-    context: context,
-    builder: (context) => _PaymentDialog(group: group, transfer: suggested),
-  );
-  if (amount == null || !context.mounted) return;
-  // The sheet can close during the request, and the ref with it.
-  final container = ProviderScope.containerOf(context, listen: false);
-  final payment = '${group.token}/${suggested.from}/${suggested.to}';
-  final key = _paymentKeys[payment] ??= newClientKey();
-  final target = pendingTarget(ref, group.token);
-  final occurredAt = DateTime.now();
-  try {
-    final recorded = await groupApiOf(ref, group.token).recordPayment(
-      suggested.from,
-      suggested.to,
-      amount,
-      group.minorDigits,
-      key: key,
-      occurredAt: occurredAt,
-    );
-    _paymentKeys.remove(payment);
-    refreshGroupIn(container, group.token);
-    if (!context.mounted) return;
-    // An earlier try got through, with the amount it asked for.
-    final message = recorded.amount == amount
-        ? l10n.paymentRecorded
-        : l10n.paymentRecordedEarlier(
-            formatMoney(context, recorded.amount, group.minorDigits, group.currency, symbol: group.symbol),
-          );
-    messenger.showSnackBar(SnackBar(content: Text(message)));
-  } on ApiException catch (e) {
-    if (!e.unreachable) {
-      _paymentKeys.remove(payment);
-    } else {
-      final body = GroupApi.paymentBody(
-        suggested.from,
-        suggested.to,
-        amount,
-        group.minorDigits,
-        occurredAt: occurredAt,
-      );
-      final sender = container.read(pendingSenderProvider.notifier);
-      if (await sender.queue(group.token, PendingPath.payments, body, key, target: target)) {
-        _paymentKeys.remove(payment);
-        messenger.showSnackBar(SnackBar(content: Text(l10n.pendingSaved)));
-        return;
-      }
-    }
-    messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
-  }
-}
-
-class _PaymentDialog extends StatefulWidget {
-  const _PaymentDialog({required this.group, required this.transfer});
-
-  final Group group;
-  final Transfer transfer;
-
-  @override
-  State<_PaymentDialog> createState() => _PaymentDialogState();
-}
-
-class _PaymentDialogState extends State<_PaymentDialog> {
-  // One payment holds at most maxMinor; what a larger debt has left is
-  // suggested again once it is recorded.
-  late final _amount = TextEditingController(
-    text: formatAmount(
-      widget.transfer.amount > maxMinor ? maxMinor : widget.transfer.amount,
-      widget.group.minorDigits,
-    ),
-  );
-  String? _error;
-
-  @override
-  void dispose() {
-    _amount.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    try {
-      // As in the expense editor: a comma is the decimal point, never a
-      // thousands separator, which the field does not let in.
-      final v = parseInput(_amount.text, widget.group.minorDigits);
-      if (v == null || v <= BigInt.zero) throw const MoneyException(MoneyError.invalidAmount);
-      Navigator.of(context).pop(v);
-    } on MoneyException catch (e) {
-      setState(() => _error = moneyErrorMessage(context.l10n, e.error));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final g = widget.group;
-    final from = g.member(widget.transfer.from)!, to = g.member(widget.transfer.to)!;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    return AlertDialog(
-      scrollable: true,
-      title: Text(l10n.recordPaymentTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.paymentTitle(from.name, to.name)),
-          const SizedBox(height: BSpace.s16),
-          TextField(
-            controller: _amount,
-            autofocus: true,
-            keyboardType: TextInputType.numberWithOptions(decimal: g.minorDigits > 0),
-            inputFormatters: [AmountFormatter(g.minorDigits)],
-            decoration: InputDecoration(
-              labelText: l10n.expenseAmount,
-              prefixText: moneySymbol(locale, g.currency, g.symbol),
-              errorText: _error,
-            ),
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: BSpace.s8),
-          Text(l10n.recordPaymentHelp, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
-        FilledButton(onPressed: _submit, child: Text(l10n.recordPayment)),
-      ],
-    );
-  }
-}
+/// Opens a new expense recording [suggested]: what the payer hands over is
+/// all the payee's. It can still be changed before saving.
+Future<void> recordPayment(BuildContext context, Group group, Transfer suggested) => context.push(
+  Uri(
+    path: '/g/${group.token}/expenses/new',
+    queryParameters: {'from': suggested.from, 'to': suggested.to, 'amount': '${suggested.amount}'},
+  ).toString(),
+);

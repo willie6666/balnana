@@ -279,6 +279,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get categoryGifts => '贈り物';
 
   @override
+  String get categoryTransfer => '送金';
+
+  @override
   String get categoryOther => 'その他';
 
   @override
@@ -457,41 +460,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get memberRename => '名前を変更';
 
   @override
-  String get memberPaymentDetails => '支払い先情報';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'このグループのほかの人が$nameさんに支払う方法（銀行口座、決済アプリ、リンクなど）。グループの全員が見られます。';
-  }
-
-  @override
-  String get paymentDetailLabel => '方法';
-
-  @override
-  String get paymentDetailValue => '口座・ID・リンク';
-
-  @override
-  String get paymentDetailAdd => '支払い方法を追加';
-
-  @override
-  String get paymentDetailBank => '銀行振込';
-
-  @override
-  String get paymentDetailSuggestions => '候補';
-
-  @override
   String get paymentDetailCopy => 'コピー';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$labelをコピーしました';
-  }
-
-  @override
-  String get paymentDetailOpen => 'リンクを開く';
-
-  @override
-  String get errorInvalidPaymentDetails => '支払い方法ごとに、方法と口座・ID・リンクをそれぞれ1行で入力してください。';
 
   @override
   String get errorNothingOwed => '今は支払いがありません。';
@@ -756,9 +725,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get filterAnyCategory => 'すべてのカテゴリ';
 
   @override
-  String get filterPayments => '支払い';
-
-  @override
   String get filterClear => 'フィルターをクリア';
 
   @override
@@ -819,11 +785,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dateYesterday => '昨日';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$fromから$toへの支払い';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$nameが$amountを支払いました';
   }
@@ -868,12 +829,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get transactionIncome => '収入';
-
-  @override
-  String get paymentDelete => '支払いを削除';
-
-  @override
-  String get paymentDeleted => '支払いを削除しました';
 
   @override
   String expenseDeleted(String title) {
@@ -1104,18 +1059,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'リマインド：$groupで$payeeさんに$amountの支払いがあります。';
   }
-
-  @override
-  String get reminderHowToPay => '支払い方法：';
-
-  @override
-  String get recordPaymentTitle => '支払いを記録';
-
-  @override
-  String get recordPaymentHelp => 'Balnanaの外で実際に支払ったお金だけを記録してください。';
-
-  @override
-  String get paymentRecorded => '支払いを記録しました';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3392,11 +3335,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorPushOff => 'このサーバーは通知を送信しません。';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return '以前の試行で $amount がすでに記録されていました。新しい記録は追加されていません。';
-  }
 
   @override
   String get refreshFailed => '更新できませんでした。表示が古い可能性があります。';

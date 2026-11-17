@@ -13,7 +13,6 @@ class Member {
     this.owner = false,
     this.claimed = false,
     required this.balance,
-    this.paymentDetails = const [],
   });
 
   factory Member.fromJson(Object? data, int digits) {
@@ -26,10 +25,6 @@ class Member {
       owner: optionalField<bool>(json, 'owner') ?? false,
       claimed: optionalField<bool>(json, 'claimed') ?? false,
       balance: moneyField(json, 'balance', digits),
-      paymentDetails: [
-        for (final d in optionalField<List<Object?>>(json, 'paymentDetails') ?? const [])
-          PaymentDetail.fromJson(d),
-      ],
     );
   }
 
@@ -50,42 +45,6 @@ class Member {
 
   /// Positive: is owed. Negative: owes.
   final BigInt balance;
-
-  /// How to pay them in this group, in the order they listed them.
-  final List<PaymentDetail> paymentDetails;
-}
-
-/// One way to pay a member: a bank account, a payment app handle or a link.
-@immutable
-class PaymentDetail {
-  const PaymentDetail({required this.label, required this.value});
-
-  factory PaymentDetail.fromJson(Object? data) {
-    final json = jsonObject(data);
-    return PaymentDetail(label: requiredField(json, 'label'), value: requiredField(json, 'value'));
-  }
-
-  /// At most this many per member, as the server allows.
-  static const max = 5;
-  static const maxLabel = 40;
-  static const maxValue = 200;
-
-  final String label;
-  final String value;
-
-  /// A web address, which can be opened as well as copied.
-  Uri? get link {
-    final uri = Uri.tryParse(value);
-    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty ? uri : null;
-  }
-
-  Map<String, Object?> toJson() => {'label': label, 'value': value};
-
-  @override
-  bool operator ==(Object other) => other is PaymentDetail && other.label == label && other.value == value;
-
-  @override
-  int get hashCode => Object.hash(label, value);
 }
 
 @immutable

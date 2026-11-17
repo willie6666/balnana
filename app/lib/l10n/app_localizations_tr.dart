@@ -289,6 +289,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get categoryGifts => 'Hediyeler';
 
   @override
+  String get categoryTransfer => 'Transfer';
+
+  @override
   String get categoryOther => 'Diğer';
 
   @override
@@ -471,42 +474,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get memberRename => 'Yeniden adlandır';
 
   @override
-  String get memberPaymentDetails => 'Ödeme bilgileri';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Bu gruptaki diğerlerinin $name kişisine nasıl ödeme yapabileceği: banka hesabı, ödeme uygulaması veya bağlantı. Gruptaki herkes görebilir.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Yöntem';
-
-  @override
-  String get paymentDetailValue => 'Hesap, kimlik veya bağlantı';
-
-  @override
-  String get paymentDetailAdd => 'Ödeme yolu ekle';
-
-  @override
-  String get paymentDetailBank => 'Banka havalesi';
-
-  @override
-  String get paymentDetailSuggestions => 'Öneriler';
-
-  @override
   String get paymentDetailCopy => 'Kopyala';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '$label kopyalandı';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Bağlantıyı aç';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Her ödeme yolu için bir yöntem ve bir hesap, kimlik veya bağlantı gerekir; her biri tek satırda olmalı.';
 
   @override
   String get errorNothingOwed => 'Şu an sana borcu yok.';
@@ -774,9 +742,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get filterAnyCategory => 'Herhangi bir kategori';
 
   @override
-  String get filterPayments => 'Ödemeler';
-
-  @override
   String get filterClear => 'Filtreleri temizle';
 
   @override
@@ -842,11 +807,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dateYesterday => 'Dün';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from, $to için ödeme yaptı';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name, $amount ödedi';
   }
@@ -891,12 +851,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Gelir';
-
-  @override
-  String get paymentDelete => 'Ödemeyi sil';
-
-  @override
-  String get paymentDeleted => 'Ödeme silindi';
 
   @override
   String expenseDeleted(String title) {
@@ -1129,18 +1083,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Hatırlatma: $group grubunda $payee kişisine $amount borcun var.';
   }
-
-  @override
-  String get reminderHowToPay => 'Nasıl ödenir:';
-
-  @override
-  String get recordPaymentTitle => 'Ödeme kaydet';
-
-  @override
-  String get recordPaymentHelp => 'Yalnızca Balnana dışında gerçekten yapılmış ödemeleri kaydedin.';
-
-  @override
-  String get paymentRecorded => 'Ödeme kaydedildi';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3527,11 +3469,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Bu sunucu bildirim göndermiyor.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Önceki bir deneme $amount tutarını zaten kaydetmişti. Yeni bir şey eklenmedi.';
-  }
 
   @override
   String get refreshFailed => 'Güncellenemedi. Bu bilgiler eski olabilir.';

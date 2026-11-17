@@ -293,6 +293,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get categoryGifts => 'الهدايا';
 
   @override
+  String get categoryTransfer => 'تحويل';
+
+  @override
   String get categoryOther => 'أخرى';
 
   @override
@@ -481,42 +484,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get memberRename => 'إعادة تسمية';
 
   @override
-  String get memberPaymentDetails => 'تفاصيل الدفع';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'كيف يمكن للآخرين في هذه المجموعة الدفع إلى $name: حساب بنكي أو تطبيق دفع أو رابط. يمكن لجميع أعضاء المجموعة رؤيتها.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'الطريقة';
-
-  @override
-  String get paymentDetailValue => 'الحساب أو المعرّف أو الرابط';
-
-  @override
-  String get paymentDetailAdd => 'إضافة طريقة دفع';
-
-  @override
-  String get paymentDetailBank => 'تحويل بنكي';
-
-  @override
-  String get paymentDetailSuggestions => 'اقتراحات';
-
-  @override
   String get paymentDetailCopy => 'نسخ';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return 'تم نسخ $label';
-  }
-
-  @override
-  String get paymentDetailOpen => 'فتح الرابط';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'تحتاج كل طريقة دفع إلى اسم الطريقة وحساب أو معرّف أو رابط، كل منهما في سطر واحد.';
 
   @override
   String get errorNothingOwed => 'لا يدين لك بشيء الآن.';
@@ -783,9 +751,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get filterAnyCategory => 'أي فئة';
 
   @override
-  String get filterPayments => 'الدفعات';
-
-  @override
   String get filterClear => 'مسح عوامل التصفية';
 
   @override
@@ -855,11 +820,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dateYesterday => 'أمس';
 
   @override
-  String paymentTitle(String from, String to) {
-    return 'حوّل $from مبلغًا إلى $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return 'دفع $name مبلغ $amount';
   }
@@ -904,12 +864,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get transactionIncome => 'دخل';
-
-  @override
-  String get paymentDelete => 'حذف الدفعة';
-
-  @override
-  String get paymentDeleted => 'حُذفت الدفعة';
 
   @override
   String expenseDeleted(String title) {
@@ -1142,18 +1096,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'تذكير: عليك $amount لـ $payee في $group.';
   }
-
-  @override
-  String get reminderHowToPay => 'طريقة الدفع:';
-
-  @override
-  String get recordPaymentTitle => 'تسجيل دفعة';
-
-  @override
-  String get recordPaymentHelp => 'سجّل فقط الأموال التي دُفعت فعلًا خارج Balnana.';
-
-  @override
-  String get paymentRecorded => 'سُجلت الدفعة';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3623,11 +3565,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorPushOff => 'هذا الخادم لا يرسل إشعارات.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'سبق أن سجّلت محاولة سابقة $amount. لم تتم إضافة أي شيء جديد.';
-  }
 
   @override
   String get refreshFailed => 'تعذّر التحديث. قد تكون هذه البيانات قديمة.';

@@ -38,7 +38,6 @@ extension _ForeignLogic on _EditorState {
   bool get _canForeign =>
       _unit == null &&
       widget.recurring == null &&
-      !(widget.expense?.isPayment ?? false) &&
       (_group.features.foreignCurrency || widget.expense?.foreign != null);
 
   Future<void> _pickCurrency() async {

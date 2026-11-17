@@ -197,6 +197,16 @@ func createGroup(c *client, names ...string) Group {
 
 func ptr[T any](v T) *T { return &v }
 
+// transfer is from handing to the amount, as an expense in the transfer
+// category, dated now.
+func transfer(from, to, amount string) ExpenseInput {
+	return ExpenseInput{
+		Title: "Payback", CategoryId: ptr(categoryTransfer), Amount: amount, OccurredAt: time.Now().UTC().Truncate(time.Second),
+		Payers: []PayerInput{{MemberId: from, Amount: amount}}, SplitMethod: "exact",
+		Splits: []Share{{MemberId: to, Value: ptr(amount)}},
+	}
+}
+
 func TestCreateAndReadGroup(t *testing.T) {
 	c := newClient(t)
 	g := createGroup(c, "Ana", "Ben", "Cleo")
@@ -297,12 +307,9 @@ func TestExpensesAndBalances(t *testing.T) {
 
 	// Ben pays Ana back.
 	var p Expense
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: ben, ToMemberId: ana, Amount: "33.33"}, &p)
-	if p.Kind != "payment" || p.SplitMethod != "exact" {
-		t.Fatalf("payment: %+v", p)
-	}
-	if code := c.errorCode(400, "POST", base+"/payments", PaymentInput{FromMemberId: ben, ToMemberId: ben, Amount: "1"}); code != "invalid_payment" {
-		t.Fatalf("self payment: %q", code)
+	c.must(201, "POST", base+"/expenses", transfer(ben, ana, "33.33"), &p)
+	if p.Kind != "expense" || p.CategoryId == nil || *p.CategoryId != categoryTransfer || p.SplitMethod != "exact" {
+		t.Fatalf("transfer: %+v", p)
 	}
 
 	// Split by shares, with the shares remembered.
@@ -639,9 +646,9 @@ func TestDepartedMembers(t *testing.T) {
 
 	c.must(201, "POST", base+"/expenses", expense("Dinner", "4.00", ana, cy), nil)
 	balance("-7.00")
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: cy, ToMemberId: ana, Amount: "7.00"}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(cy, ana, "7.00"), nil)
 	balance("0.00")
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: ana, ToMemberId: cy, Amount: "1.00"}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(ana, cy, "1.00"), nil)
 	balance("-1.00")
 	add := expense("Lunch", "6.00", ana, ben, cy)
 	add.Version = ptr(lunch.Version)
@@ -709,8 +716,8 @@ func TestGroupTotalCap(t *testing.T) {
 	if code := c.errorCode(400, "POST", base+"/expenses", in("0.06")); code != "amount_too_large" {
 		t.Fatalf("code %q", code)
 	}
-	if code := c.errorCode(400, "POST", base+"/payments", PaymentInput{FromMemberId: ana, ToMemberId: g.Members[1].Id, Amount: "0.06"}); code != "amount_too_large" {
-		t.Fatalf("payment code %q", code)
+	if code := c.errorCode(400, "POST", base+"/expenses", transfer(ana, g.Members[1].Id, "0.06")); code != "amount_too_large" {
+		t.Fatalf("transfer code %q", code)
 	}
 	var small, other Expense
 	c.must(201, "POST", base+"/expenses", in("0.05"), &small) // the group is now full

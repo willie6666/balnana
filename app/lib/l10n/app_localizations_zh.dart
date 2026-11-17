@@ -279,6 +279,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryGifts => '礼物';
 
   @override
+  String get categoryTransfer => '转账';
+
+  @override
   String get categoryOther => '其他';
 
   @override
@@ -457,41 +460,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memberRename => '重命名';
 
   @override
-  String get memberPaymentDetails => '收款信息';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return '群组里的其他人如何付款给$name：银行账户、支付应用或链接。群组里的每个人都能看到。';
-  }
-
-  @override
-  String get paymentDetailLabel => '方式';
-
-  @override
-  String get paymentDetailValue => '账号、ID 或链接';
-
-  @override
-  String get paymentDetailAdd => '添加收款方式';
-
-  @override
-  String get paymentDetailBank => '银行转账';
-
-  @override
-  String get paymentDetailSuggestions => '建议';
-
-  @override
   String get paymentDetailCopy => '复制';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '已复制$label';
-  }
-
-  @override
-  String get paymentDetailOpen => '打开链接';
-
-  @override
-  String get errorInvalidPaymentDetails => '每种收款方式都需要填写方式和账号、ID 或链接，且各占一行。';
 
   @override
   String get errorNothingOwed => '对方目前没有欠你。';
@@ -756,9 +725,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterAnyCategory => '所有类别';
 
   @override
-  String get filterPayments => '转账';
-
-  @override
   String get filterClear => '清除筛选';
 
   @override
@@ -819,11 +785,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dateYesterday => '昨天';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from 付给 $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name 支付了 $amount';
   }
@@ -868,12 +829,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transactionIncome => '收入';
-
-  @override
-  String get paymentDelete => '删除转账';
-
-  @override
-  String get paymentDeleted => '转账已删除';
 
   @override
   String expenseDeleted(String title) {
@@ -1104,18 +1059,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return '提醒：你在「$group」中欠 $payee $amount。';
   }
-
-  @override
-  String get reminderHowToPay => '付款方式：';
-
-  @override
-  String get recordPaymentTitle => '记录转账';
-
-  @override
-  String get recordPaymentHelp => '仅记录在 Balnana 之外实际支付的款项。';
-
-  @override
-  String get paymentRecorded => '已记录转账';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3378,11 +3321,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorPushOff => '此服务器不发送通知。';
 
   @override
-  String paymentRecordedEarlier(String amount) {
-    return '之前的尝试已记录 $amount，这次没有新增。';
-  }
-
-  @override
   String get refreshFailed => '无法更新，显示的内容可能不是最新的。';
 
   @override
@@ -3856,6 +3794,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get categoryGifts => '禮物';
 
   @override
+  String get categoryTransfer => '轉帳';
+
+  @override
   String get categoryOther => '其他';
 
   @override
@@ -4034,41 +3975,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get memberRename => '重新命名';
 
   @override
-  String get memberPaymentDetails => '收款資訊';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return '群組裡的其他人如何付款給$name：銀行帳戶、支付 App 或連結。群組裡的每個人都看得到。';
-  }
-
-  @override
-  String get paymentDetailLabel => '方式';
-
-  @override
-  String get paymentDetailValue => '帳號、ID 或連結';
-
-  @override
-  String get paymentDetailAdd => '新增收款方式';
-
-  @override
-  String get paymentDetailBank => '銀行轉帳';
-
-  @override
-  String get paymentDetailSuggestions => '建議';
-
-  @override
   String get paymentDetailCopy => '複製';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return '已複製$label';
-  }
-
-  @override
-  String get paymentDetailOpen => '開啟連結';
-
-  @override
-  String get errorInvalidPaymentDetails => '每種收款方式都需要填寫方式和帳號、ID 或連結，且各占一行。';
 
   @override
   String get errorNothingOwed => '對方目前沒有欠你。';
@@ -4333,9 +4240,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get filterAnyCategory => '所有類別';
 
   @override
-  String get filterPayments => '轉帳';
-
-  @override
   String get filterClear => '清除篩選條件';
 
   @override
@@ -4396,11 +4300,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get dateYesterday => '昨天';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from 轉帳給 $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name 支付了 $amount';
   }
@@ -4445,12 +4344,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get transactionIncome => '收入';
-
-  @override
-  String get paymentDelete => '刪除轉帳';
-
-  @override
-  String get paymentDeleted => '已刪除轉帳';
 
   @override
   String expenseDeleted(String title) {
@@ -4681,18 +4574,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String reminderMessage(String payee, String amount, String group) {
     return '提醒：你在「$group」中欠 $payee $amount。';
   }
-
-  @override
-  String get reminderHowToPay => '付款方式：';
-
-  @override
-  String get recordPaymentTitle => '記錄轉帳';
-
-  @override
-  String get recordPaymentHelp => '只記錄實際已支付、且在 Balnana 之外完成的款項。';
-
-  @override
-  String get paymentRecorded => '已記錄轉帳';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -6953,11 +6834,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorPushOff => '此伺服器不傳送通知。';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return '之前的嘗試已記錄 $amount，這次沒有新增。';
-  }
 
   @override
   String get refreshFailed => '無法更新，顯示的內容可能不是最新的。';

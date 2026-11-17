@@ -29,6 +29,7 @@ import '../features/settings/settings_page.dart';
 import '../features/settings/share_plan_page.dart';
 import '../features/shell/shell.dart';
 import 'home_screen.dart';
+import 'money.dart';
 import 'push.dart';
 import 'server.dart';
 
@@ -94,6 +95,14 @@ const _publicLinks = [
   '/open',
   '/privacy',
 ];
+
+/// The payment a new expense records, from the balances' "Record" button.
+Transfer? _transfer(Map<String, String> query) {
+  final from = query['from'], to = query['to'];
+  final amount = BigInt.tryParse(query['amount'] ?? '');
+  if (from == null || to == null || from == to || amount == null || amount <= BigInt.zero) return null;
+  return Transfer(from, to, amount);
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Signing in or out moves people on without rebuilding the router.
@@ -195,6 +204,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                       child: ExpenseEditorPage(
                         token: state.pathParameters['token']!,
                         repeat: state.uri.queryParameters['repeat'] == '1',
+                        transfer: _transfer(state.uri.queryParameters),
                       ),
                     ),
                   ),

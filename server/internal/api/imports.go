@@ -277,7 +277,7 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 	count := 0
 	var total int64 // what the new group's entries add up to, see maxGroupTotal
 	for _, e := range r.file.Entries {
-		kind, input, problem := importInput(e, r.currency, r.digits, r.untitled, r.ids, r.categories)
+		transfer, input, problem := importInput(e, r.currency, r.digits, r.untitled, r.ids, r.categories)
 		if problem == "skip" {
 			preview.Skipped++
 			continue
@@ -287,7 +287,7 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 		}
 		category := input.CategoryId
 		input.CategoryId = nil
-		d, err := validateExpense(ctx, nil, g, kind, input, members)
+		d, err := validateExpense(ctx, nil, g, input, members)
 		if err != nil {
 			var ae *apiError
 			var dc domain.Code
@@ -304,7 +304,7 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 			return 0, preview, importRowError(e.Line, string(domain.ErrAmountTooLarge))
 		}
 		total += d.amount
-		if kind == kindExpense && importReceived(e, r.currency, r.digits) {
+		if !transfer && importReceived(e, r.currency, r.digits) {
 			d.transactionType = "refund"
 			if e.Type == "income" {
 				d.transactionType = "income"
@@ -314,7 +314,7 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 			return 0, preview, err
 		}
 		count++
-		if kind == kindPayment {
+		if transfer {
 			preview.Payments++
 		} else {
 			preview.Expenses++
@@ -327,6 +327,25 @@ func (r importRows) check(ctx context.Context, g *group, members []member, keep 
 		}
 	}
 	return count, preview, nil
+}
+
+// transferTitle names a transfer by who paid whom, as the people in the
+// file are called.
+func transferTitle(ids map[string]string, from, to string) string {
+	var fromName, toName string
+	for name, id := range ids {
+		switch id {
+		case from:
+			fromName = name
+		case to:
+			toName = name
+		}
+	}
+	title := importName(fromName) + " → " + importName(toName)
+	if r := []rune(title); len(r) > maxTitleLen {
+		title = strings.TrimSpace(string(r[:maxTitleLen]))
+	}
+	return title
 }
 
 // importName makes a name from another app fit ours: one line, not too long.
@@ -441,9 +460,9 @@ func addTo(list []share, id string, v int64) ([]share, bool) {
 	return append(list, share{id, v}), true
 }
 
-// importInput turns one row into an expense or payment. The problem is
-// "skip" for rows that move no money.
-func importInput(e importer.Entry, currency string, digits int, untitled string, ids, categories map[string]string) (string, ExpenseInput, string) {
+// importInput turns one row into an expense, which is a transfer between two
+// members when it says so. The problem is "skip" for rows that move no money.
+func importInput(e importer.Entry, currency string, digits int, untitled string, ids, categories map[string]string) (bool, ExpenseInput, string) {
 	// What each payer paid, in the group's currency.
 	var paid []share
 	switch {
@@ -451,67 +470,67 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		for _, p := range e.Payers {
 			v, ok := toMinor(p.Amount, digits)
 			if !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 			if paid, ok = addTo(paid, ids[p.Name], v); !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 		}
 	case e.Rate == "":
-		return "", ExpenseInput{}, "currency"
+		return false, ExpenseInput{}, "currency"
 	case len(e.Converted) == len(e.Payers):
 		for i, p := range e.Payers {
 			v, ok := toMinor(e.Converted[i], digits)
 			if !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 			if paid, ok = addTo(paid, ids[p.Name], v); !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 		}
 	case len(e.Converted) == 1:
 		total, ok := toMinor(e.Converted[0], digits)
 		if !ok {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		var weights []share
 		for _, p := range e.Payers {
 			w, ok := toMinor(p.Amount, 4)
 			if !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 			if weights, ok = addTo(weights, ids[p.Name], w); !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 		}
 		if total == 0 {
-			return "", ExpenseInput{}, "skip"
+			return false, ExpenseInput{}, "skip"
 		}
 		for _, w := range weights {
 			if (w.value < 0) != (total < 0) && w.value != 0 {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 		}
 		amounts, ok := spread(abs(total), digits, weights)
 		if !ok {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		for _, w := range weights {
 			paid, _ = addTo(paid, w.id, sign(total)*amounts[w.id])
 		}
 	default:
-		return "", ExpenseInput{}, "counts"
+		return false, ExpenseInput{}, "counts"
 	}
 	var total int64
 	for _, p := range paid {
 		total += p.value
 	}
 	if total == 0 {
-		return "", ExpenseInput{}, "skip"
+		return false, ExpenseInput{}, "skip"
 	}
 	for _, p := range paid {
 		if p.value != 0 && (p.value < 0) != (total < 0) {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 	}
 	// A refund or income: money came in. Whoever it is for "paid" it, and
@@ -528,14 +547,14 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 	for _, p := range e.ForWhom {
 		w, ok := toMinor(p.Amount, 4)
 		if !ok {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		above, below = above || w > 0, below || w < 0
 		if above && below {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		if weights, ok = addTo(weights, ids[p.Name], abs(w)); !ok {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		v, ok := toMinor(p.Amount, digits)
 		exactOK = exactOK && ok
@@ -571,7 +590,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			}
 		}
 		if len(from) != 1 || len(to) != 1 || from[0].id == to[0].id {
-			return "", ExpenseInput{}, "transfer"
+			return false, ExpenseInput{}, "transfer"
 		}
 		if received {
 			from, to = to, from
@@ -580,7 +599,12 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		in.Payers = []PayerInput{{MemberId: from[0].id, Amount: in.Amount}}
 		in.SplitMethod = SplitMethod(domain.SplitExact)
 		in.Splits = []Share{{MemberId: to[0].id, Value: &v}}
-		return kindPayment, in, ""
+		category := categoryTransfer
+		in.CategoryId = &category
+		if title == "" {
+			in.Title = transferTitle(ids, from[0].id, to[0].id)
+		}
+		return true, in, ""
 	}
 
 	if title == "" {
@@ -613,7 +637,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		} else {
 			var ok bool
 			if owed, ok = spread(total, digits, people); !ok {
-				return "", ExpenseInput{}, "amount"
+				return false, ExpenseInput{}, "amount"
 			}
 		}
 		for _, p := range people {
@@ -628,7 +652,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 				in.Splits = append(in.Splits, Share{MemberId: p.id, Value: &v})
 			}
 		}
-		return kindExpense, in, ""
+		return false, in, ""
 	}
 
 	for _, p := range paid {
@@ -653,7 +677,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 		// come to.
 		owed, ok := spread(total, digits, people)
 		if !ok {
-			return "", ExpenseInput{}, "amount"
+			return false, ExpenseInput{}, "amount"
 		}
 		in.SplitMethod = SplitMethod(domain.SplitExact)
 		for _, p := range people {
@@ -667,7 +691,7 @@ func importInput(e importer.Entry, currency string, digits int, untitled string,
 			in.Splits = append(in.Splits, Share{MemberId: p.id, Value: &v})
 		}
 	}
-	return kindExpense, in, ""
+	return false, in, ""
 }
 
 // spread divides total by weight (4 decimals); zero weights get nothing.

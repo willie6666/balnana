@@ -172,7 +172,7 @@ func scheduleOf(r *RecurringExpense) (schedule, error) {
 // validateRecurring checks a recurring expense as validateExpense checks an
 // expense dated at its start, and checks its schedule.
 func validateRecurring(ctx context.Context, q querier, g *group, in RecurringExpenseInput) (*expenseData, schedule, error) {
-	d, err := validateExpense(ctx, q, g, kindExpense, ExpenseInput{
+	d, err := validateExpense(ctx, q, g, ExpenseInput{
 		Title:       in.Title,
 		CategoryId:  in.CategoryId,
 		Amount:      in.Amount,
@@ -322,7 +322,7 @@ func addDue(ctx context.Context, tx pgx.Tx, g *group, r *RecurringExpense, now t
 	}
 	// Every occurrence is the same expense on another day: it is checked
 	// once, and the group's total is kept up as they are added.
-	d, err := validateExpense(ctx, tx, g, kindExpense, r.input(*r.NextAt), nil)
+	d, err := validateExpense(ctx, tx, g, r.input(*r.NextAt), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -795,7 +795,7 @@ func (s *Server) PauseRecurringExpense(ctx context.Context, req PauseRecurringEx
 				return err
 			}
 			// What it adds from now on must still work.
-			d, err := validateExpense(ctx, tx, g, kindExpense, r.input(now), nil)
+			d, err := validateExpense(ctx, tx, g, r.input(now), nil)
 			if err != nil {
 				return err
 			}

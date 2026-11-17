@@ -74,7 +74,7 @@ func TestRemindPlan(t *testing.T) {
 	base := "/g/" + g.Token
 	ben.must(200, "POST", base+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
 	subscribe(ben, "ben-phone", PushDeviceInput{})
-	ana.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: g.Members[0].Id, ToMemberId: g.Members[1].Id}, nil)
+	ana.must(201, "POST", base+"/expenses", transfer(g.Members[0].Id, g.Members[1].Id, "5"), nil)
 	f.take(s)
 
 	remind := base + "/members/" + g.Members[1].Id + "/remind"

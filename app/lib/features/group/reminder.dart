@@ -81,16 +81,11 @@ Future<void> _share(BuildContext context, WidgetRef ref, Group group, Transfer t
   messenger.showSnackBar(SnackBar(content: Text(l10n.remindCopied)));
 }
 
-/// The message reminding someone to pay [payee] [amount], with how to and
-/// the group's [link].
+/// The message reminding someone to pay [payee] [amount], with the group's
+/// [link].
 @visibleForTesting
 String reminderText(AppLocalizations l10n, Group group, Member payee, String amount, String link) => [
   l10n.reminderMessage(payee.name, amount, group.name),
-  if (payee.paymentDetails.isNotEmpty) ...[
-    '',
-    l10n.reminderHowToPay,
-    for (final d in payee.paymentDetails) '${d.label}: ${d.value}',
-  ],
   '',
   link,
 ].join('\n');

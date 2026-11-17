@@ -18,7 +18,6 @@ type expenseFilter struct {
 	q        *string
 	member   *string
 	category *string
-	kind     *string
 	from, to *time.Time
 }
 
@@ -51,9 +50,6 @@ func (f expenseFilter) where(groupID string) (string, []any, error) {
 	}
 	if f.category != nil && *f.category != "" {
 		conds = append(conds, "category_id = "+arg(*f.category))
-	}
-	if f.kind != nil {
-		conds = append(conds, "kind = "+arg(*f.kind)+"::expense_kind")
 	}
 	if f.from != nil {
 		conds = append(conds, "occurred_at >= "+arg(*f.from))
@@ -100,13 +96,13 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 	if err != nil {
 		return nil, err
 	}
-	kind := kindExpense
-	where, args, err := expenseFilter{kind: &kind, from: req.Params.From, to: req.Params.To}.where(g.id)
+	where, args, err := expenseFilter{from: req.Params.From, to: req.Params.To}.where(g.id)
 	if err != nil {
 		return nil, err
 	}
 
-	where += " and transaction_type <> 'income'"
+	// Transfers between members settle debts: they are not spending.
+	where += " and transaction_type <> 'income' and category_id is distinct from '" + categoryTransfer + "'"
 	const netAmount = "case when transaction_type = 'refund' then -amount else amount end"
 	out := GroupStats{Categories: []CategoryStats{}, Members: []MemberStats{}, Months: []MonthStats{}}
 	err = pgx.BeginTxFunc(ctx, s.db, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly},

@@ -769,7 +769,8 @@ func TestCreateTwiceWithOneKey(t *testing.T) {
 		Title: "Lunch", Amount: "1", OccurredAt: when, SplitMethod: "equal",
 		Payers: []PayerInput{{MemberId: ana, Amount: "1"}}, Splits: []Share{{MemberId: ana}},
 	}
-	payment := PaymentInput{FromMemberId: ana, ToMemberId: ben, Amount: "5", OccurredAt: &when}
+	payment := transfer(ana, ben, "5")
+	payment.OccurredAt = when
 	repeating := RecurringExpenseInput{
 		Title: "Rent", Amount: "3.00", StartsAt: time.Now().Add(24 * time.Hour).UTC().Truncate(time.Second),
 		Payers:      []PayerInput{{MemberId: ana, Amount: "3.00"}},
@@ -793,8 +794,8 @@ func TestCreateTwiceWithOneKey(t *testing.T) {
 	// A payment is a new one under a key of its own.
 	c.header = http.Header{"Idempotency-Key": {"2b9d1f54-1c55-4d0e-8a6e-3c7f4d7f9a10"}}
 	var p1, p2 Expense
-	c.must(201, "POST", base+"/payments", payment, &p1)
-	c.must(201, "POST", base+"/payments", payment, &p2)
+	c.must(201, "POST", base+"/expenses", payment, &p1)
+	c.must(201, "POST", base+"/expenses", payment, &p2)
 	if p2.Id != p1.Id {
 		t.Fatalf("payment added twice: %s, %s", p1.Id, p2.Id)
 	}

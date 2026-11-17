@@ -36,8 +36,9 @@ func statsGroup(t *testing.T) (*client, string, [3]string) {
 	add("Dinner", ptr("food"), "90", "2026-10-01T19:00:00Z", ben, ptr("100% fun_night"), ana, ben, cleo)
 	add("Groceries", ptr("groceries"), "12", "2026-10-20T12:00:00Z", ana, nil, ana, cleo)
 	add("Snacks", nil, "6", "2026-10-21T08:00:00Z", cleo, nil, cleo)
-	c.must(201, "POST", base+"/payments", PaymentInput{FromMemberId: ben, ToMemberId: ana, Amount: "15",
-		OccurredAt: ptr(mustTime(t, "2026-10-22T10:00:00Z"))}, nil)
+	payback := transfer(ben, ana, "15")
+	payback.OccurredAt = mustTime(t, "2026-10-22T10:00:00Z")
+	c.must(201, "POST", base+"/expenses", payback, nil)
 	return c, base, [3]string{ana, ben, cleo}
 }
 
@@ -62,7 +63,7 @@ func TestExpenseFilters(t *testing.T) {
 		q    url.Values
 		want []string
 	}{
-		{"everything", url.Values{}, []string{"", "Snacks", "Groceries", "Dinner", "Taxi"}},
+		{"everything", url.Values{}, []string{"Payback", "Snacks", "Groceries", "Dinner", "Taxi"}},
 		{"title ignoring case", url.Values{"q": {"  tAX "}}, []string{"Taxi"}},
 		{"note", url.Values{"q": {"fun"}}, []string{"Dinner"}},
 		{"percent is literal", url.Values{"q": {"0%"}}, []string{"Dinner"}},
@@ -70,11 +71,11 @@ func TestExpenseFilters(t *testing.T) {
 		{"underscore matches itself", url.Values{"q": {"n_n"}}, []string{"Dinner"}},
 		{"member who paid or shared", url.Values{"member": {cleo}}, []string{"Snacks", "Groceries", "Dinner"}},
 		{"category", url.Values{"category": {"food"}}, []string{"Dinner"}},
-		{"payments", url.Values{"kind": {"payment"}}, []string{""}},
+		{"transfers", url.Values{"category": {"transfer"}}, []string{"Payback"}},
 		{"from is inclusive, to is not", url.Values{"from": {"2026-10-01T19:00:00Z"}, "to": {"2026-10-21T08:00:00Z"}},
 			[]string{"Groceries", "Dinner"}},
-		{"combined", url.Values{"member": {ana}, "kind": {"expense"}, "q": {"o"}}, []string{"Groceries"}},
-		{"member and payment", url.Values{"member": {ben}, "kind": {"payment"}}, []string{""}},
+		{"combined", url.Values{"member": {ana}, "category": {"groceries"}, "q": {"o"}}, []string{"Groceries"}},
+		{"member and transfer", url.Values{"member": {ben}, "category": {"transfer"}}, []string{"Payback"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -87,7 +88,7 @@ func TestExpenseFilters(t *testing.T) {
 	// Pages keep the filter.
 	var page ExpensePage
 	c.must(200, "GET", path+"?member="+ana+"&limit=1", nil, &page)
-	if len(page.Items) != 1 || page.Items[0].Title != "" || page.NextCursor == nil {
+	if len(page.Items) != 1 || page.Items[0].Title != "Payback" || page.NextCursor == nil {
 		t.Fatalf("first page: %+v", page)
 	}
 	c.must(200, "GET", path+"?member="+ana+"&limit=2&cursor="+*page.NextCursor, nil, &page)
@@ -97,9 +98,6 @@ func TestExpenseFilters(t *testing.T) {
 
 	if code := c.errorCode(400, "GET", path+"?member=nobody", nil); code != "invalid_member" {
 		t.Fatalf("bad member: %q", code)
-	}
-	if code := c.errorCode(400, "GET", path+"?kind=gift", nil); code != "invalid_kind" {
-		t.Fatalf("bad kind: %q", code)
 	}
 }
 

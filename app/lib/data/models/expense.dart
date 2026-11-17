@@ -3,8 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../../core/money.dart';
 import 'json_fields.dart';
 
-/// [unknown] is one a newer server sent: shown, but not edited.
-enum ExpenseKind { expense, payment, unknown }
+/// [unknown] is one a newer server sent: shown, but not edited. Payments
+/// between members are expenses in the "transfer" category.
+enum ExpenseKind { expense, unknown }
 
 @immutable
 class ExpensePart {
@@ -189,14 +190,12 @@ class Expense {
   /// group's. [amount] and the parts' amounts stay in the group's currency.
   final ForeignMoney? foreign;
 
-  bool get isPayment => kind == ExpenseKind.payment;
-
   /// Whether the form can hold it without losing what a newer server sent.
   bool get editable => kind != ExpenseKind.unknown && splitMethod != SplitMethod.unknown;
 
   /// Money that came in, a refund or income. Its ledger roles are reversed:
   /// whom it is for "paid" it, and whoever received it owes it to them.
-  bool get isReceived => !isPayment && transactionType != 'expense';
+  bool get isReceived => transactionType != 'expense';
 
   BigInt paidBy(String memberId) =>
       payers.where((p) => p.memberId == memberId).fold(BigInt.zero, (a, p) => a + p.amount);
@@ -342,7 +341,7 @@ typedef Period = ({DateTime from, DateTime to});
 /// What to narrow a group's expenses to. Empty fields match everything.
 @immutable
 class ExpenseFilter {
-  const ExpenseFilter({this.text = '', this.member, this.category, this.payments = false, this.period});
+  const ExpenseFilter({this.text = '', this.member, this.category, this.period});
 
   /// Words to find in the title, note or location.
   final String text;
@@ -353,25 +352,19 @@ class ExpenseFilter {
   /// Only expenses of this category.
   final String? category;
 
-  /// Only payments between members.
-  final bool payments;
-
   final Period? period;
 
-  bool get isEmpty =>
-      text.trim().isEmpty && member == null && category == null && !payments && period == null;
+  bool get isEmpty => text.trim().isEmpty && member == null && category == null && period == null;
 
   ExpenseFilter copyWith({
     String? text,
     ValueGetter<String?>? member,
     ValueGetter<String?>? category,
-    bool? payments,
     ValueGetter<Period?>? period,
   }) => ExpenseFilter(
     text: text ?? this.text,
     member: member == null ? this.member : member(),
     category: category == null ? this.category : category(),
-    payments: payments ?? this.payments,
     period: period == null ? this.period : period(),
   );
 
@@ -379,7 +372,6 @@ class ExpenseFilter {
     if (text.trim() case final q when q.isNotEmpty) 'q': q,
     'member': ?member,
     'category': ?category,
-    if (payments) 'kind': 'payment',
     if (period case final p?) ...{
       'from': p.from.toUtc().toIso8601String(),
       'to': p.to.toUtc().toIso8601String(),
@@ -392,11 +384,10 @@ class ExpenseFilter {
       other.text == text &&
       other.member == member &&
       other.category == category &&
-      other.payments == payments &&
       other.period == period;
 
   @override
-  int get hashCode => Object.hash(text, member, category, payments, period);
+  int get hashCode => Object.hash(text, member, category, period);
 }
 
 /// What a group spent over some time, see `GET /g/{token}/stats`. Payments

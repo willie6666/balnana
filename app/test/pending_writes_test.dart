@@ -134,6 +134,35 @@ void main() {
     expect(await rows(), isEmpty);
   });
 
+  test('sends a payment an earlier version kept as a transfer expense', () async {
+    final payment = {
+      'fromMemberId': 'ana',
+      'toMemberId': 'ben',
+      'amount': '5.00',
+      'occurredAt': '2026-10-01T10:00:00.000Z',
+    };
+    await sender().queue('tok', PendingPath.payments, payment, 'k1', target: target());
+
+    await sender().send();
+
+    final sent = server.sent.single;
+    expect((sent.path, sent.key), ('/api/v1/g/tok/expenses', 'k1'));
+    expect(sent.body, {
+      'title': '→',
+      'categoryId': 'transfer',
+      'amount': '5.00',
+      'occurredAt': '2026-10-01T10:00:00.000Z',
+      'payers': [
+        {'memberId': 'ana', 'amount': '5.00'},
+      ],
+      'splitMethod': 'equal',
+      'splits': [
+        {'memberId': 'ben'},
+      ],
+    });
+    expect(await rows(), isEmpty);
+  });
+
   test('sends once the server is back', () async {
     await queue('Sushi', 'k1');
 
@@ -145,9 +174,9 @@ void main() {
   });
 
   test('keeps one the server refuses with why, and still sends the rest', () async {
-    await sender().queue('tok', PendingPath.payments, {'amount': '1'}, 'k1', target: target());
+    await sender().queue('bad', PendingPath.expenses, {'title': 'Sushi'}, 'k1', target: target());
     await queue('Ramen', 'k2');
-    server.statuses['/api/v1/g/tok/payments'] = 422;
+    server.statuses['/api/v1/g/bad/expenses'] = 422;
 
     await sender().send();
 

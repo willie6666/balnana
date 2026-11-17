@@ -29,7 +29,6 @@ import 'group_page.dart';
 import 'group_password.dart';
 import 'identity_sheet.dart';
 import 'invite_dialog.dart';
-import 'payment_details.dart';
 import 'share_sheet.dart';
 
 /// [name] made safe to use as a file name.
@@ -439,13 +438,10 @@ class _Settings extends ConsumerWidget {
                 trailing: PopupMenuButton<String>(
                   onSelected: (action) => switch (action) {
                     'rename' => _renameMember(context, ref, m),
-                    'pay' => showPaymentDetailsSheet(context, group, m),
                     _ => _removeMember(context, ref, m),
                   },
                   itemBuilder: (context) => [
                     PopupMenuItem(value: 'rename', child: Text(l10n.memberRename)),
-                    if (mayEditPayment(m, accounts: accounts, me: me?.id))
-                      PopupMenuItem(value: 'pay', child: Text(l10n.memberPaymentDetails)),
                     PopupMenuItem(value: 'remove', child: Text(l10n.commonRemove)),
                   ],
                 ),

@@ -5,7 +5,7 @@ import '../ui/colors.dart';
 import 'models.dart';
 
 /// The built-in categories. Ids, emoji and colors match the server's seed
-/// (server/migrations/00001_init.sql).
+/// (server/migrations/00001_init.sql and 00050_transfer_category.sql).
 enum Category {
   food('🍔', 0xF07C2E),
   groceries('🛒', 0x3C9D6B),
@@ -18,6 +18,7 @@ enum Category {
   shopping('🛍️', 0xB57EDC),
   health('💊', 0x2E7D5B),
   gifts('🎁', 0xC2415B),
+  transfer('💸', 0x2E8B8B),
   other('📦', 0x5D6B82);
 
   const Category(this.emoji, this.rgb);
@@ -43,6 +44,7 @@ enum Category {
     shopping => l10n.categoryShopping,
     health => l10n.categoryHealth,
     gifts => l10n.categoryGifts,
+    transfer => l10n.categoryTransfer,
     other => l10n.categoryOther,
   };
 }

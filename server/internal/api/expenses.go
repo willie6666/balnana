@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"balnana/internal/domain"
 )
 
 // Expense cursors are opaque to clients: "<occurred_at>|<id>" in base64url.
@@ -47,13 +45,6 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 	}
 	f := expenseFilter{q: req.Params.Q, member: req.Params.Member, category: req.Params.Category,
 		from: req.Params.From, to: req.Params.To}
-	if req.Params.Kind != nil {
-		k := string(*req.Params.Kind)
-		if k != kindExpense && k != kindPayment {
-			return nil, badRequest("invalid_kind")
-		}
-		f.kind = &k
-	}
 	where, args, err := f.where(g.id)
 	if err != nil {
 		return nil, err
@@ -85,33 +76,14 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 }
 
 func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObject) (CreateExpenseResponseObject, error) {
-	expense, err := s.createExpense(ctx, req.Token, kindExpense, *req.Body, req.Params.IdempotencyKey, req.Params.XBalnanaMember)
+	expense, err := s.createExpense(ctx, req.Token, *req.Body, req.Params.IdempotencyKey, req.Params.XBalnanaMember)
 	if err != nil {
 		return nil, err
 	}
 	return CreateExpense201JSONResponse(expense), nil
 }
 
-func (s *Server) CreatePayment(ctx context.Context, req CreatePaymentRequestObject) (CreatePaymentResponseObject, error) {
-	in := req.Body
-	occurred := time.Now()
-	if in.OccurredAt != nil {
-		occurred = *in.OccurredAt
-	}
-	payment, err := s.createExpense(ctx, req.Token, kindPayment, ExpenseInput{
-		Amount:      in.Amount,
-		OccurredAt:  occurred,
-		Payers:      []PayerInput{{MemberId: in.FromMemberId, Amount: in.Amount}},
-		SplitMethod: SplitMethod(domain.SplitExact),
-		Splits:      []Share{{MemberId: in.ToMemberId, Value: &in.Amount}},
-	}, req.Params.IdempotencyKey, req.Params.XBalnanaMember)
-	if err != nil {
-		return nil, err
-	}
-	return CreatePayment201JSONResponse(payment), nil
-}
-
-func (s *Server) createExpense(ctx context.Context, token, kind string, in ExpenseInput, key *IdempotencyKey, memberHeader *string) (Expense, error) {
+func (s *Server) createExpense(ctx context.Context, token string, in ExpenseInput, key *IdempotencyKey, memberHeader *string) (Expense, error) {
 	var out Expense
 	var g *group
 	var who *string
@@ -133,7 +105,7 @@ func (s *Server) createExpense(ctx context.Context, token, kind string, in Expen
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kind, in, members)
+		d, err := validateExpense(ctx, tx, g, in, members)
 		if err != nil {
 			return err
 		}
@@ -148,10 +120,6 @@ func (s *Server) createExpense(ctx context.Context, token, kind string, in Expen
 			return err
 		}
 		payload := d.payload(g.digits)
-		if kind == kindPayment {
-			payload["from"] = findMember(members, in.Payers[0].MemberId).name
-			payload["to"] = findMember(members, in.Splits[0].MemberId).name
-		}
 		d.clientKey = key
 		id, err = insertExpense(ctx, tx, g, who, d, payload)
 		if err != nil {
@@ -195,7 +163,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		kind, version, deleted, _, err := lockExpense(ctx, tx, g, req.ExpenseId)
+		_, version, deleted, _, err := lockExpense(ctx, tx, g, req.ExpenseId)
 		if err != nil {
 			return err
 		}
@@ -209,7 +177,7 @@ func (s *Server) UpdateExpense(ctx context.Context, req UpdateExpenseRequestObje
 		if err != nil {
 			return err
 		}
-		d, err := validateExpense(ctx, tx, g, kind, *req.Body, nil)
+		d, err := validateExpense(ctx, tx, g, *req.Body, nil)
 		if err != nil {
 			return err
 		}

@@ -42,7 +42,7 @@ func TestExportCsv(t *testing.T) {
 		`2026-10-02,Dinner,food,expense,90.00,EUR,100% fun_night,,,,,,-30.00,60.00,-30.00,0.00`,
 		"2026-10-20,Groceries,groceries,expense,12.00,EUR,,,,,,,6.00,0.00,-6.00,0.00",
 		"2026-10-21,Snacks,,expense,6.00,EUR,,,,,,,0.00,0.00,0.00,0.00",
-		"2026-10-22,,,payment,15.00,EUR,,,,,,,-15.00,15.00,0.00,0.00",
+		"2026-10-22,Payback,transfer,expense,15.00,EUR,,,,,,,-15.00,15.00,0.00,0.00",
 		"2026-10-23,'=SUM(A1),,expense,4.00,EUR,,'=Cafe,25.0339,121.5645,650,JPY,4.00,-4.00,0.00,0.00",
 	}, "\n") + "\n"
 	if got := rec.Body.String(); got != want {

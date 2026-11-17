@@ -221,9 +221,6 @@ func (s *Server) notifyExpense(g *group, who *string, action string, e Expense, 
 
 func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action string, e Expense,
 	earlier []string) error {
-	if e.Kind == ExpenseKindPayment && action != "added" {
-		return nil
-	}
 	involved := map[string]bool{}
 	for _, id := range earlier {
 		involved[id] = true
@@ -264,7 +261,7 @@ func (s *Server) sendExpense(ctx context.Context, g *group, who *string, action 
 	}
 	n := notification{Group: g.token, Expense: e.Id, Title: clip(g.name)}
 	switch {
-	case e.Kind == ExpenseKindPayment:
+	case action == "added" && isTransfer(e):
 		n.Key, n.Args = "push_payment_added", []string{name(e.Payers[0].MemberId), name(e.Splits[0].MemberId), amount}
 	case who == nil || name(*who) == "":
 		n.Key, n.Args = "push_expense_"+action+"_anon", []string{e.Title, amount}
@@ -391,4 +388,11 @@ func (s *Server) pushDevices(ctx context.Context, g *group, ids []string) ([]pus
 		err := row.Scan(&d.id, &d.sub.Endpoint, &d.sub.P256dh, &d.sub.Auth)
 		return d, err
 	})
+}
+
+// isTransfer reports an expense in the transfer category that one member
+// paid wholly to another.
+func isTransfer(e Expense) bool {
+	return e.CategoryId != nil && *e.CategoryId == categoryTransfer && len(e.Payers) == 1 && len(e.Splits) == 1 &&
+		e.Payers[0].MemberId != e.Splits[0].MemberId
 }

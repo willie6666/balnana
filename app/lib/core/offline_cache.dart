@@ -60,9 +60,31 @@ class PendingWrites extends Table {
 /// Where a [PendingWrite] is sent, after the group's path.
 abstract final class PendingPath {
   static const expenses = '/expenses';
+
+  /// Payments kept by earlier versions, which servers now take as expenses
+  /// in the "transfer" category: see [paymentAsExpense].
   static const payments = '/payments';
 
   static bool supports(String path) => path == expenses || path == payments;
+
+  /// The expense recording a payment body kept under [payments]: what the
+  /// payer handed over is all the payee's. [name] gives a member's name.
+  static Map<String, Object?> paymentAsExpense(Map<String, Object?> body, String? Function(Object?) name) {
+    final from = body['fromMemberId'], to = body['toMemberId'];
+    return {
+      'title': '${name(from) ?? ''} → ${name(to) ?? ''}'.trim(),
+      'categoryId': 'transfer',
+      'amount': body['amount'],
+      'occurredAt': body['occurredAt'],
+      'payers': [
+        {'memberId': from, 'amount': body['amount']},
+      ],
+      'splitMethod': 'equal',
+      'splits': [
+        {'memberId': to},
+      ],
+    };
+  }
 }
 
 typedef _CacheKey = ({String server, String account, String request});

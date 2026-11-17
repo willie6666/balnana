@@ -291,6 +291,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get categoryGifts => 'Prezenty';
 
   @override
+  String get categoryTransfer => 'Przelew';
+
+  @override
   String get categoryOther => 'Inne';
 
   @override
@@ -481,42 +484,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get memberRename => 'Zmień imię';
 
   @override
-  String get memberPaymentDetails => 'Dane do płatności';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Jak inni w tej grupie mogą zapłacić $name: konto bankowe, aplikacja płatnicza lub link. Wszyscy w grupie mogą je zobaczyć.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Sposób';
-
-  @override
-  String get paymentDetailValue => 'Konto, ID lub link';
-
-  @override
-  String get paymentDetailAdd => 'Dodaj sposób płatności';
-
-  @override
-  String get paymentDetailBank => 'Przelew bankowy';
-
-  @override
-  String get paymentDetailSuggestions => 'Sugestie';
-
-  @override
   String get paymentDetailCopy => 'Kopiuj';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return 'Skopiowano: $label';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Otwórz link';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Każdy sposób płatności wymaga nazwy oraz konta, ID lub linku, każde w jednym wierszu.';
 
   @override
   String get errorNothingOwed => 'Ta osoba nic ci teraz nie jest winna.';
@@ -784,9 +752,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get filterAnyCategory => 'Dowolna kategoria';
 
   @override
-  String get filterPayments => 'Płatności';
-
-  @override
   String get filterClear => 'Wyczyść filtry';
 
   @override
@@ -853,11 +818,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get dateYesterday => 'Wczoraj';
-
-  @override
-  String paymentTitle(String from, String to) {
-    return '$from zapłacił(a) $to';
-  }
 
   @override
   String expensePaidBy(String name, String amount) {
@@ -940,12 +900,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Przychód';
-
-  @override
-  String get paymentDelete => 'Usuń płatność';
-
-  @override
-  String get paymentDeleted => 'Płatność usunięta';
 
   @override
   String expenseDeleted(String title) {
@@ -1179,18 +1133,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Przypomnienie: jesteś winien(-na) $payee $amount w grupie $group.';
   }
-
-  @override
-  String get reminderHowToPay => 'Jak zapłacić:';
-
-  @override
-  String get recordPaymentTitle => 'Zapisz płatność';
-
-  @override
-  String get recordPaymentHelp => 'Zapisuj tylko płatności faktycznie wykonane poza Balnana.';
-
-  @override
-  String get paymentRecorded => 'Płatność zapisana';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3676,11 +3618,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Ten serwer nie wysyła powiadomień.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Wcześniejsza próba zapisała już $amount. Nic nowego nie dodano.';
-  }
 
   @override
   String get refreshFailed => 'Nie udało się zaktualizować. Te dane mogą być nieaktualne.';

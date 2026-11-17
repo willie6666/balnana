@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../core/money.dart';
 import '../models/activity.dart';
 import '../models/billing.dart';
 import '../models/expense.dart';
@@ -114,23 +113,8 @@ class GroupApi {
     (data) => Member.fromJson(data, digits),
   );
 
-  /// Leaving out [paymentDetails] keeps the member's as they are.
-  Future<Member> updateMember(
-    String id,
-    String name, {
-    int? color,
-    List<PaymentDetail>? paymentDetails,
-    required int digits,
-  }) => _transport.send(
-    () => _dio.patch<Object?>(
-      '$_base/members/$id',
-      data: {
-        'name': name,
-        'color': ?color,
-        'paymentDetails': ?paymentDetails?.map((d) => d.toJson()).toList(),
-      },
-      options: _as,
-    ),
+  Future<Member> updateMember(String id, String name, {int? color, required int digits}) => _transport.send(
+    () => _dio.patch<Object?>('$_base/members/$id', data: {'name': name, 'color': ?color}, options: _as),
     (data) => Member.fromJson(data, digits),
   );
 
@@ -234,35 +218,6 @@ class GroupApi {
     () => _dio.post<Object?>('$_base/expenses/$id/restore', options: _as),
     (data) => Expense.fromJson(data, digits),
   );
-
-  Future<Expense> recordPayment(
-    String from,
-    String to,
-    BigInt amount,
-    int digits, {
-    String? key,
-    DateTime? occurredAt,
-  }) => _transport.send(
-    () => _dio.post<Object?>(
-      '$_base/payments',
-      data: paymentBody(from, to, amount, digits, occurredAt: occurredAt ?? DateTime.now()),
-      options: _once(key),
-    ),
-    (data) => Expense.fromJson(data, digits),
-  );
-
-  static Map<String, Object?> paymentBody(
-    String from,
-    String to,
-    BigInt amount,
-    int digits, {
-    required DateTime occurredAt,
-  }) => {
-    'fromMemberId': from,
-    'toMemberId': to,
-    'amount': formatAmount(amount, digits),
-    'occurredAt': occurredAt.toUtc().toIso8601String(),
-  };
 
   /// Sends [body] to [path] in the group as it was kept while offline, with
   /// the same [key], so it is added once however often it is sent.

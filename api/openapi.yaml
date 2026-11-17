@@ -1649,7 +1649,7 @@ paths:
       - $ref: "#/components/parameters/Token"
     get:
       operationId: listExpenses
-      summary: Expenses and payments, newest first
+      summary: Expenses, newest first
       description: >-
         The filters combine; a cursor only works with the filters it was
         given with.
@@ -1674,11 +1674,6 @@ paths:
           description: Only expenses of this category.
           schema:
             type: string
-        - name: kind
-          in: query
-          schema:
-            type: string
-            enum: [expense, payment]
         - $ref: "#/components/parameters/From"
         - $ref: "#/components/parameters/To"
         - name: limit
@@ -1844,31 +1839,6 @@ paths:
                 $ref: "#/components/schemas/Expense"
         default:
           $ref: "#/components/responses/Error"
-  /g/{token}/payments:
-    parameters:
-      - $ref: "#/components/parameters/Token"
-    post:
-      operationId: createPayment
-      summary: Record that one member paid another
-      description: Either member may have left the group.
-      parameters:
-        - $ref: "#/components/parameters/ActingMember"
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PaymentInput"
-      responses:
-        "201":
-          description: The payment, stored as an expense of kind `payment`
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Expense"
-        default:
-          $ref: "#/components/responses/Error"
   /g/{token}/recurring:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -2014,7 +1984,9 @@ paths:
     get:
       operationId: getStats
       summary: What the group spent, by category, member and month
-      description: Payments between members are not spending and are left out.
+      description: >-
+        Transfers between members (category `transfer`) are not spending and
+        are left out.
       parameters:
         - $ref: "#/components/parameters/From"
         - $ref: "#/components/parameters/To"
@@ -2043,10 +2015,10 @@ paths:
       - $ref: "#/components/parameters/Token"
     get:
       operationId: exportCsv
-      summary: Every expense and payment of the group as a spreadsheet
+      summary: Every expense of the group as a spreadsheet
       description: >-
         UTF-8 CSV with a byte order mark, oldest first. Fixed columns, in order:
-        Date, Title, Category, Type (`expense`, `payment`, `refund` or `income`),
+        Date, Title, Category, Type (`expense`, `refund` or `income`),
         Amount, Currency, Note, Location, Latitude, Longitude, Original amount,
         Original currency (what an expense paid in another currency came to in
         it, else empty), then one per member with what the entry did to their balance (paid minus
@@ -2366,6 +2338,7 @@ components:
           type: integer
         payments:
           type: integer
+          description: Rows that are transfers between two people, kept as expenses in the `transfer` category.
         skipped:
           type: integer
           description: Rows with a zero amount, which are left out.
@@ -2501,7 +2474,7 @@ components:
           type: boolean
     Member:
       type: object
-      required: [id, name, left, balance, owner, claimed, paymentDetails]
+      required: [id, name, left, balance, owner, claimed]
       properties:
         id:
           type: string
@@ -2518,23 +2491,6 @@ components:
           description: 'Accounts mode: an account is linked to this member.'
         balance:
           $ref: "#/components/schemas/Money"
-        paymentDetails:
-          type: array
-          description: How to pay this member, in the order they listed them.
-          items:
-            $ref: "#/components/schemas/PaymentDetail"
-    PaymentDetail:
-      type: object
-      required: [label, value]
-      properties:
-        label:
-          type: string
-          maxLength: 40
-          description: What it is, such as a bank or a payment app.
-        value:
-          type: string
-          maxLength: 200
-          description: The account number, handle or link.
     MemberInput:
       type: object
       required: [name]
@@ -2543,15 +2499,6 @@ components:
           type: string
         color:
           type: integer
-        paymentDetails:
-          type: array
-          maxItems: 5
-          description: >-
-            Replaces the member's payment details; left out, they stay as they
-            are. In accounts mode only the member's own account may change
-            them, so nobody else can send their debtors to another account.
-          items:
-            $ref: "#/components/schemas/PaymentDetail"
     GroupSummaryRequest:
       type: object
       required: [groups]
@@ -2687,8 +2634,7 @@ components:
         amount over the payers and the split in proportion to their amounts
         in this currency, largest remainders first, so every balance stays in
         the group's currency. Errors: `invalid_currency` for a code that is
-        not three letters or is the group's own, `invalid_payment` on a
-        payment, and `payer_too_small` when a payer's part comes to nothing
+        not three letters or is the group's own, and `payer_too_small` when a payer's part comes to nothing
         in the group's currency.
       properties:
         currency:
@@ -2736,20 +2682,6 @@ components:
           type: number
           format: double
           description: Degrees east, -180 to 180 (WGS 84).
-    PaymentInput:
-      type: object
-      required: [fromMemberId, toMemberId, amount]
-      properties:
-        fromMemberId:
-          type: string
-        toMemberId:
-          type: string
-        amount:
-          $ref: "#/components/schemas/Money"
-        occurredAt:
-          type: string
-          format: date-time
-          description: Defaults to now.
     SplitMethod:
       type: string
       enum: [equal, exact, shares]
@@ -2761,7 +2693,10 @@ components:
           type: string
         kind:
           type: string
-          enum: [expense, payment]
+          enum: [expense]
+          description: >-
+            Always `expense`. Money one member hands another is an expense in
+            the built-in `transfer` category.
         transactionType:
           type: string
           enum: [expense, refund, income]
@@ -2988,7 +2923,7 @@ components:
             $ref: "#/components/schemas/Transfer"
     GroupStats:
       description: |
-        Net spending: expenses minus refunds, excluding payments and income.
+        Net spending: expenses minus refunds, excluding transfers (category `transfer`) and income.
         Refund paid/share figures negate the original receiver/beneficiary amounts.
         Date filters apply independently to each entry, including refunds.
       type: object
@@ -3090,8 +3025,9 @@ components:
             expense.created, expense.updated, expense.deleted,
             expense.restored, receipt.added, receipt.removed,
             recurring.created, recurring.updated, recurring.paused,
-            recurring.resumed, recurring.deleted. Payments use the expense
-            actions with `kind: payment` in the payload. An expense a
+            recurring.resumed, recurring.deleted. Entries older than the
+            `transfer` category may carry `kind: payment` in an expense
+            action's payload, with `from` and `to` names. An expense a
             recurring expense added has `recurring: true` in its payload; a
             recurring expense the server paused has no actor and the error
             code as `reason`.

@@ -11,6 +11,7 @@ class _Editor extends ConsumerStatefulWidget {
     this.recurring,
     this.onReloadRecurring,
     this.repeat = false,
+    this.transfer,
   });
 
   final Group group;
@@ -33,6 +34,9 @@ class _Editor extends ConsumerStatefulWidget {
 
   /// Starts a new expense repeating every month.
   final bool repeat;
+
+  /// Starts a new expense recording this payment between members.
+  final Transfer? transfer;
 
   @override
   ConsumerState<_Editor> createState() => _EditorState();
@@ -132,7 +136,19 @@ class _EditorState extends ConsumerState<_Editor> {
       _values[m.id] = TextEditingController();
     }
     final e = widget.expense;
-    if (e == null) {
+    final transfer = widget.transfer;
+    final from = _group.member(transfer?.from), to = _group.member(transfer?.to);
+    if (e == null && transfer != null && from != null && to != null) {
+      // What the payer hands over is all the payee's, as the payment the
+      // balances suggest. One expense holds at most maxMinor; what a larger
+      // debt has left is suggested again once this one is saved.
+      _date = DateTime.now();
+      _title.text = '${from.name} → ${to.name}';
+      _category = Category.transfer.id;
+      _amount.text = formatAmount(transfer.amount > maxMinor ? maxMinor : transfer.amount, _digits);
+      _payer = from.id;
+      _included.add(to.id);
+    } else if (e == null) {
       _date = DateTime.now();
       final me = _group.member(myMemberIdRead(ref, _group.token));
       _payer = (me != null && !me.left) ? me.id : _group.activeMembers.firstOrNull?.id;

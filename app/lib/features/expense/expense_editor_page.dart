@@ -48,6 +48,7 @@ class ExpenseEditorPage extends ConsumerStatefulWidget {
     this.expenseId,
     this.recurringId,
     this.repeat = false,
+    this.transfer,
   });
 
   final String token;
@@ -56,6 +57,9 @@ class ExpenseEditorPage extends ConsumerStatefulWidget {
 
   /// Starts a new expense repeating every month.
   final bool repeat;
+
+  /// Starts a new expense recording this payment between members.
+  final Transfer? transfer;
 
   @override
   ConsumerState<ExpenseEditorPage> createState() => _ExpenseEditorPageState();
@@ -106,6 +110,7 @@ class _ExpenseEditorPageState extends ConsumerState<ExpenseEditorPage> {
           newer: latest != null && latest.version != base?.version ? latest : null,
           onReload: _adopt,
           repeat: widget.repeat,
+          transfer: widget.transfer,
         ),
       );
     }

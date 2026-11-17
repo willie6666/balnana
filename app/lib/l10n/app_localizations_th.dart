@@ -283,6 +283,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoryGifts => 'ของขวัญ';
 
   @override
+  String get categoryTransfer => 'โอนเงิน';
+
+  @override
   String get categoryOther => 'อื่นๆ';
 
   @override
@@ -463,42 +466,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get memberRename => 'เปลี่ยนชื่อ';
 
   @override
-  String get memberPaymentDetails => 'ข้อมูลการชำระเงิน';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'วิธีที่คนอื่นในกลุ่มนี้จ่ายเงินให้ $name: บัญชีธนาคาร แอปชำระเงิน หรือลิงก์ ทุกคนในกลุ่มมองเห็นได้';
-  }
-
-  @override
-  String get paymentDetailLabel => 'วิธี';
-
-  @override
-  String get paymentDetailValue => 'บัญชี ไอดี หรือลิงก์';
-
-  @override
-  String get paymentDetailAdd => 'เพิ่มวิธีชำระเงิน';
-
-  @override
-  String get paymentDetailBank => 'โอนผ่านธนาคาร';
-
-  @override
-  String get paymentDetailSuggestions => 'คำแนะนำ';
-
-  @override
   String get paymentDetailCopy => 'คัดลอก';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return 'คัดลอก $label แล้ว';
-  }
-
-  @override
-  String get paymentDetailOpen => 'เปิดลิงก์';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'แต่ละวิธีชำระเงินต้องมีชื่อวิธีและบัญชี ไอดี หรือลิงก์ โดยแต่ละอย่างอยู่ในบรรทัดเดียว';
 
   @override
   String get errorNothingOwed => 'ตอนนี้เขาไม่ได้ค้างจ่ายคุณ';
@@ -765,9 +733,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get filterAnyCategory => 'ทุกหมวดหมู่';
 
   @override
-  String get filterPayments => 'การชำระเงิน';
-
-  @override
   String get filterClear => 'ล้างตัวกรอง';
 
   @override
@@ -833,11 +798,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get dateYesterday => 'เมื่อวาน';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from จ่ายให้ $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name จ่าย $amount';
   }
@@ -882,12 +842,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionIncome => 'รายรับ';
-
-  @override
-  String get paymentDelete => 'ลบการชำระเงิน';
-
-  @override
-  String get paymentDeleted => 'ลบการชำระเงินแล้ว';
 
   @override
   String expenseDeleted(String title) {
@@ -1120,18 +1074,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'เตือน: คุณค้างจ่าย $payee $amount ในกลุ่ม $group';
   }
-
-  @override
-  String get reminderHowToPay => 'วิธีชำระ:';
-
-  @override
-  String get recordPaymentTitle => 'บันทึกการชำระเงิน';
-
-  @override
-  String get recordPaymentHelp => 'บันทึกเฉพาะเงินที่จ่ายจริงนอก Balnana';
-
-  @override
-  String get paymentRecorded => 'บันทึกการชำระเงินแล้ว';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3483,11 +3425,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errorPushOff => 'เซิร์ฟเวอร์นี้ไม่ส่งการแจ้งเตือน';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'การลองครั้งก่อนบันทึก $amount ไว้แล้ว จึงไม่มีการเพิ่มรายการใหม่';
-  }
 
   @override
   String get refreshFailed => 'อัปเดตไม่ได้ ข้อมูลนี้อาจไม่เป็นปัจจุบัน';

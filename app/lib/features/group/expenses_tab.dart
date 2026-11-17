@@ -136,9 +136,7 @@ class ExpensesTab extends ConsumerWidget {
                     expense: e,
                     group: group,
                     me: me,
-                    onTap: () => e.isPayment
-                        ? showPaymentSheet(context, group, e)
-                        : context.push('/g/${group.token}/expenses/${e.id}'),
+                    onTap: () => context.push('/g/${group.token}/expenses/${e.id}'),
                   ),
                   _ => const SizedBox.shrink(),
                 };
@@ -315,27 +313,20 @@ class _ExpenseFilterBarState extends ConsumerState<ExpenseFilterBar> {
                 ],
               ),
               MenuChip(
-                avatar: category != null
-                    ? Text(category.emoji)
-                    : Icon(filter.payments ? Icons.payments_outlined : Icons.category_outlined),
-                label: category?.label(l10n) ?? (filter.payments ? l10n.filterPayments : l10n.filterAnyCategory),
-                selected: category != null || filter.payments,
+                avatar: category != null ? Text(category.emoji) : const Icon(Icons.category_outlined),
+                label: category?.label(l10n) ?? l10n.filterAnyCategory,
+                selected: category != null,
                 items: [
                   MenuItemButton(
-                    onPressed: () => set(filter.copyWith(category: () => null, payments: false)),
+                    onPressed: () => set(filter.copyWith(category: () => null)),
                     child: Text(l10n.filterAnyCategory),
                   ),
                   for (final c in group.offeredCategories(filter.category))
                     MenuItemButton(
                       leadingIcon: Text(c.emoji),
-                      onPressed: () => set(filter.copyWith(category: () => c.id, payments: false)),
+                      onPressed: () => set(filter.copyWith(category: () => c.id)),
                       child: Text(c.label(l10n)),
                     ),
-                  MenuItemButton(
-                    leadingIcon: const Icon(Icons.payments_outlined),
-                    onPressed: () => set(filter.copyWith(category: () => null, payments: true)),
-                    child: Text(l10n.filterPayments),
-                  ),
                 ],
               ),
               PeriodChip(period: filter.period, onChanged: (p) => set(filter.copyWith(period: () => p))),
@@ -392,15 +383,6 @@ class CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    if (expense.isPayment) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: scheme.tertiaryContainer, shape: BoxShape.circle),
-        child: Icon(Icons.payments_outlined, color: scheme.onTertiaryContainer, size: size * 0.5),
-      );
-    }
     return CategoryBubble(
       category: group.category(expense.categoryId) ?? Category.other.asGroupCategory,
       size: size,
@@ -432,21 +414,16 @@ class ExpenseTile extends ConsumerWidget {
     final paid = me == null ? BigInt.zero : e.paidBy(me!), owed = me == null ? BigInt.zero : e.owedBy(me!);
     final net = paid - owed;
     // Whether the row shows this member's part rather than the whole amount.
-    // A payment is all theirs when they are in it.
-    final part = myShare && !e.isPayment && net != BigInt.zero;
+    final part = myShare && net != BigInt.zero;
     // Paid in another currency, the row leads with what it was there.
     final f = e.foreign;
     final whole = f == null ? money(e.amount) : formatMoney(context, f.amount, f.digits, f.currency);
 
     // Who paid or received goes on a line of its own, so a phone does not cut
     // it off after the time. Beside the whole amount it needs no amount.
-    final String title;
-    String? who;
-    if (e.isPayment) {
-      final from = _name(l10n, e.payers.first.memberId), to = _name(l10n, e.splits.first.memberId);
-      title = l10n.paymentTitle(from, to);
-    } else if (e.isReceived) {
-      title = e.title;
+    final title = e.title;
+    final String who;
+    if (e.isReceived) {
       final type = e.transactionType == 'income' ? l10n.transactionIncome : l10n.transactionRefund;
       final receiver = _name(l10n, e.splits.first.memberId), receivers = e.splits.length;
       final by = switch ((part, receivers)) {
@@ -458,7 +435,6 @@ class ExpenseTile extends ConsumerWidget {
       // Not beside the time, which shares its line with the faces.
       who = '$by · $type';
     } else {
-      title = e.title;
       final payer = _name(l10n, e.payers.first.memberId), payers = e.payers.length;
       who = switch ((part, payers)) {
         (true, 1) => l10n.expensePaidBy(payer, whole),
@@ -468,7 +444,7 @@ class ExpenseTile extends ConsumerWidget {
       };
     }
     // ... and what it came to in the group's currency follows, small.
-    if (f != null && !part && who != null) who = '$who · ${money(e.amount)}';
+    final whoLine = f != null && !part ? '$who · ${money(e.amount)}' : who;
 
     // Every row shows who paid or received and everyone it was for, under the
     // whole amount or, as settings choose, this member's part of it: green
@@ -574,7 +550,7 @@ class ExpenseTile extends ConsumerWidget {
                       ],
                     ),
                     // Under the faces, so it has the row's whole width.
-                    if (who != null) line(who),
+                    line(whoLine),
                   ],
                 ),
               ),
@@ -676,57 +652,6 @@ class _Faces extends StatelessWidget {
   }
 }
 
-/// Details of a recorded payment, with a way to delete it.
-Future<void> showPaymentSheet(BuildContext context, Group group, Expense payment) => showModalBottomSheet<void>(
-  context: context,
-  useRootNavigator: true,
-  showDragHandle: true,
-  builder: (context) => _PaymentSheet(group: group, payment: payment),
-);
-
-class _PaymentSheet extends ConsumerWidget {
-  const _PaymentSheet({required this.group, required this.payment});
-
-  final Group group;
-  final Expense payment;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final text = Theme.of(context).textTheme;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final from = group.member(payment.payers.first.memberId)?.name ?? l10n.someone;
-    final to = group.member(payment.splits.first.memberId)?.name ?? l10n.someone;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(BSpace.s24, 0, BSpace.s24, BSpace.s24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CategoryIcon(expense: payment, group: group, size: 56),
-            const SizedBox(height: BSpace.s16),
-            Text(l10n.paymentTitle(from, to), style: text.titleLarge, textAlign: TextAlign.center),
-            Text(
-              formatMoney(context, payment.amount, group.minorDigits, group.currency, symbol: group.symbol),
-              style: text.moneyLarge,
-            ),
-            Text(DateFormat.yMMMEd(locale).add_jm().format(payment.occurredAt.toLocal()), style: text.bodyMedium),
-            const SizedBox(height: BSpace.s24),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                deleteExpenseWithUndo(context, ref, group, payment);
-              },
-              icon: const Icon(Icons.delete_outline),
-              label: Text(l10n.paymentDelete),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Deletes [expense] and offers to bring it back; false when it could not.
 Future<bool> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group group, Expense expense) async {
   final l10n = context.l10n;
@@ -743,7 +668,7 @@ Future<bool> deleteExpenseWithUndo(BuildContext context, WidgetRef ref, Group gr
   refreshGroupIn(container, group.token);
   messenger.showSnackBar(
     SnackBar(
-      content: Text(expense.isPayment ? l10n.paymentDeleted : l10n.expenseDeleted(expense.title)),
+      content: Text(l10n.expenseDeleted(expense.title)),
       action: SnackBarAction(
         label: l10n.commonUndo,
         onPressed: () async {

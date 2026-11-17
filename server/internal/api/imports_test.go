@@ -102,7 +102,8 @@ func TestImportSettleUp(t *testing.T) {
 	if refund := byTitle["Untitled"]; refund.Amount != "6.00" || len(refund.Payers) != 2 {
 		t.Errorf("refund %+v", refund)
 	}
-	if pay := byTitle[""]; pay.Kind != "payment" || ids[pay.Payers[0].MemberId] != "Cy" || ids[pay.Splits[0].MemberId] != "Ana" {
+	if pay := byTitle["Cy → Ana"]; pay.CategoryId == nil || *pay.CategoryId != categoryTransfer || len(pay.Payers) != 1 ||
+		ids[pay.Payers[0].MemberId] != "Cy" || ids[pay.Splits[0].MemberId] != "Ana" {
 		t.Errorf("transfer %+v", pay)
 	}
 

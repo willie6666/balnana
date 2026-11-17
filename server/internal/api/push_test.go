@@ -162,7 +162,7 @@ func TestPushLinkMode(t *testing.T) {
 	}
 
 	c.member = ben
-	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(cy, ana, "5"), nil)
 	sent = f.take(s)
 	if len(sent) != 2 || sent[0].phone != "ana-phone" || sent[1].phone != "cy-phone" ||
 		sent[0].n.Key != "push_payment_added" || !slices.Equal(sent[0].n.Args, []string{"Cy", "Ana", "5.00 EUR"}) {
@@ -170,17 +170,17 @@ func TestPushLinkMode(t *testing.T) {
 	}
 	// A symbol the group picked stands in for the currency code.
 	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("€")}, nil)
-	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(cy, ana, "5"), nil)
 	if sent = f.take(s); len(sent) != 2 || !slices.Equal(sent[0].n.Args, []string{"Cy", "Ana", "€5.00"}) {
 		t.Errorf("payment with symbol sent %+v", sent)
 	}
 	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("NT$")}, nil)
-	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(cy, ana, "5"), nil)
 	if sent = f.take(s); len(sent) != 2 || sent[0].n.Args[2] != "NT$5.00" {
 		t.Errorf("payment with symbol sent %+v", sent)
 	}
 	c.must(200, "PATCH", base, GroupUpdate{Symbol: ptr("TWD")}, nil)
-	c.must(201, "POST", base+"/payments", PaymentInput{Amount: "5", FromMemberId: cy, ToMemberId: ana}, nil)
+	c.must(201, "POST", base+"/expenses", transfer(cy, ana, "5"), nil)
 	if sent = f.take(s); len(sent) != 2 || sent[0].n.Args[2] != "TWD 5.00" {
 		t.Errorf("payment with letter symbol sent %+v", sent)
 	}
@@ -407,7 +407,7 @@ func TestPushAccounts(t *testing.T) {
 	subscribe(stranger, "stranger-phone", follow(g.Token, g.Members[0].Id))
 
 	pay := func() {
-		ben.must(201, "POST", "/g/"+g.Token+"/payments", PaymentInput{Amount: "5", FromMemberId: g.Members[1].Id, ToMemberId: g.Members[0].Id}, nil)
+		ben.must(201, "POST", "/g/"+g.Token+"/expenses", transfer(g.Members[1].Id, g.Members[0].Id, "5"), nil)
 	}
 	pay()
 	if sent := f.take(s); len(sent) != 1 || sent[0].phone != "ana-phone" {
@@ -456,7 +456,7 @@ func TestPushLinkReset(t *testing.T) {
 	subscribe(c, "new-phone", follow(reset.Token, ben))
 
 	c.member = ana
-	c.must(201, "POST", "/g/"+reset.Token+"/payments", PaymentInput{Amount: "5", FromMemberId: ana, ToMemberId: ben}, nil)
+	c.must(201, "POST", "/g/"+reset.Token+"/expenses", transfer(ana, ben, "5"), nil)
 	sent := f.take(s)
 	if len(sent) != 1 || sent[0].phone != "new-phone" {
 		t.Fatalf("sent %+v", sent)

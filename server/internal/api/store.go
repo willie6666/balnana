@@ -44,9 +44,6 @@ const (
 	tokenBytes    = 16
 	tokenLen      = 22 // base64url of tokenBytes, no padding
 	maxShareValue = 99_999_999_9999
-	maxPayDetails = 5
-	maxPayLabel   = 40
-	maxPayValue   = 200
 )
 
 // group is a row of the groups table, plus what the request may do in it.
@@ -313,19 +310,18 @@ type member struct {
 	left   bool
 	owner  bool
 	userID *string
-	pay    []PaymentDetail
 }
 
 func groupMembers(ctx context.Context, q querier, groupID string) ([]member, error) {
 	rows, err := q.Query(ctx, `
-		select id::text, display_name, color, left_at is not null, is_owner, user_id::text, payment_details
+		select id::text, display_name, color, left_at is not null, is_owner, user_id::text
 		from members where group_id = $1 order by created_at, id`, groupID)
 	if err != nil {
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (member, error) {
 		var m member
-		err := row.Scan(&m.id, &m.name, &m.color, &m.left, &m.owner, &m.userID, &m.pay)
+		err := row.Scan(&m.id, &m.name, &m.color, &m.left, &m.owner, &m.userID)
 		return m, err
 	})
 }
@@ -365,24 +361,15 @@ func groupNets(ctx context.Context, q querier, groupID string) (map[string]int64
 	return nets, err
 }
 
-// listed is pay, or an empty list for none, which is stored and sent as [].
-func listed(pay []PaymentDetail) []PaymentDetail {
-	if pay == nil {
-		return []PaymentDetail{}
-	}
-	return pay
-}
-
 func toMember(m member, nets map[string]int64, digits int) Member {
 	return Member{
-		Id:             m.id,
-		Name:           m.name,
-		Color:          m.color,
-		Left:           m.left,
-		Owner:          m.owner,
-		Claimed:        m.userID != nil,
-		Balance:        domain.FormatAmount(nets[m.id], digits),
-		PaymentDetails: listed(m.pay),
+		Id:      m.id,
+		Name:    m.name,
+		Color:   m.color,
+		Left:    m.left,
+		Owner:   m.owner,
+		Claimed: m.userID != nil,
+		Balance: domain.FormatAmount(nets[m.id], digits),
 	}
 }
 

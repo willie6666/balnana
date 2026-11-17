@@ -81,9 +81,7 @@ func TestPushPasswordRacingRegistration(t *testing.T) {
 			current.Groups[0].Key = &fresh.Key
 			subscribe(c, "current-phone", current)
 			c.member = g.Members[0].Id
-			c.must(201, "POST", base+"/payments", PaymentInput{
-				Amount: "5", FromMemberId: g.Members[0].Id, ToMemberId: g.Members[1].Id,
-			}, nil)
+			c.must(201, "POST", base+"/expenses", transfer(g.Members[0].Id, g.Members[1].Id, "5"), nil)
 			if messages := sent.take(s); len(messages) != 1 || messages[0].phone != "current-phone" {
 				t.Fatalf("revoked phones received pushes: %+v", messages)
 			}
@@ -106,9 +104,7 @@ func TestPushRemovingPasswordKeepsFollows(t *testing.T) {
 		if phase != "protected" {
 			c.must(204, "DELETE", base+"/password", nil, nil)
 		}
-		c.must(201, "POST", base+"/payments", PaymentInput{
-			Amount: "5", FromMemberId: g.Members[0].Id, ToMemberId: g.Members[1].Id,
-		}, nil)
+		c.must(201, "POST", base+"/expenses", transfer(g.Members[0].Id, g.Members[1].Id, "5"), nil)
 		if messages := sent.take(s); len(messages) != 1 || messages[0].phone != "ben-phone" {
 			t.Fatalf("%s: authorized phone stopped receiving pushes: %+v", phase, messages)
 		}

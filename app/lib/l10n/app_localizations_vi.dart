@@ -285,6 +285,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get categoryGifts => 'Quà tặng';
 
   @override
+  String get categoryTransfer => 'Chuyển khoản';
+
+  @override
   String get categoryOther => 'Khác';
 
   @override
@@ -465,42 +468,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get memberRename => 'Đổi tên';
 
   @override
-  String get memberPaymentDetails => 'Thông tin thanh toán';
-
-  @override
-  String paymentDetailsHelp(String name) {
-    return 'Cách những người khác trong nhóm trả tiền cho $name: tài khoản ngân hàng, ứng dụng thanh toán hoặc liên kết. Mọi người trong nhóm đều xem được.';
-  }
-
-  @override
-  String get paymentDetailLabel => 'Phương thức';
-
-  @override
-  String get paymentDetailValue => 'Tài khoản, ID hoặc liên kết';
-
-  @override
-  String get paymentDetailAdd => 'Thêm cách thanh toán';
-
-  @override
-  String get paymentDetailBank => 'Chuyển khoản ngân hàng';
-
-  @override
-  String get paymentDetailSuggestions => 'Gợi ý';
-
-  @override
   String get paymentDetailCopy => 'Sao chép';
-
-  @override
-  String paymentDetailCopied(String label) {
-    return 'Đã sao chép $label';
-  }
-
-  @override
-  String get paymentDetailOpen => 'Mở liên kết';
-
-  @override
-  String get errorInvalidPaymentDetails =>
-      'Mỗi cách thanh toán cần có phương thức và tài khoản, ID hoặc liên kết, mỗi mục trên một dòng.';
 
   @override
   String get errorNothingOwed => 'Hiện họ không nợ bạn gì.';
@@ -768,9 +736,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get filterAnyCategory => 'Mọi danh mục';
 
   @override
-  String get filterPayments => 'Thanh toán';
-
-  @override
   String get filterClear => 'Xóa bộ lọc';
 
   @override
@@ -836,11 +801,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get dateYesterday => 'Hôm qua';
 
   @override
-  String paymentTitle(String from, String to) {
-    return '$from đã trả cho $to';
-  }
-
-  @override
   String expensePaidBy(String name, String amount) {
     return '$name đã trả $amount';
   }
@@ -885,12 +845,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get transactionIncome => 'Thu nhập';
-
-  @override
-  String get paymentDelete => 'Xóa khoản thanh toán';
-
-  @override
-  String get paymentDeleted => 'Đã xóa khoản thanh toán';
 
   @override
   String expenseDeleted(String title) {
@@ -1123,18 +1077,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String reminderMessage(String payee, String amount, String group) {
     return 'Nhắc nhở: bạn nợ $payee $amount trong $group.';
   }
-
-  @override
-  String get reminderHowToPay => 'Cách thanh toán:';
-
-  @override
-  String get recordPaymentTitle => 'Ghi nhận khoản thanh toán';
-
-  @override
-  String get recordPaymentHelp => 'Chỉ ghi nhận tiền đã thực sự được trả bên ngoài Balnana.';
-
-  @override
-  String get paymentRecorded => 'Đã ghi nhận khoản thanh toán';
 
   @override
   String activityGroupCreated(String who, String group) {
@@ -3511,11 +3453,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorPushOff => 'Máy chủ này không gửi thông báo.';
-
-  @override
-  String paymentRecordedEarlier(String amount) {
-    return 'Lần thử trước đã ghi nhận $amount. Không có gì mới được thêm.';
-  }
 
   @override
   String get refreshFailed => 'Không thể cập nhật. Nội dung này có thể đã cũ.';
