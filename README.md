@@ -233,6 +233,5 @@ code of your version under the same license.
 <p align="center">
   <a href="https://balnana.com">Website</a> ·
   <a href="https://app.balnana.com">App</a> ·
-  <a href="https://balnana.com/docs/">Docs</a> ·
-  <a href="https://www.youtube.com/@balnana-com">YouTube</a>
+  <a href="https://balnana.com/docs/">Docs</a>
 </p>
