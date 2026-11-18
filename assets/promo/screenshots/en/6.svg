@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs><clipPath id="screen"><rect x="166" y="656" width="748" height="1920" rx="58"/></clipPath><filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="30" stdDeviation="40" flood-color="#3A2C00" flood-opacity="0.22"/></filter><filter id="soft" x="-20%" y="-40%" width="140%" height="180%"><feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#3A2C00" flood-opacity="0.18"/></filter></defs>
+<rect width="1080" height="1920" fill="#FBE6B8"/>
+<g transform="translate(230.0,720.0) scale(14.4444)"><circle cx="54" cy="54" r="36" fill="#F7D88C"/><path fill="#F0C35A" d="M51.5,33.131A24,24 0,0 0 51.5,80.869ZM56.5,27.131A24,24 0,0 1 56.5,74.869Z"/></g>
+<text x="540.0" y="250" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="700" font-size="112" fill="#3A2C00" letter-spacing="-1">Share a link,</text>
+<rect x="181" y="350" width="718" height="40" rx="10" fill="#F7C948" opacity="0.8"/>
+<text x="540.0" y="384" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="700" font-size="112" fill="#3A2C00" letter-spacing="-1">split together</text>
+<text x="540.0" y="524" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="500" font-size="42" fill="#4A4132">Friends join with a link or QR code</text>
+<g filter="url(#shadow)"><rect x="150" y="640" width="780" height="1920" rx="74" fill="#2B2418"/></g><image x="166" y="383" width="748" height="1537" preserveAspectRatio="xMidYMin slice" xlink:href="../../../screenshots/play/en/6-invite.png" clip-path="url(#screen)"/>
+<g filter="url(#soft)"><rect x="170" y="606" width="161" height="68" rx="34" fill="#FFFFFF"/></g><text x="250" y="652" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="600" font-size="34" fill="#5A4A20">No ads</text>
+<g filter="url(#soft)"><rect x="347" y="606" width="295" height="68" rx="34" fill="#FFFFFF"/></g><text x="494" y="652" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="600" font-size="34" fill="#5A4A20">Multi-currency</text>
+<g filter="url(#soft)"><rect x="657" y="606" width="253" height="68" rx="34" fill="#FFFFFF"/></g><text x="784" y="652" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Noto Sans CJK TC', sans-serif" font-weight="600" font-size="34" fill="#5A4A20">Open source</text>
+</svg>

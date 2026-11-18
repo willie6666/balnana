@@ -1,7 +1,32 @@
-Balnana helps friends, households and travel groups split expenses and keep track of who owes whom.
+Trips, flatmates, nights out: someone always pays, and someone has to work out who owes what. Balnana does the maths.
 
-Split a bill equally, by exact amounts or by shares, with support for multiple payers. Add recurring expenses, attach receipts and record what you spent in a foreign currency. See balances and suggested transfers, review spending by category or person, and export your records to CSV.
+Share a link with your group and add expenses as they happen. Balnana shows everyone where they stand, and the few payments that settle it all.
 
-To get started, connect to a Balnana server you run yourself or one you have been invited to use. Server setup instructions are in the source repository. Depending on the server settings, you can join a group with a private link or sign in with an account. Previously loaded groups and expenses can be viewed offline.
+SPLIT IT YOUR WAY
+• Equally, by exact amounts or by shares
+• Several payers on one expense
+• Refunds and income, not just spending
+• Recurring expenses such as rent or subscriptions
+• Pin where it happened on a map and attach a photo of the receipt
 
-For push notifications, install a UnifiedPush distributor such as ntfy.
+SETTLE UP IN A FEW PAYMENTS
+• Balnana works out a short list of payments that squares everyone up
+• Record a payment once the money has changed hands, and balances update for everyone
+
+BUILT FOR TRAVEL
+• Enter an expense in the currency you paid in, and balances stay in the group's currency
+• Type the exchange rate, or what it came to on your card statement
+• Saved groups still open when you're offline
+
+EASY TO SHARE
+• Invite friends with a private link or a QR code
+• See expenses appear as others add them, with push notifications
+
+KNOW WHERE THE MONEY WENT
+• Spending by category, by member and by month
+• Export to CSV, or bring your groups over from Settle Up
+
+OPEN SOURCE, NO ADS
+Balnana has no ads and no tracking. Use the official server at app.balnana.com, or connect to any other Balnana server. The app and the server are open source under the AGPL-3.0: https://github.com/willie6666/balnana
+
+Push notifications use UnifiedPush. If you don't get them, install a distributor such as ntfy.

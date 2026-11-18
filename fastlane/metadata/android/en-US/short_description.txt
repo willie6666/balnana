@@ -1,1 +1,1 @@
-Split group expenses and track who owes whom on a self-hosted server
+Split bills with friends, in any currency, and settle up in a few payments
