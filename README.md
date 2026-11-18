@@ -1,24 +1,35 @@
 <p align="center">
-  <img src="app/web/icons/Icon-192.png" width="96" height="96" alt="Balnana logo">
+  <a href="https://balnana.com">
+    <img src="assets/promo/key-visual-en.png" width="820" alt="Balnana: Split it. Settle it. Log what the group spends and Balnana finds the fewest payments.">
+  </a>
 </p>
 
 <h1 align="center">Balnana</h1>
 
 <p align="center">
-  <strong>Split group expenses. Settle up with fewer payments.<br>On a server you own.</strong>
+  <strong>Split group expenses. Settle up with fewer payments.</strong><br>
+  Free and open source. Use the official server, or run your own.
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Status-alpha%20%C2%B7%20pre--release-F28C28" alt="Status: alpha, pre-release">
   <img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android">
   <img src="https://img.shields.io/badge/Web-4285F4?logo=googlechrome&logoColor=white" alt="Web">
   <img src="https://img.shields.io/badge/Self--hosted-Docker-2496ED?logo=docker&logoColor=white" alt="Self-hosted with Docker">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-E8A800" alt="AGPL-3.0"></a>
-  <img src="https://img.shields.io/badge/Status-early%20development-lightgrey" alt="Early development">
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> ·
+  <a href="https://app.balnana.com"><img src="https://img.shields.io/badge/Open%20the%20app-app.balnana.com-E8A800?style=for-the-badge" alt="Open the app at app.balnana.com"></a>
+  <a href="https://balnana.com"><img src="https://img.shields.io/badge/Website-balnana.com-3A2C08?style=for-the-badge" alt="Website: balnana.com"></a>
+  <a href="https://balnana.com/docs/"><img src="https://img.shields.io/badge/Docs-balnana.com%2Fdocs-3A2C08?style=for-the-badge" alt="Documentation"></a>
+</p>
+
+<p align="center">
+  <a href="#watch-the-video">Video</a> ·
+  <a href="#a-weekend-in-kyoto">Screenshots</a> ·
   <a href="#features">Features</a> ·
+  <a href="#get-started">Get started</a> ·
   <a href="#development">Development</a> ·
   <a href="#license">License</a>
 </p>
@@ -30,10 +41,28 @@ work out who owes what. **Balnana does the maths.** Share a private link with
 your group, add expenses as they happen, and Balnana tells everyone where they
 stand and the few payments that settle it all.
 
-No ads, no tracking, and nothing to pay when you run it yourself. Your group's
-money stays on your server.
+No ads, no tracking, and the source is open for anyone to read.
 
-> **Status:** early development, preparing the first release.
+> [!WARNING]
+> **Alpha, pre-release.** Balnana works for everyday use, but it is still
+> changing quickly: expect rough edges, and things may move around before the
+> first stable release. Google Play and F-Droid releases are on the way.
+> Found a bug? [Open an issue](https://github.com/willie6666/balnana/issues).
+
+## Watch the video
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="https://youtu.be/Hi_VW6T_hHM"><img src="assets/readme/video-en.jpg" alt="Watch the Balnana promo in English on YouTube"></a>
+      <br><sub><b>▶ English</b> · 40 s</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="https://youtu.be/pkju-vmfZPM"><img src="assets/readme/video-zh.jpg" alt="在 YouTube 觀看 Balnana 中文宣傳片"></a>
+      <br><sub><b>▶ 繁體中文</b> · 40 秒</sub>
+    </td>
+  </tr>
+</table>
 
 ## A weekend in Kyoto
 
@@ -42,16 +71,14 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 
 <table>
   <tr>
-    <th width="25%">Every expense in one place</th>
-    <th width="25%">Who owes whom, at a glance</th>
-    <th width="25%">Where the money went</th>
-    <th width="25%">Paid abroad? No problem</th>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="Split it. Settle it. Alex is owed ¥35,112, and three suggested payments settle the group"></td>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Fair shares, your way. A ¥7,200 lunch split by shares between four friends"></td>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="Every expense, in one place. The Kyoto expense list with places, times and who paid"></td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/expenses.png" alt="Kyoto weekend expense list showing places, times, who paid and who it was for"></td>
-    <td><img src="assets/screenshots/balances.png" alt="Alex is owed ¥35,113, with balances for four friends and three suggested payments"></td>
-    <td><img src="assets/screenshots/statistics.png" alt="¥130,750 spent across 13 expenses, broken down by category"></td>
-    <td><img src="assets/screenshots/foreign.png" alt="A $48.00 kimono rental converted to ¥7,350 at 153.125 yen to the dollar, split equally"></td>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" alt="Any currency, one balance. A $48.00 kimono rental converted to ¥7,350"></td>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="See where it went. ¥130,750 spent across 13 expenses, broken down by category"></td>
+    <td width="33%"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="Share a link, split together. Friends join the group with a link or QR code"></td>
   </tr>
 </table>
 
@@ -59,7 +86,7 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 
 ## Features
 
-### Split it your way
+### ⚖️ Split it your way
 
 - **Equally, by exact amounts or by shares**, with several payers on one
   expense when two people put their cards down.
@@ -69,14 +96,14 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - **Places and receipts**: pin where an expense happened on a map and attach a
   photo of the receipt.
 
-### Settle up with fewer payments
+### 🤝 Settle up with fewer payments
 
 - Balnana suggests **at most one payment fewer than the number of people who
   owe or are owed**, and the same balances always give the same suggestions.
 - Record a suggested payment straight from the list once the money has
   changed hands, and the balances update for everyone.
 
-### Built for travel
+### ✈️ Built for travel
 
 - **Enter an expense in the currency it was paid in.** Type the rate, or what
   it came to on your card statement. Balances stay in the group's currency.
@@ -85,7 +112,7 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - **Works on a bad connection**: saved groups and expenses still open while
   the server is out of reach.
 
-### Easy to share
+### 🔗 Easy to share
 
 - **Link mode**: a group's private link, or its QR code, is all anyone needs.
   No sign-up.
@@ -95,12 +122,12 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
   push notifications over UnifiedPush. On the FOSS build, install a
   UnifiedPush distributor such as ntfy to receive push notifications.
 
-### Know where the money went
+### 📊 Know where the money went
 
 - Spending **by category, by member and by month**.
 - **Export to CSV**, and **import from Settle Up** with the balances intact.
 
-### Yours to run
+### 🏠 Yours to run
 
 - One Docker Compose file, a PostgreSQL database and a web page for
   administering the server.
@@ -109,7 +136,15 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - A Material 3 app with light and dark themes and, if you like, your
   wallpaper's colors.
 
-## Quick start
+## Get started
+
+### Use the official server
+
+Open **[app.balnana.com](https://app.balnana.com)** in your browser, create a
+group and share its link. That's it. The Android app can connect to the
+same server.
+
+### Run your own
 
 You need Docker with the Compose plugin.
 
@@ -121,7 +156,8 @@ docker compose up -d --build
 
 Open `http://localhost:8080`. On first setup, `/admin` asks for a password
 and a setup code. Get the code with `docker compose logs balnana`. Every
-setting is listed in [.env.example](.env.example).
+setting is listed in [.env.example](.env.example), and the
+[documentation](https://balnana.com/docs/) covers running a server.
 
 ## Built with
 
@@ -163,6 +199,9 @@ leaves the server address configurable, and disables external payment links.
 The [English store listing](fastlane/metadata/android/en-US/) includes the
 description, screenshots, and release notes.
 
+<details>
+<summary>Submitting a release to F-Droid</summary>
+
 For the first submission, tag the release commit for `1.1.1+3` as `v1.1.1`.
 Copy the recipe into an fdroiddata fork as `metadata/com.balnana.app.yml` and
 set `Builds[0].commit` to the full commit hash of that tag. Run the following
@@ -178,6 +217,8 @@ For later releases, increment the version code in `app/pubspec.yaml`, add a
 changelog named after that code in `fastlane/metadata/android/en-US/changelogs/`,
 and tag the release commit as `v<versionName>`.
 
+</details>
+
 ## License
 
 Balnana is free software, licensed under the
@@ -186,3 +227,12 @@ Balnana is free software, licensed under the
 You may run, study, change and share it. If you run a modified version as a
 service that others use over a network, you must offer those users the source
 code of your version under the same license.
+
+---
+
+<p align="center">
+  <a href="https://balnana.com">Website</a> ·
+  <a href="https://app.balnana.com">App</a> ·
+  <a href="https://balnana.com/docs/">Docs</a> ·
+  <a href="https://www.youtube.com/@balnana-com">YouTube</a>
+</p>
