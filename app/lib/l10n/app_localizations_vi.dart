@@ -3660,4 +3660,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who đã gỡ mật khẩu nhóm';
   }
+
+  @override
+  String get termsTitle => 'Điều khoản dịch vụ';
+
+  @override
+  String get termsAgreement =>
+      'Khi tạo tài khoản, bạn đồng ý với điều khoản dịch vụ và chính sách quyền riêng tư.';
+
+  @override
+  String get planTermsHelp =>
+      'Khi thanh toán, bạn đồng ý với điều khoản dịch vụ, bao gồm quy định về hủy và hoàn tiền.';
+
+  @override
+  String get adminTermsUrl => 'Liên kết điều khoản dịch vụ';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Điều khoản dịch vụ của bạn, được liên kết ở nơi mọi người đăng ký và mua gói. Nếu để trống, ứng dụng sẽ không hiển thị điều khoản.';
 }

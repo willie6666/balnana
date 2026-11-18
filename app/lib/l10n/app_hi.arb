@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "लिंक से शामिल होना बंद है",
   "errorNoPassword": "इस ग्रुप में अब पासवर्ड नहीं है।",
   "activityGroupPasswordSet": "{who} ने ग्रुप पासवर्ड सेट किया",
-  "activityGroupPasswordRemoved": "{who} ने ग्रुप पासवर्ड हटाया"
+  "activityGroupPasswordRemoved": "{who} ने ग्रुप पासवर्ड हटाया",
+  "termsTitle": "सेवा की शर्तें",
+  "termsAgreement": "खाता बनाकर, आप सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं।",
+  "planTermsHelp": "भुगतान करके, आप सेवा की शर्तों से सहमत होते हैं, जिनमें रद्द करने और रिफ़ंड के नियम शामिल हैं।",
+  "adminTermsUrl": "सेवा की शर्तों का लिंक",
+  "adminTermsUrlHelp": "आपकी सेवा की शर्तें, जिनका लिंक साइन अप करने और प्लान खरीदने की जगह दिखता है। खाली छोड़ने पर app कोई शर्तें नहीं दिखाता।"
 }

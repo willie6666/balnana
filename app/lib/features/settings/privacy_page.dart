@@ -12,6 +12,35 @@ import '../../ui/widgets/page.dart';
 import '../account/account_section.dart';
 import '../account/sign_in_page.dart';
 
+/// The official site, whose policies have a page per language: `/terms` in
+/// English, `/zh-Hant/terms` and `/zh/terms` in Chinese.
+const _officialSite = {'balnana.com', 'www.balnana.com'};
+const _siteLanguages = {'zh', 'zh-Hant'};
+
+/// [url] in [locale]'s language when it is one of the official site's
+/// policies, which other servers' operators would link from their own site.
+Uri localizedPolicyUrl(Uri url, Locale locale) {
+  if (!_officialSite.contains(url.host)) return url;
+  final path = url.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (path.isNotEmpty && _siteLanguages.contains(path.first)) path.removeAt(0);
+  final language = switch (locale) {
+    Locale(languageCode: 'zh', scriptCode: 'Hant') => 'zh-Hant',
+    Locale(languageCode: 'zh') => 'zh',
+    _ => null,
+  };
+  return url.replace(pathSegments: [?language, ...path]);
+}
+
+/// Opens [url], a policy, in a browser, or copies it when none opens.
+Future<void> _openPolicy(BuildContext context, Uri url) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final copied = context.l10n.aboutSourceCopied;
+  url = localizedPolicyUrl(url, Localizations.localeOf(context));
+  if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+  await Clipboard.setData(ClipboardData(text: url.toString()));
+  messenger.showSnackBar(SnackBar(content: Text(copied)));
+}
+
 /// Opens the operator's privacy policy when the server names one, else the
 /// app's own.
 Future<void> openPrivacyPolicy(BuildContext context, WidgetRef ref) async {
@@ -20,11 +49,14 @@ Future<void> openPrivacyPolicy(BuildContext context, WidgetRef ref) async {
     await context.push('/privacy');
     return;
   }
-  final messenger = ScaffoldMessenger.of(context);
-  final copied = context.l10n.aboutSourceCopied;
-  if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
-  await Clipboard.setData(ClipboardData(text: url.toString()));
-  messenger.showSnackBar(SnackBar(content: Text(copied)));
+  await _openPolicy(context, url);
+}
+
+/// Opens the operator's terms of service, [ServerInfo.termsUrl]. Only offer
+/// it when the server names one: the app has no terms of its own.
+Future<void> openTermsOfService(BuildContext context, WidgetRef ref) async {
+  final url = ref.read(serverInfoProvider).value?.termsUrl;
+  if (url != null) await _openPolicy(context, url);
 }
 
 /// /privacy: what Balnana stores and does with it. It speaks for the

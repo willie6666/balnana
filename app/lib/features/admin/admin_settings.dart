@@ -531,6 +531,8 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       _textField('BALNANA_SOURCE_URL', keyboard: TextInputType.url),
       gap,
       _textField('BALNANA_PRIVACY_URL', keyboard: TextInputType.url),
+      gap,
+      _textField('BALNANA_TERMS_URL', keyboard: TextInputType.url),
       FormSection(l10n.adminSectionMaps),
       _choice('BALNANA_MAP_SOURCE', titled: false, {
         'style': (l10n.adminMapSourceStyle, l10n.adminMapSourceStyleHelp),

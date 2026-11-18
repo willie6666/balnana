@@ -128,6 +128,9 @@ type Config struct {
 	// PrivacyURL is the server's own privacy policy; nil shows the app's
 	// built-in one.
 	PrivacyURL *url.URL
+	// TermsURL is the server's terms of service, which people agree to when
+	// they sign up or buy a plan; nil shows no terms.
+	TermsURL *url.URL
 	// MapStyle is the MapLibre style URL the app draws maps from, when the
 	// map source is a style.
 	MapStyle string
@@ -238,6 +241,7 @@ var Managed = []Setting{
 	{Key: "BALNANA_PUBLIC_URL", Default: "http://localhost:8080"},
 	{Key: "BALNANA_SOURCE_URL", Default: UpstreamSourceURL},
 	{Key: "BALNANA_PRIVACY_URL"},
+	{Key: "BALNANA_TERMS_URL"},
 	{Key: "BALNANA_MAP_SOURCE", Default: string(MapStyle)},
 	{Key: "BALNANA_MAP_STYLE", Default: DefaultMapStyle},
 	{Key: "BALNANA_MAP_TILES", Default: DefaultMapTiles},
@@ -486,6 +490,14 @@ func load(getenv func(string) string) (*Config, error) {
 			e.fail("BALNANA_PRIVACY_URL", "BALNANA_PRIVACY_URL must be an absolute http(s) URL, got %q", privacyURL)
 		} else {
 			c.PrivacyURL = u
+		}
+	}
+
+	if termsURL := e.managed("BALNANA_TERMS_URL"); termsURL != "" {
+		if u, err := url.Parse(termsURL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			e.fail("BALNANA_TERMS_URL", "BALNANA_TERMS_URL must be an absolute http(s) URL, got %q", termsURL)
+		} else {
+			c.TermsURL = u
 		}
 	}
 

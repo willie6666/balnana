@@ -3727,4 +3727,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who hat das Gruppenpasswort entfernt';
   }
+
+  @override
+  String get termsTitle => 'Nutzungsbedingungen';
+
+  @override
+  String get termsAgreement =>
+      'Mit dem Erstellen eines Kontos stimmst du den Nutzungsbedingungen und der Datenschutzerklärung zu.';
+
+  @override
+  String get planTermsHelp =>
+      'Mit der Zahlung stimmst du den Nutzungsbedingungen zu, auch den Regeln zu Kündigung und Erstattung.';
+
+  @override
+  String get adminTermsUrl => 'Link zu den Nutzungsbedingungen';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Deine Nutzungsbedingungen, verlinkt bei der Registrierung und beim Kauf eines Tarifs. Wenn leer, zeigt die App keine Nutzungsbedingungen.';
 }

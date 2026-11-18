@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Unirse por enlace está desactivado",
   "errorNoPassword": "Este grupo ya no tiene contraseña.",
   "activityGroupPasswordSet": "{who} puso la contraseña del grupo",
-  "activityGroupPasswordRemoved": "{who} quitó la contraseña del grupo"
+  "activityGroupPasswordRemoved": "{who} quitó la contraseña del grupo",
+  "termsTitle": "Términos del servicio",
+  "termsAgreement": "Al crear una cuenta, aceptas los términos del servicio y la política de privacidad.",
+  "planTermsHelp": "Al pagar, aceptas los términos del servicio, incluidas las condiciones de cancelación y reembolso.",
+  "adminTermsUrl": "Enlace a los términos del servicio",
+  "adminTermsUrlHelp": "Tus términos del servicio, enlazados donde la gente se registra y compra un plan. Si está vacío, la app no muestra términos."
 }

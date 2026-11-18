@@ -5405,5 +5405,25 @@
       }
     },
     "description": "Message for activity group password removed in the cross-group activity timeline. Placeholders are supplied by the app; amounts and dates are already formatted for the active locale."
+  },
+  "termsTitle": "Terms of service",
+  "@termsTitle": {
+    "description": "Title of the link to the server's terms of service, under the sign-in form, on the Plan page and in Settings > About."
+  },
+  "termsAgreement": "By creating an account, you agree to the terms of service and the privacy policy.",
+  "@termsAgreement": {
+    "description": "Under the sign-in and sign-up form, above links to the terms of service and the privacy policy. Signing in with Google or another provider also creates an account."
+  },
+  "planTermsHelp": "By paying, you agree to the terms of service, including how cancellations and refunds work.",
+  "@planTermsHelp": {
+    "description": "On the Plan page, under the ways to buy a plan, explaining the link to the terms of service."
+  },
+  "adminTermsUrl": "Terms of service link",
+  "@adminTermsUrl": {
+    "description": "Admin setting label: link to the server's own terms of service (BALNANA_TERMS_URL)."
+  },
+  "adminTermsUrlHelp": "Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.",
+  "@adminTermsUrlHelp": {
+    "description": "Admin setting help for the terms of service link."
   }
 }

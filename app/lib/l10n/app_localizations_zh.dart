@@ -3518,6 +3518,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who 移除了群组密码';
   }
+
+  @override
+  String get termsTitle => '服务条款';
+
+  @override
+  String get termsAgreement => '创建账号即表示你同意服务条款和隐私政策。';
+
+  @override
+  String get planTermsHelp => '付款即表示你同意服务条款，包括取消和退款的方式。';
+
+  @override
+  String get adminTermsUrl => '服务条款链接';
+
+  @override
+  String get adminTermsUrlHelp => '你的服务条款，会显示在注册和购买方案的地方。留空时，应用不会显示服务条款。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -7033,4 +7048,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String activityGroupPasswordRemoved(String who) {
     return '$who 移除了群組密碼';
   }
+
+  @override
+  String get termsTitle => '服務條款';
+
+  @override
+  String get termsAgreement => '建立帳戶即表示你同意服務條款和隱私權政策。';
+
+  @override
+  String get planTermsHelp => '付款即表示你同意服務條款，包括取消和退款的方式。';
+
+  @override
+  String get adminTermsUrl => '服務條款連結';
+
+  @override
+  String get adminTermsUrlHelp => '你的服務條款，會顯示在註冊和購買方案的地方。留空時，應用程式不會顯示服務條款。';
 }

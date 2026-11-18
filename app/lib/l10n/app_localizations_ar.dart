@@ -3772,4 +3772,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return 'أزال $who كلمة مرور المجموعة';
   }
+
+  @override
+  String get termsTitle => 'شروط الخدمة';
+
+  @override
+  String get termsAgreement => 'بإنشاء حساب، فإنك توافق على شروط الخدمة وسياسة الخصوصية.';
+
+  @override
+  String get planTermsHelp => 'بالدفع، فإنك توافق على شروط الخدمة، بما فيها قواعد الإلغاء واسترداد المبالغ.';
+
+  @override
+  String get adminTermsUrl => 'رابط شروط الخدمة';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'شروط الخدمة الخاصة بك، ويظهر رابطها عند التسجيل وشراء خطة. عند ترك الحقل فارغًا، لا يعرض التطبيق أي شروط.';
 }

@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "已停用連結加入",
   "errorNoPassword": "這個群組已經沒有密碼了。",
   "activityGroupPasswordSet": "{who} 設定了群組密碼",
-  "activityGroupPasswordRemoved": "{who} 移除了群組密碼"
+  "activityGroupPasswordRemoved": "{who} 移除了群組密碼",
+  "termsTitle": "服務條款",
+  "termsAgreement": "建立帳戶即表示你同意服務條款和隱私權政策。",
+  "planTermsHelp": "付款即表示你同意服務條款，包括取消和退款的方式。",
+  "adminTermsUrl": "服務條款連結",
+  "adminTermsUrlHelp": "你的服務條款，會顯示在註冊和購買方案的地方。留空時，應用程式不會顯示服務條款。"
 }

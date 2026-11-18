@@ -50,6 +50,32 @@ func TestSourceURL(t *testing.T) {
 	}
 }
 
+func TestTermsURL(t *testing.T) {
+	c, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.TermsURL != nil {
+		t.Fatalf("terms url = %s, want none by default", c.TermsURL)
+	}
+	c, err = load(envMap(map[string]string{
+		"BALNANA_DATABASE_URL": "postgres:///x",
+		"BALNANA_TERMS_URL":    "https://example.com/terms",
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.TermsURL.String() != "https://example.com/terms" {
+		t.Fatalf("terms url = %s", c.TermsURL)
+	}
+	for _, bad := range []string{"example.com/terms", "ftp://example.com/terms", "https://"} {
+		_, err := load(envMap(map[string]string{"BALNANA_DATABASE_URL": "postgres:///x", "BALNANA_TERMS_URL": bad}))
+		if err == nil || !strings.Contains(err.Error(), "BALNANA_TERMS_URL") {
+			t.Errorf("%q: want error, got %v", bad, err)
+		}
+	}
+}
+
 func TestMaps(t *testing.T) {
 	maps := func(env map[string]string) (*Config, error) {
 		env["BALNANA_DATABASE_URL"] = "postgres:///x"

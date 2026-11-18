@@ -122,6 +122,7 @@ class ServerInfo {
     required this.publicUrl,
     this.sourceUrl,
     this.privacyUrl,
+    this.termsUrl,
     this.billing = false,
     this.kofiUrl,
     this.mapStyle,
@@ -169,6 +170,7 @@ class ServerInfo {
       publicUrl: publicUrl,
       sourceUrl: _webUrl(json['sourceUrl']),
       privacyUrl: _webUrl(json['privacyUrl']),
+      termsUrl: _webUrl(json['termsUrl']),
       billing: json['billing'] is Map,
       kofiUrl: switch (json['billing']) {
         {'kofiUrl': final Object url} => _webUrl(url),
@@ -227,6 +229,10 @@ class ServerInfo {
 
   /// The operator's privacy policy, if they set one; else the app shows its own.
   final Uri? privacyUrl;
+
+  /// The operator's terms of service, if they set one: people agree to them
+  /// by signing up or buying a plan. Without it the app shows no terms.
+  final Uri? termsUrl;
 
   /// Whether the server has paid plans.
   final bool billing;

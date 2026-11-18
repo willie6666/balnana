@@ -6374,6 +6374,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{who} removed the group password'**
   String activityGroupPasswordRemoved(String who);
+
+  /// Title of the link to the server's terms of service, under the sign-in form, on the Plan page and in Settings > About.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get termsTitle;
+
+  /// Under the sign-in and sign-up form, above links to the terms of service and the privacy policy. Signing in with Google or another provider also creates an account.
+  ///
+  /// In en, this message translates to:
+  /// **'By creating an account, you agree to the terms of service and the privacy policy.'**
+  String get termsAgreement;
+
+  /// On the Plan page, under the ways to buy a plan, explaining the link to the terms of service.
+  ///
+  /// In en, this message translates to:
+  /// **'By paying, you agree to the terms of service, including how cancellations and refunds work.'**
+  String get planTermsHelp;
+
+  /// Admin setting label: link to the server's own terms of service (BALNANA_TERMS_URL).
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service link'**
+  String get adminTermsUrl;
+
+  /// Admin setting help for the terms of service link.
+  ///
+  /// In en, this message translates to:
+  /// **'Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.'**
+  String get adminTermsUrlHelp;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

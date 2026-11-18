@@ -3784,4 +3784,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who удаляет пароль группы';
   }
+
+  @override
+  String get termsTitle => 'Условия использования';
+
+  @override
+  String get termsAgreement =>
+      'Создавая аккаунт, вы принимаете условия использования и политику конфиденциальности.';
+
+  @override
+  String get planTermsHelp =>
+      'Оплачивая, вы принимаете условия использования, включая правила отмены и возврата средств.';
+
+  @override
+  String get adminTermsUrl => 'Ссылка на условия использования';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Ваши условия использования, ссылка на которые показывается при регистрации и покупке тарифа. Если поле пустое, приложение не показывает условия.';
 }

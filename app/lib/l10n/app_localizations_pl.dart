@@ -3825,4 +3825,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who usunął(-ęła) hasło grupy';
   }
+
+  @override
+  String get termsTitle => 'Warunki korzystania z usługi';
+
+  @override
+  String get termsAgreement =>
+      'Tworząc konto, akceptujesz warunki korzystania z usługi i politykę prywatności.';
+
+  @override
+  String get planTermsHelp =>
+      'Płacąc, akceptujesz warunki korzystania z usługi, w tym zasady anulowania i zwrotów.';
+
+  @override
+  String get adminTermsUrl => 'Link do warunków korzystania z usługi';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Twoje warunki korzystania z usługi, podlinkowane przy rejestracji i zakupie planu. Jeśli pole jest puste, aplikacja nie wyświetla warunków.';
 }

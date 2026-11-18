@@ -1342,6 +1342,9 @@ type ServerInfo struct {
 	// SourceUrl Where to get this server's source code (AGPL-3.0). Defaults to the upstream repository.
 	SourceUrl string `json:"sourceUrl"`
 
+	// TermsUrl The server's terms of service (BALNANA_TERMS_URL), which the app links where people sign up and buy a plan. Without it the app shows no terms.
+	TermsUrl *string `json:"termsUrl,omitempty"`
+
 	// VapidPublicKey The server's VAPID public key (RFC 8292), uncompressed and in unpadded base64url, for the app to subscribe with. Only when `push` is on.
 	VapidPublicKey *string `json:"vapidPublicKey,omitempty"`
 

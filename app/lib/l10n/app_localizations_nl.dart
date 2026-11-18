@@ -3706,4 +3706,22 @@ class AppLocalizationsNl extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who heeft het groepswachtwoord verwijderd';
   }
+
+  @override
+  String get termsTitle => 'Servicevoorwaarden';
+
+  @override
+  String get termsAgreement =>
+      'Door een account aan te maken, ga je akkoord met de servicevoorwaarden en het privacybeleid.';
+
+  @override
+  String get planTermsHelp =>
+      'Door te betalen ga je akkoord met de servicevoorwaarden, ook met de regels voor opzeggen en terugbetalen.';
+
+  @override
+  String get adminTermsUrl => 'Link naar servicevoorwaarden';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Je servicevoorwaarden, gelinkt waar mensen zich aanmelden en een abonnement nemen. Als je dit leeg laat, toont de app geen voorwaarden.';
 }

@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Unirsi tramite link è disattivato",
   "errorNoPassword": "Questo gruppo non ha più una password.",
   "activityGroupPasswordSet": "{who} ha impostato la password del gruppo",
-  "activityGroupPasswordRemoved": "{who} ha rimosso la password del gruppo"
+  "activityGroupPasswordRemoved": "{who} ha rimosso la password del gruppo",
+  "termsTitle": "Termini di servizio",
+  "termsAgreement": "Creando un account, accetti i termini di servizio e l'informativa sulla privacy.",
+  "planTermsHelp": "Pagando, accetti i termini di servizio, comprese le regole su disdetta e rimborsi.",
+  "adminTermsUrl": "Link ai termini di servizio",
+  "adminTermsUrlHelp": "I tuoi termini di servizio, collegati dove le persone si registrano e acquistano un piano. Se il campo è vuoto, l'app non mostra termini."
 }

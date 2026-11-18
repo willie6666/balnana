@@ -462,12 +462,35 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   ),
                 ),
               const SizedBox(height: BSpace.s24),
-              Center(
-                child: TextButton(
-                  onPressed: () => openPrivacyPolicy(context, ref),
-                  child: Text(l10n.privacyLink),
+              // Signing in with a provider can create an account too, so the
+              // terms show whenever one can be made.
+              if (canRegister && info?.termsUrl != null) ...[
+                Text(
+                  l10n.termsAgreement,
+                  textAlign: TextAlign.center,
+                  style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                 ),
-              ),
+                const SizedBox(height: BSpace.s4),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => openTermsOfService(context, ref),
+                      child: Text(l10n.termsTitle),
+                    ),
+                    TextButton(
+                      onPressed: () => openPrivacyPolicy(context, ref),
+                      child: Text(l10n.privacyTitle),
+                    ),
+                  ],
+                ),
+              ] else
+                Center(
+                  child: TextButton(
+                    onPressed: () => openPrivacyPolicy(context, ref),
+                    child: Text(l10n.privacyLink),
+                  ),
+                ),
             ],
           );
         },

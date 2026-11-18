@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Beitreten per Link ist aus",
   "errorNoPassword": "Diese Gruppe hat kein Passwort mehr.",
   "activityGroupPasswordSet": "{who} hat das Gruppenpasswort festgelegt",
-  "activityGroupPasswordRemoved": "{who} hat das Gruppenpasswort entfernt"
+  "activityGroupPasswordRemoved": "{who} hat das Gruppenpasswort entfernt",
+  "termsTitle": "Nutzungsbedingungen",
+  "termsAgreement": "Mit dem Erstellen eines Kontos stimmst du den Nutzungsbedingungen und der Datenschutzerklärung zu.",
+  "planTermsHelp": "Mit der Zahlung stimmst du den Nutzungsbedingungen zu, auch den Regeln zu Kündigung und Erstattung.",
+  "adminTermsUrl": "Link zu den Nutzungsbedingungen",
+  "adminTermsUrlHelp": "Deine Nutzungsbedingungen, verlinkt bei der Registrierung und beim Kauf eines Tarifs. Wenn leer, zeigt die App keine Nutzungsbedingungen."
 }

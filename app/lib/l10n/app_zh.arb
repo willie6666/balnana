@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "已停用链接加入",
   "errorNoPassword": "这个群组已没有密码。",
   "activityGroupPasswordSet": "{who} 设置了群组密码",
-  "activityGroupPasswordRemoved": "{who} 移除了群组密码"
+  "activityGroupPasswordRemoved": "{who} 移除了群组密码",
+  "termsTitle": "服务条款",
+  "termsAgreement": "创建账号即表示你同意服务条款和隐私政策。",
+  "planTermsHelp": "付款即表示你同意服务条款，包括取消和退款的方式。",
+  "adminTermsUrl": "服务条款链接",
+  "adminTermsUrlHelp": "你的服务条款，会显示在注册和购买方案的地方。留空时，应用不会显示服务条款。"
 }

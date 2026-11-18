@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Bağlantıyla katılma kapalı",
   "errorNoPassword": "Bu grubun artık şifresi yok.",
   "activityGroupPasswordSet": "{who} grup şifresini belirledi",
-  "activityGroupPasswordRemoved": "{who} grup şifresini kaldırdı"
+  "activityGroupPasswordRemoved": "{who} grup şifresini kaldırdı",
+  "termsTitle": "Hizmet şartları",
+  "termsAgreement": "Hesap oluşturarak hizmet şartlarını ve gizlilik politikasını kabul etmiş olursunuz.",
+  "planTermsHelp": "Ödeme yaparak, iptal ve iade kuralları dahil hizmet şartlarını kabul etmiş olursunuz.",
+  "adminTermsUrl": "Hizmet şartları bağlantısı",
+  "adminTermsUrlHelp": "Kaydolma ve plan satın alma ekranlarında bağlantısı gösterilen hizmet şartlarınız. Boş bırakılırsa uygulama şart göstermez."
 }

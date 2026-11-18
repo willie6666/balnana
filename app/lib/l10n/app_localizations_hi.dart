@@ -3717,4 +3717,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who ने ग्रुप पासवर्ड हटाया';
   }
+
+  @override
+  String get termsTitle => 'सेवा की शर्तें';
+
+  @override
+  String get termsAgreement => 'खाता बनाकर, आप सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं।';
+
+  @override
+  String get planTermsHelp =>
+      'भुगतान करके, आप सेवा की शर्तों से सहमत होते हैं, जिनमें रद्द करने और रिफ़ंड के नियम शामिल हैं।';
+
+  @override
+  String get adminTermsUrl => 'सेवा की शर्तों का लिंक';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'आपकी सेवा की शर्तें, जिनका लिंक साइन अप करने और प्लान खरीदने की जगह दिखता है। खाली छोड़ने पर app कोई शर्तें नहीं दिखाता।';
 }

@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Dołączanie przez link jest wyłączone",
   "errorNoPassword": "Ta grupa nie ma już hasła.",
   "activityGroupPasswordSet": "{who} ustawił(a) hasło grupy",
-  "activityGroupPasswordRemoved": "{who} usunął(-ęła) hasło grupy"
+  "activityGroupPasswordRemoved": "{who} usunął(-ęła) hasło grupy",
+  "termsTitle": "Warunki korzystania z usługi",
+  "termsAgreement": "Tworząc konto, akceptujesz warunki korzystania z usługi i politykę prywatności.",
+  "planTermsHelp": "Płacąc, akceptujesz warunki korzystania z usługi, w tym zasady anulowania i zwrotów.",
+  "adminTermsUrl": "Link do warunków korzystania z usługi",
+  "adminTermsUrlHelp": "Twoje warunki korzystania z usługi, podlinkowane przy rejestracji i zakupie planu. Jeśli pole jest puste, aplikacja nie wyświetla warunków."
 }

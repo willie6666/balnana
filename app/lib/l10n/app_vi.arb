@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Đã tắt tham gia bằng liên kết",
   "errorNoPassword": "Nhóm này không còn mật khẩu.",
   "activityGroupPasswordSet": "{who} đã đặt mật khẩu nhóm",
-  "activityGroupPasswordRemoved": "{who} đã gỡ mật khẩu nhóm"
+  "activityGroupPasswordRemoved": "{who} đã gỡ mật khẩu nhóm",
+  "termsTitle": "Điều khoản dịch vụ",
+  "termsAgreement": "Khi tạo tài khoản, bạn đồng ý với điều khoản dịch vụ và chính sách quyền riêng tư.",
+  "planTermsHelp": "Khi thanh toán, bạn đồng ý với điều khoản dịch vụ, bao gồm quy định về hủy và hoàn tiền.",
+  "adminTermsUrl": "Liên kết điều khoản dịch vụ",
+  "adminTermsUrlHelp": "Điều khoản dịch vụ của bạn, được liên kết ở nơi mọi người đăng ký và mua gói. Nếu để trống, ứng dụng sẽ không hiển thị điều khoản."
 }

@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "الانضمام عبر الرابط متوقف",
   "errorNoPassword": "لم تعد لهذه المجموعة كلمة مرور.",
   "activityGroupPasswordSet": "عيّن {who} كلمة مرور المجموعة",
-  "activityGroupPasswordRemoved": "أزال {who} كلمة مرور المجموعة"
+  "activityGroupPasswordRemoved": "أزال {who} كلمة مرور المجموعة",
+  "termsTitle": "شروط الخدمة",
+  "termsAgreement": "بإنشاء حساب، فإنك توافق على شروط الخدمة وسياسة الخصوصية.",
+  "planTermsHelp": "بالدفع، فإنك توافق على شروط الخدمة، بما فيها قواعد الإلغاء واسترداد المبالغ.",
+  "adminTermsUrl": "رابط شروط الخدمة",
+  "adminTermsUrlHelp": "شروط الخدمة الخاصة بك، ويظهر رابطها عند التسجيل وشراء خطة. عند ترك الحقل فارغًا، لا يعرض التطبيق أي شروط."
 }

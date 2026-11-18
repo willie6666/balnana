@@ -3815,4 +3815,22 @@ class AppLocalizationsUk extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who видаляє пароль групи';
   }
+
+  @override
+  String get termsTitle => 'Умови користування';
+
+  @override
+  String get termsAgreement =>
+      'Створюючи обліковий запис, ви приймаєте умови користування та політику конфіденційності.';
+
+  @override
+  String get planTermsHelp =>
+      'Оплачуючи, ви приймаєте умови користування, зокрема правила скасування та повернення коштів.';
+
+  @override
+  String get adminTermsUrl => 'Посилання на умови користування';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Ваші умови користування, посилання на які показується під час реєстрації та купівлі тарифу. Якщо поле порожнє, застосунок не показує умови.';
 }

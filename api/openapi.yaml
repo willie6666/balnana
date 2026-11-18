@@ -3465,6 +3465,12 @@ components:
           description: >-
             The server's own privacy policy (BALNANA_PRIVACY_URL). Without it
             the app shows its built-in one.
+        termsUrl:
+          type: string
+          description: >-
+            The server's terms of service (BALNANA_TERMS_URL), which the app
+            links where people sign up and buy a plan. Without it the app
+            shows no terms.
         mapStyle:
           type: string
           description: >-

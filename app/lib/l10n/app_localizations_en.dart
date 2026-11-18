@@ -3665,4 +3665,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who removed the group password';
   }
+
+  @override
+  String get termsTitle => 'Terms of service';
+
+  @override
+  String get termsAgreement =>
+      'By creating an account, you agree to the terms of service and the privacy policy.';
+
+  @override
+  String get planTermsHelp =>
+      'By paying, you agree to the terms of service, including how cancellations and refunds work.';
+
+  @override
+  String get adminTermsUrl => 'Terms of service link';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.';
 }

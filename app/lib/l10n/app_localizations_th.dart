@@ -3632,4 +3632,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who ลบรหัสผ่านกลุ่ม';
   }
+
+  @override
+  String get termsTitle => 'ข้อกำหนดการให้บริการ';
+
+  @override
+  String get termsAgreement => 'การสร้างบัญชีถือว่าคุณยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว';
+
+  @override
+  String get planTermsHelp => 'การชำระเงินถือว่าคุณยอมรับข้อกำหนดการให้บริการ รวมถึงกฎการยกเลิกและการคืนเงิน';
+
+  @override
+  String get adminTermsUrl => 'ลิงก์ข้อกำหนดการให้บริการ';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'ข้อกำหนดการให้บริการของคุณ ซึ่งจะลิงก์ไว้ในหน้าที่ผู้ใช้สมัครและซื้อแพ็กเกจ หากเว้นว่าง แอปจะไม่แสดงข้อกำหนด';
 }

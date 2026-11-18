@@ -3767,4 +3767,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who a retiré le mot de passe du groupe';
   }
+
+  @override
+  String get termsTitle => 'Conditions d’utilisation';
+
+  @override
+  String get termsAgreement =>
+      'En créant un compte, vous acceptez les conditions d’utilisation et la politique de confidentialité.';
+
+  @override
+  String get planTermsHelp =>
+      'En payant, vous acceptez les conditions d’utilisation, y compris les règles d’annulation et de remboursement.';
+
+  @override
+  String get adminTermsUrl => 'Lien vers les conditions d’utilisation';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Vos conditions d’utilisation, affichées à l’inscription et à l’achat d’une formule. Si ce champ est vide, l’application n’affiche aucune condition.';
 }

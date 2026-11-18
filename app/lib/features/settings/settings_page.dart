@@ -38,6 +38,7 @@ class SettingsPage extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     final server = ref.watch(serverUrlProvider);
     final sourceUrl = ref.watch(serverInfoProvider).value?.sourceUrl;
+    final hasTerms = ref.watch(serverInfoProvider).value?.termsUrl != null;
 
     final themeLabel = switch (settings.themeMode) {
       ThemeMode.system => l10n.themeSystem,
@@ -195,6 +196,13 @@ class SettingsPage extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => openPrivacyPolicy(context, ref),
             ),
+            if (hasTerms)
+              GroupedTile(
+                icon: Icons.description_outlined,
+                title: l10n.termsTitle,
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => openTermsOfService(context, ref),
+              ),
             if (sourceUrl != null)
               GroupedTile(
                 icon: Icons.code,

@@ -148,6 +148,10 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 		privacy := cfg.PrivacyURL.String()
 		info.PrivacyUrl = &privacy
 	}
+	if cfg.TermsURL != nil {
+		terms := cfg.TermsURL.String()
+		info.TermsUrl = &terms
+	}
 	if cfg.MapStyle != "" {
 		info.MapStyle = &cfg.MapStyle
 	}

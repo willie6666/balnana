@@ -3538,4 +3538,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who 님이 그룹 비밀번호를 삭제했습니다';
   }
+
+  @override
+  String get termsTitle => '서비스 약관';
+
+  @override
+  String get termsAgreement => '계정을 만들면 서비스 약관과 개인정보 처리방침에 동의하게 돼요.';
+
+  @override
+  String get planTermsHelp => '결제하면 취소와 환불 방법을 포함한 서비스 약관에 동의하게 돼요.';
+
+  @override
+  String get adminTermsUrl => '서비스 약관 링크';
+
+  @override
+  String get adminTermsUrlHelp => '가입하고 요금제를 구매하는 곳에 연결되는 서비스 약관이에요. 비워 두면 앱에 약관이 표시되지 않아요.';
 }

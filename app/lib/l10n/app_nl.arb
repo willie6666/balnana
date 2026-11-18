@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Lid worden via de link staat uit",
   "errorNoPassword": "Deze groep heeft geen wachtwoord meer.",
   "activityGroupPasswordSet": "{who} heeft het groepswachtwoord ingesteld",
-  "activityGroupPasswordRemoved": "{who} heeft het groepswachtwoord verwijderd"
+  "activityGroupPasswordRemoved": "{who} heeft het groepswachtwoord verwijderd",
+  "termsTitle": "Servicevoorwaarden",
+  "termsAgreement": "Door een account aan te maken, ga je akkoord met de servicevoorwaarden en het privacybeleid.",
+  "planTermsHelp": "Door te betalen ga je akkoord met de servicevoorwaarden, ook met de regels voor opzeggen en terugbetalen.",
+  "adminTermsUrl": "Link naar servicevoorwaarden",
+  "adminTermsUrlHelp": "Je servicevoorwaarden, gelinkt waar mensen zich aanmelden en een abonnement nemen. Als je dit leeg laat, toont de app geen voorwaarden."
 }

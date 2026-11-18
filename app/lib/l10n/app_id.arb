@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Bergabung lewat tautan dinonaktifkan",
   "errorNoPassword": "Grup ini tidak lagi punya kata sandi.",
   "activityGroupPasswordSet": "{who} memasang kata sandi grup",
-  "activityGroupPasswordRemoved": "{who} menghapus kata sandi grup"
+  "activityGroupPasswordRemoved": "{who} menghapus kata sandi grup",
+  "termsTitle": "Ketentuan layanan",
+  "termsAgreement": "Dengan membuat akun, Anda menyetujui ketentuan layanan dan kebijakan privasi.",
+  "planTermsHelp": "Dengan membayar, Anda menyetujui ketentuan layanan, termasuk aturan pembatalan dan pengembalian dana.",
+  "adminTermsUrl": "Tautan ketentuan layanan",
+  "adminTermsUrlHelp": "Ketentuan layanan Anda, ditautkan di tempat orang mendaftar dan membeli paket. Jika dikosongkan, aplikasi tidak menampilkan ketentuan."
 }

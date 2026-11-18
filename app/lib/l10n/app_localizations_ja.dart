@@ -3536,4 +3536,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$whoさんがグループのパスワードを削除しました';
   }
+
+  @override
+  String get termsTitle => '利用規約';
+
+  @override
+  String get termsAgreement => 'アカウントを作成すると、利用規約とプライバシーポリシーに同意したことになります。';
+
+  @override
+  String get planTermsHelp => '支払うと、キャンセルと返金についての定めを含む利用規約に同意したことになります。';
+
+  @override
+  String get adminTermsUrl => '利用規約のリンク';
+
+  @override
+  String get adminTermsUrlHelp => '登録やプランの購入をする画面にリンクされる利用規約を設定します。空欄の場合、利用規約は表示されません。';
 }

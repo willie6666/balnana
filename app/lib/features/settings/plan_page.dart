@@ -18,6 +18,7 @@ import '../../ui/widgets/page.dart';
 import '../../ui/widgets/play_purchases.dart';
 import '../../ui/widgets/usage_tile.dart';
 import 'plan_comparison.dart';
+import 'privacy_page.dart';
 
 /// "3 of 20", or just what is used when there is no limit.
 String planUsage(AppLocalizations l10n, PlanUsage usage) {
@@ -373,6 +374,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                   onTap: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
                 ),
               ],
+              if (info?.termsUrl != null)
+                GroupedTile(
+                  icon: Icons.gavel_outlined,
+                  title: l10n.termsTitle,
+                  subtitle: l10n.planTermsHelp,
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => openTermsOfService(context, ref),
+                ),
             ],
           ),
       ],

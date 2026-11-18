@@ -112,6 +112,7 @@ Future<void> _pump(
   BalnanaApi? api,
   String? paypal,
   bool externalLinks = false,
+  Uri? termsUrl,
 }) async {
   // Tall enough for the whole page: its lists only build what is on screen.
   tester.view.physicalSize = const Size(1200, 3600);
@@ -130,6 +131,7 @@ Future<void> _pump(
               publicUrl: _server,
               billing: true,
               kofiUrl: externalLinks ? Uri.parse('https://ko-fi.com/example') : null,
+              termsUrl: termsUrl,
             ),
           ),
         ),
@@ -516,6 +518,20 @@ void main() {
       expect(find.text(l10n.planGet), findsOneWidget);
       expect(find.text(l10n.planPlayPrice(3, r'$3')), findsOneWidget);
       expect(find.text(l10n.planPlayManage), findsNothing);
+      // Without terms from the server there is nothing to agree to.
+      expect(find.text(l10n.planTermsHelp), findsNothing);
+    });
+
+    testWidgets('the terms of service show beside the ways to buy', (tester) async {
+      await _pump(
+        tester,
+        withPlay(_play),
+        store: _FakePlay(),
+        termsUrl: Uri.parse('https://balnana.com/terms'),
+      );
+
+      expect(find.text(l10n.termsTitle), findsOneWidget);
+      expect(find.text(l10n.planTermsHelp), findsOneWidget);
     });
 
     testWidgets('buying reports the purchase under the account it was made for', (tester) async {

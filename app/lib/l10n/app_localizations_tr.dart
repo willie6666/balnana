@@ -3677,4 +3677,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who grup şifresini kaldırdı';
   }
+
+  @override
+  String get termsTitle => 'Hizmet şartları';
+
+  @override
+  String get termsAgreement =>
+      'Hesap oluşturarak hizmet şartlarını ve gizlilik politikasını kabul etmiş olursunuz.';
+
+  @override
+  String get planTermsHelp =>
+      'Ödeme yaparak, iptal ve iade kuralları dahil hizmet şartlarını kabul etmiş olursunuz.';
+
+  @override
+  String get adminTermsUrl => 'Hizmet şartları bağlantısı';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Kaydolma ve plan satın alma ekranlarında bağlantısı gösterilen hizmet şartlarınız. Boş bırakılırsa uygulama şart göstermez.';
 }

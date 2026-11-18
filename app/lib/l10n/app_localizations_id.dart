@@ -3673,4 +3673,22 @@ class AppLocalizationsId extends AppLocalizations {
   String activityGroupPasswordRemoved(String who) {
     return '$who menghapus kata sandi grup';
   }
+
+  @override
+  String get termsTitle => 'Ketentuan layanan';
+
+  @override
+  String get termsAgreement =>
+      'Dengan membuat akun, Anda menyetujui ketentuan layanan dan kebijakan privasi.';
+
+  @override
+  String get planTermsHelp =>
+      'Dengan membayar, Anda menyetujui ketentuan layanan, termasuk aturan pembatalan dan pengembalian dana.';
+
+  @override
+  String get adminTermsUrl => 'Tautan ketentuan layanan';
+
+  @override
+  String get adminTermsUrlHelp =>
+      'Ketentuan layanan Anda, ditautkan di tempat orang mendaftar dan membeli paket. Jika dikosongkan, aplikasi tidak menampilkan ketentuan.';
 }

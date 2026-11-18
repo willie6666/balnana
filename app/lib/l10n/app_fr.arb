@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "Rejoindre par lien est désactivé",
   "errorNoPassword": "Ce groupe n'a plus de mot de passe.",
   "activityGroupPasswordSet": "{who} a défini le mot de passe du groupe",
-  "activityGroupPasswordRemoved": "{who} a retiré le mot de passe du groupe"
+  "activityGroupPasswordRemoved": "{who} a retiré le mot de passe du groupe",
+  "termsTitle": "Conditions d’utilisation",
+  "termsAgreement": "En créant un compte, vous acceptez les conditions d’utilisation et la politique de confidentialité.",
+  "planTermsHelp": "En payant, vous acceptez les conditions d’utilisation, y compris les règles d’annulation et de remboursement.",
+  "adminTermsUrl": "Lien vers les conditions d’utilisation",
+  "adminTermsUrlHelp": "Vos conditions d’utilisation, affichées à l’inscription et à l’achat d’une formule. Si ce champ est vide, l’application n’affiche aucune condition."
 }

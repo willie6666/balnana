@@ -1040,5 +1040,10 @@
   "joinLinkClosedTitle": "リンクでの参加はオフです",
   "errorNoPassword": "このグループにはもうパスワードがありません。",
   "activityGroupPasswordSet": "{who}さんがグループのパスワードを設定しました",
-  "activityGroupPasswordRemoved": "{who}さんがグループのパスワードを削除しました"
+  "activityGroupPasswordRemoved": "{who}さんがグループのパスワードを削除しました",
+  "termsTitle": "利用規約",
+  "termsAgreement": "アカウントを作成すると、利用規約とプライバシーポリシーに同意したことになります。",
+  "planTermsHelp": "支払うと、キャンセルと返金についての定めを含む利用規約に同意したことになります。",
+  "adminTermsUrl": "利用規約のリンク",
+  "adminTermsUrlHelp": "登録やプランの購入をする画面にリンクされる利用規約を設定します。空欄の場合、利用規約は表示されません。"
 }

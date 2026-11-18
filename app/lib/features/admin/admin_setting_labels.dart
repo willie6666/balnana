@@ -4,6 +4,7 @@ String settingLabel(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrl,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrl,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrl,
+  'BALNANA_TERMS_URL' => l10n.adminTermsUrl,
   'BALNANA_MAP_SOURCE' => l10n.adminMapSource,
   'BALNANA_MAP_STYLE' => l10n.adminMapStyle,
   'BALNANA_MAP_TILES' => l10n.adminMapTiles,
@@ -44,6 +45,7 @@ String? settingHelp(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' => l10n.adminPublicUrlHelp,
   'BALNANA_SOURCE_URL' => l10n.adminSourceUrlHelp,
   'BALNANA_PRIVACY_URL' => l10n.adminPrivacyUrlHelp,
+  'BALNANA_TERMS_URL' => l10n.adminTermsUrlHelp,
   'BALNANA_MAP_STYLE' => l10n.adminMapStyleHelp,
   'BALNANA_MAP_TILES' => l10n.adminMapTilesHelp,
   'BALNANA_MAP_ATTRIBUTION' => l10n.adminMapAttributionHelp,
@@ -72,6 +74,7 @@ String settingProblem(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PUBLIC_URL' ||
   'BALNANA_SOURCE_URL' ||
   'BALNANA_PRIVACY_URL' ||
+  'BALNANA_TERMS_URL' ||
   'BALNANA_KOFI_URL' ||
   'BALNANA_MAP_STYLE' ||
   'BALNANA_OAUTH_OIDC_ISSUER' => l10n.adminInvalidUrl,
