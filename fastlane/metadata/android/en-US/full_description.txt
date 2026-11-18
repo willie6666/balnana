@@ -1,32 +1,26 @@
-Trips, flatmates, nights out: someone always pays, and someone has to work out who owes what. Balnana does the maths.
+Balnana is a simple and easy-to-use shared expense tracker that helps you manage expenses with friends, family, and travel companions.
 
-Share a link with your group and add expenses as they happen. Balnana shows everyone where they stand, and the few payments that settle it all.
+Whether you're traveling together, sharing meals, living with roommates, or organizing group activities, Balnana makes it easier to keep track of shared expenses without the hassle of managing spreadsheets or scattered notes.
 
-SPLIT IT YOUR WAY
-• Equally, by exact amounts or by shares
-• Several payers on one expense
-• Refunds and income, not just spending
-• Recurring expenses such as rent or subscriptions
-• Pin where it happened on a map and attach a photo of the receipt
+✨ Features
 
-SETTLE UP IN A FEW PAYMENTS
-• Balnana works out a short list of payments that squares everyone up
-• Record a payment once the money has changed hands, and balances update for everyone
+📒 Group Expense Tracking
+Create separate groups for trips, everyday life, or special activities. Keep all your shared expenses organized in one place.
 
-BUILT FOR TRAVEL
-• Enter an expense in the currency you paid in, and balances stay in the group's currency
-• Type the exchange rate, or what it came to on your card statement
-• Saved groups still open when you're offline
+💰 Easy Expense Splitting
+Record shared expenses and splitting details. Keep track of everyone's expenses and shares without complicated manual calculations.
 
-EASY TO SHARE
-• Invite friends with a private link or a QR code
-• See expenses appear as others add them, with push notifications
+🧾 Receipt & Image Attachments
+Attach receipts and images to expenses for easy reference. No more searching through chat histories for missing receipts.
 
-KNOW WHERE THE MONEY WENT
-• Spending by category, by member and by month
-• Export to CSV, or bring your groups over from Settle Up
+👥 Collaborative Groups
+Invite other members to your groups and work together to record and view shared expenses, keeping everyone up to date.
 
-OPEN SOURCE, NO ADS
-Balnana has no ads and no tracking. Use the official server at app.balnana.com, or connect to any other Balnana server. The app and the server are open source under the AGPL-3.0: https://github.com/willie6666/balnana
+🌱 Open Source & Freedom
 
-Push notifications use UnifiedPush. If you don't get them, install a distributor such as ntfy.
+Balnana is an open-source project that values transparency and user freedom. You can explore how it works and access its source code on GitHub.
+
+GitHub:
+https://github.com/willie6666/balnana
+
+Make shared expenses easier with Balnana!
