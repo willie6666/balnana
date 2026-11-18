@@ -126,6 +126,122 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('after signing out, another account does not reopen a remembered group it has not joined', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'settings.server': _a,
+      'session.tokens': jsonEncode({_a: 'ana'}),
+      // Ben previously opened Ana's group via a share link without joining it.
+      'groups.current': jsonEncode({'$_a ana': _token, '$_a ben': _token}),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final benGroups = Completer<void>();
+    final container = ProviderContainer.test(
+      retry: (count, error) => null,
+      overrides: [
+        prefsProvider.overrideWithValue(prefs),
+        cacheDbProvider.overrideWithValue(null),
+        pushServiceProvider.overrideWithValue(null),
+        serverInfoProvider.overrideWithValue(
+          const AsyncData(
+            ServerInfo(version: 'test', authMode: AuthMode.accounts, password: true, publicUrl: _a),
+          ),
+        ),
+        groupEventsProvider.overrideWithValue((dio, token) => const Stream.empty()),
+        groupProvider.overrideWith(
+          (ref, token) async => Group(
+            token: token,
+            name: 'Ana’s trip',
+            currency: 'USD',
+            minorDigits: 2,
+            createdAt: DateTime.utc(2026),
+            members: const [],
+          ),
+        ),
+        balancesProvider.overrideWith((ref, token) async => const Balances(nets: {}, transfers: [])),
+        expensesProvider.overrideWith2(_NoExpenses.new),
+        apiProvider.overrideWith((ref) {
+          final token = ref.watch(identityProvider).token;
+          final dio = Dio(BaseOptions(baseUrl: '$_a/api/v1'));
+          dio.interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (request, handler) async {
+                Map<String, Object?> user(String id) => {'id': id, 'name': id, 'hasPassword': true};
+                if (request.path == '/me/groups' && token == 'ben') await benGroups.future;
+                final (int status, Object? data) = switch ((request.path, token)) {
+                  ('/auth/logout', 'ana') => (204, null),
+                  ('/auth/login', null) => (200, {'token': 'ben', 'user': user('ben')}),
+                  ('/me', final id?) => (200, user(id)),
+                  ('/me', null) => (401, {'code': 'sign_in_required'}),
+                  ('/me/groups', 'ana') => (
+                    200,
+                    {
+                      'groups': [
+                        {
+                          'token': _token,
+                          'name': 'Ana’s trip',
+                          'currency': 'USD',
+                          'minorDigits': 2,
+                          'memberCount': 1,
+                          'updatedAt': '2026-01-01T00:00:00Z',
+                        },
+                      ],
+                    },
+                  ),
+                  ('/me/groups', 'ben') => (200, {'groups': <Object>[]}),
+                  _ => (404, {'code': 'not_found'}),
+                };
+                final response = Response(requestOptions: request, statusCode: status, data: data);
+                if (status < 400) {
+                  handler.resolve(response);
+                } else {
+                  handler.reject(
+                    DioException.badResponse(statusCode: status, requestOptions: request, response: response),
+                  );
+                }
+              },
+            ),
+          );
+          ref.onDispose(dio.close);
+          return dio;
+        }),
+      ],
+    );
+    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const BalnanaApp()));
+    await tester.pumpAndSettle();
+    expect(find.text('Ana’s trip'), findsWidgets);
+
+    final router = container.read(routerProvider);
+    router.go('/settings/account');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Sign out'));
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, '/sign-in');
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'ben@example.com');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'correct horse');
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Ana’s trip'), findsNothing);
+    expect(container.read(visibleSummariesProvider).value, isNull);
+
+    benGroups.complete();
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, '/groups');
+    expect(find.text('No groups yet'), findsOneWidget);
+
+    router.go('/settings');
+    await tester.pumpAndSettle();
+    router.go('/groups');
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, '/groups');
+    expect(find.text('Ana’s trip'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   // A session is for the server that gave it, however late it comes back.
   for (final (register, returnToA) in [(false, false), (true, false), (false, true), (true, true)]) {
     final action = register ? 'sign-up' : 'sign-in';

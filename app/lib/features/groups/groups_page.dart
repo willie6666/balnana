@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../core/session.dart';
+import '../../data/home_group.dart';
 import '../../data/known_groups.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
@@ -99,12 +100,18 @@ class GroupsPage extends ConsumerWidget {
       );
     }
 
-    // Home shows a group itself. The router opens one directly when it can
-    // tell which without the server; otherwise the first group, once known.
-    final first = data == null || data.groups.isEmpty ? null : data.groups.first.token;
-    if (first != null) {
+    // Only open a remembered group if it is in the current list.
+    final current = ref.watch(currentGroupProvider);
+    final groups = data?.groups;
+    final token = groups?.any((group) => group.token == current) == true
+        ? current
+        : groups?.firstOrNull?.token;
+    if (token != null) {
+      final who = ref.watch(identityProvider);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.go('/g/$first');
+        if (!context.mounted || ref.read(identityProvider) != who) return;
+        final router = GoRouter.of(context);
+        if (router.routeInformationProvider.value.uri.path == '/groups') router.go('/g/$token');
       });
     }
     // Waiting to know which group to open, as while the app starts. The

@@ -77,8 +77,11 @@ String? _redirect(Ref ref, GoRouterState state) {
     }
   }
   if (path == '/groups') {
-    final home = homeGroup(ref);
-    if (home != null) return '/g/$home';
+    final info = ref.read(serverInfoProvider);
+    if (!info.isLoading && info.value?.authMode == AuthMode.link) {
+      final home = homeGroup(ref);
+      if (home != null) return '/g/$home';
+    }
   }
   return null;
 }

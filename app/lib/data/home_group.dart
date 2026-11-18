@@ -128,11 +128,9 @@ void reorderGroups(WidgetRef ref, List<GroupSummary> groups, int from, int to) {
   }
 }
 
-/// Where home opens without asking the server, if it can tell: the group
-/// opened last, or else the first group on this device.
+/// Where home opens in link mode: the last group opened, or the first saved link.
 String? homeGroup(Ref ref) {
   final current = ref.read(currentGroupProvider);
-  if (ref.read(signedInProvider)) return current;
   final known = ref.read(knownGroupsProvider);
   if (current != null && known.any((g) => g.token == current)) return current;
   return known.isEmpty ? null : known.first.token;

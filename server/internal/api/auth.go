@@ -95,6 +95,8 @@ func (s *Server) sessions(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		// A URL can return different data after a cookie or bearer session changes.
+		w.Header().Set("Cache-Control", "private, no-store")
 		st := &authState{w: w, crossSite: !safeMethod(r.Method) && !s.sameOrigin(r)}
 		if bearer, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
 			st.token = strings.TrimSpace(bearer)

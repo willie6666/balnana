@@ -448,3 +448,36 @@ func TestMyGroupsEmptyLists(t *testing.T) {
 		t.Fatal(rec.Body)
 	}
 }
+
+func TestCookieAccountSwitchDoesNotShareGroupList(t *testing.T) {
+	ana := accountsClient(t, map[string]string{})
+	register(ana, "ana@example.com", "Ana")
+	var group Group
+	ana.must(201, "POST", "/groups", GroupCreate{Name: "Ana's trip", Currency: "USD", Members: []string{"Ana"}}, &group)
+	register(ana.another(), "ben@example.com", "Ben")
+
+	web := ana.another()
+	login := func(email string) {
+		web.must(200, "POST", "/auth/login", LoginInput{Login: email, Password: "correct horse", Cookie: ptr(true)}, nil)
+	}
+	login("ana@example.com")
+	var mine GroupSummaryList
+	web.must(200, "GET", "/me/groups", nil, &mine)
+	if len(mine.Groups) != 1 || mine.Groups[0].Token != group.Token {
+		t.Fatalf("Ana's groups = %+v", mine.Groups)
+	}
+	for _, path := range []string{"/me", "/me/groups", "/g/" + group.Token} {
+		rec := web.do("GET", path, nil)
+		if got := rec.Header().Get("Cache-Control"); rec.Code != 200 || !strings.Contains(got, "no-store") {
+			t.Errorf("GET %s: status %d, Cache-Control %q", path, rec.Code, got)
+		}
+	}
+
+	web.must(204, "POST", "/auth/logout", nil, nil)
+	web.must(401, "GET", "/me/groups", nil, nil)
+	login("ben@example.com")
+	web.must(200, "GET", "/me/groups", nil, &mine)
+	if len(mine.Groups) != 0 {
+		t.Fatalf("Ben's groups = %+v", mine.Groups)
+	}
+}

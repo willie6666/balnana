@@ -306,6 +306,8 @@ final apiProvider = Provider<Dio?>((ref) {
   final (token, _) = ref.watch(sessionProvider.select((s) => (s.token, s.generation)));
   final dio = _cachedDio(ref, url, cacheAccount(token));
   if (token != null) dio.options.headers['Authorization'] = 'Bearer $token';
+  // Revalidate any responses the browser cached before the server sent no-store.
+  if (cookieSession(url)) dio.options.headers['Cache-Control'] = 'no-cache';
   // Read at each request, so a key just given is sent without a new client.
   dio.interceptors.insert(
     0,
