@@ -1,0 +1,36 @@
+Categories:
+  - Finance Manager
+License: AGPL-3.0-only
+SourceCode: https://github.com/willie6666/balnana
+IssueTracker: https://github.com/willie6666/balnana/issues
+
+AutoName: Balnana
+
+RepoType: git
+Repo: https://github.com/willie6666/balnana.git
+
+Builds:
+  - versionName: 1.1.1
+    versionCode: 3
+    commit: v1.1.1
+    subdir: app
+    output: build/app/outputs/flutter-apk/app-foss-release.apk
+    srclibs:
+      - flutter@737ba8f885dc774b53b442759999a312c9461e4e
+    prebuild:
+      - sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'cmake;3.22.1'
+      - $$flutter$$/bin/flutter config --no-analytics
+      - export PUB_CACHE="$PWD/.pub-cache"
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+      - python3 -B ../.github/scripts/prepare_fdroid.py
+    build:
+      - export PUB_CACHE="$PWD/.pub-cache"
+      - $$flutter$$/bin/flutter build apk --release --flavor foss --no-pub --android-project-arg=allowUnsignedFoss=true
+        --dart-define=BALNANA_EXTERNAL_PAYMENTS=false
+    ndk: 28.2.13676358
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+UpdateCheckData: app/pubspec.yaml|(?m)^version:\s.+\+(\d+)$|.|(?m)^version:\s(.+)\+
+CurrentVersion: 1.1.1
+CurrentVersionCode: 3

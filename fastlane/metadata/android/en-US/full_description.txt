@@ -1,0 +1,7 @@
+Balnana helps friends, households and travel groups split expenses and keep track of who owes whom.
+
+Split a bill equally, by exact amounts or by shares, with support for multiple payers. Add recurring expenses, attach receipts and record what you spent in a foreign currency. See balances and suggested transfers, review spending by category or person, and export your records to CSV.
+
+To get started, connect to a Balnana server you run yourself or one you have been invited to use. Server setup instructions are in the source repository. Depending on the server settings, you can join a group with a private link or sign in with an account. Previously loaded groups and expenses can be viewed offline.
+
+For push notifications, install a UnifiedPush distributor such as ntfy.

@@ -1,0 +1,1 @@
+Split group expenses and track who owes whom on a self-hosted server

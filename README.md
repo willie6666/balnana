@@ -92,7 +92,8 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - **Accounts mode**: sign in with a password, Google or any number of OpenID
   Connect providers.
 - **Live updates**: open groups refresh as others add expenses, and phones get
-  push notifications over UnifiedPush, with no Firebase SDK in the app.
+  push notifications over UnifiedPush. On the FOSS build, install a
+  UnifiedPush distributor such as ntfy to receive push notifications.
 
 ### Know where the money went
 
@@ -153,6 +154,29 @@ See the [CI workflow](.github/workflows/ci.yml).
   `server/` with the `oapi-codegen` version pinned in CI. After editing
   `app/lib/l10n/*.arb`, run `flutter gen-l10n` in `app/`. If any push
   notification strings changed, also run `dart run tool/push_strings.dart`.
+
+## F-Droid
+
+The [F-Droid build recipe](packaging/fdroid/com.balnana.app.yml) builds an
+unsigned FOSS release APK for F-Droid to sign. It builds SQLite from source,
+leaves the server address configurable, and disables external payment links.
+The [English store listing](fastlane/metadata/android/en-US/) includes the
+description, screenshots, and release notes.
+
+For the first submission, tag the release commit for `1.1.1+3` as `v1.1.1`.
+Copy the recipe into an fdroiddata fork as `metadata/com.balnana.app.yml` and
+set `Builds[0].commit` to the full commit hash of that tag. Run the following
+from the fdroiddata checkout, then open a merge request after its GitLab
+pipeline passes.
+
+```sh
+fdroid lint com.balnana.app
+fdroid build --test --scan-binary com.balnana.app
+```
+
+For later releases, increment the version code in `app/pubspec.yaml`, add a
+changelog named after that code in `fastlane/metadata/android/en-US/changelogs/`,
+and tag the release commit as `v<versionName>`.
 
 ## License
 

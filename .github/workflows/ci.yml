@@ -86,8 +86,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: flutter build apk --debug --flavor foss --target-platform android-arm64 --no-pub
       - run: flutter build apk --debug --flavor play --target-platform android-arm64 --no-pub
+      - name: Build the unsigned F-Droid APK
+        env:
+          PUB_CACHE: ${{ github.workspace }}/app/.pub-cache
+        run: |
+          flutter pub get --enforce-lockfile
+          python3 -B ../.github/scripts/prepare_fdroid.py
+          flutter build apk --release --flavor foss --no-pub \
+            --android-project-arg=allowUnsignedFoss=true \
+            --dart-define=BALNANA_EXTERNAL_PAYMENTS=false
 
   deployment:
     runs-on: ubuntu-latest

@@ -1,0 +1,1 @@
+Fixed a bug that could show groups from the previous account after switching accounts.

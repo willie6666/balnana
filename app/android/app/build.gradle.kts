@@ -13,31 +13,41 @@ plugins {
 // release builds stop, since an APK signed with another key cannot update an
 // installed release, nor the reverse. To try a release build anyway, pass
 // -PallowDebugSigning (flutter: --android-project-arg=allowDebugSigning=true),
-// which signs APKs with the debug key. App bundles are only for the Play
-// Store, so they always need the real key.
+// which signs APKs with the debug key. F-Droid uses -PallowUnsignedFoss=true
+// to build a foss APK for its own signing process.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
 val allowDebugSigning = project.findProperty("allowDebugSigning")?.toString()?.let { it != "false" } ?: false
+val allowUnsignedFoss = providers.gradleProperty("allowUnsignedFoss").orNull == "true"
 
 gradle.taskGraph.whenReady {
-    if (hasReleaseKey) return@whenReady
     // This app's own tasks: plugin modules run bundleLib*Release tasks for
     // APKs too.
     val names = allTasks.filter { it.project == project }.map { it.name }
-    if (names.any { it.startsWith("bundle") && !it.startsWith("bundleLib") && it.endsWith("Release") }) {
+    val bundlesRelease = names.any { it.startsWith("bundle") && !it.startsWith("bundleLib") && it.endsWith("Release") }
+    val assemblesRelease = names.filter { it.startsWith("assemble") && it.endsWith("Release") }
+    if (allowUnsignedFoss) {
+        if (bundlesRelease || assemblesRelease.any { it != "assembleFossRelease" }) {
+            throw GradleException("allowUnsignedFoss=true is only supported for the foss release APK.")
+        }
+        return@whenReady
+    }
+    if (hasReleaseKey) return@whenReady
+    if (bundlesRelease) {
         throw GradleException(
             "No release key: create android/key.properties (storeFile, storePassword, keyAlias, keyPassword) " +
                 "before building an app bundle."
         )
     }
-    if (names.any { it.startsWith("assemble") && it.endsWith("Release") }) {
+    if (assemblesRelease.isNotEmpty()) {
         if (!allowDebugSigning) {
             throw GradleException(
                 "No release key: create android/key.properties (storeFile, storePassword, keyAlias, keyPassword), " +
-                    "or pass --android-project-arg=allowDebugSigning=true to sign this APK with the debug key."
+                    "or pass --android-project-arg=allowDebugSigning=true to sign this APK with the debug key. " +
+                    "For an unsigned foss APK, pass --android-project-arg=allowUnsignedFoss=true."
             )
         }
         logger.warn("WARNING: android/key.properties is missing, so this release APK is signed with the debug key.")
@@ -123,7 +133,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
+            if (!allowUnsignedFoss) {
+                signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
+            }
         }
     }
 }
@@ -145,12 +157,8 @@ flutter {
 }
 
 dependencies {
-    // Push notifications without a separate distributor app (UnifiedPush):
-    // phones with Google Play services get them through FCM, with no
-    // Firebase SDK in the app. Phones with a distributor such as ntfy use it
-    // instead.
-    implementation("org.unifiedpush.android:embedded-fcm-distributor:3.1.0")
-    // Spelled as a flavor's own: F-Droid's scanner accepts it only that way.
+    // Play can use FCM as a fallback. FOSS uses an external UnifiedPush distributor.
+    "playImplementation"("org.unifiedpush.android:embedded-fcm-distributor:3.1.0")
     "playImplementation"("com.android.billingclient:billing:9.1.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
