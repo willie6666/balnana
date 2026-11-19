@@ -16,6 +16,7 @@ skills-lock.json
 /scripts/*
 !/scripts/deploy-debian.sh
 !/scripts/.env.example
+!/scripts/build-apks.sh
 
 # Nix (each developer keeps their own environment)
 *.nix
