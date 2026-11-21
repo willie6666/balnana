@@ -9,7 +9,7 @@ import 'server.dart';
 
 /// How this app is signed in to the current server.
 ///
-/// On Android the server hands out a bearer token, kept on the device per
+/// On mobile the server hands out a bearer token, kept on the device per
 /// server, in shared preferences. The same-origin web app uses an HttpOnly
 /// cookie and [token] stays null; a cross-origin web app keeps a bearer token.
 /// [generation] marks a sign-in or sign-out even when the cookie is unseen.

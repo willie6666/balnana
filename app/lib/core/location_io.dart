@@ -5,7 +5,7 @@ import 'location.dart';
 
 const _channel = MethodChannel('balnana/location');
 
-/// Asks MainActivity, which uses Android's own LocationManager.
+/// Asks the mobile platform for a foreground location fix.
 Future<GeoPoint> currentLocation() async {
   try {
     final point = await _channel.invokeMapMethod<String, double>('current');
@@ -13,7 +13,7 @@ Future<GeoPoint> currentLocation() async {
   } on PlatformException catch (e) {
     throw LocationException(LocationProblem.values.asNameMap()[e.code] ?? LocationProblem.unavailable);
   } on MissingPluginException {
-    // Not Android.
+    // This platform has no native location handler.
   }
   throw const LocationException(LocationProblem.unavailable);
 }

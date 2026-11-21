@@ -23,7 +23,7 @@ import 'sign_in_page.dart';
 
 /// Sign-in with Google or an OpenID Connect provider. The browser goes
 /// through the server to the provider and comes back to /oauth-done: in this
-/// tab on the web, through a balnana://app link on Android.
+/// tab on the web, through a balnana://app link on mobile.
 
 /// The sign-in under way: the server it was started on and its PKCE
 /// verifier. The code coming back belongs to that server alone, and together
@@ -41,6 +41,8 @@ String _base64Url(List<int> bytes) => base64Url.encode(bytes).replaceAll('=', ''
 Future<void> startOAuth(WidgetRef ref, OAuthProvider provider, String next, {String? link}) async {
   final server = ref.read(serverUrlProvider);
   if (server == null) return;
+  // The server's existing "android" mode returns a PKCE code to balnana://app.
+  // Both mobile apps handle that callback.
   final query = {'app': kIsWeb ? 'web' : 'android', 'next': next, 'link': ?link};
   if (!cookieSession(server)) {
     // A web app on another origin gets the sign-in back there as a code.
@@ -67,7 +69,7 @@ Future<void> startOAuth(WidgetRef ref, OAuthProvider provider, String next, {Str
 class OAuthDonePage extends ConsumerStatefulWidget {
   const OAuthDonePage({super.key, this.code, this.pending, this.linked, this.error, this.next});
 
-  /// Android, or a web app on another origin: the code to trade for a session.
+  /// Mobile, or a web app on another origin: the code to trade for a session.
   final String? code;
 
   /// The sign-in matched an account that never confirmed its address: the

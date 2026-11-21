@@ -28,9 +28,8 @@ class LocationException implements Exception {
 /// taps "Use current location", never on its own: that tap is also when the
 /// system asks for permission. Throws [LocationException].
 ///
-/// Android gives up 15 seconds after the person answers the permission
-/// question, however long that took, so this only guards against no answer
-/// at all.
+/// On mobile, the native location lookup has its own timeout after permission
+/// is granted. This also bounds the wait for the permission prompt.
 Future<GeoPoint> currentLocation() => impl
     .currentLocation()
     .timeout(const Duration(minutes: 2), onTimeout: () => throw const LocationException(LocationProblem.unavailable));

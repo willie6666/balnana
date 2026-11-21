@@ -91,8 +91,7 @@ typedef _CacheKey = ({String server, String account, String request});
 typedef _CacheScope = (String server, String? path);
 
 /// What this device remembers of each server, to show while it is out of
-/// reach. Only the Android app keeps one: the web app comes from the server
-/// itself, so it cannot load without it anyway.
+/// reach. The web app comes from the server itself and cannot load without it.
 @DriftDatabase(tables: [CachedResponses, PendingWrites])
 class CacheDb extends _$CacheDb {
   CacheDb(super.executor);

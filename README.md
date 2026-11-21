@@ -141,8 +141,8 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 ### Use the official server
 
 Open **[app.balnana.com](https://app.balnana.com)** in your browser, create a
-group and share its link. That's it. The Android app can connect to the
-same server.
+group and share its link. That's it. The Android and iOS apps can connect
+to the same server.
 
 ### Run your own
 
@@ -164,7 +164,7 @@ setting is listed in [.env.example](.env.example), and the
 | Part   | Stack                                                    |
 |--------|----------------------------------------------------------|
 | Server | Go, backed by PostgreSQL (`server/`)                     |
-| App    | Flutter, for Android and the web (`app/`)                |
+| App    | Flutter, for Android, iOS and the web (`app/`)           |
 | API    | One OpenAPI contract between them (`api/openapi.yaml`)   |
 
 ## Development
@@ -190,6 +190,34 @@ See the [CI workflow](.github/workflows/ci.yml).
   `server/` with the `oapi-codegen` version pinned in CI. After editing
   `app/lib/l10n/*.arb`, run `flutter gen-l10n` in `app/`. If any push
   notification strings changed, also run `dart run tool/push_strings.dart`.
+
+### iOS
+
+Use Xcode with an iOS Simulator runtime and the Flutter version pinned in CI.
+The iOS 15+ target uses Swift Package Manager. Run these commands from `app/`.
+
+```bash
+flutter pub get
+xcrun simctl list devices available
+xcrun simctl boot <simulator-id>
+flutter run -d <simulator-id>
+```
+
+If the active developer directory points at Command Line Tools, select
+Xcode with `sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer`.
+To see the simulator screen in Xcode 27, open **Xcode > Open Developer
+Tool > Device Hub**.
+
+Enter your Balnana server on first launch. The simulator can connect to a
+server running on the Mac at `http://127.0.0.1:8080`. Use your Mac's LAN
+address or an HTTPS server when testing on an iPhone.
+
+For a physical device, run `flutter build ios --config-only --no-codesign`
+from `app/`. Open `app/ios/Runner.xcworkspace`, select a signing team for
+Runner, and run the `foss` scheme. External payment links are off by default
+on iOS. The iOS target currently covers the core expense flows and uses
+the server's existing mobile sign-in callback. Push notifications, home
+screen widgets and Google Play Billing are available on Android.
 
 ## F-Droid
 

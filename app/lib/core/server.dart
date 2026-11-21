@@ -13,7 +13,7 @@ const apiBasePath = '/api/v1';
 /// The server used when the user has not chosen one.
 ///
 /// A build can bake one in with `--dart-define=BALNANA_SERVER_URL=https://...`.
-/// The web app otherwise talks to the server that served it. An Android build
+/// The web app otherwise talks to the server that served it. A mobile build
 /// without one asks on first launch.
 String? get defaultServerUrl {
   const fromBuild = String.fromEnvironment('BALNANA_SERVER_URL');
@@ -24,11 +24,11 @@ String? get defaultServerUrl {
 
 /// Whether this build may send people to pay outside an app store.
 ///
-/// The FOSS build enables these links by default. An explicit
+/// The Android FOSS build enables these links by default. An explicit
 /// `BALNANA_EXTERNAL_PAYMENTS` overrides that default outside Google Play.
 bool get externalPayments => externalPaymentsFor(
   web: kIsWeb,
-  flavor: appFlavor,
+  flavor: defaultTargetPlatform == TargetPlatform.iOS ? null : appFlavor,
   enabled: const bool.hasEnvironment('BALNANA_EXTERNAL_PAYMENTS')
       ? const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS')
       : null,
@@ -40,7 +40,7 @@ bool externalPaymentsFor({required bool web, required String? flavor, bool? enab
 
 /// Whether the session lives in [serverUrl]'s cookie: only in the web app it
 /// serves. A web app on another origin cannot use that cookie, so it keeps a
-/// token as the Android app does.
+/// token as the mobile apps do.
 bool cookieSession(String serverUrl, {bool web = kIsWeb, Uri? page}) =>
     web && Uri.parse(serverUrl).origin == (page ?? Uri.base).origin;
 

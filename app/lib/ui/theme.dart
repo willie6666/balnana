@@ -137,9 +137,6 @@ ThemeData buildTheme(ColorScheme scheme, {bool pureBlack = false}) {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(BShape.md))),
     ),
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: {TargetPlatform.android: PredictiveBackPageTransitionsBuilder()},
-    ),
   );
 }
 
