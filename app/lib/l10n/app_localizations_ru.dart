@@ -3802,4 +3802,73 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Ваши условия использования, ссылка на которые показывается при регистрации и покупке тарифа. Если поле пустое, приложение не показывает условия.';
+
+  @override
+  String get adminSectionIos => 'Приложение для iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'Приложение для iOS входит через Apple и продаёт подписки в App Store для указанного здесь Bundle ID.';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID для iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Bundle ID приложения для iOS, например com.balnana.app. Включает «Вход с Apple» в этом приложении, а при включённой оплате — подписки App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Принимать покупки из песочницы App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Принимать также покупки из песочницы App Store, где TestFlight, Xcode и проверка приложений покупают без оплаты. Нужно, пока Apple проверяет приложение.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL для App Store Server Notifications V2 в App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Изменить или отменить в App Store';
+
+  @override
+  String get planAppStoreFailed => 'App Store не смог завершить покупку.';
+
+  @override
+  String get planAppStorePending => 'Покупка ждёт одобрения. Тариф начнёт действовать после одобрения.';
+
+  @override
+  String get planAppStoreUnavailable => 'Не удалось подключиться к App Store. Попробуйте позже.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Оплата списывается с вашего Apple ID при подтверждении. Подписка продлевается автоматически, если не отменить её не позднее чем за 24 часа до конца текущего периода. Управлять подпиской или отменить её можно в настройках учётной записи App Store.';
+
+  @override
+  String get planRestore => 'Восстановить покупки';
+
+  @override
+  String get planRestoreHelp => 'Вернуть подписку, купленную с этим Apple ID';
+
+  @override
+  String get planRestoreNone => 'Для этого Apple ID нет подписок для восстановления.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store не распознаёт эту покупку.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Эта подписка принадлежит другой учётной записи. Войдите в неё или отмените подписку в App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Вход с Apple не завершён. Попробуйте ещё раз.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Подписка App Store не прекращается вместе с учётной записью. Сначала отмените её в App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Как указано в App Store Connect для автовозобновляемой подписки. App Store сам сообщает, когда заканчивается каждый платёж, поэтому дни задавать не нужно.';
 }

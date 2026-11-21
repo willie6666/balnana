@@ -5,11 +5,17 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private let expenseLocation = ExpenseLocation()
+  private var storeBridge: StoreBridge?
+  private var appleSignIn: AppleSignIn?
+  private var webAuth: WebAuth?
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let messenger = engineBridge.applicationRegistrar.messenger()
     DeviceStorage.register(with: messenger)
+    storeBridge = StoreBridge.register(with: messenger)
+    appleSignIn = AppleSignIn.register(with: messenger)
+    webAuth = WebAuth.register(with: messenger)
     let channel = FlutterMethodChannel(
       name: "balnana/location", binaryMessenger: messenger
     )

@@ -1,4 +1,5 @@
 import '../data/api.dart';
+import 'app_store.dart';
 import 'l10n.dart';
 import 'money.dart';
 
@@ -82,7 +83,10 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'paypal_subscribed' => l10n.errorPayPalSubscribed,
     'paypal_unavailable' => l10n.errorPayPalUnavailable,
     'invalid_plan' => l10n.errorInvalidPlan,
+    // Only the iOS app reports App Store purchases, only Android Play ones.
+    'invalid_purchase' when iosApp => l10n.errorInvalidAppStorePurchase,
     'invalid_purchase' => l10n.errorInvalidPurchase,
+    'appstore_other_account' => l10n.errorAppStoreOtherAccount,
     'play_other_account' => l10n.errorPlayOtherAccount,
     'play_unavailable' => l10n.errorPlayUnavailable,
     'too_large' => l10n.errorTooLarge,

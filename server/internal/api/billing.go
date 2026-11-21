@@ -320,10 +320,13 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.Play, err = s.playOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
+	if out.AppStore, err = s.appStoreOffer(ctx, q, userID); err != nil {
+		return MyPlan{}, err
+	}
 	if out.Paypal, err = s.paypalOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
-	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.Paypal); err != nil {
+	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.AppStore != nil, out.Paypal); err != nil {
 		return MyPlan{}, err
 	}
 	return out, nil
@@ -331,7 +334,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 
 // planComparison exposes the plans this account can use or buy. Product
 // mappings and unrelated administrator-only plans stay in the admin API.
-func (s *Server) planComparison(ctx context.Context, q querier, current string, play bool, paypal *PayPalBilling) (*PlanComparison, error) {
+func (s *Server) planComparison(ctx context.Context, q querier, current string, play, appStore bool, paypal *PayPalBilling) (*PlanComparison, error) {
 	catalog, err := planCatalog(ctx, q)
 	if err != nil {
 		return nil, err
@@ -352,7 +355,8 @@ func (s *Server) planComparison(ctx context.Context, q querier, current string, 
 	}
 	for _, product := range catalog.Products {
 		if (product.Provider == Kofi && s.conf().KofiURL != nil) ||
-			(product.Provider == Play && play) || (product.Provider == Paypal && paypalProducts[product.Product]) {
+			(product.Provider == Play && play) || (product.Provider == Appstore && appStore) ||
+			(product.Provider == Paypal && paypalProducts[product.Product]) {
 			visible[product.PlanId] = true
 		}
 	}

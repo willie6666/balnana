@@ -3553,4 +3553,70 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminTermsUrlHelp => '가입하고 요금제를 구매하는 곳에 연결되는 서비스 약관이에요. 비워 두면 앱에 약관이 표시되지 않아요.';
+
+  @override
+  String get adminSectionIos => 'iOS 앱';
+
+  @override
+  String get adminSectionIosBody => 'iOS 앱은 여기에서 설정한 번들 ID로 Apple로 로그인하고 App Store에서 구독을 판매합니다.';
+
+  @override
+  String get adminAppleBundleId => 'iOS 번들 ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS 앱의 번들 ID(예: com.balnana.app). 설정하면 해당 앱에서 Apple로 로그인이 켜지고, 결제가 켜져 있으면 App Store 구독도 켜집니다.';
+
+  @override
+  String get adminAppStoreSandbox => 'App Store 샌드박스 구매 허용';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'App Store 샌드박스 구매도 받습니다. TestFlight, Xcode, 앱 심사는 결제 없이 샌드박스에서 구매합니다. Apple 심사 중에는 필요합니다.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'App Store Connect에 입력할 App Store 서버 알림 V2 URL: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'App Store에서 변경하거나 해지';
+
+  @override
+  String get planAppStoreFailed => 'App Store에서 구매를 완료하지 못했습니다.';
+
+  @override
+  String get planAppStorePending => '구매가 승인을 기다리고 있습니다. 승인되면 요금제가 시작됩니다.';
+
+  @override
+  String get planAppStoreUnavailable => 'App Store에 연결할 수 없습니다. 나중에 다시 시도하세요.';
+
+  @override
+  String get planAppStoreRenewal =>
+      '구매를 확인하면 Apple ID로 결제됩니다. 현재 기간이 끝나기 최소 24시간 전에 해지하지 않으면 구독이 자동으로 갱신됩니다. App Store 계정 설정에서 관리하거나 해지할 수 있습니다.';
+
+  @override
+  String get planRestore => '구매 복원';
+
+  @override
+  String get planRestoreHelp => '이 Apple ID로 구매한 구독을 다시 가져옵니다';
+
+  @override
+  String get planRestoreNone => '이 Apple ID에 복원할 구독이 없습니다.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store에서 이 구매를 인식하지 못합니다.';
+
+  @override
+  String get errorAppStoreOtherAccount => '이 구독은 다른 계정의 것입니다. 해당 계정으로 로그인하거나 App Store에서 해지하세요.';
+
+  @override
+  String get signInWithAppleFailed => 'Apple로 로그인을 완료하지 못했습니다. 다시 시도하세요.';
+
+  @override
+  String get accountDeleteAppStoreNote => 'App Store 구독은 계정을 삭제해도 끝나지 않습니다. 먼저 App Store에서 해지하세요.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'App Store Connect의 자동 갱신 구독에 적힌 그대로 입력합니다. 결제마다 언제 끝나는지 App Store가 알려 주므로 일수를 설정하지 않습니다.';
 }

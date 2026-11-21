@@ -3648,4 +3648,73 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'ข้อกำหนดการให้บริการของคุณ ซึ่งจะลิงก์ไว้ในหน้าที่ผู้ใช้สมัครและซื้อแพ็กเกจ หากเว้นว่าง แอปจะไม่แสดงข้อกำหนด';
+
+  @override
+  String get adminSectionIos => 'แอป iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'แอป iOS จะลงชื่อเข้าด้วย Apple และขายการสมัครสมาชิกผ่าน App Store สำหรับ Bundle ID ที่ตั้งไว้ที่นี่';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID ของ iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Bundle ID ของแอป iOS เช่น com.balnana.app ใช้เปิดการลงชื่อเข้าด้วย Apple ในแอปนั้น และเมื่อเปิดการเรียกเก็บเงิน จะเปิดการสมัครสมาชิกผ่าน App Store ด้วย';
+
+  @override
+  String get adminAppStoreSandbox => 'รับการซื้อจากแซนด์บ็อกซ์ของ App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'รับการซื้อจากแซนด์บ็อกซ์ของ App Store ด้วย ซึ่ง TestFlight, Xcode และการตรวจสอบแอปใช้ซื้อโดยไม่ต้องจ่ายเงิน จำเป็นระหว่างที่ Apple ตรวจสอบแอป';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL ของ App Store Server Notifications V2 สำหรับ App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'เปลี่ยนหรือยกเลิกใน App Store';
+
+  @override
+  String get planAppStoreFailed => 'App Store ทำรายการซื้อไม่สำเร็จ';
+
+  @override
+  String get planAppStorePending => 'การซื้อกำลังรอการอนุมัติ แพ็กเกจจะเริ่มเมื่อได้รับอนุมัติ';
+
+  @override
+  String get planAppStoreUnavailable => 'เชื่อมต่อ App Store ไม่ได้ ลองใหม่ภายหลัง';
+
+  @override
+  String get planAppStoreRenewal =>
+      'ระบบจะเรียกเก็บเงินจาก Apple ID ของคุณเมื่อยืนยัน การสมัครสมาชิกจะต่ออายุอัตโนมัติ เว้นแต่จะยกเลิกอย่างน้อย 24 ชั่วโมงก่อนสิ้นสุดรอบปัจจุบัน จัดการหรือยกเลิกได้ในการตั้งค่าบัญชี App Store';
+
+  @override
+  String get planRestore => 'กู้คืนการซื้อ';
+
+  @override
+  String get planRestoreHelp => 'นำการสมัครสมาชิกที่ซื้อด้วย Apple ID นี้กลับมา';
+
+  @override
+  String get planRestoreNone => 'ไม่มีการสมัครสมาชิกให้กู้คืนใน Apple ID นี้';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store ไม่รู้จักการซื้อนี้';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'การสมัครสมาชิกนี้เป็นของบัญชีอื่น ลงชื่อเข้าบัญชีนั้น หรือยกเลิกใน App Store';
+
+  @override
+  String get signInWithAppleFailed => 'การลงชื่อเข้าด้วย Apple ไม่สำเร็จ ลองอีกครั้ง';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'การสมัครสมาชิก App Store ไม่สิ้นสุดพร้อมบัญชีของคุณ ยกเลิกใน App Store ก่อน';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'ตามที่เขียนไว้ใน App Store Connect สำหรับการสมัครสมาชิกแบบต่ออายุอัตโนมัติ App Store จะบอกว่าการชำระแต่ละครั้งสิ้นสุดเมื่อใด จึงไม่ต้องตั้งจำนวนวัน';
 }

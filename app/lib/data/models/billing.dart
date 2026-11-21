@@ -53,6 +53,30 @@ class PlayBilling {
   List<String> get held => [...subscribed, ...onHold];
 }
 
+/// What the server sells in the App Store, for an account that can buy it.
+class AppStoreBilling {
+  const AppStoreBilling({required this.accountToken, this.products = const [], this.subscribed = const []});
+
+  factory AppStoreBilling.fromJson(Object? data) {
+    final json = jsonObject(data);
+    return AppStoreBilling(
+      accountToken: requiredField(json, 'accountToken'),
+      products: [...?optionalField<List<Object?>>(json, 'products')?.whereType<String>()],
+      subscribed: [...?optionalField<List<Object?>>(json, 'subscribed')?.whereType<String>()],
+    );
+  }
+
+  /// Goes with a purchase as StoreKit's appAccountToken, for Apple to say
+  /// whose it is.
+  final String accountToken;
+
+  /// Auto-renewable subscription product ids.
+  final List<String> products;
+
+  /// The products the account has a running subscription to.
+  final List<String> subscribed;
+}
+
 /// The signed-in account's plan and how much of it is used.
 class MyPlan {
   const MyPlan({
@@ -66,6 +90,7 @@ class MyPlan {
     this.membersPerGroup,
     this.reminders = false,
     this.play,
+    this.appStore,
     this.paypal,
     this.comparison,
   });
@@ -83,6 +108,7 @@ class MyPlan {
       membersPerGroup: optionalField<num>(json, 'membersPerGroup')?.toInt(),
       reminders: optionalField<bool>(json, 'reminders') ?? false,
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
+      appStore: json['appStore'] == null ? null : AppStoreBilling.fromJson(json['appStore']),
       paypal: json['paypal'] == null ? null : PayPalBilling.fromJson(json['paypal']),
       comparison: json['comparison'] == null ? null : PlanComparisonData.fromJson(json['comparison']),
     );
@@ -113,6 +139,9 @@ class MyPlan {
 
   /// Null when the server doesn't sell on Google Play.
   final PlayBilling? play;
+
+  /// Null when the server doesn't sell in the App Store.
+  final AppStoreBilling? appStore;
 
   /// Null when nothing can be bought through PayPal.
   final PayPalBilling? paypal;

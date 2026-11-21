@@ -3752,4 +3752,73 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Seus termos de serviço, mostrados onde as pessoas se cadastram e compram um plano. Se ficar em branco, o app não mostra termos.';
+
+  @override
+  String get adminSectionIos => 'App para iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'O app para iOS entra com a Apple e vende assinaturas pela App Store para o ID de pacote definido aqui.';
+
+  @override
+  String get adminAppleBundleId => 'ID de pacote do iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'O ID de pacote do app para iOS, como com.balnana.app. Ele ativa “Iniciar sessão com a Apple” nesse app e, com cobrança, as assinaturas da App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Aceitar compras de sandbox da App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Aceita também compras do sandbox da App Store, onde TestFlight, Xcode e a revisão de apps compram sem pagar. Necessário enquanto a Apple revisa o app.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL das App Store Server Notifications V2, para o App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Altere ou cancele na App Store';
+
+  @override
+  String get planAppStoreFailed => 'A App Store não conseguiu concluir a compra.';
+
+  @override
+  String get planAppStorePending => 'A compra está aguardando aprovação. O plano começa quando for aprovada.';
+
+  @override
+  String get planAppStoreUnavailable => 'Não foi possível acessar a App Store. Tente novamente mais tarde.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'O pagamento é cobrado no seu ID Apple ao confirmar. A assinatura é renovada automaticamente, a menos que seja cancelada pelo menos 24 horas antes do fim do período atual. Gerencie ou cancele nos ajustes da sua conta da App Store.';
+
+  @override
+  String get planRestore => 'Restaurar compras';
+
+  @override
+  String get planRestoreHelp => 'Recupere uma assinatura comprada com este ID Apple';
+
+  @override
+  String get planRestoreNone => 'Não há assinatura para restaurar neste ID Apple.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'A App Store não reconhece esta compra.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Esta assinatura pertence a outra conta. Entre nela ou cancele na App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'O login com a Apple não foi concluído. Tente novamente.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Uma assinatura da App Store não termina com a sua conta. Cancele-a primeiro na App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Como está no App Store Connect, para uma assinatura renovável automaticamente. A App Store informa quando cada pagamento termina, então não há dias a definir.';
 }

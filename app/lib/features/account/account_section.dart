@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/app_store.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
@@ -14,6 +15,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
 import '../group/identity_sheet.dart';
+import 'apple_sign_in.dart';
 import 'oauth.dart';
 import 'two_factor.dart';
 
@@ -113,7 +115,11 @@ class AccountSection extends ConsumerWidget {
       }
     }
     if (ticket == null) return;
-    await startOAuth(ref, provider, '/settings/account', link: ticket);
+    if (provider.id == appleProvider.id) {
+      await signInWithApple(ref, '/settings/account', link: ticket);
+    } else {
+      await startOAuth(ref, provider, '/settings/account', link: ticket);
+    }
   }
 
   Future<void> _unlink(BuildContext context, WidgetRef ref, OAuthProvider provider, User account) async {
@@ -138,7 +144,8 @@ class AccountSection extends ConsumerWidget {
     final account = ref.watch(currentAccountProvider).value;
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
     final passwords = ref.watch(serverInfoProvider.select((i) => i.value?.password ?? false));
-    final providers = ref.watch(serverInfoProvider.select((i) => i.value?.oauthProviders ?? const []));
+    final info = ref.watch(serverInfoProvider).value;
+    final providers = [if (appleSignInOffered(info)) appleProvider, ...?info?.oauthProviders];
     if (account == null) {
       return GroupedList(
         title: l10n.settingsAccount,
@@ -254,19 +261,23 @@ Future<void> deleteAccount(BuildContext context, WidgetRef ref) async {
   final account = ref.read(currentAccountProvider).value;
   if (account == null) return;
   final who = ref.read(identityProvider);
-  // Only someone paying through Google Play has to cancel there.
-  var play = false;
+  // Only someone paying through Google Play or the App Store has to cancel
+  // there.
+  var play = false, appStore = false;
   if (ref.read(serverInfoProvider).value?.billing ?? false) {
     try {
-      play = (await ref.read(balnanaApiProvider)?.myPlan())?.play?.held.isNotEmpty ?? false;
+      final plan = await ref.read(balnanaApiProvider)?.myPlan();
+      play = plan?.play?.held.isNotEmpty ?? false;
+      appStore = plan?.appStore?.subscribed.isNotEmpty ?? false;
     } on ApiException {
-      play = true; // Better said once too often than missed.
+      // Better said once too often than missed.
+      (play, appStore) = (!iosApp, iosApp);
     }
     if (!context.mounted) return;
   }
   final deleted = await showDialog<bool>(
     context: context,
-    builder: (_) => _DeleteAccountDialog(askPassword: account.hasPassword, play: play),
+    builder: (_) => _DeleteAccountDialog(askPassword: account.hasPassword, play: play, appStore: appStore),
   );
   if (deleted != true || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -369,10 +380,13 @@ class _ConfirmPassword extends StatelessWidget {
 }
 
 class _DeleteAccountDialog extends ConsumerStatefulWidget {
-  const _DeleteAccountDialog({required this.askPassword, required this.play});
+  const _DeleteAccountDialog({required this.askPassword, required this.play, required this.appStore});
 
   final bool askPassword;
   final bool play;
+
+  /// The account has an App Store subscription, which goes on without it.
+  final bool appStore;
 
   @override
   ConsumerState<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -427,6 +441,10 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
             if (widget.play) ...[
               const SizedBox(height: BSpace.s16),
               Text(l10n.accountDeletePlayNote),
+            ],
+            if (widget.appStore) ...[
+              const SizedBox(height: BSpace.s16),
+              Text(l10n.accountDeleteAppStoreNote),
             ],
             if (widget.askPassword) ...[
               const SizedBox(height: BSpace.s16),

@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Ein Foto vom Beleg aufnehmen, um es einer Ausgabe anzuhängen.";
+"NSLocalNetworkUsageDescription" = "Mit einem Balnana-Server in deinem lokalen Netzwerk verbinden.";
+"NSLocationWhenInUseUsageDescription" = "Deinen aktuellen Standort verwenden, wenn du eine Ausgabe auf der Karte markierst.";
+"NSPhotoLibraryUsageDescription" = "Ein Belegfoto auswählen, um es einer Ausgabe anzuhängen.";

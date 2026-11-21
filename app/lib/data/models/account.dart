@@ -106,6 +106,26 @@ class OAuthPending {
   final bool signup;
 }
 
+/// What signing in with Apple from the iOS app came to: one of a code to
+/// trade for a session, a pending sign-in to ask about, or a linked identity.
+@immutable
+class AppleSignInResult {
+  const AppleSignInResult({this.code, this.pending, this.linked = false});
+
+  factory AppleSignInResult.fromJson(Object? data) {
+    final json = jsonObject(data);
+    return AppleSignInResult(
+      code: optionalField<String>(json, 'code'),
+      pending: optionalField<String>(json, 'pending'),
+      linked: optionalField<bool>(json, 'linked') ?? false,
+    );
+  }
+
+  final String? code;
+  final String? pending;
+  final bool linked;
+}
+
 /// An invitation to a group, sent by email (accounts mode).
 @immutable
 class InviteInfo {

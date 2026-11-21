@@ -6404,6 +6404,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.'**
   String get adminTermsUrlHelp;
+
+  /// Admin settings section title for the iOS app.
+  ///
+  /// In en, this message translates to:
+  /// **'iOS app'**
+  String get adminSectionIos;
+
+  /// Admin settings section intro for the iOS app.
+  ///
+  /// In en, this message translates to:
+  /// **'The iOS app signs in with Apple and sells subscriptions through the App Store for the bundle ID set here.'**
+  String get adminSectionIosBody;
+
+  /// Admin setting label for the iOS app's bundle ID.
+  ///
+  /// In en, this message translates to:
+  /// **'iOS bundle ID'**
+  String get adminAppleBundleId;
+
+  /// Admin setting help for the iOS app's bundle ID.
+  ///
+  /// In en, this message translates to:
+  /// **'The iOS app\'s bundle ID, such as com.balnana.app. It turns on Sign in with Apple in that app and, with billing, App Store subscriptions.'**
+  String get adminAppleBundleIdHelp;
+
+  /// Admin setting label: also accept App Store sandbox purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept App Store sandbox purchases'**
+  String get adminAppStoreSandbox;
+
+  /// Admin setting help for accepting App Store sandbox purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Also take purchases from the App Store sandbox, where TestFlight, Xcode and App Review buy without paying. Needed while Apple reviews the app.'**
+  String get adminAppStoreSandboxHelp;
+
+  /// Admin note with the URL to give App Store Connect for server notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'App Store Server Notifications V2 URL, for App Store Connect: {url}'**
+  String adminAppStoreWebhook(String url);
+
+  /// Subtitle of the manage subscription row for an App Store subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Change or cancel it in the App Store'**
+  String get planAppStoreManageHelp;
+
+  /// Error when the App Store purchase failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The App Store couldn\'t complete the purchase.'**
+  String get planAppStoreFailed;
+
+  /// Shown when an App Store purchase waits for approval, such as Ask to Buy.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase is waiting for approval. The plan starts once it\'s approved.'**
+  String get planAppStorePending;
+
+  /// Error when the app could not reach the App Store.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the App Store. Try again later.'**
+  String get planAppStoreUnavailable;
+
+  /// Auto-renewal terms shown under App Store subscription offers, as Apple requires.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is charged to your Apple ID when you confirm. The subscription renews automatically unless you cancel it at least 24 hours before the end of the current period. Manage or cancel it in your App Store account settings.'**
+  String get planAppStoreRenewal;
+
+  /// Button to restore App Store purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get planRestore;
+
+  /// Subtitle of the restore purchases button.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back a subscription bought with this Apple ID'**
+  String get planRestoreHelp;
+
+  /// Shown when restoring finds no subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscription to restore on this Apple ID.'**
+  String get planRestoreNone;
+
+  /// Error when the server does not accept an App Store purchase.
+  ///
+  /// In en, this message translates to:
+  /// **'The App Store doesn\'t recognize this purchase.'**
+  String get errorInvalidAppStorePurchase;
+
+  /// Error when an App Store subscription belongs to another account.
+  ///
+  /// In en, this message translates to:
+  /// **'This subscription belongs to another account. Sign in to that one, or cancel it in the App Store.'**
+  String get errorAppStoreOtherAccount;
+
+  /// Error when Sign in with Apple could not finish.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Apple didn\'t finish. Try again.'**
+  String get signInWithAppleFailed;
+
+  /// Shown when deleting an account that has an App Store subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'An App Store subscription doesn\'t end with your account. Cancel it in the App Store first.'**
+  String get accountDeleteAppStoreNote;
+
+  /// Admin help for an App Store product ID in a plan product mapping.
+  ///
+  /// In en, this message translates to:
+  /// **'As written in App Store Connect, for an auto-renewable subscription. The App Store says when each payment ends, so there are no days to set.'**
+  String get adminProductAppStoreIdHelp;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

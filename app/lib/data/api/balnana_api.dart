@@ -193,6 +193,38 @@ class BalnanaApi {
     MyPlan.fromJson,
   );
 
+  /// Tells the server about an App Store transaction, as StoreKit signed it.
+  /// Apple's signature is checked, not the app's word. Doing it again changes
+  /// nothing.
+  Future<MyPlan> reportAppStorePurchase(String signedTransaction) => _transport.send(
+    () => _dio.post<Object?>('/me/appstore/purchases', data: {'signedTransaction': signedTransaction}),
+    MyPlan.fromJson,
+  );
+
+  /// Signs in with the identity token Apple gave the iOS app for [nonce]. The
+  /// answer is what a provider's sign-in brings back to the app: a code to
+  /// trade with the verifier of [challenge], a pending sign-in to ask about,
+  /// or with a [link] ticket, the identity added to the signed-in account.
+  Future<AppleSignInResult> signInWithApple({
+    required String identityToken,
+    required String nonce,
+    String? challenge,
+    String? name,
+    String? link,
+  }) => _transport.send(
+    () => _dio.post<Object?>(
+      '/auth/apple',
+      data: {
+        'identityToken': identityToken,
+        'nonce': nonce,
+        'challenge': ?challenge,
+        'name': ?name,
+        'link': ?link,
+      },
+    ),
+    AppleSignInResult.fromJson,
+  );
+
   /// Takes a Ko-fi payment by its transaction ID, or the link with it in.
   Future<MyPlan> claimPayment(String reference) => _transport.send(
     () => _dio.post<Object?>('/me/payments/claim', data: {'reference': reference}),

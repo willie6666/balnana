@@ -268,7 +268,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
                     [
                       providerName(p.provider),
                       planName(p.planId),
-                      if (p.provider != 'play') l10n.adminPlanDays(p.days),
+                      if (!_stores.contains(p.provider)) l10n.adminPlanDays(p.days),
                       if (p.product.isNotEmpty && p.minAmount != null)
                         '${p.minAmount} ${p.currency ?? ''}'.trim(),
                     ].join(' · '),
@@ -305,8 +305,12 @@ String providerName(String provider) => switch (provider) {
   'kofi' => 'Ko-fi',
   'paypal' => 'PayPal',
   'play' => 'Google Play',
+  'appstore' => 'App Store',
   _ => provider,
 };
+
+/// Providers that say for themselves when each payment ends, and in what money.
+const _stores = {'play', 'appstore'};
 
 /// The most a limit may be; the server refuses more.
 const _maxLimit = 100000000;
@@ -493,7 +497,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   late String? _plan = widget.product?.planId;
   late String _provider = widget.product?.provider ?? 'kofi';
 
-  bool get _play => _provider == 'play';
+  bool get _play => _stores.contains(_provider);
   bool get _paypal => _provider == 'paypal';
 
   List<Plan> get _plans => [...widget.plans.where((p) => !p.isDefault)];
@@ -545,7 +549,7 @@ class _ProductDialogState extends State<_ProductDialog> {
                 isExpanded: true,
                 decoration: InputDecoration(labelText: l10n.adminProductProvider),
                 items: [
-                  for (final p in const ['kofi', 'paypal', 'play'])
+                  for (final p in const ['kofi', 'paypal', 'play', 'appstore'])
                     DropdownMenuItem(value: p, child: Text(providerName(p))),
                 ],
                 // A product's provider is part of what it is.
@@ -556,12 +560,13 @@ class _ProductDialogState extends State<_ProductDialog> {
                 controller: _name,
                 decoration: InputDecoration(
                   labelText: switch (_provider) {
-                    'play' => l10n.adminProductPlayId,
+                    'play' || 'appstore' => l10n.adminProductPlayId,
                     'paypal' => l10n.adminProductPayPalId,
                     _ => l10n.adminProductName,
                   },
                   helperText: switch (_provider) {
                     'play' => l10n.adminProductPlayIdHelp,
+                    'appstore' => l10n.adminProductAppStoreIdHelp,
                     'paypal' => l10n.adminProductPayPalIdHelp,
                     _ => l10n.adminProductNameHelp,
                   },
@@ -597,7 +602,7 @@ class _ProductDialogState extends State<_ProductDialog> {
                 onChanged: (v) => setState(() => _plan = v),
                 validator: (v) => v == null ? l10n.errorRequired : null,
               ),
-              // Google Play says when each payment ends, and in what money.
+              // The stores say when each payment ends, and in what money.
               if (!_play) ...[
                 gap,
                 TextFormField(

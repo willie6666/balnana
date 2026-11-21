@@ -75,6 +75,9 @@ type OIDC struct {
 // one has settings of its own (see OIDCKey).
 var oidcID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
+// bundleID is what Apple allows in a bundle ID: letters, digits, dots and dashes.
+var bundleID = regexp.MustCompile(`^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$`)
+
 // The settings of each OpenID Connect provider, as OIDCKey names them.
 var oidcFields = []Setting{
 	{Key: "ISSUER"},
@@ -210,6 +213,12 @@ type Config struct {
 	PayPalWebhookID string
 	// PayPalSandbox talks to PayPal's sandbox instead, where nothing is paid.
 	PayPalSandbox bool
+	// AppleBundleID is the iOS app's bundle ID. It turns on Sign in with
+	// Apple in that app and, with billing, App Store subscriptions.
+	AppleBundleID string
+	// AppStoreSandbox also takes purchases from the App Store's sandbox,
+	// where TestFlight, Xcode and App Review buy without paying.
+	AppStoreSandbox bool
 
 	// AndroidCertSHA256 lists the signing certificates of Android builds that
 	// may open this server's links (App Links), as AB:CD:... fingerprints.
@@ -274,6 +283,8 @@ var Managed = []Setting{
 	{Key: "BALNANA_PAYPAL_SECRET", Secret: true},
 	{Key: "BALNANA_PAYPAL_WEBHOOK_ID"},
 	{Key: "BALNANA_PAYPAL_SANDBOX", Default: "false"},
+	{Key: "BALNANA_APPLE_BUNDLE_ID"},
+	{Key: "BALNANA_APPSTORE_SANDBOX", Default: "false"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
 
@@ -445,6 +456,8 @@ func load(getenv func(string) string) (*Config, error) {
 		PayPalWebhookID: e.managed("BALNANA_PAYPAL_WEBHOOK_ID"),
 		PayPalSandbox:   e.managedBool("BALNANA_PAYPAL_SANDBOX"),
 		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
+		AppleBundleID:   e.managed("BALNANA_APPLE_BUNDLE_ID"),
+		AppStoreSandbox: e.managedBool("BALNANA_APPSTORE_SANDBOX"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
 			Port:     e.managedInt("BALNANA_SMTP_PORT"),
@@ -536,6 +549,10 @@ func load(getenv func(string) string) (*Config, error) {
 		}
 	}
 
+	if c.AppleBundleID != "" && !bundleID.MatchString(c.AppleBundleID) {
+		e.fail("BALNANA_APPLE_BUNDLE_ID", "BALNANA_APPLE_BUNDLE_ID must be an iOS bundle ID such as com.balnana.app, got %q", c.AppleBundleID)
+	}
+
 	switch source := MapSource(e.managed("BALNANA_MAP_SOURCE")); source {
 	case MapStyle:
 		style := e.managed("BALNANA_MAP_STYLE")
@@ -590,7 +607,7 @@ func load(getenv func(string) string) (*Config, error) {
 
 	// Payment providers call back, and Google's notifications are signed for
 	// this address, so a server still on its default would lose them.
-	if c.Billing && (c.KofiToken != "" || c.PlayPackage != "" || c.PayPalClientID != "") && c.PublicURL != nil && !publicHTTPS(c.PublicURL) {
+	if c.Billing && (c.KofiToken != "" || c.PlayPackage != "" || c.PayPalClientID != "" || c.AppleBundleID != "") && c.PublicURL != nil && !publicHTTPS(c.PublicURL) {
 		e.fail("BALNANA_PUBLIC_URL", "BALNANA_PUBLIC_URL must be the server's public https address to take payments, got %q", publicURL)
 	}
 

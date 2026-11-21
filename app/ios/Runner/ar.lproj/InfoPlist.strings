@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "التقط صورة للإيصال لإرفاقها بمصروف.";
+"NSLocalNetworkUsageDescription" = "الاتصال بخادم Balnana مستضاف على شبكتك المحلية.";
+"NSLocationWhenInUseUsageDescription" = "استخدام موقعك الحالي عندما تختار تثبيت مصروف على الخريطة.";
+"NSPhotoLibraryUsageDescription" = "اختر صورة إيصال لإرفاقها بمصروف.";

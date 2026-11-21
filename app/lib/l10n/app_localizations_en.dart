@@ -3683,4 +3683,74 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.';
+
+  @override
+  String get adminSectionIos => 'iOS app';
+
+  @override
+  String get adminSectionIosBody =>
+      'The iOS app signs in with Apple and sells subscriptions through the App Store for the bundle ID set here.';
+
+  @override
+  String get adminAppleBundleId => 'iOS bundle ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'The iOS app\'s bundle ID, such as com.balnana.app. It turns on Sign in with Apple in that app and, with billing, App Store subscriptions.';
+
+  @override
+  String get adminAppStoreSandbox => 'Accept App Store sandbox purchases';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Also take purchases from the App Store sandbox, where TestFlight, Xcode and App Review buy without paying. Needed while Apple reviews the app.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'App Store Server Notifications V2 URL, for App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Change or cancel it in the App Store';
+
+  @override
+  String get planAppStoreFailed => 'The App Store couldn\'t complete the purchase.';
+
+  @override
+  String get planAppStorePending =>
+      'The purchase is waiting for approval. The plan starts once it\'s approved.';
+
+  @override
+  String get planAppStoreUnavailable => 'Couldn\'t reach the App Store. Try again later.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Payment is charged to your Apple ID when you confirm. The subscription renews automatically unless you cancel it at least 24 hours before the end of the current period. Manage or cancel it in your App Store account settings.';
+
+  @override
+  String get planRestore => 'Restore purchases';
+
+  @override
+  String get planRestoreHelp => 'Bring back a subscription bought with this Apple ID';
+
+  @override
+  String get planRestoreNone => 'No subscription to restore on this Apple ID.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'The App Store doesn\'t recognize this purchase.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'This subscription belongs to another account. Sign in to that one, or cancel it in the App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Sign in with Apple didn\'t finish. Try again.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'An App Store subscription doesn\'t end with your account. Cancel it in the App Store first.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'As written in App Store Connect, for an auto-renewable subscription. The App Store says when each payment ends, so there are no days to set.';
 }

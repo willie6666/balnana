@@ -6,6 +6,7 @@ import 'core/l10n.dart';
 import 'core/router.dart';
 import 'core/settings.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/app_store_purchases.dart';
 import 'ui/widgets/home_screen_sync.dart';
 import 'ui/widgets/offline_bar.dart';
 import 'ui/widgets/play_purchases.dart';
@@ -39,8 +40,10 @@ class BalnanaApp extends ConsumerWidget {
           builder: (context, child) => WallpaperColors(
             on: wallpaper && settings.wallpaperGroups,
             child: PlayPurchases(
-              child: PushHandler(
-                child: HomeScreenSync(child: OfflineBar(child: child ?? const SizedBox())),
+              child: AppStorePurchases(
+                child: PushHandler(
+                  child: HomeScreenSync(child: OfflineBar(child: child ?? const SizedBox())),
+                ),
               ),
             ),
           ),

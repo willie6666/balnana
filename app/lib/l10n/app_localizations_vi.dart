@@ -3678,4 +3678,73 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Điều khoản dịch vụ của bạn, được liên kết ở nơi mọi người đăng ký và mua gói. Nếu để trống, ứng dụng sẽ không hiển thị điều khoản.';
+
+  @override
+  String get adminSectionIos => 'Ứng dụng iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'Ứng dụng iOS đăng nhập bằng Apple và bán gói đăng ký qua App Store cho Bundle ID đặt ở đây.';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Bundle ID của ứng dụng iOS, ví dụ com.balnana.app. Nó bật Đăng nhập bằng Apple trong ứng dụng đó và, khi bật thanh toán, bật gói đăng ký App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Chấp nhận giao dịch sandbox của App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Chấp nhận cả giao dịch từ sandbox của App Store, nơi TestFlight, Xcode và đội xét duyệt ứng dụng mua mà không trả tiền. Cần bật khi Apple đang xét duyệt ứng dụng.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL App Store Server Notifications V2 cho App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Thay đổi hoặc hủy trong App Store';
+
+  @override
+  String get planAppStoreFailed => 'App Store không thể hoàn tất giao dịch.';
+
+  @override
+  String get planAppStorePending => 'Giao dịch đang chờ phê duyệt. Gói sẽ bắt đầu khi được duyệt.';
+
+  @override
+  String get planAppStoreUnavailable => 'Không thể kết nối App Store. Hãy thử lại sau.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Khoản thanh toán được tính vào Apple ID của bạn khi xác nhận. Gói đăng ký tự động gia hạn trừ khi bạn hủy ít nhất 24 giờ trước khi kỳ hiện tại kết thúc. Quản lý hoặc hủy trong cài đặt tài khoản App Store.';
+
+  @override
+  String get planRestore => 'Khôi phục giao dịch';
+
+  @override
+  String get planRestoreHelp => 'Lấy lại gói đăng ký đã mua bằng Apple ID này';
+
+  @override
+  String get planRestoreNone => 'Không có gói đăng ký nào để khôi phục trên Apple ID này.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store không nhận ra giao dịch này.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Gói đăng ký này thuộc tài khoản khác. Hãy đăng nhập tài khoản đó, hoặc hủy trong App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Đăng nhập bằng Apple chưa hoàn tất. Hãy thử lại.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Gói đăng ký App Store không kết thúc cùng tài khoản của bạn. Hãy hủy trong App Store trước.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Như ghi trong App Store Connect, cho gói đăng ký tự động gia hạn. App Store cho biết khi nào mỗi khoản thanh toán kết thúc, nên không cần đặt số ngày.';
 }

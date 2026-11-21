@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Prendre en photo un reçu pour le joindre à une dépense.";
+"NSLocalNetworkUsageDescription" = "Se connecter à un serveur Balnana hébergé sur votre réseau local.";
+"NSLocationWhenInUseUsageDescription" = "Utiliser votre position actuelle quand vous choisissez d'épingler une dépense sur la carte.";
+"NSPhotoLibraryUsageDescription" = "Choisir une photo de reçu à joindre à une dépense.";

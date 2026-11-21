@@ -53,10 +53,14 @@ type Server struct {
 // administrator can change them while the server runs (see admin.go), so
 // handlers read them once per use through Server.conf and friends.
 type settings struct {
-	cfg    *config.Config
-	mail   mail.Sender // nil when the server has no email
-	oauth  map[string]*oauthProvider
-	play   *playClient   // nil when the server sells nothing through Google Play
+	cfg   *config.Config
+	mail  mail.Sender // nil when the server has no email
+	oauth map[string]*oauthProvider
+	play  *playClient // nil when the server sells nothing through Google Play
+	// appStore is nil without the iOS app's bundle ID.
+	appStore *appStoreClient
+	// apple signs in from the iOS app; nil without its bundle ID or accounts.
+	apple  *oauthProvider
 	paypal *paypalClient // nil when the server takes no PayPal payments
 }
 
@@ -101,6 +105,8 @@ func (s *Server) apply(cfg *config.Config) {
 	}
 	st.play = newPlayClient(cfg, strings.TrimSuffix(cfg.PublicURL.String(), "/")+playPath)
 	st.paypal = newPayPalClient(cfg)
+	st.appStore = newAppStoreClient(cfg)
+	st.apple = newAppleProvider(cfg)
 	s.settings.Store(st)
 }
 
@@ -176,6 +182,10 @@ func (s *Server) GetServerInfo(ctx context.Context, _ GetServerInfoRequestObject
 	if accounts {
 		for _, p := range cfg.OAuthProviders() {
 			info.OauthProviders = append(info.OauthProviders, OAuthProvider{Id: p.ID, Name: p.Name})
+		}
+		if st.apple != nil {
+			apple := true
+			info.AppleSignIn = &apple
 		}
 	}
 	return GetServerInfo200JSONResponse(info), nil

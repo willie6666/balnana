@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Haz una foto del recibo para adjuntarla a un gasto.";
+"NSLocalNetworkUsageDescription" = "Conectarse a un servidor de Balnana alojado en tu red local.";
+"NSLocationWhenInUseUsageDescription" = "Usar tu ubicación actual cuando decides marcar un gasto en el mapa.";
+"NSPhotoLibraryUsageDescription" = "Elige una foto del recibo para adjuntarla a un gasto.";

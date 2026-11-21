@@ -132,7 +132,7 @@ a kimono rental booked in dollars. Here is how that looks in Balnana.
 - One Docker Compose file, a PostgreSQL database and a web page for
   administering the server.
 - Optional plans, if you run a server for others: limits on what it stores,
-  with Ko-fi, PayPal or Google Play payments. Off by default.
+  with Ko-fi, PayPal, Google Play or App Store payments. Off by default.
 - A Material 3 app with light and dark themes and, if you like, your
   wallpaper's colors.
 
@@ -214,10 +214,32 @@ address or an HTTPS server when testing on an iPhone.
 
 For a physical device, run `flutter build ios --config-only --no-codesign`
 from `app/`. Open `app/ios/Runner.xcworkspace`, select a signing team for
-Runner, and run the `foss` scheme. External payment links are off by default
-on iOS. The iOS target currently covers the core expense flows and uses
-the server's existing mobile sign-in callback. Push notifications, home
-screen widgets and Google Play Billing are available on Android.
+Runner, and run the `foss` scheme. Push notifications and home screen
+widgets are available on Android only.
+
+#### App Store
+
+The iOS app sells plans through In-App Purchase (StoreKit 2) and never links
+to paying elsewhere, whatever `BALNANA_EXTERNAL_PAYMENTS` says. It signs in
+with Apple natively, and with Google or OpenID Connect in an
+`ASWebAuthenticationSession` sheet. To ship it:
+
+1. In the Apple Developer portal, register the bundle ID (`com.balnana.app`)
+   with the **Sign in with Apple** and **In-App Purchase** capabilities.
+2. In App Store Connect, create the app and an auto-renewable subscription
+   group with its products, and set App Store Server Notifications
+   (Version 2) for production and sandbox to
+   `<BALNANA_PUBLIC_URL>/api/v1/webhooks/appstore`.
+3. On the server, set `BALNANA_APPLE_BUNDLE_ID`, enable billing, and on the
+   admin page map each product ID to a plan under **App Store**. Turn on
+   `BALNANA_APPSTORE_SANDBOX` while the app is in review: App Review buys in
+   the sandbox against the production server.
+4. Build with `scripts/build-ipa.sh`, which bakes in `SERVER_URL` so
+   reviewers don't have to type a server, and upload the IPA with
+   Transporter. Give App Review a demo account in the review notes.
+
+`app/ios/Runner/PrivacyInfo.xcprivacy` lists what the app collects for its
+server; answer App Store Connect's privacy questions the same way.
 
 ## F-Droid
 

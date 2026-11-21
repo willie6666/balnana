@@ -49,6 +49,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	})
 	mux.HandleFunc("POST "+BasePath+"/webhooks/kofi", s.KofiWebhook)
 	mux.HandleFunc("POST "+BasePath+"/webhooks/play", s.PlayWebhook)
+	mux.HandleFunc("POST "+appStorePath, s.AppStoreWebhook)
 	mux.HandleFunc("POST "+paypalPath, s.PayPalWebhook)
 	mux.HandleFunc("GET "+paypalReturnPath, s.PayPalReturn)
 	mux.HandleFunc("GET /healthz", s.Healthz)

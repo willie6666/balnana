@@ -3691,4 +3691,73 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Ketentuan layanan Anda, ditautkan di tempat orang mendaftar dan membeli paket. Jika dikosongkan, aplikasi tidak menampilkan ketentuan.';
+
+  @override
+  String get adminSectionIos => 'Aplikasi iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'Aplikasi iOS masuk dengan Apple dan menjual langganan lewat App Store untuk bundle ID yang diatur di sini.';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Bundle ID aplikasi iOS, misalnya com.balnana.app. Ini mengaktifkan Masuk dengan Apple di aplikasi tersebut dan, dengan penagihan, langganan App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Terima pembelian sandbox App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Terima juga pembelian dari sandbox App Store, tempat TestFlight, Xcode, dan peninjauan aplikasi membeli tanpa membayar. Diperlukan selama Apple meninjau aplikasi.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL App Store Server Notifications V2 untuk App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Ubah atau batalkan di App Store';
+
+  @override
+  String get planAppStoreFailed => 'App Store tidak dapat menyelesaikan pembelian.';
+
+  @override
+  String get planAppStorePending => 'Pembelian menunggu persetujuan. Paket dimulai setelah disetujui.';
+
+  @override
+  String get planAppStoreUnavailable => 'Tidak dapat menjangkau App Store. Coba lagi nanti.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Pembayaran ditagihkan ke Apple ID Anda saat dikonfirmasi. Langganan diperpanjang otomatis kecuali dibatalkan paling lambat 24 jam sebelum periode saat ini berakhir. Kelola atau batalkan di pengaturan akun App Store Anda.';
+
+  @override
+  String get planRestore => 'Pulihkan pembelian';
+
+  @override
+  String get planRestoreHelp => 'Kembalikan langganan yang dibeli dengan Apple ID ini';
+
+  @override
+  String get planRestoreNone => 'Tidak ada langganan untuk dipulihkan di Apple ID ini.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store tidak mengenali pembelian ini.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Langganan ini milik akun lain. Masuk ke akun itu, atau batalkan di App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Masuk dengan Apple tidak selesai. Coba lagi.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Langganan App Store tidak berakhir bersama akun Anda. Batalkan dulu di App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Seperti tertulis di App Store Connect, untuk langganan yang diperpanjang otomatis. App Store menyebutkan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
 }

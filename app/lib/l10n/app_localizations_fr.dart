@@ -3785,4 +3785,74 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Vos conditions d’utilisation, affichées à l’inscription et à l’achat d’une formule. Si ce champ est vide, l’application n’affiche aucune condition.';
+
+  @override
+  String get adminSectionIos => 'App iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'L\'app iOS se connecte avec Apple et vend des abonnements via l\'App Store pour l\'identifiant de bundle indiqué ici.';
+
+  @override
+  String get adminAppleBundleId => 'Identifiant de bundle iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'L\'identifiant de bundle de l\'app iOS, par exemple com.balnana.app. Il active « Se connecter avec Apple » dans cette app et, avec la facturation, les abonnements App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Accepter les achats sandbox de l\'App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Accepte aussi les achats de la sandbox de l\'App Store, où TestFlight, Xcode et l\'examen des apps achètent sans payer. Nécessaire pendant qu\'Apple examine l\'app.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL des App Store Server Notifications V2, pour App Store Connect : $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Modifier ou annuler dans l\'App Store';
+
+  @override
+  String get planAppStoreFailed => 'L\'App Store n\'a pas pu finaliser l\'achat.';
+
+  @override
+  String get planAppStorePending =>
+      'L\'achat attend une approbation. La formule démarre dès qu\'il est approuvé.';
+
+  @override
+  String get planAppStoreUnavailable => 'Impossible de joindre l\'App Store. Réessayez plus tard.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Le paiement est débité sur votre identifiant Apple à la confirmation. L\'abonnement se renouvelle automatiquement, sauf si vous l\'annulez au moins 24 heures avant la fin de la période en cours. Gérez-le ou annulez-le dans les réglages de votre compte App Store.';
+
+  @override
+  String get planRestore => 'Restaurer les achats';
+
+  @override
+  String get planRestoreHelp => 'Récupérer un abonnement acheté avec cet identifiant Apple';
+
+  @override
+  String get planRestoreNone => 'Aucun abonnement à restaurer sur cet identifiant Apple.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'L\'App Store ne reconnaît pas cet achat.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Cet abonnement appartient à un autre compte. Connectez-vous à celui-ci, ou annulez-le dans l\'App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'La connexion avec Apple n\'a pas abouti. Réessayez.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Un abonnement App Store ne prend pas fin avec votre compte. Annulez-le d\'abord dans l\'App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Tel qu\'indiqué dans App Store Connect, pour un abonnement à renouvellement automatique. L\'App Store indique quand chaque paiement prend fin : il n\'y a pas de jours à définir.';
 }

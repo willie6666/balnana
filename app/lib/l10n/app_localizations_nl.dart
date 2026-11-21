@@ -3724,4 +3724,73 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Je servicevoorwaarden, gelinkt waar mensen zich aanmelden en een abonnement nemen. Als je dit leeg laat, toont de app geen voorwaarden.';
+
+  @override
+  String get adminSectionIos => 'iOS-app';
+
+  @override
+  String get adminSectionIosBody =>
+      'De iOS-app logt in met Apple en verkoopt abonnementen via de App Store voor de bundle-ID die hier is ingesteld.';
+
+  @override
+  String get adminAppleBundleId => 'iOS-bundle-ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'De bundle-ID van de iOS-app, zoals com.balnana.app. Hiermee gaat \'Log in met Apple\' aan in die app en, met facturering, App Store-abonnementen.';
+
+  @override
+  String get adminAppStoreSandbox => 'Sandboxaankopen uit de App Store accepteren';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Accepteer ook aankopen uit de App Store-sandbox, waar TestFlight, Xcode en App Review kopen zonder te betalen. Nodig zolang Apple de app beoordeelt.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL voor App Store Server Notifications V2, voor App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Wijzig of annuleer het in de App Store';
+
+  @override
+  String get planAppStoreFailed => 'De App Store kon de aankoop niet voltooien.';
+
+  @override
+  String get planAppStorePending => 'De aankoop wacht op goedkeuring. Het abonnement begint zodra die er is.';
+
+  @override
+  String get planAppStoreUnavailable => 'Kan de App Store niet bereiken. Probeer het later opnieuw.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'De betaling wordt bij bevestiging via je Apple ID afgeschreven. Het abonnement wordt automatisch verlengd, tenzij je het minstens 24 uur voor het einde van de huidige periode opzegt. Beheer of annuleer het in je App Store-accountinstellingen.';
+
+  @override
+  String get planRestore => 'Aankopen herstellen';
+
+  @override
+  String get planRestoreHelp => 'Haal een abonnement terug dat met deze Apple ID is gekocht';
+
+  @override
+  String get planRestoreNone => 'Er is geen abonnement om te herstellen op deze Apple ID.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'De App Store herkent deze aankoop niet.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Dit abonnement hoort bij een ander account. Log daar in, of annuleer het in de App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Inloggen met Apple is niet afgerond. Probeer het opnieuw.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Een App Store-abonnement stopt niet met je account. Annuleer het eerst in de App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Zoals in App Store Connect staat, voor een automatisch verlengbaar abonnement. De App Store zegt wanneer elke betaling afloopt, dus er zijn geen dagen in te stellen.';
 }

@@ -646,6 +646,12 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       FormSection(l10n.adminSectionAndroid),
       _note(l10n.adminSectionAndroidBody),
       _textField('BALNANA_ANDROID_CERT_SHA256', maxLines: 3),
+      FormSection(l10n.adminSectionIos),
+      _note(l10n.adminSectionIosBody),
+      _textField('BALNANA_APPLE_BUNDLE_ID', keyboard: TextInputType.url),
+      gap,
+      _note(l10n.adminAppStoreWebhook('$publicUrl$apiBasePath/webhooks/appstore')),
+      _toggle('BALNANA_APPSTORE_SANDBOX'),
     ];
   }
 

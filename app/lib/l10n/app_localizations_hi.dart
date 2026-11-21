@@ -3734,4 +3734,73 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'आपकी सेवा की शर्तें, जिनका लिंक साइन अप करने और प्लान खरीदने की जगह दिखता है। खाली छोड़ने पर app कोई शर्तें नहीं दिखाता।';
+
+  @override
+  String get adminSectionIos => 'iOS ऐप';
+
+  @override
+  String get adminSectionIosBody =>
+      'iOS ऐप यहाँ सेट किए गए बंडल ID के लिए Apple से साइन इन करता है और App Store से सदस्यताएँ बेचता है।';
+
+  @override
+  String get adminAppleBundleId => 'iOS बंडल ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS ऐप का बंडल ID, जैसे com.balnana.app. इससे उस ऐप में Apple से साइन इन चालू होता है और बिलिंग चालू होने पर App Store सदस्यताएँ भी।';
+
+  @override
+  String get adminAppStoreSandbox => 'App Store सैंडबॉक्स खरीद स्वीकार करें';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'App Store सैंडबॉक्स की खरीद भी स्वीकार करें, जहाँ TestFlight, Xcode और ऐप समीक्षा बिना भुगतान खरीदते हैं। Apple के ऐप की समीक्षा करते समय ज़रूरी है।';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'App Store Connect के लिए App Store Server Notifications V2 URL: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'App Store में बदलें या रद्द करें';
+
+  @override
+  String get planAppStoreFailed => 'App Store खरीद पूरी नहीं कर सका।';
+
+  @override
+  String get planAppStorePending => 'खरीद मंज़ूरी का इंतज़ार कर रही है। मंज़ूरी मिलते ही प्लान शुरू होगा।';
+
+  @override
+  String get planAppStoreUnavailable => 'App Store से कनेक्ट नहीं हो सका। बाद में फिर कोशिश करें।';
+
+  @override
+  String get planAppStoreRenewal =>
+      'पुष्टि करने पर भुगतान आपके Apple ID से लिया जाता है। मौजूदा अवधि खत्म होने से कम से कम 24 घंटे पहले रद्द न करने पर सदस्यता अपने आप नवीनीकृत हो जाती है। इसे अपनी App Store खाता सेटिंग में प्रबंधित या रद्द करें।';
+
+  @override
+  String get planRestore => 'खरीदारी बहाल करें';
+
+  @override
+  String get planRestoreHelp => 'इस Apple ID से खरीदी गई सदस्यता वापस लाएँ';
+
+  @override
+  String get planRestoreNone => 'इस Apple ID पर बहाल करने के लिए कोई सदस्यता नहीं है।';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store इस खरीद को नहीं पहचानता।';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'यह सदस्यता किसी दूसरे खाते की है। उस खाते में साइन इन करें, या App Store में इसे रद्द करें।';
+
+  @override
+  String get signInWithAppleFailed => 'Apple से साइन इन पूरा नहीं हुआ। फिर कोशिश करें।';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'App Store सदस्यता आपके खाते के साथ खत्म नहीं होती। पहले App Store में इसे रद्द करें।';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'जैसा App Store Connect में स्वतः-नवीनीकृत सदस्यता के लिए लिखा है। हर भुगतान कब खत्म होता है यह App Store बताता है, इसलिए दिन सेट नहीं करने होते।';
 }

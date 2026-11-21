@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/app_store.dart';
 import '../../core/errors.dart';
 import '../../core/google_play.dart';
 import '../../core/l10n.dart';
@@ -12,6 +13,7 @@ import '../../data/api.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/app_store_purchases.dart';
 import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/page.dart';
@@ -60,6 +62,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   bool _askedPlay = false;
   bool _playFailed = false;
 
+  /// The same for the App Store.
+  List<AppStoreOffer> _storeOffers = const [];
+  bool _askedAppStore = false;
+  bool _appStoreFailed = false;
+
   /// Whether a PayPal page was opened, so the plan is looked at again when
   /// the payer comes back.
   bool _checkedOut = false;
@@ -72,6 +79,8 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     ref.listenManual(myPlanProvider, fireImmediately: true, (_, next) {
       final play = next.value?.play;
       if (play != null && !_askedPlay) _loadPlay(play);
+      final appStore = next.value?.appStore;
+      if (appStore != null && !_askedAppStore) _loadAppStore(appStore);
     });
     _lifecycle = AppLifecycleListener(onShow: _cameBack);
     if (widget.paypal != null) WidgetsBinding.instance.addPostFrameCallback((_) => _tellPayPal());
@@ -179,6 +188,82 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     if (mounted) setState(() => _buying = false);
   }
 
+  Future<void> _loadAppStore(AppStoreBilling billing) async {
+    _askedAppStore = true;
+    final store = ref.read(appStoreProvider);
+    final api = ref.read(balnanaApiProvider);
+    try {
+      final offers = await store.offers(billing.products);
+      if (mounted) {
+        setState(() {
+          _storeOffers = offers;
+          _appStoreFailed = false;
+        });
+      }
+      // For a purchase that never reached the server, or a renewal on a server
+      // without Apple's notifications. What fails is tried on the next visit.
+      await _reportAppStore(api, await store.purchases());
+    } on AppStoreException {
+      if (mounted) setState(() => _appStoreFailed = true);
+    } on ApiException {
+      return;
+    }
+  }
+
+  void _retryAppStore(AppStoreBilling billing) {
+    setState(() => _appStoreFailed = false);
+    _loadAppStore(billing);
+  }
+
+  /// Tells the server about App Store transactions, and returns whether any
+  /// gave a plan.
+  Future<bool> _reportAppStore(BalnanaApi? api, List<String> signed) async {
+    if (signed.isEmpty || api == null) return false;
+    try {
+      return await reportAppStorePurchases(api, signed);
+    } finally {
+      if (mounted) ref.invalidate(myPlanProvider);
+    }
+  }
+
+  Future<void> _buyAppStore(AppStoreOffer offer, AppStoreBilling billing) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final store = ref.read(appStoreProvider);
+    final api = ref.read(balnanaApiProvider);
+    void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
+    setState(() => _buying = true);
+    try {
+      final signed = await store.buy(offer, billing.accountToken);
+      if (signed.isNotEmpty && !await _reportAppStore(api, signed)) tell(l10n.planAppStoreFailed);
+    } on AppStoreException catch (e) {
+      tell(e.pending ? l10n.planAppStorePending : l10n.planAppStoreFailed);
+    } on ApiException catch (e) {
+      tell(errorMessage(l10n, e));
+    }
+    if (mounted) setState(() => _buying = false);
+  }
+
+  /// Asks Apple again what this Apple ID holds, as App Review expects a
+  /// restore button to.
+  Future<void> _restore() async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final store = ref.read(appStoreProvider);
+    final api = ref.read(balnanaApiProvider);
+    void tell(String message) => messenger.showSnackBar(SnackBar(content: Text(message)));
+    setState(() => _buying = true);
+    try {
+      final held = await store.purchases(sync: true);
+      if (held.isEmpty || !await _reportAppStore(api, held)) tell(l10n.planRestoreNone);
+    } on AppStoreException {
+      tell(l10n.planAppStoreUnavailable);
+    } on ApiException catch (e) {
+      tell(errorMessage(l10n, e));
+    }
+    if (mounted) setState(() => _buying = false);
+  }
+
   Future<void> _open(Uri url) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
@@ -243,6 +328,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final held = play?.held ?? const <String>[];
     // A second subscription would pay twice for one plan.
     final offers = held.isNotEmpty ? const <PlayOffer>[] : _offers;
+    final appStore = plan.appStore;
+    final storeOffers = [
+      for (final offer in _storeOffers)
+        if (!(appStore?.subscribed.contains(offer.productId) ?? false)) offer,
+    ];
     final paypal = externalPayments ? plan.paypal : null;
     final paypalOffers = [
       for (final offer in paypal?.offers ?? const <PayPalOffer>[])
@@ -276,6 +366,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                     'package': play.packageName,
                   }),
                 ),
+              ),
+            if (appStore != null && appStore.subscribed.isNotEmpty)
+              GroupedTile(
+                icon: Icons.manage_accounts_outlined,
+                title: l10n.planPlayManage,
+                subtitle: l10n.planAppStoreManageHelp,
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => _open(Uri.https('apps.apple.com', '/account/subscriptions')),
               ),
             if (paypal != null && paypal.subscribed.isNotEmpty)
               GroupedTile(
@@ -326,7 +424,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
         ),
         if (plan.comparison case final comparison? when comparison.plans.length > 1)
           PlanComparisonTable(comparison: comparison),
-        if (offers.isNotEmpty || paypalOffers.isNotEmpty || kofi != null || (_playFailed && held.isEmpty))
+        if (offers.isNotEmpty ||
+            paypalOffers.isNotEmpty ||
+            kofi != null ||
+            (_playFailed && held.isEmpty) ||
+            appStore != null)
           GroupedList(
             title: l10n.planGet,
             children: [
@@ -346,6 +448,30 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                     null => offer.price,
                   },
                   onTap: _buying ? null : () => _buy(offer, play!),
+                ),
+              if (_appStoreFailed)
+                GroupedTile(
+                  icon: Icons.cloud_off_outlined,
+                  title: l10n.planAppStoreUnavailable,
+                  subtitle: l10n.commonRetry,
+                  onTap: () => _retryAppStore(appStore!),
+                ),
+              for (final offer in storeOffers)
+                GroupedTile(
+                  icon: Icons.shop_outlined,
+                  title: offer.name,
+                  subtitle: switch (offer.months) {
+                    final months? => l10n.planPlayPrice(months, offer.price),
+                    null => offer.price,
+                  },
+                  onTap: _buying ? null : () => _buyAppStore(offer, appStore!),
+                ),
+              if (appStore != null)
+                GroupedTile(
+                  icon: Icons.restore,
+                  title: l10n.planRestore,
+                  subtitle: l10n.planRestoreHelp,
+                  onTap: _buying ? null : _restore,
                 ),
               for (final offer in paypalOffers)
                 GroupedTile(
@@ -382,7 +508,27 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => openTermsOfService(context, ref),
                 ),
+              // Apple wants the privacy policy next to what is sold, too.
+              if (storeOffers.isNotEmpty)
+                GroupedTile(
+                  icon: Icons.privacy_tip_outlined,
+                  title: l10n.privacyTitle,
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => openPrivacyPolicy(context, ref),
+                ),
             ],
+          ),
+        // How an auto-renewing subscription is charged, as Apple asks to say
+        // where it is sold.
+        if (storeOffers.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
+            child: Text(
+              l10n.planAppStoreRenewal,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
       ],
     );

@@ -42,8 +42,9 @@ info:
     402 `plan_limit`, with the limit in `params` (`limit`, `max`). What exists
     already stays as it is, even past a limit. Ko-fi posts
     its payments as a form to /webhooks/kofi, PayPal its events to
-    /webhooks/paypal, and Google's Pub/Sub pushes Google Play's notifications
-    to /webhooks/play. PayPal sends the payer back from its checkout to
+    /webhooks/paypal, Google's Pub/Sub pushes Google Play's notifications
+    to /webhooks/play, and the App Store sends its Server Notifications V2
+    to /webhooks/appstore. PayPal sends the payer back from its checkout to
     /paypal/return, which redirects to the app. This contract leaves these
     out.
 
@@ -459,6 +460,33 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PlayPurchaseRequest"
+      responses:
+        "200":
+          description: The account's plan now
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /me/appstore/purchases:
+    post:
+      operationId: reportAppStorePurchase
+      summary: Tell the server of an App Store subscription
+      description: |
+        The app sends the transaction as StoreKit 2 hands it over, signed by
+        Apple, and the server checks that signature up to Apple's root rather
+        than taking the app's word. Reporting a transaction again changes
+        nothing, and a later one of the same subscription brings in its
+        renewal. `invalid_purchase` is a transaction that isn't Apple's, for
+        another app, or from the sandbox on a server that doesn't take those;
+        `appstore_other_account` is a purchase of another account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppStorePurchaseRequest"
       responses:
         "200":
           description: The account's plan now
@@ -924,6 +952,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /auth/apple:
+    post:
+      operationId: signInWithApple
+      summary: Sign in with Apple from the iOS app
+      description: >-
+        The iOS app signs in with Apple itself and sends the identity token
+        Apple gave it. Only while server-info says `appleSignIn`. The answer is
+        what /auth/oauth/{provider}/callback would put in the app's address: a
+        `code` to trade with the verifier at /auth/oauth/exchange, a
+        `pending` sign-in to ask about at /auth/oauth/pending, or with `link`
+        `linked` true. Errors are those of the callback, such as
+        `email_has_account` or `signup_closed`, and `invalid_token` for an
+        identity token that isn't Apple's, for another app, or for another
+        nonce.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppleSignInRequest"
+      responses:
+        "200":
+          description: Signed in, waiting for a choice, or linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppleSignIn"
         default:
           $ref: "#/components/responses/Error"
   /auth/invites/{inviteToken}:
@@ -3270,6 +3327,36 @@ components:
       properties:
         ticket:
           type: string
+    AppleSignInRequest:
+      type: object
+      required: [identityToken, nonce]
+      properties:
+        identityToken:
+          type: string
+          description: The JWT Apple handed the app.
+        nonce:
+          type: string
+          description: The random value whose SHA-256, in hex, the app gave Apple as the request's nonce.
+        challenge:
+          type: string
+          description: Base64url SHA-256 of a random verifier the app keeps. Required unless `link` is sent.
+        name:
+          type: string
+          description: The name Apple gave the app, which it does only the first time. Names a new account.
+        link:
+          type: string
+          description: >-
+            A ticket from POST /me/oauth/apple: the identity is added to the
+            signed-in account it was made for instead of signing in.
+    AppleSignIn:
+      type: object
+      properties:
+        code:
+          type: string
+        pending:
+          type: string
+        linked:
+          type: boolean
     OAuthExchange:
       type: object
       required: [code, verifier]
@@ -3423,6 +3510,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OAuthProvider"
+        appleSignIn:
+          type: boolean
+          description: >-
+            The iOS app can sign in with Apple (/auth/apple). Apple is not
+            among `oauthProviders`: only that app can use it. Its identities
+            are linked and unlinked as provider `apple`.
         linkGroups:
           type: boolean
           description: Groups may be opened by link alone. Always true in link mode.
@@ -3651,12 +3744,12 @@ components:
       properties:
         provider:
           type: string
-          enum: [kofi, play, paypal]
+          enum: [kofi, play, paypal, appstore]
         product:
           type: string
           description: >-
             A Ko-fi shop item's code (the end of its link), a Google Play
-            product id, or for PayPal a name for a one-off payment or a
+            or App Store product id, or for PayPal a name for a one-off payment or a
             subscription plan's ID ("P-..."). Empty for Ko-fi: any tip of at
             least `minAmount` in `currency`.
         planId:
@@ -3664,7 +3757,7 @@ components:
         days:
           type: integer
           minimum: 1
-          description: How long one payment lasts. Google Play and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
+          description: How long one payment lasts. Google Play, App Store and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
         minAmount:
           type: string
           description: A decimal number, such as "3.00". What a one-off PayPal payment costs.
@@ -3707,7 +3800,7 @@ components:
           type: string
         source:
           type: string
-          enum: [admin, kofi, play, paypal]
+          enum: [admin, kofi, play, paypal, appstore]
         note:
           type: string
         startsAt:
@@ -3754,7 +3847,7 @@ components:
           type: string
         provider:
           type: string
-          enum: [kofi, play, paypal]
+          enum: [kofi, play, paypal, appstore]
         kind:
           type: string
           description: >-
@@ -3859,6 +3952,8 @@ components:
           description: Whether groups this account sponsors can send payment reminders as notifications.
         play:
           $ref: "#/components/schemas/PlayBilling"
+        appStore:
+          $ref: "#/components/schemas/AppStoreBilling"
         paypal:
           $ref: "#/components/schemas/PayPalBilling"
         comparison:
@@ -3951,6 +4046,31 @@ components:
           description: Products whose subscription Google has held back or paused. They are still the account's, and buying again could charge twice.
           items:
             type: string
+    AppStoreBilling:
+      type: object
+      description: What can be bought through the App Store. Left out when nothing can.
+      required: [accountToken, products, subscribed]
+      properties:
+        accountToken:
+          type: string
+          description: Give StoreKit this as the purchase's appAccountToken, so that it reaches this account.
+        products:
+          type: array
+          description: Auto-renewable subscription product ids.
+          items:
+            type: string
+        subscribed:
+          type: array
+          description: The products the account has a subscription to.
+          items:
+            type: string
+    AppStorePurchaseRequest:
+      type: object
+      required: [signedTransaction]
+      properties:
+        signedTransaction:
+          type: string
+          description: The transaction's JWS, StoreKit 2's jsonRepresentation.
     PlayPurchaseRequest:
       type: object
       required: [purchaseToken]
