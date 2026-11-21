@@ -8,8 +8,10 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let messenger = engineBridge.applicationRegistrar.messenger()
+    DeviceStorage.register(with: messenger)
     let channel = FlutterMethodChannel(
-      name: "balnana/location", binaryMessenger: engineBridge.applicationRegistrar.messenger()
+      name: "balnana/location", binaryMessenger: messenger
     )
     channel.setMethodCallHandler { [expenseLocation] call, result in
       guard call.method == "current" else {
@@ -22,7 +24,7 @@ import UIKit
 }
 
 /// One foreground fix, requested only when the expense editor asks for it.
-private final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
+final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
   private lazy var manager: CLLocationManager = {
     let manager = CLLocationManager()
     manager.delegate = self
@@ -31,7 +33,7 @@ private final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
   }()
   private var reply: FlutterResult?
   private var timeout: Timer?
-  private var locating = false
+  private var startedAt: Date?
 
   func current(_ result: @escaping FlutterResult) {
     guard reply == nil else {
@@ -52,8 +54,8 @@ private final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
     guard reply != nil else { return }
     switch manager.authorizationStatus {
     case .authorizedAlways, .authorizedWhenInUse:
-      guard !locating else { return }
-      locating = true
+      guard startedAt == nil else { return }
+      startedAt = Date()
       wait(upTo: 15)
       manager.startUpdatingLocation()
     case .denied, .restricted:
@@ -66,8 +68,15 @@ private final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    guard let location = locations.last, location.horizontalAccuracy >= 0 else { return }
+    guard let startedAt, let location = Self.currentFix(in: locations, since: startedAt) else {
+      return
+    }
     finish(["latitude": location.coordinate.latitude, "longitude": location.coordinate.longitude])
+  }
+
+  static func currentFix(in locations: [CLLocation], since start: Date) -> CLLocation? {
+    // Core Location can deliver an old cached fix before measuring a new one.
+    locations.last { $0.timestamp >= start && $0.horizontalAccuracy >= 0 }
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError failure: Error) {
@@ -107,9 +116,9 @@ private final class ExpenseLocation: NSObject, CLLocationManagerDelegate {
   private func takeReply() -> FlutterResult? {
     timeout?.invalidate()
     timeout = nil
-    if locating {
+    if startedAt != nil {
       manager.stopUpdatingLocation()
-      locating = false
+      startedAt = nil
     }
     defer { reply = nil }
     return reply

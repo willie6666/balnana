@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/autofill_io.dart' if (dart.library.js_interop) 'core/autofill_web.dart';
 import 'core/home_screen.dart';
+import 'core/ios_storage.dart';
 import 'core/l10n.dart';
 import 'core/offline_cache.dart';
 import 'core/prefs.dart';
@@ -35,6 +36,10 @@ Future<void> main(List<String> args) async {
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   watchAutofill();
   useLatinDigits();
+  final iosTokens = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
+      ? await IosSessionTokens.load()
+      : null;
+  if (iosTokens != null) await prepareIosOfflineDatabase();
   final prefs = await SharedPreferences.getInstance();
   final launched = await launchedFromNotification();
   // Also for a choice made before the splash screen followed it.
@@ -46,6 +51,7 @@ Future<void> main(List<String> args) async {
       retry: (retryCount, error) => null,
       overrides: [
         prefsProvider.overrideWithValue(prefs),
+        if (iosTokens != null) iosSessionTokensProvider.overrideWithValue(iosTokens),
         launchTargetProvider.overrideWithValue(launched),
         // Show what was saved while the server is asked. Not on the web,
         // where a signed-in session is a cookie the cache cannot tell apart.

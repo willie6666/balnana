@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:balnana/app.dart';
+import 'package:balnana/core/ios_storage.dart';
 import 'package:balnana/core/offline_cache.dart';
 import 'package:balnana/core/prefs.dart';
 import 'package:balnana/core/push.dart';
@@ -14,6 +15,7 @@ import 'package:balnana/data/live.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -353,6 +355,50 @@ void main() {
     expect(session.set('older', from: first), isFalse);
     expect(session.set(null, from: first), isFalse);
     expect(container.read(sessionProvider).token, 'newer');
+  });
+
+  test('an iOS session uses Keychain tokens and never writes them to preferences', () async {
+    const storage = MethodChannel('balnana/storage');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final tokens = {_a: 'secure-a', _b: 'secure-b'};
+    messenger.setMockMethodCallHandler(storage, (call) async {
+      switch (call.method) {
+        case 'sessionTokens':
+          return tokens;
+        case 'setSessionToken':
+          final server = call.arguments as Map<Object?, Object?>;
+          final url = server['server'] as String;
+          if (server['token'] case final String token) {
+            tokens[url] = token;
+          } else {
+            tokens.remove(url);
+          }
+          return null;
+        default:
+          fail('Unexpected storage call: ${call.method}');
+      }
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(storage, null));
+
+    SharedPreferences.setMockInitialValues({'settings.server': _a});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        prefsProvider.overrideWithValue(prefs),
+        iosSessionTokensProvider.overrideWithValue(await IosSessionTokens.load()),
+        cacheDbProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    expect(container.read(sessionProvider).token, 'secure-a');
+    expect(session.set('updated-a', from: container.read(identityProvider)), isTrue);
+    expect(session.set(null, from: container.read(identityProvider)), isTrue);
+    container.read(settingsProvider.notifier).setServerUrl(_b);
+    expect(container.read(sessionProvider).token, 'secure-b');
+    await Future<void>.delayed(Duration.zero);
+    expect(tokens, {_b: 'secure-b'});
+    expect(prefs.getString('session.tokens'), isNull);
   });
 
   test(

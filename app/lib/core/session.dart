@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'ios_storage.dart';
 import 'offline_cache.dart';
 import 'prefs.dart';
 import 'server.dart';
@@ -10,8 +12,9 @@ import 'server.dart';
 /// How this app is signed in to the current server.
 ///
 /// On mobile the server hands out a bearer token, kept on the device per
-/// server, in shared preferences. The same-origin web app uses an HttpOnly
-/// cookie and [token] stays null; a cross-origin web app keeps a bearer token.
+/// server, in Keychain on iOS and preferences on Android. The same-origin web
+/// app uses an HttpOnly cookie and leaves [token] null; a cross-origin web app
+/// keeps a bearer token.
 /// [generation] marks a sign-in or sign-out even when the cookie is unseen.
 @immutable
 class SessionKey {
@@ -49,7 +52,8 @@ class SessionNotifier extends Notifier<SessionKey> {
   @override
   SessionKey build() {
     _server = ref.watch(serverUrlProvider);
-    final token = _tokens()[_server];
+    final iosTokens = ref.watch(iosSessionTokensProvider);
+    final token = iosTokens == null ? _tokens()[_server] : iosTokens[_server];
     return SessionKey(
       token,
       ++_generation,
@@ -86,13 +90,17 @@ class SessionNotifier extends Notifier<SessionKey> {
         from.generation != state.generation) {
       return false;
     }
-    final tokens = _tokens();
-    if (token == null) {
-      tokens.remove(server);
+    if (ref.read(iosSessionTokensProvider) case final iosTokens?) {
+      unawaited(iosTokens.set(server, token));
     } else {
-      tokens[server] = token;
+      final tokens = _tokens();
+      if (token == null) {
+        tokens.remove(server);
+      } else {
+        tokens[server] = token;
+      }
+      ref.read(prefsProvider).setString(_key, jsonEncode(tokens));
     }
-    ref.read(prefsProvider).setString(_key, jsonEncode(tokens));
     // What the last account saw is not for the next one.
     ref.read(cacheDbProvider)?.switchAccount(server, cacheAccount(token)).ignore();
     if (token != null && userId != null) _rememberUser(server, token, userId);
