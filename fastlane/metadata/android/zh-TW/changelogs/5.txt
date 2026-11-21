@@ -1,0 +1,1 @@
+為 iPhone 版做準備：伺服器管理員現在可以在管理頁面設定 iOS App 的 Apple 登入與 App Store 方案。

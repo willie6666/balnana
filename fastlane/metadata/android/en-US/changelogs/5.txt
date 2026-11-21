@@ -1,0 +1,1 @@
+Getting ready for the iPhone app: server administrators can now set up Sign in with Apple and App Store plans for it on the admin page.

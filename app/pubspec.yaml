@@ -3,7 +3,7 @@ description: "Split group expenses: who paid what, who owes whom."
 publish_to: 'none'
 
 # versionName+versionCode on Android; --build-name and --build-number override them.
-version: 1.1.2+4
+version: 1.2.0+5
 
 environment:
   sdk: ^3.13.7
