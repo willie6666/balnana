@@ -3727,4 +3727,74 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'I tuoi termini di servizio, collegati dove le persone si registrano e acquistano un piano. Se il campo è vuoto, l\'app non mostra termini.';
+
+  @override
+  String get adminSectionIos => 'App iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'L\'app iOS accede con Apple e vende abbonamenti tramite l\'App Store per il bundle ID impostato qui.';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Il bundle ID dell\'app iOS, ad esempio com.balnana.app. Attiva «Accedi con Apple» in quell\'app e, con la fatturazione, gli abbonamenti App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Accetta acquisti sandbox dell\'App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Accetta anche gli acquisti dalla sandbox dell\'App Store, dove TestFlight, Xcode e la revisione delle app acquistano senza pagare. Necessario mentre Apple esamina l\'app.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL di App Store Server Notifications V2, per App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Modificalo o annullalo nell\'App Store';
+
+  @override
+  String get planAppStoreFailed => 'L\'App Store non è riuscito a completare l\'acquisto.';
+
+  @override
+  String get planAppStorePending =>
+      'L\'acquisto è in attesa di approvazione. Il piano inizia appena viene approvato.';
+
+  @override
+  String get planAppStoreUnavailable => 'Impossibile raggiungere l\'App Store. Riprova più tardi.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Il pagamento viene addebitato sul tuo ID Apple alla conferma. L\'abbonamento si rinnova automaticamente a meno che non venga annullato almeno 24 ore prima della fine del periodo in corso. Puoi gestirlo o annullarlo nelle impostazioni del tuo account App Store.';
+
+  @override
+  String get planRestore => 'Ripristina acquisti';
+
+  @override
+  String get planRestoreHelp => 'Recupera un abbonamento acquistato con questo ID Apple';
+
+  @override
+  String get planRestoreNone => 'Nessun abbonamento da ripristinare su questo ID Apple.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'L\'App Store non riconosce questo acquisto.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Questo abbonamento appartiene a un altro account. Accedi a quello, oppure annullalo nell\'App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'L\'accesso con Apple non è stato completato. Riprova.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Un abbonamento App Store non termina con il tuo account. Annullalo prima nell\'App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Come indicato in App Store Connect, per un abbonamento a rinnovo automatico. L\'App Store indica quando termina ogni pagamento, quindi non ci sono giorni da impostare.';
 }

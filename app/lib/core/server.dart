@@ -25,10 +25,11 @@ String? get defaultServerUrl {
 /// Whether this build may send people to pay outside an app store.
 ///
 /// The Android FOSS build enables these links by default. An explicit
-/// `BALNANA_EXTERNAL_PAYMENTS` overrides that default outside Google Play.
+/// `BALNANA_EXTERNAL_PAYMENTS` overrides that default outside Google Play
+/// and the App Store, which sells through In-App Purchase alone.
 bool get externalPayments => externalPaymentsFor(
   web: kIsWeb,
-  flavor: defaultTargetPlatform == TargetPlatform.iOS ? null : appFlavor,
+  flavor: defaultTargetPlatform == TargetPlatform.iOS ? 'appstore' : appFlavor,
   enabled: const bool.hasEnvironment('BALNANA_EXTERNAL_PAYMENTS')
       ? const bool.fromEnvironment('BALNANA_EXTERNAL_PAYMENTS')
       : null,
@@ -36,7 +37,7 @@ bool get externalPayments => externalPaymentsFor(
 
 /// Whether a distribution permits links to external payment providers.
 bool externalPaymentsFor({required bool web, required String? flavor, bool? enabled}) =>
-    web || (flavor != 'play' && (enabled ?? flavor == 'foss'));
+    web || (flavor != 'play' && flavor != 'appstore' && (enabled ?? flavor == 'foss'));
 
 /// Whether the session lives in [serverUrl]'s cookie: only in the web app it
 /// serves. A web app on another origin cannot use that cookie, so it keeps a
@@ -117,6 +118,7 @@ class ServerInfo {
     this.emailRequired = true,
     this.verifiedRequired = false,
     this.oauthProviders = const [],
+    this.appleSignIn = false,
     this.push = false,
     this.vapidPublicKey,
     required this.publicUrl,
@@ -162,6 +164,7 @@ class ServerInfo {
           for (final p in list)
             if (p case {'id': final String id, 'name': final String name}) OAuthProvider(id: id, name: name),
       ],
+      appleSignIn: json['appleSignIn'] == true,
       push: json['push'] == true,
       vapidPublicKey: switch (json['vapidPublicKey']) {
         final String key when key.isNotEmpty => key,
@@ -214,6 +217,10 @@ class ServerInfo {
 
   /// Google or OpenID Connect sign-in, as buttons on the sign-in page.
   final List<OAuthProvider> oauthProviders;
+
+  /// The iOS app can sign in with Apple. Apple is not among
+  /// [oauthProviders]: no other app or browser can use it.
+  final bool appleSignIn;
 
   /// The server sends push notifications.
   final bool push;

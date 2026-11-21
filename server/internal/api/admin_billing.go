@@ -115,7 +115,7 @@ func validateCatalog(c *PlanCatalog) error {
 			}
 		}
 		if !slices.Contains(ids, p.PlanId) || p.Days < 1 || p.Days > maxPlanDays ||
-			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal || p.WithoutTrial != nil && p.Provider != Paypal {
+			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal && p.Provider != Appstore || p.WithoutTrial != nil && p.Provider != Paypal {
 			return errInvalidPlan
 		}
 		if p.MinAmount != nil && !decimalAmount.MatchString(*p.MinAmount) || p.Currency != nil && !currencyCode.MatchString(*p.Currency) {

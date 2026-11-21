@@ -25,10 +25,11 @@ const (
 
 // Defines values for EntitlementSource.
 const (
-	EntitlementSourceAdmin  EntitlementSource = "admin"
-	EntitlementSourceKofi   EntitlementSource = "kofi"
-	EntitlementSourcePaypal EntitlementSource = "paypal"
-	EntitlementSourcePlay   EntitlementSource = "play"
+	EntitlementSourceAdmin    EntitlementSource = "admin"
+	EntitlementSourceAppstore EntitlementSource = "appstore"
+	EntitlementSourceKofi     EntitlementSource = "kofi"
+	EntitlementSourcePaypal   EntitlementSource = "paypal"
+	EntitlementSourcePlay     EntitlementSource = "play"
 )
 
 // Defines values for ExchangeRateSource.
@@ -75,9 +76,10 @@ const (
 
 // Defines values for PaymentProvider.
 const (
-	PaymentProviderKofi   PaymentProvider = "kofi"
-	PaymentProviderPaypal PaymentProvider = "paypal"
-	PaymentProviderPlay   PaymentProvider = "play"
+	PaymentProviderAppstore PaymentProvider = "appstore"
+	PaymentProviderKofi     PaymentProvider = "kofi"
+	PaymentProviderPaypal   PaymentProvider = "paypal"
+	PaymentProviderPlay     PaymentProvider = "play"
 )
 
 // Defines values for PaymentState.
@@ -90,9 +92,10 @@ const (
 
 // Defines values for PlanProductProvider.
 const (
-	Kofi   PlanProductProvider = "kofi"
-	Paypal PlanProductProvider = "paypal"
-	Play   PlanProductProvider = "play"
+	Appstore PlanProductProvider = "appstore"
+	Kofi     PlanProductProvider = "kofi"
+	Paypal   PlanProductProvider = "paypal"
+	Play     PlanProductProvider = "play"
 )
 
 // Defines values for RepeatUnit.
@@ -239,6 +242,49 @@ type AdminUserList struct {
 	// Total Accounts matching, of which at most 200 are listed.
 	Total int         `json:"total"`
 	Users []AdminUser `json:"users"`
+}
+
+// AppStoreBilling What can be bought through the App Store. Left out when nothing can.
+type AppStoreBilling struct {
+	// AccountToken Give StoreKit this as the purchase's appAccountToken, so that it reaches this account.
+	AccountToken string `json:"accountToken"`
+
+	// Products Auto-renewable subscription product ids.
+	Products []string `json:"products"`
+
+	// Subscribed The products the account has a subscription to.
+	Subscribed []string `json:"subscribed"`
+}
+
+// AppStorePurchaseRequest defines model for AppStorePurchaseRequest.
+type AppStorePurchaseRequest struct {
+	// SignedTransaction The transaction's JWS, StoreKit 2's jsonRepresentation.
+	SignedTransaction string `json:"signedTransaction"`
+}
+
+// AppleSignIn defines model for AppleSignIn.
+type AppleSignIn struct {
+	Code    *string `json:"code,omitempty"`
+	Linked  *bool   `json:"linked,omitempty"`
+	Pending *string `json:"pending,omitempty"`
+}
+
+// AppleSignInRequest defines model for AppleSignInRequest.
+type AppleSignInRequest struct {
+	// Challenge Base64url SHA-256 of a random verifier the app keeps. Required unless `link` is sent.
+	Challenge *string `json:"challenge,omitempty"`
+
+	// IdentityToken The JWT Apple handed the app.
+	IdentityToken string `json:"identityToken"`
+
+	// Link A ticket from POST /me/oauth/apple: the identity is added to the signed-in account it was made for instead of signing in.
+	Link *string `json:"link,omitempty"`
+
+	// Name The name Apple gave the app, which it does only the first time. Names a new account.
+	Name *string `json:"name,omitempty"`
+
+	// Nonce The random value whose SHA-256, in hex, the app gave Apple as the request's nonce.
+	Nonce string `json:"nonce"`
 }
 
 // Balances defines model for Balances.
@@ -825,6 +871,9 @@ type MonthStats struct {
 
 // MyPlan defines model for MyPlan.
 type MyPlan struct {
+	// AppStore What can be bought through the App Store. Left out when nothing can.
+	AppStore *AppStoreBilling `json:"appStore,omitempty"`
+
 	// Comparison Current, automatic and purchasable plans, without unrelated administrator-only plans or product mappings.
 	Comparison *PlanComparison `json:"comparison,omitempty"`
 
@@ -1108,14 +1157,14 @@ type PlanLimits struct {
 type PlanProduct struct {
 	Currency *string `json:"currency,omitempty"`
 
-	// Days How long one payment lasts. Google Play and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
+	// Days How long one payment lasts. Google Play, App Store and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
 	Days int `json:"days"`
 
 	// MinAmount A decimal number, such as "3.00". What a one-off PayPal payment costs.
 	MinAmount *string `json:"minAmount,omitempty"`
 	PlanId    string  `json:"planId"`
 
-	// Product A Ko-fi shop item's code (the end of its link), a Google Play product id, or for PayPal a name for a one-off payment or a subscription plan's ID ("P-..."). Empty for Ko-fi: any tip of at least `minAmount` in `currency`.
+	// Product A Ko-fi shop item's code (the end of its link), a Google Play or App Store product id, or for PayPal a name for a one-off payment or a subscription plan's ID ("P-..."). Empty for Ko-fi: any tip of at least `minAmount` in `currency`.
 	Product  string              `json:"product"`
 	Provider PlanProductProvider `json:"provider"`
 
@@ -1287,7 +1336,9 @@ type ServerBilling struct {
 
 // ServerInfo defines model for ServerInfo.
 type ServerInfo struct {
-	AuthMode ServerInfoAuthMode `json:"authMode"`
+	// AppleSignIn The iOS app can sign in with Apple (/auth/apple). Apple is not among `oauthProviders`: only that app can use it. Its identities are linked and unlinked as provider `apple`.
+	AppleSignIn *bool              `json:"appleSignIn,omitempty"`
+	AuthMode    ServerInfoAuthMode `json:"authMode"`
 
 	// Billing Present when the server charges for what it stores.
 	Billing *ServerBilling `json:"billing,omitempty"`
@@ -1833,6 +1884,9 @@ type AdminSetupJSONRequestBody = AdminSetupInput
 // GrantAdminEntitlementJSONRequestBody defines body for GrantAdminEntitlement for application/json ContentType.
 type GrantAdminEntitlementJSONRequestBody = EntitlementGrant
 
+// SignInWithAppleJSONRequestBody defines body for SignInWithApple for application/json ContentType.
+type SignInWithAppleJSONRequestBody = AppleSignInRequest
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginInput
 
@@ -1913,6 +1967,9 @@ type GetGroupSummariesJSONRequestBody = GroupSummaryRequest
 
 // UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
 type UpdateMeJSONRequestBody = UserUpdate
+
+// ReportAppStorePurchaseJSONRequestBody defines body for ReportAppStorePurchase for application/json ContentType.
+type ReportAppStorePurchaseJSONRequestBody = AppStorePurchaseRequest
 
 // DeleteMeJSONRequestBody defines body for DeleteMe for application/json ContentType.
 type DeleteMeJSONRequestBody = AccountDelete
@@ -2003,6 +2060,9 @@ type ServerInterface interface {
 	// Give the account a plan, for some days or for good
 	// (POST /admin/users/{userId}/entitlements)
 	GrantAdminEntitlement(w http.ResponseWriter, r *http.Request, userId string, params GrantAdminEntitlementParams)
+	// Sign in with Apple from the iOS app
+	// (POST /auth/apple)
+	SignInWithApple(w http.ResponseWriter, r *http.Request)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(w http.ResponseWriter, r *http.Request, inviteToken string)
@@ -2180,6 +2240,9 @@ type ServerInterface interface {
 
 	// (PATCH /me)
 	UpdateMe(w http.ResponseWriter, r *http.Request)
+	// Tell the server of an App Store subscription
+	// (POST /me/appstore/purchases)
+	ReportAppStorePurchase(w http.ResponseWriter, r *http.Request)
 	// Delete the signed-in account
 	// (POST /me/delete)
 	DeleteMe(w http.ResponseWriter, r *http.Request)
@@ -3016,6 +3079,28 @@ func (siw *ServerInterfaceWrapper) GrantAdminEntitlement(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GrantAdminEntitlement(w, r, userId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SignInWithApple operation middleware
+func (siw *ServerInterfaceWrapper) SignInWithApple(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SignInWithApple(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5796,6 +5881,28 @@ func (siw *ServerInterfaceWrapper) UpdateMe(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// ReportAppStorePurchase operation middleware
+func (siw *ServerInterfaceWrapper) ReportAppStorePurchase(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportAppStorePurchase(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteMe operation middleware
 func (siw *ServerInterfaceWrapper) DeleteMe(w http.ResponseWriter, r *http.Request) {
 
@@ -6394,6 +6501,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/admin/users/{userId}", wrapper.DeleteAdminUser)
 	m.HandleFunc("GET "+options.BaseURL+"/admin/users/{userId}/entitlements", wrapper.ListAdminEntitlements)
 	m.HandleFunc("POST "+options.BaseURL+"/admin/users/{userId}/entitlements", wrapper.GrantAdminEntitlement)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/apple", wrapper.SignInWithApple)
 	m.HandleFunc("GET "+options.BaseURL+"/auth/invites/{inviteToken}", wrapper.GetInvite)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc("POST "+options.BaseURL+"/auth/login/email-code", wrapper.EmailLoginCode)
@@ -6453,6 +6561,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
 	m.HandleFunc("GET "+options.BaseURL+"/me", wrapper.GetMe)
 	m.HandleFunc("PATCH "+options.BaseURL+"/me", wrapper.UpdateMe)
+	m.HandleFunc("POST "+options.BaseURL+"/me/appstore/purchases", wrapper.ReportAppStorePurchase)
 	m.HandleFunc("POST "+options.BaseURL+"/me/delete", wrapper.DeleteMe)
 	m.HandleFunc("POST "+options.BaseURL+"/me/email", wrapper.ChangeEmail)
 	m.HandleFunc("GET "+options.BaseURL+"/me/groups", wrapper.GetMyGroups)
@@ -6943,6 +7052,35 @@ type GrantAdminEntitlementdefaultJSONResponse struct {
 }
 
 func (response GrantAdminEntitlementdefaultJSONResponse) VisitGrantAdminEntitlementResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type SignInWithAppleRequestObject struct {
+	Body *SignInWithAppleJSONRequestBody
+}
+
+type SignInWithAppleResponseObject interface {
+	VisitSignInWithAppleResponse(w http.ResponseWriter) error
+}
+
+type SignInWithApple200JSONResponse AppleSignIn
+
+func (response SignInWithApple200JSONResponse) VisitSignInWithAppleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SignInWithAppledefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response SignInWithAppledefaultJSONResponse) VisitSignInWithAppleResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
 
@@ -8762,6 +8900,35 @@ func (response UpdateMedefaultJSONResponse) VisitUpdateMeResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type ReportAppStorePurchaseRequestObject struct {
+	Body *ReportAppStorePurchaseJSONRequestBody
+}
+
+type ReportAppStorePurchaseResponseObject interface {
+	VisitReportAppStorePurchaseResponse(w http.ResponseWriter) error
+}
+
+type ReportAppStorePurchase200JSONResponse MyPlan
+
+func (response ReportAppStorePurchase200JSONResponse) VisitReportAppStorePurchaseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReportAppStorePurchasedefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ReportAppStorePurchasedefaultJSONResponse) VisitReportAppStorePurchaseResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type DeleteMeRequestObject struct {
 	Body *DeleteMeJSONRequestBody
 }
@@ -9343,6 +9510,9 @@ type StrictServerInterface interface {
 	// Give the account a plan, for some days or for good
 	// (POST /admin/users/{userId}/entitlements)
 	GrantAdminEntitlement(ctx context.Context, request GrantAdminEntitlementRequestObject) (GrantAdminEntitlementResponseObject, error)
+	// Sign in with Apple from the iOS app
+	// (POST /auth/apple)
+	SignInWithApple(ctx context.Context, request SignInWithAppleRequestObject) (SignInWithAppleResponseObject, error)
 	// The invitation behind an invitation link
 	// (GET /auth/invites/{inviteToken})
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -9520,6 +9690,9 @@ type StrictServerInterface interface {
 
 	// (PATCH /me)
 	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// Tell the server of an App Store subscription
+	// (POST /me/appstore/purchases)
+	ReportAppStorePurchase(ctx context.Context, request ReportAppStorePurchaseRequestObject) (ReportAppStorePurchaseResponseObject, error)
 	// Delete the signed-in account
 	// (POST /me/delete)
 	DeleteMe(ctx context.Context, request DeleteMeRequestObject) (DeleteMeResponseObject, error)
@@ -10074,6 +10247,37 @@ func (sh *strictHandler) GrantAdminEntitlement(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GrantAdminEntitlementResponseObject); ok {
 		if err := validResponse.VisitGrantAdminEntitlementResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SignInWithApple operation middleware
+func (sh *strictHandler) SignInWithApple(w http.ResponseWriter, r *http.Request) {
+	var request SignInWithAppleRequestObject
+
+	var body SignInWithAppleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SignInWithApple(ctx, request.(SignInWithAppleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SignInWithApple")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SignInWithAppleResponseObject); ok {
+		if err := validResponse.VisitSignInWithAppleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -11817,6 +12021,37 @@ func (sh *strictHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMeResponseObject); ok {
 		if err := validResponse.VisitUpdateMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReportAppStorePurchase operation middleware
+func (sh *strictHandler) ReportAppStorePurchase(w http.ResponseWriter, r *http.Request) {
+	var request ReportAppStorePurchaseRequestObject
+
+	var body ReportAppStorePurchaseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReportAppStorePurchase(ctx, request.(ReportAppStorePurchaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReportAppStorePurchase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReportAppStorePurchaseResponseObject); ok {
+		if err := validResponse.VisitReportAppStorePurchaseResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

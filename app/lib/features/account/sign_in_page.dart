@@ -15,6 +15,7 @@ import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import '../settings/privacy_page.dart';
+import 'apple_sign_in.dart';
 import 'email_pages.dart';
 import 'oauth.dart';
 
@@ -280,6 +281,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     // sign-in field takes either.
     final emailRequired = info?.emailRequired ?? true;
     final providers = info?.oauthProviders ?? const <OAuthProvider>[];
+    final apple = appleSignInOffered(info);
+    final others = providers.isNotEmpty || apple;
 
     return Scaffold(
       appBar: AppBar(),
@@ -296,6 +299,20 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: BSpace.s24),
+              // Apple asks for its button to be at least as prominent as the
+              // others, in its own colours.
+              if (apple) ...[
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: scheme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                    foregroundColor: scheme.brightness == Brightness.dark ? Colors.black : Colors.white,
+                  ),
+                  onPressed: _busy ? null : () => signInWithApple(ref, safeNext(widget.next) ?? '/groups'),
+                  icon: const Icon(Icons.apple),
+                  label: Text(l10n.signInWith(appleProvider.name)),
+                ),
+                const SizedBox(height: BSpace.s8),
+              ],
               for (final provider in providers) ...[
                 OutlinedButton.icon(
                   onPressed: _busy
@@ -306,7 +323,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 ),
                 const SizedBox(height: BSpace.s8),
               ],
-              if (providers.isNotEmpty && passwords) ...[
+              if (others && passwords) ...[
                 const SizedBox(height: BSpace.s8),
                 Row(
                   children: [
@@ -323,7 +340,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 ),
                 const SizedBox(height: BSpace.s16),
               ],
-              if (!passwords && providers.isEmpty)
+              if (!passwords && !others)
                 Text(l10n.signInNoPassword, style: text.bodyLarge)
               else if (passwords)
                 AutofillGroup(

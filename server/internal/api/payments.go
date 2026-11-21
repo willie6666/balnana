@@ -296,8 +296,8 @@ func applyPayment(ctx context.Context, tx pgx.Tx, paymentID, userID string) erro
 		return err
 	}
 	source := provider
-	if source == "play" {
-		source = "admin" // a Play payment an administrator placed by hand
+	if source == "play" || source == "appstore" {
+		source = "admin" // a store payment an administrator placed by hand
 	}
 	var entitlement string
 	err = tx.QueryRow(ctx, `

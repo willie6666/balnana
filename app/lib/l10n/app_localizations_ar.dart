@@ -3788,4 +3788,72 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'شروط الخدمة الخاصة بك، ويظهر رابطها عند التسجيل وشراء خطة. عند ترك الحقل فارغًا، لا يعرض التطبيق أي شروط.';
+
+  @override
+  String get adminSectionIos => 'تطبيق iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'يسجّل تطبيق iOS الدخول باستخدام Apple ويبيع الاشتراكات عبر App Store لمعرّف الحزمة المحدد هنا.';
+
+  @override
+  String get adminAppleBundleId => 'معرّف حزمة iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'معرّف حزمة تطبيق iOS، مثل com.balnana.app. يفعّل تسجيل الدخول باستخدام Apple في ذلك التطبيق، ومع تفعيل الفوترة يفعّل اشتراكات App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'قبول مشتريات بيئة الاختبار في App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'يقبل أيضًا المشتريات من بيئة الاختبار في App Store، حيث يشتري TestFlight وXcode ومراجعة التطبيقات دون دفع. مطلوب أثناء مراجعة Apple للتطبيق.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'عنوان App Store Server Notifications V2 لإدخاله في App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'غيّره أو ألغِه في App Store';
+
+  @override
+  String get planAppStoreFailed => 'تعذّر على App Store إتمام عملية الشراء.';
+
+  @override
+  String get planAppStorePending => 'عملية الشراء بانتظار الموافقة. تبدأ الخطة بعد الموافقة عليها.';
+
+  @override
+  String get planAppStoreUnavailable => 'تعذّر الوصول إلى App Store. حاول لاحقًا.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'يُخصم المبلغ من حساب Apple ID عند التأكيد. يتجدد الاشتراك تلقائيًا ما لم تُلغِه قبل 24 ساعة على الأقل من نهاية الفترة الحالية. يمكنك إدارته أو إلغاؤه من إعدادات حسابك في App Store.';
+
+  @override
+  String get planRestore => 'استعادة المشتريات';
+
+  @override
+  String get planRestoreHelp => 'استعد اشتراكًا اشتريته بهذا الـ Apple ID';
+
+  @override
+  String get planRestoreNone => 'لا يوجد اشتراك لاستعادته على هذا الـ Apple ID.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'لا يتعرّف App Store على عملية الشراء هذه.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'هذا الاشتراك يخص حسابًا آخر. سجّل الدخول إليه، أو ألغِ الاشتراك في App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'لم يكتمل تسجيل الدخول باستخدام Apple. حاول مرة أخرى.';
+
+  @override
+  String get accountDeleteAppStoreNote => 'لا ينتهي اشتراك App Store بحذف حسابك. ألغِه أولًا في App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'كما هو مكتوب في App Store Connect لاشتراك يتجدد تلقائيًا. يحدد App Store متى تنتهي كل دفعة، لذا لا توجد أيام لضبطها.';
 }

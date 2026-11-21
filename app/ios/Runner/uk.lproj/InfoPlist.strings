@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Сфотографувати чек, щоб прикріпити його до витрати.";
+"NSLocalNetworkUsageDescription" = "Під'єднатися до сервера Balnana у вашій локальній мережі.";
+"NSLocationWhenInUseUsageDescription" = "Використовувати ваше поточне місцезнаходження, коли ви позначаєте витрату на мапі.";
+"NSPhotoLibraryUsageDescription" = "Вибрати фото чека, щоб прикріпити його до витрати.";

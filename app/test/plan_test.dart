@@ -157,6 +157,9 @@ void main() {
     expect(externalPaymentsFor(web: false, flavor: null), isFalse);
     expect(externalPaymentsFor(web: false, flavor: null, enabled: true), isTrue);
     expect(externalPaymentsFor(web: true, flavor: 'play', enabled: false), isTrue);
+    // The iOS app sells through the App Store alone, whatever the build says.
+    expect(externalPaymentsFor(web: false, flavor: 'appstore'), isFalse);
+    expect(externalPaymentsFor(web: false, flavor: 'appstore', enabled: true), isFalse);
   });
 
   test('a plan reads comparison limits and automatic eligibility', () {

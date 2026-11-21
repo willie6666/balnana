@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "レシートを撮影して支出に添付します。";
+"NSLocalNetworkUsageDescription" = "ローカルネットワーク上の Balnana サーバーに接続します。";
+"NSLocationWhenInUseUsageDescription" = "支出を地図にピン留めするときに現在地を使います。";
+"NSPhotoLibraryUsageDescription" = "支出に添付するレシート写真を選びます。";

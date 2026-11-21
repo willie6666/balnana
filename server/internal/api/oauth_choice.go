@@ -298,7 +298,7 @@ func (s *Server) LinkOAuth(ctx context.Context, req LinkOAuthRequestObject) (Lin
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.oauthProvider(req.Provider); err != nil {
+	if err := s.linkableProvider(req.Provider); err != nil {
 		return nil, err
 	}
 	checked, err := s.confirmPassword(ctx, u, req.Body.Password)
@@ -331,6 +331,9 @@ func (s *Server) UnlinkOAuth(ctx context.Context, req UnlinkOAuthRequestObject) 
 		if p.ID != req.Provider {
 			others = append(others, p.ID)
 		}
+	}
+	if s.settings.Load().apple != nil && req.Provider != appleID {
+		others = append(others, appleID)
 	}
 	checked, err := s.confirmPassword(ctx, u, req.Body.Password)
 	if err != nil {

@@ -3695,4 +3695,73 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Kaydolma ve plan satın alma ekranlarında bağlantısı gösterilen hizmet şartlarınız. Boş bırakılırsa uygulama şart göstermez.';
+
+  @override
+  String get adminSectionIos => 'iOS uygulaması';
+
+  @override
+  String get adminSectionIosBody =>
+      'iOS uygulaması, burada ayarlanan paket kimliğiyle Apple ile giriş yapar ve App Store üzerinden abonelik satar.';
+
+  @override
+  String get adminAppleBundleId => 'iOS paket kimliği';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS uygulamasının paket kimliği, örneğin com.balnana.app. Bu uygulamada Apple ile Giriş Yap\'ı ve faturalandırma açıksa App Store aboneliklerini açar.';
+
+  @override
+  String get adminAppStoreSandbox => 'App Store sandbox satın alımlarını kabul et';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'TestFlight, Xcode ve uygulama incelemesinin ödeme yapmadan satın aldığı App Store sandbox ortamındaki satın alımları da kabul eder. Apple uygulamayı incelerken gereklidir.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'App Store Connect için App Store Server Notifications V2 URL\'si: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'App Store\'da değiştir veya iptal et';
+
+  @override
+  String get planAppStoreFailed => 'App Store satın alımı tamamlayamadı.';
+
+  @override
+  String get planAppStorePending => 'Satın alım onay bekliyor. Onaylanınca plan başlar.';
+
+  @override
+  String get planAppStoreUnavailable => 'App Store\'a ulaşılamadı. Daha sonra tekrar deneyin.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Ödeme, onayladığınızda Apple kimliğinizden alınır. Abonelik, mevcut dönemin bitiminden en az 24 saat önce iptal edilmedikçe otomatik olarak yenilenir. App Store hesap ayarlarınızdan yönetebilir veya iptal edebilirsiniz.';
+
+  @override
+  String get planRestore => 'Satın alımları geri yükle';
+
+  @override
+  String get planRestoreHelp => 'Bu Apple kimliğiyle alınmış bir aboneliği geri getir';
+
+  @override
+  String get planRestoreNone => 'Bu Apple kimliğinde geri yüklenecek abonelik yok.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store bu satın alımı tanımıyor.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Bu abonelik başka bir hesaba ait. O hesapla giriş yapın veya aboneliği App Store\'da iptal edin.';
+
+  @override
+  String get signInWithAppleFailed => 'Apple ile giriş tamamlanmadı. Tekrar deneyin.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'App Store aboneliği hesabınızla birlikte sona ermez. Önce App Store\'da iptal edin.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'App Store Connect\'te otomatik yenilenen abonelik için yazıldığı gibi. Her ödemenin ne zaman bittiğini App Store söyler, bu yüzden ayarlanacak gün yoktur.';
 }

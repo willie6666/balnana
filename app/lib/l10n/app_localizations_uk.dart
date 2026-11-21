@@ -3833,4 +3833,73 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Ваші умови користування, посилання на які показується під час реєстрації та купівлі тарифу. Якщо поле порожнє, застосунок не показує умови.';
+
+  @override
+  String get adminSectionIos => 'Застосунок для iOS';
+
+  @override
+  String get adminSectionIosBody =>
+      'Застосунок для iOS входить через Apple і продає підписки в App Store для вказаного тут Bundle ID.';
+
+  @override
+  String get adminAppleBundleId => 'Bundle ID для iOS';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Bundle ID застосунку для iOS, наприклад com.balnana.app. Вмикає «Вхід з Apple» у цьому застосунку, а з увімкненою оплатою — підписки App Store.';
+
+  @override
+  String get adminAppStoreSandbox => 'Приймати покупки з пісочниці App Store';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Приймати також покупки з пісочниці App Store, де TestFlight, Xcode і перевірка застосунків купують без оплати. Потрібно, поки Apple перевіряє застосунок.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL для App Store Server Notifications V2 в App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Змінити або скасувати в App Store';
+
+  @override
+  String get planAppStoreFailed => 'App Store не зміг завершити покупку.';
+
+  @override
+  String get planAppStorePending => 'Покупка чекає на схвалення. Тариф почне діяти після схвалення.';
+
+  @override
+  String get planAppStoreUnavailable => 'Не вдалося під\'єднатися до App Store. Спробуйте пізніше.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Оплата стягується з вашого Apple ID під час підтвердження. Підписка подовжується автоматично, якщо не скасувати її щонайменше за 24 години до кінця поточного періоду. Керувати підпискою або скасувати її можна в налаштуваннях облікового запису App Store.';
+
+  @override
+  String get planRestore => 'Відновити покупки';
+
+  @override
+  String get planRestoreHelp => 'Повернути підписку, куплену з цим Apple ID';
+
+  @override
+  String get planRestoreNone => 'Для цього Apple ID немає підписок для відновлення.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store не розпізнає цю покупку.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Ця підписка належить іншому обліковому запису. Увійдіть у нього або скасуйте підписку в App Store.';
+
+  @override
+  String get signInWithAppleFailed => 'Вхід з Apple не завершено. Спробуйте ще раз.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Підписка App Store не припиняється разом з обліковим записом. Спершу скасуйте її в App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Як зазначено в App Store Connect для автоподовжуваної підписки. App Store сам повідомляє, коли закінчується кожен платіж, тож дні задавати не потрібно.';
 }

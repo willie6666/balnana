@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Ambil foto struk untuk dilampirkan ke pengeluaran.";
+"NSLocalNetworkUsageDescription" = "Terhubung ke server Balnana di jaringan lokal Anda.";
+"NSLocationWhenInUseUsageDescription" = "Gunakan lokasi Anda saat ini ketika Anda memilih menandai pengeluaran di peta.";
+"NSPhotoLibraryUsageDescription" = "Pilih foto struk untuk dilampirkan ke pengeluaran.";

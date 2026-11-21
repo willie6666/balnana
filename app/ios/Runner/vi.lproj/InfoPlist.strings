@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Chụp ảnh hóa đơn để đính kèm vào khoản chi.";
+"NSLocalNetworkUsageDescription" = "Kết nối với máy chủ Balnana trong mạng cục bộ của bạn.";
+"NSLocationWhenInUseUsageDescription" = "Dùng vị trí hiện tại khi bạn chọn ghim một khoản chi lên bản đồ.";
+"NSPhotoLibraryUsageDescription" = "Chọn ảnh hóa đơn để đính kèm vào khoản chi.";

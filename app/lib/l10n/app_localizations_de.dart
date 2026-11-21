@@ -3745,4 +3745,75 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get adminTermsUrlHelp =>
       'Deine Nutzungsbedingungen, verlinkt bei der Registrierung und beim Kauf eines Tarifs. Wenn leer, zeigt die App keine Nutzungsbedingungen.';
+
+  @override
+  String get adminSectionIos => 'iOS-App';
+
+  @override
+  String get adminSectionIosBody =>
+      'Die iOS-App meldet sich mit Apple an und verkauft Abos über den App Store für die hier eingestellte Bundle-ID.';
+
+  @override
+  String get adminAppleBundleId => 'iOS-Bundle-ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'Die Bundle-ID der iOS-App, etwa com.balnana.app. Sie schaltet „Mit Apple anmelden“ in dieser App ein und, mit Abrechnung, App-Store-Abos.';
+
+  @override
+  String get adminAppStoreSandbox => 'Sandbox-Käufe aus dem App Store annehmen';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'Nimmt auch Käufe aus der App-Store-Sandbox an, wo TestFlight, Xcode und die App-Prüfung kaufen, ohne zu zahlen. Nötig, solange Apple die App prüft.';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'URL für App Store Server Notifications V2 in App Store Connect: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'Im App Store ändern oder kündigen';
+
+  @override
+  String get planAppStoreFailed => 'Der App Store konnte den Kauf nicht abschließen.';
+
+  @override
+  String get planAppStorePending =>
+      'Der Kauf wartet auf Freigabe. Der Tarif beginnt, sobald er freigegeben ist.';
+
+  @override
+  String get planAppStoreUnavailable => 'Der App Store ist nicht erreichbar. Versuche es später noch einmal.';
+
+  @override
+  String get planAppStoreRenewal =>
+      'Die Zahlung wird bei der Bestätigung über deine Apple-ID abgerechnet. Das Abo verlängert sich automatisch, wenn du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst. Verwalten oder kündigen kannst du es in den Einstellungen deines App-Store-Accounts.';
+
+  @override
+  String get planRestore => 'Käufe wiederherstellen';
+
+  @override
+  String get planRestoreHelp => 'Ein mit dieser Apple-ID gekauftes Abo zurückholen';
+
+  @override
+  String get planRestoreNone => 'Mit dieser Apple-ID gibt es kein Abo zum Wiederherstellen.';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'Der App Store erkennt diesen Kauf nicht.';
+
+  @override
+  String get errorAppStoreOtherAccount =>
+      'Dieses Abo gehört zu einem anderen Konto. Melde dich dort an oder kündige es im App Store.';
+
+  @override
+  String get signInWithAppleFailed =>
+      'Die Anmeldung mit Apple wurde nicht abgeschlossen. Versuche es noch einmal.';
+
+  @override
+  String get accountDeleteAppStoreNote =>
+      'Ein App-Store-Abo endet nicht mit deinem Konto. Kündige es zuerst im App Store.';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'Wie in App Store Connect für ein automatisch verlängertes Abo angegeben. Der App Store sagt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.';
 }

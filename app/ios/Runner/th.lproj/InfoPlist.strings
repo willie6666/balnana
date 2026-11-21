@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "ถ่ายรูปใบเสร็จเพื่อแนบกับรายจ่าย";
+"NSLocalNetworkUsageDescription" = "เชื่อมต่อกับเซิร์ฟเวอร์ Balnana ในเครือข่ายภายในของคุณ";
+"NSLocationWhenInUseUsageDescription" = "ใช้ตำแหน่งปัจจุบันของคุณเมื่อคุณเลือกปักหมุดรายจ่ายบนแผนที่";
+"NSPhotoLibraryUsageDescription" = "เลือกรูปใบเสร็จเพื่อแนบกับรายจ่าย";

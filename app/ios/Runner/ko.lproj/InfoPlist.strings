@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "영수증 사진을 찍어 지출에 첨부합니다.";
+"NSLocalNetworkUsageDescription" = "로컬 네트워크에 있는 Balnana 서버에 연결합니다.";
+"NSLocationWhenInUseUsageDescription" = "지출을 지도에 표시할 때 현재 위치를 사용합니다.";
+"NSPhotoLibraryUsageDescription" = "지출에 첨부할 영수증 사진을 선택합니다.";

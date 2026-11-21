@@ -3551,4 +3551,70 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminTermsUrlHelp => '登録やプランの購入をする画面にリンクされる利用規約を設定します。空欄の場合、利用規約は表示されません。';
+
+  @override
+  String get adminSectionIos => 'iOS アプリ';
+
+  @override
+  String get adminSectionIosBody => 'iOS アプリは、ここで設定した Bundle ID で Apple でサインインし、App Store でサブスクリプションを販売します。';
+
+  @override
+  String get adminAppleBundleId => 'iOS Bundle ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS アプリの Bundle ID（例: com.balnana.app）。設定するとそのアプリで Apple でサインインが有効になり、課金が有効なら App Store のサブスクリプションも有効になります。';
+
+  @override
+  String get adminAppStoreSandbox => 'App Store サンドボックスの購入を受け付ける';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      'App Store サンドボックスでの購入も受け付けます。TestFlight、Xcode、App 審査はサンドボックスで支払いなしに購入します。Apple の審査中は必要です。';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return 'App Store Connect に設定する App Store Server Notifications V2 の URL: $url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => 'App Store で変更・解約';
+
+  @override
+  String get planAppStoreFailed => 'App Store で購入を完了できませんでした。';
+
+  @override
+  String get planAppStorePending => '購入は承認待ちです。承認されるとプランが始まります。';
+
+  @override
+  String get planAppStoreUnavailable => 'App Store に接続できません。後でもう一度お試しください。';
+
+  @override
+  String get planAppStoreRenewal =>
+      '購入の確認時に Apple ID に請求されます。現在の期間が終わる 24 時間前までに解約しない限り、サブスクリプションは自動的に更新されます。App Store のアカウント設定で管理・解約できます。';
+
+  @override
+  String get planRestore => '購入を復元';
+
+  @override
+  String get planRestoreHelp => 'この Apple ID で購入したサブスクリプションを復元';
+
+  @override
+  String get planRestoreNone => 'この Apple ID に復元できるサブスクリプションはありません。';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store がこの購入を認識しません。';
+
+  @override
+  String get errorAppStoreOtherAccount => 'このサブスクリプションは別のアカウントのものです。そのアカウントでサインインするか、App Store で解約してください。';
+
+  @override
+  String get signInWithAppleFailed => 'Apple でサインインが完了しませんでした。もう一度お試しください。';
+
+  @override
+  String get accountDeleteAppStoreNote => 'App Store のサブスクリプションはアカウントを削除しても終了しません。先に App Store で解約してください。';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      'App Store Connect の自動更新サブスクリプションに書かれているとおりに入力します。各支払いの終了日は App Store が伝えるため、日数の設定はありません。';
 }

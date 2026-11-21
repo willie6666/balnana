@@ -3,14 +3,17 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/app_store.dart';
 import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/prefs.dart';
+import '../../core/router.dart';
 import '../../core/server.dart';
 import '../../core/session.dart';
 import '../../data/api.dart';
@@ -19,6 +22,7 @@ import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
+import 'apple_sign_in.dart';
 import 'sign_in_page.dart';
 
 /// Sign-in with Google or an OpenID Connect provider. The browser goes
@@ -47,22 +51,45 @@ Future<void> startOAuth(WidgetRef ref, OAuthProvider provider, String next, {Str
   if (!cookieSession(server)) {
     // A web app on another origin gets the sign-in back there as a code.
     if (kIsWeb) query['origin'] = Uri.base.origin;
-    // Only this app knows the verifier, so another app catching the link
-    // back cannot use its code.
-    final random = Random.secure();
-    final verifier = _base64Url([for (var i = 0; i < 32; i++) random.nextInt(256)]);
-    final attempt = jsonEncode({'server': server, 'verifier': verifier});
-    await ref.read(prefsProvider).setString(_attemptKey, attempt);
-    query['challenge'] = _base64Url(sha256.convert(utf8.encode(verifier)).bytes);
+    query['challenge'] = await saveOAuthAttempt(ref, server);
   }
   final url = Uri.parse(
     '$server$apiBasePath/auth/oauth/${Uri.encodeComponent(provider.id)}/start',
   ).replace(queryParameters: query);
+  // iOS signs in inside the app, in a browser sheet that hands the way back
+  // straight to it; App Review turns away apps that leave for Safari.
+  if (iosApp) {
+    final router = ref.read(routerProvider);
+    try {
+      final back = await _webAuth.invokeMethod<String>('authenticate', {'url': '$url', 'scheme': 'balnana'});
+      final done = back == null ? null : Uri.tryParse(back);
+      if (done != null && done.path == '/oauth-done') router.go(Uri(path: done.path, query: done.hasQuery ? done.query : null).toString());
+      return;
+    } on PlatformException catch (e) {
+      if (e.code == 'cancelled') return;
+    } on MissingPluginException {
+      // An older build: Safari brings the link back as before.
+    }
+  }
   await launchUrl(
     url,
     mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     webOnlyWindowName: '_self',
   );
+}
+
+/// ASWebAuthenticationSession, through WebAuth.swift.
+const _webAuth = MethodChannel('balnana/web_auth');
+
+/// Keeps a new sign-in's verifier for [server], and returns its challenge.
+/// Only this app knows the verifier, so another app catching the link back
+/// cannot use its code.
+Future<String> saveOAuthAttempt(WidgetRef ref, String server) async {
+  final random = Random.secure();
+  final verifier = _base64Url([for (var i = 0; i < 32; i++) random.nextInt(256)]);
+  final attempt = jsonEncode({'server': server, 'verifier': verifier});
+  await ref.read(prefsProvider).setString(_attemptKey, attempt);
+  return _base64Url(sha256.convert(utf8.encode(verifier)).bytes);
 }
 
 /// Where the provider's sign-in ends: signs in, then goes on to [next].
@@ -179,8 +206,9 @@ class _OAuthDonePageState extends ConsumerState<OAuthDonePage> {
   }
 }
 
-String _providerName(WidgetRef ref, String id) =>
-    ref.read(serverInfoProvider).value?.oauthProviders.where((p) => p.id == id).firstOrNull?.name ?? id;
+String _providerName(WidgetRef ref, String id) => id == appleProvider.id
+    ? appleProvider.name
+    : ref.read(serverInfoProvider).value?.oauthProviders.where((p) => p.id == id).firstOrNull?.name ?? id;
 
 /// Asks what the account a sign-in matched by an unconfirmed address is to
 /// the person: theirs, to keep with its password; theirs, to take over from

@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "拍攝收據照片並附加到支出。";
+"NSLocalNetworkUsageDescription" = "連線到架設在你區域網路上的 Balnana 伺服器。";
+"NSLocationWhenInUseUsageDescription" = "在你選擇把支出標記到地圖上時，使用你目前的位置。";
+"NSPhotoLibraryUsageDescription" = "選擇一張收據照片附加到支出。";

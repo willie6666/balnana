@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Zrób zdjęcie paragonu, aby dołączyć je do wydatku.";
+"NSLocalNetworkUsageDescription" = "Połącz się z serwerem Balnana w Twojej sieci lokalnej.";
+"NSLocationWhenInUseUsageDescription" = "Użyj bieżącej lokalizacji, gdy przypinasz wydatek na mapie.";
+"NSPhotoLibraryUsageDescription" = "Wybierz zdjęcie paragonu, aby dołączyć je do wydatku.";

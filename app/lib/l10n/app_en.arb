@@ -5425,5 +5425,90 @@
   "adminTermsUrlHelp": "Your terms of service, linked where people sign up and buy a plan. When empty, the app shows no terms.",
   "@adminTermsUrlHelp": {
     "description": "Admin setting help for the terms of service link."
+  },
+  "adminSectionIos": "iOS app",
+  "@adminSectionIos": {
+    "description": "Admin settings section title for the iOS app."
+  },
+  "adminSectionIosBody": "The iOS app signs in with Apple and sells subscriptions through the App Store for the bundle ID set here.",
+  "@adminSectionIosBody": {
+    "description": "Admin settings section intro for the iOS app."
+  },
+  "adminAppleBundleId": "iOS bundle ID",
+  "@adminAppleBundleId": {
+    "description": "Admin setting label for the iOS app's bundle ID."
+  },
+  "adminAppleBundleIdHelp": "The iOS app's bundle ID, such as com.balnana.app. It turns on Sign in with Apple in that app and, with billing, App Store subscriptions.",
+  "@adminAppleBundleIdHelp": {
+    "description": "Admin setting help for the iOS app's bundle ID."
+  },
+  "adminAppStoreSandbox": "Accept App Store sandbox purchases",
+  "@adminAppStoreSandbox": {
+    "description": "Admin setting label: also accept App Store sandbox purchases."
+  },
+  "adminAppStoreSandboxHelp": "Also take purchases from the App Store sandbox, where TestFlight, Xcode and App Review buy without paying. Needed while Apple reviews the app.",
+  "@adminAppStoreSandboxHelp": {
+    "description": "Admin setting help for accepting App Store sandbox purchases."
+  },
+  "adminAppStoreWebhook": "App Store Server Notifications V2 URL, for App Store Connect: {url}",
+  "@adminAppStoreWebhook": {
+    "description": "Admin note with the URL to give App Store Connect for server notifications.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "planAppStoreManageHelp": "Change or cancel it in the App Store",
+  "@planAppStoreManageHelp": {
+    "description": "Subtitle of the manage subscription row for an App Store subscription."
+  },
+  "planAppStoreFailed": "The App Store couldn't complete the purchase.",
+  "@planAppStoreFailed": {
+    "description": "Error when the App Store purchase failed."
+  },
+  "planAppStorePending": "The purchase is waiting for approval. The plan starts once it's approved.",
+  "@planAppStorePending": {
+    "description": "Shown when an App Store purchase waits for approval, such as Ask to Buy."
+  },
+  "planAppStoreUnavailable": "Couldn't reach the App Store. Try again later.",
+  "@planAppStoreUnavailable": {
+    "description": "Error when the app could not reach the App Store."
+  },
+  "planAppStoreRenewal": "Payment is charged to your Apple ID when you confirm. The subscription renews automatically unless you cancel it at least 24 hours before the end of the current period. Manage or cancel it in your App Store account settings.",
+  "@planAppStoreRenewal": {
+    "description": "Auto-renewal terms shown under App Store subscription offers, as Apple requires."
+  },
+  "planRestore": "Restore purchases",
+  "@planRestore": {
+    "description": "Button to restore App Store purchases."
+  },
+  "planRestoreHelp": "Bring back a subscription bought with this Apple ID",
+  "@planRestoreHelp": {
+    "description": "Subtitle of the restore purchases button."
+  },
+  "planRestoreNone": "No subscription to restore on this Apple ID.",
+  "@planRestoreNone": {
+    "description": "Shown when restoring finds no subscription."
+  },
+  "errorInvalidAppStorePurchase": "The App Store doesn't recognize this purchase.",
+  "@errorInvalidAppStorePurchase": {
+    "description": "Error when the server does not accept an App Store purchase."
+  },
+  "errorAppStoreOtherAccount": "This subscription belongs to another account. Sign in to that one, or cancel it in the App Store.",
+  "@errorAppStoreOtherAccount": {
+    "description": "Error when an App Store subscription belongs to another account."
+  },
+  "signInWithAppleFailed": "Sign in with Apple didn't finish. Try again.",
+  "@signInWithAppleFailed": {
+    "description": "Error when Sign in with Apple could not finish."
+  },
+  "accountDeleteAppStoreNote": "An App Store subscription doesn't end with your account. Cancel it in the App Store first.",
+  "@accountDeleteAppStoreNote": {
+    "description": "Shown when deleting an account that has an App Store subscription."
+  },
+  "adminProductAppStoreIdHelp": "As written in App Store Connect, for an auto-renewable subscription. The App Store says when each payment ends, so there are no days to set.",
+  "@adminProductAppStoreIdHelp": {
+    "description": "Admin help for an App Store product ID in a plan product mapping."
   }
 }

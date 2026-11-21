@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Maak een foto van een bon om aan een uitgave toe te voegen.";
+"NSLocalNetworkUsageDescription" = "Verbinden met een Balnana-server in je lokale netwerk.";
+"NSLocationWhenInUseUsageDescription" = "Je huidige locatie gebruiken wanneer je een uitgave op de kaart vastzet.";
+"NSPhotoLibraryUsageDescription" = "Kies een foto van een bon om aan een uitgave toe te voegen.";

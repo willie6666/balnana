@@ -55,7 +55,7 @@ func TestPlanComparison(t *testing.T) {
 	}
 
 	// Only configured payment providers add their purchasable plans.
-	comparison, err := s.planComparison(context.Background(), s.db, "free", true, &PayPalBilling{
+	comparison, err := s.planComparison(context.Background(), s.db, "free", true, false, &PayPalBilling{
 		Offers: []PayPalOffer{{Product: "P-PAYPAL"}},
 	})
 	if err != nil {

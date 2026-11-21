@@ -97,11 +97,30 @@ jobs:
             --android-project-arg=allowUnsignedFoss=true \
             --dart-define=BALNANA_EXTERNAL_PAYMENTS=false
 
+  ios:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # The App Store build: StoreKit, Sign in with Apple and the rest of the
+      # native code compile, and the privacy manifest and plist check out.
+      - run: flutter build ios --release --no-codesign --no-pub --flavor foss
+      - run: plutil -lint ios/Runner/Info.plist ios/Runner/PrivacyInfo.xcprivacy ios/Runner/Runner.entitlements ios/Runner/*.lproj/InfoPlist.strings
+
   deployment:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: bash -n scripts/deploy-debian.sh
+      - run: bash -n scripts/build-ipa.sh
       - run: docker compose --env-file /dev/null config --quiet
         env:
           POSTGRES_PASSWORD: ci-validation-only

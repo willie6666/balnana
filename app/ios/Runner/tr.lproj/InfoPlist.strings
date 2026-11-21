@@ -1,0 +1,5 @@
+/* Why the app asks for each permission, in the system's prompt. */
+"NSCameraUsageDescription" = "Bir harcamaya eklemek için fişin fotoğrafını çekin.";
+"NSLocalNetworkUsageDescription" = "Yerel ağınızda barındırılan bir Balnana sunucusuna bağlanın.";
+"NSLocationWhenInUseUsageDescription" = "Bir harcamayı haritada işaretlemeyi seçtiğinizde mevcut konumunuzu kullanın.";
+"NSPhotoLibraryUsageDescription" = "Bir harcamaya eklemek için fiş fotoğrafı seçin.";

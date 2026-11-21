@@ -3533,6 +3533,72 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminTermsUrlHelp => '你的服务条款，会显示在注册和购买方案的地方。留空时，应用不会显示服务条款。';
+
+  @override
+  String get adminSectionIos => 'iOS 应用';
+
+  @override
+  String get adminSectionIosBody => 'iOS 应用会以此处设置的 Bundle ID 使用通过 Apple 登录，并通过 App Store 销售订阅。';
+
+  @override
+  String get adminAppleBundleId => 'iOS Bundle ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS 应用的 Bundle ID，例如 com.balnana.app。设置后会在该应用中开启通过 Apple 登录，并在启用收费时开启 App Store 订阅。';
+
+  @override
+  String get adminAppStoreSandbox => '接受 App Store 沙盒购买';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      '也接受来自 App Store 沙盒的购买：TestFlight、Xcode 和 App 审核都在沙盒中购买，无需付费。Apple 审核应用期间需要开启。';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return '提供给 App Store Connect 的 App Store 服务器通知 V2 地址：$url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => '在 App Store 中更改或取消';
+
+  @override
+  String get planAppStoreFailed => 'App Store 无法完成这笔购买。';
+
+  @override
+  String get planAppStorePending => '这笔购买正在等待批准，批准后方案即开始。';
+
+  @override
+  String get planAppStoreUnavailable => '无法连接 App Store，请稍后再试。';
+
+  @override
+  String get planAppStoreRenewal =>
+      '确认购买时将向你的 Apple ID 扣款。除非在当前周期结束前至少 24 小时取消，否则订阅将自动续订。你可以在 App Store 账户设置中管理或取消订阅。';
+
+  @override
+  String get planRestore => '恢复购买';
+
+  @override
+  String get planRestoreHelp => '找回用此 Apple ID 购买的订阅';
+
+  @override
+  String get planRestoreNone => '此 Apple ID 没有可恢复的订阅。';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store 无法识别这笔购买。';
+
+  @override
+  String get errorAppStoreOtherAccount => '此订阅属于另一个账户。请登录那个账户，或在 App Store 中取消订阅。';
+
+  @override
+  String get signInWithAppleFailed => '通过 Apple 登录未完成，请重试。';
+
+  @override
+  String get accountDeleteAppStoreNote => 'App Store 订阅不会随账户删除而结束，请先在 App Store 中取消订阅。';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      '与 App Store Connect 中自动续期订阅的产品 ID 相同。App Store 会告知每次付款何时到期，因此无需设置天数。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -7063,4 +7129,70 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get adminTermsUrlHelp => '你的服務條款，會顯示在註冊和購買方案的地方。留空時，應用程式不會顯示服務條款。';
+
+  @override
+  String get adminSectionIos => 'iOS App';
+
+  @override
+  String get adminSectionIosBody => 'iOS App 會以這裡設定的 Bundle ID 使用 Apple 登入，並透過 App Store 販售訂閱。';
+
+  @override
+  String get adminAppleBundleId => 'iOS Bundle ID';
+
+  @override
+  String get adminAppleBundleIdHelp =>
+      'iOS App 的 Bundle ID，例如 com.balnana.app。設定後會在該 App 開啟 Apple 登入，並在啟用收費時開啟 App Store 訂閱。';
+
+  @override
+  String get adminAppStoreSandbox => '接受 App Store 沙盒購買';
+
+  @override
+  String get adminAppStoreSandboxHelp =>
+      '也接受 App Store 沙盒的購買：TestFlight、Xcode 與 App 審核都在沙盒購買，不需付費。Apple 審核 App 期間需要開啟。';
+
+  @override
+  String adminAppStoreWebhook(String url) {
+    return '提供給 App Store Connect 的 App Store 伺服器通知 V2 網址：$url';
+  }
+
+  @override
+  String get planAppStoreManageHelp => '在 App Store 變更或取消';
+
+  @override
+  String get planAppStoreFailed => 'App Store 無法完成這筆購買。';
+
+  @override
+  String get planAppStorePending => '這筆購買正在等待核准，核准後方案就會開始。';
+
+  @override
+  String get planAppStoreUnavailable => '無法連上 App Store，請稍後再試。';
+
+  @override
+  String get planAppStoreRenewal =>
+      '確認購買時會向你的 Apple ID 收費。除非在目前期間結束前至少 24 小時取消，否則訂閱會自動續訂。你可以在 App Store 帳號設定中管理或取消訂閱。';
+
+  @override
+  String get planRestore => '恢復購買';
+
+  @override
+  String get planRestoreHelp => '找回以這個 Apple ID 購買的訂閱';
+
+  @override
+  String get planRestoreNone => '這個 Apple ID 沒有可恢復的訂閱。';
+
+  @override
+  String get errorInvalidAppStorePurchase => 'App Store 無法辨識這筆購買。';
+
+  @override
+  String get errorAppStoreOtherAccount => '這個訂閱屬於另一個帳號。請登入那個帳號，或在 App Store 取消訂閱。';
+
+  @override
+  String get signInWithAppleFailed => 'Apple 登入沒有完成，請再試一次。';
+
+  @override
+  String get accountDeleteAppStoreNote => 'App Store 訂閱不會隨帳號刪除而結束，請先在 App Store 取消訂閱。';
+
+  @override
+  String get adminProductAppStoreIdHelp =>
+      '與 App Store Connect 中自動續訂型訂閱的產品 ID 相同。App Store 會告知每次付款何時到期，所以不需設定天數。';
 }
