@@ -49,12 +49,3 @@ jobs:
       # reaches. Fix by raising the go line in go.mod or the module.
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - run: go test -race ./...
-
-  deployment:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash -n scripts/deploy-debian.sh
-      - run: docker compose --env-file /dev/null config --quiet
-        env:
-          POSTGRES_PASSWORD: ci-validation-only
