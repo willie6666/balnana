@@ -202,7 +202,7 @@ class ServerInfo {
   /// is closed.
   final bool firstAccount;
 
-  /// Group owners may open a group to anyone with its link.
+  /// Group members may open a group to anyone with its link.
   final bool linkGroups;
 
   /// The server sends email: verification, password reset and invitations.

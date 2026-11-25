@@ -169,20 +169,6 @@ func (s *Server) join(ctx context.Context, tx pgx.Tx, g *group, u *user, in *Joi
 			return err
 		}
 	}
-	// The only account in a group whose owner is gone, as when the last one
-	// deleted theirs while the group stayed open by link, owns it.
-	var alone bool
-	err = tx.QueryRow(ctx, `
-		select not exists (select 1 from members where group_id = $2 and id <> $1 and user_id is not null and left_at is null)`,
-		m.id, g.id).Scan(&alone)
-	if err != nil {
-		return err
-	}
-	if alone {
-		if _, err := tx.Exec(ctx, `update members set is_owner = true where id = $1`, m.id); err != nil {
-			return err
-		}
-	}
 	if u.email != nil {
 		if _, err := tx.Exec(ctx, `delete from invites where group_id = $1 and email = $2`, g.id, *u.email); err != nil {
 			return err

@@ -192,7 +192,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorNotAMember => 'まだこのグループに参加していません。';
 
   @override
-  String get errorNotAllowed => 'この操作は本人かグループのオーナーのみ行えます。';
+  String get errorNotAllowed => 'この操作を行う権限がありません。';
 
   @override
   String get errorLinkGroupsOff => 'このサーバーでは、リンクだけでグループを開くことはできません。';
@@ -2127,7 +2127,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminLinkGroups => 'リンクからグループを開けるようにする';
 
   @override
-  String get adminLinkGroupsHelp => 'グループのオーナーは、サインインなしでリンクを知っている人にアクセスを許可できます。';
+  String get adminLinkGroupsHelp => 'グループのメンバーは、サインインなしでリンクを知っている人にアクセスを許可できます。';
 
   @override
   String get adminSmtpHost => 'メールサーバー';
@@ -2265,7 +2265,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのオーナーは、設定からグループ全体を削除できます。削除したグループと、削除した支出の写真は、30日後に完全に消去されます。それ以外については、サーバーの運営者にお問い合わせください。';
+      '設定からアカウントを削除できます。グループの残高を保てるよう、あなたの名前は引き継ぐ人のいないメンバーとしてグループに残ります。ほかにアクセスできる人がいないグループは一緒に削除されます。グループのメンバーなら誰でも、設定からグループ全体を削除できます。削除したグループと、削除した支出の写真は、30日後に完全に消去されます。それ以外については、サーバーの運営者にお問い合わせください。';
 
   @override
   String get privacyOperatorPolicy => '運営者のプライバシーポリシー';
@@ -2359,9 +2359,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get groupDeleted => 'グループを削除しました';
-
-  @override
-  String get groupDeleteOwnerOnly => 'グループを削除できるのはオーナーだけです。';
 
   @override
   String get expenseDiscardTitle => '変更を破棄しますか？';

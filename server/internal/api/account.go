@@ -212,8 +212,7 @@ func (s *Server) DeleteMe(ctx context.Context, req DeleteMeRequestObject) (Delet
 
 // deleteAccount deletes userID. Its members stay in their groups, unclaimed,
 // so the groups' balances and history still add up; whoever is left in a
-// group can rename or claim them. Ownership passes to the account that has
-// been in the group longest. A group that no other account could reach
+// group can rename or claim them. A group that no other account could reach
 // afterwards is deleted with it; one its link still opens stays.
 func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) error {
 	if err := lockUsersTable(ctx, tx); err != nil {
@@ -237,19 +236,6 @@ func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) er
 	if _, err := tx.Exec(ctx, `select 1 from groups where id = any($1::uuid[]) order by id for update`, groups); err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `
-		update members set is_owner = true where id in (
-			select distinct on (m.group_id) m.id
-			from members m
-			join members me on me.group_id = m.group_id and me.user_id = $1 and me.is_owner
-			where m.user_id is not null and m.user_id <> $1 and m.left_at is null
-			  and not exists (select 1 from members o
-			                  where o.group_id = m.group_id and o.is_owner and o.left_at is null
-			                    and o.user_id is not null and o.user_id <> $1)
-			order by m.group_id, m.created_at)`, userID)
-	if err != nil {
-		return err
-	}
 	// The same rule as resolveAccess: in link mode every link opens its group.
 	cfg := s.conf()
 	_, err = tx.Exec(ctx, `
@@ -261,7 +247,7 @@ func (s *Server) deleteAccount(ctx context.Context, tx pgx.Tx, userID string) er
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `update members set user_id = null, is_owner = false where user_id = $1`, userID); err != nil {
+	if _, err := tx.Exec(ctx, `update members set user_id = null where user_id = $1`, userID); err != nil {
 		return err
 	}
 	tag, err := tx.Exec(ctx, `delete from users where id = $1`, userID)

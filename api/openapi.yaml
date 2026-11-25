@@ -1169,7 +1169,7 @@ paths:
       description: >-
         Sessions, sign-in methods and email links go with it. In its groups
         the account's member stays, unclaimed, so balances and history still
-        add up; ownership passes to the longest-standing other account. Groups
+        add up. Groups
         no other account can reach afterwards (no other account member, and
         not open by link) are deleted. 403 `wrong_password` when the account
         has a password and it is not given, `recent_sign_in_required` when it
@@ -1351,10 +1351,9 @@ paths:
       operationId: deleteGroup
       summary: Delete the group with everything in it
       description: >-
-        Accounts mode: the owner only (403 `owner_only`), or any account
-        member when the group has no owner left, or anyone the link opens it
-        for when no account is a member any more. Link mode: anyone with the
-        link. The group is gone for everyone at once; the server keeps it
+        Accounts mode: any member, or anyone the link opens it for when no
+        account is a member any more (otherwise 403 `not_a_member`). Link
+        mode: anyone with the link. The group is gone for everyone at once; the server keeps it
         archived for 30 days, when an operator with database access can still
         restore it by clearing archived_at (there is no restore API or UI),
         then deletes it for good.
@@ -1390,9 +1389,9 @@ paths:
       operationId: setGroupPassword
       summary: Set or change the group's password
       description: >-
-        Accounts mode: the owner only (403 `owner_only`), or any account
-        member when the group has no owner left. Link mode: anyone the group
-        is open to. Every key handed out before stops working; the answer
+        Accounts mode: any member, or anyone the link opens it for when no
+        account is a member any more (otherwise 403 `not_a_member`). Link
+        mode: anyone the group is open to. Every key handed out before stops working; the answer
         carries the new one, so this device stays in.
       parameters:
         - $ref: "#/components/parameters/ActingMember"
@@ -2370,9 +2369,8 @@ components:
         me:
           type: string
           description: >-
-            Which person in the file the creator is. They become the owner;
-            in accounts mode, required, and the member is linked to the
-            account.
+            Which person in the file the creator is. In accounts mode,
+            required, and the member is linked to the account.
         untitled:
           type: string
           description: Title for expenses the file has no purpose for.
@@ -2429,7 +2427,7 @@ components:
         linkAccess:
           type: boolean
           description: >-
-            Accounts mode, owners only, when the server allows it
+            Accounts mode, members only, when the server allows it
             (`linkGroups`). 409 `link_closed` to turn it on while the link
             is closed.
         linkClosed:
@@ -2543,6 +2541,11 @@ components:
           type: boolean
         owner:
           type: boolean
+          deprecated: true
+          description: >-
+            No one owns a group any more; every member may do everything.
+            Kept for older apps, which show owners' controls by it: true for
+            every claimed member still in the group.
         claimed:
           type: boolean
           description: 'Accounts mode: an account is linked to this member.'

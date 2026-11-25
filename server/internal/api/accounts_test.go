@@ -174,7 +174,7 @@ func TestAccountsGroupAccess(t *testing.T) {
 	register(ana, "ana@example.com", "Ana")
 	var g Group
 	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}}, &g)
-	if g.LinkAccess || g.MyMemberId == nil || *g.MyMemberId != g.Members[0].Id || !g.Members[0].Claimed || !g.Members[0].Owner || g.Members[1].Claimed {
+	if g.LinkAccess || g.MyMemberId == nil || *g.MyMemberId != g.Members[0].Id || !g.Members[0].Claimed || g.Members[1].Claimed {
 		t.Fatalf("group = %+v", g)
 	}
 	path := "/g/" + g.Token
@@ -230,13 +230,9 @@ func TestAccountsGroupAccess(t *testing.T) {
 	}
 	ben.member = ""
 
-	// Only Ana may rename Ana; only the owner may turn on link access.
-	if code := ben.errorCode(403, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Anna"}); code != "not_allowed" {
-		t.Fatal(code)
-	}
-	if code := ben.errorCode(403, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}); code != "owner_only" {
-		t.Fatal(code)
-	}
+	// Every member may do anything, to Ana as well as to himself.
+	ben.must(200, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Anna"}, nil)
+	ben.must(200, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Ana"}, nil)
 
 	// Home lists the account's groups with its balance.
 	var mine GroupSummaryList
@@ -245,8 +241,9 @@ func TestAccountsGroupAccess(t *testing.T) {
 		t.Fatalf("my groups = %+v", mine)
 	}
 
-	// With link access, the link opens the group to anyone again.
-	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, &g)
+	// With link access, which Ben may turn on, the link opens the group to
+	// anyone again.
+	ben.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, &g)
 	if !g.LinkAccess {
 		t.Fatal("link access not on")
 	}
@@ -265,18 +262,19 @@ func TestAccountsGroupAccess(t *testing.T) {
 		t.Fatal("rejoining made a new member")
 	}
 
-	// The owner leaving hands the group on, and coming back by the link does
-	// not make them an owner again.
+	// The group's creator leaving takes nothing from the rest: Ben still
+	// manages it. Older apps see every claimed member as an owner.
 	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, nil)
 	ben.must(201, "POST", path+"/expenses", transfer(g.Members[0].Id, g.Members[1].Id, "50.00"), nil)
 	ana.must(204, "DELETE", path+"/members/"+g.Members[0].Id, nil, nil)
-	ben.must(200, "GET", path, nil, &g)
+	ben.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(false)}, nil)
+	ben.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, &g)
 	if g.Members[0].Owner || !g.Members[1].Owner {
-		t.Fatalf("after the owner left: %+v", g.Members)
+		t.Fatalf("owner flags: %+v", g.Members)
 	}
 	ana.must(200, "POST", path+"/join", JoinInput{}, &joined)
-	if joined.Members[0].Owner {
-		t.Fatal("rejoining made them an owner again")
+	if *joined.MyMemberId != g.Members[0].Id || !joined.Members[0].Owner {
+		t.Fatalf("rejoined: %+v", joined.Members[0])
 	}
 }
 
@@ -392,7 +390,8 @@ func TestFirstAccountOnClosedServer(t *testing.T) {
 }
 
 // In link mode, members claimed by accounts are anyone's to change, as there
-// are no accounts; back in accounts mode, they are their accounts' again.
+// are no accounts; back in accounts mode, only members may change them, not
+// someone the link alone lets in.
 func TestLinkModeClaimedMembers(t *testing.T) {
 	pool := testDB(t)
 	cfg := baseConfig(t, map[string]string{"BALNANA_AUTH_MODE": "accounts"})
@@ -413,7 +412,9 @@ func TestLinkModeClaimedMembers(t *testing.T) {
 	anyone.must(204, "DELETE", path+"/members/"+g.Members[2].Id, nil, nil)
 
 	srv.apply(cfg)
-	if code := ben.errorCode(403, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Ana"}); code != "not_allowed" {
+	ben.must(200, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Ana"}, nil)
+	ben.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, nil)
+	if code := anyone.errorCode(403, "PATCH", path+"/members/"+g.Members[0].Id, MemberInput{Name: "Anna"}); code != "not_allowed" {
 		t.Fatal(code)
 	}
 	ben.must(200, "PATCH", path+"/members/"+g.Members[1].Id, MemberInput{Name: "Benjamin"}, nil)

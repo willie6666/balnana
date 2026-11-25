@@ -108,7 +108,7 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 	} else if creator != nil && !dryRun {
 		return nil, badRequest("import_me")
 	}
-	owner := max(me, 0)
+	creatorIndex := max(me, 0)
 
 	// A preview may come before the name is chosen.
 	name := "Import"
@@ -207,13 +207,13 @@ func (s *Server) ImportGroup(ctx context.Context, req ImportGroupRequestObject) 
 			}
 			// clock_timestamp keeps the file's order; now() is fixed per transaction.
 			err := tx.QueryRow(ctx, `
-				insert into members (id, group_id, display_name, is_owner, user_id, created_at)
-				values ($1, $2, $3, $4, $5, clock_timestamp()) returning id::text`, id, g.id, n, i == owner, userID).Scan(&id)
+				insert into members (id, group_id, display_name, user_id, created_at)
+				values ($1, $2, $3, $4, clock_timestamp()) returning id::text`, id, g.id, n, userID).Scan(&id)
 			if err != nil {
 				return err
 			}
 		}
-		actor := ids[file.People[owner]]
+		actor := ids[file.People[creatorIndex]]
 		if err := logActivity(ctx, tx, g.id, &actor, "group.created", nil, map[string]any{"name": name}); err != nil {
 			return err
 		}

@@ -293,7 +293,7 @@ class _Settings extends ConsumerWidget {
       await groupApiOf(ref, group.token).delete();
     } on ApiException catch (e) {
       if (!context.mounted) return;
-      _snack(context, e.code == 'owner_only' ? l10n.groupDeleteOwnerOnly : errorMessage(l10n, e));
+      _snack(context, errorMessage(l10n, e));
       return;
     }
     removeDeletedGroup(container, server, group.token);
@@ -312,14 +312,10 @@ class _Settings extends ConsumerWidget {
     final accounts = ref.watch(accountsModeProvider);
     final linkGroups = ref.watch(serverInfoProvider.select((i) => i.value?.linkGroups ?? false));
     final email = ref.watch(serverInfoProvider.select((i) => i.value?.email ?? false));
-    // In accounts mode a group is its members' business, and deleting it its
-    // owner's (anyone's, once no owner is left; anyone the link opens it for,
-    // once no account is in it).
+    // In accounts mode a group is its members' business: every member may do
+    // everything, and anyone the link opens it for once no account is in it.
     final member = !accounts || me != null;
-    final canDelete =
-        !accounts ||
-        (me != null && (me.owner || !group.activeMembers.any((m) => m.owner))) ||
-        (me == null && group.linkAccess && !group.activeMembers.any((m) => m.claimed));
+    final canDelete = member || (group.linkAccess && !group.activeMembers.any((m) => m.claimed));
 
     return BPage(
       title: l10n.groupSettings,
@@ -390,7 +386,7 @@ class _Settings extends ConsumerWidget {
                 value: group.linkClosed,
                 onSave: (closed) => _setLinkClosed(context, ref, closed),
               ),
-            if (accounts && linkGroups && me != null && me.owner && !group.linkClosed)
+            if (accounts && linkGroups && me != null && !group.linkClosed)
               GroupedSwitchTile.saving(
                 icon: Icons.public,
                 title: l10n.linkAccessTitle,

@@ -192,7 +192,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorNotAMember => '아직 이 그룹의 멤버가 아니에요.';
 
   @override
-  String get errorNotAllowed => '해당 멤버나 그룹 소유자만 이 작업을 할 수 있어요.';
+  String get errorNotAllowed => '이 작업을 할 권한이 없어요.';
 
   @override
   String get errorLinkGroupsOff => '이 서버에서는 링크만으로 그룹을 열 수 없어요.';
@@ -2127,7 +2127,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminLinkGroups => '링크로 그룹 열기 허용';
 
   @override
-  String get adminLinkGroupsHelp => '그룹 소유자가 로그인 없이도 링크가 있는 사람을 참여시킬 수 있어요.';
+  String get adminLinkGroupsHelp => '그룹 멤버가 로그인 없이도 링크가 있는 사람을 참여시킬 수 있어요.';
 
   @override
   String get adminSmtpHost => '메일 서버';
@@ -2265,7 +2265,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '설정에서 계정을 삭제할 수 있어요. 그룹의 잔액 계산이 맞도록 내 이름은 미확인 멤버로 남고, 다른 사람이 접근할 수 없는 그룹은 함께 삭제돼요. 그룹 소유자는 그룹 설정에서 그룹 전체를 삭제할 수 있어요. 삭제한 그룹과 삭제한 지출의 사진은 30일 후 완전히 지워져요. 그 외 문의는 서버 운영자에게 해 주세요.';
+      '설정에서 계정을 삭제할 수 있어요. 그룹의 잔액 계산이 맞도록 내 이름은 미확인 멤버로 남고, 다른 사람이 접근할 수 없는 그룹은 함께 삭제돼요. 그룹 멤버라면 누구나 그룹 설정에서 그룹 전체를 삭제할 수 있어요. 삭제한 그룹과 삭제한 지출의 사진은 30일 후 완전히 지워져요. 그 외 문의는 서버 운영자에게 해 주세요.';
 
   @override
   String get privacyOperatorPolicy => '운영자의 개인정보 처리방침';
@@ -2359,9 +2359,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get groupDeleted => '그룹을 삭제했어요';
-
-  @override
-  String get groupDeleteOwnerOnly => '그룹 소유자만 삭제할 수 있어요.';
 
   @override
   String get expenseDiscardTitle => '변경사항을 취소할까요?';

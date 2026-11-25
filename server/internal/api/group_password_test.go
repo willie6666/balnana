@@ -117,7 +117,7 @@ func TestGroupPasswordAccountsMode(t *testing.T) {
 	path := "/g/" + g.Token
 	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(true)}, nil)
 
-	// Only the owner sets it, and members need no key.
+	// A member sets it, and members need no key.
 	var k GroupKey
 	ana.must(200, "PUT", path+"/password", GroupPasswordInput{Password: "banana split"}, &k)
 	ana.must(200, "GET", path, nil, &g)
@@ -148,14 +148,9 @@ func TestGroupPasswordAccountsMode(t *testing.T) {
 	var joined Group
 	keyed.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, &joined)
 
-	// Once a member, Ben needs no key, but may not change the password.
+	// Once a member, Ben needs no key, and may change the password as Ana may.
 	ben.must(200, "GET", path, nil, nil)
-	if code := ben.errorCode(403, "PUT", path+"/password", GroupPasswordInput{Password: "mine now"}); code != "owner_only" {
-		t.Fatal(code)
-	}
-	if code := ben.errorCode(403, "DELETE", path+"/password", nil); code != "owner_only" {
-		t.Fatal(code)
-	}
+	ben.must(200, "PUT", path+"/password", GroupPasswordInput{Password: "mine now"}, nil)
 
 	// Signed out and members-only, sign-in comes before the password.
 	ana.must(200, "PATCH", path, GroupUpdate{LinkAccess: ptr(false)}, nil)
@@ -188,7 +183,6 @@ func TestSetGroupPasswordRejectsBeforeHashing(t *testing.T) {
 		{"missing key", g.Token, "password_required", ana.another(), 403},
 		{"wrong key", g.Token, "password_required", ana.another().withKey("wrong"), 403},
 		{"non-member", g.Token, "not_a_member", ana.another().withKey(key.Key), 403},
-		{"non-owner", g.Token, "owner_only", ben, 403},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// Denied requests must finish even while every hashing slot is

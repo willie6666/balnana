@@ -206,7 +206,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorNotAMember => 'вы ещё не вступили в эту группу.';
 
   @override
-  String get errorNotAllowed => 'Это может сделать только этот участник или владелец группы.';
+  String get errorNotAllowed => 'У вас нет прав на это действие.';
 
   @override
   String get errorLinkGroupsOff => 'На этом сервере нельзя открывать группы только по ссылке.';
@@ -2228,7 +2228,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get adminLinkGroups => 'Открывать группы по ссылке';
 
   @override
-  String get adminLinkGroupsHelp => 'Владельцы групп могут разрешить доступ по ссылке без входа в аккаунт.';
+  String get adminLinkGroupsHelp => 'Участники групп могут разрешить доступ по ссылке без входа в аккаунт.';
 
   @override
   String get adminSmtpHost => 'Почтовый сервер';
@@ -2369,7 +2369,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Аккаунт можно удалить в настройках. ваше имя останется в группах как имя участника, за которым никто не закреплён, чтобы баланс продолжал сходиться. Группы, к которым больше никто не имеет доступа, будут удалены. Владелец группы может удалить её целиком в настройках группы. Удалённые группы и фото удалённых расходов стираются безвозвратно через 30 дней. По другим вопросам обратитесь к администратору сервера.';
+      'Аккаунт можно удалить в настройках. ваше имя останется в группах как имя участника, за которым никто не закреплён, чтобы баланс продолжал сходиться. Группы, к которым больше никто не имеет доступа, будут удалены. Любой участник группы может удалить её целиком в настройках группы. Удалённые группы и фото удалённых расходов стираются безвозвратно через 30 дней. По другим вопросам обратитесь к администратору сервера.';
 
   @override
   String get privacyOperatorPolicy => 'Политика конфиденциальности администратора сервера';
@@ -2466,9 +2466,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Группа удалена';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Удалить группу может только её владелец.';
 
   @override
   String get expenseDiscardTitle => 'Отменить изменения?';

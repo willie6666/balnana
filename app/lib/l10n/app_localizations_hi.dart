@@ -203,7 +203,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get errorNotAMember => 'आप अभी इस समूह में नहीं हैं।';
 
   @override
-  String get errorNotAllowed => 'यह काम सिर्फ़ वही व्यक्ति या समूह का मालिक कर सकता है।';
+  String get errorNotAllowed => 'आपको यह करने की अनुमति नहीं है।';
 
   @override
   String get errorLinkGroupsOff => 'यह सर्वर सिर्फ़ लिंक से समूह खोलने की अनुमति नहीं देता।';
@@ -2205,7 +2205,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'समूह के मालिक बिना साइन इन किए, लिंक पाने वाले किसी भी व्यक्ति को शामिल होने दे सकते हैं।';
+      'समूह के सदस्य बिना साइन इन किए, लिंक पाने वाले किसी भी व्यक्ति को शामिल होने दे सकते हैं।';
 
   @override
   String get adminSmtpHost => 'मेल सर्वर';
@@ -2346,7 +2346,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'आप सेटिंग में अपना खाता मिटा सकते हैं। आपके समूहों में आपका नाम ऐसे सदस्य के रूप में बना रहेगा जिसका दावा किसी ने नहीं किया, ताकि बैलेंस का जोड़ सही रहे। जिन समूहों तक कोई और नहीं पहुँच सकता, वे भी मिट जाएँगे। समूह का मालिक उसकी सेटिंग में पूरा समूह मिटा सकता है। मिटाए गए समूह और मिटाए गए खर्चों की तस्वीरें 30 दिनों के बाद हमेशा के लिए हटा दी जाती हैं। बाकी किसी बात के लिए सर्वर ऑपरेटर से संपर्क करें।';
+      'आप सेटिंग में अपना खाता मिटा सकते हैं। आपके समूहों में आपका नाम ऐसे सदस्य के रूप में बना रहेगा जिसका दावा किसी ने नहीं किया, ताकि बैलेंस का जोड़ सही रहे। जिन समूहों तक कोई और नहीं पहुँच सकता, वे भी मिट जाएँगे। समूह का कोई भी सदस्य उसकी सेटिंग में पूरा समूह मिटा सकता है। मिटाए गए समूह और मिटाए गए खर्चों की तस्वीरें 30 दिनों के बाद हमेशा के लिए हटा दी जाती हैं। बाकी किसी बात के लिए सर्वर ऑपरेटर से संपर्क करें।';
 
   @override
   String get privacyOperatorPolicy => 'ऑपरेटर की गोपनीयता नीति';
@@ -2443,9 +2443,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get groupDeleted => 'समूह मिटा दिया गया';
-
-  @override
-  String get groupDeleteOwnerOnly => 'सिर्फ़ समूह का मालिक इसे मिटा सकता है।';
 
   @override
   String get expenseDiscardTitle => 'बदलाव छोड़ दें?';

@@ -19,11 +19,8 @@ func TestLinkClosed(t *testing.T) {
 	register(ben, "ben@example.com", "Ben")
 	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
 
-	// Only those who manage the group close it, and closing turns link access off.
-	if code := ben.errorCode(403, "PATCH", path, GroupUpdate{LinkClosed: ptr(true)}); code != "owner_only" {
-		t.Fatal(code)
-	}
-	ana.must(200, "PATCH", path, GroupUpdate{LinkClosed: ptr(true)}, &g)
+	// Any member closes it, and closing turns link access off.
+	ben.must(200, "PATCH", path, GroupUpdate{LinkClosed: ptr(true)}, &g)
 	if !g.LinkClosed || g.LinkAccess {
 		t.Fatalf("closed: linkClosed %v, linkAccess %v", g.LinkClosed, g.LinkAccess)
 	}

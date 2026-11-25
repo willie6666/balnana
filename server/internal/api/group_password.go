@@ -174,28 +174,25 @@ func (s *Server) changeGroupPassword(ctx context.Context, token string, member *
 }
 
 // mayManage checks the request may change who can open g or delete it. In
-// accounts mode that is its owner; when the owner has gone, any member; and
-// when no account is a member any more, anyone the link opens it for. In
-// link mode, anyone it is open to.
+// accounts mode that is any member, and when no account is a member any
+// more, anyone the link opens it for. In link mode, anyone it is open to.
 func (s *Server) mayManage(ctx context.Context, q querier, g *group) error {
-	if s.conf().AuthMode != config.AuthModeAccounts || g.owner {
+	if s.conf().AuthMode != config.AuthModeAccounts || g.me != nil {
 		return nil
 	}
-	var owned, claimed bool
+	if !g.open {
+		return forbidden("not_a_member")
+	}
+	var claimed bool
 	err := q.QueryRow(ctx, `
 		select exists (select 1 from members
-		               where group_id = $1 and is_owner and user_id is not null and left_at is null),
-		       exists (select 1 from members
 		               where group_id = $1 and user_id is not null and left_at is null)`,
-		g.id).Scan(&owned, &claimed)
+		g.id).Scan(&claimed)
 	if err != nil {
 		return err
 	}
-	if g.me == nil && (!g.open || claimed) {
+	if claimed {
 		return forbidden("not_a_member")
-	}
-	if owned {
-		return forbidden("owner_only")
 	}
 	return nil
 }

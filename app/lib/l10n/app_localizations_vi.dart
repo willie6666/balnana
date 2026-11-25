@@ -198,7 +198,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorNotAMember => 'Bạn chưa tham gia nhóm này.';
 
   @override
-  String get errorNotAllowed => 'Chỉ người đó hoặc chủ nhóm mới có thể làm việc này.';
+  String get errorNotAllowed => 'Bạn không có quyền làm việc này.';
 
   @override
   String get errorLinkGroupsOff => 'Máy chủ này không cho phép mở nhóm chỉ bằng liên kết.';
@@ -2178,7 +2178,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Chủ nhóm có thể cho phép bất kỳ ai có liên kết tham gia mà không cần đăng nhập.';
+      'Thành viên nhóm có thể cho phép bất kỳ ai có liên kết tham gia mà không cần đăng nhập.';
 
   @override
   String get adminSmtpHost => 'Máy chủ email';
@@ -2318,7 +2318,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Bạn có thể xóa tài khoản trong Cài đặt. Tên bạn vẫn ở trong nhóm với tư cách thành viên chưa có ai nhận là mình, để số dư vẫn khớp; các nhóm không ai khác truy cập được sẽ bị xóa. Chủ nhóm có thể xóa toàn bộ nhóm trong phần cài đặt. Nhóm đã xóa và ảnh của các khoản chi đã xóa sẽ bị xóa vĩnh viễn sau 30 ngày. Với yêu cầu khác, hãy liên hệ người quản lý máy chủ.';
+      'Bạn có thể xóa tài khoản trong Cài đặt. Tên bạn vẫn ở trong nhóm với tư cách thành viên chưa có ai nhận là mình, để số dư vẫn khớp; các nhóm không ai khác truy cập được sẽ bị xóa. Bất kỳ thành viên nào của nhóm cũng có thể xóa toàn bộ nhóm trong phần cài đặt. Nhóm đã xóa và ảnh của các khoản chi đã xóa sẽ bị xóa vĩnh viễn sau 30 ngày. Với yêu cầu khác, hãy liên hệ người quản lý máy chủ.';
 
   @override
   String get privacyOperatorPolicy => 'Chính sách quyền riêng tư của người quản lý';
@@ -2415,9 +2415,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Đã xóa nhóm';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Chỉ chủ nhóm mới có thể xóa nhóm.';
 
   @override
   String get expenseDiscardTitle => 'Bỏ thay đổi?';

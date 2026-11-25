@@ -206,7 +206,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorNotAMember => 'لست عضوًا في هذه المجموعة بعد.';
 
   @override
-  String get errorNotAllowed => 'يمكن لهذا الشخص أو مالك المجموعة وحده القيام بذلك.';
+  String get errorNotAllowed => 'غير مسموح لك بالقيام بذلك.';
 
   @override
   String get errorLinkGroupsOff => 'لا يسمح هذا الخادم بفتح المجموعات باستخدام الرابط وحده.';
@@ -2218,7 +2218,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'يمكن لمالكي المجموعات السماح لأي شخص لديه الرابط بالانضمام دون تسجيل الدخول.';
+      'يمكن لأعضاء المجموعات السماح لأي شخص لديه الرابط بالانضمام دون تسجيل الدخول.';
 
   @override
   String get adminSmtpHost => 'خادم البريد';
@@ -2359,7 +2359,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'يمكنك حذف حسابك من الإعدادات. سيبقى اسمك في مجموعاتك كعضو لم يتولّه أحد، لتظل الأرصدة صحيحة، وستُحذف معه المجموعات التي لا يستطيع أحد سواك الوصول إليها. ويمكن لمالك المجموعة حذفها بالكامل من إعداداتها. تُمحى المجموعات المحذوفة وصور المصروفات المحذوفة نهائيًا بعد 30 يومًا. لأي أمر آخر، تواصل مع مشغّل الخادم.';
+      'يمكنك حذف حسابك من الإعدادات. سيبقى اسمك في مجموعاتك كعضو لم يتولّه أحد، لتظل الأرصدة صحيحة، وستُحذف معه المجموعات التي لا يستطيع أحد سواك الوصول إليها. ويمكن لأي عضو في المجموعة حذفها بالكامل من إعداداتها. تُمحى المجموعات المحذوفة وصور المصروفات المحذوفة نهائيًا بعد 30 يومًا. لأي أمر آخر، تواصل مع مشغّل الخادم.';
 
   @override
   String get privacyOperatorPolicy => 'سياسة الخصوصية الخاصة بالمشغّل';
@@ -2455,9 +2455,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get groupDeleted => 'حُذفت المجموعة';
-
-  @override
-  String get groupDeleteOwnerOnly => 'يمكن لمالك المجموعة وحده حذفها.';
 
   @override
   String get expenseDiscardTitle => 'تجاهل التغييرات؟';

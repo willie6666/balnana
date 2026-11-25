@@ -196,7 +196,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorNotAMember => 'คุณยังไม่ได้อยู่ในกลุ่มนี้';
 
   @override
-  String get errorNotAllowed => 'คนนี้หรือเจ้าของกลุ่มเท่านั้นที่ทำรายการนี้ได้';
+  String get errorNotAllowed => 'คุณไม่มีสิทธิ์ทำรายการนี้';
 
   @override
   String get errorLinkGroupsOff => 'เซิร์ฟเวอร์นี้ไม่อนุญาตให้เปิดกลุ่มด้วยลิงก์เพียงอย่างเดียว';
@@ -2172,7 +2172,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminLinkGroups => 'เปิดกลุ่มด้วยลิงก์ได้';
 
   @override
-  String get adminLinkGroupsHelp => 'เจ้าของกลุ่มอนุญาตให้ทุกคนที่มีลิงก์เข้ากลุ่มได้โดยไม่ต้องลงชื่อเข้าใช้';
+  String get adminLinkGroupsHelp => 'สมาชิกกลุ่มอนุญาตให้ทุกคนที่มีลิงก์เข้ากลุ่มได้โดยไม่ต้องลงชื่อเข้าใช้';
 
   @override
   String get adminSmtpHost => 'เซิร์ฟเวอร์อีเมล';
@@ -2311,7 +2311,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'คุณลบบัญชีได้ในการตั้งค่า จากนั้นชื่อของคุณจะยังอยู่ในกลุ่มในฐานะสมาชิกที่ยังไม่มีใครรับช่วง เพื่อให้ยอดคงเหลือยังรวมกันได้ และกลุ่มที่ไม่มีคนอื่นเข้าถึงจะถูกลบไปด้วย เจ้าของกลุ่มลบทั้งกลุ่มได้ในการตั้งค่ากลุ่ม กลุ่มที่ลบและรูปถ่ายของค่าใช้จ่ายที่ลบจะถูกลบถาวรหลังจาก 30 วัน หากต้องการทำอย่างอื่น โปรดติดต่อผู้ดูแลเซิร์ฟเวอร์';
+      'คุณลบบัญชีได้ในการตั้งค่า จากนั้นชื่อของคุณจะยังอยู่ในกลุ่มในฐานะสมาชิกที่ยังไม่มีใครรับช่วง เพื่อให้ยอดคงเหลือยังรวมกันได้ และกลุ่มที่ไม่มีคนอื่นเข้าถึงจะถูกลบไปด้วย สมาชิกทุกคนในกลุ่มลบทั้งกลุ่มได้ในการตั้งค่ากลุ่ม กลุ่มที่ลบและรูปถ่ายของค่าใช้จ่ายที่ลบจะถูกลบถาวรหลังจาก 30 วัน หากต้องการทำอย่างอื่น โปรดติดต่อผู้ดูแลเซิร์ฟเวอร์';
 
   @override
   String get privacyOperatorPolicy => 'นโยบายความเป็นส่วนตัวของผู้ดูแล';
@@ -2407,9 +2407,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get groupDeleted => 'ลบกลุ่มแล้ว';
-
-  @override
-  String get groupDeleteOwnerOnly => 'เฉพาะเจ้าของกลุ่มเท่านั้นที่ลบกลุ่มได้';
 
   @override
   String get expenseDiscardTitle => 'ทิ้งการเปลี่ยนแปลงไหม?';

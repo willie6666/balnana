@@ -204,7 +204,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get errorNotAMember => 'Nie należysz jeszcze do tej grupy.';
 
   @override
-  String get errorNotAllowed => 'Może to zrobić tylko ta osoba albo właściciel grupy.';
+  String get errorNotAllowed => 'Nie masz uprawnień, aby to zrobić.';
 
   @override
   String get errorLinkGroupsOff => 'Ten serwer nie pozwala otwierać grup za pomocą samego linku.';
@@ -2266,7 +2266,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Właściciele grup mogą zezwolić każdej osobie z linkiem na dołączenie bez logowania.';
+      'Członkowie grup mogą zezwolić każdej osobie z linkiem na dołączenie bez logowania.';
 
   @override
   String get adminSmtpHost => 'Serwer poczty';
@@ -2407,7 +2407,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Możesz usunąć konto w Ustawieniach. Twoje imię pozostanie w grupach jako osoba bez przypisanego konta, dzięki czemu salda nadal będą się zgadzać. Usunięte zostaną też grupy, do których nikt inny nie ma dostępu. Właściciel grupy może usunąć całą grupę w jej ustawieniach. Usunięte grupy i zdjęcia usuniętych wydatków są trwale kasowane po 30 dniach. W innych sprawach skontaktuj się z administratorem serwera.';
+      'Możesz usunąć konto w Ustawieniach. Twoje imię pozostanie w grupach jako osoba bez przypisanego konta, dzięki czemu salda nadal będą się zgadzać. Usunięte zostaną też grupy, do których nikt inny nie ma dostępu. Każdy członek grupy może usunąć całą grupę w jej ustawieniach. Usunięte grupy i zdjęcia usuniętych wydatków są trwale kasowane po 30 dniach. W innych sprawach skontaktuj się z administratorem serwera.';
 
   @override
   String get privacyOperatorPolicy => 'Polityka prywatności administratora';
@@ -2504,9 +2504,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Grupa usunięta';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Grupę może usunąć tylko jej właściciel.';
 
   @override
   String get expenseDiscardTitle => 'Odrzucić zmiany?';

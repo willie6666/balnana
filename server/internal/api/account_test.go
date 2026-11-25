@@ -35,10 +35,10 @@ func TestDeleteAccount(t *testing.T) {
 		t.Fatal(code)
 	}
 
-	// Ana's member stays, unclaimed; Ben owns the group now.
+	// Ana's member stays, unclaimed.
 	var g Group
 	ben.must(200, "GET", "/g/"+flat.Token, nil, &g)
-	if a, b := g.Members[0], g.Members[1]; a.Name != "Ana" || a.Claimed || a.Owner || !b.Owner {
+	if a, b := g.Members[0], g.Members[1]; a.Name != "Ana" || a.Claimed || !b.Claimed {
 		t.Fatalf("members = %+v", g.Members)
 	}
 	// Nobody could reach Solo any more; Open still has its link.
@@ -72,15 +72,12 @@ func TestDeleteGroup(t *testing.T) {
 	ana.must(201, "POST", "/groups", GroupCreate{Name: "Flat", Currency: "EUR", Members: []string{"Ana", "Ben"}, LinkAccess: ptr(true)}, &g)
 	path := "/g/" + g.Token
 
-	// Holding the link is not enough, nor is being a member.
+	// Holding the link is not enough; being a member is, whoever made it.
 	if code := ben.errorCode(403, "DELETE", path, nil); code != "not_a_member" {
 		t.Fatal(code)
 	}
 	ben.must(200, "POST", path+"/join", JoinInput{ClaimMemberId: &g.Members[1].Id}, nil)
-	if code := ben.errorCode(403, "DELETE", path, nil); code != "owner_only" {
-		t.Fatal(code)
-	}
-	ana.must(204, "DELETE", path, nil, nil)
+	ben.must(204, "DELETE", path, nil, nil)
 	ana.errorCode(404, "GET", path, nil)
 	var mine GroupSummaryList
 	ben.must(200, "GET", "/me/groups", nil, &mine)

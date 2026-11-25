@@ -691,7 +691,7 @@ type GroupUpdate struct {
 	// Features Those left out stay as they are, or on for a new group.
 	Features *GroupFeaturesInput `json:"features,omitempty"`
 
-	// LinkAccess Accounts mode, owners only, when the server allows it (`linkGroups`). 409 `link_closed` to turn it on while the link is closed.
+	// LinkAccess Accounts mode, members only, when the server allows it (`linkGroups`). 409 `link_closed` to turn it on while the link is closed.
 	LinkAccess *bool `json:"linkAccess,omitempty"`
 
 	// LinkClosed Accounts mode only (otherwise 403 `accounts_off`): close the link, so only members use the group and only people invited by email join it. Who may change it as for the password; closing also turns link access off.
@@ -710,7 +710,7 @@ type ImportInput struct {
 	File   []byte            `json:"file"`
 	Format ImportInputFormat `json:"format"`
 
-	// Me Which person in the file the creator is. They become the owner; in accounts mode, required, and the member is linked to the account.
+	// Me Which person in the file the creator is. In accounts mode, required, and the member is linked to the account.
 	Me *string `json:"me,omitempty"`
 
 	// Name The new group's name. Required unless `dryRun`.
@@ -830,7 +830,10 @@ type Member struct {
 	Id      string `json:"id"`
 	Left    bool   `json:"left"`
 	Name    string `json:"name"`
-	Owner   bool   `json:"owner"`
+
+	// Owner No one owns a group any more; every member may do everything. Kept for older apps, which show owners' controls by it: true for every claimed member still in the group.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Owner bool `json:"owner"`
 }
 
 // MemberBalance defines model for MemberBalance.

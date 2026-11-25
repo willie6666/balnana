@@ -204,7 +204,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get errorNotAMember => 'Non fai ancora parte di questo gruppo.';
 
   @override
-  String get errorNotAllowed => 'Solo questa persona o il proprietario del gruppo può farlo.';
+  String get errorNotAllowed => 'Non hai il permesso di farlo.';
 
   @override
   String get errorLinkGroupsOff => 'Questo server non permette di aprire i gruppi usando solo un link.';
@@ -2204,7 +2204,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'I proprietari dei gruppi possono consentire l\'accesso a chiunque abbia il link, senza effettuare l\'accesso.';
+      'I membri dei gruppi possono consentire l\'accesso a chiunque abbia il link, senza effettuare l\'accesso.';
 
   @override
   String get adminSmtpHost => 'Server di posta';
@@ -2347,7 +2347,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Il proprietario di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. I gruppi eliminati e le foto delle spese eliminate vengono cancellati definitivamente dopo 30 giorni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
+      'Puoi eliminare il tuo account dalle impostazioni. Nei tuoi gruppi il tuo nome resterà associato a un membro non rivendicato, così i saldi continueranno a tornare; i gruppi a cui nessun altro può accedere verranno eliminati. Qualsiasi membro di un gruppo può eliminare l\'intero gruppo dalle sue impostazioni. I gruppi eliminati e le foto delle spese eliminate vengono cancellati definitivamente dopo 30 giorni. Per qualsiasi altra richiesta, contatta l\'operatore del server.';
 
   @override
   String get privacyOperatorPolicy => 'Informativa sulla privacy dell\'operatore';
@@ -2444,9 +2444,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Gruppo eliminato';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Solo il proprietario del gruppo può eliminarlo.';
 
   @override
   String get expenseDiscardTitle => 'Annullare le modifiche?';

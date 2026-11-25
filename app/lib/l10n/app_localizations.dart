@@ -486,7 +486,7 @@ abstract class AppLocalizations {
   /// Message for error not allowed in API error feedback.
   ///
   /// In en, this message translates to:
-  /// **'Only that person or the group\'s owner can do this.'**
+  /// **'You aren\'t allowed to do this.'**
   String get errorNotAllowed;
 
   /// Message for error link groups off in API error feedback.
@@ -3906,7 +3906,7 @@ abstract class AppLocalizations {
   /// Help text for admin link groups help in the server administrator interface.
   ///
   /// In en, this message translates to:
-  /// **'Group owners may let anyone with the link in, without signing in.'**
+  /// **'Group members may let anyone with the link in, without signing in.'**
   String get adminLinkGroupsHelp;
 
   /// Label or control text for admin smtp host in the server administrator interface.
@@ -4164,7 +4164,7 @@ abstract class AppLocalizations {
   /// Explanatory text for privacy delete body in the built-in privacy notice.
   ///
   /// In en, this message translates to:
-  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.'**
+  /// **'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. Any member of a group can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.'**
   String get privacyDeleteBody;
 
   /// Label or control text for privacy operator policy in the built-in privacy notice.
@@ -4340,12 +4340,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group deleted'**
   String get groupDeleted;
-
-  /// Label or control text for group delete owner only in group creation, settings, or switching.
-  ///
-  /// In en, this message translates to:
-  /// **'Only the group\'s owner can delete it.'**
-  String get groupDeleteOwnerOnly;
 
   /// Heading for expense discard title in the expense editor or expense list.
   ///

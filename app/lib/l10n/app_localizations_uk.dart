@@ -205,7 +205,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorNotAMember => 'Ви ще не приєдналися до цієї групи.';
 
   @override
-  String get errorNotAllowed => 'Це може зробити лише ця людина або власник групи.';
+  String get errorNotAllowed => 'У вас немає прав на цю дію.';
 
   @override
   String get errorLinkGroupsOff => 'На цьому сервері не можна відкривати групи лише за посиланням.';
@@ -2260,7 +2260,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Власники груп можуть надати доступ кожному, хто має посилання, без входу.';
+      'Учасники груп можуть надати доступ кожному, хто має посилання, без входу.';
 
   @override
   String get adminSmtpHost => 'Поштовий сервер';
@@ -2401,7 +2401,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Обліковий запис можна видалити в налаштуваннях. Ваше ім’я залишиться в групах як учасник без власника, щоб баланси й далі сходилися. Групи, до яких більше ніхто не має доступу, буде видалено. Власник групи може видалити всю групу в її налаштуваннях. Видалені групи та фото видалених витрат стираються остаточно через 30 днів. З інших питань зверніться до оператора сервера.';
+      'Обліковий запис можна видалити в налаштуваннях. Ваше ім’я залишиться в групах як учасник без власника, щоб баланси й далі сходилися. Групи, до яких більше ніхто не має доступу, буде видалено. Будь-який учасник групи може видалити всю групу в її налаштуваннях. Видалені групи та фото видалених витрат стираються остаточно через 30 днів. З інших питань зверніться до оператора сервера.';
 
   @override
   String get privacyOperatorPolicy => 'Політика конфіденційності оператора';
@@ -2498,9 +2498,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Групу видалено';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Видалити групу може лише її власник.';
 
   @override
   String get expenseDiscardTitle => 'Відкинути зміни?';

@@ -68,7 +68,6 @@ type group struct {
 	open     bool    // the link alone opens the group
 	accounts bool    // accounts mode: members claimed by accounts are theirs
 	me       *string // accounts mode: the signed-in account's member
-	owner    bool    // ...who owns the group
 }
 
 const groupColumns = `id::text, token, name, emoji, color, currency, symbol, minor_digits, link_access, created_at, ` +
@@ -119,11 +118,11 @@ func (s *Server) findGroup(ctx context.Context, q querier, token string, lock bo
 	return g, nil
 }
 
-// resolveAccess fills in g.open, g.me and g.owner for this request.
+// resolveAccess fills in g.open and g.me for this request.
 func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
 	accounts := s.conf().AuthMode == config.AuthModeAccounts
 	g.open = !accounts || s.conf().LinkGroups && g.linkAccess
-	g.accounts, g.me, g.owner = accounts, nil, false
+	g.accounts, g.me = accounts, nil
 	if !accounts {
 		return nil
 	}
@@ -134,8 +133,8 @@ func (s *Server) resolveAccess(ctx context.Context, q querier, g *group) error {
 	}
 	var id string
 	err = q.QueryRow(ctx, `
-		select id::text, is_owner from members
-		where group_id = $1 and user_id = $2 and left_at is null`, g.id, u.id).Scan(&id, &g.owner)
+		select id::text from members
+		where group_id = $1 and user_id = $2 and left_at is null`, g.id, u.id).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -308,20 +307,19 @@ type member struct {
 	name   string
 	color  *int
 	left   bool
-	owner  bool
 	userID *string
 }
 
 func groupMembers(ctx context.Context, q querier, groupID string) ([]member, error) {
 	rows, err := q.Query(ctx, `
-		select id::text, display_name, color, left_at is not null, is_owner, user_id::text
+		select id::text, display_name, color, left_at is not null, user_id::text
 		from members where group_id = $1 order by created_at, id`, groupID)
 	if err != nil {
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (member, error) {
 		var m member
-		err := row.Scan(&m.id, &m.name, &m.color, &m.left, &m.owner, &m.userID)
+		err := row.Scan(&m.id, &m.name, &m.color, &m.left, &m.userID)
 		return m, err
 	})
 }
@@ -367,7 +365,9 @@ func toMember(m member, nets map[string]int64, digits int) Member {
 		Name:    m.name,
 		Color:   m.color,
 		Left:    m.left,
-		Owner:   m.owner,
+		// Deprecated: no one owns a group any more. Apps before 1.3 show
+		// owners' controls by it, which every member now has.
+		Owner:   m.userID != nil && !m.left,
 		Claimed: m.userID != nil,
 		Balance: domain.FormatAmount(nets[m.id], digits),
 	}

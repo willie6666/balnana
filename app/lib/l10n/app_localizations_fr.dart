@@ -205,8 +205,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorNotAMember => 'Vous ne faites pas encore partie de ce groupe.';
 
   @override
-  String get errorNotAllowed =>
-      'Seule cette personne ou le propriétaire du groupe peut effectuer cette action.';
+  String get errorNotAllowed => 'Vous n’êtes pas autorisé à effectuer cette action.';
 
   @override
   String get errorLinkGroupsOff => 'Ce serveur ne permet pas d’ouvrir un groupe avec son seul lien.';
@@ -2232,7 +2231,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Les propriétaires de groupe peuvent autoriser toute personne ayant le lien à rejoindre le groupe sans se connecter.';
+      'Les membres d’un groupe peuvent autoriser toute personne ayant le lien à rejoindre le groupe sans se connecter.';
 
   @override
   String get adminSmtpHost => 'Serveur de messagerie';
@@ -2375,7 +2374,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Vous pouvez supprimer votre compte dans les paramètres. Votre nom restera alors dans vos groupes comme membre non revendiqué, afin que les soldes restent justes. Les groupes auxquels personne d’autre n’a accès seront supprimés. Le propriétaire d’un groupe peut supprimer tout le groupe dans ses paramètres. Les groupes supprimés et les photos des dépenses supprimées sont effacés définitivement au bout de 30 jours. Pour toute autre demande, contactez la personne qui gère le serveur.';
+      'Vous pouvez supprimer votre compte dans les paramètres. Votre nom restera alors dans vos groupes comme membre non revendiqué, afin que les soldes restent justes. Les groupes auxquels personne d’autre n’a accès seront supprimés. Tout membre d’un groupe peut supprimer tout le groupe dans ses paramètres. Les groupes supprimés et les photos des dépenses supprimées sont effacés définitivement au bout de 30 jours. Pour toute autre demande, contactez la personne qui gère le serveur.';
 
   @override
   String get privacyOperatorPolicy => 'Politique de confidentialité du serveur';
@@ -2473,9 +2472,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Groupe supprimé';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Seul le propriétaire du groupe peut le supprimer.';
 
   @override
   String get expenseDiscardTitle => 'Abandonner les modifications ?';

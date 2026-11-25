@@ -192,7 +192,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorNotAMember => '你还不是此群组的成员。';
 
   @override
-  String get errorNotAllowed => '只有此成员或群组所有者可以执行此操作。';
+  String get errorNotAllowed => '你无权执行此操作。';
 
   @override
   String get errorLinkGroupsOff => '此服务器不允许仅凭链接打开群组。';
@@ -2119,7 +2119,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminLinkGroups => '允许通过链接打开群组';
 
   @override
-  String get adminLinkGroupsHelp => '群组所有者可以允许任何拥有链接的人无需登录即可加入。';
+  String get adminLinkGroupsHelp => '群组成员可以允许任何拥有链接的人无需登录即可加入。';
 
   @override
   String get adminSmtpHost => '邮件服务器';
@@ -2255,7 +2255,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组所有者可以在群组设置中删除整个群组。已删除的群组和已删除费用的照片会在 30 天后彻底清除。其他数据相关问题，请联系服务器运营者。';
+      '你可以在设置中删除账号。删除后，你的姓名仍会作为无人认领的成员保留在群组中，以确保余额仍能正确计算；没有其他成员可以访问的群组也会一并删除。群组的任何成员都可以在群组设置中删除整个群组。已删除的群组和已删除费用的照片会在 30 天后彻底清除。其他数据相关问题，请联系服务器运营者。';
 
   @override
   String get privacyOperatorPolicy => '运营者的隐私政策';
@@ -2347,9 +2347,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get groupDeleted => '群组已删除';
-
-  @override
-  String get groupDeleteOwnerOnly => '只有群组所有者可以删除群组。';
 
   @override
   String get expenseDiscardTitle => '放弃更改？';
@@ -3788,7 +3785,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get errorNotAMember => '你還不是這個群組的成員。';
 
   @override
-  String get errorNotAllowed => '只有這個人或群組擁有者能進行這項操作。';
+  String get errorNotAllowed => '你沒有權限進行這項操作。';
 
   @override
   String get errorLinkGroupsOff => '這台伺服器不允許只透過連結開啟群組。';
@@ -5715,7 +5712,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get adminLinkGroups => '允許透過連結開啟群組';
 
   @override
-  String get adminLinkGroupsHelp => '群組擁有者可以允許任何取得連結的人加入，無需登入。';
+  String get adminLinkGroupsHelp => '群組成員可以允許任何取得連結的人加入，無需登入。';
 
   @override
   String get adminSmtpHost => '郵件伺服器';
@@ -5852,7 +5849,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacyDeleteBody =>
-      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組擁有者可以在群組設定中刪除整個群組。已刪除的群組和已刪除費用的照片會在 30 天後徹底清除。其他資料刪除需求請聯絡伺服器管理者。';
+      '你可以在「設定」中刪除帳戶。刪除後，你的名稱仍會保留在群組中，成為無人認領的成員，讓餘額繼續正確計算；其他人都無法存取的群組也會一併刪除。群組的任何成員都可以在群組設定中刪除整個群組。已刪除的群組和已刪除費用的照片會在 30 天後徹底清除。其他資料刪除需求請聯絡伺服器管理者。';
 
   @override
   String get privacyOperatorPolicy => '管理者的隱私權政策';
@@ -5944,9 +5941,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupDeleted => '群組已刪除';
-
-  @override
-  String get groupDeleteOwnerOnly => '只有群組擁有者能刪除群組。';
 
   @override
   String get expenseDiscardTitle => '要捨棄變更嗎？';

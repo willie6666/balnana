@@ -202,7 +202,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errorNotAMember => 'Você ainda não faz parte deste grupo.';
 
   @override
-  String get errorNotAllowed => 'Só essa pessoa ou o dono do grupo pode fazer isso.';
+  String get errorNotAllowed => 'Você não tem permissão para fazer isso.';
 
   @override
   String get errorLinkGroupsOff => 'Este servidor não permite abrir grupos apenas com o link.';
@@ -2215,7 +2215,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Quem é dono do grupo pode permitir que qualquer pessoa com o link entre sem acessar uma conta.';
+      'Membros do grupo podem permitir que qualquer pessoa com o link entre sem acessar uma conta.';
 
   @override
   String get adminSmtpHost => 'Servidor de e-mail';
@@ -2357,7 +2357,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Você pode excluir sua conta em Configurações. Seu nome continuará nos grupos como um membro sem responsável, para que os saldos continuem fechando. Os grupos que ninguém mais consegue acessar também serão excluídos. Quem é dono de um grupo pode excluí-lo por completo nas configurações. Grupos excluídos e as fotos de despesas excluídas são apagados definitivamente após 30 dias. Para qualquer outra coisa, entre em contato com quem administra o servidor.';
+      'Você pode excluir sua conta em Configurações. Seu nome continuará nos grupos como um membro sem responsável, para que os saldos continuem fechando. Os grupos que ninguém mais consegue acessar também serão excluídos. Qualquer membro de um grupo pode excluí-lo por completo nas configurações. Grupos excluídos e as fotos de despesas excluídas são apagados definitivamente após 30 dias. Para qualquer outra coisa, entre em contato com quem administra o servidor.';
 
   @override
   String get privacyOperatorPolicy => 'Política de privacidade do servidor';
@@ -2454,9 +2454,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Grupo excluído';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Só quem é dono do grupo pode excluí-lo.';
 
   @override
   String get expenseDiscardTitle => 'Descartar alterações?';

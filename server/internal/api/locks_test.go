@@ -207,15 +207,15 @@ func TestAdminLoginRacingReset(t *testing.T) {
 	}
 }
 
-// Someone joining an open group as its last owner deletes their account
-// waits for the deletion, then owns the group.
+// Someone joining an open group as its last account deletes theirs waits for
+// the deletion, then is in the group.
 func TestDeleteAccountRacingJoin(t *testing.T) {
 	var ben *client
 	var token string
 	joined := make(chan int, 1)
 	fired := false
 	first, second, _, _ := racing(t, map[string]string{}, func(sql string) {
-		if fired || !strings.Contains(sql, "update members set user_id = null, is_owner = false") {
+		if fired || !strings.Contains(sql, "update members set user_id = null where user_id") {
 			return
 		}
 		fired = true
@@ -235,12 +235,8 @@ func TestDeleteAccountRacingJoin(t *testing.T) {
 		t.Fatalf("fired=%v join status %d", fired, status)
 	}
 	ben.must(200, "GET", "/g/"+token, nil, &g)
-	owned := false
-	for _, m := range g.Members {
-		owned = owned || m.Owner && m.Claimed && !m.Left
-	}
-	if !owned {
-		t.Fatal("the group has no owner")
+	if g.MyMemberId == nil {
+		t.Fatal("Ben is not in the group")
 	}
 }
 

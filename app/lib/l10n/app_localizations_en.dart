@@ -202,7 +202,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorNotAMember => 'You\'re not in this group yet.';
 
   @override
-  String get errorNotAllowed => 'Only that person or the group\'s owner can do this.';
+  String get errorNotAllowed => 'You aren\'t allowed to do this.';
 
   @override
   String get errorLinkGroupsOff => 'This server doesn\'t allow opening groups by link alone.';
@@ -2182,7 +2182,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminLinkGroups => 'Groups may be opened by link';
 
   @override
-  String get adminLinkGroupsHelp => 'Group owners may let anyone with the link in, without signing in.';
+  String get adminLinkGroupsHelp => 'Group members may let anyone with the link in, without signing in.';
 
   @override
   String get adminSmtpHost => 'Mail server';
@@ -2323,7 +2323,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group\'s owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.';
+      'You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. Any member of a group can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server\'s operator.';
 
   @override
   String get privacyOperatorPolicy => 'The operator\'s privacy policy';
@@ -2420,9 +2420,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Group deleted';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Only the group\'s owner can delete it.';
 
   @override
   String get expenseDiscardTitle => 'Discard changes?';

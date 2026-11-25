@@ -103,8 +103,8 @@ func (s *Server) CreateGroup(ctx context.Context, req CreateGroupRequestObject) 
 			}
 			// clock_timestamp keeps the given order; now() is fixed per transaction.
 			err := tx.QueryRow(ctx, `
-				insert into members (group_id, display_name, is_owner, user_id, created_at)
-				values ($1, $2, $3, $4, clock_timestamp()) returning id::text`, g.id, n, i == 0, userID).Scan(&id)
+				insert into members (group_id, display_name, user_id, created_at)
+				values ($1, $2, $3, clock_timestamp()) returning id::text`, g.id, n, userID).Scan(&id)
 			if err != nil {
 				return err
 			}
@@ -178,7 +178,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 		return nil, err
 	}
 	rows, err := s.db.Query(ctx, `
-		select `+prefixed("g.", groupColumns)+`, m.id::text, m.is_owner
+		select `+prefixed("g.", groupColumns)+`, m.id::text
 		from members m join groups g on g.id = m.group_id
 		where m.user_id = $1 and m.left_at is null and g.archived_at is null
 		order by g.created_at`, u.id)
@@ -188,7 +188,7 @@ func (s *Server) GetMyGroups(ctx context.Context, _ GetMyGroupsRequestObject) (G
 	groups, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*group, error) {
 		var g group
 		var me string
-		err := row.Scan(g.columns(&me, &g.owner)...)
+		err := row.Scan(g.columns(&me)...)
 		g.me = &me
 		return &g, err
 	})
@@ -369,8 +369,8 @@ func (s *Server) UpdateGroup(ctx context.Context, req UpdateGroupRequestObject) 
 		}
 		var linkAccess *bool
 		if in.LinkAccess != nil && accounts && *in.LinkAccess != g.linkAccess {
-			if !g.owner {
-				return forbidden("owner_only")
+			if err := s.mayManage(ctx, tx, g); err != nil {
+				return err
 			}
 			linkAccess = in.LinkAccess
 		}

@@ -10,7 +10,6 @@ class Member {
     required this.name,
     this.color,
     this.left = false,
-    this.owner = false,
     this.claimed = false,
     required this.balance,
   });
@@ -22,7 +21,6 @@ class Member {
       name: requiredField(json, 'name'),
       color: optionalField(json, 'color'),
       left: optionalField<bool>(json, 'left') ?? false,
-      owner: optionalField<bool>(json, 'owner') ?? false,
       claimed: optionalField<bool>(json, 'claimed') ?? false,
       balance: moneyField(json, 'balance', digits),
     );
@@ -36,9 +34,6 @@ class Member {
 
   /// Removed from the group; kept so old expenses still name them.
   final bool left;
-
-  /// May change the group's access settings (accounts mode).
-  final bool owner;
 
   /// Linked to an account (accounts mode).
   final bool claimed;

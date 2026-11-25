@@ -71,8 +71,8 @@ func TestImportSettleUp(t *testing.T) {
 	ids := map[string]string{}
 	for _, m := range g.Members {
 		ids[m.Id] = m.Name
-		if want[m.Name] != m.Balance || m.Owner != (m.Name == "Cy") {
-			t.Errorf("%s: balance %s owner %v", m.Name, m.Balance, m.Owner)
+		if want[m.Name] != m.Balance {
+			t.Errorf("%s: balance %s", m.Name, m.Balance)
 		}
 	}
 
@@ -230,7 +230,7 @@ func TestImportWithAccounts(t *testing.T) {
 		t.Fatalf("group %+v", g)
 	}
 	for _, m := range g.Members {
-		if (m.Id == *g.MyMemberId) != (m.Name == "Ben") || m.Owner != (m.Name == "Ben") {
+		if (m.Id == *g.MyMemberId) != (m.Name == "Ben") || m.Claimed != (m.Name == "Ben") {
 			t.Errorf("member %+v", m)
 		}
 	}

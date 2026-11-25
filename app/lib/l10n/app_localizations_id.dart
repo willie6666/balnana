@@ -198,7 +198,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get errorNotAMember => 'Anda belum bergabung ke grup ini.';
 
   @override
-  String get errorNotAllowed => 'Hanya orang itu atau pemilik grup yang dapat melakukan ini.';
+  String get errorNotAllowed => 'Anda tidak diizinkan melakukan ini.';
 
   @override
   String get errorLinkGroupsOff => 'Server ini tidak mengizinkan grup dibuka hanya dengan tautan.';
@@ -2192,7 +2192,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Pemilik grup dapat mengizinkan siapa pun yang memiliki tautan untuk bergabung tanpa login.';
+      'Anggota grup dapat mengizinkan siapa pun yang memiliki tautan untuk bergabung tanpa login.';
 
   @override
   String get adminSmtpHost => 'Server email';
@@ -2333,7 +2333,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Pemilik grup dapat menghapus seluruh grup dari setelannya. Grup yang dihapus dan foto pengeluaran yang dihapus akan dihapus permanen setelah 30 hari. Untuk hal lain, hubungi pengelola server.';
+      'Anda dapat menghapus akun di Setelan. Nama Anda tetap ada di grup sebagai anggota yang belum diklaim agar saldo tetap sesuai, dan grup yang tidak dapat diakses orang lain akan ikut dihapus. Setiap anggota grup dapat menghapus seluruh grup dari setelannya. Grup yang dihapus dan foto pengeluaran yang dihapus akan dihapus permanen setelah 30 hari. Untuk hal lain, hubungi pengelola server.';
 
   @override
   String get privacyOperatorPolicy => 'Kebijakan privasi pengelola';
@@ -2430,9 +2430,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Grup dihapus';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Hanya pemilik grup yang dapat menghapusnya.';
 
   @override
   String get expenseDiscardTitle => 'Buang perubahan?';

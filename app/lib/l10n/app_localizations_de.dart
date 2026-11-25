@@ -206,7 +206,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorNotAMember => 'Du bist noch nicht in dieser Gruppe.';
 
   @override
-  String get errorNotAllowed => 'Nur diese Person oder der Inhaber der Gruppe kann das tun.';
+  String get errorNotAllowed => 'Das darfst du nicht tun.';
 
   @override
   String get errorLinkGroupsOff =>
@@ -2224,7 +2224,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Gruppeninhaber können allen mit dem Link den Zugang erlauben, ohne Anmeldung.';
+      'Gruppenmitglieder können allen mit dem Link den Zugang erlauben, ohne Anmeldung.';
 
   @override
   String get adminSmtpHost => 'Mailserver';
@@ -2366,7 +2366,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Der Inhaber einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Gelöschte Gruppen und die Fotos gelöschter Ausgaben werden nach 30 Tagen endgültig entfernt. Bei allem anderen wende dich an die betreibende Person des Servers.';
+      'Du kannst dein Konto in den Einstellungen löschen. Dein Name bleibt dann in deinen Gruppen als Mitglied ohne zugeordnetes Konto erhalten, damit die Salden weiterhin stimmen. Gruppen, auf die sonst niemand mehr zugreifen kann, werden ebenfalls gelöscht. Jedes Mitglied einer Gruppe kann sie in den Gruppeneinstellungen vollständig löschen. Gelöschte Gruppen und die Fotos gelöschter Ausgaben werden nach 30 Tagen endgültig entfernt. Bei allem anderen wende dich an die betreibende Person des Servers.';
 
   @override
   String get privacyOperatorPolicy => 'Datenschutzerklärung der betreibenden Person';
@@ -2464,9 +2464,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Gruppe gelöscht';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Nur der Inhaber der Gruppe kann sie löschen.';
 
   @override
   String get expenseDiscardTitle => 'Änderungen verwerfen?';

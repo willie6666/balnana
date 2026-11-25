@@ -34,6 +34,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'sign_in_required' => l10n.errorSignInRequired,
     'recent_sign_in_required' => l10n.errorRecentSignIn,
     'not_a_member' => l10n.errorNotAMember,
+    // owner_only: servers before groups lost their owners.
     'not_allowed' || 'owner_only' => l10n.errorNotAllowed,
     'link_groups_off' => l10n.errorLinkGroupsOff,
     'member_claimed' => l10n.errorMemberClaimed,

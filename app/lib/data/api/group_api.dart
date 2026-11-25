@@ -34,8 +34,8 @@ class GroupApi {
   Future<GroupPlan> unsponsor() =>
       _transport.send(() => _dio.delete<Object?>('$_base/sponsor'), GroupPlan.fromJson);
 
-  /// An empty [emoji] removes it. [linkAccess] is for owners in accounts mode,
-  /// [linkClosed] for whoever may manage the group there.
+  /// An empty [emoji] removes it. [linkAccess] is for members in accounts
+  /// mode, [linkClosed] for whoever may manage the group there.
   /// An empty [emoji] or [symbol] clears it.
   Future<Group> update({
     String? name,
@@ -78,8 +78,8 @@ class GroupApi {
     (_) {},
   );
 
-  /// Deletes the group with everything in it. In accounts mode only its
-  /// owner may.
+  /// Deletes the group with everything in it. In accounts mode any member
+  /// may.
   Future<void> delete() => _transport.send(() => _dio.delete<Object?>(_base, options: _as), (_) {});
 
   /// Gives the key that opens the group for [password]; see "Group

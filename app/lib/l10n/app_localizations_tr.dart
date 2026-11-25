@@ -202,7 +202,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorNotAMember => 'Henüz bu grubun üyesi değilsiniz.';
 
   @override
-  String get errorNotAllowed => 'Bunu yalnızca o kişi veya grubun sahibi yapabilir.';
+  String get errorNotAllowed => 'Bunu yapma izniniz yok.';
 
   @override
   String get errorLinkGroupsOff => 'Bu sunucu, grupların yalnızca bağlantıyla açılmasına izin vermiyor.';
@@ -2188,7 +2188,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get adminLinkGroupsHelp =>
-      'Grup sahipleri, herkesin oturum açmadan bağlantıyla katılmasına izin verebilir.';
+      'Grup üyeleri, herkesin oturum açmadan bağlantıyla katılmasına izin verebilir.';
 
   @override
   String get adminSmtpHost => 'Posta sunucusu';
@@ -2329,7 +2329,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacyDeleteBody =>
-      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grup sahibi, grubun tamamını ayarlarından silebilir. Silinen gruplar ve silinen harcamaların fotoğrafları 30 gün sonra kalıcı olarak yok edilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
+      'Hesabınızı Ayarlar’dan silebilirsiniz. Böylece adınız, bakiyelerin hesaplanabilmesi için gruplarınızda kimsenin sahiplenmediği bir üye olarak kalır; başka kimsenin erişemediği gruplar da silinir. Grubun her üyesi, grubun tamamını ayarlarından silebilir. Silinen gruplar ve silinen harcamaların fotoğrafları 30 gün sonra kalıcı olarak yok edilir. Diğer konular için sunucu işletmecisiyle iletişime geçin.';
 
   @override
   String get privacyOperatorPolicy => 'İşletmecinin gizlilik politikası';
@@ -2427,9 +2427,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get groupDeleted => 'Grup silindi';
-
-  @override
-  String get groupDeleteOwnerOnly => 'Grubu yalnızca sahibi silebilir.';
 
   @override
   String get expenseDiscardTitle => 'Değişiklikler silinsin mi?';

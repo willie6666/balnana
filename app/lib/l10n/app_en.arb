@@ -246,7 +246,7 @@
   "@errorNotAMember": {
     "description": "Message for error not a member in API error feedback."
   },
-  "errorNotAllowed": "Only that person or the group's owner can do this.",
+  "errorNotAllowed": "You aren't allowed to do this.",
   "@errorNotAllowed": {
     "description": "Message for error not allowed in API error feedback."
   },
@@ -3336,7 +3336,7 @@
   "@adminLinkGroups": {
     "description": "Label or control text for admin link groups in the server administrator interface."
   },
-  "adminLinkGroupsHelp": "Group owners may let anyone with the link in, without signing in.",
+  "adminLinkGroupsHelp": "Group members may let anyone with the link in, without signing in.",
   "@adminLinkGroupsHelp": {
     "description": "Help text for admin link groups help in the server administrator interface."
   },
@@ -3515,7 +3515,7 @@
   "@privacyDeleteTitle": {
     "description": "Heading for privacy delete title in the built-in privacy notice."
   },
-  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. A group's owner can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server's operator.",
+  "privacyDeleteBody": "You can delete your account in Settings. Your name then stays in your groups as a member nobody has claimed, so their balances still add up, and groups nobody else can reach are deleted with it. Any member of a group can delete the whole group in its settings. Deleted groups and the photos of deleted expenses are erased for good after 30 days. For anything else, contact the server's operator.",
   "@privacyDeleteBody": {
     "description": "Explanatory text for privacy delete body in the built-in privacy notice."
   },
@@ -3647,10 +3647,6 @@
   "groupDeleted": "Group deleted",
   "@groupDeleted": {
     "description": "Label or control text for group deleted in group creation, settings, or switching."
-  },
-  "groupDeleteOwnerOnly": "Only the group's owner can delete it.",
-  "@groupDeleteOwnerOnly": {
-    "description": "Label or control text for group delete owner only in group creation, settings, or switching."
   },
   "expenseDiscardTitle": "Discard changes?",
   "@expenseDiscardTitle": {
