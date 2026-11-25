@@ -4032,6 +4032,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Tylko zawsze aktualne linki mogą pokazywać zdjęcia paragonów.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Migawka zachowuje to tylko, gdy jest włączone. Po wyłączeniu nie można tego włączyć ponownie.';
+
+  @override
   String get viewLinkExpiry => 'Ważny do';
 
   @override

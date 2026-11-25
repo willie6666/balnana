@@ -3835,6 +3835,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'เฉพาะลิงก์ที่อัปเดตเสมอเท่านั้นที่แสดงรูปใบเสร็จได้';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'ภาพสแนปช็อตจะเก็บข้อมูลนี้ไว้เฉพาะตอนที่เปิดอยู่ เมื่อปิดแล้วจะเปิดอีกไม่ได้';
+
+  @override
   String get viewLinkExpiry => 'ใช้ได้ถึง';
 
   @override

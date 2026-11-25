@@ -3975,6 +3975,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'الروابط المحدَّثة دائمًا فقط يمكنها عرض صور الإيصالات.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'تحتفظ اللقطة بهذا ما دام مفعّلًا فقط. بعد إيقافه لا يمكن تفعيله مرة أخرى.';
+
+  @override
   String get viewLinkExpiry => 'صالح حتى';
 
   @override

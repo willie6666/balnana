@@ -3885,6 +3885,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Fiş fotoğraflarını yalnızca her zaman güncel bağlantılar gösterebilir.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Anlık görüntü bunu yalnızca açıkken saklar. Kapatıldıktan sonra yeniden açılamaz.';
+
+  @override
   String get viewLinkExpiry => 'Geçerlilik sonu';
 
   @override

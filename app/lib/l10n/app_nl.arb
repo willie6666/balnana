@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Locaties van uitgaven",
   "viewLinkShowReceipts": "Bonnetjesfoto’s",
   "viewLinkReceiptsLiveOnly": "Alleen altijd actuele links kunnen bonnetjesfoto’s tonen.",
+  "viewLinkSnapshotKeepsShown": "Een momentopname bewaart dit alleen zolang het aan staat. Eenmaal uitgezet kan het niet meer aan.",
   "viewLinkExpiry": "Geldig tot",
   "viewLinkNoExpiry": "Geldig tot hij wordt uitgezet",
   "viewLinkExpiresOn": "Einde van {date}",

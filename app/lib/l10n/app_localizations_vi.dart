@@ -3867,6 +3867,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Chỉ liên kết luôn cập nhật mới hiển thị được ảnh hóa đơn.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Ảnh chụp chỉ giữ mục này khi đang bật. Đã tắt thì không bật lại được.';
+
+  @override
   String get viewLinkExpiry => 'Có hiệu lực đến';
 
   @override

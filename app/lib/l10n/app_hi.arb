@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "खर्च की जगहें",
   "viewLinkShowReceipts": "रसीद की फ़ोटो",
   "viewLinkReceiptsLiveOnly": "सिर्फ़ हमेशा अपडेट रहने वाले लिंक ही रसीद की फ़ोटो दिखा सकते हैं।",
+  "viewLinkSnapshotKeepsShown": "स्नैपशॉट इसे सिर्फ़ तभी तक रखता है जब तक यह चालू है। बंद करने के बाद इसे फिर से चालू नहीं किया जा सकता।",
   "viewLinkExpiry": "कब तक मान्य",
   "viewLinkNoExpiry": "बंद किए जाने तक मान्य",
   "viewLinkExpiresOn": "{date} के अंत तक",

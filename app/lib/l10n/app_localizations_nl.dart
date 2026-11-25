@@ -3913,6 +3913,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Alleen altijd actuele links kunnen bonnetjesfoto’s tonen.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Een momentopname bewaart dit alleen zolang het aan staat. Eenmaal uitgezet kan het niet meer aan.';
+
+  @override
   String get viewLinkExpiry => 'Geldig tot';
 
   @override

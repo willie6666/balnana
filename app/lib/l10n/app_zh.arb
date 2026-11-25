@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "支出地点",
   "viewLinkShowReceipts": "收据照片",
   "viewLinkReceiptsLiveOnly": "只有持续更新的链接才能显示收据照片。",
+  "viewLinkSnapshotKeepsShown": "快照只在开启时保存这项内容。关闭后就无法再开启。",
   "viewLinkExpiry": "有效期至",
   "viewLinkNoExpiry": "一直有效，直到停用",
   "viewLinkExpiresOn": "{date} 结束时",

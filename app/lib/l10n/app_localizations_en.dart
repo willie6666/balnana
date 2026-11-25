@@ -3873,6 +3873,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Only links kept up to date can show receipt photos.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'A snapshot keeps this only while it\'s on. Once turned off, it can\'t be turned back on.';
+
+  @override
   String get viewLinkExpiry => 'Works until';
 
   @override

@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -108,17 +109,23 @@ const viewPreview = `<meta property="og:site_name" content="Balnana">
   <meta property="og:type" content="website">
   <meta property="og:title" content="A Balnana group, view only">
   <meta property="og:description" content="Who paid what and who owes whom. No account needed.">
+  <meta name="description" content="Who paid what and who owes whom. No account needed.">
   <meta name="twitter:card" content="summary">
 `
+
+// indexDescription is the app's own description in index, which a view-only
+// link's takes the place of.
+var indexDescription = regexp.MustCompile(`[ \t]*<meta name="description"[^>]*>\r?\n?`)
 
 // withViewPreview is index with the link preview of view-only links in its
 // head. An index without a head is left as it is.
 func withViewPreview(index []byte) []byte {
 	page := string(index)
-	at := strings.Index(page, "</head>")
-	if at < 0 {
+	if !strings.Contains(page, "</head>") {
 		return index
 	}
+	page = indexDescription.ReplaceAllString(page, "")
+	at := strings.Index(page, "</head>")
 	return []byte(page[:at] + "  " + viewPreview + page[at:])
 }
 

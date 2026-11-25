@@ -42,23 +42,30 @@ func effectiveMemberLimit(limit *int) *int {
 func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time, error) {
 	var p plan
 	var ends *time.Time
-	err := q.QueryRow(ctx, `
-		select p.id, p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
-		       p.members_per_group, p.sponsored_groups, p.reminders, p.view_link, e.expires_at
-		from plans p
-		cross join automatic_plans a
-		left join users u on u.id = $1
-		left join entitlements e on e.plan_id = p.id and e.user_id = $1 and `+entitlementActive+`
-		where (case when u.id is null then p.is_default
-		       when u.email_verified then p.id = a.verified_plan_id
-		       else p.id = a.unverified_plan_id end) or e.id is not null
-		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
-		limit 1`, userID).
+	err := q.QueryRow(ctx, userPlanQuery(`p.id, p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group,
+		p.joined_groups, p.members_per_group, p.sponsored_groups, p.reminders, p.view_link, e.expires_at`, "$1"), userID).
 		Scan(&p.id, &p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &p.viewLink, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
 	return &p, ends, nil
+}
+
+// userPlanQuery selects columns of the plan (as p) and entitlement (as e)
+// userPlan finds for the account whose id is the SQL expression user; a null
+// one finds the group default.
+func userPlanQuery(columns, user string) string {
+	return `
+		select ` + columns + `
+		from plans p
+		cross join automatic_plans a
+		left join users u on u.id = ` + user + `
+		left join entitlements e on e.plan_id = p.id and e.user_id = ` + user + ` and ` + entitlementActive + `
+		where (case when u.id is null then p.is_default
+		       when u.email_verified then p.id = a.verified_plan_id
+		       else p.id = a.unverified_plan_id end) or e.id is not null
+		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
+		limit 1`
 }
 
 // groupSponsor finds who sponsors the group: their account and member, while

@@ -3923,6 +3923,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'सिर्फ़ हमेशा अपडेट रहने वाले लिंक ही रसीद की फ़ोटो दिखा सकते हैं।';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'स्नैपशॉट इसे सिर्फ़ तभी तक रखता है जब तक यह चालू है। बंद करने के बाद इसे फिर से चालू नहीं किया जा सकता।';
+
+  @override
   String get viewLinkExpiry => 'कब तक मान्य';
 
   @override

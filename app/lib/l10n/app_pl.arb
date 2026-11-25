@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Miejsca wydatków",
   "viewLinkShowReceipts": "Zdjęcia paragonów",
   "viewLinkReceiptsLiveOnly": "Tylko zawsze aktualne linki mogą pokazywać zdjęcia paragonów.",
+  "viewLinkSnapshotKeepsShown": "Migawka zachowuje to tylko, gdy jest włączone. Po wyłączeniu nie można tego włączyć ponownie.",
   "viewLinkExpiry": "Ważny do",
   "viewLinkNoExpiry": "Ważny do wyłączenia",
   "viewLinkExpiresOn": "Koniec dnia {date}",

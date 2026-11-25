@@ -3937,6 +3937,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Nur immer aktuelle Links können Belegfotos zeigen.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Eine Momentaufnahme behält dies nur, solange es an ist. Einmal ausgeschaltet, lässt es sich nicht wieder einschalten.';
+
+  @override
   String get viewLinkExpiry => 'Gültig bis';
 
   @override

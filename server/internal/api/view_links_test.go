@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 	"strings"
@@ -160,6 +161,18 @@ func TestViewLinkLive(t *testing.T) {
 	if code := viewer.errorCode(http.StatusGone, "GET", view, nil); code != "view_link_expired" {
 		t.Error(code)
 	}
+	// Its other settings change with the end date kept as it was; another
+	// date that has passed is still refused.
+	c.must(200, "GET", base+"/view-link", nil, &state)
+	c.must(200, "PUT", base+"/view-link", ViewLinkSettings{Show: ViewLinkShow{Balances: true},
+		ExpiresAt: state.Link.ExpiresAt}, &link)
+	if link.ExpiresAt == nil || !link.ExpiresAt.Equal(*state.Link.ExpiresAt) {
+		t.Fatalf("%+v", link)
+	}
+	earlier := state.Link.ExpiresAt.Add(-time.Minute)
+	if code := c.errorCode(400, "PUT", base+"/view-link", ViewLinkSettings{Show: showAll, ExpiresAt: &earlier}); code != "invalid_expiry" {
+		t.Error(code)
+	}
 	c.must(200, "PUT", base+"/view-link", ViewLinkSettings{Show: showAll}, nil)
 	viewer.must(200, "GET", view, nil, nil)
 
@@ -179,7 +192,7 @@ func TestViewLinkLive(t *testing.T) {
 	for _, a := range log.Items {
 		actions[a.Action]++
 	}
-	if actions["group.view_link_created"] != 2 || actions["group.view_link_changed"] != 5 ||
+	if actions["group.view_link_created"] != 2 || actions["group.view_link_changed"] != 6 ||
 		actions["group.view_link_revoked"] != 1 {
 		t.Fatalf("%v", actions)
 	}
@@ -321,18 +334,70 @@ func TestViewLinkSnapshot(t *testing.T) {
 		t.Fatalf("%+v", vg)
 	}
 
-	// A snapshot never shows receipts, but turns notes and places on later.
+	// A snapshot never shows receipts. It keeps no notes or places it does
+	// not show, so they cannot be turned on later.
 	if code := c.errorCode(400, "PUT", base+"/view-link", ViewLinkSettings{Show: ViewLinkShow{Expenses: true,
 		Receipts: true}}); code != "invalid_show" {
 		t.Error(code)
 	}
-	c.must(200, "PUT", base+"/view-link", ViewLinkSettings{Show: ViewLinkShow{Expenses: true, Notes: true, Places: true}}, nil)
-	viewer.must(200, "GET", view+"/expenses?q=at%20lunch", nil, &page)
-	if len(page.Items) != 1 || page.Items[0].Note == nil || *page.Items[0].Note != "note Lunch" ||
-		page.Items[0].Location == nil || *page.Items[0].Location.Name != "at Lunch" {
-		t.Fatalf("%+v", page)
+	for _, sh := range []ViewLinkShow{{Expenses: true, Notes: true}, {Expenses: true, Places: true}} {
+		if code := c.errorCode(400, "PUT", base+"/view-link", ViewLinkSettings{Show: sh}); code != "invalid_show" {
+			t.Errorf("%+v: %s", sh, code)
+		}
+	}
+	stored := func(key string) int {
+		t.Helper()
+		var n int
+		err := s.db.QueryRow(context.Background(), `
+			select count(*) from view_links, jsonb_array_elements(snapshot->'expenses') x
+			where token = $1 and x ? $2`, link.Token, key).Scan(&n)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	if stored("note") != 0 || stored("location") != 0 {
+		t.Fatal("hidden notes or places stored")
 	}
 	viewer.must(404, "GET", view+"/expenses/"+lunch.Id+"/receipt", nil, nil)
+
+	// One that shows them keeps them, until it stops showing them.
+	c.must(204, "DELETE", base+"/view-link", nil, nil)
+	c.must(201, "POST", base+"/view-link", ViewLinkCreate{Show: ViewLinkShow{Expenses: true, Notes: true, Places: true}}, &link)
+	view = "/v/" + link.Token
+	list := func() []string {
+		t.Helper()
+		var p ViewExpensePage
+		viewer.must(200, "GET", view+"/expenses?limit=100", nil, &p)
+		var ids []string
+		for _, e := range p.Items {
+			ids = append(ids, e.Id)
+		}
+		return ids
+	}
+	all := list()
+	viewer.must(200, "GET", view+"/expenses?q=at%20train", nil, &page)
+	if len(page.Items) != 1 || page.Items[0].Note == nil || *page.Items[0].Note != "note Train" ||
+		page.Items[0].Location == nil || *page.Items[0].Location.Name != "at Train" {
+		t.Fatalf("%+v", page)
+	}
+	n := stored("note")
+	c.must(200, "PUT", base+"/view-link", ViewLinkSettings{Show: ViewLinkShow{Expenses: true, Places: true}}, nil)
+	if n == 0 || stored("note") != 0 || stored("location") != n {
+		t.Fatalf("notes %d, then %d; places %d", n, stored("note"), stored("location"))
+	}
+	if code := c.errorCode(400, "PUT", base+"/view-link", ViewLinkSettings{Show: ViewLinkShow{Expenses: true,
+		Notes: true, Places: true}}); code != "invalid_show" {
+		t.Error(code)
+	}
+	var after ViewExpensePage
+	viewer.must(200, "GET", view+"/expenses?q=at%20train", nil, &after)
+	if len(after.Items) != 1 || after.Items[0].Note != nil || after.Items[0].Location == nil {
+		t.Fatalf("%+v", after)
+	}
+	if got := list(); !reflect.DeepEqual(got, all) {
+		t.Fatalf("%v != %v", got, all)
+	}
 	viewer.must(404, "GET", view+"/stats", nil, nil)
 }
 

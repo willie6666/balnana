@@ -1571,7 +1571,7 @@ type ViewGroup struct {
 	MinorDigits int          `json:"minorDigits"`
 	Name        string       `json:"name"`
 
-	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot keeps notes and places only while it shows them: turning `notes` or `places` off drops them from it, and turning one on that is off is 400 `invalid_show`.
 	Show   ViewLinkShow `json:"show"`
 	Symbol *string      `json:"symbol,omitempty"`
 
@@ -1591,7 +1591,7 @@ type ViewLink struct {
 	// Paused The group's plan does not include a view-only link, so the link shows nothing.
 	Paused bool `json:"paused"`
 
-	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot keeps notes and places only while it shows them: turning `notes` or `places` off drops them from it, and turning one on that is off is 400 `invalid_show`.
 	Show ViewLinkShow `json:"show"`
 
 	// SnapshotAt When a snapshot was taken; left out for a live link.
@@ -1609,7 +1609,7 @@ type ViewLinkCreate struct {
 	// Live Whether it always shows the group as it is, rather than as it is now. Cannot change later.
 	Live bool `json:"live"`
 
-	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot keeps notes and places only while it shows them: turning `notes` or `places` off drops them from it, and turning one on that is off is 400 `invalid_show`.
 	Show ViewLinkShow `json:"show"`
 }
 
@@ -1618,11 +1618,11 @@ type ViewLinkSettings struct {
 	// ExpiresAt When the link stops working; left out for never. 400 `invalid_expiry` when past.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot keeps notes and places only while it shows them: turning `notes` or `places` off drops them from it, and turning one on that is off is 400 `invalid_show`.
 	Show ViewLinkShow `json:"show"`
 }
 
-// ViewLinkShow What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+// ViewLinkShow What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot keeps notes and places only while it shows them: turning `notes` or `places` off drops them from it, and turning one on that is off is 400 `invalid_show`.
 type ViewLinkShow struct {
 	// Balances Each member's balance and the suggested payments.
 	Balances bool `json:"balances"`

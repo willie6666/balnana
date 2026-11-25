@@ -116,8 +116,14 @@ class _ViewLinkSettingsState extends ConsumerState<_ViewLinkSettings> {
     }
   }
 
-  Future<void> _create() =>
-      _run((api) => api.createViewLink(live: _live, show: _show, expiresAt: _expiresAt));
+  // A snapshot never shows receipts, whatever the switch held while live.
+  Future<void> _create() => _run(
+    (api) => api.createViewLink(
+      live: _live,
+      show: _live ? _show : _show.copyWith(receipts: false),
+      expiresAt: _expiresAt,
+    ),
+  );
 
   Future<void> _update(ViewLink link, {ViewLinkShow? show, DateTime? Function()? expiresAt}) => _run(
     (api) => api.updateViewLink(
@@ -227,19 +233,22 @@ class _ViewLinkSettingsState extends ConsumerState<_ViewLinkSettings> {
           (v) => show.copyWith(expenses: v),
         ),
         toggle(Icons.pie_chart_outline, l10n.statsTitle, show.spending, (v) => show.copyWith(spending: v)),
+        // A snapshot keeps no notes or places it does not show.
         toggle(
           Icons.notes,
           l10n.viewLinkShowNotes,
           show.notes,
           (v) => show.copyWith(notes: v),
-          enabled: show.expenses,
+          enabled: show.expenses && (live || link == null || show.notes),
+          subtitle: live ? null : l10n.viewLinkSnapshotKeepsShown,
         ),
         toggle(
           Icons.place_outlined,
           l10n.viewLinkShowPlaces,
           show.places,
           (v) => show.copyWith(places: v),
-          enabled: show.expenses,
+          enabled: show.expenses && (live || link == null || show.places),
+          subtitle: live ? null : l10n.viewLinkSnapshotKeepsShown,
         ),
         toggle(
           Icons.photo_outlined,

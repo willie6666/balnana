@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Harcama yerleri",
   "viewLinkShowReceipts": "Fiş fotoğrafları",
   "viewLinkReceiptsLiveOnly": "Fiş fotoğraflarını yalnızca her zaman güncel bağlantılar gösterebilir.",
+  "viewLinkSnapshotKeepsShown": "Anlık görüntü bunu yalnızca açıkken saklar. Kapatıldıktan sonra yeniden açılamaz.",
   "viewLinkExpiry": "Geçerlilik sonu",
   "viewLinkNoExpiry": "Kapatılana kadar geçerli",
   "viewLinkExpiresOn": "{date} gün sonu",

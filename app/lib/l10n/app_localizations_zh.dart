@@ -3714,6 +3714,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => '只有持续更新的链接才能显示收据照片。';
 
   @override
+  String get viewLinkSnapshotKeepsShown => '快照只在开启时保存这项内容。关闭后就无法再开启。';
+
+  @override
   String get viewLinkExpiry => '有效期至';
 
   @override
@@ -7481,6 +7484,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get viewLinkReceiptsLiveOnly => '只有持續更新的連結能顯示收據照片。';
+
+  @override
+  String get viewLinkSnapshotKeepsShown => '快照只在開啟時保存這項內容。關閉後就無法再開啟。';
 
   @override
   String get viewLinkExpiry => '有效期限';

@@ -44,7 +44,7 @@ func TestSPAFallback(t *testing.T) {
 // View-only links get a generic preview in chat apps; other pages get none.
 func TestViewPreview(t *testing.T) {
 	dir := t.TempDir()
-	must(t, os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html><head><title>Balnana</title></head></html>"), 0o644))
+	must(t, os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html><head><title>Balnana</title>\n  <meta name=\"description\" content=\"The app\">\n</head></html>"), 0o644))
 	h := Handler(dir)
 
 	get := func(path string) string {
@@ -59,6 +59,10 @@ func TestViewPreview(t *testing.T) {
 	if !strings.Contains(view, `<meta property="og:title" content="A Balnana group, view only">`) ||
 		!strings.HasSuffix(view, "</head></html>") {
 		t.Errorf("view page: %s", view)
+	}
+	// Its description takes the place of the app's.
+	if strings.Contains(view, "The app") || strings.Count(view, `name="description"`) != 1 {
+		t.Errorf("view page description: %s", view)
 	}
 	for _, path := range []string{"/", "/g/abc123", "/view"} {
 		if body := get(path); strings.Contains(body, "og:") {

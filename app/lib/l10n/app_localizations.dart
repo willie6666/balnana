@@ -6741,6 +6741,12 @@ abstract class AppLocalizations {
   /// **'Only links kept up to date can show receipt photos.'**
   String get viewLinkReceiptsLiveOnly;
 
+  /// Under the notes and places switches of a snapshot link: turning one off removes that data from the snapshot for good.
+  ///
+  /// In en, this message translates to:
+  /// **'A snapshot keeps this only while it\'s on. Once turned off, it can\'t be turned back on.'**
+  String get viewLinkSnapshotKeepsShown;
+
   /// Title of the end date of a view-only link.
   ///
   /// In en, this message translates to:

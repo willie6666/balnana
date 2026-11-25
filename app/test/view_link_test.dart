@@ -210,7 +210,9 @@ void main() {
     await _tap(tester, find.widgetWithText(GroupedTile, 'View-only link'));
     expect(server.requests, ['GET /api/v1/g/tok/view-link']);
 
-    // A snapshot can't show receipts, so that switch is off and dimmed.
+    // A snapshot can't show receipts, so that switch is off and dimmed, also
+    // when it was on while kept up to date.
+    await _tap(tester, _switch('Receipt photos'));
     await _tap(tester, find.text('Snapshot'));
     expect(tester.widget<GroupedSwitchTile>(_switch('Receipt photos')).onChanged, isNull);
     await _tap(tester, _switch('Expense notes'));
@@ -230,6 +232,11 @@ void main() {
     });
 
     // The link is shown to pass on.
+    await tester.scrollUntilVisible(
+      find.text('$_server/v/$_viewToken'),
+      -200,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('$_server/v/$_viewToken'), findsOneWidget);
     expect(find.textContaining('Snapshot of'), findsOneWidget);
     expect(find.text('Not opened yet'), findsOneWidget);
@@ -239,6 +246,11 @@ void main() {
     expect(server.requests.reversed.elementAt(1), 'PUT /api/v1/g/tok/view-link');
     expect((server.bodies.last as Map)['show'], containsPair('spending', false));
     expect((server.bodies.last as Map)['show'], containsPair('notes', true));
+    // The snapshot kept no places, so they can't be turned on; notes can be
+    // turned off.
+    await tester.scrollUntilVisible(_switch('Expense places'), 200, scrollable: find.byType(Scrollable).last);
+    expect(tester.widget<GroupedSwitchTile>(_switch('Expense places')).onSave, isNull);
+    expect(tester.widget<GroupedSwitchTile>(_switch('Expense notes')).onSave, isNotNull);
 
     await _tap(tester, find.text('Turn off link'));
     await tester.tap(find.widgetWithText(FilledButton, 'Turn off link'));

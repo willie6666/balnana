@@ -1569,7 +1569,8 @@ paths:
       summary: Change what the view-only link shows and when it expires
       description: >-
         Replaces both; the link's URL stays the same. Allowed as creating
-        it is, also while the link is paused.
+        it is, also while the link is paused. An `expiresAt` kept as it was
+        may have passed; a changed one may not (400 `invalid_expiry`).
       parameters:
         - $ref: "#/components/parameters/ActingMember"
       requestBody:
@@ -3005,7 +3006,10 @@ components:
         colour, currency and member names. At least one of `balances`,
         `expenses` and `spending` (400 `invalid_show`). `notes`, `places`
         and `receipts` are about expenses and apply only with `expenses`;
-        a snapshot cannot show `receipts` (400 `invalid_show`).
+        a snapshot cannot show `receipts` (400 `invalid_show`). A snapshot
+        keeps notes and places only while it shows them: turning `notes` or
+        `places` off drops them from it, and turning one on that is off is
+        400 `invalid_show`.
       required: [balances, expenses, spending, notes, places, receipts]
       properties:
         balances:

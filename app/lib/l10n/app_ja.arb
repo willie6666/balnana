@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "支出の場所",
   "viewLinkShowReceipts": "レシートの写真",
   "viewLinkReceiptsLiveOnly": "レシートの写真を表示できるのは、常に最新のリンクだけです。",
+  "viewLinkSnapshotKeepsShown": "スナップショットはオンの間だけこの内容を保存します。オフにすると、再びオンにできません。",
   "viewLinkExpiry": "有効期限",
   "viewLinkNoExpiry": "無効にするまで使えます",
   "viewLinkExpiresOn": "{date} の終わりまで",

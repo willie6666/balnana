@@ -3881,6 +3881,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Hanya tautan yang selalu terbaru yang dapat menampilkan foto struk.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Cuplikan hanya menyimpan ini selama aktif. Setelah dimatikan, tidak bisa diaktifkan lagi.';
+
+  @override
   String get viewLinkExpiry => 'Berlaku sampai';
 
   @override

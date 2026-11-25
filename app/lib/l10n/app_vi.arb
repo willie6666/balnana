@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Địa điểm khoản chi",
   "viewLinkShowReceipts": "Ảnh hóa đơn",
   "viewLinkReceiptsLiveOnly": "Chỉ liên kết luôn cập nhật mới hiển thị được ảnh hóa đơn.",
+  "viewLinkSnapshotKeepsShown": "Ảnh chụp chỉ giữ mục này khi đang bật. Đã tắt thì không bật lại được.",
   "viewLinkExpiry": "Có hiệu lực đến",
   "viewLinkNoExpiry": "Có hiệu lực đến khi bị tắt",
   "viewLinkExpiresOn": "Hết ngày {date}",

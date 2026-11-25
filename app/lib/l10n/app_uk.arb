@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Місця витрат",
   "viewLinkShowReceipts": "Фото чеків",
   "viewLinkReceiptsLiveOnly": "Фото чеків можуть показувати лише завжди актуальні посилання.",
+  "viewLinkSnapshotKeepsShown": "Знімок зберігає це, лише поки його ввімкнено. Після вимкнення ввімкнути знову не можна.",
   "viewLinkExpiry": "Діє до",
   "viewLinkNoExpiry": "Діє, доки не вимкнуть",
   "viewLinkExpiresOn": "Кінець дня {date}",

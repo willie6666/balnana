@@ -3918,6 +3918,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Solo i link sempre aggiornati possono mostrare le foto delle ricevute.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Un’istantanea conserva questo solo finché è attivo. Una volta disattivato, non si può riattivare.';
+
+  @override
   String get viewLinkExpiry => 'Valido fino a';
 
   @override

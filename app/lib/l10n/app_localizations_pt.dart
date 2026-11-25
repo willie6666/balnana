@@ -3941,6 +3941,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Somente links sempre atualizados podem mostrar fotos de recibos.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Um retrato só guarda isto enquanto está ativado. Depois de desativado, não pode ser ativado de novo.';
+
+  @override
   String get viewLinkExpiry => 'Válido até';
 
   @override

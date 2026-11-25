@@ -576,6 +576,7 @@ class ViewExpensesNotifier extends AsyncNotifier<ExpenseList> {
 
   final String token;
   int _digits = 2;
+  late Identity _who;
 
   /// Counts builds, so a page asked for before one is not added after it.
   var _build = 0;
@@ -583,12 +584,13 @@ class ViewExpensesNotifier extends AsyncNotifier<ExpenseList> {
   @override
   Future<ExpenseList> build() async {
     _build++;
+    _who = ref.watch(identityProvider);
     final api = _api(ref).view(token);
     final filter = ref.watch(expenseFilterProvider(viewFilterKey(token)));
     final view = await ref.watch(viewProvider(token).future);
     _digits = view.minorDigits;
     final page = await api.expenses(_digits, filter: filter);
-    return ExpenseList(page.items.toList(), page.nextCursor, filter: filter);
+    return _mark(_who, ExpenseList(page.items.toList(), page.nextCursor, filter: filter));
   }
 
   /// Loads the next page, unless the last try failed and this is no [retry].
@@ -600,14 +602,20 @@ class ViewExpensesNotifier extends AsyncNotifier<ExpenseList> {
     final api = ref.read(balnanaApiProvider);
     if (api == null) return;
     final build = _build, filter = current.filter;
-    state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true));
+    state = AsyncData(
+      _mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true)),
+    );
     try {
       final page = await api.view(token).expenses(_digits, cursor: current.nextCursor, filter: filter);
       if (!ref.mounted || build != _build || state.isLoading) return;
-      state = AsyncData(ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter));
+      state = AsyncData(
+        _mark(_who, ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter)),
+      );
     } on Exception catch (e) {
       if (!ref.mounted || build != _build || state.isLoading) return;
-      state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e));
+      state = AsyncData(
+        _mark(_who, ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e)),
+      );
     }
   }
 }
@@ -617,9 +625,8 @@ final viewStatsProvider = FutureProvider.autoDispose.family<GroupStats, ({String
   ref,
   key,
 ) async {
-  final api = _api(ref).view(key.token);
   final view = await ref.watch(viewProvider(key.token).future);
-  return api.stats(view.minorDigits, period: key.period);
+  return _load(ref, (api) => api.view(key.token).stats(view.minorDigits, period: key.period));
 });
 
 /// The photo of a receipt a view-only link shows.

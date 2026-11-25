@@ -3732,6 +3732,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'レシートの写真を表示できるのは、常に最新のリンクだけです。';
 
   @override
+  String get viewLinkSnapshotKeepsShown => 'スナップショットはオンの間だけこの内容を保存します。オフにすると、再びオンにできません。';
+
+  @override
   String get viewLinkExpiry => '有効期限';
 
   @override

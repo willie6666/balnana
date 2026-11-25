@@ -3735,6 +3735,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => '항상 최신인 링크만 영수증 사진을 보여줄 수 있습니다.';
 
   @override
+  String get viewLinkSnapshotKeepsShown => '스냅샷은 켜져 있는 동안에만 이 내용을 보관합니다. 끄면 다시 켤 수 없습니다.';
+
+  @override
   String get viewLinkExpiry => '사용 기한';
 
   @override

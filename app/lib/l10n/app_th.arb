@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "สถานที่ของค่าใช้จ่าย",
   "viewLinkShowReceipts": "รูปใบเสร็จ",
   "viewLinkReceiptsLiveOnly": "เฉพาะลิงก์ที่อัปเดตเสมอเท่านั้นที่แสดงรูปใบเสร็จได้",
+  "viewLinkSnapshotKeepsShown": "ภาพสแนปช็อตจะเก็บข้อมูลนี้ไว้เฉพาะตอนที่เปิดอยู่ เมื่อปิดแล้วจะเปิดอีกไม่ได้",
   "viewLinkExpiry": "ใช้ได้ถึง",
   "viewLinkNoExpiry": "ใช้ได้จนกว่าจะปิด",
   "viewLinkExpiresOn": "สิ้นวันที่ {date}",

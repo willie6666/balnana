@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Locais das despesas",
   "viewLinkShowReceipts": "Fotos de recibos",
   "viewLinkReceiptsLiveOnly": "Somente links sempre atualizados podem mostrar fotos de recibos.",
+  "viewLinkSnapshotKeepsShown": "Um retrato só guarda isto enquanto está ativado. Depois de desativado, não pode ser ativado de novo.",
   "viewLinkExpiry": "Válido até",
   "viewLinkNoExpiry": "Válido até ser desativado",
   "viewLinkExpiresOn": "Fim de {date}",

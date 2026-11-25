@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Lokasi pengeluaran",
   "viewLinkShowReceipts": "Foto struk",
   "viewLinkReceiptsLiveOnly": "Hanya tautan yang selalu terbaru yang dapat menampilkan foto struk.",
+  "viewLinkSnapshotKeepsShown": "Cuplikan hanya menyimpan ini selama aktif. Setelah dimatikan, tidak bisa diaktifkan lagi.",
   "viewLinkExpiry": "Berlaku sampai",
   "viewLinkNoExpiry": "Berlaku sampai dimatikan",
   "viewLinkExpiresOn": "Akhir {date}",

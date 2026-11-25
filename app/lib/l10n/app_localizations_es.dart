@@ -3909,6 +3909,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Solo los enlaces siempre al día pueden mostrar fotos de recibos.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Una instantánea solo guarda esto mientras está activado. Una vez desactivado, no se puede volver a activar.';
+
+  @override
   String get viewLinkExpiry => 'Válido hasta';
 
   @override

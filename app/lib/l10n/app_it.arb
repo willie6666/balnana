@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Luoghi delle spese",
   "viewLinkShowReceipts": "Foto delle ricevute",
   "viewLinkReceiptsLiveOnly": "Solo i link sempre aggiornati possono mostrare le foto delle ricevute.",
+  "viewLinkSnapshotKeepsShown": "Un’istantanea conserva questo solo finché è attivo. Una volta disattivato, non si può riattivare.",
   "viewLinkExpiry": "Valido fino a",
   "viewLinkNoExpiry": "Valido finché non viene disattivato",
   "viewLinkExpiresOn": "Fine del {date}",

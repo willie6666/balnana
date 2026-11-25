@@ -5578,6 +5578,8 @@
   "@viewLinkShowReceipts": {"description": "Switch: the view-only link shows receipt photos."},
   "viewLinkReceiptsLiveOnly": "Only links kept up to date can show receipt photos.",
   "@viewLinkReceiptsLiveOnly": {"description": "Under the receipt photos switch of a snapshot link."},
+  "viewLinkSnapshotKeepsShown": "A snapshot keeps this only while it's on. Once turned off, it can't be turned back on.",
+  "@viewLinkSnapshotKeepsShown": {"description": "Under the notes and places switches of a snapshot link: turning one off removes that data from the snapshot for good."},
   "viewLinkExpiry": "Works until",
   "@viewLinkExpiry": {"description": "Title of the end date of a view-only link."},
   "viewLinkNoExpiry": "Keeps working until turned off",

@@ -1102,6 +1102,7 @@
   "viewLinkShowPlaces": "Lugares de los gastos",
   "viewLinkShowReceipts": "Fotos de recibos",
   "viewLinkReceiptsLiveOnly": "Solo los enlaces siempre al día pueden mostrar fotos de recibos.",
+  "viewLinkSnapshotKeepsShown": "Una instantánea solo guarda esto mientras está activado. Una vez desactivado, no se puede volver a activar.",
   "viewLinkExpiry": "Válido hasta",
   "viewLinkNoExpiry": "Válido hasta que se desactive",
   "viewLinkExpiresOn": "Final del {date}",

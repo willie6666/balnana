@@ -105,6 +105,11 @@ func checkShow(show ViewLinkShow, live bool) error {
 	return nil
 }
 
+// sameTime reports whether a and b are both unset or the same instant.
+func sameTime(a, b *time.Time) bool {
+	return a == nil && b == nil || a != nil && b != nil && a.Equal(*b)
+}
+
 func checkExpiry(at *time.Time) error {
 	if at != nil && !at.After(time.Now()) {
 		return badRequest("invalid_expiry")
@@ -160,7 +165,7 @@ func (s *Server) CreateViewLink(ctx context.Context, req CreateViewLinkRequestOb
 		}
 		var doc []byte
 		if !in.Live {
-			if doc, err = buildViewSnapshot(ctx, tx, g); err != nil {
+			if doc, err = buildViewSnapshot(ctx, tx, g, in.Show); err != nil {
 				return err
 			}
 		}
@@ -199,9 +204,6 @@ func (s *Server) CreateViewLink(ctx context.Context, req CreateViewLinkRequestOb
 // is paused.
 func (s *Server) UpdateViewLink(ctx context.Context, req UpdateViewLinkRequestObject) (UpdateViewLinkResponseObject, error) {
 	in := req.Body
-	if err := checkExpiry(in.ExpiresAt); err != nil {
-		return nil, err
-	}
 	var out ViewLink
 	err := pgx.BeginFunc(ctx, s.db, func(tx pgx.Tx) error {
 		g, err := s.groupByToken(ctx, tx, req.Token, true)
@@ -221,17 +223,41 @@ func (s *Server) UpdateViewLink(ctx context.Context, req UpdateViewLinkRequestOb
 		if err := checkShow(in.Show, l.live()); err != nil {
 			return err
 		}
+		// A snapshot has no notes or places it does not show: what it left
+		// out cannot come back.
+		if !l.live() && (in.Show.Notes && !l.show.Notes || in.Show.Places && !l.show.Places) {
+			return badRequest("invalid_show")
+		}
+		// An end date kept as it was may have passed: the link's other
+		// settings still change.
+		if !sameTime(in.ExpiresAt, l.expiresAt) {
+			if err := checkExpiry(in.ExpiresAt); err != nil {
+				return err
+			}
+		}
 		who, err := actor(ctx, tx, g, req.Params.XBalnanaMember)
 		if err != nil {
 			return err
 		}
 		sh := in.Show
+		var drop []string
+		if !l.live() && l.show.Notes && !sh.Notes {
+			drop = append(drop, "note")
+		}
+		if !l.live() && l.show.Places && !sh.Places {
+			drop = append(drop, "location")
+		}
 		err = tx.QueryRow(ctx, `
 			update view_links set show_balances = $2, show_expenses = $3, show_spending = $4, show_notes = $5,
-				show_places = $6, show_receipts = $7, expires_at = $8
+				show_places = $6, show_receipts = $7, expires_at = $8,
+				snapshot = case when snapshot is null or cardinality($9::text[]) = 0 then snapshot
+					else jsonb_set(snapshot, '{expenses}', (
+						select coalesce(jsonb_agg(x - $9::text[] order by i), '[]'::jsonb)
+						from jsonb_array_elements(snapshot->'expenses') with ordinality t(x, i)))
+					end
 			where id = $1
 			returning `+viewLinkColumns,
-			l.id, sh.Balances, sh.Expenses, sh.Spending, sh.Notes, sh.Places, sh.Receipts, in.ExpiresAt).
+			l.id, sh.Balances, sh.Expenses, sh.Spending, sh.Notes, sh.Places, sh.Receipts, in.ExpiresAt, drop).
 			Scan(l.columns()...)
 		if err != nil {
 			return err
@@ -275,8 +301,9 @@ func (s *Server) DeleteViewLink(ctx context.Context, req DeleteViewLinkRequestOb
 	return DeleteViewLink204Response{}, nil
 }
 
-// viewSnapshot is the document a snapshot stores: everything any setting
-// could show, as it was. What the settings hide is left out when it is read.
+// viewSnapshot is the document a snapshot stores: the group as it was, with
+// notes and places only while the link shows them. What the settings hide is
+// left out when it is read.
 type viewSnapshot struct {
 	Version    int                  `json:"version"`
 	Name       string               `json:"name"`
@@ -301,8 +328,8 @@ type viewSnapshotMember struct {
 }
 
 // buildViewSnapshot reads g, which the transaction has locked, into a
-// snapshot's document.
-func buildViewSnapshot(ctx context.Context, q querier, g *group) ([]byte, error) {
+// snapshot's document, with notes and places only when show has them.
+func buildViewSnapshot(ctx context.Context, q querier, g *group, show ViewLinkShow) ([]byte, error) {
 	members, err := groupMembers(ctx, q, g.id)
 	if err != nil {
 		return nil, err
@@ -337,9 +364,9 @@ func buildViewSnapshot(ctx context.Context, q querier, g *group) ([]byte, error)
 	for _, m := range members {
 		d.Members = append(d.Members, viewSnapshotMember{Id: m.id, Name: m.name, Color: m.color, Left: m.left, Net: nets[m.id]})
 	}
-	everything := ViewLinkShow{Notes: true, Places: true}
+	kept := ViewLinkShow{Notes: show.Notes, Places: show.Places}
 	for _, e := range expenses {
-		v := toViewExpense(e, everything)
+		v := toViewExpense(e, kept)
 		v.HasReceipt = false
 		d.Expenses = append(d.Expenses, v)
 	}
@@ -413,13 +440,21 @@ func (s *Server) openView(ctx context.Context, token string, doc bool) (*viewLin
 	if doc {
 		snapshot = `l.snapshot`
 	}
+	// Whether the group's plan includes the link, as viewLinkAllowed finds
+	// it, in the same query.
+	allowed := `true`
+	if s.conf().Billing {
+		allowed = `coalesce((` + userPlanQuery(`p.view_link`, `sp.user_id`) + `), false)`
+	}
 	var l viewLink
 	var g group
 	var raw []byte
+	var ok bool
 	err := s.db.QueryRow(ctx, `
-		select `+prefixed("l.", viewLinkColumns)+`, `+prefixed("g.", groupColumns)+`, `+snapshot+`
+		select `+prefixed("l.", viewLinkColumns)+`, `+prefixed("g.", groupColumns)+`, `+snapshot+`, `+allowed+`
 		from view_links l join groups g on g.id = l.group_id
-		where l.token = $1 and g.archived_at is null`, token).Scan(l.columns(g.columns(&raw)...)...)
+		left join members sp on sp.group_id = g.id and sp.user_id = g.sponsor_user_id and sp.left_at is null
+		where l.token = $1 and g.archived_at is null`, token).Scan(l.columns(g.columns(&raw, &ok)...)...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		noteMiss(ctx)
 		return nil, nil, nil, errNotFound
@@ -430,9 +465,7 @@ func (s *Server) openView(ctx context.Context, token string, doc bool) (*viewLin
 	if l.expiresAt != nil && !l.expiresAt.After(time.Now()) {
 		return nil, nil, nil, errViewExpired
 	}
-	if allowed, err := s.viewLinkAllowed(ctx, s.db, &g); err != nil {
-		return nil, nil, nil, err
-	} else if !allowed {
+	if !ok {
 		return nil, nil, nil, errViewPaused
 	}
 	sh := &l.show
@@ -515,7 +548,8 @@ func (s *Server) GetView(ctx context.Context, req GetViewRequestObject) (GetView
 			update view_links set last_viewed_at = $2
 			where id = $1 and (last_viewed_at is null or last_viewed_at < $2)`, l.id, hour)
 		if err != nil {
-			return nil, err
+			// Only bookkeeping: the group shows all the same.
+			s.log.WarnContext(ctx, "view link not marked as opened", "err", err)
 		}
 	}
 	return GetView200JSONResponse(out), nil

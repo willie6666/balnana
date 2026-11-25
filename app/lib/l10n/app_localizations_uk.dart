@@ -4022,6 +4022,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get viewLinkReceiptsLiveOnly => 'Фото чеків можуть показувати лише завжди актуальні посилання.';
 
   @override
+  String get viewLinkSnapshotKeepsShown =>
+      'Знімок зберігає це, лише поки його ввімкнено. Після вимкнення ввімкнути знову не можна.';
+
+  @override
   String get viewLinkExpiry => 'Діє до';
 
   @override
