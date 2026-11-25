@@ -1,0 +1,1 @@
+New view-only links, on plans that include them: share a link that lets anyone see a group without an account or joining. Choose whether it stays up to date or shows the group as it is now, what it shows, and how long it works. Group, invitation, view-only and email links on app.balnana.com now open in the app.
