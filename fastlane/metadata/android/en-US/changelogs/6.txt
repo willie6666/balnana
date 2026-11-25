@@ -1,0 +1,1 @@
+Groups no longer have an owner: every member can now change the group password, who can open the group by its link, and delete the group.
