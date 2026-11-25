@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +12,7 @@ import '../../ui/widgets/empty_state.dart';
 import 'open_link.dart';
 
 /// The app pages a web link may open, after the server's address: those of
-/// the web app, which Android hands to this app.
+/// the web app, which Android and iOS hand to this app.
 final _appPaths = RegExp(
   r'^/(g/[A-Za-z0-9_-]{22}(?:/(?:(?:expenses|recurring)/[A-Za-z0-9_-]+|settings(?:/categories|/recurring|/view-link)?|join))?'
   r'|invite/[A-Za-z0-9_-]+|v/[A-Za-z0-9_-]{22}|verify-email|reset-password)/?$',
@@ -53,7 +54,8 @@ String? appRouteFromLink(String link, {required String? serverUrl, String? publi
   return null;
 }
 
-/// /link?url=...: a web link Android opened in the app (see MainActivity).
+/// /link?url=...: a web link Android (see MainActivity) or iOS (see the
+/// router's redirect) opened in the app.
 /// It opens the page the link is for, if the link is for this app's server.
 class LinkPage extends ConsumerWidget {
   const LinkPage({super.key, required this.url});
@@ -103,9 +105,13 @@ class LinkPage extends ConsumerWidget {
                 FilledButton(onPressed: () => context.go('/groups'), child: Text(l10n.linkGoHome)),
                 // A page of this server's web app that this app lacks. A
                 // browser tab of the app's own, since Android would hand
-                // the link straight back here. Not from the Play build: the
-                // web app sells plans outside Google Play.
-                if (appFlavor != 'play' && web != null && (web.isScheme('https') || web.isScheme('http')))
+                // the link straight back here. Not from the store builds:
+                // the web app sells plans outside Google Play and the App
+                // Store.
+                if (appFlavor != 'play' &&
+                    defaultTargetPlatform != TargetPlatform.iOS &&
+                    web != null &&
+                    (web.isScheme('https') || web.isScheme('http')))
                   OutlinedButton(
                     onPressed: () => launchUrl(web, mode: LaunchMode.inAppBrowserView),
                     child: Text(l10n.linkOpenInBrowser),

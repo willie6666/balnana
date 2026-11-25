@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "Aplikasi iOS masuk dengan Apple dan menjual langganan lewat App Store untuk bundle ID yang diatur di sini.",
   "adminAppleBundleId": "Bundle ID iOS",
   "adminAppleBundleIdHelp": "Bundle ID aplikasi iOS, misalnya com.balnana.app. Ini mengaktifkan Masuk dengan Apple di aplikasi tersebut dan, dengan penagihan, langganan App Store.",
+  "adminAppleTeamId": "ID tim Apple",
+  "adminAppleTeamIdHelp": "ID tim akun developer Apple yang menandatangani aplikasi iOS, misalnya A1B2C3D4E5. Aplikasi dengan Bundle ID di atas (com.balnana.app jika kosong) lalu membuka tautan server ini.",
   "adminAppStoreSandbox": "Terima pembelian sandbox App Store",
   "adminAppStoreSandboxHelp": "Terima juga pembelian dari sandbox App Store, tempat TestFlight, Xcode, dan peninjauan aplikasi membeli tanpa membayar. Diperlukan selama Apple meninjau aplikasi.",
   "adminAppStoreWebhook": "URL App Store Server Notifications V2 untuk App Store Connect: {url}",

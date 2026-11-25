@@ -3797,6 +3797,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'identifiant de bundle de l\'app iOS, par exemple com.balnana.app. Il active « Se connecter avec Apple » dans cette app et, avec la facturation, les abonnements App Store.';
 
   @override
+  String get adminAppleTeamId => 'Identifiant d\'équipe Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'L\'identifiant d\'équipe du compte développeur Apple qui signe l\'app iOS, par exemple A1B2C3D4E5. L\'app ayant l\'identifiant de bundle ci-dessus (com.balnana.app s\'il est vide) ouvre alors les liens de ce serveur.';
+
+  @override
   String get adminAppStoreSandbox => 'Accepter les achats sandbox de l\'App Store';
 
   @override

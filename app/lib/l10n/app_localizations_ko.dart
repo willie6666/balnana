@@ -3565,6 +3565,13 @@ class AppLocalizationsKo extends AppLocalizations {
       'iOS 앱의 번들 ID(예: com.balnana.app). 설정하면 해당 앱에서 Apple로 로그인이 켜지고, 결제가 켜져 있으면 App Store 구독도 켜집니다.';
 
   @override
+  String get adminAppleTeamId => 'Apple 팀 ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'iOS 앱에 서명하는 Apple 개발자 계정의 팀 ID(예: A1B2C3D4E5). 설정하면 위 번들 ID(비어 있으면 com.balnana.app)의 앱이 이 서버의 링크를 엽니다.';
+
+  @override
   String get adminAppStoreSandbox => 'App Store 샌드박스 구매 허용';
 
   @override

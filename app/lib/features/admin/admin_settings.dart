@@ -650,6 +650,8 @@ class _AdminSettingsPageState extends ConsumerState<AdminSettingsPage> {
       _note(l10n.adminSectionIosBody),
       _textField('BALNANA_APPLE_BUNDLE_ID', keyboard: TextInputType.url),
       gap,
+      _textField('BALNANA_APPLE_TEAM_ID', keyboard: TextInputType.visiblePassword),
+      gap,
       _note(l10n.adminAppStoreWebhook('$publicUrl$apiBasePath/webhooks/appstore')),
       _toggle('BALNANA_APPSTORE_SANDBOX'),
     ];

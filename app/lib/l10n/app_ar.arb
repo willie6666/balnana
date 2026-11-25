@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "يسجّل تطبيق iOS الدخول باستخدام Apple ويبيع الاشتراكات عبر App Store لمعرّف الحزمة المحدد هنا.",
   "adminAppleBundleId": "معرّف حزمة iOS",
   "adminAppleBundleIdHelp": "معرّف حزمة تطبيق iOS، مثل com.balnana.app. يفعّل تسجيل الدخول باستخدام Apple في ذلك التطبيق، ومع تفعيل الفوترة يفعّل اشتراكات App Store.",
+  "adminAppleTeamId": "معرّف فريق Apple",
+  "adminAppleTeamIdHelp": "معرّف الفريق لحساب مطوّر Apple الذي يوقّع تطبيق iOS، مثل A1B2C3D4E5. عندها يفتح التطبيق الذي يحمل معرّف الحزمة أعلاه (com.balnana.app إن كان فارغًا) روابط هذا الخادم.",
   "adminAppStoreSandbox": "قبول مشتريات بيئة الاختبار في App Store",
   "adminAppStoreSandboxHelp": "يقبل أيضًا المشتريات من بيئة الاختبار في App Store، حيث يشتري TestFlight وXcode ومراجعة التطبيقات دون دفع. مطلوب أثناء مراجعة Apple للتطبيق.",
   "adminAppStoreWebhook": "عنوان App Store Server Notifications V2 لإدخاله في App Store Connect: {url}",

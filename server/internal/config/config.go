@@ -78,6 +78,9 @@ var oidcID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 // bundleID is what Apple allows in a bundle ID: letters, digits, dots and dashes.
 var bundleID = regexp.MustCompile(`^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$`)
 
+// teamID is an Apple developer team ID, such as A1B2C3D4E5.
+var teamID = regexp.MustCompile(`^[A-Z0-9]{10}$`)
+
 // The settings of each OpenID Connect provider, as OIDCKey names them.
 var oidcFields = []Setting{
 	{Key: "ISSUER"},
@@ -216,6 +219,9 @@ type Config struct {
 	// AppleBundleID is the iOS app's bundle ID. It turns on Sign in with
 	// Apple in that app and, with billing, App Store subscriptions.
 	AppleBundleID string
+	// AppleTeamID is the Apple developer team the iOS app is signed by. It
+	// lets that app open this server's links (Universal Links).
+	AppleTeamID string
 	// AppStoreSandbox also takes purchases from the App Store's sandbox,
 	// where TestFlight, Xcode and App Review buy without paying.
 	AppStoreSandbox bool
@@ -284,6 +290,7 @@ var Managed = []Setting{
 	{Key: "BALNANA_PAYPAL_WEBHOOK_ID"},
 	{Key: "BALNANA_PAYPAL_SANDBOX", Default: "false"},
 	{Key: "BALNANA_APPLE_BUNDLE_ID"},
+	{Key: "BALNANA_APPLE_TEAM_ID"},
 	{Key: "BALNANA_APPSTORE_SANDBOX", Default: "false"},
 	{Key: "BALNANA_ANDROID_CERT_SHA256"},
 }
@@ -457,6 +464,7 @@ func load(getenv func(string) string) (*Config, error) {
 		PayPalSandbox:   e.managedBool("BALNANA_PAYPAL_SANDBOX"),
 		PlayPushAccount: e.managed("BALNANA_PLAY_PUSH_ACCOUNT"),
 		AppleBundleID:   e.managed("BALNANA_APPLE_BUNDLE_ID"),
+		AppleTeamID:     e.managed("BALNANA_APPLE_TEAM_ID"),
 		AppStoreSandbox: e.managedBool("BALNANA_APPSTORE_SANDBOX"),
 		SMTP: SMTP{
 			Host:     e.managed("BALNANA_SMTP_HOST"),
@@ -551,6 +559,9 @@ func load(getenv func(string) string) (*Config, error) {
 
 	if c.AppleBundleID != "" && !bundleID.MatchString(c.AppleBundleID) {
 		e.fail("BALNANA_APPLE_BUNDLE_ID", "BALNANA_APPLE_BUNDLE_ID must be an iOS bundle ID such as com.balnana.app, got %q", c.AppleBundleID)
+	}
+	if c.AppleTeamID != "" && !teamID.MatchString(c.AppleTeamID) {
+		e.fail("BALNANA_APPLE_TEAM_ID", "BALNANA_APPLE_TEAM_ID must be an Apple team ID (10 capital letters and digits), got %q", c.AppleTeamID)
 	}
 
 	switch source := MapSource(e.managed("BALNANA_MAP_SOURCE")); source {

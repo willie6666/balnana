@@ -39,6 +39,7 @@ String settingLabel(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PAYPAL_WEBHOOK_ID' => l10n.adminPayPalWebhookId,
   'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandbox,
   'BALNANA_APPLE_BUNDLE_ID' => l10n.adminAppleBundleId,
+  'BALNANA_APPLE_TEAM_ID' => l10n.adminAppleTeamId,
   'BALNANA_APPSTORE_SANDBOX' => l10n.adminAppStoreSandbox,
   _ => key,
 };
@@ -69,6 +70,7 @@ String? settingHelp(AppLocalizations l10n, String key) => switch (key) {
   'BALNANA_PAYPAL_CLIENT_ID' => l10n.adminPayPalClientIdHelp,
   'BALNANA_PAYPAL_SANDBOX' => l10n.adminPayPalSandboxHelp,
   'BALNANA_APPLE_BUNDLE_ID' => l10n.adminAppleBundleIdHelp,
+  'BALNANA_APPLE_TEAM_ID' => l10n.adminAppleTeamIdHelp,
   'BALNANA_APPSTORE_SANDBOX' => l10n.adminAppStoreSandboxHelp,
   _ => null,
 };

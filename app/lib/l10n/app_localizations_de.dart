@@ -3758,6 +3758,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Bundle-ID der iOS-App, etwa com.balnana.app. Sie schaltet „Mit Apple anmelden“ in dieser App ein und, mit Abrechnung, App-Store-Abos.';
 
   @override
+  String get adminAppleTeamId => 'Apple-Team-ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'Die Team-ID des Apple-Entwicklerkontos, das die iOS-App signiert, etwa A1B2C3D4E5. Die App mit der Bundle-ID oben (com.balnana.app, wenn leer) öffnet dann die Links dieses Servers.';
+
+  @override
   String get adminAppStoreSandbox => 'Sandbox-Käufe aus dem App Store annehmen';
 
   @override

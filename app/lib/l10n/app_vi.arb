@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "Ứng dụng iOS đăng nhập bằng Apple và bán gói đăng ký qua App Store cho Bundle ID đặt ở đây.",
   "adminAppleBundleId": "Bundle ID iOS",
   "adminAppleBundleIdHelp": "Bundle ID của ứng dụng iOS, ví dụ com.balnana.app. Nó bật Đăng nhập bằng Apple trong ứng dụng đó và, khi bật thanh toán, bật gói đăng ký App Store.",
+  "adminAppleTeamId": "Team ID của Apple",
+  "adminAppleTeamIdHelp": "Team ID của tài khoản nhà phát triển Apple dùng để ký ứng dụng iOS, ví dụ A1B2C3D4E5. Khi đó ứng dụng có Bundle ID ở trên (com.balnana.app nếu để trống) sẽ mở các liên kết của máy chủ này.",
   "adminAppStoreSandbox": "Chấp nhận giao dịch sandbox của App Store",
   "adminAppStoreSandboxHelp": "Chấp nhận cả giao dịch từ sandbox của App Store, nơi TestFlight, Xcode và đội xét duyệt ứng dụng mua mà không trả tiền. Cần bật khi Apple đang xét duyệt ứng dụng.",
   "adminAppStoreWebhook": "URL App Store Server Notifications V2 cho App Store Connect: {url}",

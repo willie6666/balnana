@@ -3563,6 +3563,13 @@ class AppLocalizationsJa extends AppLocalizations {
       'iOS アプリの Bundle ID（例: com.balnana.app）。設定するとそのアプリで Apple でサインインが有効になり、課金が有効なら App Store のサブスクリプションも有効になります。';
 
   @override
+  String get adminAppleTeamId => 'Apple チーム ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'iOS アプリに署名する Apple デベロッパーアカウントのチーム ID（例: A1B2C3D4E5）。設定すると、上の Bundle ID（空なら com.balnana.app）のアプリがこのサーバーのリンクを開きます。';
+
+  @override
   String get adminAppStoreSandbox => 'App Store サンドボックスの購入を受け付ける';
 
   @override

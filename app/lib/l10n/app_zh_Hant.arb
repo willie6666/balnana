@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "iOS App 會以這裡設定的 Bundle ID 使用 Apple 登入，並透過 App Store 販售訂閱。",
   "adminAppleBundleId": "iOS Bundle ID",
   "adminAppleBundleIdHelp": "iOS App 的 Bundle ID，例如 com.balnana.app。設定後會在該 App 開啟 Apple 登入，並在啟用收費時開啟 App Store 訂閱。",
+  "adminAppleTeamId": "Apple 團隊 ID",
+  "adminAppleTeamIdHelp": "簽署 iOS App 的 Apple 開發者帳號團隊 ID，例如 A1B2C3D4E5。設定後，使用上方 Bundle ID（留空則為 com.balnana.app）的 App 會直接開啟這台伺服器的連結。",
   "adminAppStoreSandbox": "接受 App Store 沙盒購買",
   "adminAppStoreSandboxHelp": "也接受 App Store 沙盒的購買：TestFlight、Xcode 與 App 審核都在沙盒購買，不需付費。Apple 審核 App 期間需要開啟。",
   "adminAppStoreWebhook": "提供給 App Store Connect 的 App Store 伺服器通知 V2 網址：{url}",

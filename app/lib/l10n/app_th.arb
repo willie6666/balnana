@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "แอป iOS จะลงชื่อเข้าด้วย Apple และขายการสมัครสมาชิกผ่าน App Store สำหรับ Bundle ID ที่ตั้งไว้ที่นี่",
   "adminAppleBundleId": "Bundle ID ของ iOS",
   "adminAppleBundleIdHelp": "Bundle ID ของแอป iOS เช่น com.balnana.app ใช้เปิดการลงชื่อเข้าด้วย Apple ในแอปนั้น และเมื่อเปิดการเรียกเก็บเงิน จะเปิดการสมัครสมาชิกผ่าน App Store ด้วย",
+  "adminAppleTeamId": "Team ID ของ Apple",
+  "adminAppleTeamIdHelp": "Team ID ของบัญชีนักพัฒนา Apple ที่ใช้ลงนามแอป iOS เช่น A1B2C3D4E5 จากนั้นแอปที่ใช้ Bundle ID ด้านบน (ถ้าว่างจะเป็น com.balnana.app) จะเปิดลิงก์ของเซิร์ฟเวอร์นี้",
   "adminAppStoreSandbox": "รับการซื้อจากแซนด์บ็อกซ์ของ App Store",
   "adminAppStoreSandboxHelp": "รับการซื้อจากแซนด์บ็อกซ์ของ App Store ด้วย ซึ่ง TestFlight, Xcode และการตรวจสอบแอปใช้ซื้อโดยไม่ต้องจ่ายเงิน จำเป็นระหว่างที่ Apple ตรวจสอบแอป",
   "adminAppStoreWebhook": "URL ของ App Store Server Notifications V2 สำหรับ App Store Connect: {url}",

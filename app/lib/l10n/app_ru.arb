@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "Приложение для iOS входит через Apple и продаёт подписки в App Store для указанного здесь Bundle ID.",
   "adminAppleBundleId": "Bundle ID для iOS",
   "adminAppleBundleIdHelp": "Bundle ID приложения для iOS, например com.balnana.app. Включает «Вход с Apple» в этом приложении, а при включённой оплате — подписки App Store.",
+  "adminAppleTeamId": "Team ID Apple",
+  "adminAppleTeamIdHelp": "Team ID аккаунта разработчика Apple, которым подписано приложение для iOS, например A1B2C3D4E5. Тогда приложение с указанным выше Bundle ID (com.balnana.app, если пусто) открывает ссылки этого сервера.",
   "adminAppStoreSandbox": "Принимать покупки из песочницы App Store",
   "adminAppStoreSandboxHelp": "Принимать также покупки из песочницы App Store, где TestFlight, Xcode и проверка приложений покупают без оплаты. Нужно, пока Apple проверяет приложение.",
   "adminAppStoreWebhook": "URL для App Store Server Notifications V2 в App Store Connect: {url}",

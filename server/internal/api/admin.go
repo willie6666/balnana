@@ -516,3 +516,36 @@ func (s *Server) assetLinks(w http.ResponseWriter, r *http.Request) {
 		},
 	}})
 }
+
+// appleAppSiteAssociation lets the iOS app signed by the configured team
+// open this server's group, invitation, view-only and email links
+// (Universal Links). The app checks a link is for the server it uses before
+// opening it.
+func (s *Server) appleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
+	cfg := s.conf()
+	if cfg.AppleTeamID == "" {
+		http.NotFound(w, r)
+		return
+	}
+	bundle := cfg.AppleBundleID
+	if bundle == "" {
+		bundle = androidPackage // The same ID on both stores.
+	}
+	base := ""
+	if cfg.PublicURL != nil {
+		base = strings.TrimSuffix(cfg.PublicURL.Path, "/")
+	}
+	var components []map[string]string
+	for _, path := range []string{"/g/*", "/invite/*", "/v/*", "/verify-email", "/reset-password"} {
+		components = append(components, map[string]string{"/": base + path})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"applinks": map[string]any{
+			"details": []map[string]any{{
+				"appIDs":     []string{cfg.AppleTeamID + "." + bundle},
+				"components": components,
+			}},
+		},
+	})
+}

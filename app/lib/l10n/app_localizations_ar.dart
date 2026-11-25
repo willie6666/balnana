@@ -3801,6 +3801,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'معرّف حزمة تطبيق iOS، مثل com.balnana.app. يفعّل تسجيل الدخول باستخدام Apple في ذلك التطبيق، ومع تفعيل الفوترة يفعّل اشتراكات App Store.';
 
   @override
+  String get adminAppleTeamId => 'معرّف فريق Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'معرّف الفريق لحساب مطوّر Apple الذي يوقّع تطبيق iOS، مثل A1B2C3D4E5. عندها يفتح التطبيق الذي يحمل معرّف الحزمة أعلاه (com.balnana.app إن كان فارغًا) روابط هذا الخادم.';
+
+  @override
   String get adminAppStoreSandbox => 'قبول مشتريات بيئة الاختبار في App Store';
 
   @override

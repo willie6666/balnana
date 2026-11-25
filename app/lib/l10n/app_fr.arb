@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "L'app iOS se connecte avec Apple et vend des abonnements via l'App Store pour l'identifiant de bundle indiqué ici.",
   "adminAppleBundleId": "Identifiant de bundle iOS",
   "adminAppleBundleIdHelp": "L'identifiant de bundle de l'app iOS, par exemple com.balnana.app. Il active « Se connecter avec Apple » dans cette app et, avec la facturation, les abonnements App Store.",
+  "adminAppleTeamId": "Identifiant d'équipe Apple",
+  "adminAppleTeamIdHelp": "L'identifiant d'équipe du compte développeur Apple qui signe l'app iOS, par exemple A1B2C3D4E5. L'app ayant l'identifiant de bundle ci-dessus (com.balnana.app s'il est vide) ouvre alors les liens de ce serveur.",
   "adminAppStoreSandbox": "Accepter les achats sandbox de l'App Store",
   "adminAppStoreSandboxHelp": "Accepte aussi les achats de la sandbox de l'App Store, où TestFlight, Xcode et l'examen des apps achètent sans payer. Nécessaire pendant qu'Apple examine l'app.",
   "adminAppStoreWebhook": "URL des App Store Server Notifications V2, pour App Store Connect : {url}",

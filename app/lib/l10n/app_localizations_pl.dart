@@ -3856,6 +3856,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Identyfikator pakietu aplikacji na iOS, np. com.balnana.app. Włącza „Zaloguj się przez Apple” w tej aplikacji, a przy włączonych płatnościach — subskrypcje App Store.';
 
   @override
+  String get adminAppleTeamId => 'Identyfikator zespołu Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'Identyfikator zespołu konta deweloperskiego Apple, które podpisuje aplikację na iOS, np. A1B2C3D4E5. Aplikacja z identyfikatorem pakietu powyżej (com.balnana.app, jeśli pusty) otwiera wtedy linki tego serwera.';
+
+  @override
   String get adminAppStoreSandbox => 'Akceptuj zakupy z piaskownicy App Store';
 
   @override

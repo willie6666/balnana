@@ -284,6 +284,16 @@ void main() {
     expect(tester.widget<FilledButton>(create).onPressed, isNull);
   });
 
+  testWidgets("iOS's whole web link opens the view, or says it is another server's", (tester) async {
+    final container = await _boot(tester, _Viewer(200));
+    await _go(tester, container, '$_server/v/$_viewToken');
+    expect(container.read(routerProvider).routeInformationProvider.value.uri.path, '/v/$_viewToken');
+    expect(find.text('🏔 Trip'), findsOneWidget);
+
+    await _go(tester, container, 'https://elsewhere.example.com/v/$_viewToken');
+    expect(find.text('This link is for another server'), findsOneWidget);
+  });
+
   testWidgets('anyone with the link sees the group as it was, read-only', (tester) async {
     final container = await _boot(tester, _Viewer(200));
     await _go(tester, container, '/v/$_viewToken');

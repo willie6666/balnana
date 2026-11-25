@@ -3747,6 +3747,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'iOS ऐप का बंडल ID, जैसे com.balnana.app. इससे उस ऐप में Apple से साइन इन चालू होता है और बिलिंग चालू होने पर App Store सदस्यताएँ भी।';
 
   @override
+  String get adminAppleTeamId => 'Apple टीम ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'iOS ऐप पर साइन करने वाले Apple डेवलपर खाते की टीम ID, जैसे A1B2C3D4E5. इसके बाद ऊपर दिए बंडल ID (खाली हो तो com.balnana.app) वाला ऐप इस सर्वर के लिंक खोलता है।';
+
+  @override
   String get adminAppStoreSandbox => 'App Store सैंडबॉक्स खरीद स्वीकार करें';
 
   @override

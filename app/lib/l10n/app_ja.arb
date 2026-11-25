@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "iOS アプリは、ここで設定した Bundle ID で Apple でサインインし、App Store でサブスクリプションを販売します。",
   "adminAppleBundleId": "iOS Bundle ID",
   "adminAppleBundleIdHelp": "iOS アプリの Bundle ID（例: com.balnana.app）。設定するとそのアプリで Apple でサインインが有効になり、課金が有効なら App Store のサブスクリプションも有効になります。",
+  "adminAppleTeamId": "Apple チーム ID",
+  "adminAppleTeamIdHelp": "iOS アプリに署名する Apple デベロッパーアカウントのチーム ID（例: A1B2C3D4E5）。設定すると、上の Bundle ID（空なら com.balnana.app）のアプリがこのサーバーのリンクを開きます。",
   "adminAppStoreSandbox": "App Store サンドボックスの購入を受け付ける",
   "adminAppStoreSandboxHelp": "App Store サンドボックスでの購入も受け付けます。TestFlight、Xcode、App 審査はサンドボックスで支払いなしに購入します。Apple の審査中は必要です。",
   "adminAppStoreWebhook": "App Store Connect に設定する App Store Server Notifications V2 の URL: {url}",

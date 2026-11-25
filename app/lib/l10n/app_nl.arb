@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "De iOS-app logt in met Apple en verkoopt abonnementen via de App Store voor de bundle-ID die hier is ingesteld.",
   "adminAppleBundleId": "iOS-bundle-ID",
   "adminAppleBundleIdHelp": "De bundle-ID van de iOS-app, zoals com.balnana.app. Hiermee gaat 'Log in met Apple' aan in die app en, met facturering, App Store-abonnementen.",
+  "adminAppleTeamId": "Apple-team-ID",
+  "adminAppleTeamIdHelp": "De team-ID van het Apple-ontwikkelaarsaccount dat de iOS-app ondertekent, zoals A1B2C3D4E5. De app met de bundle-ID hierboven (com.balnana.app als die leeg is) opent dan de links van deze server.",
   "adminAppStoreSandbox": "Sandboxaankopen uit de App Store accepteren",
   "adminAppStoreSandboxHelp": "Accepteer ook aankopen uit de App Store-sandbox, waar TestFlight, Xcode en App Review kopen zonder te betalen. Nodig zolang Apple de app beoordeelt.",
   "adminAppStoreWebhook": "URL voor App Store Server Notifications V2, voor App Store Connect: {url}",

@@ -3704,6 +3704,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Bundle ID aplikasi iOS, misalnya com.balnana.app. Ini mengaktifkan Masuk dengan Apple di aplikasi tersebut dan, dengan penagihan, langganan App Store.';
 
   @override
+  String get adminAppleTeamId => 'ID tim Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'ID tim akun developer Apple yang menandatangani aplikasi iOS, misalnya A1B2C3D4E5. Aplikasi dengan Bundle ID di atas (com.balnana.app jika kosong) lalu membuka tautan server ini.';
+
+  @override
   String get adminAppStoreSandbox => 'Terima pembelian sandbox App Store';
 
   @override

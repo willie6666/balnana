@@ -3733,6 +3733,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'El ID de paquete de la app de iOS, como com.balnana.app. Activa «Iniciar sesión con Apple» en esa app y, con la facturación, las suscripciones de la App Store.';
 
   @override
+  String get adminAppleTeamId => 'ID de equipo de Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'El ID de equipo de la cuenta de desarrollador de Apple que firma la app de iOS, como A1B2C3D4E5. La app con el ID de paquete de arriba (com.balnana.app si está vacío) abre entonces los enlaces de este servidor.';
+
+  @override
   String get adminAppStoreSandbox => 'Aceptar compras de prueba (sandbox) de la App Store';
 
   @override

@@ -3708,6 +3708,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'iOS uygulamasının paket kimliği, örneğin com.balnana.app. Bu uygulamada Apple ile Giriş Yap\'ı ve faturalandırma açıksa App Store aboneliklerini açar.';
 
   @override
+  String get adminAppleTeamId => 'Apple ekip kimliği';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'iOS uygulamasını imzalayan Apple geliştirici hesabının ekip kimliği, örneğin A1B2C3D4E5. Ardından yukarıdaki paket kimliğine (boşsa com.balnana.app) sahip uygulama bu sunucunun bağlantılarını açar.';
+
+  @override
   String get adminAppStoreSandbox => 'App Store sandbox satın alımlarını kabul et';
 
   @override

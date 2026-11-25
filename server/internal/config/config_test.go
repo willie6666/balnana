@@ -268,6 +268,7 @@ func TestErrorKeys(t *testing.T) {
 		"BALNANA_SMTP_PORT":                "70000",
 		"BALNANA_OAUTH_GOOGLE_CLIENT_ID":   "id",
 		"BALNANA_ANDROID_CERT_SHA256":      "nope",
+		"BALNANA_APPLE_TEAM_ID":            "abc",
 		"BALNANA_AUTH_MODE":                "accounts",
 		"BALNANA_AUTH_PASSWORD":            "false",
 		"BALNANA_OAUTH_OIDC_PROVIDERS":     "sso",
@@ -279,7 +280,7 @@ func TestErrorKeys(t *testing.T) {
 	keys := ErrorKeys(err)
 	slices.Sort(keys)
 	want := []string{
-		"BALNANA_ANDROID_CERT_SHA256", "BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_OIDC_SSO_ISSUER",
+		"BALNANA_ANDROID_CERT_SHA256", "BALNANA_APPLE_TEAM_ID", "BALNANA_OAUTH_GOOGLE_SECRET", "BALNANA_OAUTH_OIDC_SSO_ISSUER",
 		"BALNANA_SMTP_FROM", "BALNANA_SMTP_PORT",
 	}
 	if !slices.Equal(keys, want) {

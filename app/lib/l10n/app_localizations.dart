@@ -6423,6 +6423,18 @@ abstract class AppLocalizations {
   /// **'The iOS app\'s bundle ID, such as com.balnana.app. It turns on Sign in with Apple in that app and, with billing, App Store subscriptions.'**
   String get adminAppleBundleIdHelp;
 
+  /// Admin setting label for the Apple developer team ID that signs the iOS app.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple team ID'**
+  String get adminAppleTeamId;
+
+  /// Admin setting help for the Apple team ID, which lets the iOS app open the server's links (Universal Links).
+  ///
+  /// In en, this message translates to:
+  /// **'The team ID of the Apple developer account that signs the iOS app, such as A1B2C3D4E5. The app with the bundle ID above (com.balnana.app if empty) then opens this server\'s links.'**
+  String get adminAppleTeamIdHelp;
+
   /// Admin setting label: also accept App Store sandbox purchases.
   ///
   /// In en, this message translates to:

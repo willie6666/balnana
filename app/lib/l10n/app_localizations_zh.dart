@@ -3545,6 +3545,13 @@ class AppLocalizationsZh extends AppLocalizations {
       'iOS 应用的 Bundle ID，例如 com.balnana.app。设置后会在该应用中开启通过 Apple 登录，并在启用收费时开启 App Store 订阅。';
 
   @override
+  String get adminAppleTeamId => 'Apple 团队 ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      '签署 iOS 应用的 Apple 开发者账号团队 ID，例如 A1B2C3D4E5。设置后，使用上方 Bundle ID（留空则为 com.balnana.app）的应用会直接打开这台服务器的链接。';
+
+  @override
   String get adminAppStoreSandbox => '接受 App Store 沙盒购买';
 
   @override
@@ -7305,6 +7312,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get adminAppleBundleIdHelp =>
       'iOS App 的 Bundle ID，例如 com.balnana.app。設定後會在該 App 開啟 Apple 登入，並在啟用收費時開啟 App Store 訂閱。';
+
+  @override
+  String get adminAppleTeamId => 'Apple 團隊 ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      '簽署 iOS App 的 Apple 開發者帳號團隊 ID，例如 A1B2C3D4E5。設定後，使用上方 Bundle ID（留空則為 com.balnana.app）的 App 會直接開啟這台伺服器的連結。';
 
   @override
   String get adminAppStoreSandbox => '接受 App Store 沙盒購買';

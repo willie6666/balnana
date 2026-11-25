@@ -3846,6 +3846,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Bundle ID застосунку для iOS, наприклад com.balnana.app. Вмикає «Вхід з Apple» у цьому застосунку, а з увімкненою оплатою — підписки App Store.';
 
   @override
+  String get adminAppleTeamId => 'Team ID Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'Team ID облікового запису розробника Apple, яким підписано застосунок для iOS, наприклад A1B2C3D4E5. Тоді застосунок із Bundle ID вище (com.balnana.app, якщо порожньо) відкриває посилання цього сервера.';
+
+  @override
   String get adminAppStoreSandbox => 'Приймати покупки з пісочниці App Store';
 
   @override

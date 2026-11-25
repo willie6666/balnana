@@ -317,6 +317,32 @@ func TestAssetLinks(t *testing.T) {
 	}
 }
 
+func TestAppleAppSiteAssociation(t *testing.T) {
+	c, _, _ := adminClient(t, map[string]string{})
+	admin := c.asAdmin(setUp(c))
+	const path = "/.well-known/apple-app-site-association"
+	if rec := get(t, c.h, path, nil); rec.Code != 404 {
+		t.Fatalf("without a team: %d", rec.Code)
+	}
+	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{"BALNANA_APPLE_TEAM_ID": "A1B2C3D4E5"}}, nil)
+	rec := get(t, c.h, path, nil)
+	body := rec.Body.String()
+	if rec.Code != 200 || rec.Header().Get("Content-Type") != "application/json" ||
+		!strings.Contains(body, `"appIDs":["A1B2C3D4E5.com.balnana.app"]`) ||
+		!strings.Contains(body, `{"/":"/v/*"}`) || !strings.Contains(body, `{"/":"/g/*"}`) {
+		t.Fatalf("%d %s", rec.Code, body)
+	}
+	admin.must(200, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{
+		"BALNANA_APPLE_BUNDLE_ID": "org.example.split",
+		"BALNANA_PUBLIC_URL":      "https://example.org/balnana/",
+	}}, nil)
+	body = get(t, c.h, path, nil).Body.String()
+	if !strings.Contains(body, `"appIDs":["A1B2C3D4E5.org.example.split"]`) || !strings.Contains(body, `{"/":"/balnana/v/*"}`) {
+		t.Fatal(body)
+	}
+	admin.errorCode(400, "PUT", "/admin/settings", AdminSettingsInput{Values: map[string]string{"BALNANA_APPLE_TEAM_ID": "a1b2c3d4e5"}})
+}
+
 // Servers sharing a database follow settings saved through any of them.
 func TestSettingsReachOtherServers(t *testing.T) {
 	c, _, pool := adminClient(t, map[string]string{})

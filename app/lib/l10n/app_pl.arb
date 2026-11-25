@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "Aplikacja na iOS loguje się przez Apple i sprzedaje subskrypcje w App Store dla ustawionego tu identyfikatora pakietu.",
   "adminAppleBundleId": "Identyfikator pakietu iOS",
   "adminAppleBundleIdHelp": "Identyfikator pakietu aplikacji na iOS, np. com.balnana.app. Włącza „Zaloguj się przez Apple” w tej aplikacji, a przy włączonych płatnościach — subskrypcje App Store.",
+  "adminAppleTeamId": "Identyfikator zespołu Apple",
+  "adminAppleTeamIdHelp": "Identyfikator zespołu konta deweloperskiego Apple, które podpisuje aplikację na iOS, np. A1B2C3D4E5. Aplikacja z identyfikatorem pakietu powyżej (com.balnana.app, jeśli pusty) otwiera wtedy linki tego serwera.",
   "adminAppStoreSandbox": "Akceptuj zakupy z piaskownicy App Store",
   "adminAppStoreSandboxHelp": "Przyjmuje też zakupy z piaskownicy App Store, gdzie TestFlight, Xcode i weryfikacja aplikacji kupują bez płacenia. Potrzebne, gdy Apple sprawdza aplikację.",
   "adminAppStoreWebhook": "Adres App Store Server Notifications V2 do App Store Connect: {url}",

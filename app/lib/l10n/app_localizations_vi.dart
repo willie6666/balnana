@@ -3691,6 +3691,13 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bundle ID của ứng dụng iOS, ví dụ com.balnana.app. Nó bật Đăng nhập bằng Apple trong ứng dụng đó và, khi bật thanh toán, bật gói đăng ký App Store.';
 
   @override
+  String get adminAppleTeamId => 'Team ID của Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'Team ID của tài khoản nhà phát triển Apple dùng để ký ứng dụng iOS, ví dụ A1B2C3D4E5. Khi đó ứng dụng có Bundle ID ở trên (com.balnana.app nếu để trống) sẽ mở các liên kết của máy chủ này.';
+
+  @override
   String get adminAppStoreSandbox => 'Chấp nhận giao dịch sandbox của App Store';
 
   @override

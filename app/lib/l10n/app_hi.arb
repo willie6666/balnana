@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "iOS ऐप यहाँ सेट किए गए बंडल ID के लिए Apple से साइन इन करता है और App Store से सदस्यताएँ बेचता है।",
   "adminAppleBundleId": "iOS बंडल ID",
   "adminAppleBundleIdHelp": "iOS ऐप का बंडल ID, जैसे com.balnana.app. इससे उस ऐप में Apple से साइन इन चालू होता है और बिलिंग चालू होने पर App Store सदस्यताएँ भी।",
+  "adminAppleTeamId": "Apple टीम ID",
+  "adminAppleTeamIdHelp": "iOS ऐप पर साइन करने वाले Apple डेवलपर खाते की टीम ID, जैसे A1B2C3D4E5. इसके बाद ऊपर दिए बंडल ID (खाली हो तो com.balnana.app) वाला ऐप इस सर्वर के लिंक खोलता है।",
   "adminAppStoreSandbox": "App Store सैंडबॉक्स खरीद स्वीकार करें",
   "adminAppStoreSandboxHelp": "App Store सैंडबॉक्स की खरीद भी स्वीकार करें, जहाँ TestFlight, Xcode और ऐप समीक्षा बिना भुगतान खरीदते हैं। Apple के ऐप की समीक्षा करते समय ज़रूरी है।",
   "adminAppStoreWebhook": "App Store Connect के लिए App Store Server Notifications V2 URL: {url}",

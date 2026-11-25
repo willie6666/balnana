@@ -3737,6 +3737,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'De bundle-ID van de iOS-app, zoals com.balnana.app. Hiermee gaat \'Log in met Apple\' aan in die app en, met facturering, App Store-abonnementen.';
 
   @override
+  String get adminAppleTeamId => 'Apple-team-ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'De team-ID van het Apple-ontwikkelaarsaccount dat de iOS-app ondertekent, zoals A1B2C3D4E5. De app met de bundle-ID hierboven (com.balnana.app als die leeg is) opent dan de links van deze server.';
+
+  @override
   String get adminAppStoreSandbox => 'Sandboxaankopen uit de App Store accepteren';
 
   @override

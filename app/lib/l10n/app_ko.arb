@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "iOS 앱은 여기에서 설정한 번들 ID로 Apple로 로그인하고 App Store에서 구독을 판매합니다.",
   "adminAppleBundleId": "iOS 번들 ID",
   "adminAppleBundleIdHelp": "iOS 앱의 번들 ID(예: com.balnana.app). 설정하면 해당 앱에서 Apple로 로그인이 켜지고, 결제가 켜져 있으면 App Store 구독도 켜집니다.",
+  "adminAppleTeamId": "Apple 팀 ID",
+  "adminAppleTeamIdHelp": "iOS 앱에 서명하는 Apple 개발자 계정의 팀 ID(예: A1B2C3D4E5). 설정하면 위 번들 ID(비어 있으면 com.balnana.app)의 앱이 이 서버의 링크를 엽니다.",
   "adminAppStoreSandbox": "App Store 샌드박스 구매 허용",
   "adminAppStoreSandboxHelp": "App Store 샌드박스 구매도 받습니다. TestFlight, Xcode, 앱 심사는 결제 없이 샌드박스에서 구매합니다. Apple 심사 중에는 필요합니다.",
   "adminAppStoreWebhook": "App Store Connect에 입력할 App Store 서버 알림 V2 URL: {url}",

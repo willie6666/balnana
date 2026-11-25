@@ -1049,6 +1049,8 @@
   "adminSectionIosBody": "La app de iOS inicia sesión con Apple y vende suscripciones a través de la App Store para el ID de paquete indicado aquí.",
   "adminAppleBundleId": "ID de paquete de iOS",
   "adminAppleBundleIdHelp": "El ID de paquete de la app de iOS, como com.balnana.app. Activa «Iniciar sesión con Apple» en esa app y, con la facturación, las suscripciones de la App Store.",
+  "adminAppleTeamId": "ID de equipo de Apple",
+  "adminAppleTeamIdHelp": "El ID de equipo de la cuenta de desarrollador de Apple que firma la app de iOS, como A1B2C3D4E5. La app con el ID de paquete de arriba (com.balnana.app si está vacío) abre entonces los enlaces de este servidor.",
   "adminAppStoreSandbox": "Aceptar compras de prueba (sandbox) de la App Store",
   "adminAppStoreSandboxHelp": "También acepta compras del entorno de pruebas de la App Store, donde TestFlight, Xcode y la revisión de apps compran sin pagar. Necesario mientras Apple revisa la app.",
   "adminAppStoreWebhook": "URL de App Store Server Notifications V2, para App Store Connect: {url}",

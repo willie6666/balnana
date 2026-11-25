@@ -3661,6 +3661,13 @@ class AppLocalizationsTh extends AppLocalizations {
       'Bundle ID ของแอป iOS เช่น com.balnana.app ใช้เปิดการลงชื่อเข้าด้วย Apple ในแอปนั้น และเมื่อเปิดการเรียกเก็บเงิน จะเปิดการสมัครสมาชิกผ่าน App Store ด้วย';
 
   @override
+  String get adminAppleTeamId => 'Team ID ของ Apple';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'Team ID ของบัญชีนักพัฒนา Apple ที่ใช้ลงนามแอป iOS เช่น A1B2C3D4E5 จากนั้นแอปที่ใช้ Bundle ID ด้านบน (ถ้าว่างจะเป็น com.balnana.app) จะเปิดลิงก์ของเซิร์ฟเวอร์นี้';
+
+  @override
   String get adminAppStoreSandbox => 'รับการซื้อจากแซนด์บ็อกซ์ของ App Store';
 
   @override

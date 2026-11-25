@@ -54,6 +54,7 @@ func NewHandler(s *Server, web http.Handler) http.Handler {
 	mux.HandleFunc("GET "+paypalReturnPath, s.PayPalReturn)
 	mux.HandleFunc("GET /healthz", s.Healthz)
 	mux.HandleFunc("GET /.well-known/assetlinks.json", s.assetLinks)
+	mux.HandleFunc("GET /.well-known/apple-app-site-association", s.appleAppSiteAssociation)
 	mux.Handle("/", web)
 
 	var h http.Handler = mux

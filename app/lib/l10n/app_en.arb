@@ -5438,6 +5438,14 @@
   "@adminAppleBundleIdHelp": {
     "description": "Admin setting help for the iOS app's bundle ID."
   },
+  "adminAppleTeamId": "Apple team ID",
+  "@adminAppleTeamId": {
+    "description": "Admin setting label for the Apple developer team ID that signs the iOS app."
+  },
+  "adminAppleTeamIdHelp": "The team ID of the Apple developer account that signs the iOS app, such as A1B2C3D4E5. The app with the bundle ID above (com.balnana.app if empty) then opens this server's links.",
+  "@adminAppleTeamIdHelp": {
+    "description": "Admin setting help for the Apple team ID, which lets the iOS app open the server's links (Universal Links)."
+  },
   "adminAppStoreSandbox": "Accept App Store sandbox purchases",
   "@adminAppStoreSandbox": {
     "description": "Admin setting label: also accept App Store sandbox purchases."

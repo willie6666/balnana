@@ -3696,6 +3696,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'The iOS app\'s bundle ID, such as com.balnana.app. It turns on Sign in with Apple in that app and, with billing, App Store subscriptions.';
 
   @override
+  String get adminAppleTeamId => 'Apple team ID';
+
+  @override
+  String get adminAppleTeamIdHelp =>
+      'The team ID of the Apple developer account that signs the iOS app, such as A1B2C3D4E5. The app with the bundle ID above (com.balnana.app if empty) then opens this server\'s links.';
+
+  @override
   String get adminAppStoreSandbox => 'Accept App Store sandbox purchases';
 
   @override

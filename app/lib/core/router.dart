@@ -47,6 +47,12 @@ const _homePage = ValueKey('home');
 /// and groups opened by link (which ask them to sign in unless open to
 /// anyone). Home is a group: the one opened last, when there is one.
 String? _redirect(Ref ref, GoRouterState state) {
+  // iOS hands over a Universal Link whole (Android's App Links come as /link
+  // from MainActivity): first check which server it is for, so a group's
+  // secret never goes to another one.
+  if (state.uri.isScheme('https') || state.uri.isScheme('http')) {
+    return Uri(path: '/link', queryParameters: {'url': state.uri.toString()}).toString();
+  }
   final path = state.matchedLocation;
   if (ref.read(setupRequiredProvider)) {
     // The way out for someone who typed the wrong server.
