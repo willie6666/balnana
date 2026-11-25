@@ -1,0 +1,1 @@
+View-only links: a snapshot now keeps notes and places only while it shows them, an expired link's settings can be changed again, and making a snapshot after turning on receipts no longer fails. Shared view pages now show their own description in link previews.
