@@ -12,7 +12,11 @@ import (
 
 // Expense cursors are opaque to clients: "<occurred_at>|<id>" in base64url.
 func encodeExpenseCursor(e Expense) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(e.OccurredAt.Format(time.RFC3339Nano) + "|" + e.Id))
+	return expenseCursor(e.OccurredAt, e.Id)
+}
+
+func expenseCursor(at time.Time, id string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(at.Format(time.RFC3339Nano) + "|" + id))
 }
 
 func decodeExpenseCursor(c string) (time.Time, string, error) {
@@ -33,21 +37,31 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 	if err != nil {
 		return nil, err
 	}
-	limit := pageSize(req.Params.Limit)
+	f := expenseFilter{q: req.Params.Q, member: req.Params.Member, category: req.Params.Category,
+		from: req.Params.From, to: req.Params.To}
+	page, err := s.expensePage(ctx, g, f, req.Params.Cursor, req.Params.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return ListExpenses200JSONResponse(page), nil
+}
+
+// expensePage lists g's live expenses that f lets through, newest first, a
+// page at a time.
+func (s *Server) expensePage(ctx context.Context, g *group, f expenseFilter, cursor *string, size *int) (ExpensePage, error) {
+	limit := pageSize(size)
 	var afterAt *time.Time
 	var afterID *string
-	if req.Params.Cursor != nil && *req.Params.Cursor != "" {
-		t, id, err := decodeExpenseCursor(*req.Params.Cursor)
+	if cursor != nil && *cursor != "" {
+		t, id, err := decodeExpenseCursor(*cursor)
 		if err != nil {
-			return nil, err
+			return ExpensePage{}, err
 		}
 		afterAt, afterID = &t, &id
 	}
-	f := expenseFilter{q: req.Params.Q, member: req.Params.Member, category: req.Params.Category,
-		from: req.Params.From, to: req.Params.To}
 	where, args, err := f.where(g.id)
 	if err != nil {
-		return nil, err
+		return ExpensePage{}, err
 	}
 	n := len(args)
 	args = append(args, afterAt, afterID, limit+1)
@@ -64,7 +78,7 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return ExpensePage{}, err
 	}
 	page := ExpensePage{Items: list}
 	if len(list) > limit {
@@ -72,7 +86,7 @@ func (s *Server) ListExpenses(ctx context.Context, req ListExpensesRequestObject
 		c := encodeExpenseCursor(list[limit-1])
 		page.NextCursor = &c
 	}
-	return ListExpenses200JSONResponse(page), nil
+	return page, nil
 }
 
 func (s *Server) CreateExpense(ctx context.Context, req CreateExpenseRequestObject) (CreateExpenseResponseObject, error) {

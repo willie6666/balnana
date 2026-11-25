@@ -24,6 +24,7 @@ type plan struct {
 	members   *int
 	sponsored *int
 	reminders bool
+	viewLink  bool
 }
 
 // effectiveMemberLimit includes the server's hard cap, even for unlimited plans.
@@ -43,7 +44,7 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 	var ends *time.Time
 	err := q.QueryRow(ctx, `
 		select p.id, p.name, e.id is not null, p.receipts_per_group, p.recurring_per_group, p.joined_groups,
-		       p.members_per_group, p.sponsored_groups, p.reminders, e.expires_at
+		       p.members_per_group, p.sponsored_groups, p.reminders, p.view_link, e.expires_at
 		from plans p
 		cross join automatic_plans a
 		left join users u on u.id = $1
@@ -53,7 +54,7 @@ func userPlan(ctx context.Context, q querier, userID string) (*plan, *time.Time,
 		       else p.id = a.unverified_plan_id end) or e.id is not null
 		order by e.id is not null desc, p.rank desc, e.expires_at desc nulls first
 		limit 1`, userID).
-		Scan(&p.id, &p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &ends)
+		Scan(&p.id, &p.name, &p.paid, &p.receipts, &p.recurring, &p.joined, &p.members, &p.sponsored, &p.reminders, &p.viewLink, &ends)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -302,6 +303,7 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 		RecurringPerGroup: p.recurring,
 		MembersPerGroup:   effectiveMemberLimit(p.members),
 		Reminders:         p.reminders,
+		ViewLink:          p.viewLink,
 		JoinedGroups:      Usage{Limit: p.joined},
 		SponsoredGroups:   Usage{Limit: p.sponsored},
 	}
@@ -459,6 +461,7 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 		Receipts:        Usage{Limit: p.receipts},
 		Recurring:       Usage{Limit: p.recurring},
 		Reminders:       p.reminders,
+		ViewLink:        p.viewLink,
 	}
 	if out.Members.Used, err = countMembers(ctx, q, g.id); err != nil {
 		return GroupPlan{}, err
@@ -488,7 +491,7 @@ func (s *Server) groupPlanFor(ctx context.Context, q querier, g *group) (GroupPl
 		}
 		out.PlanName = p.name
 		out.Members.Limit, out.Receipts.Limit, out.Recurring.Limit = effectiveMemberLimit(p.members), p.receipts, p.recurring
-		out.Reminders = p.reminders
+		out.Reminders, out.ViewLink = p.reminders, p.viewLink
 		out.SponsorMemberId = nil
 	}
 	u, err := s.currentUser(ctx)

@@ -12,6 +12,7 @@ void main() {
     expect(route('https://split.example.com/g/$token'), '/g/$token');
     expect(route('https://SPLIT.example.com/g/$token/'), '/g/$token');
     expect(route('https://split.example.com/invite/abc_DEF-1'), '/invite/abc_DEF-1');
+    expect(route('https://split.example.com/v/$token'), '/v/$token');
     expect(route('https://split.example.com/verify-email?token=t1'), '/verify-email?token=t1');
     expect(route('https://split.example.com/reset-password?token=t2'), '/reset-password?token=t2');
     // The web app's pages within a group.
@@ -21,6 +22,7 @@ void main() {
       'recurring/r_1',
       'settings',
       'settings/categories',
+      'settings/view-link',
       'join',
     ]) {
       expect(route('https://split.example.com/g/$token/$page'), '/g/$token/$page');

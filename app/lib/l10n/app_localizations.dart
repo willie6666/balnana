@@ -6518,6 +6518,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'As written in App Store Connect, for an auto-renewable subscription. The App Store says when each payment ends, so there are no days to set.'**
   String get adminProductAppStoreIdHelp;
+
+  /// No description provided for @viewOnlyLive.
+  ///
+  /// In en, this message translates to:
+  /// **'View only · Kept up to date'**
+  String get viewOnlyLive;
+
+  /// Above a group shown by its view-only link, which shows the group as it was then. date is a date and time.
+  ///
+  /// In en, this message translates to:
+  /// **'View only · As of {date}'**
+  String viewOnlyAsOf(String date);
+
+  /// No description provided for @viewRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get viewRefresh;
+
+  /// No description provided for @viewBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances'**
+  String get viewBalances;
+
+  /// No description provided for @viewEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses added to the group will show up here.'**
+  String get viewEmptyBody;
+
+  /// No description provided for @viewMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This link doesn\'t work'**
+  String get viewMissingTitle;
+
+  /// No description provided for @viewMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It was turned off, or the group was deleted. Ask someone in the group for a new link.'**
+  String get viewMissingBody;
+
+  /// No description provided for @viewExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This link has expired'**
+  String get viewExpiredTitle;
+
+  /// No description provided for @viewExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask someone in the group for a new link.'**
+  String get viewExpiredBody;
+
+  /// No description provided for @viewPausedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is paused'**
+  String get viewPausedTitle;
+
+  /// No description provided for @viewPausedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The group\'s plan doesn\'t include view-only links right now. The link works again once it does.'**
+  String get viewPausedBody;
+
+  /// In the list of what a plan includes: a link that shows a group to anyone, read-only.
+  ///
+  /// In en, this message translates to:
+  /// **'View-only link'**
+  String get planLimitViewLink;
+
+  /// Help under the view-only link switch when an administrator edits a plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups on this plan can share a link that shows the group to anyone, without signing in.'**
+  String get adminPlanViewLinkHelp;
+
+  /// Error when a group's plan doesn't allow a view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'This group\'s plan doesn\'t include a view-only link.'**
+  String get errorLimitViewLink;
+
+  /// Error when creating a second view-only link for a group.
+  ///
+  /// In en, this message translates to:
+  /// **'This group already has a view-only link.'**
+  String get errorViewLinkExists;
+
+  /// Error when a view-only link would show nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'A view-only link has to show balances, expenses or spending.'**
+  String get errorInvalidShow;
+
+  /// Error when a view-only link's end date has passed.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an end date in the future.'**
+  String get errorInvalidExpiry;
+
+  /// Title of the page where members manage the group's view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'View-only link'**
+  String get viewLinkTitle;
+
+  /// Under the view-only link entry in group settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Let anyone see the group without joining it'**
+  String get viewLinkHelp;
+
+  /// Explains a view-only link at the top of its page.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with this link can see the group, without an account and without joining. They can\'t change anything. A group has one link at a time.'**
+  String get viewLinkIntro;
+
+  /// Snackbar after copying the view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied. Anyone with it can see this group.'**
+  String get viewLinkCopied;
+
+  /// Shown when the group's plan doesn't include a view-only link; opens the plans.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs an upgraded plan'**
+  String get viewLinkNeedsPlan;
+
+  /// Under viewLinkNeedsPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'This group\'s plan doesn\'t include a view-only link.'**
+  String get viewLinkNeedsPlanHelp;
+
+  /// Heading above the choice between a link kept up to date and a snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get viewLinkKind;
+
+  /// A view-only link that shows the group as it is when opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept up to date'**
+  String get viewLinkLive;
+
+  /// Under viewLinkLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows the group as it is whenever someone opens it.'**
+  String get viewLinkLiveHelp;
+
+  /// A view-only link that shows the group as it was when the link was made.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot'**
+  String get viewLinkSnapshot;
+
+  /// Under viewLinkSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows the group as it is now, and never changes.'**
+  String get viewLinkSnapshotHelp;
+
+  /// A view-only link showing the group as it was then. date is a date and time.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot of {date}'**
+  String viewLinkSnapshotOf(String date);
+
+  /// Under viewLinkSnapshotOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Later changes don\'t show. To show them, turn this link off and create a new one.'**
+  String get viewLinkSnapshotMade;
+
+  /// Heading above the switches for what a view-only link shows.
+  ///
+  /// In en, this message translates to:
+  /// **'What it shows'**
+  String get viewLinkShows;
+
+  /// Switch: the view-only link shows the notes of expenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense notes'**
+  String get viewLinkShowNotes;
+
+  /// Switch: the view-only link shows where expenses were paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense places'**
+  String get viewLinkShowPlaces;
+
+  /// Switch: the view-only link shows receipt photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt photos'**
+  String get viewLinkShowReceipts;
+
+  /// Under the receipt photos switch of a snapshot link.
+  ///
+  /// In en, this message translates to:
+  /// **'Only links kept up to date can show receipt photos.'**
+  String get viewLinkReceiptsLiveOnly;
+
+  /// Title of the end date of a view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Works until'**
+  String get viewLinkExpiry;
+
+  /// A view-only link with no end date.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps working until turned off'**
+  String get viewLinkNoExpiry;
+
+  /// The last day a view-only link works. date is a date.
+  ///
+  /// In en, this message translates to:
+  /// **'The end of {date}'**
+  String viewLinkExpiresOn(String date);
+
+  /// Tooltip of the button that removes a view-only link's end date.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove end date'**
+  String get viewLinkClearExpiry;
+
+  /// Button that creates the group's view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Create link'**
+  String get viewLinkCreate;
+
+  /// Under viewPausedTitle on the view-only link page.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody can open it until the group\'s plan includes view-only links again.'**
+  String get viewLinkPausedHelp;
+
+  /// Screen reader label of the view-only link's QR code.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code of the view-only link to {group}'**
+  String viewLinkQrLabel(String group);
+
+  /// When someone last opened the view-only link. date is a date.
+  ///
+  /// In en, this message translates to:
+  /// **'Last opened {date}'**
+  String viewLinkLastOpened(String date);
+
+  /// Nobody has opened the view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Not opened yet'**
+  String get viewLinkNeverOpened;
+
+  /// Turns off the group's view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off link'**
+  String get viewLinkTurnOff;
+
+  /// Under viewLinkTurnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'It stops working. A new link would have a different address.'**
+  String get viewLinkTurnOffHelp;
+
+  /// Title of the dialog confirming turning off the view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off the view-only link?'**
+  String get viewLinkTurnOffTitle;
+
+  /// Body of the dialog confirming turning off the view-only link.
+  ///
+  /// In en, this message translates to:
+  /// **'People who have it will no longer see the group. This can\'t be undone.'**
+  String get viewLinkTurnOffBody;
+
+  /// Activity timeline message.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} created a view-only link'**
+  String activityViewLinkCreated(String who);
+
+  /// Activity timeline message.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} changed the view-only link'**
+  String activityViewLinkChanged(String who);
+
+  /// Activity timeline message.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} turned off the view-only link'**
+  String activityViewLinkRevoked(String who);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

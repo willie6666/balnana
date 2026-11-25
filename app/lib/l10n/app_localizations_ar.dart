@@ -3853,4 +3853,178 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'كما هو مكتوب في App Store Connect لاشتراك يتجدد تلقائيًا. يحدد App Store متى تنتهي كل دفعة، لذا لا توجد أيام لضبطها.';
+
+  @override
+  String get viewOnlyLive => 'للعرض فقط · محدَّث دائمًا';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'للعرض فقط · حتى $date';
+  }
+
+  @override
+  String get viewRefresh => 'تحديث';
+
+  @override
+  String get viewBalances => 'الأرصدة';
+
+  @override
+  String get viewEmptyBody => 'ستظهر هنا المصاريف التي تُضاف إلى المجموعة.';
+
+  @override
+  String get viewMissingTitle => 'هذا الرابط لا يعمل';
+
+  @override
+  String get viewMissingBody => 'تم إيقافه أو حُذفت المجموعة. اطلب رابطًا جديدًا من أحد أفراد المجموعة.';
+
+  @override
+  String get viewExpiredTitle => 'انتهت صلاحية هذا الرابط';
+
+  @override
+  String get viewExpiredBody => 'اطلب رابطًا جديدًا من أحد أفراد المجموعة.';
+
+  @override
+  String get viewPausedTitle => 'هذا الرابط متوقف مؤقتًا';
+
+  @override
+  String get viewPausedBody =>
+      'خطة المجموعة لا تتضمن روابط العرض فقط حاليًا. سيعمل الرابط مجددًا عندما تتضمنها.';
+
+  @override
+  String get planLimitViewLink => 'رابط للعرض فقط';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'يمكن للمجموعات في هذه الخطة مشاركة رابط يعرض المجموعة لأي شخص دون تسجيل الدخول.';
+
+  @override
+  String get errorLimitViewLink => 'خطة هذه المجموعة لا تتضمن رابطًا للعرض فقط.';
+
+  @override
+  String get errorViewLinkExists => 'لدى هذه المجموعة رابط للعرض فقط بالفعل.';
+
+  @override
+  String get errorInvalidShow => 'يجب أن يعرض رابط العرض فقط الأرصدة أو المصاريف أو الإحصاءات.';
+
+  @override
+  String get errorInvalidExpiry => 'اختر تاريخ انتهاء في المستقبل.';
+
+  @override
+  String get viewLinkTitle => 'رابط للعرض فقط';
+
+  @override
+  String get viewLinkHelp => 'دع أي شخص يرى المجموعة دون الانضمام إليها';
+
+  @override
+  String get viewLinkIntro =>
+      'يمكن لأي شخص لديه هذا الرابط رؤية المجموعة دون حساب ودون الانضمام. لا يمكنه تغيير أي شيء. للمجموعة رابط واحد فقط في كل مرة.';
+
+  @override
+  String get viewLinkCopied => 'تم نسخ الرابط. يمكن لأي شخص لديه الرابط رؤية هذه المجموعة.';
+
+  @override
+  String get viewLinkNeedsPlan => 'يتطلب خطة أعلى';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'خطة هذه المجموعة لا تتضمن رابطًا للعرض فقط.';
+
+  @override
+  String get viewLinkKind => 'التحديث';
+
+  @override
+  String get viewLinkLive => 'محدَّث دائمًا';
+
+  @override
+  String get viewLinkLiveHelp => 'يعرض المجموعة كما هي لحظة فتحه.';
+
+  @override
+  String get viewLinkSnapshot => 'لقطة';
+
+  @override
+  String get viewLinkSnapshotHelp => 'يعرض المجموعة كما هي الآن ولا يتغير أبدًا.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'لقطة بتاريخ $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'لا تظهر التغييرات اللاحقة. لعرضها، أوقف هذا الرابط وأنشئ رابطًا جديدًا.';
+
+  @override
+  String get viewLinkShows => 'ما يعرضه';
+
+  @override
+  String get viewLinkShowNotes => 'ملاحظات المصاريف';
+
+  @override
+  String get viewLinkShowPlaces => 'أماكن المصاريف';
+
+  @override
+  String get viewLinkShowReceipts => 'صور الإيصالات';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'الروابط المحدَّثة دائمًا فقط يمكنها عرض صور الإيصالات.';
+
+  @override
+  String get viewLinkExpiry => 'صالح حتى';
+
+  @override
+  String get viewLinkNoExpiry => 'صالح حتى إيقافه';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'نهاية يوم $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'إزالة تاريخ الانتهاء';
+
+  @override
+  String get viewLinkCreate => 'إنشاء رابط';
+
+  @override
+  String get viewLinkPausedHelp => 'لا يمكن لأحد فتحه حتى تتضمن خطة المجموعة روابط العرض فقط مجددًا.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'رمز QR لرابط العرض فقط إلى $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'آخر فتح في $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'لم يُفتح بعد';
+
+  @override
+  String get viewLinkTurnOff => 'إيقاف الرابط';
+
+  @override
+  String get viewLinkTurnOffHelp => 'سيتوقف عن العمل. سيكون للرابط الجديد عنوان مختلف.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'إيقاف رابط العرض فقط؟';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'لن يتمكن من لديهم الرابط من رؤية المجموعة بعد الآن. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return 'أنشأ $who رابطًا للعرض فقط';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return 'غيّر $who رابط العرض فقط';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return 'أوقف $who رابط العرض فقط';
+  }
 }

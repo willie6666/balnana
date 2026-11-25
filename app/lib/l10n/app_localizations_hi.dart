@@ -3800,4 +3800,180 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'जैसा App Store Connect में स्वतः-नवीनीकृत सदस्यता के लिए लिखा है। हर भुगतान कब खत्म होता है यह App Store बताता है, इसलिए दिन सेट नहीं करने होते।';
+
+  @override
+  String get viewOnlyLive => 'सिर्फ़ देखने के लिए · हमेशा अपडेट';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'सिर्फ़ देखने के लिए · $date तक';
+  }
+
+  @override
+  String get viewRefresh => 'रीफ़्रेश करें';
+
+  @override
+  String get viewBalances => 'बैलेंस';
+
+  @override
+  String get viewEmptyBody => 'ग्रुप में जोड़े गए खर्च यहाँ दिखेंगे।';
+
+  @override
+  String get viewMissingTitle => 'यह लिंक काम नहीं करता';
+
+  @override
+  String get viewMissingBody =>
+      'इसे बंद कर दिया गया है या ग्रुप हटा दिया गया है। ग्रुप के किसी व्यक्ति से नया लिंक माँगें।';
+
+  @override
+  String get viewExpiredTitle => 'इस लिंक की अवधि खत्म हो गई';
+
+  @override
+  String get viewExpiredBody => 'ग्रुप के किसी व्यक्ति से नया लिंक माँगें।';
+
+  @override
+  String get viewPausedTitle => 'यह लिंक रोका गया है';
+
+  @override
+  String get viewPausedBody =>
+      'ग्रुप के प्लान में अभी सिर्फ़ देखने वाले लिंक शामिल नहीं हैं। शामिल होते ही लिंक फिर से काम करेगा।';
+
+  @override
+  String get planLimitViewLink => 'सिर्फ़ देखने वाला लिंक';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'इस प्लान वाले ग्रुप ऐसा लिंक शेयर कर सकते हैं जिससे कोई भी बिना साइन इन किए ग्रुप देख सके।';
+
+  @override
+  String get errorLimitViewLink => 'इस ग्रुप के प्लान में सिर्फ़ देखने वाला लिंक शामिल नहीं है।';
+
+  @override
+  String get errorViewLinkExists => 'इस ग्रुप के पास पहले से सिर्फ़ देखने वाला लिंक है।';
+
+  @override
+  String get errorInvalidShow => 'सिर्फ़ देखने वाले लिंक में बैलेंस, खर्च या आँकड़े दिखने चाहिए।';
+
+  @override
+  String get errorInvalidExpiry => 'भविष्य की कोई आख़िरी तारीख चुनें।';
+
+  @override
+  String get viewLinkTitle => 'सिर्फ़ देखने वाला लिंक';
+
+  @override
+  String get viewLinkHelp => 'कोई भी बिना जुड़े ग्रुप देख सके';
+
+  @override
+  String get viewLinkIntro =>
+      'जिसके पास यह लिंक है, वह बिना खाते और बिना जुड़े ग्रुप देख सकता है। वह कुछ बदल नहीं सकता। एक ग्रुप का एक समय में एक ही लिंक होता है।';
+
+  @override
+  String get viewLinkCopied => 'लिंक कॉपी हो गया। जिसके पास यह है, वह इस ग्रुप को देख सकता है।';
+
+  @override
+  String get viewLinkNeedsPlan => 'ऊँचा प्लान चाहिए';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'इस ग्रुप के प्लान में सिर्फ़ देखने वाला लिंक शामिल नहीं है।';
+
+  @override
+  String get viewLinkKind => 'अपडेट';
+
+  @override
+  String get viewLinkLive => 'हमेशा अपडेट';
+
+  @override
+  String get viewLinkLiveHelp => 'ग्रुप को वैसा दिखाता है जैसा वह खोलते समय होता है।';
+
+  @override
+  String get viewLinkSnapshot => 'स्नैपशॉट';
+
+  @override
+  String get viewLinkSnapshotHelp => 'ग्रुप को वैसा दिखाता है जैसा वह अभी है, और कभी नहीं बदलता।';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return '$date का स्नैपशॉट';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'बाद के बदलाव नहीं दिखते। उन्हें दिखाने के लिए यह लिंक बंद करके नया बनाएँ।';
+
+  @override
+  String get viewLinkShows => 'क्या दिखाता है';
+
+  @override
+  String get viewLinkShowNotes => 'खर्च के नोट';
+
+  @override
+  String get viewLinkShowPlaces => 'खर्च की जगहें';
+
+  @override
+  String get viewLinkShowReceipts => 'रसीद की फ़ोटो';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'सिर्फ़ हमेशा अपडेट रहने वाले लिंक ही रसीद की फ़ोटो दिखा सकते हैं।';
+
+  @override
+  String get viewLinkExpiry => 'कब तक मान्य';
+
+  @override
+  String get viewLinkNoExpiry => 'बंद किए जाने तक मान्य';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return '$date के अंत तक';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'आख़िरी तारीख हटाएँ';
+
+  @override
+  String get viewLinkCreate => 'लिंक बनाएँ';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'जब तक ग्रुप के प्लान में फिर से सिर्फ़ देखने वाले लिंक शामिल नहीं होते, कोई इसे खोल नहीं सकता।';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return '$group के सिर्फ़ देखने वाले लिंक का QR कोड';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'आख़िरी बार $date को खोला गया';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'अभी तक नहीं खोला गया';
+
+  @override
+  String get viewLinkTurnOff => 'लिंक बंद करें';
+
+  @override
+  String get viewLinkTurnOffHelp => 'यह काम करना बंद कर देगा। नए लिंक का पता अलग होगा।';
+
+  @override
+  String get viewLinkTurnOffTitle => 'सिर्फ़ देखने वाला लिंक बंद करें?';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'जिनके पास यह है, वे अब ग्रुप नहीं देख पाएँगे। इसे पहले जैसा नहीं किया जा सकता।';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who ने सिर्फ़ देखने वाला लिंक बनाया';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who ने सिर्फ़ देखने वाला लिंक बदला';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who ने सिर्फ़ देखने वाला लिंक बंद किया';
+  }
 }

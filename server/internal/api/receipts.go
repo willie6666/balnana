@@ -65,20 +65,26 @@ func (s *Server) GetReceipt(ctx context.Context, req GetReceiptRequestObject) (G
 	if err != nil {
 		return nil, err
 	}
-	if !validUUID(req.ExpenseId) {
-		return nil, errNotFound
-	}
-	var data []byte
-	err = s.db.QueryRow(ctx, `
-		select r.data from receipts r join expenses e on e.id = r.expense_id
-		where r.expense_id = $1 and e.group_id = $2 and e.deleted_at is null`, req.ExpenseId, g.id).Scan(&data)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errNotFound
-	}
+	data, err := s.receiptPhoto(ctx, g.id, req.ExpenseId)
 	if err != nil {
 		return nil, err
 	}
 	return GetReceipt200ImagejpegResponse{Body: bytes.NewReader(data), ContentLength: int64(len(data))}, nil
+}
+
+// receiptPhoto is the photo of a live expense in the group.
+func (s *Server) receiptPhoto(ctx context.Context, groupID, expenseID string) ([]byte, error) {
+	if !validUUID(expenseID) {
+		return nil, errNotFound
+	}
+	var data []byte
+	err := s.db.QueryRow(ctx, `
+		select r.data from receipts r join expenses e on e.id = r.expense_id
+		where r.expense_id = $1 and e.group_id = $2 and e.deleted_at is null`, expenseID, groupID).Scan(&data)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errNotFound
+	}
+	return data, err
 }
 
 func (s *Server) PutReceipt(ctx context.Context, req PutReceiptRequestObject) (PutReceiptResponseObject, error) {

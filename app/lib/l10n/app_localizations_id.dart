@@ -3757,4 +3757,181 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Seperti tertulis di App Store Connect, untuk langganan yang diperpanjang otomatis. App Store menyebutkan kapan setiap pembayaran berakhir, jadi tidak ada hari yang perlu diatur.';
+
+  @override
+  String get viewOnlyLive => 'Hanya lihat · Selalu terbaru';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Hanya lihat · Per $date';
+  }
+
+  @override
+  String get viewRefresh => 'Muat ulang';
+
+  @override
+  String get viewBalances => 'Saldo';
+
+  @override
+  String get viewEmptyBody => 'Pengeluaran yang ditambahkan ke grup akan muncul di sini.';
+
+  @override
+  String get viewMissingTitle => 'Tautan ini tidak berfungsi';
+
+  @override
+  String get viewMissingBody =>
+      'Tautan sudah dimatikan, atau grup sudah dihapus. Minta tautan baru kepada seseorang di grup.';
+
+  @override
+  String get viewExpiredTitle => 'Tautan ini sudah kedaluwarsa';
+
+  @override
+  String get viewExpiredBody => 'Minta tautan baru kepada seseorang di grup.';
+
+  @override
+  String get viewPausedTitle => 'Tautan ini dijeda';
+
+  @override
+  String get viewPausedBody =>
+      'Paket grup saat ini tidak mencakup tautan hanya lihat. Tautan akan berfungsi lagi setelah paket mencakupnya.';
+
+  @override
+  String get planLimitViewLink => 'Tautan hanya lihat';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Grup dengan paket ini dapat membagikan tautan yang menampilkan grup kepada siapa saja, tanpa masuk.';
+
+  @override
+  String get errorLimitViewLink => 'Paket grup ini tidak mencakup tautan hanya lihat.';
+
+  @override
+  String get errorViewLinkExists => 'Grup ini sudah punya tautan hanya lihat.';
+
+  @override
+  String get errorInvalidShow => 'Tautan hanya lihat harus menampilkan saldo, pengeluaran, atau statistik.';
+
+  @override
+  String get errorInvalidExpiry => 'Pilih tanggal berakhir di masa depan.';
+
+  @override
+  String get viewLinkTitle => 'Tautan hanya lihat';
+
+  @override
+  String get viewLinkHelp => 'Biarkan siapa saja melihat grup tanpa bergabung';
+
+  @override
+  String get viewLinkIntro =>
+      'Siapa saja yang punya tautan ini dapat melihat grup, tanpa akun dan tanpa bergabung. Mereka tidak dapat mengubah apa pun. Satu grup hanya punya satu tautan dalam satu waktu.';
+
+  @override
+  String get viewLinkCopied => 'Tautan disalin. Siapa saja yang memilikinya dapat melihat grup ini.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Perlu paket yang lebih tinggi';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Paket grup ini tidak mencakup tautan hanya lihat.';
+
+  @override
+  String get viewLinkKind => 'Pembaruan';
+
+  @override
+  String get viewLinkLive => 'Selalu terbaru';
+
+  @override
+  String get viewLinkLiveHelp => 'Menampilkan grup sesuai keadaannya saat dibuka.';
+
+  @override
+  String get viewLinkSnapshot => 'Cuplikan';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Menampilkan grup seperti sekarang, dan tidak pernah berubah.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Cuplikan per $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Perubahan setelahnya tidak muncul. Untuk menampilkannya, matikan tautan ini lalu buat yang baru.';
+
+  @override
+  String get viewLinkShows => 'Yang ditampilkan';
+
+  @override
+  String get viewLinkShowNotes => 'Catatan pengeluaran';
+
+  @override
+  String get viewLinkShowPlaces => 'Lokasi pengeluaran';
+
+  @override
+  String get viewLinkShowReceipts => 'Foto struk';
+
+  @override
+  String get viewLinkReceiptsLiveOnly =>
+      'Hanya tautan yang selalu terbaru yang dapat menampilkan foto struk.';
+
+  @override
+  String get viewLinkExpiry => 'Berlaku sampai';
+
+  @override
+  String get viewLinkNoExpiry => 'Berlaku sampai dimatikan';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Akhir $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Hapus tanggal berakhir';
+
+  @override
+  String get viewLinkCreate => 'Buat tautan';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Tidak ada yang dapat membukanya sampai paket grup kembali mencakup tautan hanya lihat.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'Kode QR tautan hanya lihat untuk $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Terakhir dibuka $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Belum pernah dibuka';
+
+  @override
+  String get viewLinkTurnOff => 'Matikan tautan';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Tautan akan berhenti berfungsi. Tautan baru akan punya alamat lain.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Matikan tautan hanya lihat?';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'Orang yang memilikinya tidak dapat melihat grup lagi. Tindakan ini tidak dapat dibatalkan.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who membuat tautan hanya lihat';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who mengubah tautan hanya lihat';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who mematikan tautan hanya lihat';
+  }
 }

@@ -10,6 +10,7 @@ import '../models/expense.dart';
 import '../models/group.dart';
 import 'group_api.dart';
 import 'transport.dart';
+import 'view_api.dart';
 
 /// Where a push service delivers this device's Web Push messages: the
 /// [endpoint] to send to and the keys to encrypt for (RFC 8291), base64url.
@@ -389,6 +390,9 @@ class BalnanaApi {
 
   /// Calls about one group, made as [memberId] when this device knows who it is.
   GroupApi group(String token, {String? memberId}) => GroupApi(_transport, token, memberId: memberId);
+
+  /// A group seen through its view-only link [token].
+  ViewApi view(String token) => ViewApi(_transport, token);
 
   /// Asks for notifications about [groups] (and, signed in, the account's
   /// groups) on [device], this app's own random ID for the phone, sent to

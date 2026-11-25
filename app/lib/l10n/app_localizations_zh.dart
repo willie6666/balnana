@@ -3596,6 +3596,175 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       '与 App Store Connect 中自动续期订阅的产品 ID 相同。App Store 会告知每次付款何时到期，因此无需设置天数。';
+
+  @override
+  String get viewOnlyLive => '仅供查看 · 持续更新';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return '仅供查看 · $date 时的状态';
+  }
+
+  @override
+  String get viewRefresh => '刷新';
+
+  @override
+  String get viewBalances => '余额';
+
+  @override
+  String get viewEmptyBody => '群组中添加的支出会显示在这里。';
+
+  @override
+  String get viewMissingTitle => '此链接无法使用';
+
+  @override
+  String get viewMissingBody => '链接已停用，或群组已删除。请向群组成员索取新链接。';
+
+  @override
+  String get viewExpiredTitle => '此链接已过期';
+
+  @override
+  String get viewExpiredBody => '请向群组成员索取新链接。';
+
+  @override
+  String get viewPausedTitle => '此链接已暂停';
+
+  @override
+  String get viewPausedBody => '此群组的方案目前不包含只读链接。方案包含后，链接将恢复使用。';
+
+  @override
+  String get planLimitViewLink => '只读链接';
+
+  @override
+  String get adminPlanViewLinkHelp => '此方案的群组可以分享一个链接，任何人无需登录即可查看群组。';
+
+  @override
+  String get errorLimitViewLink => '此群组的方案不包含只读链接。';
+
+  @override
+  String get errorViewLinkExists => '此群组已有只读链接。';
+
+  @override
+  String get errorInvalidShow => '只读链接至少要显示余额、支出或支出统计中的一项。';
+
+  @override
+  String get errorInvalidExpiry => '请选择将来的结束日期。';
+
+  @override
+  String get viewLinkTitle => '只读链接';
+
+  @override
+  String get viewLinkHelp => '让任何人无需加入即可查看群组';
+
+  @override
+  String get viewLinkIntro => '任何拥有此链接的人都能查看群组，无需账号，也无需加入，但无法更改任何内容。每个群组同一时间只能有一个链接。';
+
+  @override
+  String get viewLinkCopied => '链接已复制。拥有链接的人都能查看此群组。';
+
+  @override
+  String get viewLinkNeedsPlan => '需要升级方案';
+
+  @override
+  String get viewLinkNeedsPlanHelp => '此群组的方案不包含只读链接。';
+
+  @override
+  String get viewLinkKind => '更新方式';
+
+  @override
+  String get viewLinkLive => '持续更新';
+
+  @override
+  String get viewLinkLiveHelp => '每次打开时都显示群组当前的状态。';
+
+  @override
+  String get viewLinkSnapshot => '快照';
+
+  @override
+  String get viewLinkSnapshotHelp => '显示群组现在的状态，之后不再变化。';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return '$date 的快照';
+  }
+
+  @override
+  String get viewLinkSnapshotMade => '之后的更改不会显示。如需显示，请停用此链接并创建新链接。';
+
+  @override
+  String get viewLinkShows => '显示内容';
+
+  @override
+  String get viewLinkShowNotes => '支出备注';
+
+  @override
+  String get viewLinkShowPlaces => '支出地点';
+
+  @override
+  String get viewLinkShowReceipts => '收据照片';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => '只有持续更新的链接才能显示收据照片。';
+
+  @override
+  String get viewLinkExpiry => '有效期至';
+
+  @override
+  String get viewLinkNoExpiry => '一直有效，直到停用';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return '$date 结束时';
+  }
+
+  @override
+  String get viewLinkClearExpiry => '移除结束日期';
+
+  @override
+  String get viewLinkCreate => '创建链接';
+
+  @override
+  String get viewLinkPausedHelp => '在群组的方案再次包含只读链接之前，任何人都无法打开它。';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return '$group 的只读链接二维码';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return '上次打开：$date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => '尚无人打开';
+
+  @override
+  String get viewLinkTurnOff => '停用链接';
+
+  @override
+  String get viewLinkTurnOffHelp => '链接将失效。新链接会使用不同的地址。';
+
+  @override
+  String get viewLinkTurnOffTitle => '停用只读链接？';
+
+  @override
+  String get viewLinkTurnOffBody => '拥有链接的人将无法再查看群组。此操作无法撤销。';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who 创建了只读链接';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who 更改了只读链接';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who 停用了只读链接';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -7189,4 +7358,173 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get adminProductAppStoreIdHelp =>
       '與 App Store Connect 中自動續訂型訂閱的產品 ID 相同。App Store 會告知每次付款何時到期，所以不需設定天數。';
+
+  @override
+  String get viewOnlyLive => '僅供檢視 · 持續更新';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return '僅供檢視 · $date 的狀態';
+  }
+
+  @override
+  String get viewRefresh => '重新整理';
+
+  @override
+  String get viewBalances => '餘額';
+
+  @override
+  String get viewEmptyBody => '群組新增的支出會顯示在這裡。';
+
+  @override
+  String get viewMissingTitle => '此連結無法使用';
+
+  @override
+  String get viewMissingBody => '連結已停用，或群組已刪除。請向群組成員索取新連結。';
+
+  @override
+  String get viewExpiredTitle => '此連結已過期';
+
+  @override
+  String get viewExpiredBody => '請向群組成員索取新連結。';
+
+  @override
+  String get viewPausedTitle => '此連結已暫停';
+
+  @override
+  String get viewPausedBody => '此群組的方案目前不包含僅供檢視連結。方案包含後，連結就會恢復運作。';
+
+  @override
+  String get planLimitViewLink => '僅供檢視連結';
+
+  @override
+  String get adminPlanViewLinkHelp => '此方案的群組可以分享一個連結，讓任何人不必登入就能檢視群組。';
+
+  @override
+  String get errorLimitViewLink => '此群組的方案不包含僅供檢視連結。';
+
+  @override
+  String get errorViewLinkExists => '此群組已經有僅供檢視連結。';
+
+  @override
+  String get errorInvalidShow => '僅供檢視連結至少要顯示餘額、支出或支出統計其中一項。';
+
+  @override
+  String get errorInvalidExpiry => '請選擇未來的結束日期。';
+
+  @override
+  String get viewLinkTitle => '僅供檢視連結';
+
+  @override
+  String get viewLinkHelp => '讓任何人不必加入就能檢視群組';
+
+  @override
+  String get viewLinkIntro => '任何持有此連結的人都能檢視群組，不需要帳號也不必加入，但無法變更任何內容。每個群組同時只能有一個連結。';
+
+  @override
+  String get viewLinkCopied => '已複製連結。持有連結的人都能檢視此群組。';
+
+  @override
+  String get viewLinkNeedsPlan => '需要升級方案';
+
+  @override
+  String get viewLinkNeedsPlanHelp => '此群組的方案不包含僅供檢視連結。';
+
+  @override
+  String get viewLinkKind => '更新方式';
+
+  @override
+  String get viewLinkLive => '持續更新';
+
+  @override
+  String get viewLinkLiveHelp => '每次開啟時都顯示群組目前的狀態。';
+
+  @override
+  String get viewLinkSnapshot => '快照';
+
+  @override
+  String get viewLinkSnapshotHelp => '顯示群組現在的狀態，之後不再變動。';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return '$date 的快照';
+  }
+
+  @override
+  String get viewLinkSnapshotMade => '之後的變更不會顯示。若要顯示，請停用此連結並建立新的連結。';
+
+  @override
+  String get viewLinkShows => '顯示內容';
+
+  @override
+  String get viewLinkShowNotes => '支出備註';
+
+  @override
+  String get viewLinkShowPlaces => '支出地點';
+
+  @override
+  String get viewLinkShowReceipts => '收據照片';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => '只有持續更新的連結能顯示收據照片。';
+
+  @override
+  String get viewLinkExpiry => '有效期限';
+
+  @override
+  String get viewLinkNoExpiry => '持續有效，直到停用';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return '到 $date 結束';
+  }
+
+  @override
+  String get viewLinkClearExpiry => '移除結束日期';
+
+  @override
+  String get viewLinkCreate => '建立連結';
+
+  @override
+  String get viewLinkPausedHelp => '在群組的方案再次包含僅供檢視連結之前，沒有人能開啟它。';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return '$group 的僅供檢視連結 QR 碼';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return '上次開啟：$date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => '尚未有人開啟';
+
+  @override
+  String get viewLinkTurnOff => '停用連結';
+
+  @override
+  String get viewLinkTurnOffHelp => '連結會失效。新的連結會是不同的網址。';
+
+  @override
+  String get viewLinkTurnOffTitle => '要停用僅供檢視連結嗎？';
+
+  @override
+  String get viewLinkTurnOffBody => '持有連結的人將無法再檢視群組。此動作無法復原。';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who 建立了僅供檢視連結';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who 變更了僅供檢視連結';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who 停用了僅供檢視連結';
+  }
 }

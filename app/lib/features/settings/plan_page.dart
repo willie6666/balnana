@@ -420,6 +420,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               title: l10n.planLimitReminders,
               label: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
             ),
+            GroupedLimitTile(
+              icon: Icons.visibility_outlined,
+              title: l10n.planLimitViewLink,
+              label: plan.viewLink ? l10n.planIncluded : l10n.planNotIncluded,
+            ),
           ],
         ),
         if (plan.comparison case final comparison? when comparison.plans.length > 1)

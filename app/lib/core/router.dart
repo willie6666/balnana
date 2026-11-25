@@ -17,6 +17,7 @@ import '../features/group/group_page.dart';
 import '../features/group/group_settings_page.dart';
 import '../features/group/join_page.dart';
 import '../features/group/recurring_page.dart';
+import '../features/group/view_link_page.dart';
 import '../features/groups/create_group_page.dart';
 import '../features/groups/groups_page.dart';
 import '../features/groups/import_group_page.dart';
@@ -28,6 +29,7 @@ import '../features/settings/server_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/settings/share_plan_page.dart';
 import '../features/shell/shell.dart';
+import '../features/view/view_page.dart';
 import 'home_screen.dart';
 import 'money.dart';
 import 'push.dart';
@@ -92,6 +94,7 @@ const _publicLinks = [
   '/verify-email',
   '/reset-password',
   '/invite/',
+  '/v/',
   '/oauth-done',
   '/admin',
   '/link',
@@ -163,6 +166,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/invite/:token',
         builder: (context, state) => InvitePage(token: state.pathParameters['token']!),
       ),
+      // A group's view-only link, for anyone: the token is the link's own.
+      GoRoute(path: '/v/:token', builder: (context, state) => ViewPage(token: state.pathParameters['token']!)),
       GoRoute(path: '/privacy', builder: (context, state) => const PrivacyPage()),
       // For app stores, which ask for a web page where accounts can be deleted.
       GoRoute(path: '/delete-account', builder: (context, state) => const DeleteAccountPage()),
@@ -254,6 +259,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'recurring',
                         builder: (context, state) => RecurringPage(token: state.pathParameters['token']!),
+                      ),
+                      GoRoute(
+                        path: 'view-link',
+                        builder: (context, state) => ViewLinkPage(token: state.pathParameters['token']!),
                       ),
                     ],
                   ),

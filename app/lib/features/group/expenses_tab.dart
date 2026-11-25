@@ -91,7 +91,7 @@ class ExpensesTab extends ConsumerWidget {
         padding: EdgeInsets.fromLTRB(sidePadding, BSpace.s12, sidePadding, 0),
         sliver: SliverToBoxAdapter(child: ExpenseFilterBar(group: group)),
       );
-      final rows = _rows(list.items);
+      final rows = withDays(list.items);
       slivers = [
         bar,
         // Made offline: not on the server, so in no filter or day yet.
@@ -187,7 +187,7 @@ class ExpensesTab extends ConsumerWidget {
   }
 
   /// Expenses with a date header before each new local day.
-  static List<Object> _rows(List<Expense> items) {
+  static List<Object> withDays(List<Expense> items) {
     final rows = <Object>[];
     DateTime? day;
     for (final e in items) {

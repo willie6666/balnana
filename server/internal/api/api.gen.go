@@ -126,6 +126,13 @@ const (
 	Shares SplitMethod = "shares"
 )
 
+// Defines values for ViewExpenseTransactionType.
+const (
+	ViewExpenseTransactionTypeExpense ViewExpenseTransactionType = "expense"
+	ViewExpenseTransactionTypeIncome  ViewExpenseTransactionType = "income"
+	ViewExpenseTransactionTypeRefund  ViewExpenseTransactionType = "refund"
+)
+
 // Defines values for StartOAuthParamsApp.
 const (
 	StartOAuthParamsAppAndroid StartOAuthParamsApp = "android"
@@ -615,6 +622,9 @@ type GroupPlan struct {
 
 	// SponsorMemberId The member who pays for this group's limits.
 	SponsorMemberId *string `json:"sponsorMemberId,omitempty"`
+
+	// ViewLink Whether the group can have a view-only link.
+	ViewLink bool `json:"viewLink"`
 }
 
 // GroupStats Net spending: expenses minus refunds, excluding transfers (category `transfer`) and income.
@@ -902,6 +912,9 @@ type MyPlan struct {
 	// Reminders Whether groups this account sponsors can send payment reminders as notifications.
 	Reminders       bool  `json:"reminders"`
 	SponsoredGroups Usage `json:"sponsoredGroups"`
+
+	// ViewLink Whether groups this account sponsors can have a view-only link.
+	ViewLink bool `json:"viewLink"`
 }
 
 // OAuthExchange defines model for OAuthExchange.
@@ -1154,6 +1167,9 @@ type PlanLimits struct {
 	// Reminders Whether its groups can send payment reminders as notifications. Left out means not.
 	Reminders       *bool `json:"reminders,omitempty"`
 	SponsoredGroups *int  `json:"sponsoredGroups,omitempty"`
+
+	// ViewLink Whether its groups can have a view-only link. Left out means not.
+	ViewLink *bool `json:"viewLink,omitempty"`
 }
 
 // PlanProduct defines model for PlanProduct.
@@ -1503,6 +1519,139 @@ type UserUpdate struct {
 	Name   *string `json:"name,omitempty"`
 }
 
+// ViewExpense defines model for ViewExpense.
+type ViewExpense struct {
+	// Amount Decimal amount with up to the group's `minorDigits` decimals.
+	Amount     Money     `json:"amount"`
+	CategoryId *string   `json:"categoryId,omitempty"`
+	CreatedAt  time.Time `json:"createdAt"`
+
+	// Foreign What the expense came to in the currency it was paid in. The rate is this amount against the expense's `amount`.
+	Foreign *Foreign `json:"foreign,omitempty"`
+
+	// HasReceipt Whether /receipt has a photo; false unless the link shows receipts.
+	HasReceipt bool   `json:"hasReceipt"`
+	Id         string `json:"id"`
+
+	// Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
+	Location *Location `json:"location,omitempty"`
+
+	// Note Left out unless the link shows notes.
+	Note            *string                    `json:"note,omitempty"`
+	OccurredAt      time.Time                  `json:"occurredAt"`
+	Payers          []Payer                    `json:"payers"`
+	SplitMethod     SplitMethod                `json:"splitMethod"`
+	Splits          []SplitPart                `json:"splits"`
+	Title           string                     `json:"title"`
+	TransactionType ViewExpenseTransactionType `json:"transactionType"`
+	UpdatedAt       time.Time                  `json:"updatedAt"`
+}
+
+// ViewExpenseTransactionType defines model for ViewExpense.TransactionType.
+type ViewExpenseTransactionType string
+
+// ViewExpensePage defines model for ViewExpensePage.
+type ViewExpensePage struct {
+	Items      []ViewExpense `json:"items"`
+	NextCursor *string       `json:"nextCursor,omitempty"`
+}
+
+// ViewGroup defines model for ViewGroup.
+type ViewGroup struct {
+	// AsOf When a snapshot was taken; left out for a live link.
+	AsOf       *time.Time `json:"asOf,omitempty"`
+	Categories []Category `json:"categories"`
+	Color      *int       `json:"color,omitempty"`
+	Currency   string     `json:"currency"`
+	Emoji      *string    `json:"emoji,omitempty"`
+	Live       bool       `json:"live"`
+
+	// Members Everyone, including members who left, oldest first.
+	Members     []ViewMember `json:"members"`
+	MinorDigits int          `json:"minorDigits"`
+	Name        string       `json:"name"`
+
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	Show   ViewLinkShow `json:"show"`
+	Symbol *string      `json:"symbol,omitempty"`
+
+	// Transfers Suggested payments that settle everyone up; left out unless the link shows balances.
+	Transfers *[]Transfer `json:"transfers,omitempty"`
+}
+
+// ViewLink defines model for ViewLink.
+type ViewLink struct {
+	CreatedAt time.Time  `json:"createdAt"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// LastViewedAt When it was last opened, to the hour.
+	LastViewedAt *time.Time `json:"lastViewedAt,omitempty"`
+	Live         bool       `json:"live"`
+
+	// Paused The group's plan does not include a view-only link, so the link shows nothing.
+	Paused bool `json:"paused"`
+
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	Show ViewLinkShow `json:"show"`
+
+	// SnapshotAt When a snapshot was taken; left out for a live link.
+	SnapshotAt *time.Time `json:"snapshotAt,omitempty"`
+
+	// Token The secret of its URL, /v/{token}.
+	Token string `json:"token"`
+}
+
+// ViewLinkCreate defines model for ViewLinkCreate.
+type ViewLinkCreate struct {
+	// ExpiresAt When the link stops working; left out for never. 400 `invalid_expiry` when past.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Live Whether it always shows the group as it is, rather than as it is now. Cannot change later.
+	Live bool `json:"live"`
+
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	Show ViewLinkShow `json:"show"`
+}
+
+// ViewLinkSettings defines model for ViewLinkSettings.
+type ViewLinkSettings struct {
+	// ExpiresAt When the link stops working; left out for never. 400 `invalid_expiry` when past.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Show What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+	Show ViewLinkShow `json:"show"`
+}
+
+// ViewLinkShow What a view-only link shows besides the group's name, symbol, colour, currency and member names. At least one of `balances`, `expenses` and `spending` (400 `invalid_show`). `notes`, `places` and `receipts` are about expenses and apply only with `expenses`; a snapshot cannot show `receipts` (400 `invalid_show`).
+type ViewLinkShow struct {
+	// Balances Each member's balance and the suggested payments.
+	Balances bool `json:"balances"`
+
+	// Expenses The expenses, with whoever paid and shared in them.
+	Expenses bool `json:"expenses"`
+	Notes    bool `json:"notes"`
+	Places   bool `json:"places"`
+	Receipts bool `json:"receipts"`
+
+	// Spending Spending by category, member and month.
+	Spending bool `json:"spending"`
+}
+
+// ViewLinkState defines model for ViewLinkState.
+type ViewLinkState struct {
+	Link *ViewLink `json:"link,omitempty"`
+}
+
+// ViewMember defines model for ViewMember.
+type ViewMember struct {
+	// Balance Decimal amount with up to the group's `minorDigits` decimals.
+	Balance *Money `json:"balance,omitempty"`
+	Color   *int   `json:"color,omitempty"`
+	Id      string `json:"id"`
+	Left    bool   `json:"left"`
+	Name    string `json:"name"`
+}
+
 // ActingMember defines model for ActingMember.
 type ActingMember = string
 
@@ -1538,6 +1687,9 @@ type To = time.Time
 
 // Token defines model for Token.
 type Token = string
+
+// ViewToken defines model for ViewToken.
+type ViewToken = string
 
 // RevokeAdminEntitlementParams defines parameters for RevokeAdminEntitlement.
 type RevokeAdminEntitlementParams struct {
@@ -1863,6 +2015,51 @@ type GetStatsParams struct {
 	UtcOffset *int `form:"utcOffset,omitempty" json:"utcOffset,omitempty"`
 }
 
+// DeleteViewLinkParams defines parameters for DeleteViewLink.
+type DeleteViewLinkParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// CreateViewLinkParams defines parameters for CreateViewLink.
+type CreateViewLinkParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// UpdateViewLinkParams defines parameters for UpdateViewLink.
+type UpdateViewLinkParams struct {
+	// XBalnanaMember Link mode: the member this device acts as, recorded in the activity log. Ignored when it is not a member of the group, and always in accounts mode, where only the signed-in account names the actor.
+	XBalnanaMember *ActingMember `json:"X-Balnana-Member,omitempty"`
+}
+
+// ListViewExpensesParams defines parameters for ListViewExpenses.
+type ListViewExpensesParams struct {
+	Cursor   *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Q        *string `form:"q,omitempty" json:"q,omitempty"`
+	Member   *string `form:"member,omitempty" json:"member,omitempty"`
+	Category *string `form:"category,omitempty" json:"category,omitempty"`
+
+	// From Only what happened at or after this time.
+	From *From `form:"from,omitempty" json:"from,omitempty"`
+
+	// To Only what happened before this time.
+	To    *To  `form:"to,omitempty" json:"to,omitempty"`
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetViewStatsParams defines parameters for GetViewStats.
+type GetViewStatsParams struct {
+	// From Only what happened at or after this time.
+	From *From `form:"from,omitempty" json:"from,omitempty"`
+
+	// To Only what happened before this time.
+	To *To `form:"to,omitempty" json:"to,omitempty"`
+
+	// TimeZone The reader's IANA time zone, such as `Europe/Berlin`. Each entry is dated by the offset in force when it happened. 400 `invalid_time_zone` for a name the server does not know.
+	TimeZone *TimeZone `form:"timeZone,omitempty" json:"timeZone,omitempty"`
+}
+
 // AdminLoginJSONRequestBody defines body for AdminLogin for application/json ContentType.
 type AdminLoginJSONRequestBody = AdminLoginInput
 
@@ -1958,6 +2155,12 @@ type UpdateRecurringExpenseJSONRequestBody = RecurringExpenseInput
 
 // UnlockGroupJSONRequestBody defines body for UnlockGroup for application/json ContentType.
 type UnlockGroupJSONRequestBody = GroupPasswordInput
+
+// CreateViewLinkJSONRequestBody defines body for CreateViewLink for application/json ContentType.
+type CreateViewLinkJSONRequestBody = ViewLinkCreate
+
+// UpdateViewLinkJSONRequestBody defines body for UpdateViewLink for application/json ContentType.
+type UpdateViewLinkJSONRequestBody = ViewLinkSettings
 
 // CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
 type CreateGroupJSONRequestBody = GroupCreate
@@ -2228,6 +2431,18 @@ type ServerInterface interface {
 	// Trade the group's password for the key that opens it
 	// (POST /g/{token}/unlock)
 	UnlockGroup(w http.ResponseWriter, r *http.Request, token Token)
+	// Revoke the view-only link, with a snapshot's data
+	// (DELETE /g/{token}/view-link)
+	DeleteViewLink(w http.ResponseWriter, r *http.Request, token Token, params DeleteViewLinkParams)
+	// The group's view-only link, if it has one
+	// (GET /g/{token}/view-link)
+	GetViewLink(w http.ResponseWriter, r *http.Request, token Token)
+	// Make the group's view-only link
+	// (POST /g/{token}/view-link)
+	CreateViewLink(w http.ResponseWriter, r *http.Request, token Token, params CreateViewLinkParams)
+	// Change what the view-only link shows and when it expires
+	// (PUT /g/{token}/view-link)
+	UpdateViewLink(w http.ResponseWriter, r *http.Request, token Token, params UpdateViewLinkParams)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(w http.ResponseWriter, r *http.Request)
@@ -2303,6 +2518,18 @@ type ServerInterface interface {
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(w http.ResponseWriter, r *http.Request)
+	// A group as its view-only link shows it
+	// (GET /v/{viewToken})
+	GetView(w http.ResponseWriter, r *http.Request, viewToken ViewToken)
+	// The expenses a view-only link shows, newest first
+	// (GET /v/{viewToken}/expenses)
+	ListViewExpenses(w http.ResponseWriter, r *http.Request, viewToken ViewToken, params ListViewExpensesParams)
+	// The photo of an expense's receipt, for a live link showing receipts
+	// (GET /v/{viewToken}/expenses/{expenseId}/receipt)
+	GetViewReceipt(w http.ResponseWriter, r *http.Request, viewToken ViewToken, expenseId ExpenseId)
+	// What the group spent, as a view-only link shows it
+	// (GET /v/{viewToken}/stats)
+	GetViewStats(w http.ResponseWriter, r *http.Request, viewToken ViewToken, params GetViewStatsParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -5774,6 +6001,210 @@ func (siw *ServerInterfaceWrapper) UnlockGroup(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteViewLink operation middleware
+func (siw *ServerInterfaceWrapper) DeleteViewLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteViewLinkParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteViewLink(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetViewLink operation middleware
+func (siw *ServerInterfaceWrapper) GetViewLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetViewLink(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateViewLink operation middleware
+func (siw *ServerInterfaceWrapper) CreateViewLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateViewLinkParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateViewLink(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateViewLink operation middleware
+func (siw *ServerInterfaceWrapper) UpdateViewLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "token" -------------
+	var token Token
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateViewLinkParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Balnana-Member" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Balnana-Member")]; found {
+		var XBalnanaMember ActingMember
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Balnana-Member", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Balnana-Member", valueList[0], &XBalnanaMember, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Balnana-Member", Err: err})
+			return
+		}
+
+		params.XBalnanaMember = &XBalnanaMember
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateViewLink(w, r, token, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateGroup operation middleware
 func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Request) {
 
@@ -6368,6 +6799,233 @@ func (siw *ServerInterfaceWrapper) GetServerInfo(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// GetView operation middleware
+func (siw *ServerInterfaceWrapper) GetView(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "viewToken" -------------
+	var viewToken ViewToken
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewToken", r.PathValue("viewToken"), &viewToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewToken", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetView(w, r, viewToken)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListViewExpenses operation middleware
+func (siw *ServerInterfaceWrapper) ListViewExpenses(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "viewToken" -------------
+	var viewToken ViewToken
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewToken", r.PathValue("viewToken"), &viewToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewToken", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListViewExpensesParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "q", r.URL.Query(), &params.Q)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "member" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "member", r.URL.Query(), &params.Member)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "member", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "category" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "category", r.URL.Query(), &params.Category)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListViewExpenses(w, r, viewToken, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetViewReceipt operation middleware
+func (siw *ServerInterfaceWrapper) GetViewReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "viewToken" -------------
+	var viewToken ViewToken
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewToken", r.PathValue("viewToken"), &viewToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewToken", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "expenseId" -------------
+	var expenseId ExpenseId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "expenseId", r.PathValue("expenseId"), &expenseId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "expenseId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetViewReceipt(w, r, viewToken, expenseId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetViewStats operation middleware
+func (siw *ServerInterfaceWrapper) GetViewStats(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "viewToken" -------------
+	var viewToken ViewToken
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewToken", r.PathValue("viewToken"), &viewToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewToken", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, CookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetViewStatsParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "timeZone" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "timeZone", r.URL.Query(), &params.TimeZone)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "timeZone", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetViewStats(w, r, viewToken, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -6559,6 +7217,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/sponsor", wrapper.SponsorGroup)
 	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/stats", wrapper.GetStats)
 	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/unlock", wrapper.UnlockGroup)
+	m.HandleFunc("DELETE "+options.BaseURL+"/g/{token}/view-link", wrapper.DeleteViewLink)
+	m.HandleFunc("GET "+options.BaseURL+"/g/{token}/view-link", wrapper.GetViewLink)
+	m.HandleFunc("POST "+options.BaseURL+"/g/{token}/view-link", wrapper.CreateViewLink)
+	m.HandleFunc("PUT "+options.BaseURL+"/g/{token}/view-link", wrapper.UpdateViewLink)
 	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/import", wrapper.ImportGroup)
 	m.HandleFunc("POST "+options.BaseURL+"/groups/summaries", wrapper.GetGroupSummaries)
@@ -6584,6 +7246,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/push/devices/{device}", wrapper.RemovePushDevice)
 	m.HandleFunc("PUT "+options.BaseURL+"/push/devices/{device}", wrapper.RegisterPushDevice)
 	m.HandleFunc("GET "+options.BaseURL+"/server-info", wrapper.GetServerInfo)
+	m.HandleFunc("GET "+options.BaseURL+"/v/{viewToken}", wrapper.GetView)
+	m.HandleFunc("GET "+options.BaseURL+"/v/{viewToken}/expenses", wrapper.ListViewExpenses)
+	m.HandleFunc("GET "+options.BaseURL+"/v/{viewToken}/expenses/{expenseId}/receipt", wrapper.GetViewReceipt)
+	m.HandleFunc("GET "+options.BaseURL+"/v/{viewToken}/stats", wrapper.GetViewStats)
 
 	return m
 }
@@ -8750,6 +9416,126 @@ func (response UnlockGroupdefaultJSONResponse) VisitUnlockGroupResponse(w http.R
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type DeleteViewLinkRequestObject struct {
+	Token  Token `json:"token"`
+	Params DeleteViewLinkParams
+}
+
+type DeleteViewLinkResponseObject interface {
+	VisitDeleteViewLinkResponse(w http.ResponseWriter) error
+}
+
+type DeleteViewLink204Response struct {
+}
+
+func (response DeleteViewLink204Response) VisitDeleteViewLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteViewLinkdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response DeleteViewLinkdefaultJSONResponse) VisitDeleteViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetViewLinkRequestObject struct {
+	Token Token `json:"token"`
+}
+
+type GetViewLinkResponseObject interface {
+	VisitGetViewLinkResponse(w http.ResponseWriter) error
+}
+
+type GetViewLink200JSONResponse ViewLinkState
+
+func (response GetViewLink200JSONResponse) VisitGetViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetViewLinkdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetViewLinkdefaultJSONResponse) VisitGetViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type CreateViewLinkRequestObject struct {
+	Token  Token `json:"token"`
+	Params CreateViewLinkParams
+	Body   *CreateViewLinkJSONRequestBody
+}
+
+type CreateViewLinkResponseObject interface {
+	VisitCreateViewLinkResponse(w http.ResponseWriter) error
+}
+
+type CreateViewLink201JSONResponse ViewLink
+
+func (response CreateViewLink201JSONResponse) VisitCreateViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateViewLinkdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response CreateViewLinkdefaultJSONResponse) VisitCreateViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type UpdateViewLinkRequestObject struct {
+	Token  Token `json:"token"`
+	Params UpdateViewLinkParams
+	Body   *UpdateViewLinkJSONRequestBody
+}
+
+type UpdateViewLinkResponseObject interface {
+	VisitUpdateViewLinkResponse(w http.ResponseWriter) error
+}
+
+type UpdateViewLink200JSONResponse ViewLink
+
+func (response UpdateViewLink200JSONResponse) VisitUpdateViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateViewLinkdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response UpdateViewLinkdefaultJSONResponse) VisitUpdateViewLinkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type CreateGroupRequestObject struct {
 	Body *CreateGroupJSONRequestBody
 }
@@ -9463,6 +10249,135 @@ func (response GetServerInfo200JSONResponse) VisitGetServerInfoResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetViewRequestObject struct {
+	ViewToken ViewToken `json:"viewToken"`
+}
+
+type GetViewResponseObject interface {
+	VisitGetViewResponse(w http.ResponseWriter) error
+}
+
+type GetView200JSONResponse ViewGroup
+
+func (response GetView200JSONResponse) VisitGetViewResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetViewdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetViewdefaultJSONResponse) VisitGetViewResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type ListViewExpensesRequestObject struct {
+	ViewToken ViewToken `json:"viewToken"`
+	Params    ListViewExpensesParams
+}
+
+type ListViewExpensesResponseObject interface {
+	VisitListViewExpensesResponse(w http.ResponseWriter) error
+}
+
+type ListViewExpenses200JSONResponse ViewExpensePage
+
+func (response ListViewExpenses200JSONResponse) VisitListViewExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListViewExpensesdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response ListViewExpensesdefaultJSONResponse) VisitListViewExpensesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetViewReceiptRequestObject struct {
+	ViewToken ViewToken `json:"viewToken"`
+	ExpenseId ExpenseId `json:"expenseId"`
+}
+
+type GetViewReceiptResponseObject interface {
+	VisitGetViewReceiptResponse(w http.ResponseWriter) error
+}
+
+type GetViewReceipt200ImagejpegResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetViewReceipt200ImagejpegResponse) VisitGetViewReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "image/jpeg")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetViewReceiptdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetViewReceiptdefaultJSONResponse) VisitGetViewReceiptResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type GetViewStatsRequestObject struct {
+	ViewToken ViewToken `json:"viewToken"`
+	Params    GetViewStatsParams
+}
+
+type GetViewStatsResponseObject interface {
+	VisitGetViewStatsResponse(w http.ResponseWriter) error
+}
+
+type GetViewStats200JSONResponse GroupStats
+
+func (response GetViewStats200JSONResponse) VisitGetViewStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetViewStatsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (response GetViewStatsdefaultJSONResponse) VisitGetViewStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// End an entitlement now, after a refund for example
@@ -9678,6 +10593,18 @@ type StrictServerInterface interface {
 	// Trade the group's password for the key that opens it
 	// (POST /g/{token}/unlock)
 	UnlockGroup(ctx context.Context, request UnlockGroupRequestObject) (UnlockGroupResponseObject, error)
+	// Revoke the view-only link, with a snapshot's data
+	// (DELETE /g/{token}/view-link)
+	DeleteViewLink(ctx context.Context, request DeleteViewLinkRequestObject) (DeleteViewLinkResponseObject, error)
+	// The group's view-only link, if it has one
+	// (GET /g/{token}/view-link)
+	GetViewLink(ctx context.Context, request GetViewLinkRequestObject) (GetViewLinkResponseObject, error)
+	// Make the group's view-only link
+	// (POST /g/{token}/view-link)
+	CreateViewLink(ctx context.Context, request CreateViewLinkRequestObject) (CreateViewLinkResponseObject, error)
+	// Change what the view-only link shows and when it expires
+	// (PUT /g/{token}/view-link)
+	UpdateViewLink(ctx context.Context, request UpdateViewLinkRequestObject) (UpdateViewLinkResponseObject, error)
 	// Create a group with its first members
 	// (POST /groups)
 	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
@@ -9753,6 +10680,18 @@ type StrictServerInterface interface {
 	// Mode and enabled features, read by the app on startup
 	// (GET /server-info)
 	GetServerInfo(ctx context.Context, request GetServerInfoRequestObject) (GetServerInfoResponseObject, error)
+	// A group as its view-only link shows it
+	// (GET /v/{viewToken})
+	GetView(ctx context.Context, request GetViewRequestObject) (GetViewResponseObject, error)
+	// The expenses a view-only link shows, newest first
+	// (GET /v/{viewToken}/expenses)
+	ListViewExpenses(ctx context.Context, request ListViewExpensesRequestObject) (ListViewExpensesResponseObject, error)
+	// The photo of an expense's receipt, for a live link showing receipts
+	// (GET /v/{viewToken}/expenses/{expenseId}/receipt)
+	GetViewReceipt(ctx context.Context, request GetViewReceiptRequestObject) (GetViewReceiptResponseObject, error)
+	// What the group spent, as a view-only link shows it
+	// (GET /v/{viewToken}/stats)
+	GetViewStats(ctx context.Context, request GetViewStatsRequestObject) (GetViewStatsResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -11883,6 +12822,127 @@ func (sh *strictHandler) UnlockGroup(w http.ResponseWriter, r *http.Request, tok
 	}
 }
 
+// DeleteViewLink operation middleware
+func (sh *strictHandler) DeleteViewLink(w http.ResponseWriter, r *http.Request, token Token, params DeleteViewLinkParams) {
+	var request DeleteViewLinkRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteViewLink(ctx, request.(DeleteViewLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteViewLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteViewLinkResponseObject); ok {
+		if err := validResponse.VisitDeleteViewLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetViewLink operation middleware
+func (sh *strictHandler) GetViewLink(w http.ResponseWriter, r *http.Request, token Token) {
+	var request GetViewLinkRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetViewLink(ctx, request.(GetViewLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetViewLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetViewLinkResponseObject); ok {
+		if err := validResponse.VisitGetViewLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateViewLink operation middleware
+func (sh *strictHandler) CreateViewLink(w http.ResponseWriter, r *http.Request, token Token, params CreateViewLinkParams) {
+	var request CreateViewLinkRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body CreateViewLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateViewLink(ctx, request.(CreateViewLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateViewLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateViewLinkResponseObject); ok {
+		if err := validResponse.VisitCreateViewLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateViewLink operation middleware
+func (sh *strictHandler) UpdateViewLink(w http.ResponseWriter, r *http.Request, token Token, params UpdateViewLinkParams) {
+	var request UpdateViewLinkRequestObject
+
+	request.Token = token
+	request.Params = params
+
+	var body UpdateViewLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateViewLink(ctx, request.(UpdateViewLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateViewLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateViewLinkResponseObject); ok {
+		if err := validResponse.VisitUpdateViewLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateGroup operation middleware
 func (sh *strictHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	var request CreateGroupRequestObject
@@ -12610,6 +13670,113 @@ func (sh *strictHandler) GetServerInfo(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetServerInfoResponseObject); ok {
 		if err := validResponse.VisitGetServerInfoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetView operation middleware
+func (sh *strictHandler) GetView(w http.ResponseWriter, r *http.Request, viewToken ViewToken) {
+	var request GetViewRequestObject
+
+	request.ViewToken = viewToken
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetView(ctx, request.(GetViewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetView")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetViewResponseObject); ok {
+		if err := validResponse.VisitGetViewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListViewExpenses operation middleware
+func (sh *strictHandler) ListViewExpenses(w http.ResponseWriter, r *http.Request, viewToken ViewToken, params ListViewExpensesParams) {
+	var request ListViewExpensesRequestObject
+
+	request.ViewToken = viewToken
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListViewExpenses(ctx, request.(ListViewExpensesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListViewExpenses")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListViewExpensesResponseObject); ok {
+		if err := validResponse.VisitListViewExpensesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetViewReceipt operation middleware
+func (sh *strictHandler) GetViewReceipt(w http.ResponseWriter, r *http.Request, viewToken ViewToken, expenseId ExpenseId) {
+	var request GetViewReceiptRequestObject
+
+	request.ViewToken = viewToken
+	request.ExpenseId = expenseId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetViewReceipt(ctx, request.(GetViewReceiptRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetViewReceipt")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetViewReceiptResponseObject); ok {
+		if err := validResponse.VisitGetViewReceiptResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetViewStats operation middleware
+func (sh *strictHandler) GetViewStats(w http.ResponseWriter, r *http.Request, viewToken ViewToken, params GetViewStatsParams) {
+	var request GetViewStatsRequestObject
+
+	request.ViewToken = viewToken
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetViewStats(ctx, request.(GetViewStatsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetViewStats")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetViewStatsResponseObject); ok {
+		if err := validResponse.VisitGetViewStatsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

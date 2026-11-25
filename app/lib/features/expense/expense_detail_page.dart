@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -99,7 +100,14 @@ class _ExpenseDetailPageState extends ConsumerState<ExpenseDetailPage> {
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(side, BSpace.s8, side, BSpace.s32),
-                  children: [_Details(group: g, expense: e)],
+                  children: [
+                    ExpenseDetails(
+                      group: g,
+                      expense: e,
+                      me: myMemberId(ref, g.token),
+                      receipt: e.hasReceipt ? ref.watchCurrent(receiptProvider((token: token, id: e.id))) : null,
+                    ),
+                  ],
                 );
               },
             ),
@@ -134,11 +142,18 @@ class _ExpenseDetailPageState extends ConsumerState<ExpenseDetailPage> {
   }
 }
 
-class _Details extends ConsumerWidget {
-  const _Details({required this.group, required this.expense});
+/// Everything about an expense, read only.
+class ExpenseDetails extends ConsumerWidget {
+  const ExpenseDetails({super.key, required this.group, required this.expense, required this.me, this.receipt});
 
   final Group group;
   final Expense expense;
+
+  /// This device's member, whose parts say "you".
+  final String? me;
+
+  /// The receipt's photo, when the expense has one.
+  final AsyncValue<Uint8List>? receipt;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -148,7 +163,6 @@ class _Details extends ConsumerWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final muted = text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
     final e = expense, f = e.foreign;
-    final me = myMemberId(ref, group.token);
     String money(BigInt v) => formatMoney(context, v, group.minorDigits, group.currency, symbol: group.symbol);
 
     final title = e.title;
@@ -265,11 +279,11 @@ class _Details extends ConsumerWidget {
           SelectableText(note, style: text.bodyLarge),
         ],
 
-        if (e.hasReceipt) ...[
+        if (receipt case final photo?) ...[
           FormSection(l10n.expenseReceipt),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: ReceiptThumbnail(photo: ref.watchCurrent(receiptProvider((token: group.token, id: e.id)))),
+            child: ReceiptThumbnail(photo: photo),
           ),
         ],
       ],

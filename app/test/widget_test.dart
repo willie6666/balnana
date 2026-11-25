@@ -150,6 +150,10 @@ void main() {
     expect(pathFromLink('$server/g/$token/join', serverUrl: server), '/g/$token');
     expect(tokenFromLink('$server/invite/$token', serverUrl: server), isNull);
     expect(pathFromLink('$server/invite/$token/join', serverUrl: server), isNull);
+    // So does a view-only link.
+    expect(pathFromLink('$server/v/$token', serverUrl: server), '/v/$token');
+    expect(tokenFromLink('$server/v/$token', serverUrl: server), isNull);
+    expect(pathFromLink('$server/v/$token/join', serverUrl: server), isNull);
     expect(
       () => pathFromLink('https://foreign.example/invite/$token', serverUrl: server),
       throwsA(isA<ForeignGroupLink>()),

@@ -167,6 +167,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
         l10n.planLimitReminders,
         limits.reminders ? l10n.planIncluded : l10n.planNotIncluded,
       ),
+      l10n.adminPlanLimit(l10n.planLimitViewLink, limits.viewLink ? l10n.planIncluded : l10n.planNotIncluded),
     ].join(' · ');
   }
 
@@ -358,6 +359,7 @@ class _PlanDialogState extends State<_PlanDialog> {
   late final _sponsored = TextEditingController(text: widget.plan?.limits.sponsoredGroups?.toString());
   late bool _default = widget.plan?.isDefault ?? false;
   late bool _reminders = widget.plan?.limits.reminders ?? false;
+  late bool _viewLink = widget.plan?.limits.viewLink ?? false;
 
   @override
   void dispose() {
@@ -384,6 +386,7 @@ class _PlanDialogState extends State<_PlanDialog> {
           membersPerGroup: number(_members),
           sponsoredGroups: number(_sponsored),
           reminders: _reminders,
+          viewLink: _viewLink,
         ),
       ),
     );
@@ -452,6 +455,13 @@ class _PlanDialogState extends State<_PlanDialog> {
                 subtitle: Text(l10n.adminPlanRemindersHelp),
                 value: _reminders,
                 onChanged: (v) => setState(() => _reminders = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.planLimitViewLink),
+                subtitle: Text(l10n.adminPlanViewLinkHelp),
+                value: _viewLink,
+                onChanged: (v) => setState(() => _viewLink = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

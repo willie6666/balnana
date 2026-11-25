@@ -3750,4 +3750,179 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'As written in App Store Connect, for an auto-renewable subscription. The App Store says when each payment ends, so there are no days to set.';
+
+  @override
+  String get viewOnlyLive => 'View only · Kept up to date';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'View only · As of $date';
+  }
+
+  @override
+  String get viewRefresh => 'Refresh';
+
+  @override
+  String get viewBalances => 'Balances';
+
+  @override
+  String get viewEmptyBody => 'Expenses added to the group will show up here.';
+
+  @override
+  String get viewMissingTitle => 'This link doesn\'t work';
+
+  @override
+  String get viewMissingBody =>
+      'It was turned off, or the group was deleted. Ask someone in the group for a new link.';
+
+  @override
+  String get viewExpiredTitle => 'This link has expired';
+
+  @override
+  String get viewExpiredBody => 'Ask someone in the group for a new link.';
+
+  @override
+  String get viewPausedTitle => 'This link is paused';
+
+  @override
+  String get viewPausedBody =>
+      'The group\'s plan doesn\'t include view-only links right now. The link works again once it does.';
+
+  @override
+  String get planLimitViewLink => 'View-only link';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Groups on this plan can share a link that shows the group to anyone, without signing in.';
+
+  @override
+  String get errorLimitViewLink => 'This group\'s plan doesn\'t include a view-only link.';
+
+  @override
+  String get errorViewLinkExists => 'This group already has a view-only link.';
+
+  @override
+  String get errorInvalidShow => 'A view-only link has to show balances, expenses or spending.';
+
+  @override
+  String get errorInvalidExpiry => 'Choose an end date in the future.';
+
+  @override
+  String get viewLinkTitle => 'View-only link';
+
+  @override
+  String get viewLinkHelp => 'Let anyone see the group without joining it';
+
+  @override
+  String get viewLinkIntro =>
+      'Anyone with this link can see the group, without an account and without joining. They can\'t change anything. A group has one link at a time.';
+
+  @override
+  String get viewLinkCopied => 'Link copied. Anyone with it can see this group.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Needs an upgraded plan';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'This group\'s plan doesn\'t include a view-only link.';
+
+  @override
+  String get viewLinkKind => 'Updates';
+
+  @override
+  String get viewLinkLive => 'Kept up to date';
+
+  @override
+  String get viewLinkLiveHelp => 'Shows the group as it is whenever someone opens it.';
+
+  @override
+  String get viewLinkSnapshot => 'Snapshot';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Shows the group as it is now, and never changes.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Snapshot of $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Later changes don\'t show. To show them, turn this link off and create a new one.';
+
+  @override
+  String get viewLinkShows => 'What it shows';
+
+  @override
+  String get viewLinkShowNotes => 'Expense notes';
+
+  @override
+  String get viewLinkShowPlaces => 'Expense places';
+
+  @override
+  String get viewLinkShowReceipts => 'Receipt photos';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Only links kept up to date can show receipt photos.';
+
+  @override
+  String get viewLinkExpiry => 'Works until';
+
+  @override
+  String get viewLinkNoExpiry => 'Keeps working until turned off';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'The end of $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Remove end date';
+
+  @override
+  String get viewLinkCreate => 'Create link';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Nobody can open it until the group\'s plan includes view-only links again.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'QR code of the view-only link to $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Last opened $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Not opened yet';
+
+  @override
+  String get viewLinkTurnOff => 'Turn off link';
+
+  @override
+  String get viewLinkTurnOffHelp => 'It stops working. A new link would have a different address.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Turn off the view-only link?';
+
+  @override
+  String get viewLinkTurnOffBody => 'People who have it will no longer see the group. This can\'t be undone.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who created a view-only link';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who changed the view-only link';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who turned off the view-only link';
+  }
 }

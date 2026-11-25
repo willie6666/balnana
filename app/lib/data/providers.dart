@@ -271,6 +271,11 @@ final groupPlanProvider = FutureProvider.autoDispose.family<GroupPlan, String>(
   (ref, token) => _load(ref, (_) => groupApi(ref, token).plan()),
 );
 
+/// A group's view-only link, or null when it has none.
+final viewLinkProvider = FutureProvider.autoDispose.family<ViewLink?, String>(
+  (ref, token) => _load(ref, (_) => groupApi(ref, token).viewLink()),
+);
+
 final balancesProvider = FutureProvider.family<Balances, String>((ref, token) async {
   final group = await ref.watch(groupProvider(token).future);
   return _load(ref, (_) => groupApi(ref, token).balances(group.minorDigits));
@@ -551,3 +556,73 @@ final statsProvider = FutureProvider.autoDispose.family<GroupStats, ({String tok
   final group = await ref.watch(groupProvider(key.token).future);
   return _load(ref, (_) => groupApi(ref, key.token).stats(group.minorDigits, period: key.period));
 });
+
+/// A group seen through its view-only link, `/v/{token}`. Reloading it
+/// reloads its expenses and stats too.
+final viewProvider = FutureProvider.autoDispose.family<ViewGroup, String>(
+  (ref, token) => _load(ref, (api) => api.view(token).get()),
+);
+
+/// The filter of a view-only link's expenses: apart from any group's.
+String viewFilterKey(String token) => 'view:$token';
+
+/// The expenses a view-only link shows, a page at a time.
+final viewExpensesProvider = AsyncNotifierProvider.autoDispose.family<ViewExpensesNotifier, ExpenseList, String>(
+  ViewExpensesNotifier.new,
+);
+
+class ViewExpensesNotifier extends AsyncNotifier<ExpenseList> {
+  ViewExpensesNotifier(this.token);
+
+  final String token;
+  int _digits = 2;
+
+  /// Counts builds, so a page asked for before one is not added after it.
+  var _build = 0;
+
+  @override
+  Future<ExpenseList> build() async {
+    _build++;
+    final api = _api(ref).view(token);
+    final filter = ref.watch(expenseFilterProvider(viewFilterKey(token)));
+    final view = await ref.watch(viewProvider(token).future);
+    _digits = view.minorDigits;
+    final page = await api.expenses(_digits, filter: filter);
+    return ExpenseList(page.items.toList(), page.nextCursor, filter: filter);
+  }
+
+  /// Loads the next page, unless the last try failed and this is no [retry].
+  Future<void> loadMore({bool retry = false}) async {
+    if (state.isLoading) return;
+    final current = state.value;
+    if (current == null || !current.hasMore || current.loadingMore) return;
+    if (current.moreError != null && !retry) return;
+    final api = ref.read(balnanaApiProvider);
+    if (api == null) return;
+    final build = _build, filter = current.filter;
+    state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, loadingMore: true));
+    try {
+      final page = await api.view(token).expenses(_digits, cursor: current.nextCursor, filter: filter);
+      if (!ref.mounted || build != _build || state.isLoading) return;
+      state = AsyncData(ExpenseList([...current.items, ...page.items], page.nextCursor, filter: filter));
+    } on Exception catch (e) {
+      if (!ref.mounted || build != _build || state.isLoading) return;
+      state = AsyncData(ExpenseList(current.items, current.nextCursor, filter: filter, moreError: e));
+    }
+  }
+}
+
+/// What a view-only link's group spent in a period, or all time when it is null.
+final viewStatsProvider = FutureProvider.autoDispose.family<GroupStats, ({String token, Period? period})>((
+  ref,
+  key,
+) async {
+  final api = _api(ref).view(key.token);
+  final view = await ref.watch(viewProvider(key.token).future);
+  return api.stats(view.minorDigits, period: key.period);
+});
+
+/// The photo of a receipt a view-only link shows.
+final viewReceiptProvider = FutureProvider.autoDispose.family<Uint8List, ({String token, String id})>(
+  (ref, key) => _load(ref, (api) => api.view(key.token).receipt(key.id)),
+);

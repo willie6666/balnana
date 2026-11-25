@@ -120,7 +120,7 @@ void main() {
     expect(find.text(l10n.planCurrent), findsOneWidget);
     expect(_mark('0'), findsOneWidget);
     expect(find.text(l10n.planUnlimited), findsNWidgets(9));
-    expect(_mark(l10n.planNotIncluded), findsNWidgets(2));
+    expect(_mark(l10n.planNotIncluded), findsNWidgets(4));
     final badge = tester.getCenter(find.text(l10n.planCurrent));
     final names = tester.getCenter(find.text('Same name').last);
     expect(badge.dx, greaterThan(600));

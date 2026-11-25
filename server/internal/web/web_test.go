@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -36,6 +37,32 @@ func TestSPAFallback(t *testing.T) {
 		}
 		if c.body != "" && rec.Body.String() != c.body {
 			t.Errorf("%s: body %q", c.path, rec.Body.String())
+		}
+	}
+}
+
+// View-only links get a generic preview in chat apps; other pages get none.
+func TestViewPreview(t *testing.T) {
+	dir := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html><head><title>Balnana</title></head></html>"), 0o644))
+	h := Handler(dir)
+
+	get := func(path string) string {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s: status %d", path, rec.Code)
+		}
+		return rec.Body.String()
+	}
+	view := get("/v/abc123")
+	if !strings.Contains(view, `<meta property="og:title" content="A Balnana group, view only">`) ||
+		!strings.HasSuffix(view, "</head></html>") {
+		t.Errorf("view page: %s", view)
+	}
+	for _, path := range []string{"/", "/g/abc123", "/view"} {
+		if body := get(path); strings.Contains(body, "og:") {
+			t.Errorf("%s has a preview: %s", path, body)
 		}
 	}
 }

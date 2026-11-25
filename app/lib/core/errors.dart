@@ -34,6 +34,11 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'sign_in_required' => l10n.errorSignInRequired,
     'recent_sign_in_required' => l10n.errorRecentSignIn,
     'not_a_member' => l10n.errorNotAMember,
+    'view_link_exists' => l10n.errorViewLinkExists,
+    'view_link_paused' => l10n.viewPausedBody,
+    'view_link_expired' => l10n.viewExpiredTitle,
+    'invalid_show' => l10n.errorInvalidShow,
+    'invalid_expiry' => l10n.errorInvalidExpiry,
     // owner_only: servers before groups lost their owners.
     'not_allowed' || 'owner_only' => l10n.errorNotAllowed,
     'link_groups_off' => l10n.errorLinkGroupsOff,
@@ -139,6 +144,7 @@ String _planLimit(AppLocalizations l10n, Map<String, Object?> params) {
     'members' => l10n.errorLimitMembers(max),
     'sponsored_groups' => l10n.errorLimitSponsored(max),
     'reminders' => l10n.errorLimitReminders,
+    'viewLink' => l10n.errorLimitViewLink,
     _ => l10n.errorLimitOther,
   };
 }

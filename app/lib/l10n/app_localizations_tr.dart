@@ -3761,4 +3761,180 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'App Store Connect\'te otomatik yenilenen abonelik için yazıldığı gibi. Her ödemenin ne zaman bittiğini App Store söyler, bu yüzden ayarlanacak gün yoktur.';
+
+  @override
+  String get viewOnlyLive => 'Yalnızca görüntüleme · Her zaman güncel';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Yalnızca görüntüleme · $date itibarıyla';
+  }
+
+  @override
+  String get viewRefresh => 'Yenile';
+
+  @override
+  String get viewBalances => 'Bakiyeler';
+
+  @override
+  String get viewEmptyBody => 'Gruba eklenen harcamalar burada görünür.';
+
+  @override
+  String get viewMissingTitle => 'Bu bağlantı çalışmıyor';
+
+  @override
+  String get viewMissingBody => 'Kapatılmış ya da grup silinmiş. Gruptan birinden yeni bir bağlantı isteyin.';
+
+  @override
+  String get viewExpiredTitle => 'Bu bağlantının süresi doldu';
+
+  @override
+  String get viewExpiredBody => 'Gruptan birinden yeni bir bağlantı isteyin.';
+
+  @override
+  String get viewPausedTitle => 'Bu bağlantı duraklatıldı';
+
+  @override
+  String get viewPausedBody =>
+      'Grubun planı şu anda yalnızca görüntüleme bağlantılarını içermiyor. İçerdiğinde bağlantı yeniden çalışır.';
+
+  @override
+  String get planLimitViewLink => 'Görüntüleme bağlantısı';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Bu plandaki gruplar, grubu herkesin oturum açmadan görebileceği bir bağlantı paylaşabilir.';
+
+  @override
+  String get errorLimitViewLink => 'Bu grubun planı görüntüleme bağlantısı içermiyor.';
+
+  @override
+  String get errorViewLinkExists => 'Bu grubun zaten bir görüntüleme bağlantısı var.';
+
+  @override
+  String get errorInvalidShow =>
+      'Görüntüleme bağlantısı bakiyeleri, harcamaları veya istatistikleri göstermelidir.';
+
+  @override
+  String get errorInvalidExpiry => 'Gelecekte bir bitiş tarihi seçin.';
+
+  @override
+  String get viewLinkTitle => 'Görüntüleme bağlantısı';
+
+  @override
+  String get viewLinkHelp => 'Herkes katılmadan grubu görebilsin';
+
+  @override
+  String get viewLinkIntro =>
+      'Bu bağlantıya sahip herkes grubu hesap olmadan ve katılmadan görebilir. Hiçbir şeyi değiştiremez. Bir grubun aynı anda tek bir bağlantısı olur.';
+
+  @override
+  String get viewLinkCopied => 'Bağlantı kopyalandı. Ona sahip herkes bu grubu görebilir.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Daha üst bir plan gerekir';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Bu grubun planı görüntüleme bağlantısı içermiyor.';
+
+  @override
+  String get viewLinkKind => 'Güncelleme';
+
+  @override
+  String get viewLinkLive => 'Her zaman güncel';
+
+  @override
+  String get viewLinkLiveHelp => 'Grubu açıldığı andaki haliyle gösterir.';
+
+  @override
+  String get viewLinkSnapshot => 'Anlık görüntü';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Grubu şu anki haliyle gösterir ve hiç değişmez.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return '$date tarihli anlık görüntü';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Sonraki değişiklikler görünmez. Göstermek için bu bağlantıyı kapatıp yenisini oluşturun.';
+
+  @override
+  String get viewLinkShows => 'Ne gösterir';
+
+  @override
+  String get viewLinkShowNotes => 'Harcama notları';
+
+  @override
+  String get viewLinkShowPlaces => 'Harcama yerleri';
+
+  @override
+  String get viewLinkShowReceipts => 'Fiş fotoğrafları';
+
+  @override
+  String get viewLinkReceiptsLiveOnly =>
+      'Fiş fotoğraflarını yalnızca her zaman güncel bağlantılar gösterebilir.';
+
+  @override
+  String get viewLinkExpiry => 'Geçerlilik sonu';
+
+  @override
+  String get viewLinkNoExpiry => 'Kapatılana kadar geçerli';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return '$date gün sonu';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Bitiş tarihini kaldır';
+
+  @override
+  String get viewLinkCreate => 'Bağlantı oluştur';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Grubun planı yeniden görüntüleme bağlantılarını içerene kadar kimse açamaz.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return '$group grubunun görüntüleme bağlantısı için QR kodu';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'En son $date tarihinde açıldı';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Henüz açılmadı';
+
+  @override
+  String get viewLinkTurnOff => 'Bağlantıyı kapat';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Çalışmayı bırakır. Yeni bir bağlantının adresi farklı olur.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Görüntüleme bağlantısı kapatılsın mı?';
+
+  @override
+  String get viewLinkTurnOffBody => 'Bağlantıya sahip olanlar artık grubu göremez. Bu işlem geri alınamaz.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who bir görüntüleme bağlantısı oluşturdu';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who görüntüleme bağlantısını değiştirdi';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who görüntüleme bağlantısını kapattı';
+  }
 }

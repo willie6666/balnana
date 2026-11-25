@@ -380,7 +380,7 @@ class _GroupPageState extends ConsumerState<GroupPage> {
                       handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                       sliver: SliverPersistentHeader(
                         pinned: true,
-                        delegate: _TabsHeader(
+                        delegate: TabsHeader(
                           color: Theme.of(context).colorScheme.surface,
                           padding: side,
                           tabs: TabBar(
@@ -409,8 +409,9 @@ class _GroupPageState extends ConsumerState<GroupPage> {
   }
 }
 
-class _TabsHeader extends SliverPersistentHeaderDelegate {
-  _TabsHeader({required this.tabs, required this.color, required this.padding});
+/// Tabs pinned under the top of a scrolling page, on [color].
+class TabsHeader extends SliverPersistentHeaderDelegate {
+  TabsHeader({required this.tabs, required this.color, required this.padding});
 
   final TabBar tabs;
   final Color color;
@@ -432,5 +433,5 @@ class _TabsHeader extends SliverPersistentHeaderDelegate {
   );
 
   @override
-  bool shouldRebuild(_TabsHeader old) => old.tabs != tabs || old.color != color || old.padding != padding;
+  bool shouldRebuild(TabsHeader old) => old.tabs != tabs || old.color != color || old.padding != padding;
 }

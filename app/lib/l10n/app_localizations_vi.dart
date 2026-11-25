@@ -3744,4 +3744,178 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Như ghi trong App Store Connect, cho gói đăng ký tự động gia hạn. App Store cho biết khi nào mỗi khoản thanh toán kết thúc, nên không cần đặt số ngày.';
+
+  @override
+  String get viewOnlyLive => 'Chỉ xem · Luôn cập nhật';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Chỉ xem · Tính đến $date';
+  }
+
+  @override
+  String get viewRefresh => 'Làm mới';
+
+  @override
+  String get viewBalances => 'Số dư';
+
+  @override
+  String get viewEmptyBody => 'Các khoản chi được thêm vào nhóm sẽ hiện ở đây.';
+
+  @override
+  String get viewMissingTitle => 'Liên kết này không hoạt động';
+
+  @override
+  String get viewMissingBody =>
+      'Liên kết đã bị tắt, hoặc nhóm đã bị xóa. Hãy xin một liên kết mới từ người trong nhóm.';
+
+  @override
+  String get viewExpiredTitle => 'Liên kết này đã hết hạn';
+
+  @override
+  String get viewExpiredBody => 'Hãy xin một liên kết mới từ người trong nhóm.';
+
+  @override
+  String get viewPausedTitle => 'Liên kết này đang tạm dừng';
+
+  @override
+  String get viewPausedBody =>
+      'Gói của nhóm hiện không bao gồm liên kết chỉ xem. Liên kết sẽ hoạt động lại khi gói bao gồm tính năng này.';
+
+  @override
+  String get planLimitViewLink => 'Liên kết chỉ xem';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Nhóm dùng gói này có thể chia sẻ một liên kết cho bất kỳ ai xem nhóm mà không cần đăng nhập.';
+
+  @override
+  String get errorLimitViewLink => 'Gói của nhóm này không bao gồm liên kết chỉ xem.';
+
+  @override
+  String get errorViewLinkExists => 'Nhóm này đã có liên kết chỉ xem.';
+
+  @override
+  String get errorInvalidShow => 'Liên kết chỉ xem phải hiển thị số dư, khoản chi hoặc thống kê.';
+
+  @override
+  String get errorInvalidExpiry => 'Hãy chọn ngày kết thúc trong tương lai.';
+
+  @override
+  String get viewLinkTitle => 'Liên kết chỉ xem';
+
+  @override
+  String get viewLinkHelp => 'Cho bất kỳ ai xem nhóm mà không cần tham gia';
+
+  @override
+  String get viewLinkIntro =>
+      'Bất kỳ ai có liên kết này đều xem được nhóm, không cần tài khoản và không cần tham gia. Họ không thể thay đổi gì. Mỗi nhóm chỉ có một liên kết tại một thời điểm.';
+
+  @override
+  String get viewLinkCopied => 'Đã sao chép liên kết. Bất kỳ ai có liên kết đều xem được nhóm này.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Cần gói cao hơn';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Gói của nhóm này không bao gồm liên kết chỉ xem.';
+
+  @override
+  String get viewLinkKind => 'Cập nhật';
+
+  @override
+  String get viewLinkLive => 'Luôn cập nhật';
+
+  @override
+  String get viewLinkLiveHelp => 'Hiển thị nhóm đúng như lúc được mở.';
+
+  @override
+  String get viewLinkSnapshot => 'Ảnh chụp';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Hiển thị nhóm như hiện tại và không bao giờ thay đổi.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Ảnh chụp ngày $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Các thay đổi sau đó sẽ không hiện. Để hiển thị, hãy tắt liên kết này và tạo liên kết mới.';
+
+  @override
+  String get viewLinkShows => 'Nội dung hiển thị';
+
+  @override
+  String get viewLinkShowNotes => 'Ghi chú khoản chi';
+
+  @override
+  String get viewLinkShowPlaces => 'Địa điểm khoản chi';
+
+  @override
+  String get viewLinkShowReceipts => 'Ảnh hóa đơn';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Chỉ liên kết luôn cập nhật mới hiển thị được ảnh hóa đơn.';
+
+  @override
+  String get viewLinkExpiry => 'Có hiệu lực đến';
+
+  @override
+  String get viewLinkNoExpiry => 'Có hiệu lực đến khi bị tắt';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Hết ngày $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Xóa ngày kết thúc';
+
+  @override
+  String get viewLinkCreate => 'Tạo liên kết';
+
+  @override
+  String get viewLinkPausedHelp => 'Không ai mở được cho đến khi gói của nhóm bao gồm lại liên kết chỉ xem.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'Mã QR của liên kết chỉ xem tới $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Mở lần cuối ngày $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Chưa có ai mở';
+
+  @override
+  String get viewLinkTurnOff => 'Tắt liên kết';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Liên kết sẽ ngừng hoạt động. Liên kết mới sẽ có địa chỉ khác.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Tắt liên kết chỉ xem?';
+
+  @override
+  String get viewLinkTurnOffBody => 'Những người có liên kết sẽ không xem được nhóm nữa. Không thể hoàn tác.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who đã tạo liên kết chỉ xem';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who đã thay đổi liên kết chỉ xem';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who đã tắt liên kết chỉ xem';
+  }
 }

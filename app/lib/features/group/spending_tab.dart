@@ -72,7 +72,7 @@ class _SpendingTabState extends ConsumerState<SpendingTab> {
         // The last period's numbers, faded, until this one's arrive.
         opacity: async.value == null ? 0.5 : 1,
         duration: BMotion.short,
-        child: _StatsBody(group: group, stats: stats, onShow: _showExpenses),
+        child: StatsBody(group: group, stats: stats, onShow: _showExpenses),
       );
     }
 
@@ -117,12 +117,14 @@ class _SpendingTabState extends ConsumerState<SpendingTab> {
   }
 }
 
-class _StatsBody extends StatelessWidget {
-  const _StatsBody({required this.group, required this.stats, required this.onShow});
+/// What a group spent, from [stats]. [onShow] lists the expenses behind a row;
+/// without it, rows lead nowhere.
+class StatsBody extends StatelessWidget {
+  const StatsBody({super.key, required this.group, required this.stats, this.onShow});
 
   final Group group;
   final GroupStats stats;
-  final ValueChanged<ExpenseFilter> onShow;
+  final ValueChanged<ExpenseFilter>? onShow;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +172,7 @@ class _StatsBody extends StatelessWidget {
         paid: (money(m.paid), _fraction(m.paid, biggestMember)),
         share: (money(m.share), _fraction(m.share, biggestMember)),
         amountWidth: amountWidth,
-        onTap: () => onShow(ExpenseFilter(member: member.id)),
+        onTap: onShow == null ? null : () => onShow!(ExpenseFilter(member: member.id)),
       );
     }
 
@@ -197,7 +199,9 @@ class _StatsBody extends StatelessWidget {
                   count: c.count,
                   fraction: _fraction(c.amount, biggestCategory),
                   // Expenses without a category cannot be listed on their own.
-                  onTap: c.category == null ? null : () => onShow(ExpenseFilter(category: c.category)),
+                  onTap: c.category == null || onShow == null
+                      ? null
+                      : () => onShow!(ExpenseFilter(category: c.category)),
                 ),
             ],
           ),
@@ -418,7 +422,7 @@ class _MemberRow extends StatelessWidget {
   /// The amount as shown, and how long its bar is.
   final (String, double) paid, share;
   final double amountWidth;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -493,7 +497,7 @@ class _MonthChartState extends State<_MonthChart> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final months = widget.months;
     final picked = months.firstWhere((m) => m.month == _picked, orElse: () => months.last);
-    final biggest = months.map((m) => m.amount).fold(BigInt.zero, _StatsBody._max);
+    final biggest = months.map((m) => m.amount).fold(BigInt.zero, StatsBody._max);
     final manyYears = months.first.month.year != months.last.month.year;
 
     String name(DateTime month, {bool long = false}) =>

@@ -19,6 +19,8 @@ type expenseFilter struct {
 	member   *string
 	category *string
 	from, to *time.Time
+	// noNotes and noPlaces keep q from finding text a view-only link hides.
+	noNotes, noPlaces bool
 }
 
 // likeEscaper makes user text literal inside a LIKE pattern.
@@ -36,8 +38,14 @@ func (f expenseFilter) where(groupID string) (string, []any, error) {
 	if f.q != nil {
 		if q := strings.TrimSpace(*f.q); q != "" {
 			p := arg("%" + likeEscaper.Replace(q) + "%")
-			conds = append(conds, fmt.Sprintf(
-				"(title ilike %[1]s or coalesce(note, '') ilike %[1]s or coalesce(location_name, '') ilike %[1]s)", p))
+			cond := "title ilike " + p
+			if !f.noNotes {
+				cond += " or coalesce(note, '') ilike " + p
+			}
+			if !f.noPlaces {
+				cond += " or coalesce(location_name, '') ilike " + p
+			}
+			conds = append(conds, "("+cond+")")
 		}
 	}
 	if f.member != nil && *f.member != "" {
@@ -96,9 +104,19 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 	if err != nil {
 		return nil, err
 	}
-	where, args, err := expenseFilter{from: req.Params.From, to: req.Params.To}.where(g.id)
+	out, err := s.groupStats(ctx, g, req.Params.From, req.Params.To, zone)
 	if err != nil {
 		return nil, err
+	}
+	return GetStats200JSONResponse(out), nil
+}
+
+// groupStats sums up what g spent between from and to, with months as they
+// are in zone.
+func (s *Server) groupStats(ctx context.Context, g *group, from, to *time.Time, zone *time.Location) (GroupStats, error) {
+	where, args, err := expenseFilter{from: from, to: to}.where(g.id)
+	if err != nil {
+		return GroupStats{}, err
 	}
 
 	// Transfers between members settle debts: they are not spending.
@@ -194,10 +212,7 @@ func (s *Server) GetStats(ctx context.Context, req GetStatsRequestObject) (GetSt
 			return err
 		})
 	if unknownZone(err) {
-		return nil, badRequest("invalid_time_zone")
+		return GroupStats{}, badRequest("invalid_time_zone")
 	}
-	if err != nil {
-		return nil, err
-	}
-	return GetStats200JSONResponse(out), nil
+	return out, err
 }

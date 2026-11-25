@@ -35,6 +35,7 @@ class PlanComparisonTable extends StatelessWidget {
       (Icons.receipt_outlined, l10n.planLimitReceipts, (p) => _Value.limit(p.receiptsPerGroup)),
       (Icons.repeat, l10n.planLimitRecurring, (p) => _Value.limit(p.recurringPerGroup)),
       (Icons.notifications_active_outlined, l10n.planLimitReminders, (p) => _Value.included(p.reminders)),
+      (Icons.visibility_outlined, l10n.planLimitViewLink, (p) => _Value.included(p.viewLink)),
     ];
 
     bool isCurrent(Plan plan) => plan.id == comparison.currentPlanId;

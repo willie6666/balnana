@@ -401,6 +401,14 @@ class _Settings extends ConsumerWidget {
                 subtitle: group.hasPassword ? l10n.groupPasswordOnHelp : l10n.groupPasswordOffHelp,
                 onTap: () => showGroupPasswordDialog(context, group, accounts: accounts),
               ),
+            if (canDelete)
+              GroupedTile(
+                icon: Icons.visibility_outlined,
+                title: l10n.viewLinkTitle,
+                subtitle: l10n.viewLinkHelp,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/g/${group.token}/settings/view-link'),
+              ),
             if (member)
               GroupedTile(
                 icon: Icons.lock_reset,

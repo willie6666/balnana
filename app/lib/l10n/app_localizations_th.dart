@@ -3714,4 +3714,176 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'ตามที่เขียนไว้ใน App Store Connect สำหรับการสมัครสมาชิกแบบต่ออายุอัตโนมัติ App Store จะบอกว่าการชำระแต่ละครั้งสิ้นสุดเมื่อใด จึงไม่ต้องตั้งจำนวนวัน';
+
+  @override
+  String get viewOnlyLive => 'ดูอย่างเดียว · อัปเดตเสมอ';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'ดูอย่างเดียว · ณ $date';
+  }
+
+  @override
+  String get viewRefresh => 'รีเฟรช';
+
+  @override
+  String get viewBalances => 'ยอดคงเหลือ';
+
+  @override
+  String get viewEmptyBody => 'ค่าใช้จ่ายที่เพิ่มในกลุ่มจะแสดงที่นี่';
+
+  @override
+  String get viewMissingTitle => 'ลิงก์นี้ใช้ไม่ได้';
+
+  @override
+  String get viewMissingBody => 'ลิงก์ถูกปิดไปแล้ว หรือกลุ่มถูกลบไปแล้ว ขอลิงก์ใหม่จากคนในกลุ่ม';
+
+  @override
+  String get viewExpiredTitle => 'ลิงก์นี้หมดอายุแล้ว';
+
+  @override
+  String get viewExpiredBody => 'ขอลิงก์ใหม่จากคนในกลุ่ม';
+
+  @override
+  String get viewPausedTitle => 'ลิงก์นี้ถูกหยุดชั่วคราว';
+
+  @override
+  String get viewPausedBody =>
+      'แพ็กเกจของกลุ่มตอนนี้ไม่มีลิงก์ดูอย่างเดียว ลิงก์จะใช้ได้อีกครั้งเมื่อแพ็กเกจรองรับ';
+
+  @override
+  String get planLimitViewLink => 'ลิงก์ดูอย่างเดียว';
+
+  @override
+  String get adminPlanViewLinkHelp => 'กลุ่มในแพ็กเกจนี้แชร์ลิงก์ให้ทุกคนดูกลุ่มได้โดยไม่ต้องลงชื่อเข้าใช้';
+
+  @override
+  String get errorLimitViewLink => 'แพ็กเกจของกลุ่มนี้ไม่มีลิงก์ดูอย่างเดียว';
+
+  @override
+  String get errorViewLinkExists => 'กลุ่มนี้มีลิงก์ดูอย่างเดียวอยู่แล้ว';
+
+  @override
+  String get errorInvalidShow => 'ลิงก์ดูอย่างเดียวต้องแสดงยอดคงเหลือ ค่าใช้จ่าย หรือสถิติ';
+
+  @override
+  String get errorInvalidExpiry => 'เลือกวันสิ้นสุดในอนาคต';
+
+  @override
+  String get viewLinkTitle => 'ลิงก์ดูอย่างเดียว';
+
+  @override
+  String get viewLinkHelp => 'ให้ทุกคนดูกลุ่มได้โดยไม่ต้องเข้าร่วม';
+
+  @override
+  String get viewLinkIntro =>
+      'ใครที่มีลิงก์นี้ก็ดูกลุ่มได้ โดยไม่ต้องมีบัญชีและไม่ต้องเข้าร่วม แต่แก้ไขอะไรไม่ได้ หนึ่งกลุ่มมีได้ทีละหนึ่งลิงก์';
+
+  @override
+  String get viewLinkCopied => 'คัดลอกลิงก์แล้ว ใครที่มีลิงก์นี้ก็ดูกลุ่มนี้ได้';
+
+  @override
+  String get viewLinkNeedsPlan => 'ต้องใช้แพ็กเกจที่สูงกว่า';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'แพ็กเกจของกลุ่มนี้ไม่มีลิงก์ดูอย่างเดียว';
+
+  @override
+  String get viewLinkKind => 'การอัปเดต';
+
+  @override
+  String get viewLinkLive => 'อัปเดตเสมอ';
+
+  @override
+  String get viewLinkLiveHelp => 'แสดงกลุ่มตามสภาพตอนที่เปิดดู';
+
+  @override
+  String get viewLinkSnapshot => 'ภาพสแนปช็อต';
+
+  @override
+  String get viewLinkSnapshotHelp => 'แสดงกลุ่มตามสภาพตอนนี้ และไม่เปลี่ยนอีก';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'สแนปช็อต ณ $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'การเปลี่ยนแปลงหลังจากนี้จะไม่แสดง หากต้องการแสดง ให้ปิดลิงก์นี้แล้วสร้างลิงก์ใหม่';
+
+  @override
+  String get viewLinkShows => 'สิ่งที่แสดง';
+
+  @override
+  String get viewLinkShowNotes => 'โน้ตของค่าใช้จ่าย';
+
+  @override
+  String get viewLinkShowPlaces => 'สถานที่ของค่าใช้จ่าย';
+
+  @override
+  String get viewLinkShowReceipts => 'รูปใบเสร็จ';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'เฉพาะลิงก์ที่อัปเดตเสมอเท่านั้นที่แสดงรูปใบเสร็จได้';
+
+  @override
+  String get viewLinkExpiry => 'ใช้ได้ถึง';
+
+  @override
+  String get viewLinkNoExpiry => 'ใช้ได้จนกว่าจะปิด';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'สิ้นวันที่ $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'ลบวันสิ้นสุด';
+
+  @override
+  String get viewLinkCreate => 'สร้างลิงก์';
+
+  @override
+  String get viewLinkPausedHelp => 'ไม่มีใครเปิดได้จนกว่าแพ็กเกจของกลุ่มจะรองรับลิงก์ดูอย่างเดียวอีกครั้ง';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'คิวอาร์โค้ดของลิงก์ดูอย่างเดียวไปยัง $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'เปิดล่าสุดเมื่อ $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'ยังไม่มีใครเปิด';
+
+  @override
+  String get viewLinkTurnOff => 'ปิดลิงก์';
+
+  @override
+  String get viewLinkTurnOffHelp => 'ลิงก์จะใช้ไม่ได้อีก ลิงก์ใหม่จะมีที่อยู่ต่างออกไป';
+
+  @override
+  String get viewLinkTurnOffTitle => 'ปิดลิงก์ดูอย่างเดียวไหม';
+
+  @override
+  String get viewLinkTurnOffBody => 'คนที่มีลิงก์จะดูกลุ่มไม่ได้อีก การดำเนินการนี้ย้อนกลับไม่ได้';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who สร้างลิงก์ดูอย่างเดียว';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who เปลี่ยนลิงก์ดูอย่างเดียว';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who ปิดลิงก์ดูอย่างเดียว';
+  }
 }

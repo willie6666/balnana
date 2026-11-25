@@ -3868,4 +3868,180 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Как указано в App Store Connect для автовозобновляемой подписки. App Store сам сообщает, когда заканчивается каждый платёж, поэтому дни задавать не нужно.';
+
+  @override
+  String get viewOnlyLive => 'Только просмотр · Всегда актуально';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Только просмотр · На $date';
+  }
+
+  @override
+  String get viewRefresh => 'Обновить';
+
+  @override
+  String get viewBalances => 'Балансы';
+
+  @override
+  String get viewEmptyBody => 'Здесь появятся расходы, добавленные в группу.';
+
+  @override
+  String get viewMissingTitle => 'Эта ссылка не работает';
+
+  @override
+  String get viewMissingBody =>
+      'Её отключили, или группа удалена. Попросите у кого-нибудь из группы новую ссылку.';
+
+  @override
+  String get viewExpiredTitle => 'Срок действия ссылки истёк';
+
+  @override
+  String get viewExpiredBody => 'Попросите у кого-нибудь из группы новую ссылку.';
+
+  @override
+  String get viewPausedTitle => 'Ссылка приостановлена';
+
+  @override
+  String get viewPausedBody =>
+      'Тариф группы сейчас не включает ссылки только для просмотра. Ссылка снова заработает, когда включит.';
+
+  @override
+  String get planLimitViewLink => 'Ссылка для просмотра';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Группы на этом тарифе могут поделиться ссылкой, по которой группу увидит любой без входа в аккаунт.';
+
+  @override
+  String get errorLimitViewLink => 'Тариф этой группы не включает ссылку для просмотра.';
+
+  @override
+  String get errorViewLinkExists => 'У этой группы уже есть ссылка для просмотра.';
+
+  @override
+  String get errorInvalidShow => 'Ссылка для просмотра должна показывать балансы, расходы или статистику.';
+
+  @override
+  String get errorInvalidExpiry => 'Выберите дату окончания в будущем.';
+
+  @override
+  String get viewLinkTitle => 'Ссылка для просмотра';
+
+  @override
+  String get viewLinkHelp => 'Любой может посмотреть группу, не вступая в неё';
+
+  @override
+  String get viewLinkIntro =>
+      'Любой, у кого есть эта ссылка, может посмотреть группу без аккаунта и не вступая в неё. Изменить ничего нельзя. У группы одновременно только одна ссылка.';
+
+  @override
+  String get viewLinkCopied => 'Ссылка скопирована. Любой, у кого она есть, может посмотреть эту группу.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Нужен тариф выше';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Тариф этой группы не включает ссылку для просмотра.';
+
+  @override
+  String get viewLinkKind => 'Обновление';
+
+  @override
+  String get viewLinkLive => 'Всегда актуально';
+
+  @override
+  String get viewLinkLiveHelp => 'Показывает группу такой, какая она в момент открытия.';
+
+  @override
+  String get viewLinkSnapshot => 'Снимок';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Показывает группу такой, какая она сейчас, и никогда не меняется.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Снимок от $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Более поздние изменения не видны. Чтобы их показать, отключите эту ссылку и создайте новую.';
+
+  @override
+  String get viewLinkShows => 'Что показывает';
+
+  @override
+  String get viewLinkShowNotes => 'Заметки к расходам';
+
+  @override
+  String get viewLinkShowPlaces => 'Места расходов';
+
+  @override
+  String get viewLinkShowReceipts => 'Фото чеков';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Фото чеков могут показывать только всегда актуальные ссылки.';
+
+  @override
+  String get viewLinkExpiry => 'Действует до';
+
+  @override
+  String get viewLinkNoExpiry => 'Действует, пока не отключена';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Конец дня $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Убрать дату окончания';
+
+  @override
+  String get viewLinkCreate => 'Создать ссылку';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Никто не сможет её открыть, пока тариф группы снова не включит ссылки для просмотра.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'QR-код ссылки для просмотра группы $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Последний раз открыта $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Ещё не открывалась';
+
+  @override
+  String get viewLinkTurnOff => 'Отключить ссылку';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Она перестанет работать. У новой ссылки будет другой адрес.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Отключить ссылку для просмотра?';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'Те, у кого она есть, больше не смогут видеть группу. Это нельзя отменить.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who создаёт ссылку для просмотра';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who меняет ссылку для просмотра';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who отключает ссылку для просмотра';
+  }
 }

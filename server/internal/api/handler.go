@@ -148,7 +148,8 @@ func securityHeaders(next http.Handler) http.Handler {
 		// into clicking in them (the administrator's settings, say).
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
-		if strings.HasPrefix(r.URL.Path, "/g/") || r.URL.Path == "/admin" || strings.HasPrefix(r.URL.Path, "/admin/") {
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/g/") || strings.HasPrefix(path, "/v/") || path == "/admin" || strings.HasPrefix(path, "/admin/") {
 			h.Set("X-Robots-Tag", "noindex, nofollow")
 		}
 		next.ServeHTTP(w, r)
@@ -208,7 +209,8 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 // Paths whose next part is a secret: a group token grants access to the
 // group, an invitation token proves an email address, and a device token
 // decides what a phone is told.
-var secretPaths = []string{"/g/", "/invite/", BasePath + "/g/", BasePath + "/auth/invites/", BasePath + "/push/devices/"}
+var secretPaths = []string{"/g/", "/v/", "/invite/", BasePath + "/g/", BasePath + "/v/", BasePath + "/auth/invites/",
+	BasePath + "/push/devices/"}
 
 // maskPath hides the secrets in a path before it is logged.
 func maskPath(path string) string {

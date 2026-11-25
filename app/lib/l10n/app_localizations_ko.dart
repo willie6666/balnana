@@ -3616,4 +3616,174 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'App Store Connect의 자동 갱신 구독에 적힌 그대로 입력합니다. 결제마다 언제 끝나는지 App Store가 알려 주므로 일수를 설정하지 않습니다.';
+
+  @override
+  String get viewOnlyLive => '보기 전용 · 항상 최신';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return '보기 전용 · $date 기준';
+  }
+
+  @override
+  String get viewRefresh => '새로고침';
+
+  @override
+  String get viewBalances => '잔액';
+
+  @override
+  String get viewEmptyBody => '그룹에 추가된 지출이 여기에 표시됩니다.';
+
+  @override
+  String get viewMissingTitle => '이 링크는 작동하지 않습니다';
+
+  @override
+  String get viewMissingBody => '링크가 해제되었거나 그룹이 삭제되었습니다. 그룹 멤버에게 새 링크를 요청하세요.';
+
+  @override
+  String get viewExpiredTitle => '이 링크는 만료되었습니다';
+
+  @override
+  String get viewExpiredBody => '그룹 멤버에게 새 링크를 요청하세요.';
+
+  @override
+  String get viewPausedTitle => '이 링크는 일시 중지되었습니다';
+
+  @override
+  String get viewPausedBody => '지금은 그룹의 요금제에 보기 전용 링크가 포함되어 있지 않습니다. 포함되면 링크가 다시 작동합니다.';
+
+  @override
+  String get planLimitViewLink => '보기 전용 링크';
+
+  @override
+  String get adminPlanViewLinkHelp => '이 요금제의 그룹은 로그인 없이 누구나 그룹을 볼 수 있는 링크를 공유할 수 있습니다.';
+
+  @override
+  String get errorLimitViewLink => '이 그룹의 요금제에는 보기 전용 링크가 포함되어 있지 않습니다.';
+
+  @override
+  String get errorViewLinkExists => '이 그룹에는 이미 보기 전용 링크가 있습니다.';
+
+  @override
+  String get errorInvalidShow => '보기 전용 링크는 잔액, 지출, 지출 통계 중 하나 이상을 보여야 합니다.';
+
+  @override
+  String get errorInvalidExpiry => '미래의 종료일을 선택하세요.';
+
+  @override
+  String get viewLinkTitle => '보기 전용 링크';
+
+  @override
+  String get viewLinkHelp => '참여하지 않아도 누구나 그룹을 볼 수 있게 합니다';
+
+  @override
+  String get viewLinkIntro =>
+      '이 링크가 있는 사람은 누구나 계정이나 참여 없이 그룹을 볼 수 있습니다. 아무것도 변경할 수 없습니다. 그룹에는 한 번에 하나의 링크만 있습니다.';
+
+  @override
+  String get viewLinkCopied => '링크를 복사했습니다. 링크가 있는 사람은 누구나 이 그룹을 볼 수 있습니다.';
+
+  @override
+  String get viewLinkNeedsPlan => '요금제 업그레이드 필요';
+
+  @override
+  String get viewLinkNeedsPlanHelp => '이 그룹의 요금제에는 보기 전용 링크가 포함되어 있지 않습니다.';
+
+  @override
+  String get viewLinkKind => '업데이트';
+
+  @override
+  String get viewLinkLive => '항상 최신';
+
+  @override
+  String get viewLinkLiveHelp => '열 때마다 그룹의 현재 상태를 보여줍니다.';
+
+  @override
+  String get viewLinkSnapshot => '스냅샷';
+
+  @override
+  String get viewLinkSnapshotHelp => '지금의 그룹을 보여주며, 이후로 바뀌지 않습니다.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return '$date 스냅샷';
+  }
+
+  @override
+  String get viewLinkSnapshotMade => '이후의 변경 사항은 표시되지 않습니다. 표시하려면 이 링크를 해제하고 새 링크를 만드세요.';
+
+  @override
+  String get viewLinkShows => '표시할 내용';
+
+  @override
+  String get viewLinkShowNotes => '지출 메모';
+
+  @override
+  String get viewLinkShowPlaces => '지출 장소';
+
+  @override
+  String get viewLinkShowReceipts => '영수증 사진';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => '항상 최신인 링크만 영수증 사진을 보여줄 수 있습니다.';
+
+  @override
+  String get viewLinkExpiry => '사용 기한';
+
+  @override
+  String get viewLinkNoExpiry => '해제할 때까지 계속 작동';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return '$date까지';
+  }
+
+  @override
+  String get viewLinkClearExpiry => '종료일 삭제';
+
+  @override
+  String get viewLinkCreate => '링크 만들기';
+
+  @override
+  String get viewLinkPausedHelp => '그룹의 요금제에 보기 전용 링크가 다시 포함될 때까지 아무도 열 수 없습니다.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return '$group의 보기 전용 링크 QR 코드';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return '마지막으로 열린 날짜: $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => '아직 열리지 않음';
+
+  @override
+  String get viewLinkTurnOff => '링크 해제';
+
+  @override
+  String get viewLinkTurnOffHelp => '링크가 더 이상 작동하지 않습니다. 새 링크는 주소가 달라집니다.';
+
+  @override
+  String get viewLinkTurnOffTitle => '보기 전용 링크를 해제할까요?';
+
+  @override
+  String get viewLinkTurnOffBody => '링크가 있는 사람은 더 이상 그룹을 볼 수 없습니다. 되돌릴 수 없습니다.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who님이 보기 전용 링크를 만들었습니다';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who님이 보기 전용 링크를 변경했습니다';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who님이 보기 전용 링크를 해제했습니다';
+  }
 }

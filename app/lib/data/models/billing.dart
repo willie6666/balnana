@@ -89,6 +89,7 @@ class MyPlan {
     this.recurringPerGroup,
     this.membersPerGroup,
     this.reminders = false,
+    this.viewLink = false,
     this.play,
     this.appStore,
     this.paypal,
@@ -107,6 +108,7 @@ class MyPlan {
       recurringPerGroup: optionalField<num>(json, 'recurringPerGroup')?.toInt(),
       membersPerGroup: optionalField<num>(json, 'membersPerGroup')?.toInt(),
       reminders: optionalField<bool>(json, 'reminders') ?? false,
+      viewLink: optionalField<bool>(json, 'viewLink') ?? false,
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
       appStore: json['appStore'] == null ? null : AppStoreBilling.fromJson(json['appStore']),
       paypal: json['paypal'] == null ? null : PayPalBilling.fromJson(json['paypal']),
@@ -136,6 +138,9 @@ class MyPlan {
   /// Whether groups sharing the plan can send payment reminders as
   /// notifications.
   final bool reminders;
+
+  /// Whether groups sharing the plan can have a view-only link.
+  final bool viewLink;
 
   /// Null when the server doesn't sell on Google Play.
   final PlayBilling? play;
@@ -240,6 +245,7 @@ class GroupPlan {
     required this.receipts,
     required this.recurring,
     this.reminders = false,
+    this.viewLink = false,
     this.sponsorMemberId,
   });
 
@@ -252,6 +258,7 @@ class GroupPlan {
       receipts: PlanUsage.fromJson(json['receipts']),
       recurring: PlanUsage.fromJson(json['recurring']),
       reminders: optionalField<bool>(json, 'reminders') ?? false,
+      viewLink: optionalField<bool>(json, 'viewLink') ?? false,
       sponsorMemberId: optionalField(json, 'sponsorMemberId'),
     );
   }
@@ -267,6 +274,9 @@ class GroupPlan {
   /// Whether the group can send payment reminders as notifications.
   final bool reminders;
 
+  /// Whether the group can have a view-only link.
+  final bool viewLink;
+
   /// The member whose plan covers the group, if any.
   final String? sponsorMemberId;
 }
@@ -280,6 +290,7 @@ class PlanLimits {
     this.membersPerGroup,
     this.sponsoredGroups,
     this.reminders = false,
+    this.viewLink = false,
   });
 
   factory PlanLimits.fromJson(Object? data) {
@@ -291,6 +302,7 @@ class PlanLimits {
       membersPerGroup: optionalField<num>(json, 'membersPerGroup')?.toInt(),
       sponsoredGroups: optionalField<num>(json, 'sponsoredGroups')?.toInt(),
       reminders: optionalField<bool>(json, 'reminders') ?? false,
+      viewLink: optionalField<bool>(json, 'viewLink') ?? false,
     );
   }
 
@@ -303,6 +315,9 @@ class PlanLimits {
   /// Whether its groups can send payment reminders as notifications.
   final bool reminders;
 
+  /// Whether its groups can have a view-only link.
+  final bool viewLink;
+
   Map<String, Object?> toJson() => {
     'receiptsPerGroup': ?receiptsPerGroup,
     'recurringPerGroup': ?recurringPerGroup,
@@ -310,6 +325,7 @@ class PlanLimits {
     'membersPerGroup': ?membersPerGroup,
     'sponsoredGroups': ?sponsoredGroups,
     'reminders': reminders,
+    'viewLink': viewLink,
   };
 }
 

@@ -14,7 +14,7 @@ class ForeignGroupLink implements Exception {
 }
 
 /// The page a bare token or a link opens: a group's, also from the link that
-/// joins it, or an invite's, which holds a token of its own. Only links
+/// joins it, an invite's or a view-only link's, which hold tokens of their own. Only links
 /// belonging to the current server's configured or advertised URL count. A
 /// different server, including a different subpath on the same origin, is
 /// rejected before its token can be used.
@@ -34,7 +34,7 @@ String? pathFromLink(String input, {required String? serverUrl, String? publicUr
   if (join) segments.removeLast();
   if (segments.length < 2) return null;
   final kind = segments[segments.length - 2];
-  if (kind != 'g' && (kind != 'invite' || join)) return null;
+  if (kind != 'g' && ((kind != 'invite' && kind != 'v') || join)) return null;
   final token = segments.last;
   if (!_token.hasMatch(token)) return null;
   final base = normalizeServerUrl(

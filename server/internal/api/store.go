@@ -361,10 +361,10 @@ func groupNets(ctx context.Context, q querier, groupID string) (map[string]int64
 
 func toMember(m member, nets map[string]int64, digits int) Member {
 	return Member{
-		Id:      m.id,
-		Name:    m.name,
-		Color:   m.color,
-		Left:    m.left,
+		Id:    m.id,
+		Name:  m.name,
+		Color: m.color,
+		Left:  m.left,
 		// Deprecated: no one owns a group any more. Apps before 1.3 show
 		// owners' controls by it, which every member now has.
 		Owner:   m.userID != nil && !m.left,

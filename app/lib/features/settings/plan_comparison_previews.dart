@@ -34,6 +34,7 @@ const previewPlanComparison = PlanComparisonData(
         recurringPerGroup: 50,
         membersPerGroup: 100,
         reminders: true,
+        viewLink: true,
       ),
     ),
   ],

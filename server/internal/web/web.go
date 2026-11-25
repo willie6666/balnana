@@ -44,12 +44,14 @@ func serve(files fs.FS, tagged bool) http.Handler {
 		})
 	}
 
+	viewIndex := withViewPreview(index)
+
 	fileServer := http.FileServerFS(files)
 	compressed := &compressor{}
-	serveIndex := func(w http.ResponseWriter) {
+	serveIndex := func(w http.ResponseWriter, page []byte) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
-		_, _ = w.Write(index)
+		_, _ = w.Write(page)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +61,7 @@ func serve(files fs.FS, tagged bool) http.Handler {
 		}
 		name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 		if name == "" || name == "index.html" {
-			serveIndex(w)
+			serveIndex(w, index)
 			return
 		}
 		if strings.HasPrefix(name, ".") || strings.Contains(name, "/.") {
@@ -92,8 +94,32 @@ func serve(files fs.FS, tagged bool) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		serveIndex(w)
+		if strings.HasPrefix(name, "v/") {
+			serveIndex(w, viewIndex)
+			return
+		}
+		serveIndex(w, index)
 	})
+}
+
+// viewPreview is what chat apps show for a view-only link. It leaves out the
+// group's name, so people who only see the chat do not learn it.
+const viewPreview = `<meta property="og:site_name" content="Balnana">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="A Balnana group, view only">
+  <meta property="og:description" content="Who paid what and who owes whom. No account needed.">
+  <meta name="twitter:card" content="summary">
+`
+
+// withViewPreview is index with the link preview of view-only links in its
+// head. An index without a head is left as it is.
+func withViewPreview(index []byte) []byte {
+	page := string(index)
+	at := strings.Index(page, "</head>")
+	if at < 0 {
+		return index
+	}
+	return []byte(page[:at] + "  " + viewPreview + page[at:])
 }
 
 // etag is the ETag of the embedded file name: a hash of its content, worked

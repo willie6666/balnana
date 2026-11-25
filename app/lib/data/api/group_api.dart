@@ -6,6 +6,7 @@ import '../models/billing.dart';
 import '../models/expense.dart';
 import '../models/group.dart';
 import '../models/page.dart';
+import '../models/view_link.dart';
 import 'expense_draft.dart';
 import 'time_zone.dart';
 import 'transport.dart';
@@ -95,6 +96,43 @@ class GroupApi {
     () => _dio.put<Object?>('$_base/password', data: {'password': password}, options: _as),
     _groupKey,
   );
+
+  /// The group's view-only link, or null when it has none.
+  Future<ViewLink?> viewLink() => _transport.send(
+    () => _dio.get<Object?>('$_base/view-link'),
+    (data) => switch (data) {
+      {'link': final Object link} => ViewLink.fromJson(link),
+      Map<String, Object?>() => null,
+      _ => throw const FormatException('expected an object'),
+    },
+  );
+
+  /// Makes the group's one view-only link: [live], or a snapshot of the group
+  /// as it is now. 409 `view_link_exists` when it has one, 402 `plan_limit`
+  /// when its plan has none.
+  Future<ViewLink> createViewLink({required bool live, required ViewLinkShow show, DateTime? expiresAt}) =>
+      _transport.send(
+        () => _dio.post<Object?>(
+          '$_base/view-link',
+          data: {'live': live, 'show': show.toJson(), 'expiresAt': ?expiresAt?.toUtc().toIso8601String()},
+          options: _as,
+        ),
+        ViewLink.fromJson,
+      );
+
+  /// Sets what the link shows and when it stops working: never without [expiresAt].
+  Future<ViewLink> updateViewLink({required ViewLinkShow show, DateTime? expiresAt}) => _transport.send(
+    () => _dio.put<Object?>(
+      '$_base/view-link',
+      data: {'show': show.toJson(), 'expiresAt': ?expiresAt?.toUtc().toIso8601String()},
+      options: _as,
+    ),
+    ViewLink.fromJson,
+  );
+
+  /// Its URL stops working at once.
+  Future<void> deleteViewLink() =>
+      _transport.send(() => _dio.delete<Object?>('$_base/view-link', options: _as), (_) {});
 
   Future<void> removePassword() =>
       _transport.send(() => _dio.delete<Object?>('$_base/password', options: _as), (_) {});

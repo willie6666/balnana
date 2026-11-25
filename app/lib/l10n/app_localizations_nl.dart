@@ -3790,4 +3790,180 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Zoals in App Store Connect staat, voor een automatisch verlengbaar abonnement. De App Store zegt wanneer elke betaling afloopt, dus er zijn geen dagen in te stellen.';
+
+  @override
+  String get viewOnlyLive => 'Alleen bekijken · Altijd actueel';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Alleen bekijken · Stand van $date';
+  }
+
+  @override
+  String get viewRefresh => 'Vernieuwen';
+
+  @override
+  String get viewBalances => 'Saldi';
+
+  @override
+  String get viewEmptyBody => 'Uitgaven die aan de groep worden toegevoegd, verschijnen hier.';
+
+  @override
+  String get viewMissingTitle => 'Deze link werkt niet';
+
+  @override
+  String get viewMissingBody =>
+      'Hij is uitgezet, of de groep is verwijderd. Vraag iemand in de groep om een nieuwe link.';
+
+  @override
+  String get viewExpiredTitle => 'Deze link is verlopen';
+
+  @override
+  String get viewExpiredBody => 'Vraag iemand in de groep om een nieuwe link.';
+
+  @override
+  String get viewPausedTitle => 'Deze link is gepauzeerd';
+
+  @override
+  String get viewPausedBody =>
+      'Het abonnement van de groep bevat nu geen alleen-bekijkenlinks. De link werkt weer zodra dat wel zo is.';
+
+  @override
+  String get planLimitViewLink => 'Alleen-bekijkenlink';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Groepen met dit abonnement kunnen een link delen waarmee iedereen de groep kan bekijken, zonder in te loggen.';
+
+  @override
+  String get errorLimitViewLink => 'Het abonnement van deze groep bevat geen alleen-bekijkenlink.';
+
+  @override
+  String get errorViewLinkExists => 'Deze groep heeft al een alleen-bekijkenlink.';
+
+  @override
+  String get errorInvalidShow => 'Een alleen-bekijkenlink moet saldi, uitgaven of statistieken tonen.';
+
+  @override
+  String get errorInvalidExpiry => 'Kies een einddatum in de toekomst.';
+
+  @override
+  String get viewLinkTitle => 'Alleen-bekijkenlink';
+
+  @override
+  String get viewLinkHelp => 'Laat iedereen de groep zien zonder lid te worden';
+
+  @override
+  String get viewLinkIntro =>
+      'Iedereen met deze link kan de groep bekijken, zonder account en zonder lid te worden. Ze kunnen niets wijzigen. Een groep heeft steeds één link.';
+
+  @override
+  String get viewLinkCopied => 'Link gekopieerd. Iedereen die hem heeft, kan deze groep bekijken.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Vereist een hoger abonnement';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Het abonnement van deze groep bevat geen alleen-bekijkenlink.';
+
+  @override
+  String get viewLinkKind => 'Bijwerken';
+
+  @override
+  String get viewLinkLive => 'Altijd actueel';
+
+  @override
+  String get viewLinkLiveHelp => 'Toont de groep zoals die is wanneer iemand hem opent.';
+
+  @override
+  String get viewLinkSnapshot => 'Momentopname';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Toont de groep zoals die nu is, en verandert nooit.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Momentopname van $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Latere wijzigingen zijn niet te zien. Zet deze link uit en maak een nieuwe om ze te tonen.';
+
+  @override
+  String get viewLinkShows => 'Wat hij toont';
+
+  @override
+  String get viewLinkShowNotes => 'Notities bij uitgaven';
+
+  @override
+  String get viewLinkShowPlaces => 'Locaties van uitgaven';
+
+  @override
+  String get viewLinkShowReceipts => 'Bonnetjesfoto’s';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Alleen altijd actuele links kunnen bonnetjesfoto’s tonen.';
+
+  @override
+  String get viewLinkExpiry => 'Geldig tot';
+
+  @override
+  String get viewLinkNoExpiry => 'Geldig tot hij wordt uitgezet';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Einde van $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Einddatum verwijderen';
+
+  @override
+  String get viewLinkCreate => 'Link maken';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Niemand kan hem openen tot het abonnement van de groep weer alleen-bekijkenlinks bevat.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'QR-code van de alleen-bekijkenlink naar $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Laatst geopend op $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Nog niet geopend';
+
+  @override
+  String get viewLinkTurnOff => 'Link uitzetten';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Hij werkt dan niet meer. Een nieuwe link krijgt een ander adres.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Alleen-bekijkenlink uitzetten?';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'Wie hem heeft, kan de groep niet meer bekijken. Dit kan niet ongedaan worden gemaakt.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who heeft een alleen-bekijkenlink gemaakt';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who heeft de alleen-bekijkenlink gewijzigd';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who heeft de alleen-bekijkenlink uitgezet';
+  }
 }

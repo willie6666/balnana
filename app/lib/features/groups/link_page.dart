@@ -13,8 +13,8 @@ import 'open_link.dart';
 /// The app pages a web link may open, after the server's address: those of
 /// the web app, which Android hands to this app.
 final _appPaths = RegExp(
-  r'^/(g/[A-Za-z0-9_-]{22}(?:/(?:(?:expenses|recurring)/[A-Za-z0-9_-]+|settings(?:/categories|/recurring)?|join))?'
-  r'|invite/[A-Za-z0-9_-]+|verify-email|reset-password)/?$',
+  r'^/(g/[A-Za-z0-9_-]{22}(?:/(?:(?:expenses|recurring)/[A-Za-z0-9_-]+|settings(?:/categories|/recurring|/view-link)?|join))?'
+  r'|invite/[A-Za-z0-9_-]+|v/[A-Za-z0-9_-]{22}|verify-email|reset-password)/?$',
 );
 
 /// The page of this app that [link] opens, for a link to the current server

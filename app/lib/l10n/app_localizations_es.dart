@@ -3786,4 +3786,179 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Tal como aparece en App Store Connect, para una suscripción con renovación automática. La App Store indica cuándo termina cada pago, así que no hay días que configurar.';
+
+  @override
+  String get viewOnlyLive => 'Solo lectura · Siempre al día';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Solo lectura · A fecha de $date';
+  }
+
+  @override
+  String get viewRefresh => 'Actualizar';
+
+  @override
+  String get viewBalances => 'Saldos';
+
+  @override
+  String get viewEmptyBody => 'Los gastos que se añadan al grupo aparecerán aquí.';
+
+  @override
+  String get viewMissingTitle => 'Este enlace no funciona';
+
+  @override
+  String get viewMissingBody =>
+      'Se desactivó o el grupo se eliminó. Pide un enlace nuevo a alguien del grupo.';
+
+  @override
+  String get viewExpiredTitle => 'Este enlace ha caducado';
+
+  @override
+  String get viewExpiredBody => 'Pide un enlace nuevo a alguien del grupo.';
+
+  @override
+  String get viewPausedTitle => 'Este enlace está en pausa';
+
+  @override
+  String get viewPausedBody =>
+      'El plan del grupo no incluye enlaces de solo lectura ahora mismo. El enlace volverá a funcionar cuando los incluya.';
+
+  @override
+  String get planLimitViewLink => 'Enlace de solo lectura';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Los grupos con este plan pueden compartir un enlace que muestra el grupo a cualquiera, sin iniciar sesión.';
+
+  @override
+  String get errorLimitViewLink => 'El plan de este grupo no incluye un enlace de solo lectura.';
+
+  @override
+  String get errorViewLinkExists => 'Este grupo ya tiene un enlace de solo lectura.';
+
+  @override
+  String get errorInvalidShow => 'Un enlace de solo lectura tiene que mostrar saldos, gastos o estadísticas.';
+
+  @override
+  String get errorInvalidExpiry => 'Elige una fecha de fin futura.';
+
+  @override
+  String get viewLinkTitle => 'Enlace de solo lectura';
+
+  @override
+  String get viewLinkHelp => 'Deja que cualquiera vea el grupo sin unirse';
+
+  @override
+  String get viewLinkIntro =>
+      'Cualquiera con este enlace puede ver el grupo, sin cuenta y sin unirse. No puede cambiar nada. Un grupo tiene un solo enlace a la vez.';
+
+  @override
+  String get viewLinkCopied => 'Enlace copiado. Cualquiera que lo tenga puede ver este grupo.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Requiere un plan superior';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'El plan de este grupo no incluye un enlace de solo lectura.';
+
+  @override
+  String get viewLinkKind => 'Actualización';
+
+  @override
+  String get viewLinkLive => 'Siempre al día';
+
+  @override
+  String get viewLinkLiveHelp => 'Muestra el grupo tal como está cada vez que se abre.';
+
+  @override
+  String get viewLinkSnapshot => 'Instantánea';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Muestra el grupo tal como está ahora y nunca cambia.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Instantánea del $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Los cambios posteriores no se muestran. Para mostrarlos, desactiva este enlace y crea uno nuevo.';
+
+  @override
+  String get viewLinkShows => 'Qué muestra';
+
+  @override
+  String get viewLinkShowNotes => 'Notas de los gastos';
+
+  @override
+  String get viewLinkShowPlaces => 'Lugares de los gastos';
+
+  @override
+  String get viewLinkShowReceipts => 'Fotos de recibos';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Solo los enlaces siempre al día pueden mostrar fotos de recibos.';
+
+  @override
+  String get viewLinkExpiry => 'Válido hasta';
+
+  @override
+  String get viewLinkNoExpiry => 'Válido hasta que se desactive';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Final del $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Quitar fecha de fin';
+
+  @override
+  String get viewLinkCreate => 'Crear enlace';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Nadie puede abrirlo hasta que el plan del grupo vuelva a incluir enlaces de solo lectura.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'Código QR del enlace de solo lectura a $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Abierto por última vez el $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Aún no se ha abierto';
+
+  @override
+  String get viewLinkTurnOff => 'Desactivar enlace';
+
+  @override
+  String get viewLinkTurnOffHelp => 'Deja de funcionar. Un enlace nuevo tendría otra dirección.';
+
+  @override
+  String get viewLinkTurnOffTitle => '¿Desactivar el enlace de solo lectura?';
+
+  @override
+  String get viewLinkTurnOffBody => 'Quien lo tenga ya no podrá ver el grupo. No se puede deshacer.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who creó un enlace de solo lectura';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who cambió el enlace de solo lectura';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who desactivó el enlace de solo lectura';
+  }
 }

@@ -1521,6 +1521,83 @@ paths:
                 $ref: "#/components/schemas/GroupPlan"
         default:
           $ref: "#/components/responses/Error"
+  /g/{token}/view-link:
+    parameters:
+      - $ref: "#/components/parameters/Token"
+    get:
+      operationId: getViewLink
+      summary: The group's view-only link, if it has one
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewLinkState"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createViewLink
+      summary: Make the group's view-only link
+      description: >-
+        A group has one at most: 409 `view_link_exists` while it has one.
+        A snapshot stores the group as it is now (413 `too_large` when that
+        passes 8 MiB) and cannot show receipts. With billing enabled the
+        group's plan must include it (402 `plan_limit`, limit `viewLink`).
+        Accounts mode: any member, or anyone the link opens the group for
+        when no account is a member any more (otherwise 403
+        `not_a_member`). The group's password does not apply to the link.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ViewLinkCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewLink"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateViewLink
+      summary: Change what the view-only link shows and when it expires
+      description: >-
+        Replaces both; the link's URL stays the same. Allowed as creating
+        it is, also while the link is paused.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ViewLinkSettings"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewLink"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteViewLink
+      summary: Revoke the view-only link, with a snapshot's data
+      description: Allowed as creating it is, also while the link is paused.
+      parameters:
+        - $ref: "#/components/parameters/ActingMember"
+      responses:
+        "204":
+          description: Revoked, or there was none
+        default:
+          $ref: "#/components/responses/Error"
   /g/{token}/sponsor:
     parameters:
       - $ref: "#/components/parameters/Token"
@@ -2163,6 +2240,111 @@ paths:
                 type: string
         default:
           $ref: "#/components/responses/Error"
+  /v/{viewToken}:
+    parameters:
+      - $ref: "#/components/parameters/ViewToken"
+    get:
+      operationId: getView
+      summary: A group as its view-only link shows it
+      description: >-
+        Needs no session, and ignores one, the acting member and group
+        keys. 404 for an unknown or revoked link, or a deleted group; 410
+        `view_link_expired` once it expired; 403 `view_link_paused` while
+        the group's plan does not include it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewGroup"
+        default:
+          $ref: "#/components/responses/Error"
+  /v/{viewToken}/expenses:
+    parameters:
+      - $ref: "#/components/parameters/ViewToken"
+    get:
+      operationId: listViewExpenses
+      summary: The expenses a view-only link shows, newest first
+      description: >-
+        As /g/{token}/expenses, with errors as /v/{viewToken}; 404 unless
+        the link shows expenses. `q` searches notes and places only when the
+        link shows them.
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+        - name: member
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViewExpensePage"
+        default:
+          $ref: "#/components/responses/Error"
+  /v/{viewToken}/stats:
+    parameters:
+      - $ref: "#/components/parameters/ViewToken"
+    get:
+      operationId: getViewStats
+      summary: What the group spent, as a view-only link shows it
+      description: >-
+        As /g/{token}/stats, with errors as /v/{viewToken}; 404 unless the
+        link shows spending. Months follow `timeZone`, UTC when left out.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/TimeZone"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupStats"
+        default:
+          $ref: "#/components/responses/Error"
+  /v/{viewToken}/expenses/{expenseId}/receipt:
+    parameters:
+      - $ref: "#/components/parameters/ViewToken"
+      - $ref: "#/components/parameters/ExpenseId"
+    get:
+      operationId: getViewReceipt
+      summary: The photo of an expense's receipt, for a live link showing receipts
+      responses:
+        "200":
+          description: A JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
 components:
   parameters:
     AdminToken:
@@ -2177,6 +2359,13 @@ components:
       in: path
       required: true
       description: The group's secret token from its link.
+      schema:
+        type: string
+    ViewToken:
+      name: viewToken
+      in: path
+      required: true
+      description: The secret token from a group's view-only link.
       schema:
         type: string
     CategoryId:
@@ -2809,6 +2998,198 @@ components:
           description: The recurring expense that added it, while that still exists.
         foreign:
           $ref: "#/components/schemas/Foreign"
+    ViewLinkShow:
+      type: object
+      description: >-
+        What a view-only link shows besides the group's name, symbol,
+        colour, currency and member names. At least one of `balances`,
+        `expenses` and `spending` (400 `invalid_show`). `notes`, `places`
+        and `receipts` are about expenses and apply only with `expenses`;
+        a snapshot cannot show `receipts` (400 `invalid_show`).
+      required: [balances, expenses, spending, notes, places, receipts]
+      properties:
+        balances:
+          type: boolean
+          description: Each member's balance and the suggested payments.
+        expenses:
+          type: boolean
+          description: The expenses, with whoever paid and shared in them.
+        spending:
+          type: boolean
+          description: Spending by category, member and month.
+        notes:
+          type: boolean
+        places:
+          type: boolean
+        receipts:
+          type: boolean
+    ViewLinkSettings:
+      type: object
+      required: [show]
+      properties:
+        show:
+          $ref: "#/components/schemas/ViewLinkShow"
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the link stops working; left out for never. 400 `invalid_expiry` when past.
+    ViewLinkCreate:
+      type: object
+      required: [live, show]
+      properties:
+        live:
+          type: boolean
+          description: Whether it always shows the group as it is, rather than as it is now. Cannot change later.
+        show:
+          $ref: "#/components/schemas/ViewLinkShow"
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the link stops working; left out for never. 400 `invalid_expiry` when past.
+    ViewLink:
+      type: object
+      required: [token, live, show, createdAt, paused]
+      properties:
+        token:
+          type: string
+          description: The secret of its URL, /v/{token}.
+        live:
+          type: boolean
+        snapshotAt:
+          type: string
+          format: date-time
+          description: When a snapshot was taken; left out for a live link.
+        show:
+          $ref: "#/components/schemas/ViewLinkShow"
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastViewedAt:
+          type: string
+          format: date-time
+          description: When it was last opened, to the hour.
+        paused:
+          type: boolean
+          description: The group's plan does not include a view-only link, so the link shows nothing.
+    ViewLinkState:
+      type: object
+      properties:
+        link:
+          $ref: "#/components/schemas/ViewLink"
+    ViewMember:
+      type: object
+      required: [id, name, left]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: integer
+        left:
+          type: boolean
+        balance:
+          $ref: "#/components/schemas/Money"
+          description: Left out unless the link shows balances.
+    ViewGroup:
+      type: object
+      required: [name, currency, minorDigits, live, show, members, categories]
+      properties:
+        name:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: integer
+        currency:
+          type: string
+        symbol:
+          type: string
+        minorDigits:
+          type: integer
+        live:
+          type: boolean
+        asOf:
+          type: string
+          format: date-time
+          description: When a snapshot was taken; left out for a live link.
+        show:
+          $ref: "#/components/schemas/ViewLinkShow"
+          description: >-
+            What the link shows, with `notes`, `places` and `receipts` false
+            unless `expenses` is shown.
+        members:
+          type: array
+          description: Everyone, including members who left, oldest first.
+          items:
+            $ref: "#/components/schemas/ViewMember"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+        transfers:
+          type: array
+          description: Suggested payments that settle everyone up; left out unless the link shows balances.
+          items:
+            $ref: "#/components/schemas/Transfer"
+    ViewExpense:
+      type: object
+      required: [id, transactionType, title, amount, occurredAt, splitMethod, payers, splits, createdAt, updatedAt, hasReceipt]
+      properties:
+        id:
+          type: string
+        transactionType:
+          type: string
+          enum: [expense, refund, income]
+        title:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        occurredAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+          description: Left out unless the link shows notes.
+        location:
+          $ref: "#/components/schemas/Location"
+          description: Left out unless the link shows places.
+        splitMethod:
+          $ref: "#/components/schemas/SplitMethod"
+        payers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payer"
+        splits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SplitPart"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        hasReceipt:
+          type: boolean
+          description: Whether /receipt has a photo; false unless the link shows receipts.
+        foreign:
+          $ref: "#/components/schemas/Foreign"
+    ViewExpensePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ViewExpense"
+        nextCursor:
+          type: string
     Repeat:
       type: object
       required: [unit, every]
@@ -3724,6 +4105,9 @@ components:
         reminders:
           type: boolean
           description: Whether its groups can send payment reminders as notifications. Left out means not.
+        viewLink:
+          type: boolean
+          description: Whether its groups can have a view-only link. Left out means not.
     Plan:
       type: object
       required: [id, name, rank, isDefault, limits]
@@ -3927,7 +4311,7 @@ components:
           description: Left out means no limit.
     MyPlan:
       type: object
-      required: [planName, paid, joinedGroups, sponsoredGroups, reminders]
+      required: [planName, paid, joinedGroups, sponsoredGroups, reminders, viewLink]
       properties:
         planName:
           type: string
@@ -3953,6 +4337,9 @@ components:
         reminders:
           type: boolean
           description: Whether groups this account sponsors can send payment reminders as notifications.
+        viewLink:
+          type: boolean
+          description: Whether groups this account sponsors can have a view-only link.
         play:
           $ref: "#/components/schemas/PlayBilling"
         appStore:
@@ -4089,7 +4476,7 @@ components:
           description: The transaction ID, or the link to the payment.
     GroupPlan:
       type: object
-      required: [planName, members, receipts, recurring, reminders, canSponsor]
+      required: [planName, members, receipts, recurring, reminders, viewLink, canSponsor]
       properties:
         planName:
           type: string
@@ -4106,6 +4493,9 @@ components:
         reminders:
           type: boolean
           description: Whether the group can send payment reminders as notifications.
+        viewLink:
+          type: boolean
+          description: Whether the group can have a view-only link.
         canSponsor:
           type: boolean
           description: Whether the signed-in account could sponsor the group now.

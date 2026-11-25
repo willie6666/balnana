@@ -3813,4 +3813,182 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get adminProductAppStoreIdHelp =>
       'Wie in App Store Connect für ein automatisch verlängertes Abo angegeben. Der App Store sagt, wann jede Zahlung endet, daher gibt es keine Tage einzustellen.';
+
+  @override
+  String get viewOnlyLive => 'Nur ansehen · Immer aktuell';
+
+  @override
+  String viewOnlyAsOf(String date) {
+    return 'Nur ansehen · Stand $date';
+  }
+
+  @override
+  String get viewRefresh => 'Aktualisieren';
+
+  @override
+  String get viewBalances => 'Salden';
+
+  @override
+  String get viewEmptyBody => 'Ausgaben, die der Gruppe hinzugefügt werden, erscheinen hier.';
+
+  @override
+  String get viewMissingTitle => 'Dieser Link funktioniert nicht';
+
+  @override
+  String get viewMissingBody =>
+      'Er wurde deaktiviert oder die Gruppe wurde gelöscht. Bitte jemanden aus der Gruppe um einen neuen Link.';
+
+  @override
+  String get viewExpiredTitle => 'Dieser Link ist abgelaufen';
+
+  @override
+  String get viewExpiredBody => 'Bitte jemanden aus der Gruppe um einen neuen Link.';
+
+  @override
+  String get viewPausedTitle => 'Dieser Link ist pausiert';
+
+  @override
+  String get viewPausedBody =>
+      'Der Tarif der Gruppe enthält gerade keine Nur-Ansehen-Links. Sobald er das tut, funktioniert der Link wieder.';
+
+  @override
+  String get planLimitViewLink => 'Nur-Ansehen-Link';
+
+  @override
+  String get adminPlanViewLinkHelp =>
+      'Gruppen mit diesem Tarif können einen Link teilen, über den jeder die Gruppe ohne Anmeldung ansehen kann.';
+
+  @override
+  String get errorLimitViewLink => 'Der Tarif dieser Gruppe enthält keinen Nur-Ansehen-Link.';
+
+  @override
+  String get errorViewLinkExists => 'Diese Gruppe hat bereits einen Nur-Ansehen-Link.';
+
+  @override
+  String get errorInvalidShow =>
+      'Ein Nur-Ansehen-Link muss Salden, Ausgaben oder die Ausgabenübersicht zeigen.';
+
+  @override
+  String get errorInvalidExpiry => 'Wähle ein Enddatum in der Zukunft.';
+
+  @override
+  String get viewLinkTitle => 'Nur-Ansehen-Link';
+
+  @override
+  String get viewLinkHelp => 'Jeder kann die Gruppe sehen, ohne beizutreten';
+
+  @override
+  String get viewLinkIntro =>
+      'Wer diesen Link hat, kann die Gruppe sehen – ohne Konto und ohne beizutreten. Ändern kann man nichts. Eine Gruppe hat immer nur einen Link.';
+
+  @override
+  String get viewLinkCopied => 'Link kopiert. Jeder, der ihn hat, kann diese Gruppe sehen.';
+
+  @override
+  String get viewLinkNeedsPlan => 'Erfordert einen höheren Tarif';
+
+  @override
+  String get viewLinkNeedsPlanHelp => 'Der Tarif dieser Gruppe enthält keinen Nur-Ansehen-Link.';
+
+  @override
+  String get viewLinkKind => 'Aktualisierung';
+
+  @override
+  String get viewLinkLive => 'Immer aktuell';
+
+  @override
+  String get viewLinkLiveHelp => 'Zeigt die Gruppe so, wie sie beim Öffnen gerade ist.';
+
+  @override
+  String get viewLinkSnapshot => 'Momentaufnahme';
+
+  @override
+  String get viewLinkSnapshotHelp => 'Zeigt die Gruppe so, wie sie jetzt ist, und ändert sich nie.';
+
+  @override
+  String viewLinkSnapshotOf(String date) {
+    return 'Momentaufnahme vom $date';
+  }
+
+  @override
+  String get viewLinkSnapshotMade =>
+      'Spätere Änderungen erscheinen nicht. Um sie zu zeigen, deaktiviere diesen Link und erstelle einen neuen.';
+
+  @override
+  String get viewLinkShows => 'Was er zeigt';
+
+  @override
+  String get viewLinkShowNotes => 'Notizen zu Ausgaben';
+
+  @override
+  String get viewLinkShowPlaces => 'Orte von Ausgaben';
+
+  @override
+  String get viewLinkShowReceipts => 'Belegfotos';
+
+  @override
+  String get viewLinkReceiptsLiveOnly => 'Nur immer aktuelle Links können Belegfotos zeigen.';
+
+  @override
+  String get viewLinkExpiry => 'Gültig bis';
+
+  @override
+  String get viewLinkNoExpiry => 'Gültig, bis er deaktiviert wird';
+
+  @override
+  String viewLinkExpiresOn(String date) {
+    return 'Ende des $date';
+  }
+
+  @override
+  String get viewLinkClearExpiry => 'Enddatum entfernen';
+
+  @override
+  String get viewLinkCreate => 'Link erstellen';
+
+  @override
+  String get viewLinkPausedHelp =>
+      'Niemand kann ihn öffnen, bis der Tarif der Gruppe wieder Nur-Ansehen-Links enthält.';
+
+  @override
+  String viewLinkQrLabel(String group) {
+    return 'QR-Code des Nur-Ansehen-Links zu $group';
+  }
+
+  @override
+  String viewLinkLastOpened(String date) {
+    return 'Zuletzt geöffnet am $date';
+  }
+
+  @override
+  String get viewLinkNeverOpened => 'Noch nicht geöffnet';
+
+  @override
+  String get viewLinkTurnOff => 'Link deaktivieren';
+
+  @override
+  String get viewLinkTurnOffHelp =>
+      'Er funktioniert dann nicht mehr. Ein neuer Link hätte eine andere Adresse.';
+
+  @override
+  String get viewLinkTurnOffTitle => 'Nur-Ansehen-Link deaktivieren?';
+
+  @override
+  String get viewLinkTurnOffBody =>
+      'Wer ihn hat, kann die Gruppe nicht mehr sehen. Das lässt sich nicht rückgängig machen.';
+
+  @override
+  String activityViewLinkCreated(String who) {
+    return '$who hat einen Nur-Ansehen-Link erstellt';
+  }
+
+  @override
+  String activityViewLinkChanged(String who) {
+    return '$who hat den Nur-Ansehen-Link geändert';
+  }
+
+  @override
+  String activityViewLinkRevoked(String who) {
+    return '$who hat den Nur-Ansehen-Link deaktiviert';
+  }
 }
