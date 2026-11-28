@@ -1135,5 +1135,9 @@
   "planSupports": "Płatne plany utrzymują ten serwer.",
   "planPayWith": "Zapłać przez",
   "planKofiBuy": "Kup na Ko-fi",
-  "planUsageNow": "Twoje wykorzystanie ({plan})"
+  "planUsageNow": "Twoje wykorzystanie ({plan})",
+  "planPriceAtKofi": "Cenę pokazuje Ko-fi",
+  "adminProductDisplayPrice": "Wyświetlana cena",
+  "adminProductDisplayPriceHelp": "Widoczna na stronie planów, na przykład US$5. Nie zmienia pobieranej kwoty ani sposobu dopasowywania płatności. Gdy pole jest puste, widać powyższą kwotę.",
+  "adminProductShownPrice": "Wyświetlane jako {price}"
 }

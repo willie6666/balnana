@@ -1135,5 +1135,9 @@
   "planSupports": "Betaalde abonnementen houden deze server draaiende.",
   "planPayWith": "Betalen met",
   "planKofiBuy": "Kopen op Ko-fi",
-  "planUsageNow": "Je gebruik ({plan})"
+  "planUsageNow": "Je gebruik ({plan})",
+  "planPriceAtKofi": "Ko-fi toont de prijs",
+  "adminProductDisplayPrice": "Getoonde prijs",
+  "adminProductDisplayPriceHelp": "Staat op de abonnementspagina, bijvoorbeeld US$5. Verandert niet wat er wordt afgeschreven of hoe betalingen worden gekoppeld. Leeg gelaten wordt het bedrag hierboven getoond.",
+  "adminProductShownPrice": "Getoond als {price}"
 }

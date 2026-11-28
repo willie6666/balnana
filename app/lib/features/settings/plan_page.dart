@@ -348,6 +348,8 @@ class _PlanPageState extends ConsumerState<PlanPage> {
       for (final offer in paypal?.offers ?? const <PayPalOffer>[])
         if (!offer.subscription || !paypal!.subscribed.contains(offer.product)) offer,
     ];
+    // Without a page to buy them on, what Ko-fi sells is of no use.
+    final kofiOffers = kofi == null ? const <KofiOffer>[] : plan.kofi ?? const <KofiOffer>[];
     final choices = sortedChoices([
       for (final offer in offers)
         _storeChoice(
@@ -367,22 +369,13 @@ class _PlanPageState extends ConsumerState<PlanPage> {
           months: offer.months,
           buy: () => _buyAppStore(offer, appStore!),
         ),
-      for (final offer in paypalOffers)
-        PlanChoice(
-          id: 'paypal:${offer.product}',
-          planName: offer.planName,
-          subscription: offer.subscription,
-          days: offer.days,
-          period: l10n.planPayPalDays(offer.days),
-          price: switch ((offer.amount, offer.currency)) {
-            (final amount?, final currency?) when !offer.subscription => '$amount $currency',
-            _ => null,
-          },
-          note: offer.subscription
-              ? '${l10n.planPayPalSubscription(offer.days)}\n${l10n.planPriceAtPayPal}'
-              : l10n.planOnceNote,
-          buy: () => _payPal(offer),
-        ),
+      ...externalChoices(
+        l10n,
+        paypal: paypalOffers,
+        kofi: kofiOffers,
+        buyPayPal: _payPal,
+        openKofi: () => _open(kofi!),
+      ),
     ]);
     final selected = choices.where((c) => c.id == _selected).firstOrNull ?? choices.firstOrNull;
 
@@ -430,6 +423,8 @@ class _PlanPageState extends ConsumerState<PlanPage> {
             choices: choices,
             selected: selected,
             kofi: kofi,
+            // A server that doesn't say what Ko-fi sells may sell any of it.
+            anyOnKofi: kofiOffers.isEmpty,
             play: play,
             playDown: playDown,
             appStore: appStore,
@@ -621,6 +616,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     required List<PlanChoice> choices,
     required PlanChoice? selected,
     required Uri? kofi,
+    required bool anyOnKofi,
     required PlayBilling? play,
     required bool playDown,
     required AppStoreBilling? appStore,
@@ -632,6 +628,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final scheme = theme.colorScheme;
     final severalPlans = {for (final c in choices) c.planName}.length > 1;
     final name = selected?.planName ?? targetName;
+    // Whether the picked choice can be paid for both ways.
+    final both = kofi != null &&
+        selected?.paypal != null &&
+        (selected?.kofi != null || anyOnKofi);
+    final onlyKofi = selected == null || selected.paypal == null && selected.kofi != null;
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(BSpace.s16, 0, BSpace.s16, BSpace.s8),
@@ -674,18 +675,18 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               ? null
               : selected == null
               ? () => _open(kofi!)
-              : kofi != null && selected.id.startsWith('paypal:')
+              : both
               ? () => _chooseMethod(selected, kofi)
               : selected.buy,
           child: Text(
-            selected == null
+            onlyKofi
                 ? l10n.planKofiBuy
                 : paid
                 ? l10n.planBuy(name!)
                 : l10n.planUpgradeTo(name!),
           ),
         ),
-        if (selected == null) _note(context, l10n.planKofiHelp),
+        if (onlyKofi) _note(context, l10n.planKofiHelp),
         // Nothing renews a one-off payment, so there is nothing to cancel.
         _note(
           context,
@@ -755,14 +756,17 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               GroupedTile(
                 icon: Icons.payments_outlined,
                 title: 'PayPal',
-                subtitle: [?choice.period, ?choice.price].join(' · '),
+                subtitle: [?choice.period, ?choice.paypal?.price].join(' · '),
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () => Navigator.pop(context, choice.buy),
               ),
               GroupedTile(
                 icon: Icons.coffee_outlined,
                 title: l10n.planKofi,
-                subtitle: l10n.planKofiHelp,
+                subtitle: [
+                  if (choice.kofi case final offer?) [?choice.period, ?offer.price].join(' · '),
+                  l10n.planKofiHelp,
+                ].join('\n'),
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () => Navigator.pop(context, () => _open(kofi)),
               ),

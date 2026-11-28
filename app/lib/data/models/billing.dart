@@ -93,6 +93,7 @@ class MyPlan {
     this.play,
     this.appStore,
     this.paypal,
+    this.kofi,
     this.comparison,
   });
 
@@ -112,6 +113,11 @@ class MyPlan {
       play: json['play'] == null ? null : PlayBilling.fromJson(json['play']),
       appStore: json['appStore'] == null ? null : AppStoreBilling.fromJson(json['appStore']),
       paypal: json['paypal'] == null ? null : PayPalBilling.fromJson(json['paypal']),
+      kofi: [
+        if (json['kofi'] != null)
+          for (final o in optionalField<List<Object?>>(jsonObject(json['kofi']), 'offers') ?? const [])
+            KofiOffer.fromJson(o),
+      ],
       comparison: json['comparison'] == null ? null : PlanComparisonData.fromJson(json['comparison']),
     );
   }
@@ -150,6 +156,9 @@ class MyPlan {
 
   /// Null when nothing can be bought through PayPal.
   final PayPalBilling? paypal;
+
+  /// What Ko-fi sells; null or empty when the server doesn't say.
+  final List<KofiOffer>? kofi;
 
   /// The current, automatic and purchasable plans for comparing their limits.
   final PlanComparisonData? comparison;
@@ -209,6 +218,7 @@ class PayPalOffer {
     this.subscription = false,
     this.amount,
     this.currency,
+    this.displayPrice,
   });
 
   factory PayPalOffer.fromJson(Object? data) {
@@ -220,6 +230,7 @@ class PayPalOffer {
       subscription: optionalField<bool>(json, 'subscription') ?? false,
       amount: optionalField(json, 'amount'),
       currency: optionalField(json, 'currency'),
+      displayPrice: optionalField(json, 'displayPrice'),
     );
   }
 
@@ -234,7 +245,41 @@ class PayPalOffer {
   /// What a one-off payment costs; PayPal shows a subscription's price.
   final String? amount;
   final String? currency;
+
+  /// The administrator's wording of the price.
+  final String? displayPrice;
+
+  /// The price to show: as worded, or what a one-off payment costs. Null when
+  /// only PayPal knows.
+  String? get price => displayPrice ?? (subscription ? null : _price(amount, currency));
 }
+
+/// A plan sold on Ko-fi for [days].
+class KofiOffer {
+  const KofiOffer({required this.planName, required this.days, this.amount, this.currency, this.displayPrice});
+
+  factory KofiOffer.fromJson(Object? data) {
+    final json = jsonObject(data);
+    return KofiOffer(
+      planName: requiredField(json, 'planName'),
+      days: requiredField<num>(json, 'days').toInt(),
+      amount: optionalField(json, 'amount'),
+      currency: optionalField(json, 'currency'),
+      displayPrice: optionalField(json, 'displayPrice'),
+    );
+  }
+
+  final String planName;
+  final int days;
+  final String? amount;
+  final String? currency;
+  final String? displayPrice;
+
+  /// The price to show, if the server knows one.
+  String? get price => displayPrice ?? _price(amount, currency);
+}
+
+String? _price(String? amount, String? currency) => amount == null || currency == null ? null : '$amount $currency';
 
 /// The limits that apply to a group and how much of them is used.
 class GroupPlan {
@@ -379,6 +424,7 @@ class PlanProduct {
     this.minAmount,
     this.currency,
     this.withoutTrial,
+    this.displayPrice,
   });
 
   factory PlanProduct.fromJson(Object? data) {
@@ -391,6 +437,7 @@ class PlanProduct {
       minAmount: optionalField(json, 'minAmount'),
       currency: optionalField(json, 'currency'),
       withoutTrial: optionalField(json, 'withoutTrial'),
+      displayPrice: optionalField(json, 'displayPrice'),
     );
   }
 
@@ -411,6 +458,10 @@ class PlanProduct {
   /// accounts that have had a trial subscribe to.
   final String? withoutTrial;
 
+  /// For Ko-fi and PayPal, the price the Plan page shows. Nothing is charged
+  /// by it.
+  final String? displayPrice;
+
   Map<String, Object?> toJson() => {
     'provider': provider,
     'product': product,
@@ -419,6 +470,7 @@ class PlanProduct {
     'minAmount': ?minAmount,
     'currency': ?currency,
     'withoutTrial': ?withoutTrial,
+    'displayPrice': ?displayPrice,
   };
 }
 

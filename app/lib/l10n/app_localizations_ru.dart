@@ -4133,4 +4133,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Использование ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Цена указана на Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => 'Отображаемая цена';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Показывается на странице тарифов, например US\$5. Не меняет списываемую сумму и сопоставление платежей. Если поле пустое, показывается сумма выше.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Показывается как $price';
+  }
 }

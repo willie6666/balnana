@@ -4173,4 +4173,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Twoje wykorzystanie ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Cenę pokazuje Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => 'Wyświetlana cena';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Widoczna na stronie planów, na przykład US\$5. Nie zmienia pobieranej kwoty ani sposobu dopasowywania płatności. Gdy pole jest puste, widać powyższą kwotę.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Wyświetlane jako $price';
+  }
 }

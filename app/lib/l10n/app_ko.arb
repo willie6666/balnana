@@ -1135,5 +1135,9 @@
   "planSupports": "유료 요금제는 이 서버 운영에 쓰여요.",
   "planPayWith": "결제 수단",
   "planKofiBuy": "Ko-fi에서 구매",
-  "planUsageNow": "현재 사용량({plan})"
+  "planUsageNow": "현재 사용량({plan})",
+  "planPriceAtKofi": "가격은 Ko-fi에서 표시돼요",
+  "adminProductDisplayPrice": "표시 가격",
+  "adminProductDisplayPriceHelp": "요금제 페이지에 표시돼요(예: US$5). 청구 금액이나 결제 대조에는 영향이 없어요. 비워 두면 위의 금액이 표시돼요.",
+  "adminProductShownPrice": "{price}(으)로 표시"
 }

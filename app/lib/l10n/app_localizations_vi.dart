@@ -3991,4 +3991,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Mức dùng của bạn ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Giá hiển thị trên Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => 'Giá hiển thị';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Hiện trên trang gói, ví dụ US\$5. Không thay đổi số tiền bị tính hay cách đối chiếu thanh toán. Để trống thì hiện số tiền ở trên.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Hiển thị là $price';
+  }
 }

@@ -1135,5 +1135,9 @@
   "planSupports": "Les formules payantes font vivre ce serveur.",
   "planPayWith": "Payer avec",
   "planKofiBuy": "Acheter sur Ko-fi",
-  "planUsageNow": "Votre utilisation ({plan})"
+  "planUsageNow": "Votre utilisation ({plan})",
+  "planPriceAtKofi": "Le prix est affiché sur Ko-fi",
+  "adminProductDisplayPrice": "Prix affiché",
+  "adminProductDisplayPriceHelp": "Affiché sur la page des formules, par exemple US$5. Ne change ni le montant facturé ni l’association des paiements. Si le champ est vide, le montant ci-dessus est affiché.",
+  "adminProductShownPrice": "Affiché : {price}"
 }

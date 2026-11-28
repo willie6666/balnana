@@ -3860,4 +3860,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String planUsageNow(String plan) {
     return '現在の使用状況（$plan）';
   }
+
+  @override
+  String get planPriceAtKofi => '価格は Ko-fi に表示されます';
+
+  @override
+  String get adminProductDisplayPrice => '表示価格';
+
+  @override
+  String get adminProductDisplayPriceHelp => 'プランページに表示します（例：US\$5）。請求額や支払いの照合は変わりません。空欄の場合は上の金額を表示します。';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '表示：$price';
+  }
 }

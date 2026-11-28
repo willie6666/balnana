@@ -3863,4 +3863,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String planUsageNow(String plan) {
     return '현재 사용량($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => '가격은 Ko-fi에서 표시돼요';
+
+  @override
+  String get adminProductDisplayPrice => '표시 가격';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      '요금제 페이지에 표시돼요(예: US\$5). 청구 금액이나 결제 대조에는 영향이 없어요. 비워 두면 위의 금액이 표시돼요.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '$price(으)로 표시';
+  }
 }

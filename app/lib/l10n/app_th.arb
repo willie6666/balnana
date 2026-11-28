@@ -1135,5 +1135,9 @@
   "planSupports": "แพ็กเกจแบบชำระเงินช่วยให้เซิร์ฟเวอร์นี้ทำงานต่อได้",
   "planPayWith": "ชำระด้วย",
   "planKofiBuy": "ซื้อบน Ko-fi",
-  "planUsageNow": "การใช้งานของคุณ ({plan})"
+  "planUsageNow": "การใช้งานของคุณ ({plan})",
+  "planPriceAtKofi": "ดูราคาได้ที่ Ko-fi",
+  "adminProductDisplayPrice": "ราคาที่แสดง",
+  "adminProductDisplayPriceHelp": "แสดงในหน้าแพ็กเกจ เช่น US$5 ไม่เปลี่ยนยอดที่เรียกเก็บหรือการจับคู่การชำระเงิน หากเว้นว่างจะแสดงจำนวนเงินด้านบน",
+  "adminProductShownPrice": "แสดงเป็น {price}"
 }

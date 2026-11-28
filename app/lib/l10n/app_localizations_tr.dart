@@ -4011,4 +4011,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Kullanımınız ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Fiyat Ko-fi’de gösterilir';
+
+  @override
+  String get adminProductDisplayPrice => 'Gösterilen fiyat';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Plan sayfasında gösterilir, örneğin US\$5. Tahsil edilen tutarı veya ödemelerin eşleştirilmesini değiştirmez. Boş bırakılırsa yukarıdaki tutar gösterilir.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '$price olarak gösterilir';
+  }
 }

@@ -1135,5 +1135,9 @@
   "planSupports": "Ücretli planlar bu sunucunun çalışmasını sağlar.",
   "planPayWith": "Ödeme yöntemi",
   "planKofiBuy": "Ko-fi’den satın al",
-  "planUsageNow": "Kullanımınız ({plan})"
+  "planUsageNow": "Kullanımınız ({plan})",
+  "planPriceAtKofi": "Fiyat Ko-fi’de gösterilir",
+  "adminProductDisplayPrice": "Gösterilen fiyat",
+  "adminProductDisplayPriceHelp": "Plan sayfasında gösterilir, örneğin US$5. Tahsil edilen tutarı veya ödemelerin eşleştirilmesini değiştirmez. Boş bırakılırsa yukarıdaki tutar gösterilir.",
+  "adminProductShownPrice": "{price} olarak gösterilir"
 }

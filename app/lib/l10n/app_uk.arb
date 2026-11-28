@@ -1135,5 +1135,9 @@
   "planSupports": "Платні тарифи підтримують роботу цього сервера.",
   "planPayWith": "Спосіб оплати",
   "planKofiBuy": "Купити на Ko-fi",
-  "planUsageNow": "Використання ({plan})"
+  "planUsageNow": "Використання ({plan})",
+  "planPriceAtKofi": "Ціну вказано на Ko-fi",
+  "adminProductDisplayPrice": "Показана ціна",
+  "adminProductDisplayPriceHelp": "Відображається на сторінці тарифів, наприклад US$5. Не змінює суму списання та зіставлення платежів. Якщо поле порожнє, показується сума вище.",
+  "adminProductShownPrice": "Показується як {price}"
 }

@@ -3959,4 +3959,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'การใช้งานของคุณ ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'ดูราคาได้ที่ Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => 'ราคาที่แสดง';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'แสดงในหน้าแพ็กเกจ เช่น US\$5 ไม่เปลี่ยนยอดที่เรียกเก็บหรือการจับคู่การชำระเงิน หากเว้นว่างจะแสดงจำนวนเงินด้านบน';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'แสดงเป็น $price';
+  }
 }

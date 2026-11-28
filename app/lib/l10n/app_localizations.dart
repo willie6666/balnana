@@ -6944,6 +6944,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your usage ({plan})'**
   String planUsageNow(String plan);
+
+  /// Under a Ko-fi choice whose price the app does not know.
+  ///
+  /// In en, this message translates to:
+  /// **'Ko-fi shows the price'**
+  String get planPriceAtKofi;
+
+  /// Field of a Ko-fi or PayPal product: the price the Plan page shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Displayed price'**
+  String get adminProductDisplayPrice;
+
+  /// Help under the displayed price field.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on the Plan page, for example US\$5. It doesn’t change what is charged or how payments are matched. Left empty, the amount above is shown.'**
+  String get adminProductDisplayPriceHelp;
+
+  /// In the list of products, the price the Plan page shows for one.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown as {price}'**
+  String adminProductShownPrice(String price);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

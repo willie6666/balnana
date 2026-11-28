@@ -4161,6 +4161,13 @@ components:
             same plan without one ("P-..."). PayPal gives the trial to every
             subscription on a plan, so accounts that have had one subscribe
             to this plan instead.
+        displayPrice:
+          type: string
+          maxLength: 40
+          description: >-
+            For Ko-fi and PayPal, the price the Plan page shows, such as
+            "US$5". Nothing is charged or matched by it. Without it the page
+            shows `minAmount`, which a PayPal subscription doesn't use.
     PlanCatalog:
       type: object
       required: [plans, products]
@@ -4350,6 +4357,8 @@ components:
           $ref: "#/components/schemas/AppStoreBilling"
         paypal:
           $ref: "#/components/schemas/PayPalBilling"
+        kofi:
+          $ref: "#/components/schemas/KofiBilling"
         comparison:
           $ref: "#/components/schemas/PlanComparison"
     PlanComparison:
@@ -4396,8 +4405,37 @@ components:
           description: What a one-off payment costs. PayPal shows a subscription's price.
         currency:
           type: string
+        displayPrice:
+          type: string
+          description: The administrator's wording of the price, to show in place of the amount.
         subscription:
           type: boolean
+    KofiBilling:
+      type: object
+      description: What can be bought on Ko-fi. Left out when nothing can.
+      required: [offers]
+      properties:
+        offers:
+          type: array
+          description: One for each plan and duration, in the order of the plans.
+          items:
+            $ref: "#/components/schemas/KofiOffer"
+    KofiOffer:
+      type: object
+      required: [planName, days]
+      properties:
+        planName:
+          type: string
+        days:
+          type: integer
+        amount:
+          type: string
+          description: The least a payment has to be, when the server knows.
+        currency:
+          type: string
+        displayPrice:
+          type: string
+          description: The administrator's wording of the price, to show in place of the amount.
     PayPalCheckoutRequest:
       type: object
       required: [product, app]

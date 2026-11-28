@@ -335,6 +335,9 @@ func (s *Server) myPlan(ctx context.Context, q querier, userID string) (MyPlan, 
 	if out.Paypal, err = s.paypalOffer(ctx, q, userID); err != nil {
 		return MyPlan{}, err
 	}
+	if out.Kofi, err = s.kofiOffer(ctx, q); err != nil {
+		return MyPlan{}, err
+	}
 	if out.Comparison, err = s.planComparison(ctx, q, p.id, out.Play != nil, out.AppStore != nil, out.Paypal); err != nil {
 		return MyPlan{}, err
 	}

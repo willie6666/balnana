@@ -1135,5 +1135,9 @@
   "planSupports": "الخطط المدفوعة تبقي هذا الخادم يعمل.",
   "planPayWith": "الدفع عبر",
   "planKofiBuy": "الشراء من Ko-fi",
-  "planUsageNow": "استخدامك ({plan})"
+  "planUsageNow": "استخدامك ({plan})",
+  "planPriceAtKofi": "يظهر السعر في Ko-fi",
+  "adminProductDisplayPrice": "السعر المعروض",
+  "adminProductDisplayPriceHelp": "يظهر في صفحة الخطط، مثل US$5. لا يغيّر المبلغ المخصوم ولا طريقة مطابقة المدفوعات. إذا تُرك فارغًا يظهر المبلغ أعلاه.",
+  "adminProductShownPrice": "يظهر بصيغة {price}"
 }

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
@@ -19,6 +20,7 @@ const (
 	maxAdminPayments = 200
 	maxPlanLimit     = 100_000_000
 	maxPlanDays      = 36_500
+	maxPriceLen      = 40
 )
 
 var planID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -44,14 +46,14 @@ func planCatalog(ctx context.Context, q querier) (PlanCatalog, error) {
 		return PlanCatalog{}, err
 	}
 	rows, err = q.Query(ctx, `
-		select provider, product, plan_id, days, min_amount::text, currency, without_trial
+		select provider, product, plan_id, days, min_amount::text, currency, without_trial, display_price
 		from plan_products order by provider, product, min_amount`)
 	if err != nil {
 		return PlanCatalog{}, err
 	}
 	products, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (PlanProduct, error) {
 		var p PlanProduct
-		err := row.Scan(&p.Provider, &p.Product, &p.PlanId, &p.Days, &p.MinAmount, &p.Currency, &p.WithoutTrial)
+		err := row.Scan(&p.Provider, &p.Product, &p.PlanId, &p.Days, &p.MinAmount, &p.Currency, &p.WithoutTrial, &p.DisplayPrice)
 		return p, err
 	})
 	if err != nil {
@@ -114,6 +116,18 @@ func validateCatalog(c *PlanCatalog) error {
 			} else {
 				p.WithoutTrial = nil
 			}
+		}
+		if p.DisplayPrice != nil {
+			if t := strings.TrimSpace(*p.DisplayPrice); t != "" {
+				p.DisplayPrice = &t
+			} else {
+				p.DisplayPrice = nil
+			}
+		}
+		// The stores word their own prices.
+		if d := p.DisplayPrice; d != nil && (p.Provider != Kofi && p.Provider != Paypal ||
+			utf8.RuneCountInString(*d) > maxPriceLen || strings.ContainsFunc(*d, unicode.IsControl)) {
+			return errInvalidPlan
 		}
 		if !slices.Contains(ids, p.PlanId) || p.Days < 1 || p.Days > maxPlanDays ||
 			p.Provider != Kofi && p.Provider != Play && p.Provider != Paypal && p.Provider != Appstore || p.WithoutTrial != nil && p.Provider != Paypal {
@@ -198,8 +212,9 @@ func (s *Server) UpdateAdminPlans(ctx context.Context, req UpdateAdminPlansReque
 		}
 		for _, p := range c.Products {
 			_, err := tx.Exec(ctx, `
-				insert into plan_products (provider, product, plan_id, days, min_amount, currency, without_trial)
-				values ($1, $2, $3, $4, $5::numeric, $6, $7)`, string(p.Provider), p.Product, p.PlanId, p.Days, p.MinAmount, p.Currency, p.WithoutTrial)
+				insert into plan_products (provider, product, plan_id, days, min_amount, currency, without_trial, display_price)
+				values ($1, $2, $3, $4, $5::numeric, $6, $7, $8)`,
+				string(p.Provider), p.Product, p.PlanId, p.Days, p.MinAmount, p.Currency, p.WithoutTrial, p.DisplayPrice)
 			// The index knows the same product however its amount is written.
 			if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				return errInvalidPlan

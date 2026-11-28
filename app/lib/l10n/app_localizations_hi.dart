@@ -4050,4 +4050,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'आपका उपयोग ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'कीमत Ko-fi पर दिखती है';
+
+  @override
+  String get adminProductDisplayPrice => 'दिखाई जाने वाली कीमत';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'प्लान पेज पर दिखती है, जैसे US\$5। इससे ली जाने वाली राशि या भुगतान का मिलान नहीं बदलता। खाली छोड़ने पर ऊपर की राशि दिखती है।';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '$price के रूप में दिखता है';
+  }
 }

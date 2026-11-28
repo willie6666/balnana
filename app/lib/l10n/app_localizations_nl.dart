@@ -4045,4 +4045,19 @@ class AppLocalizationsNl extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Je gebruik ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Ko-fi toont de prijs';
+
+  @override
+  String get adminProductDisplayPrice => 'Getoonde prijs';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Staat op de abonnementspagina, bijvoorbeeld US\$5. Verandert niet wat er wordt afgeschreven of hoe betalingen worden gekoppeld. Leeg gelaten wordt het bedrag hierboven getoond.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Getoond als $price';
+  }
 }

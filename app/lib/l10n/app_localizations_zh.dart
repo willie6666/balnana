@@ -3838,6 +3838,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String planUsageNow(String plan) {
     return '当前用量（$plan）';
   }
+
+  @override
+  String get planPriceAtKofi => '价格显示于 Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => '显示价格';
+
+  @override
+  String get adminProductDisplayPriceHelp => '显示在方案页面，例如 US\$5。不影响实际扣款或款项匹配。留空时显示上面的金额。';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '显示为 $price';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -7672,5 +7686,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String planUsageNow(String plan) {
     return '目前用量（$plan）';
+  }
+
+  @override
+  String get planPriceAtKofi => '價格顯示於 Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => '顯示價格';
+
+  @override
+  String get adminProductDisplayPriceHelp => '顯示在方案頁，例如 US\$5。不影響實際扣款或款項比對。留空時顯示上面的金額。';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return '顯示為 $price';
   }
 }

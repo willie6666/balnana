@@ -1135,5 +1135,9 @@
   "planSupports": "付费方案支持这台服务器持续运行。",
   "planPayWith": "付款方式",
   "planKofiBuy": "在 Ko-fi 购买",
-  "planUsageNow": "当前用量（{plan}）"
+  "planUsageNow": "当前用量（{plan}）",
+  "planPriceAtKofi": "价格显示于 Ko-fi",
+  "adminProductDisplayPrice": "显示价格",
+  "adminProductDisplayPriceHelp": "显示在方案页面，例如 US$5。不影响实际扣款或款项匹配。留空时显示上面的金额。",
+  "adminProductShownPrice": "显示为 {price}"
 }

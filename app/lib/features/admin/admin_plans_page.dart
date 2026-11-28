@@ -272,6 +272,7 @@ class _AdminPlansPageState extends ConsumerState<AdminPlansPage> {
                       if (!_stores.contains(p.provider)) l10n.adminPlanDays(p.days),
                       if (p.product.isNotEmpty && p.minAmount != null)
                         '${p.minAmount} ${p.currency ?? ''}'.trim(),
+                      if (p.displayPrice case final price?) l10n.adminProductShownPrice(price),
                     ].join(' · '),
                   ),
                   onTap: _busy ? null : () => _editProduct(p),
@@ -318,6 +319,9 @@ const _maxLimit = 100000000;
 
 /// The most days a plan may run for; the server refuses more.
 const _maxDays = 36500;
+
+/// The longest a price may be worded; the server refuses more.
+const _maxPriceLength = 40;
 
 /// A whole number from 0 (or [min]) to [max], or empty when [optional].
 String? _checkNumber(
@@ -504,6 +508,7 @@ class _ProductDialogState extends State<_ProductDialog> {
   late final _minAmount = TextEditingController(text: widget.product?.minAmount);
   late final _currency = TextEditingController(text: widget.product?.currency);
   late final _withoutTrial = TextEditingController(text: widget.product?.withoutTrial);
+  late final _displayPrice = TextEditingController(text: widget.product?.displayPrice);
   late String? _plan = widget.product?.planId;
   late String _provider = widget.product?.provider ?? 'kofi';
 
@@ -514,7 +519,7 @@ class _ProductDialogState extends State<_ProductDialog> {
 
   @override
   void dispose() {
-    for (final c in [_name, _days, _minAmount, _currency, _withoutTrial]) {
+    for (final c in [_name, _days, _minAmount, _currency, _withoutTrial, _displayPrice]) {
       c.dispose();
     }
     super.dispose();
@@ -525,6 +530,7 @@ class _ProductDialogState extends State<_ProductDialog> {
     final amount = _minAmount.text.trim();
     final currency = _currency.text.trim().toUpperCase();
     final withoutTrial = _withoutTrial.text.trim();
+    final displayPrice = _displayPrice.text.trim();
     Navigator.pop(
       context,
       PlanProduct(
@@ -535,6 +541,7 @@ class _ProductDialogState extends State<_ProductDialog> {
         minAmount: _play || amount.isEmpty ? null : amount,
         currency: _play || currency.isEmpty ? null : currency,
         withoutTrial: _paypal && _paypalPlan.hasMatch(_name.text.trim()) && withoutTrial.isNotEmpty ? withoutTrial : null,
+        displayPrice: _play || displayPrice.isEmpty ? null : displayPrice,
       ),
     );
   }
@@ -650,6 +657,17 @@ class _ProductDialogState extends State<_ProductDialog> {
                     }
                     return _currencyCode.hasMatch(currency) ? null : l10n.adminInvalidValue;
                   },
+                ),
+                gap,
+                TextFormField(
+                  controller: _displayPrice,
+                  autocorrect: false,
+                  maxLength: _maxPriceLength,
+                  decoration: InputDecoration(
+                    labelText: l10n.adminProductDisplayPrice,
+                    helperText: l10n.adminProductDisplayPriceHelp,
+                    helperMaxLines: 4,
+                  ),
                 ),
               ],
             ],

@@ -107,4 +107,29 @@ void main() {
     expect(dropdown.value, 'unverified');
     expect(api.saved.single.unverifiedPlanId, 'plus');
   });
+
+  testWidgets('a Ko-fi product saves the price the Plan page shows', (tester) async {
+    final api = _Api()
+      ..catalog = _catalog.copyWith(
+        products: [const PlanProduct(provider: 'kofi', product: 'plus91', planId: 'plus', days: 91)],
+      );
+    await _pump(tester, api);
+    await tester.tap(find.text('plus91'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Displayed price'), ' US\$5 ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = api.catalog.products.single;
+    expect(saved.displayPrice, r'US$5');
+    expect(PlanProduct.fromJson(saved.toJson()).displayPrice, r'US$5');
+    expect(find.textContaining(r'Shown as US$5'), findsOneWidget);
+  });
+
+  testWidgets('a store product has no price to word', (tester) async {
+    await _pump(tester, _Api());
+    await tester.tap(find.text('monthly'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'Displayed price'), findsNothing);
+  });
 }

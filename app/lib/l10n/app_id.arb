@@ -1135,5 +1135,9 @@
   "planSupports": "Paket berbayar menjaga server ini tetap berjalan.",
   "planPayWith": "Bayar dengan",
   "planKofiBuy": "Beli di Ko-fi",
-  "planUsageNow": "Pemakaian Anda ({plan})"
+  "planUsageNow": "Pemakaian Anda ({plan})",
+  "planPriceAtKofi": "Harga ditampilkan di Ko-fi",
+  "adminProductDisplayPrice": "Harga yang ditampilkan",
+  "adminProductDisplayPriceHelp": "Ditampilkan di halaman paket, misalnya US$5. Tidak mengubah jumlah yang ditagih atau pencocokan pembayaran. Jika kosong, jumlah di atas yang ditampilkan.",
+  "adminProductShownPrice": "Ditampilkan sebagai {price}"
 }

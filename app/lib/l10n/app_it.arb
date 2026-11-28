@@ -1135,5 +1135,9 @@
   "planSupports": "I piani a pagamento mantengono attivo questo server.",
   "planPayWith": "Paga con",
   "planKofiBuy": "Acquista su Ko-fi",
-  "planUsageNow": "Il tuo utilizzo ({plan})"
+  "planUsageNow": "Il tuo utilizzo ({plan})",
+  "planPriceAtKofi": "Il prezzo è indicato su Ko-fi",
+  "adminProductDisplayPrice": "Prezzo mostrato",
+  "adminProductDisplayPriceHelp": "Mostrato nella pagina dei piani, ad esempio US$5. Non cambia l’importo addebitato né l’abbinamento dei pagamenti. Se vuoto, viene mostrato l’importo qui sopra.",
+  "adminProductShownPrice": "Mostrato come {price}"
 }

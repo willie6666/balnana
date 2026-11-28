@@ -254,6 +254,41 @@ func matchKofi(ctx context.Context, q querier, p payment) (planID *string, days 
 	return planID, days, err
 }
 
+// kofiOffer is what the Plan page can say Ko-fi sells, if anything: each
+// plan for each duration once, however many products give it. One with a price
+// worded for it comes first, then a shop item, then the cheapest tip.
+func (s *Server) kofiOffer(ctx context.Context, q querier) (*KofiBilling, error) {
+	if s.conf().KofiURL == nil {
+		return nil, nil
+	}
+	rows, err := q.Query(ctx, `
+		select pl.name, p.days, p.min_amount::text, p.currency, p.display_price
+		from plan_products p join plans pl on pl.id = p.plan_id
+		where p.provider = 'kofi'
+		order by pl.rank, pl.id, p.days, p.display_price is null, p.product = '', p.min_amount nulls last, p.product, p.currency`)
+	if err != nil {
+		return nil, err
+	}
+	offers, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (KofiOffer, error) {
+		var o KofiOffer
+		err := row.Scan(&o.PlanName, &o.Days, &o.Amount, &o.Currency, &o.DisplayPrice)
+		// Written as PayPal's offers write it, so the same price reads the same.
+		if o.Amount != nil && o.Currency != nil && validPayPalPrice(*o.Amount, *o.Currency) {
+			a := paypalAmount(*o.Amount, *o.Currency)
+			o.Amount = &a
+		}
+		return o, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	offers = slices.CompactFunc(offers, func(a, b KofiOffer) bool { return a.PlanName == b.PlanName && a.Days == b.Days })
+	if len(offers) == 0 {
+		return nil, nil
+	}
+	return &KofiBilling{Offers: offers}, nil
+}
+
 // matchProduct finds the plan a provider's product buys, by its name.
 func matchProduct(ctx context.Context, q querier, p payment) (planID *string, days *int, err error) {
 	if p.product == nil {

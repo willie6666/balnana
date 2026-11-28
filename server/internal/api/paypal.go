@@ -98,7 +98,7 @@ func (s *Server) paypalOffer(ctx context.Context, q querier, userID string) (*Pa
 		return nil, nil
 	}
 	rows, err := q.Query(ctx, `
-		select p.product, pl.name, p.days, p.min_amount::text, p.currency
+		select p.product, pl.name, p.days, p.min_amount::text, p.currency, p.display_price
 		from plan_products p join plans pl on pl.id = p.plan_id
 		where p.provider = 'paypal' order by pl.rank, p.days, p.product`)
 	if err != nil {
@@ -106,7 +106,7 @@ func (s *Server) paypalOffer(ctx context.Context, q querier, userID string) (*Pa
 	}
 	offers, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (PayPalOffer, error) {
 		var o PayPalOffer
-		err := row.Scan(&o.Product, &o.PlanName, &o.Days, &o.Amount, &o.Currency)
+		err := row.Scan(&o.Product, &o.PlanName, &o.Days, &o.Amount, &o.Currency, &o.DisplayPrice)
 		o.Subscription = paypalPlanID.MatchString(o.Product)
 		if o.Subscription {
 			o.Amount = nil // PayPal's plan has the price

@@ -1135,5 +1135,9 @@
   "planSupports": "सशुल्क प्लान इस सर्वर को चालू रखते हैं।",
   "planPayWith": "भुगतान का तरीका",
   "planKofiBuy": "Ko-fi पर खरीदें",
-  "planUsageNow": "आपका उपयोग ({plan})"
+  "planUsageNow": "आपका उपयोग ({plan})",
+  "planPriceAtKofi": "कीमत Ko-fi पर दिखती है",
+  "adminProductDisplayPrice": "दिखाई जाने वाली कीमत",
+  "adminProductDisplayPriceHelp": "प्लान पेज पर दिखती है, जैसे US$5। इससे ली जाने वाली राशि या भुगतान का मिलान नहीं बदलता। खाली छोड़ने पर ऊपर की राशि दिखती है।",
+  "adminProductShownPrice": "{price} के रूप में दिखता है"
 }

@@ -1135,5 +1135,9 @@
   "planSupports": "有料プランはこのサーバーの運営を支えます。",
   "planPayWith": "支払い方法",
   "planKofiBuy": "Ko-fi で購入",
-  "planUsageNow": "現在の使用状況（{plan}）"
+  "planUsageNow": "現在の使用状況（{plan}）",
+  "planPriceAtKofi": "価格は Ko-fi に表示されます",
+  "adminProductDisplayPrice": "表示価格",
+  "adminProductDisplayPriceHelp": "プランページに表示します（例：US$5）。請求額や支払いの照合は変わりません。空欄の場合は上の金額を表示します。",
+  "adminProductShownPrice": "表示：{price}"
 }

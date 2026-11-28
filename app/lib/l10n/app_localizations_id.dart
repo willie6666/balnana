@@ -4007,4 +4007,19 @@ class AppLocalizationsId extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Pemakaian Anda ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Harga ditampilkan di Ko-fi';
+
+  @override
+  String get adminProductDisplayPrice => 'Harga yang ditampilkan';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Ditampilkan di halaman paket, misalnya US\$5. Tidak mengubah jumlah yang ditagih atau pencocokan pembayaran. Jika kosong, jumlah di atas yang ditampilkan.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Ditampilkan sebagai $price';
+  }
 }

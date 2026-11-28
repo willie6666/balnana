@@ -17,6 +17,8 @@ class PlanChoice {
     this.period,
     this.price,
     this.note,
+    this.paypal,
+    this.kofi,
   });
 
   final String id;
@@ -31,13 +33,73 @@ class PlanChoice {
   /// How long one payment lasts, in words.
   final String? period;
 
-  /// What one payment costs; null when only the checkout page says.
+  /// What one payment costs; null when only the checkout page says, or when
+  /// the ways to pay differ, as [note] then tells.
   final String? price;
 
   /// How it is charged.
   final String? note;
 
   final VoidCallback buy;
+
+  /// The PayPal and Ko-fi offers behind it. With both, [buy] is PayPal's and
+  /// the page asks which to use.
+  final PayPalOffer? paypal;
+  final KofiOffer? kofi;
+}
+
+/// The choices from PayPal and Ko-fi: one for what both sell, for the same
+/// plan and days. A subscription is only PayPal's.
+List<PlanChoice> externalChoices(
+  AppLocalizations l10n, {
+  required List<PayPalOffer> paypal,
+  required List<KofiOffer> kofi,
+  required void Function(PayPalOffer) buyPayPal,
+  required VoidCallback openKofi,
+}) {
+  final left = [...kofi];
+  KofiOffer? take(PayPalOffer offer) {
+    if (offer.subscription) return null;
+    final i = left.indexWhere((k) => k.planName == offer.planName && k.days == offer.days);
+    return i < 0 ? null : left.removeAt(i);
+  }
+
+  PlanChoice fromPayPal(PayPalOffer offer, KofiOffer? other) {
+    final prices = {?offer.price, ?other?.price};
+    final price = prices.length == 1 ? prices.single : null;
+    return PlanChoice(
+      id: 'paypal:${offer.product}',
+      planName: offer.planName,
+      subscription: offer.subscription,
+      days: offer.days,
+      period: l10n.planPayPalDays(offer.days),
+      price: price,
+      note: [
+        if (offer.subscription) l10n.planPayPalSubscription(offer.days) else l10n.planOnceNote,
+        if (offer.subscription && price == null) l10n.planPriceAtPayPal,
+        if (prices.length > 1) 'PayPal ${offer.price} · Ko-fi ${other!.price}',
+      ].join('\n'),
+      buy: () => buyPayPal(offer),
+      paypal: offer,
+      kofi: other,
+    );
+  }
+
+  return [
+    for (final offer in paypal) fromPayPal(offer, take(offer)),
+    for (final offer in left)
+      PlanChoice(
+        id: 'kofi:${offer.planName}:${offer.days}',
+        planName: offer.planName,
+        subscription: false,
+        days: offer.days,
+        period: l10n.planPayPalDays(offer.days),
+        price: offer.price,
+        note: [l10n.planOnceNote, if (offer.price == null) l10n.planPriceAtKofi].join('\n'),
+        buy: openKofi,
+        kofi: offer,
+      ),
+  ];
 }
 
 /// [months] in words, with whole years as years.

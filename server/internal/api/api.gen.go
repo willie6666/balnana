@@ -810,6 +810,24 @@ type JoinMember struct {
 	Name    string `json:"name"`
 }
 
+// KofiBilling What can be bought on Ko-fi. Left out when nothing can.
+type KofiBilling struct {
+	// Offers One for each plan and duration, in the order of the plans.
+	Offers []KofiOffer `json:"offers"`
+}
+
+// KofiOffer defines model for KofiOffer.
+type KofiOffer struct {
+	// Amount The least a payment has to be, when the server knows.
+	Amount   *string `json:"amount,omitempty"`
+	Currency *string `json:"currency,omitempty"`
+	Days     int     `json:"days"`
+
+	// DisplayPrice The administrator's wording of the price, to show in place of the amount.
+	DisplayPrice *string `json:"displayPrice,omitempty"`
+	PlanName     string  `json:"planName"`
+}
+
 // Location Where an expense happened: a name, a point on the map, or both. Error `invalid_location` for a name over 200 characters or on several lines, or a point off the globe.
 type Location struct {
 	Name  *string   `json:"name,omitempty"`
@@ -893,6 +911,9 @@ type MyPlan struct {
 	// ExpiresAt When the current plan ends. Left out when it does not.
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 	JoinedGroups Usage      `json:"joinedGroups"`
+
+	// Kofi What can be bought on Ko-fi. Left out when nothing can.
+	Kofi *KofiBilling `json:"kofi,omitempty"`
 
 	// MembersPerGroup For groups this account sponsors. Others have the default plan's limit.
 	MembersPerGroup *int `json:"membersPerGroup,omitempty"`
@@ -1035,9 +1056,12 @@ type PayPalCheckoutRequestApp string
 // PayPalOffer defines model for PayPalOffer.
 type PayPalOffer struct {
 	// Amount What a one-off payment costs. PayPal shows a subscription's price.
-	Amount       *string `json:"amount,omitempty"`
-	Currency     *string `json:"currency,omitempty"`
-	Days         int     `json:"days"`
+	Amount   *string `json:"amount,omitempty"`
+	Currency *string `json:"currency,omitempty"`
+	Days     int     `json:"days"`
+
+	// DisplayPrice The administrator's wording of the price, to show in place of the amount.
+	DisplayPrice *string `json:"displayPrice,omitempty"`
 	PlanName     string  `json:"planName"`
 	Product      string  `json:"product"`
 	Subscription bool    `json:"subscription"`
@@ -1178,6 +1202,9 @@ type PlanProduct struct {
 
 	// Days How long one payment lasts. Google Play, App Store and PayPal subscriptions say for themselves when each payment ends, so this is only a fallback for them.
 	Days int `json:"days"`
+
+	// DisplayPrice For Ko-fi and PayPal, the price the Plan page shows, such as "US$5". Nothing is charged or matched by it. Without it the page shows `minAmount`, which a PayPal subscription doesn't use.
+	DisplayPrice *string `json:"displayPrice,omitempty"`
 
 	// MinAmount A decimal number, such as "3.00". What a one-off PayPal payment costs.
 	MinAmount *string `json:"minAmount,omitempty"`

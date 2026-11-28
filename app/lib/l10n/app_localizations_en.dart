@@ -4009,4 +4009,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String planUsageNow(String plan) {
     return 'Your usage ($plan)';
   }
+
+  @override
+  String get planPriceAtKofi => 'Ko-fi shows the price';
+
+  @override
+  String get adminProductDisplayPrice => 'Displayed price';
+
+  @override
+  String get adminProductDisplayPriceHelp =>
+      'Shown on the Plan page, for example US\$5. It doesn’t change what is charged or how payments are matched. Left empty, the amount above is shown.';
+
+  @override
+  String adminProductShownPrice(String price) {
+    return 'Shown as $price';
+  }
 }
