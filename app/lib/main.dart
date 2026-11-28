@@ -17,6 +17,7 @@ import 'core/offline_cache.dart';
 import 'core/prefs.dart';
 import 'core/push.dart';
 import 'core/settings.dart';
+import 'core/swipe_delay_io.dart' if (dart.library.js_interop) 'core/swipe_delay_web.dart';
 import 'ui/smooth_wheel.dart';
 
 Future<void> main(List<String> args) async {
@@ -35,6 +36,7 @@ Future<void> main(List<String> args) async {
   // accessibility by hand.
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   watchAutofill();
+  skipSwipeDelay();
   useLatinDigits();
   final iosTokens = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
       ? await IosSessionTokens.load()
