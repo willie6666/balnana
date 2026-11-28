@@ -1,0 +1,1 @@
+A new Plan page: see the prices and upgrade with one button, then what a plan gives everyone in your group. Compare plans and check your usage when you need to. When you reach a plan's limit, the message now has a button to view plans.
