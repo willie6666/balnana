@@ -17,6 +17,7 @@ import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/icon_picker.dart';
@@ -157,7 +158,7 @@ class _Settings extends ConsumerWidget {
       await groupApiOf(ref, group.token).addMember(name, digits: group.minorDigits);
       refreshGroup(ref, group.token);
     } on ApiException catch (e) {
-      if (context.mounted) _snack(context, errorMessage(l10n, e));
+      if (context.mounted) showError(ScaffoldMessenger.of(context), l10n, e);
     }
   }
 
@@ -718,7 +719,7 @@ class _GroupPlanSectionState extends ConsumerState<_GroupPlanSection> {
       // The switch shows the change until the plan does.
       await ref.read(groupPlanProvider(token).future);
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+      showError(messenger, l10n, e);
     } on Object {
       // The plan failing to load again leaves the section as it was.
     }

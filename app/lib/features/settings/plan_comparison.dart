@@ -12,9 +12,12 @@ import '../../ui/tokens.dart';
 /// that plan's column. The columns share the full width, so a phone fits
 /// several plans; only when they would get too narrow does it scroll sideways.
 class PlanComparisonTable extends StatelessWidget {
-  const PlanComparisonTable({super.key, required this.comparison});
+  const PlanComparisonTable({super.key, required this.comparison, this.titled = true});
 
   final PlanComparisonData comparison;
+
+  /// Off where a row above already names the table.
+  final bool titled;
 
   /// The narrowest a plan's column gets, at the default text size.
   static const _minColumn = 88.0;
@@ -215,8 +218,10 @@ class PlanComparisonTable extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.planCompare, style: theme.textTheme.labelLarge?.copyWith(color: scheme.primary)),
-                const SizedBox(height: BSpace.s4),
+                if (titled) ...[
+                  Text(l10n.planCompare, style: theme.textTheme.labelLarge?.copyWith(color: scheme.primary)),
+                  const SizedBox(height: BSpace.s4),
+                ],
                 Text(
                   l10n.planCompareHelp,
                   style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),

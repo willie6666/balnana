@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/server.dart';
 import '../../core/session.dart';
@@ -15,6 +14,7 @@ import '../../ui/colors.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/currency_field.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/icon_picker.dart';
@@ -102,7 +102,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+      showError(ScaffoldMessenger.of(context), l10n, e);
     }
   }
 

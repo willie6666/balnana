@@ -3150,11 +3150,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days 天 $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days 天';
   }
@@ -3198,12 +3193,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => '到 Google Play 更改或取消';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 个月', one: '月');
-    return '每 $_temp0 $price';
-  }
 
   @override
   String get planPlayFailed => 'Google Play 无法完成这笔购买。';
@@ -3774,6 +3763,80 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who 停用了只读链接';
+  }
+
+  @override
+  String get planView => '查看方案';
+
+  @override
+  String get planHeroTitle => '用方案做更多事';
+
+  @override
+  String get planHeroShare => '一人升级，整个群组受益';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '最多可升级 $count 个群组，群组里每个人都能使用');
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => '升级的群组数量没有上限，群组里每个人都能使用';
+
+  @override
+  String planBenefits(String plan) {
+    return '$plan 多了什么';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return '升级 $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return '购买 $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 个月');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years 年');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => '订阅，自动续订';
+
+  @override
+  String get planOnceNote => '一次性付款，不会自动续订';
+
+  @override
+  String get planPriceAtPayPal => '价格显示于 PayPal';
+
+  @override
+  String get planCancelAnytime => '可随时取消。';
+
+  @override
+  String get planFreeForever => '分账和结清始终免费。';
+
+  @override
+  String get planSupports => '付费方案支持这台服务器持续运行。';
+
+  @override
+  String get planPayWith => '付款方式';
+
+  @override
+  String get planKofiBuy => '在 Ko-fi 购买';
+
+  @override
+  String planUsageNow(String plan) {
+    return '当前用量（$plan）';
   }
 }
 
@@ -6922,11 +6985,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days 天 $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days 天';
   }
@@ -6970,12 +7028,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get planPlayManageHelp => '到 Google Play 變更或取消';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 個月', one: '月');
-    return '每 $_temp0 $price';
-  }
 
   @override
   String get planPlayFailed => 'Google Play 無法完成這筆購買。';
@@ -7546,5 +7598,79 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who 停用了僅供檢視連結';
+  }
+
+  @override
+  String get planView => '查看方案';
+
+  @override
+  String get planHeroTitle => '用方案做更多事';
+
+  @override
+  String get planHeroShare => '一人升級，整個群組受用';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '最多可升級 $count 個群組，群組裡每個人都能使用');
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => '升級的群組數量沒有上限，群組裡每個人都能使用';
+
+  @override
+  String planBenefits(String plan) {
+    return '$plan 多了什麼';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return '升級 $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return '購買 $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months 個月');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years 年');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => '訂閱，自動續訂';
+
+  @override
+  String get planOnceNote => '一次性付款，不會自動續訂';
+
+  @override
+  String get planPriceAtPayPal => '價格顯示於 PayPal';
+
+  @override
+  String get planCancelAnytime => '可隨時取消。';
+
+  @override
+  String get planFreeForever => '分帳和結清永遠免費。';
+
+  @override
+  String get planSupports => '付費方案支持這台伺服器持續營運。';
+
+  @override
+  String get planPayWith => '付款方式';
+
+  @override
+  String get planKofiBuy => '在 Ko-fi 購買';
+
+  @override
+  String planUsageNow(String plan) {
+    return '目前用量（$plan）';
   }
 }

@@ -145,7 +145,7 @@ void main() {
     await _pump(tester, _withAppStore(_billing), store: _FakeAppStore());
 
     expect(find.text(l10n.planGet), findsOneWidget);
-    expect(find.text(l10n.planPlayPrice(1, r'$4.99')), findsOneWidget);
+    expect(find.text(r'$4.99'), findsOneWidget);
     expect(find.text(l10n.planRestore), findsOneWidget);
     expect(find.text(l10n.planAppStoreManageHelp), findsNothing);
     // The page builds what is on screen: the end of it is further down.
@@ -159,7 +159,7 @@ void main() {
     final api = _FakeApi();
     await _pump(tester, _withAppStore(_billing), store: store, api: api);
 
-    await tester.tap(find.text(l10n.planPlayPrice(1, r'$4.99')));
+    await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
     expect(store.boughtFor, 'token-uuid');
@@ -169,7 +169,7 @@ void main() {
   testWidgets('a purchase waiting for approval says so', (tester) async {
     await _pump(tester, _withAppStore(_billing), store: _FakeAppStore(pending: true), api: _FakeApi());
 
-    await tester.tap(find.text(l10n.planPlayPrice(1, r'$4.99')));
+    await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.planAppStorePending), findsOneWidget);
@@ -202,7 +202,7 @@ void main() {
     await _pump(tester, _withAppStore(subscribed), store: _FakeAppStore());
 
     expect(find.text(l10n.planAppStoreManageHelp), findsOneWidget);
-    expect(find.text(l10n.planPlayPrice(1, r'$4.99')), findsNothing);
+    expect(find.text(r'$4.99'), findsNothing);
   });
 
   testWidgets('the App Store out of reach can be tried again', (tester) async {
@@ -214,7 +214,7 @@ void main() {
     await tester.tap(find.text(l10n.planAppStoreUnavailable));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.planPlayPrice(1, r'$4.99')), findsOneWidget);
+    expect(find.text(r'$4.99'), findsOneWidget);
   });
 
   testWidgets('a server that sells nothing there shows none of it', (tester) async {

@@ -12,6 +12,7 @@ import '../../data/providers.dart';
 import '../../ui/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/empty_state.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 import 'group_password.dart';
@@ -74,7 +75,7 @@ class _JoinPageState extends ConsumerState<JoinPage> {
         if (other != null && mounted) await _join(name: other);
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+      showError(ScaffoldMessenger.of(context), l10n, e);
       if (e.code == 'member_claimed') ref.invalidate(_joinInfoProvider(widget.token));
     }
   }

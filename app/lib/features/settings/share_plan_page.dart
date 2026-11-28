@@ -7,6 +7,7 @@ import '../../data/api.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/widgets/empty_state.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/grouped_list.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/page.dart';
@@ -35,7 +36,7 @@ class _SharePlanPageState extends ConsumerState<SharePlanPage> {
       await (on ? api.sponsor() : api.unsponsor());
       if (mounted) setState(() => _switched[group.token] = on);
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+      showError(messenger, l10n, e);
     }
     if (!mounted) return;
     setState(() => _busy.remove(group.token));

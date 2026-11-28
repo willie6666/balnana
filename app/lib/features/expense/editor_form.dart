@@ -404,7 +404,7 @@ class _EditorState extends ConsumerState<_Editor> {
         ref.invalidate(groupProvider(_group.token));
         messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
       } else {
-        messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+        showError(messenger, l10n, e);
       }
     }
   }
@@ -464,7 +464,7 @@ class _EditorState extends ConsumerState<_Editor> {
         await api.deleteReceipt(id);
       }
     } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.receiptNotSaved(errorMessage(l10n, e)))));
+      showError(messenger, l10n, e, message: l10n.receiptNotSaved(errorMessage(l10n, e)));
     }
   }
 

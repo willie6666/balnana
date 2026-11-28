@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,6 +21,7 @@ import '../../ui/widgets/page.dart';
 import '../../ui/widgets/play_purchases.dart';
 import '../../ui/widgets/usage_tile.dart';
 import 'plan_comparison.dart';
+import 'plan_offers.dart';
 import 'privacy_page.dart';
 
 /// "3 of 20", or just what is used when there is no limit.
@@ -71,6 +73,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   /// the payer comes back.
   bool _checkedOut = false;
   late final AppLifecycleListener _lifecycle;
+
+  /// The picked [PlanChoice.id]; null for the first. This and what is folded
+  /// open are kept here, as the list drops what scrolls away.
+  String? _selected;
+
+  /// Null until tapped, when the page decides.
+  bool? _comparing;
+  bool _showUsage = false;
 
   @override
   void initState() {
@@ -338,7 +348,157 @@ class _PlanPageState extends ConsumerState<PlanPage> {
       for (final offer in paypal?.offers ?? const <PayPalOffer>[])
         if (!offer.subscription || !paypal!.subscribed.contains(offer.product)) offer,
     ];
-    String limit(int? n) => n?.toString() ?? l10n.planUnlimited;
+    final choices = sortedChoices([
+      for (final offer in offers)
+        _storeChoice(
+          l10n,
+          id: 'play:${offer.productId}:${offer.period}',
+          name: offer.name,
+          price: offer.price,
+          months: offer.months,
+          buy: () => _buy(offer, play!),
+        ),
+      for (final offer in storeOffers)
+        _storeChoice(
+          l10n,
+          id: 'appstore:${offer.productId}',
+          name: offer.name,
+          price: offer.price,
+          months: offer.months,
+          buy: () => _buyAppStore(offer, appStore!),
+        ),
+      for (final offer in paypalOffers)
+        PlanChoice(
+          id: 'paypal:${offer.product}',
+          planName: offer.planName,
+          subscription: offer.subscription,
+          days: offer.days,
+          period: l10n.planPayPalDays(offer.days),
+          price: switch ((offer.amount, offer.currency)) {
+            (final amount?, final currency?) when !offer.subscription => '$amount $currency',
+            _ => null,
+          },
+          note: offer.subscription
+              ? '${l10n.planPayPalSubscription(offer.days)}\n${l10n.planPriceAtPayPal}'
+              : l10n.planOnceNote,
+          buy: () => _payPal(offer),
+        ),
+    ]);
+    final selected = choices.where((c) => c.id == _selected).firstOrNull ?? choices.firstOrNull;
+
+    final playDown = _playFailed && held.isEmpty;
+    final buyable = choices.isNotEmpty || kofi != null || playDown || _appStoreFailed || appStore != null;
+    final manage = [
+      if (play != null && held.isNotEmpty)
+        GroupedTile(
+          icon: Icons.manage_accounts_outlined,
+          title: l10n.planPlayManage,
+          subtitle: play.subscribed.isEmpty ? l10n.planPlayOnHold : l10n.planPlayManageHelp,
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => _open(
+            Uri.https('play.google.com', '/store/account/subscriptions', {
+              'sku': held.first,
+              'package': play.packageName,
+            }),
+          ),
+        ),
+      if (appStore != null && appStore.subscribed.isNotEmpty)
+        GroupedTile(
+          icon: Icons.manage_accounts_outlined,
+          title: l10n.planPlayManage,
+          subtitle: l10n.planAppStoreManageHelp,
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => _open(Uri.https('apps.apple.com', '/account/subscriptions')),
+        ),
+      if (paypal != null && paypal.subscribed.isNotEmpty)
+        GroupedTile(
+          icon: Icons.manage_accounts_outlined,
+          title: l10n.planPayPalManage,
+          subtitle: l10n.planPayPalManageHelp,
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => _open(Uri.https('www.paypal.com', '/myaccount/autopay/')),
+        ),
+    ];
+    // Selling comes first only to someone who has nothing yet.
+    final selling = buyable && !plan.paid && manage.isEmpty;
+    final comparison = (plan.comparison?.plans.length ?? 0) > 1 ? plan.comparison : null;
+    final target = planTarget(comparison, selected?.planName);
+
+    final buy = buyable
+        ? _buySection(
+            context,
+            choices: choices,
+            selected: selected,
+            kofi: kofi,
+            play: play,
+            playDown: playDown,
+            appStore: appStore,
+            paid: plan.paid,
+            targetName: target?.name,
+          )
+        : const <Widget>[];
+    final fine = [
+      if (buyable)
+        ..._finePrint(
+          context,
+          kofi: kofi,
+          appStore: appStore,
+          storeSells: storeOffers.isNotEmpty,
+          selling: selected != null || kofi != null,
+          termsUrl: info?.termsUrl,
+        )
+      else if (info?.termsUrl != null)
+        GroupedList(children: [_termsTile(l10n)]),
+    ];
+    final limits = _limits(l10n, plan);
+    Widget compare(PlanComparisonData data) {
+      final open = _comparing ?? !buyable;
+      return PlanFold(
+        icon: Icons.table_chart_outlined,
+        title: l10n.planCompare,
+        open: open,
+        onToggle: () => setState(() => _comparing = !open),
+        child: PlanComparisonTable(comparison: data, titled: false),
+      );
+    }
+
+    if (selling) {
+      bool nearlyFull(PlanUsage usage) {
+        final limit = usage.limit;
+        return limit != null && limit > 0 && usage.used >= limit * 0.8;
+      }
+
+      return BPage(
+        title: l10n.planTitle,
+        children: [
+          PlanHero(target: target),
+          // What is about to run out is a reason to look further.
+          if (nearlyFull(plan.joinedGroups))
+            GroupedList(
+              children: [
+                planUsageTile(
+                  l10n,
+                  icon: Icons.group_outlined,
+                  title: l10n.planLimitJoinedGroups,
+                  usage: plan.joinedGroups,
+                ),
+              ],
+            ),
+          // The prices come before the details, to be seen without scrolling.
+          ...buy,
+          if (comparison != null && target != null) PlanBenefits(comparison: comparison, target: target),
+          ...fine,
+          if (comparison != null) compare(comparison),
+          PlanFold(
+            icon: Icons.data_usage,
+            title: l10n.planUsageNow(plan.planName),
+            open: _showUsage,
+            onToggle: () => setState(() => _showUsage = !_showUsage),
+            child: GroupedList(children: limits),
+          ),
+        ],
+      );
+    }
     return BPage(
       title: l10n.planTitle,
       children: [
@@ -354,189 +514,264 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                           .format(expires.toLocal()),
                     ),
             ),
-            if (play != null && held.isNotEmpty)
+            ...manage,
+            // A plan does nothing for a group until it is shared with it.
+            if (plan.paid && plan.sponsoredGroups.limit != 0)
               GroupedTile(
-                icon: Icons.manage_accounts_outlined,
-                title: l10n.planPlayManage,
-                subtitle: play.subscribed.isEmpty ? l10n.planPlayOnHold : l10n.planPlayManageHelp,
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(
-                  Uri.https('play.google.com', '/store/account/subscriptions', {
-                    'sku': held.first,
-                    'package': play.packageName,
-                  }),
-                ),
-              ),
-            if (appStore != null && appStore.subscribed.isNotEmpty)
-              GroupedTile(
-                icon: Icons.manage_accounts_outlined,
-                title: l10n.planPlayManage,
-                subtitle: l10n.planAppStoreManageHelp,
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(Uri.https('apps.apple.com', '/account/subscriptions')),
-              ),
-            if (paypal != null && paypal.subscribed.isNotEmpty)
-              GroupedTile(
-                icon: Icons.manage_accounts_outlined,
-                title: l10n.planPayPalManage,
-                subtitle: l10n.planPayPalManageHelp,
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(Uri.https('www.paypal.com', '/myaccount/autopay/')),
+                icon: Icons.upgrade,
+                title: l10n.sharePlanTitle,
+                subtitle: l10n.sharePlanSettingsHelp,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/sharing'),
               ),
           ],
         ),
-        GroupedList(
-          title: l10n.planLimits,
-          children: [
-            planUsageTile(
-              l10n,
-              icon: Icons.group_outlined,
-              title: l10n.planLimitJoinedGroups,
-              usage: plan.joinedGroups,
-            ),
-            planUsageTile(
-              l10n,
-              icon: Icons.upgrade,
-              title: l10n.planLimitSponsored,
-              usage: plan.sponsoredGroups,
-            ),
-            GroupedLimitTile(
-              icon: Icons.groups_outlined,
-              title: l10n.planLimitMembers,
-              label: limit(plan.membersPerGroup),
-            ),
-            GroupedLimitTile(
-              icon: Icons.receipt_outlined,
-              title: l10n.planLimitReceipts,
-              label: limit(plan.receiptsPerGroup),
-            ),
-            GroupedLimitTile(
-              icon: Icons.repeat,
-              title: l10n.planLimitRecurring,
-              label: limit(plan.recurringPerGroup),
-            ),
-            GroupedLimitTile(
-              icon: Icons.notifications_active_outlined,
-              title: l10n.planLimitReminders,
-              label: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
-            ),
-            GroupedLimitTile(
-              icon: Icons.visibility_outlined,
-              title: l10n.planLimitViewLink,
-              label: plan.viewLink ? l10n.planIncluded : l10n.planNotIncluded,
-            ),
-          ],
-        ),
-        if (plan.comparison case final comparison? when comparison.plans.length > 1)
-          PlanComparisonTable(comparison: comparison),
-        if (offers.isNotEmpty ||
-            paypalOffers.isNotEmpty ||
-            kofi != null ||
-            (_playFailed && held.isEmpty) ||
-            appStore != null)
-          GroupedList(
-            title: l10n.planGet,
-            children: [
-              if (_playFailed && held.isEmpty)
-                GroupedTile(
-                  icon: Icons.cloud_off_outlined,
-                  title: l10n.planPlayUnavailable,
-                  subtitle: l10n.commonRetry,
-                  onTap: () => _retryPlay(play!),
-                ),
-              for (final offer in offers)
-                GroupedTile(
-                  icon: Icons.shop_outlined,
-                  title: offer.name,
-                  subtitle: switch (offer.months) {
-                    final months? => l10n.planPlayPrice(months, offer.price),
-                    null => offer.price,
-                  },
-                  onTap: _buying ? null : () => _buy(offer, play!),
-                ),
-              if (_appStoreFailed)
-                GroupedTile(
-                  icon: Icons.cloud_off_outlined,
-                  title: l10n.planAppStoreUnavailable,
-                  subtitle: l10n.commonRetry,
-                  onTap: () => _retryAppStore(appStore!),
-                ),
-              for (final offer in storeOffers)
-                GroupedTile(
-                  icon: Icons.shop_outlined,
-                  title: offer.name,
-                  subtitle: switch (offer.months) {
-                    final months? => l10n.planPlayPrice(months, offer.price),
-                    null => offer.price,
-                  },
-                  onTap: _buying ? null : () => _buyAppStore(offer, appStore!),
-                ),
-              if (appStore != null)
-                GroupedTile(
-                  icon: Icons.restore,
-                  title: l10n.planRestore,
-                  subtitle: l10n.planRestoreHelp,
-                  onTap: _buying ? null : _restore,
-                ),
-              for (final offer in paypalOffers)
-                GroupedTile(
-                  icon: Icons.payments_outlined,
-                  title: offer.planName,
-                  subtitle: switch ((offer.amount, offer.currency)) {
-                    _ when offer.subscription => l10n.planPayPalSubscription(offer.days),
-                    (final amount?, final currency?) => l10n.planPayPalOnce(offer.days, '$amount $currency'),
-                    _ => l10n.planPayPalDays(offer.days),
-                  },
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: _buying ? null : () => _payPal(offer),
-                ),
-              if (kofi != null) ...[
-                GroupedTile(
-                  icon: Icons.coffee_outlined,
-                  title: l10n.planKofi,
-                  subtitle: l10n.planKofiHelp,
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => _open(kofi),
-                ),
-                GroupedTile(
-                  icon: Icons.receipt_long_outlined,
-                  title: l10n.planPaymentClaim,
-                  subtitle: l10n.planPaymentClaimHelp,
-                  onTap: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
-                ),
-              ],
-              if (info?.termsUrl != null)
-                GroupedTile(
-                  icon: Icons.gavel_outlined,
-                  title: l10n.termsTitle,
-                  subtitle: l10n.planTermsHelp,
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => openTermsOfService(context, ref),
-                ),
-              // Apple wants the privacy policy next to what is sold, too.
-              if (storeOffers.isNotEmpty)
-                GroupedTile(
-                  icon: Icons.privacy_tip_outlined,
-                  title: l10n.privacyTitle,
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => openPrivacyPolicy(context, ref),
-                ),
-            ],
-          ),
-        // How an auto-renewing subscription is charged, as Apple asks to say
-        // where it is sold.
-        if (storeOffers.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
-            child: Text(
-              l10n.planAppStoreRenewal,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+        GroupedList(title: l10n.planLimits, children: limits),
+        if (comparison != null) compare(comparison),
+        ...buy,
+        ...fine,
       ],
     );
+  }
+
+  PlanChoice _storeChoice(
+    AppLocalizations l10n, {
+    required String id,
+    required String name,
+    required String price,
+    required int? months,
+    required VoidCallback buy,
+  }) => PlanChoice(
+    id: id,
+    planName: name,
+    subscription: true,
+    days: (months ?? 0) * 30,
+    period: months == null ? null : planMonthsLabel(l10n, months),
+    price: price,
+    note: l10n.planAutoRenews,
+    buy: buy,
+  );
+
+  List<Widget> _limits(AppLocalizations l10n, MyPlan plan) {
+    String limit(int? n) => n?.toString() ?? l10n.planUnlimited;
+    return [
+      planUsageTile(
+        l10n,
+        icon: Icons.group_outlined,
+        title: l10n.planLimitJoinedGroups,
+        usage: plan.joinedGroups,
+      ),
+      planUsageTile(
+        l10n,
+        icon: Icons.upgrade,
+        title: l10n.planLimitSponsored,
+        usage: plan.sponsoredGroups,
+      ),
+      GroupedLimitTile(
+        icon: Icons.groups_outlined,
+        title: l10n.planLimitMembers,
+        label: limit(plan.membersPerGroup),
+      ),
+      GroupedLimitTile(
+        icon: Icons.receipt_outlined,
+        title: l10n.planLimitReceipts,
+        label: limit(plan.receiptsPerGroup),
+      ),
+      GroupedLimitTile(
+        icon: Icons.repeat,
+        title: l10n.planLimitRecurring,
+        label: limit(plan.recurringPerGroup),
+      ),
+      GroupedLimitTile(
+        icon: Icons.notifications_active_outlined,
+        title: l10n.planLimitReminders,
+        label: plan.reminders ? l10n.planIncluded : l10n.planNotIncluded,
+      ),
+      GroupedLimitTile(
+        icon: Icons.visibility_outlined,
+        title: l10n.planLimitViewLink,
+        label: plan.viewLink ? l10n.planIncluded : l10n.planNotIncluded,
+      ),
+    ];
+  }
+
+  Widget _termsTile(AppLocalizations l10n) => GroupedTile(
+    icon: Icons.gavel_outlined,
+    title: l10n.termsTitle,
+    subtitle: l10n.planTermsHelp,
+    trailing: const Icon(Icons.open_in_new),
+    onTap: () => openTermsOfService(context, ref),
+  );
+
+  Widget _note(BuildContext context, String text) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(BSpace.s16, BSpace.s8, BSpace.s16, 0),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
+  /// The choices and the button that buys the picked one.
+  List<Widget> _buySection(
+    BuildContext context, {
+    required List<PlanChoice> choices,
+    required PlanChoice? selected,
+    required Uri? kofi,
+    required PlayBilling? play,
+    required bool playDown,
+    required AppStoreBilling? appStore,
+    required bool paid,
+    required String? targetName,
+  }) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final severalPlans = {for (final c in choices) c.planName}.length > 1;
+    final name = selected?.planName ?? targetName;
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(BSpace.s16, 0, BSpace.s16, BSpace.s8),
+        child: Text(l10n.planGet, style: theme.textTheme.labelLarge?.copyWith(color: scheme.primary)),
+      ),
+      if (playDown || _appStoreFailed)
+        GroupedList(
+          children: [
+            if (playDown)
+              GroupedTile(
+                icon: Icons.cloud_off_outlined,
+                title: l10n.planPlayUnavailable,
+                subtitle: l10n.commonRetry,
+                onTap: () => _retryPlay(play!),
+              ),
+            if (_appStoreFailed)
+              GroupedTile(
+                icon: Icons.cloud_off_outlined,
+                title: l10n.planAppStoreUnavailable,
+                subtitle: l10n.commonRetry,
+                onTap: () => _retryAppStore(appStore!),
+              ),
+          ],
+        ),
+      for (final choice in choices)
+        PlanChoiceCard(
+          choice: choice,
+          selected: choice.id == selected?.id,
+          showPlan: severalPlans,
+          onTap: () => setState(() => _selected = choice.id),
+        ),
+      if (selected != null || kofi != null) ...[
+        const SizedBox(height: BSpace.s8),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(56),
+            textStyle: theme.textTheme.titleMedium,
+          ),
+          onPressed: _buying
+              ? null
+              : selected == null
+              ? () => _open(kofi!)
+              : kofi != null && selected.id.startsWith('paypal:')
+              ? () => _chooseMethod(selected, kofi)
+              : selected.buy,
+          child: Text(
+            selected == null
+                ? l10n.planKofiBuy
+                : paid
+                ? l10n.planBuy(name!)
+                : l10n.planUpgradeTo(name!),
+          ),
+        ),
+        if (selected == null) _note(context, l10n.planKofiHelp),
+        // Nothing renews a one-off payment, so there is nothing to cancel.
+        _note(
+          context,
+          [
+            if (selected?.subscription ?? false) l10n.planCancelAnytime,
+            l10n.planFreeForever,
+          ].join('\n'),
+        ),
+        const SizedBox(height: BSpace.s24),
+      ],
+    ];
+  }
+
+  /// What goes with a purchase: how it is charged, and the other ways in.
+  List<Widget> _finePrint(
+    BuildContext context, {
+    required Uri? kofi,
+    required AppStoreBilling? appStore,
+    required bool storeSells,
+    required bool selling,
+    required Uri? termsUrl,
+  }) {
+    final l10n = context.l10n;
+    return [
+      if (selling) _note(context, l10n.planSupports),
+      // How an auto-renewing subscription is charged, as Apple asks to say
+      // where it is sold.
+      if (storeSells) _note(context, l10n.planAppStoreRenewal),
+      if (termsUrl != null) _note(context, l10n.planTermsHelp),
+      Padding(
+        padding: const EdgeInsets.only(top: BSpace.s8, bottom: BSpace.s24),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: BSpace.s8,
+          children: [
+            if (kofi != null)
+              TextButton(
+                onPressed: () => showDialog<void>(context: context, builder: (_) => const PaymentClaimDialog()),
+                child: Text(l10n.planPaymentClaim),
+              ),
+            if (appStore != null) TextButton(onPressed: _buying ? null : _restore, child: Text(l10n.planRestore)),
+            if (termsUrl != null)
+              TextButton(onPressed: () => openTermsOfService(context, ref), child: Text(l10n.termsTitle)),
+            // Apple wants the privacy policy next to what is sold, too.
+            if (storeSells)
+              TextButton(onPressed: () => openPrivacyPolicy(context, ref), child: Text(l10n.privacyTitle)),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  /// Asks whether to pay for [choice] through PayPal or go to Ko-fi.
+  Future<void> _chooseMethod(PlanChoice choice, Uri kofi) async {
+    final l10n = context.l10n;
+    final method = await showModalBottomSheet<VoidCallback>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
+          child: GroupedList(
+            title: l10n.planPayWith,
+            children: [
+              GroupedTile(
+                icon: Icons.payments_outlined,
+                title: 'PayPal',
+                subtitle: [?choice.period, ?choice.price].join(' · '),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => Navigator.pop(context, choice.buy),
+              ),
+              GroupedTile(
+                icon: Icons.coffee_outlined,
+                title: l10n.planKofi,
+                subtitle: l10n.planKofiHelp,
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => Navigator.pop(context, () => _open(kofi)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (mounted) method?.call();
   }
 }
 

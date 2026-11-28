@@ -3364,11 +3364,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days jours pour $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days jours';
   }
@@ -3414,17 +3409,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => 'Le modifier ou le résilier sur Google Play';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(
-      months,
-      locale: localeName,
-      other: 'tous les $months mois',
-      one: 'par mois',
-    );
-    return '$price $_temp0';
-  }
 
   @override
   String get planPlayFailed => 'Google Play n\'a pas pu finaliser l\'achat.';
@@ -4039,5 +4023,84 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who a désactivé le lien en lecture seule';
+  }
+
+  @override
+  String get planView => 'Voir les formules';
+
+  @override
+  String get planHeroTitle => 'Faites-en plus avec une formule';
+
+  @override
+  String get planHeroShare => 'Une personne surclasse, tout le groupe en profite';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Surclassez jusqu’à $count groupes pour tous leurs membres',
+      one: 'Surclassez 1 groupe pour tous ses membres',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => 'Surclassez autant de groupes que vous voulez pour tous leurs membres';
+
+  @override
+  String planBenefits(String plan) {
+    return 'Ce que $plan ajoute';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return 'Passer à $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return 'Acheter $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months mois', one: '1 mois');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years ans', one: '1 an');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => 'Abonnement à renouvellement automatique';
+
+  @override
+  String get planOnceNote => 'Paiement unique, sans renouvellement';
+
+  @override
+  String get planPriceAtPayPal => 'Le prix est affiché sur PayPal';
+
+  @override
+  String get planCancelAnytime => 'Résiliable à tout moment.';
+
+  @override
+  String get planFreeForever => 'Partager et régler restent toujours gratuits.';
+
+  @override
+  String get planSupports => 'Les formules payantes font vivre ce serveur.';
+
+  @override
+  String get planPayWith => 'Payer avec';
+
+  @override
+  String get planKofiBuy => 'Acheter sur Ko-fi';
+
+  @override
+  String planUsageNow(String plan) {
+    return 'Votre utilisation ($plan)';
   }
 }

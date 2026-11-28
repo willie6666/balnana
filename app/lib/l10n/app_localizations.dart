@@ -5688,12 +5688,6 @@ abstract class AppLocalizations {
   /// Text about paying for a plan with PayPal in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'{days} days for {price}'**
-  String planPayPalOnce(int days, String price);
-
-  /// Text about paying for a plan with PayPal in the plan screens.
-  ///
-  /// In en, this message translates to:
   /// **'{days} days'**
   String planPayPalDays(int days);
 
@@ -5768,12 +5762,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change or cancel it on Google Play'**
   String get planPlayManageHelp;
-
-  /// Label or control text for plan play price in the plan screens.
-  ///
-  /// In en, this message translates to:
-  /// **'{price} every {months, plural, =1{month} other{{months} months}}'**
-  String planPlayPrice(int months, String price);
 
   /// Label or control text for plan play failed in the plan screens.
   ///
@@ -6842,6 +6830,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{who} turned off the view-only link'**
   String activityViewLinkRevoked(String who);
+
+  /// Button on the message that a plan limit was reached, opening the Plan page.
+  ///
+  /// In en, this message translates to:
+  /// **'View plans'**
+  String get planView;
+
+  /// Headline on the Plan page above what can be bought, when plans cannot be shared with groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Do more with a plan'**
+  String get planHeroTitle;
+
+  /// Headline on the Plan page: one paying account upgrades a group for all its members.
+  ///
+  /// In en, this message translates to:
+  /// **'One person upgrades, the whole group benefits'**
+  String get planHeroShare;
+
+  /// Under the Plan page headline: how many groups the plan can upgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Upgrade 1 group for everyone in it} other{Upgrade up to {count} groups for everyone in them}}'**
+  String planHeroShareCount(int count);
+
+  /// Under the Plan page headline, for a plan that upgrades any number of groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade as many groups as you like for everyone in them'**
+  String get planHeroShareUnlimited;
+
+  /// Title of the list of what a plan allows beyond the current one.
+  ///
+  /// In en, this message translates to:
+  /// **'What {plan} adds'**
+  String planBenefits(String plan);
+
+  /// Button that buys a plan, for an account without a paid one.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to {plan}'**
+  String planUpgradeTo(String plan);
+
+  /// Button that buys a plan, for an account that already has a paid one.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy {plan}'**
+  String planBuy(String plan);
+
+  /// How long one payment for a plan lasts.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1{1 month} other{{months} months}}'**
+  String planPeriodMonths(int months);
+
+  /// How long one payment for a plan lasts.
+  ///
+  /// In en, this message translates to:
+  /// **'{years, plural, =1{1 year} other{{years} years}}'**
+  String planPeriodYears(int years);
+
+  /// Under a way to pay that charges again by itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription, renews automatically'**
+  String get planAutoRenews;
+
+  /// Under a way to pay that charges once.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time payment, doesn’t renew'**
+  String get planOnceNote;
+
+  /// Under a PayPal subscription, whose price the app does not know.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal shows the price'**
+  String get planPriceAtPayPal;
+
+  /// Under the buy button when a subscription is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel anytime.'**
+  String get planCancelAnytime;
+
+  /// Under the buy button on the Plan page.
+  ///
+  /// In en, this message translates to:
+  /// **'Splitting and settling up are always free.'**
+  String get planFreeForever;
+
+  /// Under the buy button: why paying for a plan matters.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid plans keep this server running.'**
+  String get planSupports;
+
+  /// Title of the sheet that asks which payment service to use.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay with'**
+  String get planPayWith;
+
+  /// Button that opens Ko-fi to buy a plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy on Ko-fi'**
+  String get planKofiBuy;
+
+  /// Row that shows how much of the current plan is used.
+  ///
+  /// In en, this message translates to:
+  /// **'Your usage ({plan})'**
+  String planUsageNow(String plan);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

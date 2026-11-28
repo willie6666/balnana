@@ -8,6 +8,7 @@ import 'package:balnana/data/api.dart';
 import 'package:balnana/data/models.dart';
 import 'package:balnana/data/providers.dart';
 import 'package:balnana/features/settings/plan_comparison.dart';
+import 'package:balnana/features/settings/plan_offers.dart';
 import 'package:balnana/features/settings/plan_page.dart';
 import 'package:balnana/l10n/app_localizations_en.dart';
 import 'package:balnana/ui/widgets/play_purchases.dart';
@@ -116,6 +117,7 @@ Future<void> _pump(
 }) async {
   // Tall enough for the whole page: its lists only build what is on screen.
   tester.view.physicalSize = const Size(1200, 3600);
+  tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
@@ -315,9 +317,123 @@ void main() {
         ),
       ),
     );
+    // With nothing to buy there is nothing to put ahead of it.
     expect(find.byType(PlanComparisonTable), findsOneWidget);
     expect(find.text(l10n.planCurrent), findsOneWidget);
     expect(find.text(l10n.planLimits), findsOneWidget);
+    expect(find.byType(PlanHero), findsNothing);
+  });
+
+  group('selling', () {
+    const free = Plan(
+      id: 'free',
+      name: 'Free',
+      limits: PlanLimits(joinedGroups: 5, sponsoredGroups: 0, receiptsPerGroup: 20, membersPerGroup: 15),
+    );
+    const plus = Plan(
+      id: 'plus',
+      name: 'Plus',
+      limits: PlanLimits(sponsoredGroups: 10, receiptsPerGroup: 2000, membersPerGroup: 15, reminders: true),
+    );
+    MyPlan selling({bool paid = false, int joined = 1}) => MyPlan(
+      planName: paid ? 'Plus' : 'Free',
+      paid: paid,
+      joinedGroups: PlanUsage(limit: 5, used: joined),
+      sponsoredGroups: const PlanUsage(limit: 0),
+      comparison: const PlanComparisonData(currentPlanId: 'free', plans: [free, plus]),
+      play: _play,
+    );
+
+    testWidgets('leads with what a plan adds and folds the rest away', (tester) async {
+      await _pump(tester, selling(), store: _FakePlay());
+
+      expect(find.text(l10n.planHeroShare), findsOneWidget);
+      expect(find.text(l10n.planHeroShareCount(10)), findsOneWidget);
+      expect(find.text(l10n.planBenefits('Plus')), findsOneWidget);
+      expect(find.text('20 → 2,000'), findsOneWidget);
+      // What stays the same is no reason to pay.
+      expect(find.text(l10n.planLimitMembers), findsNothing);
+      expect(find.text(l10n.planUpgradeTo('Plus')), findsOneWidget);
+      expect(find.byType(PlanComparisonTable), findsNothing);
+      expect(find.text(l10n.planLimitSponsored), findsNothing);
+
+      await tester.tap(find.text(l10n.planCompare));
+      await tester.pumpAndSettle();
+      expect(find.byType(PlanComparisonTable), findsOneWidget);
+
+      await tester.tap(find.text(l10n.planUsageNow('Free')));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.planUsage(1, 5)), findsOneWidget);
+    });
+
+    testWidgets('the button that buys is on a phone’s first screen', (tester) async {
+      await _pump(tester, selling(), store: _FakePlay());
+      tester.view.physicalSize = const Size(390, 700);
+      await tester.pumpAndSettle();
+
+      expect(tester.getBottomLeft(find.byType(FilledButton)).dy, lessThan(700));
+    });
+
+    testWidgets('shows a limit that is about to run out', (tester) async {
+      await _pump(tester, selling(joined: 4), store: _FakePlay());
+
+      expect(find.text(l10n.planUsage(4, 5)), findsOneWidget);
+    });
+
+    testWidgets('someone who pays sees their plan first', (tester) async {
+      await _pump(tester, selling(paid: true), store: _FakePlay());
+
+      expect(find.byType(PlanHero), findsNothing);
+      expect(find.text(l10n.planLimits), findsOneWidget);
+      expect(find.text(l10n.planBuy('Plus')), findsOneWidget);
+    });
+
+    test('the plan shown is never one that comes without paying', () {
+      const verified = Plan(id: 'verified', name: 'Verified', limits: PlanLimits(reminders: true));
+      const comparison = PlanComparisonData(
+        currentPlanId: 'free',
+        verifiedPlanId: 'verified',
+        plans: [free, verified, plus],
+      );
+      expect(planTarget(comparison, null), same(plus));
+      expect(planTarget(comparison, 'Verified'), same(plus));
+    });
+  });
+
+  testWidgets('the longest choice is picked, and paying can go to PayPal or Ko-fi', (tester) async {
+    if (!externalPayments) return;
+    await _pump(
+      tester,
+      const MyPlan(
+        planName: 'Free',
+        joinedGroups: PlanUsage(used: 0),
+        sponsoredGroups: PlanUsage(used: 0),
+        paypal: PayPalBilling(
+          offers: [
+            PayPalOffer(product: 'plus91', planName: 'Plus', days: 91, amount: '5.00', currency: 'USD'),
+            PayPalOffer(product: 'plus365', planName: 'Plus', days: 365, amount: '18.00', currency: 'USD'),
+          ],
+        ),
+      ),
+      api: _FakeApi(),
+      externalLinks: true,
+    );
+
+    final cards = tester.widgetList<PlanChoiceCard>(find.byType(PlanChoiceCard)).toList();
+    expect([for (final c in cards) c.choice.price], ['18.00 USD', '5.00 USD']);
+    expect([for (final c in cards) c.selected], [true, false]);
+    // Nothing renews a one-off payment.
+    expect(find.textContaining(l10n.planCancelAnytime), findsNothing);
+
+    await tester.tap(find.text('5.00 USD'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.planUpgradeTo('Plus')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.planPayWith), findsOneWidget);
+    expect(find.text('PayPal'), findsOneWidget);
+    expect(find.text('${l10n.planPayPalDays(91)} · 5.00 USD'), findsOneWidget);
+    expect(find.text(l10n.planKofi), findsOneWidget);
   });
 
   // The regular suite exercises the build's UI. CI also supplies an independent
@@ -346,19 +462,18 @@ void main() {
     );
 
     // A second subscription would pay twice for one plan.
-    expect(find.text('Plus monthly'), findsNothing);
+    expect(find.text(l10n.planPayPalDays(30)), findsNothing);
     if (!externalPayments) {
       expect(find.text(l10n.planPayPalManage), findsNothing);
-      expect(find.text(l10n.planPayPalOnce(90, '9.00 USD')), findsNothing);
-      expect(find.text(l10n.planKofi), findsNothing);
+      expect(find.text('9.00 USD'), findsNothing);
+      expect(find.text(l10n.planKofiBuy), findsNothing);
       expect(find.text(l10n.planGet), findsNothing);
       expect(find.text(l10n.planPaymentClaim), findsNothing);
       return;
     }
 
-    expect(find.text(l10n.planKofiHelp), findsOneWidget);
     expect(find.text(l10n.planPayPalManage), findsOneWidget);
-    expect(find.text(l10n.planPayPalOnce(90, '9.00 USD')), findsOneWidget);
+    expect(find.text('9.00 USD'), findsOneWidget);
 
     await tester.ensureVisible(find.text(l10n.planPaymentClaim));
     await tester.pumpAndSettle();
@@ -519,7 +634,7 @@ void main() {
       await _pump(tester, withPlay(_play), store: _FakePlay());
 
       expect(find.text(l10n.planGet), findsOneWidget);
-      expect(find.text(l10n.planPlayPrice(3, r'$3')), findsOneWidget);
+      expect(find.text(r'$3'), findsOneWidget);
       expect(find.text(l10n.planPlayManage), findsNothing);
       // Without terms from the server there is nothing to agree to.
       expect(find.text(l10n.planTermsHelp), findsNothing);
@@ -542,7 +657,7 @@ void main() {
       final api = _FakeApi();
       await _pump(tester, withPlay(_play), store: store, api: api);
 
-      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
 
       expect(store.boughtFor, 'hash');
@@ -559,7 +674,7 @@ void main() {
         api: api,
       );
 
-      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.tap(find.byType(FilledButton));
       await tester.pump();
       tester
           .state<NavigatorState>(find.byType(Navigator))
@@ -578,7 +693,7 @@ void main() {
       final api = _FakeApi();
       await _pump(tester, withPlay(_play), store: _FakePlay(), api: api);
 
-      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
 
       expect(api.reported, isEmpty);
@@ -594,7 +709,7 @@ void main() {
       );
       expect(api.reported, ['theirs']);
 
-      await tester.tap(find.text(l10n.planPlayPrice(3, r'$3')));
+      await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.errorPlayOtherAccount), findsOneWidget);
@@ -648,7 +763,7 @@ void main() {
       await tester.tap(find.text(l10n.planPlayUnavailable));
       await tester.pumpAndSettle();
       expect(find.text(l10n.planPlayUnavailable), findsNothing);
-      expect(find.text(l10n.planPlayPrice(3, r'$3')), findsOneWidget);
+      expect(find.text(r'$3'), findsOneWidget);
     });
 
     test('one purchase the server refuses does not stop the rest', () async {

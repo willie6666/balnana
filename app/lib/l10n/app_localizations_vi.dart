@@ -3265,11 +3265,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days ngày với giá $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days ngày';
   }
@@ -3315,17 +3310,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => 'Thay đổi hoặc hủy trên Google Play';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(
-      months,
-      locale: localeName,
-      other: 'mỗi $months tháng',
-      one: 'mỗi tháng',
-    );
-    return '$price $_temp0';
-  }
 
   @override
   String get planPlayFailed => 'Google Play không thể hoàn tất giao dịch.';
@@ -3928,5 +3912,83 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who đã tắt liên kết chỉ xem';
+  }
+
+  @override
+  String get planView => 'Xem các gói';
+
+  @override
+  String get planHeroTitle => 'Làm được nhiều hơn với gói';
+
+  @override
+  String get planHeroShare => 'Một người nâng cấp, cả nhóm cùng hưởng';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Nâng cấp tối đa $count nhóm cho mọi thành viên',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => 'Nâng cấp bao nhiêu nhóm tùy ý cho mọi thành viên';
+
+  @override
+  String planBenefits(String plan) {
+    return '$plan có thêm gì';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return 'Nâng cấp lên $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return 'Mua $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months tháng');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years năm');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => 'Gói đăng ký, tự động gia hạn';
+
+  @override
+  String get planOnceNote => 'Thanh toán một lần, không gia hạn';
+
+  @override
+  String get planPriceAtPayPal => 'Giá hiển thị trên PayPal';
+
+  @override
+  String get planCancelAnytime => 'Hủy bất cứ lúc nào.';
+
+  @override
+  String get planFreeForever => 'Chia và thanh toán nợ luôn miễn phí.';
+
+  @override
+  String get planSupports => 'Gói trả phí giúp duy trì máy chủ này.';
+
+  @override
+  String get planPayWith => 'Thanh toán bằng';
+
+  @override
+  String get planKofiBuy => 'Mua trên Ko-fi';
+
+  @override
+  String planUsageNow(String plan) {
+    return 'Mức dùng của bạn ($plan)';
   }
 }

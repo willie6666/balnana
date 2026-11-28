@@ -3166,11 +3166,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days일 $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days일';
   }
@@ -3214,12 +3209,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => 'Google Play에서 변경 또는 해지';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months개월마다', one: '매월');
-    return '$_temp0 $price';
-  }
 
   @override
   String get planPlayFailed => 'Google Play에서 구매를 완료하지 못했습니다.';
@@ -3795,5 +3784,83 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who님이 보기 전용 링크를 해제했습니다';
+  }
+
+  @override
+  String get planView => '요금제 보기';
+
+  @override
+  String get planHeroTitle => '요금제로 더 많이 사용하기';
+
+  @override
+  String get planHeroShare => '한 명만 업그레이드해도 그룹 전체가 혜택';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '그룹을 최대 $count개까지 업그레이드하면 구성원 모두가 사용할 수 있어요',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => '원하는 만큼 그룹을 업그레이드하면 구성원 모두가 사용할 수 있어요';
+
+  @override
+  String planBenefits(String plan) {
+    return '$plan에서 늘어나는 것';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return '$plan(으)로 업그레이드';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return '$plan 구매';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months개월');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years년');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => '구독, 자동 갱신';
+
+  @override
+  String get planOnceNote => '한 번만 결제, 자동 갱신 안 됨';
+
+  @override
+  String get planPriceAtPayPal => '가격은 PayPal에서 표시돼요';
+
+  @override
+  String get planCancelAnytime => '언제든지 해지할 수 있어요.';
+
+  @override
+  String get planFreeForever => '비용 나누기와 정산은 언제나 무료예요.';
+
+  @override
+  String get planSupports => '유료 요금제는 이 서버 운영에 쓰여요.';
+
+  @override
+  String get planPayWith => '결제 수단';
+
+  @override
+  String get planKofiBuy => 'Ko-fi에서 구매';
+
+  @override
+  String planUsageNow(String plan) {
+    return '현재 사용량($plan)';
   }
 }

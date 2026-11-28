@@ -3419,11 +3419,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days дн. за $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days дн.';
   }
@@ -3468,18 +3463,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => 'Змінити або скасувати в Google Play';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(
-      months,
-      locale: localeName,
-      other: 'кожні $months місяців',
-      few: 'кожні $months місяці',
-      one: 'на місяць',
-    );
-    return '$price $_temp0';
-  }
 
   @override
   String get planPlayFailed => 'Google Play не вдалося завершити покупку.';
@@ -4085,5 +4068,100 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who вимикає посилання для перегляду';
+  }
+
+  @override
+  String get planView => 'Переглянути тарифи';
+
+  @override
+  String get planHeroTitle => 'Більше можливостей із тарифом';
+
+  @override
+  String get planHeroShare => 'Платить один — користується вся група';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Покращте до $count груп для всіх їхніх учасників',
+      many: 'Покращте до $count груп для всіх їхніх учасників',
+      few: 'Покращте до $count груп для всіх їхніх учасників',
+      one: 'Покращте до $count групи для всіх її учасників',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => 'Покращуйте скільки завгодно груп для всіх їхніх учасників';
+
+  @override
+  String planBenefits(String plan) {
+    return 'Що додає $plan';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return 'Перейти на $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return 'Купити $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months місяця',
+      many: '$months місяців',
+      few: '$months місяці',
+      one: '$months місяць',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: '$years року',
+      many: '$years років',
+      few: '$years роки',
+      one: '$years рік',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => 'Підписка з автопоновленням';
+
+  @override
+  String get planOnceNote => 'Разовий платіж без поновлення';
+
+  @override
+  String get planPriceAtPayPal => 'Ціну вказано в PayPal';
+
+  @override
+  String get planCancelAnytime => 'Скасувати можна будь-коли.';
+
+  @override
+  String get planFreeForever => 'Поділ і розрахунки завжди безкоштовні.';
+
+  @override
+  String get planSupports => 'Платні тарифи підтримують роботу цього сервера.';
+
+  @override
+  String get planPayWith => 'Спосіб оплати';
+
+  @override
+  String get planKofiBuy => 'Купити на Ko-fi';
+
+  @override
+  String planUsageNow(String plan) {
+    return 'Використання ($plan)';
   }
 }

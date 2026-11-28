@@ -2,13 +2,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../data/api.dart';
 import '../../data/known_groups.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';
 
@@ -66,7 +66,7 @@ class _IdentitySheetState extends ConsumerState<_IdentitySheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+      showError(ScaffoldMessenger.of(context), l10n, e);
     }
   }
 

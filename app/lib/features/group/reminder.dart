@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../core/errors.dart';
 import '../../core/l10n.dart';
 import '../../core/money.dart';
 import '../../core/server.dart';
@@ -13,6 +12,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../ui/money.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/error_snack.dart';
 import 'group_page.dart';
 
 enum _Way { notify, share }
@@ -60,7 +60,7 @@ Future<void> _notify(BuildContext context, WidgetRef ref, Group group, Transfer 
       ),
     );
   } on ApiException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(errorMessage(l10n, e))));
+    showError(messenger, l10n, e);
   }
 }
 

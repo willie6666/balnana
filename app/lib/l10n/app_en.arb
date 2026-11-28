@@ -4874,18 +4874,6 @@
       }
     }
   },
-  "planPayPalOnce": "{days} days for {price}",
-  "@planPayPalOnce": {
-    "description": "Text about paying for a plan with PayPal in the plan screens.",
-    "placeholders": {
-      "days": {
-        "type": "int"
-      },
-      "price": {
-        "type": "String"
-      }
-    }
-  },
   "planPayPalDays": "{days} days",
   "@planPayPalDays": {
     "description": "Text about paying for a plan with PayPal in the plan screens.",
@@ -4953,18 +4941,6 @@
   "planPlayManageHelp": "Change or cancel it on Google Play",
   "@planPlayManageHelp": {
     "description": "Label or control text for plan play manage help in the plan screens."
-  },
-  "planPlayPrice": "{price} every {months, plural, =1{month} other{{months} months}}",
-  "@planPlayPrice": {
-    "description": "Label or control text for plan play price in the plan screens.",
-    "placeholders": {
-      "months": {
-        "type": "int"
-      },
-      "price": {
-        "type": "String"
-      }
-    }
   },
   "planPlayFailed": "Google Play couldn't complete the purchase.",
   "@planPlayFailed": {
@@ -5611,5 +5587,43 @@
   "activityViewLinkChanged": "{who} changed the view-only link",
   "@activityViewLinkChanged": {"description": "Activity timeline message.", "placeholders": {"who": {"type": "String", "description": "Display name of the person who performed the action."}}},
   "activityViewLinkRevoked": "{who} turned off the view-only link",
-  "@activityViewLinkRevoked": {"description": "Activity timeline message.", "placeholders": {"who": {"type": "String", "description": "Display name of the person who performed the action."}}}
+  "@activityViewLinkRevoked": {"description": "Activity timeline message.", "placeholders": {"who": {"type": "String", "description": "Display name of the person who performed the action."}}},
+  "planView": "View plans",
+  "@planView": {"description": "Button on the message that a plan limit was reached, opening the Plan page."},
+  "planHeroTitle": "Do more with a plan",
+  "@planHeroTitle": {"description": "Headline on the Plan page above what can be bought, when plans cannot be shared with groups."},
+  "planHeroShare": "One person upgrades, the whole group benefits",
+  "@planHeroShare": {"description": "Headline on the Plan page: one paying account upgrades a group for all its members."},
+  "planHeroShareCount": "{count, plural, =1{Upgrade 1 group for everyone in it} other{Upgrade up to {count} groups for everyone in them}}",
+  "@planHeroShareCount": {"description": "Under the Plan page headline: how many groups the plan can upgrade.", "placeholders": {"count": {"type": "int"}}},
+  "planHeroShareUnlimited": "Upgrade as many groups as you like for everyone in them",
+  "@planHeroShareUnlimited": {"description": "Under the Plan page headline, for a plan that upgrades any number of groups."},
+  "planBenefits": "What {plan} adds",
+  "@planBenefits": {"description": "Title of the list of what a plan allows beyond the current one.", "placeholders": {"plan": {"type": "String", "description": "The name of the plan."}}},
+  "planUpgradeTo": "Upgrade to {plan}",
+  "@planUpgradeTo": {"description": "Button that buys a plan, for an account without a paid one.", "placeholders": {"plan": {"type": "String", "description": "The name of the plan."}}},
+  "planBuy": "Buy {plan}",
+  "@planBuy": {"description": "Button that buys a plan, for an account that already has a paid one.", "placeholders": {"plan": {"type": "String", "description": "The name of the plan."}}},
+  "planPeriodMonths": "{months, plural, =1{1 month} other{{months} months}}",
+  "@planPeriodMonths": {"description": "How long one payment for a plan lasts.", "placeholders": {"months": {"type": "int"}}},
+  "planPeriodYears": "{years, plural, =1{1 year} other{{years} years}}",
+  "@planPeriodYears": {"description": "How long one payment for a plan lasts.", "placeholders": {"years": {"type": "int"}}},
+  "planAutoRenews": "Subscription, renews automatically",
+  "@planAutoRenews": {"description": "Under a way to pay that charges again by itself."},
+  "planOnceNote": "One-time payment, doesn’t renew",
+  "@planOnceNote": {"description": "Under a way to pay that charges once."},
+  "planPriceAtPayPal": "PayPal shows the price",
+  "@planPriceAtPayPal": {"description": "Under a PayPal subscription, whose price the app does not know."},
+  "planCancelAnytime": "Cancel anytime.",
+  "@planCancelAnytime": {"description": "Under the buy button when a subscription is picked."},
+  "planFreeForever": "Splitting and settling up are always free.",
+  "@planFreeForever": {"description": "Under the buy button on the Plan page."},
+  "planSupports": "Paid plans keep this server running.",
+  "@planSupports": {"description": "Under the buy button: why paying for a plan matters."},
+  "planPayWith": "Pay with",
+  "@planPayWith": {"description": "Title of the sheet that asks which payment service to use."},
+  "planKofiBuy": "Buy on Ko-fi",
+  "@planKofiBuy": {"description": "Button that opens Ko-fi to buy a plan."},
+  "planUsageNow": "Your usage ({plan})",
+  "@planUsageNow": {"description": "Row that shows how much of the current plan is used.", "placeholders": {"plan": {"type": "String", "description": "The name of the plan."}}}
 }

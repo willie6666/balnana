@@ -24,6 +24,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/amount_field.dart';
 import '../../ui/widgets/currency_field.dart';
 import '../../ui/widgets/empty_state.dart';
+import '../../ui/widgets/error_snack.dart';
 import '../../ui/widgets/form_page.dart';
 import '../../ui/widgets/member_avatar.dart';
 import '../../ui/widgets/member_picker.dart';

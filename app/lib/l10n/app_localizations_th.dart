@@ -3239,11 +3239,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String planPayPalOnce(int days, String price) {
-    return '$days วัน ราคา $price';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days วัน';
   }
@@ -3288,17 +3283,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planPlayManageHelp => 'เปลี่ยนหรือยกเลิกใน Google Play';
-
-  @override
-  String planPlayPrice(int months, String price) {
-    String _temp0 = intl.Intl.pluralLogic(
-      months,
-      locale: localeName,
-      other: 'ทุก $months เดือน',
-      one: 'ต่อเดือน',
-    );
-    return '$price $_temp0';
-  }
 
   @override
   String get planPlayFailed => 'Google Play ทำรายการซื้อไม่สำเร็จ';
@@ -3896,5 +3880,83 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String activityViewLinkRevoked(String who) {
     return '$who ปิดลิงก์ดูอย่างเดียว';
+  }
+
+  @override
+  String get planView => 'ดูแพ็กเกจ';
+
+  @override
+  String get planHeroTitle => 'ทำได้มากขึ้นด้วยแพ็กเกจ';
+
+  @override
+  String get planHeroShare => 'คนเดียวอัปเกรด ได้ประโยชน์ทั้งกลุ่ม';
+
+  @override
+  String planHeroShareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อัปเกรดได้สูงสุด $count กลุ่ม ให้ทุกคนในกลุ่มใช้ได้',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planHeroShareUnlimited => 'อัปเกรดได้ไม่จำกัดจำนวนกลุ่ม ให้ทุกคนในกลุ่มใช้ได้';
+
+  @override
+  String planBenefits(String plan) {
+    return 'สิ่งที่ $plan เพิ่มให้';
+  }
+
+  @override
+  String planUpgradeTo(String plan) {
+    return 'อัปเกรดเป็น $plan';
+  }
+
+  @override
+  String planBuy(String plan) {
+    return 'ซื้อ $plan';
+  }
+
+  @override
+  String planPeriodMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(months, locale: localeName, other: '$months เดือน');
+    return '$_temp0';
+  }
+
+  @override
+  String planPeriodYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(years, locale: localeName, other: '$years ปี');
+    return '$_temp0';
+  }
+
+  @override
+  String get planAutoRenews => 'สมัครสมาชิก ต่ออายุอัตโนมัติ';
+
+  @override
+  String get planOnceNote => 'จ่ายครั้งเดียว ไม่ต่ออายุ';
+
+  @override
+  String get planPriceAtPayPal => 'ดูราคาได้ที่ PayPal';
+
+  @override
+  String get planCancelAnytime => 'ยกเลิกได้ทุกเมื่อ';
+
+  @override
+  String get planFreeForever => 'การหารและการเคลียร์ยอดฟรีเสมอ';
+
+  @override
+  String get planSupports => 'แพ็กเกจแบบชำระเงินช่วยให้เซิร์ฟเวอร์นี้ทำงานต่อได้';
+
+  @override
+  String get planPayWith => 'ชำระด้วย';
+
+  @override
+  String get planKofiBuy => 'ซื้อบน Ko-fi';
+
+  @override
+  String planUsageNow(String plan) {
+    return 'การใช้งานของคุณ ($plan)';
   }
 }
