@@ -23,7 +23,9 @@ COPY app/pubspec.yaml app/pubspec.lock ./
 RUN flutter pub get
 COPY app/ ./
 # No CDN: a self-hosted server serves every web resource itself.
-RUN flutter build web --release --no-web-resources-cdn
+# Wasm draws faster in Chromium browsers; the build keeps a JavaScript copy,
+# which the others load.
+RUN flutter build web --release --wasm --no-web-resources-cdn
 
 # --- Go build -------------------------------------------------------------------
 FROM golang:${GO_VERSION}-alpine AS server

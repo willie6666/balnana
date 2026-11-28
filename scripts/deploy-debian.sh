@@ -218,8 +218,11 @@ as_builder bash -c '
   cd "$1/app"
   flutter config --no-analytics --no-cli-animations
   flutter pub get
-  flutter build web --release --no-pub --no-web-resources-cdn
+  # Wasm draws faster in Chromium browsers; the build keeps a JavaScript copy,
+  # which the others load.
+  flutter build web --release --wasm --no-pub --no-web-resources-cdn
   test -s build/web/index.html
+  test -s build/web/main.dart.wasm
   test -s build/web/main.dart.js
   mkdir -p "$1/server/internal/web/dist"
   cp -a build/web/. "$1/server/internal/web/dist/"
