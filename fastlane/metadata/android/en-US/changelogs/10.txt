@@ -1,0 +1,1 @@
+Plan page: prices now sit side by side where there is room, so they are easier to compare.
