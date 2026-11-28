@@ -5682,12 +5682,6 @@ abstract class AppLocalizations {
   /// Text about paying for a plan with PayPal in the plan screens.
   ///
   /// In en, this message translates to:
-  /// **'Subscription, renews every {days} days'**
-  String planPayPalSubscription(int days);
-
-  /// Text about paying for a plan with PayPal in the plan screens.
-  ///
-  /// In en, this message translates to:
   /// **'{days} days'**
   String planPayPalDays(int days);
 
@@ -6926,12 +6920,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid plans keep this server running.'**
   String get planSupports;
-
-  /// Title of the sheet that asks which payment service to use.
-  ///
-  /// In en, this message translates to:
-  /// **'Pay with'**
-  String get planPayWith;
 
   /// Button that opens Ko-fi to buy a plan.
   ///

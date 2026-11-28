@@ -3375,11 +3375,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planPaymentClaimed => 'تمت إضافة الدفعة';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'اشتراك يتجدد كل $days يومًا';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days يومًا';
   }
@@ -4105,9 +4100,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get planSupports => 'الخطط المدفوعة تبقي هذا الخادم يعمل.';
-
-  @override
-  String get planPayWith => 'الدفع عبر';
 
   @override
   String get planKofiBuy => 'الشراء من Ko-fi';

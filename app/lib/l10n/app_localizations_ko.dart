@@ -3161,11 +3161,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planPaymentClaimed => '결제를 추가했습니다';
 
   @override
-  String planPayPalSubscription(int days) {
-    return '구독, $days일마다 갱신';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days일';
   }
@@ -3852,9 +3847,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get planSupports => '유료 요금제는 이 서버 운영에 쓰여요.';
-
-  @override
-  String get planPayWith => '결제 수단';
 
   @override
   String get planKofiBuy => 'Ko-fi에서 구매';

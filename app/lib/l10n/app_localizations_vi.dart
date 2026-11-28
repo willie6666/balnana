@@ -3260,11 +3260,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get planPaymentClaimed => 'Đã thêm khoản thanh toán';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'Gói đăng ký, gia hạn mỗi $days ngày';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days ngày';
   }
@@ -3980,9 +3975,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planSupports => 'Gói trả phí giúp duy trì máy chủ này.';
-
-  @override
-  String get planPayWith => 'Thanh toán bằng';
 
   @override
   String get planKofiBuy => 'Mua trên Ko-fi';

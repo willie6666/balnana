@@ -3316,11 +3316,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get planPaymentClaimed => 'भुगतान जोड़ा गया';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'सदस्यता, हर $days दिन में नवीनीकृत';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days दिन';
   }
@@ -4039,9 +4034,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get planSupports => 'सशुल्क प्लान इस सर्वर को चालू रखते हैं।';
-
-  @override
-  String get planPayWith => 'भुगतान का तरीका';
 
   @override
   String get planKofiBuy => 'Ko-fi पर खरीदें';

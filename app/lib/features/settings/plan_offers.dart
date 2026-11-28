@@ -6,7 +6,10 @@ import '../../data/models/billing.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/grouped_list.dart';
 
-/// One thing to buy, from a store or PayPal.
+/// Who takes a payment that isn't the app store's.
+enum PlanProvider { paypal, kofi }
+
+/// One thing to buy, from a store, PayPal or Ko-fi.
 class PlanChoice {
   const PlanChoice({
     required this.id,
@@ -17,8 +20,8 @@ class PlanChoice {
     this.period,
     this.price,
     this.note,
-    this.paypal,
-    this.kofi,
+    this.provider,
+    this.priceNote,
   });
 
   final String id;
@@ -33,74 +36,55 @@ class PlanChoice {
   /// How long one payment lasts, in words.
   final String? period;
 
-  /// What one payment costs; null when only the checkout page says, or when
-  /// the ways to pay differ, as [note] then tells.
+  /// What one payment costs; null when only the checkout page says, as
+  /// [priceNote] then tells.
   final String? price;
+  final String? priceNote;
 
   /// How it is charged.
   final String? note;
 
   final VoidCallback buy;
 
-  /// The PayPal and Ko-fi offers behind it. With both, [buy] is PayPal's and
-  /// the page asks which to use.
-  final PayPalOffer? paypal;
-  final KofiOffer? kofi;
+  /// Null for the app store's.
+  final PlanProvider? provider;
 }
 
-/// The choices from PayPal and Ko-fi: one for what both sell, for the same
-/// plan and days. A subscription is only PayPal's.
+/// What PayPal and Ko-fi sell, as choices.
 List<PlanChoice> externalChoices(
   AppLocalizations l10n, {
   required List<PayPalOffer> paypal,
   required List<KofiOffer> kofi,
   required void Function(PayPalOffer) buyPayPal,
   required VoidCallback openKofi,
-}) {
-  final left = [...kofi];
-  KofiOffer? take(PayPalOffer offer) {
-    if (offer.subscription) return null;
-    final i = left.indexWhere((k) => k.planName == offer.planName && k.days == offer.days);
-    return i < 0 ? null : left.removeAt(i);
-  }
-
-  PlanChoice fromPayPal(PayPalOffer offer, KofiOffer? other) {
-    final prices = {?offer.price, ?other?.price};
-    final price = prices.length == 1 ? prices.single : null;
-    return PlanChoice(
+}) => [
+  for (final offer in paypal)
+    PlanChoice(
       id: 'paypal:${offer.product}',
+      provider: PlanProvider.paypal,
       planName: offer.planName,
       subscription: offer.subscription,
       days: offer.days,
       period: l10n.planPayPalDays(offer.days),
-      price: price,
-      note: [
-        if (offer.subscription) l10n.planPayPalSubscription(offer.days) else l10n.planOnceNote,
-        if (offer.subscription && price == null) l10n.planPriceAtPayPal,
-        if (prices.length > 1) 'PayPal ${offer.price} · Ko-fi ${other!.price}',
-      ].join('\n'),
+      price: offer.price,
+      priceNote: l10n.planPriceAtPayPal,
+      note: offer.subscription ? l10n.planAutoRenews : l10n.planOnceNote,
       buy: () => buyPayPal(offer),
-      paypal: offer,
-      kofi: other,
-    );
-  }
-
-  return [
-    for (final offer in paypal) fromPayPal(offer, take(offer)),
-    for (final offer in left)
-      PlanChoice(
-        id: 'kofi:${offer.planName}:${offer.days}',
-        planName: offer.planName,
-        subscription: false,
-        days: offer.days,
-        period: l10n.planPayPalDays(offer.days),
-        price: offer.price,
-        note: [l10n.planOnceNote, if (offer.price == null) l10n.planPriceAtKofi].join('\n'),
-        buy: openKofi,
-        kofi: offer,
-      ),
-  ];
-}
+    ),
+  for (final offer in kofi)
+    PlanChoice(
+      id: 'kofi:${offer.planName}:${offer.days}',
+      provider: PlanProvider.kofi,
+      planName: offer.planName,
+      subscription: false,
+      days: offer.days,
+      period: l10n.planPayPalDays(offer.days),
+      price: offer.price,
+      priceNote: l10n.planPriceAtKofi,
+      note: l10n.planOnceNote,
+      buy: openKofi,
+    ),
+];
 
 /// [months] in words, with whole years as years.
 String planMonthsLabel(AppLocalizations l10n, int months) =>
@@ -110,10 +94,14 @@ String planMonthsLabel(AppLocalizations l10n, int months) =>
 /// and the longest first.
 List<PlanChoice> sortedChoices(List<PlanChoice> choices) {
   final plans = [...{for (final c in choices) c.planName}];
-  return [...choices]..sort((a, b) {
-    final byPlan = plans.indexOf(a.planName).compareTo(plans.indexOf(b.planName));
-    return byPlan != 0 ? byPlan : b.days.compareTo(a.days);
+  // Equals keep their order, so PayPal's stays on the same side of each pair.
+  final sorted = [...choices.indexed]..sort((a, b) {
+    final byPlan = plans.indexOf(a.$2.planName).compareTo(plans.indexOf(b.$2.planName));
+    if (byPlan != 0) return byPlan;
+    final byDays = b.$2.days.compareTo(a.$2.days);
+    return byDays != 0 ? byDays : a.$1.compareTo(b.$1);
   });
+  return [for (final (_, choice) in sorted) choice];
 }
 
 /// The plan to show the benefits of: the one being bought when its name says
@@ -261,7 +249,215 @@ class PlanBenefits extends StatelessWidget {
   }
 }
 
-/// A [PlanChoice] to pick, with its price at the end.
+/// The [choices] to pick from, two side by side where there is room. A plan
+/// with an odd number of them gives its first a row of its own.
+class PlanChoiceGrid extends StatelessWidget {
+  const PlanChoiceGrid({super.key, required this.choices, required this.selected, required this.onSelect});
+
+  /// In the order of [sortedChoices].
+  final List<PlanChoice> choices;
+  final String? selected;
+  final ValueChanged<PlanChoice> onSelect;
+
+  /// The narrowest a card beside another gets, at the default text size.
+  static const _minColumn = 140.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final plans = {for (final c in choices) c.planName};
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    Widget card(PlanChoice choice, {bool narrow = false}) => PlanChoiceCard(
+      choice: choice,
+      selected: choice.id == selected,
+      showPlan: plans.length > 1,
+      narrow: narrow,
+      onTap: () => onSelect(choice),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final paired = constraints.maxWidth >= 2 * _minColumn * scale + BSpace.s8;
+        final rows = <Widget>[];
+        for (final plan in plans) {
+          var left = [...choices.where((c) => c.planName == plan)];
+          if (!paired || left.length.isOdd) {
+            final alone = paired ? 1 : left.length;
+            rows.addAll(left.take(alone).map(card));
+            left = left.sublist(alone);
+          }
+          for (var i = 0; i < left.length; i += 2) {
+            rows.add(
+              // As tall as each other, however their words wrap.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: card(left[i], narrow: true)),
+                    const SizedBox(width: BSpace.s8),
+                    Expanded(child: card(left[i + 1], narrow: true)),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+      },
+    );
+  }
+}
+
+/// PayPal's choices and Ko-fi's, each in a box of its own that says how it is
+/// charged: side by side where there is room.
+class PlanProviderBoxes extends StatelessWidget {
+  const PlanProviderBoxes({
+    super.key,
+    required this.choices,
+    required this.selected,
+    required this.onSelect,
+    this.openKofi,
+  });
+
+  /// In the order of [sortedChoices].
+  final List<PlanChoice> choices;
+  final String? selected;
+  final ValueChanged<PlanChoice> onSelect;
+
+  /// Gives Ko-fi a box with a way to its page when none of [choices] is its,
+  /// for a server that doesn't say what it sells.
+  final VoidCallback? openKofi;
+
+  /// The narrowest a box beside another gets, at the default text size.
+  static const _minBox = 156.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final showPlan = {for (final c in choices) c.planName}.length > 1;
+    final paypal = [...choices.where((c) => c.provider == PlanProvider.paypal)];
+    final kofi = [...choices.where((c) => c.provider == PlanProvider.kofi)];
+    final two = paypal.isNotEmpty && (kofi.isNotEmpty || openKofi != null);
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final beside = two && constraints.maxWidth >= 2 * _minBox * scale + BSpace.s8;
+        Widget box(String title, List<PlanChoice> own, {VoidCallback? open}) {
+          // Said once for the box when all its choices are charged alike.
+          final notes = {for (final c in own) c.note};
+          final shared = notes.length == 1 ? notes.single : null;
+          return _ProviderBox(
+            title: title,
+            description: shared,
+            // Both boxes' choices line up, however long their descriptions.
+            alignEnd: beside && paypal.length == kofi.length,
+            children: [
+              for (final choice in own)
+                PlanChoiceCard(
+                  choice: choice,
+                  selected: choice.id == selected,
+                  showPlan: showPlan,
+                  showNote: shared == null,
+                  narrow: beside,
+                  inBox: true,
+                  onTap: () => onSelect(choice),
+                ),
+              if (own.isEmpty && open != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: BSpace.s8),
+                  child: OutlinedButton(onPressed: open, child: Text(l10n.planKofiBuy, textAlign: TextAlign.center)),
+                ),
+            ],
+          );
+        }
+
+        final boxes = [
+          if (paypal.isNotEmpty) box('PayPal', paypal),
+          if (kofi.isNotEmpty || openKofi != null)
+            box(l10n.planKofi, kofi, open: openKofi),
+        ];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: BSpace.s8),
+          child: beside
+              ? IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: boxes.first),
+                      const SizedBox(width: BSpace.s8),
+                      Expanded(child: boxes.last),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: BSpace.s8,
+                  children: boxes,
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _ProviderBox extends StatelessWidget {
+  const _ProviderBox({
+    required this.title,
+    required this.description,
+    required this.alignEnd,
+    required this.children,
+  });
+
+  final String title;
+  final String? description;
+
+  /// Puts [children] at the bottom of a box stretched taller than they need.
+  final bool alignEnd;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final small = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        border: Border.all(color: scheme.outlineVariant),
+        borderRadius: const BorderRadius.all(BShape.rLg),
+      ),
+      child: Padding(
+        // The cards bring their own space below.
+        padding: const EdgeInsets.fromLTRB(BSpace.s8, BSpace.s12, BSpace.s8, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BSpace.s4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  ),
+                  if (description case final description?) ...[
+                    const SizedBox(height: BSpace.s4),
+                    Text(description, style: small),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: BSpace.s12),
+            if (alignEnd) const Spacer(),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A [PlanChoice] to pick, with its price at the end, or under its name when
+/// [narrow].
 class PlanChoiceCard extends StatelessWidget {
   const PlanChoiceCard({
     super.key,
@@ -269,6 +465,9 @@ class PlanChoiceCard extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.showPlan = false,
+    this.narrow = false,
+    this.showNote = true,
+    this.inBox = false,
   });
 
   final PlanChoice choice;
@@ -277,6 +476,13 @@ class PlanChoiceCard extends StatelessWidget {
 
   /// Whether the plan's name tells the choices apart.
   final bool showPlan;
+  final bool narrow;
+
+  /// Off where the box around it says how it is charged.
+  final bool showNote;
+
+  /// Whether it sits on a [PlanProviderBoxes] box, and has to stand out.
+  final bool inBox;
 
   @override
   Widget build(BuildContext context) {
@@ -290,13 +496,44 @@ class PlanChoiceCard extends StatelessWidget {
         : period;
     final color = selected ? scheme.onSecondaryContainer : scheme.onSurface;
     const radius = BorderRadius.all(Radius.circular(BShape.md));
+    final mark = Icon(
+      selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+      color: selected ? scheme.primary : scheme.onSurfaceVariant,
+    );
+    final name = Text(title, style: theme.textTheme.titleMedium?.copyWith(color: color));
+    final small = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final note = switch (choice.note) {
+      final note? when showNote => Text(note, style: small),
+      _ => null,
+    };
+    final Widget? price = switch (choice.price) {
+      // Smaller rather than broken in two.
+      final price? => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          price,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+      null => null,
+    };
+    // Under the name, being longer than a price.
+    final priceNote = price == null && choice.priceNote != null ? Text(choice.priceNote!, style: small) : null;
     return Padding(
       padding: const EdgeInsets.only(bottom: BSpace.s8),
       child: Semantics(
         inMutuallyExclusiveGroup: true,
         checked: selected,
         child: Material(
-          color: selected ? scheme.secondaryContainer : scheme.surfaceContainer,
+          color: selected
+              ? scheme.secondaryContainer
+              : inBox
+              ? scheme.surface
+              : scheme.surfaceContainer,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
             side: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 2),
@@ -305,37 +542,40 @@ class PlanChoiceCard extends StatelessWidget {
             onTap: onTap,
             borderRadius: radius,
             child: Padding(
-              padding: const EdgeInsets.all(BSpace.s16),
-              child: Row(
-                children: [
-                  Icon(
-                    selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    color: selected ? scheme.primary : scheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: BSpace.s16),
-                  Expanded(
-                    child: Column(
+              padding: EdgeInsets.all(narrow ? BSpace.s12 : BSpace.s16),
+              child: narrow
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: theme.textTheme.titleMedium?.copyWith(color: color)),
-                        if (choice.note case final note?)
-                          Text(note, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                        Row(
+                          children: [
+                            mark,
+                            const SizedBox(width: BSpace.s8),
+                            Expanded(child: name),
+                          ],
+                        ),
+                        if (price != null) ...[const SizedBox(height: BSpace.s8), price],
+                        if (priceNote != null) ...[const SizedBox(height: BSpace.s8), priceNote],
+                        if (note != null) ...[const SizedBox(height: BSpace.s4), note],
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        mark,
+                        const SizedBox(width: BSpace.s16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [name, ?priceNote, ?note],
+                          ),
+                        ),
+                        if (price != null) ...[
+                          const SizedBox(width: BSpace.s12),
+                          // Leaves the name room on a narrow screen.
+                          ConstrainedBox(constraints: const BoxConstraints(maxWidth: 150), child: price),
+                        ],
                       ],
                     ),
-                  ),
-                  if (choice.price case final price?) ...[
-                    const SizedBox(width: BSpace.s12),
-                    Text(
-                      price,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
             ),
           ),
         ),

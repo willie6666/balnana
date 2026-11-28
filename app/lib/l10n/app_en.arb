@@ -4865,15 +4865,6 @@
   "@planPaymentClaimed": {
     "description": "Text about adding a Ko-fi payment to an account by a code or transaction ID in the plan screens."
   },
-  "planPayPalSubscription": "Subscription, renews every {days} days",
-  "@planPayPalSubscription": {
-    "description": "Text about paying for a plan with PayPal in the plan screens.",
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
   "planPayPalDays": "{days} days",
   "@planPayPalDays": {
     "description": "Text about paying for a plan with PayPal in the plan screens.",
@@ -5620,8 +5611,6 @@
   "@planFreeForever": {"description": "Under the buy button on the Plan page."},
   "planSupports": "Paid plans keep this server running.",
   "@planSupports": {"description": "Under the buy button: why paying for a plan matters."},
-  "planPayWith": "Pay with",
-  "@planPayWith": {"description": "Title of the sheet that asks which payment service to use."},
   "planKofiBuy": "Buy on Ko-fi",
   "@planKofiBuy": {"description": "Button that opens Ko-fi to buy a plan."},
   "planUsageNow": "Your usage ({plan})",

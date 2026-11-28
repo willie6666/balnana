@@ -3414,11 +3414,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get planPaymentClaimed => 'Платіж додано';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'Підписка, поновлюється кожні $days дн.';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days дн.';
   }
@@ -4153,9 +4148,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get planSupports => 'Платні тарифи підтримують роботу цього сервера.';
-
-  @override
-  String get planPayWith => 'Спосіб оплати';
 
   @override
   String get planKofiBuy => 'Купити на Ko-fi';

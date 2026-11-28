@@ -3422,11 +3422,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get planPaymentClaimed => 'Dodano płatność';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'Subskrypcja, odnawiana co $days dni';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days dni';
   }
@@ -4162,9 +4157,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get planSupports => 'Płatne plany utrzymują ten serwer.';
-
-  @override
-  String get planPayWith => 'Zapłać przez';
 
   @override
   String get planKofiBuy => 'Kup na Ko-fi';

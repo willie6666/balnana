@@ -3275,11 +3275,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPaymentClaimed => 'Ödeme eklendi';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'Abonelik, her $days günde yenilenir';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days gün';
   }
@@ -4000,9 +3995,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planSupports => 'Ücretli planlar bu sunucunun çalışmasını sağlar.';
-
-  @override
-  String get planPayWith => 'Ödeme yöntemi';
 
   @override
   String get planKofiBuy => 'Ko-fi’den satın al';

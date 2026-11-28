@@ -3145,11 +3145,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planPaymentClaimed => '已添加付款';
 
   @override
-  String planPayPalSubscription(int days) {
-    return '订阅，每 $days 天续订';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days 天';
   }
@@ -3827,9 +3822,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planSupports => '付费方案支持这台服务器持续运行。';
-
-  @override
-  String get planPayWith => '付款方式';
 
   @override
   String get planKofiBuy => '在 Ko-fi 购买';
@@ -6994,11 +6986,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get planPaymentClaimed => '已加入付款';
 
   @override
-  String planPayPalSubscription(int days) {
-    return '訂閱，每 $days 天續訂';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days 天';
   }
@@ -7676,9 +7663,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get planSupports => '付費方案支持這台伺服器持續營運。';
-
-  @override
-  String get planPayWith => '付款方式';
 
   @override
   String get planKofiBuy => '在 Ko-fi 購買';

@@ -400,7 +400,7 @@ void main() {
     });
   });
 
-  testWidgets('the longest choice is picked, and paying can go to PayPal or Ko-fi', (tester) async {
+  testWidgets('the longest choice is picked, and a server silent on Ko-fi still leads there', (tester) async {
     if (!externalPayments) return;
     await _pump(
       tester,
@@ -424,62 +424,46 @@ void main() {
     expect([for (final c in cards) c.selected], [true, false]);
     // Nothing renews a one-off payment.
     expect(find.textContaining(l10n.planCancelAnytime), findsNothing);
-
-    await tester.tap(find.text('5.00 USD'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planUpgradeTo('Plus')));
-    await tester.pumpAndSettle();
-
-    expect(find.text(l10n.planPayWith), findsOneWidget);
     expect(find.text('PayPal'), findsOneWidget);
-    expect(find.text('${l10n.planPayPalDays(91)} · 5.00 USD'), findsOneWidget);
     expect(find.text(l10n.planKofi), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, l10n.planKofiBuy), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, l10n.planUpgradeTo('Plus')), findsOneWidget);
   });
 
-  // The regular suite exercises the build's UI. CI also supplies an independent
-  // policy expectation, so a wrong flavor or flag fails instead of skipping.
-  testWidgets('external payment links match the expected build policy', (tester) async {
-    const expected = bool.hasEnvironment('BALNANA_TEST_EXTERNAL_PAYMENTS')
-        ? bool.fromEnvironment('BALNANA_TEST_EXTERNAL_PAYMENTS')
-        : null;
-    if (expected != null) expect(externalPayments, expected);
-    await _pump(
-      tester,
-      const MyPlan(
-        planName: 'Free',
-        joinedGroups: PlanUsage(used: 0),
-        sponsoredGroups: PlanUsage(used: 0),
-        paypal: PayPalBilling(
-          offers: [
-            PayPalOffer(product: 'P-ABC', planName: 'Plus monthly', days: 30, subscription: true),
-            PayPalOffer(product: 'plus90', planName: 'Plus 90', days: 90, amount: '9.00', currency: 'USD'),
-          ],
-          subscribed: ['P-ABC'],
+  testWidgets('choices sit two to a row where there is room', (tester) async {
+    PlanChoice choice(String id, int days) =>
+        PlanChoice(id: id, planName: 'Plus', subscription: false, days: days, period: id, price: '1', buy: () {});
+    Future<List<Offset>> places(List<PlanChoice> choices, double width) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: width,
+                child: PlanChoiceGrid(choices: sortedChoices(choices), selected: null, onSelect: (_) {}),
+              ),
+            ),
+          ),
         ),
-      ),
-      api: _FakeApi(),
-      externalLinks: true,
-    );
-
-    // A second subscription would pay twice for one plan.
-    expect(find.text(l10n.planPayPalDays(30)), findsNothing);
-    if (!externalPayments) {
-      expect(find.text(l10n.planPayPalManage), findsNothing);
-      expect(find.text('9.00 USD'), findsNothing);
-      expect(find.text(l10n.planKofiBuy), findsNothing);
-      expect(find.text(l10n.planGet), findsNothing);
-      expect(find.text(l10n.planPaymentClaim), findsNothing);
-      return;
+      );
+      return [for (final c in choices) tester.getTopLeft(find.text(c.id))];
     }
 
-    expect(find.text(l10n.planPayPalManage), findsOneWidget);
-    expect(find.text('9.00 USD'), findsOneWidget);
+    final four = [choice('a', 365), choice('b', 91), choice('c', 365), choice('d', 91)];
+    var [a, b, c, d] = await places(four, 360);
+    // A row for each length, with the first given on the left.
+    expect([c.dy, d.dy], [a.dy, b.dy]);
+    expect(a.dx, lessThan(c.dx));
+    expect([b.dx, d.dx], [a.dx, c.dx]);
+    expect(b.dy, greaterThan(a.dy));
 
-    await tester.ensureVisible(find.text(l10n.planPaymentClaim));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planPaymentClaim));
-    await tester.pumpAndSettle();
-    expect(find.byType(PaymentClaimDialog), findsOneWidget);
+    [a, b, c, d] = await places(four, 270);
+    expect({a.dx, b.dx, c.dx, d.dx}, hasLength(1));
+
+    final [year, quarter, month] = await places([choice('y', 365), choice('q', 91), choice('m', 30)], 360);
+    expect(quarter.dy, month.dy);
+    expect(year.dy, lessThan(quarter.dy));
+    expect(tester.takeException(), isNull);
   });
 
   group('Ko-fi prices', () {
@@ -492,8 +476,6 @@ void main() {
     );
     Future<void> show(WidgetTester tester, MyPlan plan) =>
         _pump(tester, plan, api: _FakeApi(), externalLinks: true);
-    List<PlanChoiceCard> cards(WidgetTester tester) =>
-        tester.widgetList<PlanChoiceCard>(find.byType(PlanChoiceCard)).toList();
     const once = PayPalOffer(product: 'plus91', planName: 'Plus', days: 91, amount: '5.00', currency: 'USD');
 
     test('are read from the server', () {
@@ -511,59 +493,78 @@ void main() {
       expect([for (final o in read.kofi!) o.price], ['5.00 USD', r'US$18']);
     });
 
-    testWidgets('that differ from PayPal’s are both told', (tester) async {
+    testWidgets('sit in a box of their own beside PayPal’s', (tester) async {
       if (!externalPayments) return;
       await show(
         tester,
         plan(
-          paypal: [once],
-          kofi: const [KofiOffer(planName: 'Plus', days: 91, displayPrice: r'US$6')],
+          paypal: const [
+            PayPalOffer(product: 'P-A', planName: 'Plus', days: 91, subscription: true, displayPrice: r'US$5'),
+            PayPalOffer(product: 'P-B', planName: 'Plus', days: 365, subscription: true, displayPrice: r'US$18'),
+          ],
+          kofi: const [
+            KofiOffer(planName: 'Plus', days: 91, amount: '5.00', currency: 'USD'),
+            KofiOffer(planName: 'Plus', days: 365, amount: '18.00', currency: 'USD'),
+          ],
         ),
       );
 
-      final card = cards(tester).single.choice;
-      expect(card.price, isNull);
-      expect(card.note, contains('PayPal 5.00 USD · Ko-fi US\$6'));
+      Offset at(String text) => tester.getTopLeft(find.text(text));
+      expect(at('PayPal').dy, at(l10n.planKofi).dy);
+      expect(at('PayPal').dx, lessThan(at(l10n.planKofi).dx));
+      // The same length is level across the two, under each box's own words.
+      expect(at(r'US$18').dy, at('18.00 USD').dy);
+      expect(at(r'US$5').dy, at('5.00 USD').dy);
+      expect(at(r'US$18').dx, lessThan(at('18.00 USD').dx));
+      // How each is charged is said once, for the box.
+      expect(find.text(l10n.planAutoRenews), findsOneWidget);
+      expect(find.text(l10n.planOnceNote), findsOneWidget);
+      // What to do after paying on Ko-fi is said under the button, whichever
+      // is picked.
+      expect(find.text(l10n.planKofiHelp), findsOneWidget);
+      expect(at(l10n.planKofiHelp).dy, greaterThan(tester.getBottomLeft(find.byType(FilledButton)).dy));
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.widgetWithText(FilledButton, l10n.planUpgradeTo('Plus')), findsOneWidget);
 
-      await tester.tap(find.text(l10n.planUpgradeTo('Plus')));
+      await tester.tap(find.text('5.00 USD'));
       await tester.pumpAndSettle();
-      expect(find.text('${l10n.planPayPalDays(91)} · 5.00 USD'), findsOneWidget);
-      expect(find.text('${l10n.planPayPalDays(91)} · US\$6\n${l10n.planKofiHelp}'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, l10n.planKofiBuy), findsOneWidget);
+      expect(find.textContaining(l10n.planCancelAnytime), findsNothing);
+
+      // One under the other where two would be too narrow.
+      tester.view.physicalSize = const Size(320, 2400);
+      await tester.pumpAndSettle();
+      expect(at('PayPal').dx, at(l10n.planKofi).dx);
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('offer only the ways that sell the picked one', (tester) async {
+    testWidgets('say on each card how they differ', (tester) async {
       if (!externalPayments) return;
       await show(
         tester,
         plan(
           paypal: const [
             once,
-            PayPalOffer(product: 'P-ABC', planName: 'Plus', days: 30, subscription: true, displayPrice: r'US$2'),
+            PayPalOffer(product: 'P-ABC', planName: 'Plus', days: 30, subscription: true),
           ],
-          kofi: const [KofiOffer(planName: 'Plus', days: 365, amount: '18.00', currency: 'USD')],
+          kofi: const [KofiOffer(planName: 'Plus', days: 365)],
         ),
       );
 
-      expect([for (final c in cards(tester)) c.choice.price], ['18.00 USD', '5.00 USD', r'US$2']);
-      expect(find.textContaining(l10n.planPriceAtPayPal), findsNothing);
-      // The longest is only on Ko-fi, so the button goes there.
-      expect(find.widgetWithText(FilledButton, l10n.planKofiBuy), findsOneWidget);
-      expect(find.text(l10n.planKofiHelp), findsOneWidget);
-
-      // And what Ko-fi doesn't sell asks nothing.
-      await tester.tap(find.text('5.00 USD'));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.planKofiHelp), findsNothing);
-      await tester.tap(find.text(l10n.planUpgradeTo('Plus')));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.planPayWith), findsNothing);
+      // Both ways of charging in one box, and no price for the app to show.
+      expect(find.text(l10n.planAutoRenews), findsOneWidget);
+      // On PayPal's one-off card, and over Ko-fi's box.
+      expect(find.text(l10n.planOnceNote), findsNWidgets(2));
+      expect(find.text(l10n.planPriceAtPayPal), findsOneWidget);
+      expect(find.text(l10n.planPriceAtKofi), findsOneWidget);
     });
 
     testWidgets('show without PayPal', (tester) async {
       if (!externalPayments) return;
       await show(tester, plan(kofi: const [KofiOffer(planName: 'Plus', days: 91)]));
 
-      expect(cards(tester).single.choice.note, contains(l10n.planPriceAtKofi));
+      expect(find.text('PayPal'), findsNothing);
+      expect(find.text(l10n.planKofi), findsOneWidget);
       expect(find.widgetWithText(FilledButton, l10n.planKofiBuy), findsOneWidget);
     });
   });

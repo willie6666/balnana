@@ -3234,11 +3234,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get planPaymentClaimed => 'เพิ่มการชำระเงินแล้ว';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'สมัครสมาชิก ต่ออายุทุก $days วัน';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days วัน';
   }
@@ -3948,9 +3943,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planSupports => 'แพ็กเกจแบบชำระเงินช่วยให้เซิร์ฟเวอร์นี้ทำงานต่อได้';
-
-  @override
-  String get planPayWith => 'ชำระด้วย';
 
   @override
   String get planKofiBuy => 'ซื้อบน Ko-fi';

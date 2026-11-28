@@ -423,8 +423,6 @@ class _PlanPageState extends ConsumerState<PlanPage> {
             choices: choices,
             selected: selected,
             kofi: kofi,
-            // A server that doesn't say what Ko-fi sells may sell any of it.
-            anyOnKofi: kofiOffers.isEmpty,
             play: play,
             playDown: playDown,
             appStore: appStore,
@@ -616,7 +614,6 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     required List<PlanChoice> choices,
     required PlanChoice? selected,
     required Uri? kofi,
-    required bool anyOnKofi,
     required PlayBilling? play,
     required bool playDown,
     required AppStoreBilling? appStore,
@@ -626,13 +623,11 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final severalPlans = {for (final c in choices) c.planName}.length > 1;
     final name = selected?.planName ?? targetName;
-    // Whether the picked choice can be paid for both ways.
-    final both = kofi != null &&
-        selected?.paypal != null &&
-        (selected?.kofi != null || anyOnKofi);
-    final onlyKofi = selected == null || selected.paypal == null && selected.kofi != null;
+    final onKofi = selected == null || selected.provider == PlanProvider.kofi;
+    // PayPal and Ko-fi are told apart; an app store's choices need no name.
+    final external = choices.any((c) => c.provider != null);
+    void pick(PlanChoice choice) => setState(() => _selected = choice.id);
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(BSpace.s16, 0, BSpace.s16, BSpace.s8),
@@ -657,13 +652,15 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               ),
           ],
         ),
-      for (final choice in choices)
-        PlanChoiceCard(
-          choice: choice,
-          selected: choice.id == selected?.id,
-          showPlan: severalPlans,
-          onTap: () => setState(() => _selected = choice.id),
-        ),
+      if (external)
+        PlanProviderBoxes(
+          choices: choices,
+          selected: selected?.id,
+          onSelect: pick,
+          openKofi: kofi == null || choices.any((c) => c.provider == PlanProvider.kofi) ? null : () => _open(kofi),
+        )
+      else
+        PlanChoiceGrid(choices: choices, selected: selected?.id, onSelect: pick),
       if (selected != null || kofi != null) ...[
         const SizedBox(height: BSpace.s8),
         FilledButton(
@@ -675,18 +672,17 @@ class _PlanPageState extends ConsumerState<PlanPage> {
               ? null
               : selected == null
               ? () => _open(kofi!)
-              : both
-              ? () => _chooseMethod(selected, kofi)
               : selected.buy,
           child: Text(
-            onlyKofi
+            onKofi
                 ? l10n.planKofiBuy
                 : paid
                 ? l10n.planBuy(name!)
                 : l10n.planUpgradeTo(name!),
           ),
         ),
-        if (onlyKofi) _note(context, l10n.planKofiHelp),
+        // What to do after paying on Ko-fi, wherever it can be.
+        if (kofi != null) _note(context, l10n.planKofiHelp),
         // Nothing renews a one-off payment, so there is nothing to cancel.
         _note(
           context,
@@ -739,44 +735,6 @@ class _PlanPageState extends ConsumerState<PlanPage> {
     ];
   }
 
-  /// Asks whether to pay for [choice] through PayPal or go to Ko-fi.
-  Future<void> _chooseMethod(PlanChoice choice, Uri kofi) async {
-    final l10n = context.l10n;
-    final method = await showModalBottomSheet<VoidCallback>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: BSpace.s16),
-          child: GroupedList(
-            title: l10n.planPayWith,
-            children: [
-              GroupedTile(
-                icon: Icons.payments_outlined,
-                title: 'PayPal',
-                subtitle: [?choice.period, ?choice.paypal?.price].join(' · '),
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => Navigator.pop(context, choice.buy),
-              ),
-              GroupedTile(
-                icon: Icons.coffee_outlined,
-                title: l10n.planKofi,
-                subtitle: [
-                  if (choice.kofi case final offer?) [?choice.period, ?offer.price].join(' · '),
-                  l10n.planKofiHelp,
-                ].join('\n'),
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => Navigator.pop(context, () => _open(kofi)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (mounted) method?.call();
-  }
 }
 
 /// Takes a Ko-fi payment by its transaction ID.

@@ -3382,11 +3382,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planPaymentClaimed => 'Платёж добавлен';
 
   @override
-  String planPayPalSubscription(int days) {
-    return 'Подписка, продлевается каждые $days дн.';
-  }
-
-  @override
   String planPayPalDays(int days) {
     return '$days дн.';
   }
@@ -4122,9 +4117,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planSupports => 'Платные тарифы поддерживают работу этого сервера.';
-
-  @override
-  String get planPayWith => 'Способ оплаты';
 
   @override
   String get planKofiBuy => 'Купить на Ko-fi';
